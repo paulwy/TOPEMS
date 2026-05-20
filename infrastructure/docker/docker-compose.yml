@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: topems-postgres
+    environment:
+      - POSTGRES_USER=topems
+      - POSTGRES_PASSWORD=topems_secret
+      - POSTGRES_DB=topems
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U topems"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: topems-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  topems-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
