@@ -9,20 +9,21 @@ export interface FileMetadata {
   created_by: string;
 }
 
-export interface ListFilesResponse {
+export interface ListFilesData {
   files: FileMetadata[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface UploadFileRequest {
-  file: File;
-  folder_id?: string;
+export interface ApiResponse<T> {
+  code: number;
+  success: boolean;
+  data: T;
+  message: string;
+  timestamp: string;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T | null;
-  error: string | null;
-}
+export interface ListFilesResponse extends ApiResponse<ListFilesData> {}
+
+export interface UploadResponse extends ApiResponse<FileMetadata> {}

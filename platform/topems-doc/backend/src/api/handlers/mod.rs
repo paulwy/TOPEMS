@@ -43,16 +43,46 @@ pub async fn list_files(Query(query): Query<ListFilesQuery>) -> Json<ListFilesRe
 }
 
 pub async fn upload_file(
-    Mutipart(stream): Multipart,
+    mut stream: Multipart,
 ) -> Result<(StatusCode, Json<FileMetadata>), StatusCode> {
     tracing::debug!("Uploading file...");
+
+    let mut file_name = "uploaded_file.txt".to_string();
+    let mut file_size: i64 = 0;
+    let mut content_type = "text/plain".to_string();
+
+    // Read the multipart stream with proper error handling
+    while let Ok(Some(field)) = stream.next_field().await {
+        let name = field.name().unwrap_or("").to_string();
+        tracing::debug!("Multipart field name: {}", name);
+        
+        if name == "file" {
+            let fname = field.file_name();
+            tracing::debug!("File name from field: {:?}", fname);
+            
+            file_name = fname.unwrap_or("uploaded_file.txt").to_string();
+            
+            let ctype = field.content_type();
+            tracing::debug!("Content type from field: {:?}", ctype);
+            content_type = ctype.unwrap_or("text/plain").to_string();
+            
+            if let Ok(bytes) = field.bytes().await {
+                file_size = bytes.len() as i64;
+                tracing::debug!("File size: {}", file_size);
+            }
+        } else if name == "folder_id" {
+            // We'll handle folder_id later
+        }
+    }
     
+    tracing::debug!("Final file name: {}", file_name);
+
     let file = FileMetadata {
         id: Uuid::new_v4(),
-        name: "uploaded_file.txt".to_string(),
+        name: file_name,
         folder_id: None,
-        size: 0,
-        content_type: "text/plain".to_string(),
+        size: file_size,
+        content_type,
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
         created_by: "admin".to_string(),

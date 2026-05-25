@@ -272,6 +272,126 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- ========================
+-- topems-lims 实验室信息管理系统数据库
+-- ========================
+CREATE SCHEMA IF NOT EXISTS lims;
+
+-- 样品表
+CREATE TABLE IF NOT EXISTS lims.samples (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    sample_id VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    sample_type VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    received_date DATE NOT NULL,
+    analysis_date DATE,
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 测试记录表
+CREATE TABLE IF NOT EXISTS lims.test_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    sample_id UUID NOT NULL REFERENCES lims.samples(id) ON DELETE CASCADE,
+    test_name VARCHAR(255) NOT NULL,
+    test_method VARCHAR(255),
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    result TEXT,
+    unit VARCHAR(50),
+    standard TEXT,
+    tested_by UUID,
+    tested_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 设备表
+CREATE TABLE IF NOT EXISTS lims.equipments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    model VARCHAR(255),
+    serial_number VARCHAR(255) UNIQUE,
+    status VARCHAR(50) NOT NULL DEFAULT 'available',
+    location VARCHAR(255),
+    last_calibration_date DATE,
+    next_calibration_date DATE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_samples_sample_id ON lims.samples(sample_id);
+CREATE INDEX IF NOT EXISTS idx_samples_status ON lims.samples(status);
+CREATE INDEX IF NOT EXISTS idx_test_records_sample_id ON lims.test_records(sample_id);
+CREATE INDEX IF NOT EXISTS idx_test_records_status ON lims.test_records(status);
+CREATE INDEX IF NOT EXISTS idx_equipments_status ON lims.equipments(status);
+CREATE INDEX IF NOT EXISTS idx_equipments_serial_number ON lims.equipments(serial_number);
+
+-- ========================
+-- topems-rs 科研研发管理数据库
+-- ========================
+CREATE SCHEMA IF NOT EXISTS rs;
+
+-- 项目表
+CREATE TABLE IF NOT EXISTS rs.projects (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',  -- pending, in_progress, completed, cancelled
+    priority VARCHAR(50) NOT NULL DEFAULT 'medium',  -- low, medium, high
+    start_date DATE,
+    end_date DATE,
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 实验表
+CREATE TABLE IF NOT EXISTS rs.experiments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES rs.projects(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',  -- pending, running, completed, failed, cancelled
+    experiment_type VARCHAR(100),
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ
+);
+
+-- 配方表
+CREATE TABLE IF NOT EXISTS rs.formulas (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES rs.projects(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    version VARCHAR(50) NOT NULL,
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 配方原料表
+CREATE TABLE IF NOT EXISTS rs.ingredients (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    formula_id UUID REFERENCES rs.formulas(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    quantity NUMERIC NOT NULL,
+    unit VARCHAR(50) NOT NULL,
+    percentage NUMERIC NOT NULL
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_projects_status ON rs.projects(status);
+CREATE INDEX IF NOT EXISTS idx_projects_created_by ON rs.projects(created_by);
+CREATE INDEX IF NOT EXISTS idx_experiments_project_id ON rs.experiments(project_id);
+CREATE INDEX IF NOT EXISTS idx_experiments_status ON rs.experiments(status);
+CREATE INDEX IF NOT EXISTS idx_formulas_project_id ON rs.formulas(project_id);
+CREATE INDEX IF NOT EXISTS idx_ingredients_formula_id ON rs.ingredients(formula_id);
+
+-- ========================
 -- 初始化完成提示
 -- ========================
 DO $$
