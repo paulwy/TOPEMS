@@ -1,13 +1,28 @@
-FROM rust:1.80-bookworm AS builder
+# TOPEMS doc Service Dockerfile
+# 单阶段构建，使用 rust:nightly 既构建也运行
+
+FROM rust:nightly
 
 WORKDIR /app
-COPY Cargo.toml Cargo.lock ./
-COPY src ./src
+
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . .
 
 RUN cargo build --release
 
-FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y ca-certificates
-COPY --from=builder /app/target/release/topems-doc /usr/local/bin/
+RUN cp /app/target/release/topems-doc /app/
+
+RUN mkdir -p /app/logs
+
 EXPOSE 8001
-CMD ["topems-doc"]
+
+ENV RUST_LOG=info
+ENV SERVICE_PORT=8001
+
+ENTRYPOINT ["/app/topems-doc"]
+CMD ["--host", "0.0.0.0", "--port", "8001"]

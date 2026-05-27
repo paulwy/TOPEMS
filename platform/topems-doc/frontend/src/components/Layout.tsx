@@ -1,4 +1,3 @@
-import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { FileText, Upload, FolderOpen } from 'lucide-react';
 

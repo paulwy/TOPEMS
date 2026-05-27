@@ -42,11 +42,11 @@ npm run dev
 
 ## API 文档
 
-访问 http://localhost:8000/swagger-ui 查看完整的 API 文档。
+访问 [Swagger UI](http://localhost:8001/swagger-ui) 查看完整的 API 文档。
 
 ## 项目结构
 
-```
+```text
 topems-doc/
 ├── backend/
 │   ├── src/

@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
-import type { FileMetadata, ListFilesResponse } from '../types';
+import type { ListFilesResponse } from '../types';
 
-const API_BASE_URL = 'http://localhost:8001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
 export function useFileApi() {
   const [loading, setLoading] = useState(false);
