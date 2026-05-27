@@ -56,13 +56,15 @@ GET /api/v1/files?page=1&page_size=20&folder_id=xxx
 
 ```json
 {
+  "code": 200,
   "success": true,
   "data": {
     "id": "uuid",
     "name": "文件.txt",
     "created_at": "2026-05-20T10:00:00Z"
   },
-  "error": null
+  "message": "操作成功",
+  "timestamp": "2026-05-20T10:00:00Z"
 }
 ```
 
@@ -70,13 +72,11 @@ GET /api/v1/files?page=1&page_size=20&folder_id=xxx
 
 ```json
 {
+  "code": 404,
   "success": false,
   "data": null,
-  "error": {
-    "code": "FILE_NOT_FOUND",
-    "message": "文件不存在",
-    "details": {}
-  }
+  "message": "资源不存在",
+  "timestamp": "2026-05-20T10:00:00Z"
 }
 ```
 
@@ -84,14 +84,16 @@ GET /api/v1/files?page=1&page_size=20&folder_id=xxx
 
 ```json
 {
+  "code": 200,
   "success": true,
   "data": {
     "items": [],
     "total": 100,
     "page": 1,
-    "page_size": 20,
-    "total_pages": 5
-  }
+    "page_size": 20
+  },
+  "message": "获取成功",
+  "timestamp": "2026-05-20T10:00:00Z"
 }
 ```
 
@@ -110,14 +112,28 @@ GET /api/v1/files?page=1&page_size=20&folder_id=xxx
 
 ## 5. 服务 API 端口
 
-| 服务 | 端口 | Swagger |
-|------|------|---------|
-| topems-doc | 8001 | ✅ |
-| topems-iam | 8002 | ⏳ |
-| topems-ai | 8003 | ⏳ |
-| topems-flow | 8004 | ⏳ |
-| topems-mobile | 8005 | ⏳ |
-| topems-im | 8006 | ⏳ |
+| 服务名称 | 端口 | API前缀 | 健康检查 | 描述 |
+|---------|------|--------|----------|------|
+| topems-iam | 8001 | /api/v1 | /health | 身份认证服务 |
+| topems-rs | 8002 | /api/v1 | /health | 研发管理系统 |
+| topems-lims | 8003 | /api/v1 | /health | 实验室系统 |
+| topems-qms | 8004 | /api/v1 | /health | 质量管理系统 |
+| topems-mes | 8005 | /api/v1 | /health | 生产执行系统 |
+| topems-erp | 8006 | /api/v1 | /health | 企业资源计划 |
+| topems-scm | 8007 | /api/v1 | /health | 供应链系统 |
+| topems-wms | 8008 | /api/v1 | /health | 仓库管理系统 |
+| topems-crm | 8009 | /api/v1 | /health | 客户关系管理 |
+| topems-hrm | 8010 | /api/v1 | /health | 人力资源管理 |
+| topems-gis | 8011 | /api/v1 | /health | 地理信息系统 |
+| topems-bi | 8012 | /api/v1 | /health | 商业智能 |
+| topems-ehs | 8013 | /api/v1 | /health | 安全管理系统 |
+| topems-pdm | 8014 | /api/v1 | /health | 产品数据管理 |
+| topems-srm | 8015 | /api/v1 | /health | 供应商管理 |
+| topems-im | 8016 | /api/v1 | /health | 即时通讯 |
+| topems-ai | 8017 | /api/v1 | /health | AI知识库 |
+| topems-mobile | 8018 | /api/v1 | /health | 移动端服务 |
+| topems-integration | 8019 | /api/v1 | /health | 集成服务 |
+| topems-portal | 8020 | /api/v1 | /health | 企业门户 |
 
 ## 6. 通用 API
 
@@ -146,5 +162,9 @@ POST /api/v1/auth/refresh
 
 ## 版本
 
-v1.0.0  
-更新日期: 2026-05-20
+v1.1.0  
+更新日期: 2026-05-27  
+更新内容:
+- 统一响应格式（新增 code 和 timestamp 字段）
+- 更新服务端口配置表
+- 添加完整的服务描述信息

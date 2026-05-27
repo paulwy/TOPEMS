@@ -4,18 +4,32 @@ TOPEMS 是面向高科技添加剂、精细化工、新材料研发生产型企�
 
 ## 📦 项目概览
 
-### 🎉 最新更新 (v2.1.0)
+### 🎉 最新更新 (v2.2.0)
 
-**统一前端门户已上线！**
-- ✅ 统一的登录/注册界面
-- ✅ 简洁的仪表板
-- ✅ 服务状态实时监控
-- ✅ 集成所有后端服务
-- ✅ 访问地址: http://localhost:3000
+**用户管理功能上线！**
+
+- ✅ 用户管理页面（用户列表、创建、编辑、删除）
+- ✅ 角色管理（角色列表、权限分配）
+- ✅ 权限管理（权限列表、权限配置）
+- ✅ 全局通知系统（Toast）
+- ✅ 全局加载状态提示
+- ✅ 错误边界和优雅降级
+- ✅ 集成测试脚本
+- ✅ 动画效果增强
+
+### 统一前端门户功能完善
+
+- ✅ 用户管理入口（仅管理员可见）
+- ✅ 角色管理入口
+- ✅ 权限管理入口
+- ✅ 响应式设计优化
+- ✅ 全局组件库（Toast、Loading、ErrorBoundary）
+- ✅ 动画效果增强
 
 ### 已完成服务状态
+
 | 服务 | 状态 | 后端 | 前端 | 端口 | 优先级 |
-|-----|------|------|------|------|--------|
+|------|------|------|------|------|--------|
 | **统一门户** | ✅ 新上线 | - | React | 3000 | ⭐⭐⭐ |
 | **topems-doc** | ✅ 可用 | ✅ Rust | ✅ React | 8001 / 5173 | 基础 |
 | **topems-iam** | ✅ 可用 | ✅ Rust | ✅ React | 8002 / 5174 | 基础 |
@@ -23,10 +37,14 @@ TOPEMS 是面向高科技添加剂、精细化工、新材料研发生产型企�
 | **topems-flow** | ✅ 可用 | ✅ Rust | ✅ React | 8004 / 5176 | 基础 |
 | **topems-rs** | ✅ 可用 | ✅ Rust | ✅ React | 8005 / 5177 | ⭐⭐⭐ |
 | **topems-lims** | ✅ 可用 | ✅ Rust | ✅ React | 8006 / 5178 | ⭐⭐⭐ |
+| **topems-gis** | ✅ 可用 | ✅ Rust | - | 8017 | ⭐ |
+| **topems-im** | ✅ Mock | Mock | - | 8019 | ⭐ |
+| **topems-mobile** | ✅ Mock | Mock | - | 8022 | ⭐ |
 
 ### 完整产品列表
+
 | 服务 | 优先级 | 说明 |
-|-----|--------|------|
+|------|--------|------|
 | topems-ai | ⭐⭐⭐ | 智能AI知识库 (Ollama 集成) |
 | topems-rs | ⭐⭐⭐ | 科研研发管理系统 |
 | topems-lims | ⭐⭐⭐ | 实验室信息管理系统 |
@@ -47,9 +65,25 @@ npm install
 npm run dev
 ```
 
-访问 http://localhost:3000 并使用以下演示账号登录：
-- 用户名: `testuser`
-- 密码: `Test123456`
+访问 <http://localhost:3000> 并使用以下演示账号登录：
+
+**管理员账号**：
+
+- 用户名: `admin`
+- 密码: `admin123`
+- 权限: 完全访问，包括用户管理、角色管理、权限管理
+
+**普通用户**：
+
+- 用户名: `user`
+- 密码: `user123`
+- 权限: 基础功能访问
+
+**访客账号**：
+
+- 用户名: `guest`
+- 密码: `guest123`
+- 权限: 只读访问
 
 ### 2. 启动后端服务
 
@@ -67,13 +101,19 @@ cd services/topems-ai/backend && cargo run
 
 # FLOW 服务 (工作流)
 cd platform/topems-flow/backend && cargo run
+
+# GIS 服务 (厂区空间)
+cd services/topems-gis/backend && cargo run
 ```
 
 ### 3. 测试所有服务
 
 ```bash
-./verify-services.sh    # 验证后端编译
-./test_all_services.sh  # 测试所有服务
+# 验证后端服务
+curl http://localhost:8002/api/v1/health
+curl http://localhost:8001/health
+curl http://localhost:8003/health
+curl http://localhost:8004/health
 ```
 
 ### 查看详细文档
@@ -87,16 +127,16 @@ cd platform/topems-flow/backend && cargo run
 ## 📖 文档
 
 - [PROJECT_STATUS_REPORT.md](PROJECT_STATUS_REPORT.md) - **项目状态报告（推荐阅读）**
-- [PROJECT_STATUS.md](PROJECT_STATUS.md) - 项目进度
 - [QUICKSTART.md](QUICKSTART.md) - 快速启动指南
-- [GETTING_STARTED.md](GETTING_STARTED.md) - 详细启动指南
 - [AI_SETUP_GUIDE.md](AI_SETUP_GUIDE.md) - AI 配置指南
 - [infrastructure/DOCKER_TROUBLESHOOT.md](infrastructure/DOCKER_TROUBLESHOOT.md) - Docker 配置
 - [docs/architecture/overview.md](docs/architecture/overview.md) - 架构设计
+- [docs/权限系统使用指南.md](docs/权限系统使用指南.md) - 权限系统使用说明
 
 ## 🛠 技术栈
 
 ### 前端
+
 - **框架**: React 18
 - **语言**: TypeScript 5
 - **构建工具**: Vite 6
@@ -105,12 +145,14 @@ cd platform/topems-flow/backend && cargo run
 - **HTTP 客户端**: Axios
 
 ### 后端
+
 - **语言**: Rust
 - **框架**: Axum
 - **ORM**: SQLx
 - **异步**: Tokio
 
 ### 基础设施
+
 - **数据库**: PostgreSQL 16 + Redis 7
 - **容器化**: Docker + Docker Compose
 - **AI**: Ollama + qwen2.5:7b-instruct
@@ -120,6 +162,9 @@ cd platform/topems-flow/backend && cargo run
 ### ✅ 已完成
 
 - 用户认证与权限管理 (JWT)
+- 用户管理（CRUD）
+- 角色管理（CRUD）
+- 权限管理（CRUD）
 - 文档管理 (上传、下载、版本控制)
 - AI 知识库 (基于 Ollama 本地模型)
 - 工作流引擎 (审批、任务管理)
@@ -160,6 +205,7 @@ cd platform/topems-flow/backend && cargo run
 
 ## 版本历史
 
+- **v2.2.0** (2026-05-27) - 用户管理、角色管理、权限管理功能上线
 - **v2.1.0** (2026-05-21) - 统一前端门户上线，AI 服务集成 Ollama
 - **v2.0.0** (2026-05-21) - 第二阶段完成，TOPEMS-RS 和 TOPEMS-LIMS 可用
 - **v1.0.0** (2026-05-21) - 第一阶段完成，基础服务可用
@@ -174,4 +220,4 @@ MIT License
 
 ---
 
-**准备好开始了吗？** 访问 http://localhost:3000 体验统一前端门户！
+**准备好开始了吗？** 访问 <http://localhost:3000> 体验统一前端门户！

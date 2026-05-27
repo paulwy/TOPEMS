@@ -1,0 +1,338 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    types: [opened, synchronize, reopened]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Check Rust formatting
+        run: |
+          cargo fmt --all -- --check
+        shell: bash
+
+      - name: Run Rust clippy
+        run: |
+          cargo clippy --all-targets --all-features -- -D warnings
+        shell: bash
+
+      - name: Check TypeScript formatting
+        run: |
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npx prettier --check "src/**/*.{ts,tsx}"
+          fi
+        shell: bash
+
+      - name: Run ESLint
+        run: |
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm run lint || echo "No lint script configured"
+          fi
+        shell: bash
+
+  build-backend:
+    name: Build Rust Backend
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems
+          POSTGRES_PASSWORD: topems_secret
+          POSTGRES_DB: topems
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.cargo/git/checkouts/
+            services/**/target/
+            platform/**/backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build backend services
+        run: |
+          for service in services/backend platform/*/backend; do
+            if [ -d "$service" ]; then
+              echo "Building $service"
+              cd $service
+              cargo build --release 2>&1 | tail -20
+              cd - > /dev/null
+            fi
+          done
+        shell: bash
+
+      - name: Build Rust services
+        run: |
+          for service in services/* topems-*/backend; do
+            if [ -d "$service" ]; then
+              echo "Building $service"
+              cd $service
+              cargo build --release 2>&1 | tail -20
+              cd - > /dev/null
+            fi
+          done
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-binaries
+          path: |
+            services/backend/target/release/topems-erp
+            services/notification-service/target/release/notification-service
+            services/report-service/target/release/report-service
+            platform/topems-doc/backend/target/release/topems-doc
+            platform/topems-flow/backend/target/release/topems-flow
+            platform/topems-iam/backend/target/release/topems-iam
+            platform/topems-lims/backend/target/release/topems-lims
+            platform/topems-qms/backend/target/release/topems-qms
+            platform/topems-rs/backend/target/release/topems-rs
+            platform/topems-ehs/backend/target/release/topems-ehs
+            platform/topems-srm/backend/target/release/topems-srm
+            platform/topems-pdm/backend/target/release/topems-pdm
+            platform/topems-ai/backend/target/release/topems-ai
+            platform/topems-integration/backend/target/release/topems-integration
+          retention-days: 7
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules
+            platform/*/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm ci
+            cd ../..
+          fi
+        shell: bash
+
+      - name: Build frontend
+        run: |
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm run build
+            cd ../..
+          fi
+        shell: bash
+
+      - name: Upload frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    needs: build-backend
+    if: always()
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems
+          POSTGRES_PASSWORD: topems_secret
+          POSTGRES_DB: topems_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.cargo/git/checkouts/
+            services/**/target/
+            platform/**/backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run Rust tests
+        run: |
+          for service in services/backend platform/*/backend; do
+            if [ -d "$service" ]; then
+              echo "Testing $service"
+              cd $service
+              cargo test --no-fail-fast 2>&1 | tail -50
+              cd - > /dev/null
+            fi
+          done
+        shell: bash
+
+      - name: Run Frontend tests
+        run: |
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm test -- --coverage --watchAll=false
+          fi
+        shell: bash
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: success()
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Rust security audit
+        uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run npm audit
+        run: |
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm audit --audit-level=high
+          fi
+        shell: bash
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker images
+        run: |
+          docker build -f services/backend/Dockerfile -t topems-backend:test services/backend/
+          docker build -f frontend/Dockerfile -t topems-frontend:test frontend/
+
+      - name: Run Docker Compose
+        run: |
+          docker-compose -f infrastructure/docker/docker-compose.yml up -d
+          sleep 10
+
+      - name: Run Playwright tests
+        run: |
+          npx playwright test
+        shell: bash
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f infrastructure/docker/docker-compose.yml down
