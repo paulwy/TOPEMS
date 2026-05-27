@@ -1,273 +1,78 @@
+mod api;
+mod models;
+
+use anyhow::Result;
 use axum::{
-    extract::State,
-    routing::{get, post},
-    Json, Router,
+    routing::get,
+    Json,
+    Router,
 };
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use uuid::Uuid;
-use chrono::Utc;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Hazard {
-    id: String,
-    hazard_id: String,
-    description: String,
-    risk_level: String,
-    location: String,
-    status: String,
-    reported_date: String,
-}
+use api::{
+    list_hazards, create_hazard, get_hazard, update_hazard, delete_hazard,
+    list_checks, create_check, get_check, update_check, delete_check,
+    list_plans, create_plan, get_plan, update_plan, delete_plan,
+    list_drills, create_drill, get_drill, update_drill, delete_drill,
+};
+use models::{SafetyHazard, SafetyCheck, EmergencyPlan, DrillRecord};
+use topems_shared::{ApiResponse, create_cors_layer};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CreateHazardRequest {
-    description: String,
-    risk_level: String,
-    location: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Incident {
-    id: String,
-    incident_id: String,
-    title: String,
-    type_: String,
-    severity: String,
-    status: String,
-    occurred_date: String,
-    department: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CreateIncidentRequest {
-    title: String,
-    type_: String,
-    severity: String,
-    department: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct EquipmentInspection {
-    id: String,
-    equipment_name: String,
-    equipment_id: String,
-    inspection_date: String,
-    inspector: String,
-    status: String,
-    remarks: String,
-    next_check_date: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CreateEquipmentInspectionRequest {
-    equipment_name: String,
-    equipment_id: String,
-    inspector: String,
-    status: String,
-    remarks: String,
-    next_check_date: Option<String>,
-}
-
-#[derive(Debug)]
+#[derive(Clone)]
 struct AppState {
-    hazards: Mutex<Vec<Hazard>>,
-    incidents: Mutex<Vec<Incident>>,
-    inspections: Mutex<Vec<EquipmentInspection>>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct ApiResponse<T> {
-    success: bool,
-    data: Option<T>,
-    message: String,
+    hazards: Arc<Mutex<Vec<SafetyHazard>>>,
+    checks: Arc<Mutex<Vec<SafetyCheck>>>,
+    plans: Arc<Mutex<Vec<EmergencyPlan>>>,
+    drills: Arc<Mutex<Vec<DrillRecord>>>,
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    dotenv::dotenv().ok();
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "topems_ehs=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "topems_ehs=info".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    tracing::info!("🚀 TOPEMS-EHS 安全环保职业健康系统启动中...");
-    dotenv::dotenv().ok();
+    tracing::info!("🚀 TOPEMS-EHS 环境健康安全系统启动中...");
 
-    let state = Arc::new(AppState {
-        hazards: Mutex::new(vec![
-            Hazard {
-                id: "1".to_string(),
-                hazard_id: "HZ-2026-001".to_string(),
-                description: "化学品存储区通风不足".to_string(),
-                risk_level: "中风险".to_string(),
-                location: "原料仓库 A区".to_string(),
-                status: "整改中".to_string(),
-                reported_date: "2026-05-18".to_string(),
-            },
-        ]),
-        incidents: Mutex::new(vec![
-            Incident {
-                id: "1".to_string(),
-                incident_id: "INC-2026-001".to_string(),
-                title: "反应釜泄漏未遂事件".to_string(),
-                type_: "安全事件".to_string(),
-                severity: "中等".to_string(),
-                status: "已处理".to_string(),
-                occurred_date: "2026-05-15".to_string(),
-                department: "生产部".to_string(),
-            },
-        ]),
-        inspections: Mutex::new(vec![
-            EquipmentInspection {
-                id: "1".to_string(),
-                equipment_name: "消防设施年度检查".to_string(),
-                equipment_id: "EQ-FIRE-001".to_string(),
-                inspection_date: "2026-05-20".to_string(),
-                inspector: "王安全".to_string(),
-                status: "合格".to_string(),
-                remarks: "所有设施正常".to_string(),
-                next_check_date: Some("2027-05-20".to_string()),
-            },
-        ]),
-    });
+    let state = AppState {
+        hazards: Arc::new(Mutex::new(Vec::new())),
+        checks: Arc::new(Mutex::new(Vec::new())),
+        plans: Arc::new(Mutex::new(Vec::new())),
+        drills: Arc::new(Mutex::new(Vec::new())),
+    };
+
+    let cors = create_cors_layer();
 
     let app = Router::new()
-        .route("/", get(home))
-        .route("/health", get(health))
+        .route("/health", get(health_check))
         .route("/api/v1/hazards", get(list_hazards).post(create_hazard))
-        .route("/api/v1/incidents", get(list_incidents).post(create_incident))
-        .route("/api/v1/equipment-inspections", get(list_inspections).post(create_inspection))
+        .route("/api/v1/hazards/{id}", get(get_hazard).put(update_hazard).delete(delete_hazard))
+        .route("/api/v1/checks", get(list_checks).post(create_check))
+        .route("/api/v1/checks/{id}", get(get_check).put(update_check).delete(delete_check))
+        .route("/api/v1/plans", get(list_plans).post(create_plan))
+        .route("/api/v1/plans/{id}", get(get_plan).put(update_plan).delete(delete_plan))
+        .route("/api/v1/drills", get(list_drills).post(create_drill))
+        .route("/api/v1/drills/{id}", get(get_drill).put(update_drill).delete(delete_drill))
+        .layer(cors)
         .with_state(state);
 
-    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8008".to_string())
-        .parse()
-        .unwrap_or(8008);
-
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ TOPEMS-EHS 服务运行在 http://{}", addr);
-
-    axum::serve(
-        tokio::net::TcpListener::bind(&addr).await.unwrap(),
-        app.into_make_service(),
-    )
-    .await
-    .unwrap();
-}
-
-async fn home() -> &'static str {
-    "TOPEMS-EHS 安全环保职业健康系统 API"
-}
-
-async fn health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse {
-        success: true,
-        data: Some("TOPEMS-EHS is running!".to_string()),
-        message: "OK".to_string(),
-    })
-}
-
-async fn list_hazards(State(state): State<Arc<AppState>>) -> Json<ApiResponse<Vec<Hazard>>> {
-    let hazards = state.hazards.lock().unwrap();
-    Json(ApiResponse {
-        success: true,
-        data: Some(hazards.clone()),
-        message: "Success".to_string(),
-    })
-}
-
-async fn create_hazard(
-    State(state): State<Arc<AppState>>,
-    Json(request): Json<CreateHazardRequest>,
-) -> Json<ApiResponse<Hazard>> {
-    let count = state.hazards.lock().unwrap().len() + 1;
-    let hazard = Hazard {
-        id: Uuid::new_v4().to_string(),
-        hazard_id: format!("HZ-2026-{:03}", count),
-        description: request.description,
-        risk_level: request.risk_level,
-        location: request.location,
-        status: "待处理".to_string(),
-        reported_date: Utc::now().format("%Y-%m-%d").to_string(),
-    };
-
-    state.hazards.lock().unwrap().push(hazard.clone());
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8013".to_string());
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
+    tracing::info!("📦 端口: {}", port);
+    tracing::info!("✅ TOPEMS-EHS 已就绪");
     
-    Json(ApiResponse {
-        success: true,
-        data: Some(hazard),
-        message: "创建成功".to_string(),
-    })
+    axum::serve(listener, app).await?;
+
+    Ok(())
 }
 
-async fn list_incidents(State(state): State<Arc<AppState>>) -> Json<ApiResponse<Vec<Incident>>> {
-    let incidents = state.incidents.lock().unwrap();
-    Json(ApiResponse {
-        success: true,
-        data: Some(incidents.clone()),
-        message: "Success".to_string(),
-    })
-}
-
-async fn create_incident(
-    State(state): State<Arc<AppState>>,
-    Json(request): Json<CreateIncidentRequest>,
-) -> Json<ApiResponse<Incident>> {
-    let count = state.incidents.lock().unwrap().len() + 1;
-    let incident = Incident {
-        id: Uuid::new_v4().to_string(),
-        incident_id: format!("INC-2026-{:03}", count),
-        title: request.title,
-        type_: request.type_,
-        severity: request.severity,
-        status: "调查中".to_string(),
-        occurred_date: Utc::now().format("%Y-%m-%d").to_string(),
-        department: request.department,
-    };
-
-    state.incidents.lock().unwrap().push(incident.clone());
-    
-    Json(ApiResponse {
-        success: true,
-        data: Some(incident),
-        message: "创建成功".to_string(),
-    })
-}
-
-async fn list_inspections(State(state): State<Arc<AppState>>) -> Json<ApiResponse<Vec<EquipmentInspection>>> {
-    let inspections = state.inspections.lock().unwrap();
-    Json(ApiResponse {
-        success: true,
-        data: Some(inspections.clone()),
-        message: "Success".to_string(),
-    })
-}
-
-async fn create_inspection(
-    State(state): State<Arc<AppState>>,
-    Json(request): Json<CreateEquipmentInspectionRequest>,
-) -> Json<ApiResponse<EquipmentInspection>> {
-    let inspection = EquipmentInspection {
-        id: Uuid::new_v4().to_string(),
-        equipment_name: request.equipment_name,
-        equipment_id: request.equipment_id,
-        inspection_date: Utc::now().format("%Y-%m-%d").to_string(),
-        inspector: request.inspector,
-        status: request.status,
-        remarks: request.remarks,
-        next_check_date: request.next_check_date,
-    };
-
-    state.inspections.lock().unwrap().push(inspection.clone());
-    
-    Json(ApiResponse {
-        success: true,
-        data: Some(inspection),
-        message: "创建成功".to_string(),
-    })
+async fn health_check() -> Json<ApiResponse<&'static str>> {
+    Json(ApiResponse::success("TOPEMS-EHS is running", "健康检查"))
 }

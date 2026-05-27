@@ -1,4 +1,1 @@
-pub mod repository;
-pub mod schema;
-
-pub use repository::*;
+// 数据库模块

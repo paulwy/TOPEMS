@@ -1,284 +1,195 @@
+mod api;
+mod models;
+
+use anyhow::Result;
 use axum::{
-    extract::State,
-    routing::{get, post},
-    Json, Router,
+    extract::FromRef,
+    routing::get,
+    Json,
+    Router,
 };
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use sqlx::postgres::PgPoolOptions;
+use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use uuid::Uuid;
-use chrono::Utc;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct InspectionRecord {
-    id: String,
-    batch_id: String,
-    product_name: String,
-    inspection_date: String,
-    inspector: String,
-    status: String,
-    result_summary: String,
-}
+use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CreateInspectionRequest {
-    batch_id: String,
-    product_name: String,
-    inspector: String,
-    status: String,
-    result_summary: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct NonConformance {
-    id: String,
-    nc_id: String,
-    description: String,
-    severity: String,
-    status: String,
-    reported_date: String,
-    department: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CreateNonConformanceRequest {
-    description: String,
-    severity: String,
-    department: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct QualityStandard {
-    id: String,
-    standard_code: String,
-    title: String,
-    version: String,
-    effective_date: String,
-    category: String,
-    status: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CreateQualityStandardRequest {
-    standard_code: String,
-    title: String,
-    version: String,
-    effective_date: String,
-    category: String,
-}
-
-#[derive(Debug)]
+#[derive(Clone)]
 struct AppState {
-    inspections: Mutex<Vec<InspectionRecord>>,
-    nonconformances: Mutex<Vec<NonConformance>>,
-    standards: Mutex<Vec<QualityStandard>>,
+    pool: sqlx::PgPool,
+    auth_state: AuthState,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct ApiResponse<T> {
-    success: bool,
-    data: Option<T>,
-    message: String,
+impl FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
+    }
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    dotenv::dotenv().ok();
+
     tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "topems_qms=debug,tower_http=debug".into()),
-        )
+        .with(tracing_subscriber::EnvFilter::new(
+            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
+        ))
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    tracing::info!("🚀 TOPEMS-QMS 质量合规管理系统启动中...");
-    dotenv::dotenv().ok();
+    let database_url = env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
 
-    let state = Arc::new(AppState {
-        inspections: Mutex::new(vec![
-            InspectionRecord {
-                id: "1".to_string(),
-                batch_id: "BATCH-2026-05-001".to_string(),
-                product_name: "高性能复合材料 A".to_string(),
-                inspection_date: "2026-05-20".to_string(),
-                inspector: "张质检".to_string(),
-                status: "合格".to_string(),
-                result_summary: "各项性能指标均符合标准要求".to_string(),
-            },
-            InspectionRecord {
-                id: "2".to_string(),
-                batch_id: "BATCH-2026-05-002".to_string(),
-                product_name: "环保胶粘剂 B".to_string(),
-                inspection_date: "2026-05-21".to_string(),
-                inspector: "李质检".to_string(),
-                status: "待检".to_string(),
-                result_summary: "检验中".to_string(),
-            },
-        ]),
-        nonconformances: Mutex::new(vec![
-            NonConformance {
-                id: "1".to_string(),
-                nc_id: "NC-2026-001".to_string(),
-                description: "生产环境温湿度超标".to_string(),
-                severity: "中等".to_string(),
-                status: "整改中".to_string(),
-                reported_date: "2026-05-18".to_string(),
-                department: "生产部".to_string(),
-            },
-        ]),
-        standards: Mutex::new(vec![
-            QualityStandard {
-                id: "1".to_string(),
-                standard_code: "QMS-STD-001".to_string(),
-                title: "产品质量检验规范".to_string(),
-                version: "V2.0".to_string(),
-                effective_date: "2026-01-01".to_string(),
-                category: "质量标准".to_string(),
-                status: "生效中".to_string(),
-            },
-            QualityStandard {
-                id: "2".to_string(),
-                standard_code: "QMS-STD-002".to_string(),
-                title: "不合格品处理流程".to_string(),
-                version: "V1.5".to_string(),
-                effective_date: "2026-03-01".to_string(),
-                category: "流程文件".to_string(),
-                status: "生效中".to_string(),
-            },
-        ]),
-    });
+    let pool = PgPoolOptions::new()
+        .max_connections(10)
+        .connect(&database_url)
+        .await?;
+
+    tracing::info!("🔗 数据库连接成功");
+
+    if let Err(e) = init_db(&pool).await {
+        tracing::warn!("数据库初始化警告: {}", e);
+    }
+
+    let jwt_secret = env::var("JWT_SECRET")
+        .unwrap_or_else(|_| {
+            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
+            "topems-default-jwt-secret-change-me-in-production".to_string()
+        });
+
+    let app_state = AppState {
+        pool: pool.clone(),
+        auth_state: AuthState::new(jwt_secret),
+    };
+
+    let cors = create_cors_layer();
 
     let app = Router::new()
-        .route("/", get(home))
-        .route("/health", get(health))
-        .route("/api/v1/inspections", get(list_inspections).post(create_inspection))
-        .route("/api/v1/nonconformances", get(list_nonconformances).post(create_nonconformance))
-        .route("/api/v1/standards", get(list_standards).post(create_standard))
-        .with_state(state);
+        .route("/health", get(health_check))
+        .merge(api::quality_standard::create_routes(pool.clone()).await?)
+        .merge(api::quality_inspection::create_routes(pool.clone()).await?)
+        .merge(api::quality_issue::create_routes(pool.clone()).await?)
+        .merge(api::corrective_action::create_routes(pool.clone()).await?)
+        .layer(cors);
 
-    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8007".to_string())
-        .parse()
-        .unwrap_or(8007);
+    let port = env::var("PORT").unwrap_or_else(|_| "8004".to_string());
+    let addr = format!("0.0.0.0:{}", port);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ TOPEMS-QMS 服务运行在 http://{}", addr);
+    tracing::info!("🚀 TOPEMS-QMS 质量管理系统启动中...");
+    tracing::info!("📦 端口: {}", port);
+    tracing::info!("🔒 认证保护已启用");
 
-    axum::serve(
-        tokio::net::TcpListener::bind(&addr).await.unwrap(),
-        app.into_make_service(),
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+async fn health_check() -> Json<ApiResponse<&'static str>> {
+    Json(ApiResponse::success("TOPEMS-QMS is running", "健康检查"))
+}
+
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS qms"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qms.quality_standards (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            code VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            category VARCHAR(100),
+            version VARCHAR(50),
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
     )
-    .await
-    .unwrap();
-}
+    .execute(pool)
+    .await?;
 
-async fn home() -> &'static str {
-    "TOPEMS-QMS 质量合规管理系统 API"
-}
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qms.quality_inspections (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            inspection_type VARCHAR(100) NOT NULL,
+            standard_id UUID REFERENCES qms.quality_standards(id),
+            inspector VARCHAR(255) NOT NULL,
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            result VARCHAR(100),
+            findings TEXT,
+            inspected_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
 
-async fn health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse {
-        success: true,
-        data: Some("TOPEMS-QMS is running!".to_string()),
-        message: "OK".to_string(),
-    })
-}
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qms.quality_issues (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            severity VARCHAR(50) NOT NULL,
+            status VARCHAR(50) NOT NULL DEFAULT 'open',
+            source VARCHAR(100),
+            related_inspection_id UUID REFERENCES qms.quality_inspections(id),
+            assigned_to VARCHAR(255),
+            priority VARCHAR(50) DEFAULT 'medium',
+            due_date TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
 
-async fn list_inspections(State(state): State<Arc<AppState>>) -> Json<ApiResponse<Vec<InspectionRecord>>> {
-    let inspections = state.inspections.lock().unwrap();
-    Json(ApiResponse {
-        success: true,
-        data: Some(inspections.clone()),
-        message: "Success".to_string(),
-    })
-}
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qms.corrective_actions (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            issue_id UUID NOT NULL REFERENCES qms.quality_issues(id) ON DELETE CASCADE,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            assigned_to VARCHAR(255) NOT NULL,
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            implementation_date TIMESTAMPTZ,
+            verification_result TEXT,
+            verified_by VARCHAR(255),
+            verified_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
 
-async fn create_inspection(
-    State(state): State<Arc<AppState>>,
-    Json(request): Json<CreateInspectionRequest>,
-) -> Json<ApiResponse<InspectionRecord>> {
-    let inspection = InspectionRecord {
-        id: Uuid::new_v4().to_string(),
-        batch_id: request.batch_id,
-        product_name: request.product_name,
-        inspection_date: Utc::now().format("%Y-%m-%d").to_string(),
-        inspector: request.inspector,
-        status: request.status,
-        result_summary: request.result_summary,
-    };
+    sqlx::query(r#"GRANT ALL PRIVILEGES ON SCHEMA qms TO topems"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA qms TO topems"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA qms TO topems"#)
+        .execute(pool)
+        .await?;
 
-    state.inspections.lock().unwrap().push(inspection.clone());
-    
-    Json(ApiResponse {
-        success: true,
-        data: Some(inspection),
-        message: "创建成功".to_string(),
-    })
-}
+    tracing::info!("✅ 数据库表初始化完成");
 
-async fn list_nonconformances(State(state): State<Arc<AppState>>) -> Json<ApiResponse<Vec<NonConformance>>> {
-    let ncs = state.nonconformances.lock().unwrap();
-    Json(ApiResponse {
-        success: true,
-        data: Some(ncs.clone()),
-        message: "Success".to_string(),
-    })
-}
-
-async fn create_nonconformance(
-    State(state): State<Arc<AppState>>,
-    Json(request): Json<CreateNonConformanceRequest>,
-) -> Json<ApiResponse<NonConformance>> {
-    let count = state.nonconformances.lock().unwrap().len() + 1;
-    let nc = NonConformance {
-        id: Uuid::new_v4().to_string(),
-        nc_id: format!("NC-2026-{:03}", count),
-        description: request.description,
-        severity: request.severity,
-        status: "待处理".to_string(),
-        reported_date: Utc::now().format("%Y-%m-%d").to_string(),
-        department: request.department,
-    };
-
-    state.nonconformances.lock().unwrap().push(nc.clone());
-    
-    Json(ApiResponse {
-        success: true,
-        data: Some(nc),
-        message: "创建成功".to_string(),
-    })
-}
-
-async fn list_standards(State(state): State<Arc<AppState>>) -> Json<ApiResponse<Vec<QualityStandard>>> {
-    let standards = state.standards.lock().unwrap();
-    Json(ApiResponse {
-        success: true,
-        data: Some(standards.clone()),
-        message: "Success".to_string(),
-    })
-}
-
-async fn create_standard(
-    State(state): State<Arc<AppState>>,
-    Json(request): Json<CreateQualityStandardRequest>,
-) -> Json<ApiResponse<QualityStandard>> {
-    let standard = QualityStandard {
-        id: Uuid::new_v4().to_string(),
-        standard_code: request.standard_code,
-        title: request.title,
-        version: request.version,
-        effective_date: request.effective_date,
-        category: request.category,
-        status: "生效中".to_string(),
-    };
-
-    state.standards.lock().unwrap().push(standard.clone());
-    
-    Json(ApiResponse {
-        success: true,
-        data: Some(standard),
-        message: "创建成功".to_string(),
-    })
+    Ok(())
 }
