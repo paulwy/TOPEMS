@@ -1,0 +1,238 @@
+use anyhow::Result;
+use axum::{
+    extract::{Path, Query, State},
+    routing::{delete, get, post, put},
+    Json, Router,
+};
+use chrono::Utc;
+use serde::Deserialize;
+use sqlx::postgres::PgPool;
+use std::sync::Arc;
+use uuid::Uuid;
+
+use crate::models::{CreateInboundOrderRequest, InboundOrder, UpdateInboundOrderRequest};
+use topems_shared::{ApiResponse, PaginationParams, api_error};
+
+pub struct AppState {
+    pub db: PgPool,
+}
+
+pub async fn create_routes(db: PgPool) -> Result<Router> {
+    let state = Arc::new(AppState { db });
+
+    let app = Router::new()
+        .route("/api/v1/inbound-orders", get(list_inbound_orders).post(create_inbound_order))
+        .route(
+            "/api/v1/inbound-orders/{id}",
+            get(get_inbound_order).put(update_inbound_order).delete(delete_inbound_order),
+        )
+        .with_state(state);
+
+    Ok(app)
+}
+
+async fn list_inbound_orders(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<PaginationParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
+    let status_filter = params.status.clone();
+
+    let result = sqlx::query_as::<_, InboundOrder>(
+        r#"
+        SELECT id, order_number, warehouse_id, supplier_id, order_date, expected_arrival, 
+               actual_arrival, total_amount, status, remarks, created_at, updated_at
+        FROM inbound_orders
+        WHERE ($1::text IS NULL OR order_number ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4
+        "#,
+    )
+    .bind(&search_pattern)
+    .bind(&status_filter)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(orders) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM inbound_orders
+                WHERE ($1::text IS NULL OR order_number ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                "#,
+            )
+            .bind(&search_pattern)
+            .bind(&status_filter)
+            .fetch_one(&state.db)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "orders": orders,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "获取入库订单列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取入库订单列表失败: {}", e);
+            Json(api_error(500, "获取入库订单列表失败"))
+        }
+    }
+}
+
+async fn create_inbound_order(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateInboundOrderRequest>,
+) -> Json<ApiResponse<InboundOrder>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, InboundOrder>(
+        r#"
+        INSERT INTO inbound_orders (id, order_number, warehouse_id, supplier_id, order_date, 
+                                    expected_arrival, total_amount, status, remarks, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
+        RETURNING id, order_number, warehouse_id, supplier_id, order_date, expected_arrival, 
+                  actual_arrival, total_amount, status, remarks, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&req.order_number)
+    .bind(&req.warehouse_id)
+    .bind(&req.supplier_id)
+    .bind(req.order_date)
+    .bind(&req.expected_arrival)
+    .bind(req.total_amount)
+    .bind(&req.remarks)
+    .bind(now)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(order) => Json(ApiResponse::success(order, "入库订单创建成功")),
+        Err(e) => {
+            tracing::error!("创建入库订单失败: {}", e);
+            Json(api_error(500, "入库订单创建失败"))
+        }
+    }
+}
+
+async fn get_inbound_order(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<InboundOrder>> {
+    let result = sqlx::query_as::<_, InboundOrder>(
+        r#"
+        SELECT id, order_number, warehouse_id, supplier_id, order_date, expected_arrival, 
+               actual_arrival, total_amount, status, remarks, created_at, updated_at
+        FROM inbound_orders WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(order)) => Json(ApiResponse::success(order, "获取入库订单成功")),
+        Ok(None) => Json(api_error(404, "入库订单不存在")),
+        Err(e) => {
+            tracing::error!("获取入库订单失败: {}", e);
+            Json(api_error(500, "获取入库订单失败"))
+        }
+    }
+}
+
+async fn update_inbound_order(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateInboundOrderRequest>,
+) -> Json<ApiResponse<InboundOrder>> {
+    let existing = sqlx::query_as::<_, InboundOrder>(
+        r#"
+        SELECT id, order_number, warehouse_id, supplier_id, order_date, expected_arrival, 
+               actual_arrival, total_amount, status, remarks, created_at, updated_at 
+        FROM inbound_orders WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(o)) => o,
+        Ok(None) => return Json(api_error(404, "入库订单不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询入库订单失败: {}", e))),
+    };
+
+    let warehouse_id = req.warehouse_id.or(existing.warehouse_id);
+    let supplier_id = req.supplier_id.or(existing.supplier_id);
+    let expected_arrival = req.expected_arrival.or(existing.expected_arrival);
+    let actual_arrival = req.actual_arrival.or(existing.actual_arrival);
+    let total_amount = req.total_amount.or(existing.total_amount);
+    let status = req.status.unwrap_or(existing.status);
+    let remarks = req.remarks.or(existing.remarks);
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, InboundOrder>(
+        r#"
+        UPDATE inbound_orders SET
+            warehouse_id = $2, supplier_id = $3, expected_arrival = $4, actual_arrival = $5, 
+            total_amount = $6, status = $7, remarks = $8, updated_at = $9
+        WHERE id = $1
+        RETURNING id, order_number, warehouse_id, supplier_id, order_date, expected_arrival, 
+                  actual_arrival, total_amount, status, remarks, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&warehouse_id)
+    .bind(&supplier_id)
+    .bind(&expected_arrival)
+    .bind(&actual_arrival)
+    .bind(total_amount)
+    .bind(&status)
+    .bind(&remarks)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(order) => Json(ApiResponse::success(order, "入库订单更新成功")),
+        Err(e) => {
+            tracing::error!("更新入库订单失败: {}", e);
+            Json(api_error(500, "入库订单更新失败"))
+        }
+    }
+}
+
+async fn delete_inbound_order(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query("DELETE FROM inbound_orders WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "入库订单删除成功")),
+        Ok(_) => Json(api_error(404, "入库订单不存在")),
+        Err(e) => {
+            tracing::error!("删除入库订单失败: {}", e);
+            Json(api_error(500, "入库订单删除失败"))
+        }
+    }
+}
