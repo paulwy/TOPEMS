@@ -1,0 +1,28 @@
+[package]
+name = "topems-gis"
+version = "0.1.0"
+edition = "2021"
+description = "TOPEMS GIS - 厂区空间数字化系统"
+
+[dependencies]
+axum = "0.8"
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["serde", "v4"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dotenv = "0.15"
+anyhow = "1"
+thiserror = "2"
+topems-shared = { path = "../../../shared/lib" }
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[[bin]]
+name = "topems-gis"
+path = "src/main.rs"
