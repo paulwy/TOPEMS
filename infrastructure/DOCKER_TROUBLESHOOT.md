@@ -64,7 +64,7 @@ Registry Mirrors:
 配置完镜像加速器后，重新运行：
 
 ```bash
-cd /Users/air/TOPEMS/infrastructure/docker
+cd /Users/xingzhai/TOPEMS/infrastructure/docker
 
 # 清理旧容器（如果有）
 docker-compose down

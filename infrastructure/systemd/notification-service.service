@@ -1,0 +1,20 @@
+[Unit]
+Description=TOPEMS Notification Service
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/%i
+Environment="RUST_LOG=info"
+EnvironmentFile=/opt/topems/%i/.env
+ExecStart=/opt/topems/%i/current/notification-service
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
