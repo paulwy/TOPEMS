@@ -1,0 +1,52 @@
+{
+  "users": [
+    {
+      "id": "user-001",
+      "username": "test_admin",
+      "email": "test_admin@topems.com",
+      "role": "admin",
+      "password": "Test@123456",
+      "is_active": true,
+      "is_superuser": true,
+      "created_at": "2026-01-01T00:00:00Z",
+      "roles": ["admin"],
+      "permissions": ["*"]
+    },
+    {
+      "id": "user-002",
+      "username": "test_user",
+      "email": "test_user@topems.com",
+      "role": "user",
+      "password": "Test@123456",
+      "is_active": true,
+      "is_superuser": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "roles": ["user"],
+      "permissions": ["read", "write"]
+    },
+    {
+      "id": "user-003",
+      "username": "test_manager",
+      "email": "test_manager@topems.com",
+      "role": "manager",
+      "password": "Test@123456",
+      "is_active": true,
+      "is_superuser": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "roles": ["manager"],
+      "permissions": ["read", "write", "approve"]
+    },
+    {
+      "id": "user-004",
+      "username": "test_guest",
+      "email": "test_guest@topems.com",
+      "role": "guest",
+      "password": "Test@123456",
+      "is_active": true,
+      "is_superuser": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "roles": ["guest"],
+      "permissions": ["read"]
+    }
+  ]
+}
