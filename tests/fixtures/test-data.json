@@ -1,0 +1,96 @@
+{
+  "test_users": [
+    {
+      "id": "1",
+      "username": "admin",
+      "email": "admin@topems.com",
+      "role": "admin",
+      "password": "admin123",
+      "permissions": ["read", "write", "delete", "admin"]
+    },
+    {
+      "id": "2",
+      "username": "user",
+      "email": "user@topems.com",
+      "role": "user",
+      "password": "user123",
+      "permissions": ["read", "write"]
+    },
+    {
+      "id": "3",
+      "username": "guest",
+      "email": "guest@topems.com",
+      "role": "guest",
+      "password": "guest123",
+      "permissions": ["read"]
+    }
+  ],
+  "test_production_plans": [
+    {
+      "id": "plan-001",
+      "product_name": "高性能复合材料 A",
+      "product_code": "MAT-A-001",
+      "planned_quantity": 1000,
+      "start_date": "2026-01-01",
+      "end_date": "2026-06-30",
+      "status": "计划中",
+      "created_by": "生产经理"
+    },
+    {
+      "id": "plan-002",
+      "product_name": "特殊合金材料 B",
+      "product_code": "MAT-B-002",
+      "planned_quantity": 500,
+      "start_date": "2026-03-01",
+      "end_date": "2026-09-30",
+      "status": "进行中",
+      "created_by": "生产经理"
+    }
+  ],
+  "test_supply_chain_orders": [
+    {
+      "id": "order-001",
+      "order_type": "采购",
+      "material_name": "化工原料 X",
+      "quantity": 500,
+      "supplier_customer": "供应商 A",
+      "status": "待处理",
+      "order_date": "2026-01-15",
+      "expected_date": "2026-02-15",
+      "created_by": "采购员"
+    },
+    {
+      "id": "order-002",
+      "order_type": "采购",
+      "material_name": "金属原料 Y",
+      "quantity": 1000,
+      "supplier_customer": "供应商 B",
+      "status": "已完成",
+      "order_date": "2026-01-01",
+      "expected_date": "2026-01-31",
+      "created_by": "采购员"
+    }
+  ],
+  "test_financial_records": [
+    {
+      "id": "record-001",
+      "record_type": "收入",
+      "description": "产品销售订单",
+      "amount": 50000.0,
+      "category": "销售收入",
+      "date": "2026-01-20",
+      "reference_number": "INV-2026-001",
+      "created_by": "财务"
+    },
+    {
+      "id": "record-002",
+      "record_type": "支出",
+      "description": "原材料采购",
+      "amount": 25000.0,
+      "category": "采购成本",
+      "date": "2026-01-18",
+      "reference_number": "EXP-2026-001",
+      "created_by": "财务"
+    }
+  ]
+}

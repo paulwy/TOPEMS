@@ -1,0 +1,486 @@
+#!/bin/bash
+
+# 更新需要 shared 库的服务的 Dockerfile
+services=("ai" "lims" "qms" "ehs" "srm" "pdm")
+ports=("8003" "8006" "8007" "8008" "8009" "8010")
+
+for i in "${!services[@]}"; do
+    service=${services[$i]}
+    port=${ports[$i]}
+    
+    cat > "services/topems-${service}/backend/Dockerfile" << EOF
+# TOPEMS ${service} Service Dockerfile
+# 单阶段构建，使用 rust:nightly，包含 shared 库支持
+
+FROM rust:nightly
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y \\
+    pkg-config \\
+    libssl-dev \\
+    ca-certificates \\
+    && rm -rf /var/lib/apt/lists/*
+
+COPY shared/lib /build/shared/lib
+COPY services/topems-${service}/backend/ /build/
+
+RUN cargo build --release
+
+RUN cp /build/target/release/topems-${service} /app/
+
+RUN mkdir -p /app/logs
+
+EXPOSE ${port}
+
+ENV RUST_LOG=info
+ENV SERVICE_PORT=${port}
+
+ENTRYPOINT ["/app/topems-${service}"]
+CMD ["--host", "0.0.0.0", "--port", "${port}"]
+EOF
+    echo "Updated services/topems-${service}/backend/Dockerfile"
+done
+
+# 更新 docker-compose.yml
+cat > docker/docker-compose.yml.new << 'EOF'
+# TOPEMS Docker Compose Configuration
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: topems-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-topems}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-topems_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-topems}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-topems} -d ${POSTGRES_DB:-topems}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  redis:
+    image: redis:7-alpine
+    container_name: topems-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  iam:
+    build:
+      context: ../services/topems-iam/backend
+      dockerfile: Dockerfile
+    container_name: topems-iam
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - JWT_SECRET=${JWT_SECRET:-topems-jwt-secret-key-change-in-production}
+      - JWT_EXPIRATION_HOURS=${JWT_EXPIRATION_HOURS:-24}
+      - SERVICE_PORT=8002
+    ports:
+      - "${IAM_PORT:-8002}:8002"
+    volumes:
+      - iam_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  doc:
+    build:
+      context: ../platform/topems-doc/backend
+      dockerfile: Dockerfile
+    container_name: topems-doc
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - UPLOAD_DIR=/app/uploads
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-104857600}
+      - SERVICE_PORT=8001
+    ports:
+      - "${DOC_PORT:-8001}:8001"
+    volumes:
+      - doc_uploads:/app/uploads
+      - doc_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  ai:
+    build:
+      context: ..
+      dockerfile: services/topems-ai/backend/Dockerfile
+    container_name: topems-ai
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:7b-instruct}
+      - SERVICE_PORT=8003
+    ports:
+      - "${AI_PORT:-8003}:8003"
+    volumes:
+      - ai_models:/app/models
+      - ai_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  flow:
+    build:
+      context: ../platform/topems-flow/backend
+      dockerfile: Dockerfile
+    container_name: topems-flow
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - SERVICE_PORT=8004
+    ports:
+      - "${FLOW_PORT:-8004}:8004"
+    volumes:
+      - flow_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  rs:
+    build:
+      context: ../services/topems-rs/backend
+      dockerfile: Dockerfile
+    container_name: topems-rs
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - SERVICE_PORT=8005
+    ports:
+      - "${RS_PORT:-8005}:8005"
+    volumes:
+      - rs_data:/app/data
+      - rs_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  lims:
+    build:
+      context: ..
+      dockerfile: services/topems-lims/backend/Dockerfile
+    container_name: topems-lims
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - SERVICE_PORT=8006
+    ports:
+      - "${LIMS_PORT:-8006}:8006"
+    volumes:
+      - lims_data:/app/data
+      - lims_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  qms:
+    build:
+      context: ..
+      dockerfile: services/topems-qms/backend/Dockerfile
+    container_name: topems-qms
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - SERVICE_PORT=8007
+    ports:
+      - "${QMS_PORT:-8007}:8007"
+    volumes:
+      - qms_data:/app/data
+      - qms_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  ehs:
+    build:
+      context: ..
+      dockerfile: services/topems-ehs/backend/Dockerfile
+    container_name: topems-ehs
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - SERVICE_PORT=8008
+    ports:
+      - "${EHS_PORT:-8008}:8008"
+    volumes:
+      - ehs_data:/app/data
+      - ehs_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  srm:
+    build:
+      context: ..
+      dockerfile: services/topems-srm/backend/Dockerfile
+    container_name: topems-srm
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - SERVICE_PORT=8009
+    ports:
+      - "${SRM_PORT:-8009}:8009"
+    volumes:
+      - srm_data:/app/data
+      - srm_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  pdm:
+    build:
+      context: ..
+      dockerfile: services/topems-pdm/backend/Dockerfile
+    container_name: topems-pdm
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RUST_LOG=${RUST_LOG:-info}
+      - SERVICE_PORT=8010
+    ports:
+      - "${PDM_PORT:-8010}:8010"
+    volumes:
+      - pdm_data:/app/data
+      - pdm_logs:/app/logs
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: topems-frontend
+    environment:
+      - VITE_API_BASE_URL=http://nginx:80
+      - NODE_ENV=production
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    volumes:
+      - frontend_logs:/var/log/nginx
+    networks:
+      - topems-network
+    depends_on:
+      - iam
+      - doc
+      - ai
+      - flow
+      - rs
+      - lims
+      - qms
+      - ehs
+      - srm
+      - pdm
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health.html"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: topems-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+      - nginx_cache:/var/cache/nginx
+    networks:
+      - topems-network
+    depends_on:
+      - frontend
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+networks:
+  topems-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  iam_logs:
+    driver: local
+  doc_uploads:
+    driver: local
+  doc_logs:
+    driver: local
+  ai_models:
+    driver: local
+  ai_logs:
+    driver: local
+  flow_logs:
+    driver: local
+  rs_data:
+    driver: local
+  rs_logs:
+    driver: local
+  lims_data:
+    driver: local
+  lims_logs:
+    driver: local
+  qms_data:
+    driver: local
+  qms_logs:
+    driver: local
+  ehs_data:
+    driver: local
+  ehs_logs:
+    driver: local
+  srm_data:
+    driver: local
+  srm_logs:
+    driver: local
+  pdm_data:
+    driver: local
+  pdm_logs:
+    driver: local
+  frontend_logs:
+    driver: local
+  nginx_logs:
+    driver: local
+  nginx_cache:
+    driver: local
+EOF
+
+mv docker/docker-compose.yml docker/docker-compose.yml.old
+mv docker/docker-compose.yml.new docker/docker-compose.yml
+
+echo "All configurations updated!"
