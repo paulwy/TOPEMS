@@ -1,0 +1,224 @@
+name: Test Suite
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'bugfix/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems
+          POSTGRES_PASSWORD: topems_secret
+          POSTGRES_DB: topems_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: cargo, rustc, rust-std
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.cargo/git/checkouts/
+            services/**/target/
+            platform/**/backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run Rust unit tests
+        run: |
+          echo "Running Rust unit tests..."
+          for service in services/backend platform/*/backend; do
+            if [ -d "$service" ] && [ -f "$service/Cargo.toml" ]; then
+              echo "Testing $service"
+              cd $service
+              cargo test --lib -- --nocapture 2>&1 | tee test_output.log
+              if ! grep -q "test result: ok" test_output.log && ! grep -q "running 0" test_output.log; then
+                echo "Tests failed in $service"
+                exit 1
+              fi
+              cd - > /dev/null
+            fi
+          done
+        shell: bash
+
+      - name: Run Frontend unit tests
+        run: |
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm test -- --coverage --watchAll=false --passWithNoTests
+          fi
+        shell: bash
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            services/**/target/**/*.log
+            platform/**/backend/target/**/*.log
+            frontend/coverage/
+          retention-days: 14
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems
+          POSTGRES_PASSWORD: topems_secret
+          POSTGRES_DB: topems_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run integration tests
+        run: |
+          echo "Running Rust integration tests..."
+          for service in services/backend platform/*/backend; do
+            if [ -d "$service" ] && [ -f "$service/Cargo.toml" ]; then
+              echo "Testing $service"
+              cd $service
+              cargo test --test '*' 2>&1 | tail -30
+              cd - > /dev/null
+            fi
+          done
+        shell: bash
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: cargo, rustc, rust-std
+
+      - name: Install cargo-tarpaulin
+        uses: taiki-e/install-action@cargo-tarpaulin
+        with:
+          version: latest
+
+      - name: Generate coverage report
+        run: |
+          echo "Generating code coverage report..."
+          cargo tarpaulin --out Xml --out Html --engine llvm
+        shell: bash
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./cobertura.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(cat cobertura.xml | grep -oP 'line-rate="\K[0-9.]+' | head -1)
+          COVERAGE_PCT=$(echo "$COVERAGE * 100" | bc | cut -d'.' -f1)
+          echo "Current coverage: ${COVERAGE_PCT}%"
+          
+          if [ "$COVERAGE_PCT" -lt 80 ]; then
+            echo "Coverage threshold not met! Required: 80%, Current: ${COVERAGE_PCT}%"
+            exit 1
+          fi
+          echo "Coverage threshold met!"
+        shell: bash
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[perf]')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run benchmarks
+        run: |
+          echo "Running performance benchmarks..."
+          for service in services/backend platform/*/backend; do
+            if [ -d "$service" ] && [ -f "$service/Cargo.toml" ]; then
+              echo "Benchmarking $service"
+              cd $service
+              cargo bench --no-run 2>&1 | tail -10
+              cd - > /dev/null
+            fi
+          done
+        shell: bash
+
+      - name: Store benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            **/target/criterion/**/benchmark.json
+          retention-days: 30

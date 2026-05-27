@@ -17,37 +17,43 @@ TOPEMS-AI 现在支持真实 AI 服务！包括：
 这是最简单且免费的方式！
 
 1. 安装 Ollama（如未安装）：
-   ```bash
+
+```bash
    # macOS
    brew install ollama
    
    # 或访问 https://ollama.com 下载
    ```
 
-2. 拉取模型（我们已经安装了 qwen2.5:7b-instruct）：
+1. 拉取模型（我们已经安装了 qwen2.5:7b-instruct）：
+
    ```bash
    ollama pull qwen2.5:7b-instruct
    ```
 
-3. 启动 Ollama 服务（如果没有运行）：
+2. 启动 Ollama 服务（如果没有运行）：
+
    ```bash
    ollama serve
    # 或直接在后台运行（大多数情况下默认已启动）
    ```
 
-4. 配置 TOPEMS-AI：
+3. 配置 TOPEMS-AI：
+
    ```bash
-   cd /Users/air/TOPEMS/services/topems-ai/backend
+   cd /Users/xingzhai/TOPEMS/services/topems-ai/backend
    # .env 文件已自动配置好
    ```
 
-5. 启动服务：
+4. 启动服务：
+
    ```bash
    cargo run
    ```
 
-6. 你会看到：
-   ```
+5. 你会看到：
+
+```text
    ✅ 使用 Ollama 本地 AI 服务 (模型: qwen2.5:7b-instruct)
    ```
 
@@ -56,12 +62,13 @@ TOPEMS-AI 现在支持真实 AI 服务！包括：
 无需任何配置，直接启动后端即可使用模拟 AI：
 
 ```bash
-cd /Users/air/TOPEMS/services/topems-ai/backend
+cd /Users/xingzhai/TOPEMS/services/topems-ai/backend
 cargo run
 ```
 
 你会看到：
-```
+
+```text
 ⚠️  AI API 未配置，将使用模拟响应（设置 OPENAI_API_KEY 启用真实 AI）
 ```
 
@@ -71,10 +78,13 @@ cargo run
 
 1. 访问 [OpenAI Platform](https://platform.openai.com/) 注册并获取 API Key
 2. 编辑配置文件：
+
 ```bash
-cd /Users/air/TOPEMS/services/topems-ai/backend
+cd /Users/xingzhai/TOPEMS/services/topems-ai/backend
 ```
-3. 在 `.env` 文件中添加：
+
+1. 在 `.env` 文件中添加：
+
 ```env
 OPENAI_API_KEY=sk-你的API密钥
 ```
@@ -84,6 +94,7 @@ OPENAI_API_KEY=sk-你的API密钥
 1. 访问 [阿里云百炼平台](https://bailian.console.aliyun.com/) 注册
 2. 获取 API Key
 3. 编辑 `.env` 文件：
+
 ```env
 OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 OPENAI_API_KEY=sk-你的API密钥
@@ -105,19 +116,20 @@ OPENAI_MODEL=模型名称
 重启后端服务：
 
 ```bash
-cd /Users/air/TOPEMS/services/topems-ai/backend
+cd /Users/xingzhai/TOPEMS/services/topems-ai/backend
 cargo run
 ```
 
 看到这条日志表示配置成功：
-```
+
+```text
 ✅ AI API 已配置，使用真实 AI 服务
 ```
 
 ### 4. 启动前端
 
 ```bash
-cd /Users/air/TOPEMS/services/topems-ai/frontend
+cd /Users/xingzhai/TOPEMS/services/topems-ai/frontend
 npm install
 npm run dev
 ```
@@ -151,4 +163,3 @@ TOPEMS-AI 会自动从知识库中提取内容作为上下文。当前包含：
 - "TOPEMS 是什么？"
 - "化工新材料研发流程是怎样的？"
 - "如何启动 TOPEMS 系统？"
-

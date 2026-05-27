@@ -1,6 +1,6 @@
 # TOPEMS 项目状态报告
 
-**更新日期**: 2026-05-21  
+**更新日期**: 2026-05-27  
 **项目阶段**: MVP (最小可行产品) 完成 ✅  
 **下一步**: 集成测试与生产准备
 
@@ -12,10 +12,13 @@
 
 | 服务 | 端口 | 状态 | 技术栈 | 功能 |
 |------|------|------|--------|------|
-| **IAM** | 8002 | ✅ 运行中 | Rust + Axum | 用户认证、JWT、权限管理 |
+| **IAM** | 8002 | ✅ 运行中 | Rust + Axum | 用户认证、JWT、权限管理、用户/角色/权限 CRUD |
 | **DOC** | 8001 | ✅ 运行中 | Rust + Axum | 文档管理、文件存储 |
 | **AI** | 8003 | ✅ 运行中 | Rust + Axum + Ollama | AI 知识库、聊天机器人 |
 | **FLOW** | 8004 | ✅ 运行中 | Rust + Axum | 工作流、审批管理 |
+| **GIS** | 8017 | ✅ 运行中 | Rust + Axum | 厂区空间数字化 |
+| **IM** | 8019 | ✅ Mock | Node.js | 即时通讯 (Mock) |
+| **MOBILE** | 8022 | ✅ Mock | Node.js | 移动工作台 (Mock) |
 
 ### ✅ 前端门户 (MVP 完成)
 
@@ -23,6 +26,9 @@
 |------|------|------|
 | 统一入口 | ✅ 完成 | 登录/注册界面 |
 | 仪表板 | ✅ 完成 | 服务状态、快捷导航 |
+| 用户管理 | ✅ 完成 | 用户列表、创建、编辑、删除 |
+| 角色管理 | ✅ 完成 | 角色列表、权限分配 |
+| 权限管理 | ✅ 完成 | 权限列表、权限配置 |
 | API 客户端 | ✅ 完成 | 统一的后端服务集成 |
 | UI 组件 | ✅ 完成 | Tailwind CSS 组件库 |
 
@@ -30,7 +36,7 @@
 
 | 组件 | 状态 | 说明 |
 |------|------|------|
-| PostgreSQL | ✅ 运行中 | Docker 容器，端口 5432 |
+| PostgreSQL | ✅ 运行中 | Docker 容器，端口 5433 |
 | Redis | ✅ 运行中 | Docker 容器，端口 6379 |
 | Ollama | ✅ 运行中 | qwen2.5:7b-instruct 模型 |
 | Docker Compose | ✅ 配置完成 | 一键启动所有基础设施 |
@@ -45,7 +51,11 @@
 │                      (localhost:3000)                    │
 │                                                          │
 │  ┌────────────┐  ┌────────────┐  ┌────────────┐         │
-│  │   登录页   │  │  仪表板    │  │  服务状态   │         │
+│  │   登录页   │  │  仪表板    │  │  用户管理   │         │
+│  └────────────┘  └────────────┘  └────────────┘         │
+│                                                          │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐         │
+│  │  角色管理  │  │  权限管理  │  │  服务状态   │         │
 │  └────────────┘  └────────────┘  └────────────┘         │
 └─────────────────────────────────────────────────────────┘
                             │
@@ -72,7 +82,7 @@
 │                   数据存储层                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
 │  │  PostgreSQL  │  │    Redis     │  │   Ollama     │  │
-│  │   (5432)     │  │   (6379)     │  │   (本地)     │  │
+│  │   (5433)     │  │   (6379)     │  │   (本地)     │  │
 │  │              │  │              │  │              │  │
 │  │  用户数据    │  │  缓存        │  │  AI 模型     │  │
 │  │  工作流      │  │  会话        │  │  向量存储    │  │
@@ -88,7 +98,7 @@
 
 ```bash
 # IAM 服务
-curl http://localhost:8002/health
+curl http://localhost:8002/api/v1/health
 # ✅ 返回: {"code":200,"success":true,"data":"TOPEMS-IAM is running!"}
 
 # DOC 服务
@@ -103,6 +113,10 @@ curl http://localhost:8003/health
 curl http://localhost:8004/health
 # ✅ 返回: {"code":200,"success":true,"data":"TOPEMS-FLOW is running!"}
 
+# GIS 服务
+curl http://localhost:8017/health
+# ✅ 返回: {"status":"healthy"}
+
 # 前端门户
 curl http://localhost:3000/
 # ✅ 返回: HTML 页面
@@ -112,7 +126,7 @@ curl http://localhost:3000/
 
 ```bash
 # 检查所有服务端口
-lsof -i :3000 -i :8001 -i :8002 -i :8003 -i :8004 -i :5432 -i :6379
+lsof -i :3000 -i :8001 -i :8002 -i :8003 -i :8004 -i :8017 -i :8019 -i :8022 -i :5433 -i :6379
 ```
 
 ---
@@ -122,18 +136,43 @@ lsof -i :3000 -i :8001 -i :8002 -i :8003 -i :8004 -i :5432 -i :6379
 ### 1. 用户认证流程
 
 ```bash
-# 注册新用户
-curl -X POST http://localhost:8002/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"newuser","email":"new@example.com","password":"Test123456"}'
-
 # 登录
 curl -X POST http://localhost:8002/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser","password":"Test123456"}'
+  -d '{"username":"admin","password":"admin123"}'
 ```
 
-### 2. AI 知识库对话
+### 2. 用户管理
+
+```bash
+# 获取用户列表
+curl http://localhost:8002/api/v1/users \
+  -H "Authorization: Bearer <your-token>"
+
+# 创建用户
+curl -X POST http://localhost:8002/api/v1/users \
+  -H "Authorization: Bearer <your-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"newuser","email":"new@example.com","password":"Admin123","full_name":"新用户"}'
+```
+
+### 3. 角色管理
+
+```bash
+# 获取角色列表
+curl http://localhost:8002/api/v1/roles \
+  -H "Authorization: Bearer <your-token>"
+```
+
+### 4. 权限管理
+
+```bash
+# 获取权限列表
+curl http://localhost:8002/api/v1/permissions \
+  -H "Authorization: Bearer <your-token>"
+```
+
+### 5. AI 知识库对话
 
 ```bash
 curl -X POST http://localhost:8003/api/v1/ai/chat \
@@ -141,7 +180,7 @@ curl -X POST http://localhost:8003/api/v1/ai/chat \
   -d '{"query":"TOPEMS平台有哪些功能模块？"}'
 ```
 
-### 3. 文档管理
+### 6. 文档管理
 
 ```bash
 # 获取文件列表
@@ -151,7 +190,7 @@ curl http://localhost:8001/api/v1/files
 curl http://localhost:8001/api/v1/files/{file_id}
 ```
 
-### 4. 工作流管理
+### 7. 工作流管理
 
 ```bash
 # 获取工作流列表
@@ -216,7 +255,10 @@ TOPEMS/
 │   │   │   └── flow.ts          # FLOW API
 │   │   ├── pages/               # 页面组件
 │   │   │   ├── LoginPage.tsx    # 登录页
-│   │   │   └── DashboardPage.tsx # 仪表板
+│   │   │   ├── DashboardPage.tsx # 仪表板
+│   │   │   ├── UserManagement.tsx # 用户管理
+│   │   │   ├── RoleManagement.tsx # 角色管理
+│   │   │   └── PermissionManagement.tsx # 权限管理
 │   │   ├── App.tsx              # 主应用
 │   │   ├── main.tsx             # 入口文件
 │   │   └── index.css            # 全局样式
@@ -240,7 +282,10 @@ TOPEMS/
 ├── services/
 │   ├── topems-ai/               # AI 服务 (Rust + Ollama)
 │   ├── topems-lims/             # LIMS 服务 (Rust)
-│   └── topems-rs/               # 研发服务 (Rust)
+│   ├── topems-rs/               # 研发服务 (Rust)
+│   ├── topems-gis/              # GIS 服务 (Rust)
+│   ├── topems-im/               # IM 服务 (Rust)
+│   └── topems-mobile/           # 移动端服务
 │
 ├── infrastructure/
 │   ├── docker/                  # Docker 配置
@@ -254,7 +299,12 @@ TOPEMS/
 │
 ├── docs/                        # 文档
 │   ├── architecture/            # 架构文档
-│   └── api-specification.md     # API 规范
+│   ├── api-specification.md     # API 规范
+│   ├── 权限系统使用指南.md      # 权限系统使用指南
+│   └── my/                      # 项目文档目录
+│       ├── README.md            # 文档索引
+│       ├── TOPEMS 2.0 总体架构设计（完整版）.md
+│       └── TOPEMS 2.0 分阶段实施计划（详细版）.md
 │
 ├── start.sh                    # 启动脚本
 ├── stop.sh                     # 停止脚本
@@ -271,20 +321,25 @@ TOPEMS/
 ### 短期 (1-2 周) 🔥
 
 - [ ] **完善前端门户**
+  - [x] 添加用户管理页面 ✅
+  - [x] 添加角色管理页面 ✅
+  - [x] 添加权限管理页面 ✅
   - [ ] 添加文档管理页面
   - [ ] 添加 AI 聊天界面
   - [ ] 添加工作流管理页面
-  - [ ] 添加用户管理页面
 
-- [ ] 集成测试
-  - [ ] 用户认证流程测试
-  - [ ] API 端到端测试
-  - [ ] 前后端集成测试
+- [x] 集成测试 ✅
+  - [x] 用户认证流程测试 ✅
+  - [x] 用户管理 API 测试 ✅
+  - [x] 角色管理 API 测试 ✅
+  - [x] 权限管理 API 测试 ✅
+  - [x] API 端到端测试 ✅
+  - [x] 前后端集成测试 ✅
 
 - [ ] 文档完善
-  - [ ] API 接口文档
-  - [ ] 开发指南
-  - [ ] 部署文档
+  - [ ] API 接口文档更新
+  - [x] 项目状态报告更新 ✅
+  - [x] README 更新 ✅
 
 ### 中期 (1 个月) 📋
 
@@ -327,27 +382,30 @@ TOPEMS/
 
 ## 🐛 已知问题
 
-### 高优先级
+### 已修复
 
-1. **数据库连接**
-   - 问题: FLOW 服务无法连接数据库
-   - 原因: topems 用户不存在
-   - 解决方案: 重启 PostgreSQL 容器或重新运行 init.sql
+1. **用户管理 API 角色显示错误** ✅
+   - 问题: 所有用户的 role 字段都显示为 "user"
+   - 解决方案: 修改 list_users 函数，使用从数据库获取的角色列表
 
-2. **内存存储限制**
-   - 问题: 所有服务使用内存存储
-   - 影响: 服务重启后数据丢失
-   - 解决方案: 配置 PostgreSQL 数据库
+2. **角色和权限 API UUID 类型不匹配** ✅
+   - 问题: UUID 类型不匹配导致 500 错误
+   - 解决方案: SQL 查询中添加 id::text 转换
+
+3. **前端登录角色验证失败** ✅
+   - 问题: 后端返回中文角色名，前端期望英文角色名
+   - 解决方案: 添加中文角色名到英文角色名的映射
+
+4. **CORS 跨域问题** ✅
+   - 问题: 前端访问后端 API 遇到跨域问题
+   - 解决方案: 配置后端 CORS 允许所有来源
 
 ### 中优先级
 
-3. **CORS 配置**
-   - 问题: 前端访问后端 API 可能遇到跨域问题
-   - 解决方案: 配置后端 CORS 或使用代理
-
-4. **错误处理**
-   - 问题: API 错误处理不够完善
-   - 解决方案: 添加统一的错误处理中间件
+1. **内存存储限制**
+   - 问题: 部分服务使用内存存储
+   - 影响: 服务重启后数据丢失
+   - 解决方案: 配置 PostgreSQL 数据库
 
 ---
 
@@ -404,6 +462,7 @@ TOPEMS/
 - [API 规范](./docs/api-specification.md)
 - [架构设计](./docs/architecture/overview.md)
 - [服务测试报告](./SERVICE_TEST_REPORT_FINAL.md)
+- [权限系统使用指南](./docs/权限系统使用指南.md)
 
 ### 外部资源
 
@@ -475,12 +534,16 @@ cargo fmt --check
 
 - [x] MVP 后端服务架构
 - [x] 用户认证与权限管理
+- [x] 用户管理 (CRUD)
+- [x] 角色管理 (CRUD)
+- [x] 权限管理 (CRUD)
 - [x] 文档管理基础功能
 - [x] AI 知识库集成 (Ollama)
 - [x] 工作流引擎框架
 - [x] 统一前端门户
 - [x] Docker 容器化
 - [x] 服务健康检查
+- [x] 集成测试
 
 ### 🔄 进行中
 
@@ -506,7 +569,7 @@ cargo fmt --check
 ---
 
 **项目状态**: 🚀 **生产就绪 (MVP)**  
+**当前版本**: v2.2.0  
 **下一步**: 完善前端功能 → 集成测试 → 生产部署
 
 准备好开始使用 TOPEMS 了吗？访问 http://localhost:3000 开始体验！
-
