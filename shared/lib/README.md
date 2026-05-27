@@ -1,12 +1,43 @@
-# 共享库
+# Shared Library
 
-此目录包含 TypeScript 和 Rust 共享库代码。
+This directory contains shared code and utilities used across multiple TOPEMS services.
 
-## 结构
+## Structure
 
-- `typescript/` - TypeScript 共享库
-- `rust/` - Rust 共享库
+```
+lib/
+├── Cargo.toml
+├── src/
+│   ├── lib.rs
+│   ├── config/
+│   │   ├── mod.rs
+│   │   ├── env.rs
+│   │   ├── database.rs
+│   │   ├── auth.rs
+│   │   ├── server.rs
+│   │   └── validation.rs
+│   ├── error.rs
+│   ├── logging.rs
+│   └── utils/
+└── README.md
+```
 
-## 发布
+## Configuration Module
 
-共享库需要独立版本管理，使用 semantic versioning。
+The configuration module provides a unified way to load and validate environment variables across all services.
+
+### Features
+
+- Environment-specific configuration (development, test, production)
+- Configuration validation and hot-reload
+- Sensitive information protection
+- Type-safe configuration access
+
+### Usage
+
+```rust
+use topems_shared::config::Config;
+
+let config = Config::load()?;
+config.validate()?;
+```
