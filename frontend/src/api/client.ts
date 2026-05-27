@@ -1,4 +1,8 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
+import config from '../config/runtime';
+import createLogger from '../utils/logger';
+
+const logger = createLogger('ApiClient');
 
 export interface ApiResponse<T = any> {
   code: number;
@@ -8,33 +12,88 @@ export interface ApiResponse<T = any> {
   timestamp: string;
 }
 
+type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' | 'delete'> & {
+  get<T = any, R = ApiResponse<T>, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+  post<T = any, R = ApiResponse<T>, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>;
+  put<T = any, R = ApiResponse<T>, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>;
+  patch<T = any, R = ApiResponse<T>, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>;
+  delete<T = any, R = ApiResponse<T>, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+};
+
+const DEFAULT_TIMEOUT = 30000;
+const AI_TIMEOUT = 120000;
+
+export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
+  const client = axios.create({
+    baseURL,
+    timeout: config.api.timeout,
+  });
+
+  client.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('token');
+      if (token && !config.headers['Authorization']) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  return client;
+};
+
 class ApiClient {
-  private clients: Record<string, AxiosInstance> = {};
-  private baseURLs = {
-    iam: 'http://localhost:8002',
-    doc: 'http://localhost:8001',
-    ai: 'http://localhost:8003',
-    flow: 'http://localhost:8004',
-  };
+  private clients: Record<string, TypedAxiosInstance> = {};
 
   constructor() {
-    Object.entries(this.baseURLs).forEach(([name, baseURL]) => {
-      this.clients[name] = axios.create({
+    Object.entries(config.services).forEach(([name, baseURL]) => {
+      const timeout = name === "ai" ? AI_TIMEOUT : DEFAULT_TIMEOUT;
+      const client = axios.create({
         baseURL,
-        timeout: 10000,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        timeout,
       });
 
-      this.clients[name].interceptors.response.use(
-        (response) => response.data,
+      client.interceptors.request.use(
+        (config) => {
+          const token = localStorage.getItem('token');
+          if (token && !config.headers['Authorization']) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+          }
+          return config;
+        },
         (error) => {
-          console.error(`API Error (${name}):`, error);
+          logger.error('Request error:', error);
           return Promise.reject(error);
         }
       );
+
+      client.interceptors.response.use(
+        (response: AxiosResponse) => {
+          return response.data;
+        },
+        (error) => {
+          if (error.response?.status === 401) {
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/login' && currentPath !== '/register') {
+              if (localStorage.getItem('token')) {
+                logger.warn('Unauthorized, token may be invalid');
+              }
+            }
+          }
+          logger.error('Response error:', error);
+          return Promise.reject(error);
+        }
+      );
+
+      this.clients[name] = client as unknown as TypedAxiosInstance;
     });
+  }
+
+  public getClient(name: string): TypedAxiosInstance {
+    return this.clients[name];
   }
 
   get iam() {
@@ -53,6 +112,78 @@ class ApiClient {
     return this.clients.flow;
   }
 
+  get rs() {
+    return this.clients.rs;
+  }
+
+  get lims() {
+    return this.clients.lims;
+  }
+
+  get qms() {
+    return this.clients.qms;
+  }
+
+  get ehs() {
+    return this.clients.ehs;
+  }
+
+  get srm() {
+    return this.clients.srm;
+  }
+
+  get pdm() {
+    return this.clients.pdm;
+  }
+
+  get report() {
+    return this.clients.report;
+  }
+
+  get gis() {
+    return this.clients.gis;
+  }
+
+  get bi() {
+    return this.clients.bi;
+  }
+
+  get mobile() {
+    return this.clients.mobile;
+  }
+
+  get im() {
+    return this.clients.im;
+  }
+
+  get erp() {
+    return this.clients.erp;
+  }
+
+  get notification() {
+    return this.clients.notification;
+  }
+
+  get integration() {
+    return this.clients.integration;
+  }
+
+  get wms() {
+    return this.clients.wms;
+  }
+
+  get hrm() {
+    return this.clients.hrm;
+  }
+
+  get crm() {
+    return this.clients.crm;
+  }
+
+  get mes() {
+    return this.clients.mes;
+  }
+
   setAuthToken(token: string) {
     Object.values(this.clients).forEach(client => {
       client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -63,6 +194,10 @@ class ApiClient {
     Object.values(this.clients).forEach(client => {
       delete client.defaults.headers.common['Authorization'];
     });
+  }
+
+  getClients() {
+    return this.clients;
   }
 }
 
