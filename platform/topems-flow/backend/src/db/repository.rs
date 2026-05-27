@@ -1,7 +1,6 @@
-#![allow(dead_code, unused_variables)]
-
 use crate::models::*;
-use chrono::Utc;
+use chrono::{DateTime, Duration, Utc};
+use serde_json::Value;
 use sqlx::FromRow;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -144,6 +143,7 @@ impl WorkflowRepository {
             id: Uuid::new_v4(),
             workflow_id: Some(req.workflow_id),
             status: "pending".to_string(),
+            current_node: None,
             initiator_id: req.initiator_id,
             data: req.data,
             started_at: None,
@@ -152,15 +152,16 @@ impl WorkflowRepository {
         };
 
         let query = r#"
-            INSERT INTO flow.workflow_instances (id, workflow_id, status, initiator_id, data, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, workflow_id, status, initiator_id, data, started_at, completed_at, created_at
+            INSERT INTO flow.workflow_instances (id, workflow_id, status, current_node, initiator_id, data, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id, workflow_id, status, current_node, initiator_id, data, started_at, completed_at, created_at
         "#;
 
         sqlx::query_as::<_, WorkflowInstance>(query)
             .bind(instance.id)
             .bind(instance.workflow_id)
             .bind(&instance.status)
+            .bind(&instance.current_node)
             .bind(instance.initiator_id)
             .bind(&instance.data)
             .bind(instance.created_at)
@@ -170,7 +171,7 @@ impl WorkflowRepository {
 
     pub async fn get_instance(&self, id: Uuid) -> Result<Option<WorkflowInstance>, sqlx::Error> {
         let query = r#"
-            SELECT id, workflow_id, status, initiator_id, data, started_at, completed_at, created_at
+            SELECT id, workflow_id, status, current_node, initiator_id, data, started_at, completed_at, created_at
             FROM flow.workflow_instances
             WHERE id = $1
         "#;
@@ -211,7 +212,7 @@ impl WorkflowRepository {
 
         let query = format!(
             r#"
-            SELECT id, workflow_id, status, initiator_id, data, started_at, completed_at, created_at
+            SELECT id, workflow_id, status, current_node, initiator_id, data, started_at, completed_at, created_at
             FROM flow.workflow_instances
             {}
             ORDER BY created_at DESC
@@ -234,22 +235,30 @@ impl WorkflowRepository {
         q.fetch_all(&self.pool).await
     }
 
-    pub async fn update_instance_status(
+    pub async fn update_instance(
         &self,
         id: Uuid,
-        req: UpdateInstanceStatusRequest,
+        status: Option<String>,
+        current_node: Option<String>,
+        data: Option<Value>,
     ) -> Result<Option<WorkflowInstance>, sqlx::Error> {
         let existing = self.get_instance(id).await?;
         if existing.is_none() {
             return Ok(None);
         }
         let inst = existing.unwrap();
-        let started_at = if req.status == "running" && inst.started_at.is_none() {
+
+        let new_status = status.unwrap_or(inst.status);
+        let new_current_node = current_node.or(inst.current_node);
+        let new_data = data.or(inst.data);
+
+        let started_at = if new_status == "running" && inst.started_at.is_none() {
             Some(Utc::now())
         } else {
             inst.started_at
         };
-        let completed_at = if req.status == "completed" || req.status == "failed" || req.status == "cancelled" {
+
+        let completed_at = if new_status == "completed" || new_status == "failed" || new_status == "cancelled" {
             Some(Utc::now())
         } else {
             inst.completed_at
@@ -257,13 +266,15 @@ impl WorkflowRepository {
 
         let query = r#"
             UPDATE flow.workflow_instances
-            SET status = $1, started_at = $2, completed_at = $3
-            WHERE id = $4
-            RETURNING id, workflow_id, status, initiator_id, data, started_at, completed_at, created_at
+            SET status = $1, current_node = $2, data = $3, started_at = $4, completed_at = $5
+            WHERE id = $6
+            RETURNING id, workflow_id, status, current_node, initiator_id, data, started_at, completed_at, created_at
         "#;
 
         sqlx::query_as::<_, WorkflowInstance>(query)
-            .bind(req.status)
+            .bind(new_status)
+            .bind(new_current_node)
+            .bind(new_data)
             .bind(started_at)
             .bind(completed_at)
             .bind(id)
@@ -271,32 +282,47 @@ impl WorkflowRepository {
             .await
     }
 
+    pub async fn update_instance_status(
+        &self,
+        id: Uuid,
+        req: UpdateInstanceStatusRequest,
+    ) -> Result<Option<WorkflowInstance>, sqlx::Error> {
+        self.update_instance(id, Some(req.status), None, None).await
+    }
+
     pub async fn create_approval(&self, req: CreateApprovalRequest) -> Result<Approval, sqlx::Error> {
         let now = Utc::now();
+        let timeout_at = req.timeout_hours.map(|h| now + Duration::hours(h as i64));
         let approval = Approval {
             id: Uuid::new_v4(),
             workflow_instance_id: Some(req.workflow_instance_id),
+            node_id: req.node_id,
             task_name: req.task_name,
             assignee_id: req.assignee_id,
             status: "pending".to_string(),
+            approval_type: req.approval_type,
             comment: None,
             approved_by: None,
             approved_at: None,
+            timeout_at,
             created_at: now,
         };
 
         let query = r#"
-            INSERT INTO flow.approvals (id, workflow_instance_id, task_name, assignee_id, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, workflow_instance_id, task_name, assignee_id, status, comment, approved_by, approved_at, created_at
+            INSERT INTO flow.approvals (id, workflow_instance_id, node_id, task_name, assignee_id, status, approval_type, timeout_at, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id, workflow_instance_id, node_id, task_name, assignee_id, status, approval_type, comment, approved_by, approved_at, timeout_at, created_at
         "#;
 
         sqlx::query_as::<_, Approval>(query)
             .bind(approval.id)
             .bind(approval.workflow_instance_id)
+            .bind(&approval.node_id)
             .bind(&approval.task_name)
             .bind(approval.assignee_id)
             .bind(&approval.status)
+            .bind(&approval.approval_type)
+            .bind(approval.timeout_at)
             .bind(approval.created_at)
             .fetch_one(&self.pool)
             .await
@@ -304,7 +330,7 @@ impl WorkflowRepository {
 
     pub async fn get_approval(&self, id: Uuid) -> Result<Option<Approval>, sqlx::Error> {
         let query = r#"
-            SELECT id, workflow_instance_id, task_name, assignee_id, status, comment, approved_by, approved_at, created_at
+            SELECT id, workflow_instance_id, node_id, task_name, assignee_id, status, approval_type, comment, approved_by, approved_at, timeout_at, created_at
             FROM flow.approvals
             WHERE id = $1
         "#;
@@ -345,7 +371,7 @@ impl WorkflowRepository {
 
         let query = format!(
             r#"
-            SELECT id, workflow_instance_id, task_name, assignee_id, status, comment, approved_by, approved_at, created_at
+            SELECT id, workflow_instance_id, node_id, task_name, assignee_id, status, approval_type, comment, approved_by, approved_at, timeout_at, created_at
             FROM flow.approvals
             {}
             ORDER BY created_at DESC
@@ -368,46 +394,44 @@ impl WorkflowRepository {
         q.fetch_all(&self.pool).await
     }
 
-    pub async fn process_approval(
+    pub async fn get_expired_approvals(&self) -> Result<Vec<Approval>, sqlx::Error> {
+        let query = r#"
+            SELECT id, workflow_instance_id, node_id, task_name, assignee_id, status, approval_type, comment, approved_by, approved_at, timeout_at, created_at
+            FROM flow.approvals
+            WHERE status = 'pending' AND timeout_at IS NOT NULL AND timeout_at < $1
+        "#;
+        sqlx::query_as::<_, Approval>(query)
+            .bind(Utc::now())
+            .fetch_all(&self.pool)
+            .await
+    }
+
+    pub async fn update_approval(
         &self,
         id: Uuid,
-        req: ProcessApprovalRequest,
+        status: Option<String>,
+        comment: Option<String>,
+        assignee_id: Option<Uuid>,
+        approved_by: Option<Uuid>,
+        approved_at: Option<DateTime<Utc>>,
     ) -> Result<Option<Approval>, sqlx::Error> {
         let existing = self.get_approval(id).await?;
         if existing.is_none() {
             return Ok(None);
         }
         let appr = existing.unwrap();
-        let (new_status, new_comment, new_assignee, new_approved_by, new_approved_at) = match req.action.as_str() {
-            "approve" => (
-                "approved".to_string(),
-                req.comment.or(appr.comment),
-                appr.assignee_id,
-                Some(req.actor_id),
-                Some(Utc::now()),
-            ),
-            "reject" => (
-                "rejected".to_string(),
-                req.comment.or(appr.comment),
-                appr.assignee_id,
-                Some(req.actor_id),
-                Some(Utc::now()),
-            ),
-            "delegate" => (
-                "delegated".to_string(),
-                req.comment.or(appr.comment),
-                req.delegate_to,
-                appr.approved_by,
-                appr.approved_at,
-            ),
-            _ => (appr.status, req.comment.or(appr.comment), appr.assignee_id, appr.approved_by, appr.approved_at),
-        };
+
+        let new_status = status.unwrap_or(appr.status);
+        let new_comment = comment.or(appr.comment);
+        let new_assignee = assignee_id.or(appr.assignee_id);
+        let new_approved_by = approved_by.or(appr.approved_by);
+        let new_approved_at = approved_at.or(appr.approved_at);
 
         let query = r#"
             UPDATE flow.approvals
             SET status = $1, comment = $2, assignee_id = $3, approved_by = $4, approved_at = $5
             WHERE id = $6
-            RETURNING id, workflow_instance_id, task_name, assignee_id, status, comment, approved_by, approved_at, created_at
+            RETURNING id, workflow_instance_id, node_id, task_name, assignee_id, status, approval_type, comment, approved_by, approved_at, timeout_at, created_at
         "#;
 
         sqlx::query_as::<_, Approval>(query)
@@ -419,5 +443,219 @@ impl WorkflowRepository {
             .bind(id)
             .fetch_optional(&self.pool)
             .await
+    }
+
+    pub async fn process_approval(
+        &self,
+        id: Uuid,
+        req: ProcessApprovalRequest,
+    ) -> Result<Option<Approval>, sqlx::Error> {
+        let existing = self.get_approval(id).await?;
+        if existing.is_none() {
+            return Ok(None);
+        }
+        let appr = existing.unwrap();
+
+        let new_status = match req.action.as_str() {
+            "approve" => "approved".to_string(),
+            "reject" => "rejected".to_string(),
+            "delegate" => "delegated".to_string(),
+            _ => appr.status.clone(),
+        };
+
+        let new_comment = req.comment.clone().or_else(|| appr.comment.clone());
+        let new_assignee = match req.action.as_str() {
+            "delegate" => req.delegate_to,
+            _ => appr.assignee_id,
+        };
+        let (new_approved_by, new_approved_at) = match req.action.as_str() {
+            "approve" | "reject" => (Some(req.actor_id), Some(Utc::now())),
+            _ => (appr.approved_by, appr.approved_at),
+        };
+
+        let record = CreateApprovalRecordRequest {
+            approval_id: id,
+            action: req.action.clone(),
+            actor_id: req.actor_id,
+            actor_name: req.actor_name,
+            comment: req.comment,
+            previous_status: appr.status,
+            new_status: new_status.clone(),
+        };
+        self.create_approval_record(record).await.ok();
+
+        self.update_approval(id, Some(new_status), new_comment, new_assignee, new_approved_by, new_approved_at).await
+    }
+
+    pub async fn create_approval_record(&self, req: CreateApprovalRecordRequest) -> Result<ApprovalRecord, sqlx::Error> {
+        let now = Utc::now();
+        let record = ApprovalRecord {
+            id: Uuid::new_v4(),
+            approval_id: req.approval_id,
+            action: req.action,
+            actor_id: req.actor_id,
+            actor_name: req.actor_name,
+            comment: req.comment,
+            previous_status: req.previous_status,
+            new_status: req.new_status,
+            created_at: now,
+        };
+
+        let query = r#"
+            INSERT INTO flow.approval_records (id, approval_id, action, actor_id, actor_name, comment, previous_status, new_status, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id, approval_id, action, actor_id, actor_name, comment, previous_status, new_status, created_at
+        "#;
+
+        sqlx::query_as::<_, ApprovalRecord>(query)
+            .bind(record.id)
+            .bind(record.approval_id)
+            .bind(&record.action)
+            .bind(record.actor_id)
+            .bind(&record.actor_name)
+            .bind(&record.comment)
+            .bind(&record.previous_status)
+            .bind(&record.new_status)
+            .bind(record.created_at)
+            .fetch_one(&self.pool)
+            .await
+    }
+
+    pub async fn get_approval_records(&self, approval_id: Uuid) -> Result<Vec<ApprovalRecord>, sqlx::Error> {
+        let query = r#"
+            SELECT id, approval_id, action, actor_id, actor_name, comment, previous_status, new_status, created_at
+            FROM flow.approval_records
+            WHERE approval_id = $1
+            ORDER BY created_at ASC
+        "#;
+        sqlx::query_as::<_, ApprovalRecord>(query)
+            .bind(approval_id)
+            .fetch_all(&self.pool)
+            .await
+    }
+
+    pub async fn list_approval_records(
+        &self,
+        approval_id: Option<Uuid>,
+        actor_id: Option<Uuid>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<ApprovalRecord>, sqlx::Error> {
+        let (mut conditions, mut idx) = (vec![], 1);
+
+        if approval_id.is_some() {
+            conditions.push(format!("approval_id = ${}", idx));
+            idx += 1;
+        }
+        if actor_id.is_some() {
+            conditions.push(format!("actor_id = ${}", idx));
+            idx += 1;
+        }
+
+        let where_clause = if conditions.is_empty() {
+            "".to_string()
+        } else {
+            format!("WHERE {}", conditions.join(" AND "))
+        };
+
+        let query = format!(
+            r#"
+            SELECT id, approval_id, action, actor_id, actor_name, comment, previous_status, new_status, created_at
+            FROM flow.approval_records
+            {}
+            ORDER BY created_at DESC
+            LIMIT ${} OFFSET ${}
+            "#,
+            where_clause, idx, idx + 1
+        );
+
+        let mut q = sqlx::query_as::<_, ApprovalRecord>(&query);
+        if let Some(appr_id) = approval_id {
+            q = q.bind(appr_id);
+        }
+        if let Some(act_id) = actor_id {
+            q = q.bind(act_id);
+        }
+        q = q.bind(limit).bind(offset);
+        q.fetch_all(&self.pool).await
+    }
+
+    pub async fn get_approvals_by_instance(&self, instance_id: Uuid) -> Result<Vec<Approval>, sqlx::Error> {
+        self.list_approvals(Some(instance_id), None, None, 100, 0).await
+    }
+
+    pub async fn create_notification(&self, req: CreateNotificationRequest) -> Result<Notification, sqlx::Error> {
+        let now = Utc::now();
+        let notification = Notification {
+            id: Uuid::new_v4(),
+            user_id: req.user_id,
+            title: req.title,
+            content: req.content,
+            notification_type: req.notification_type,
+            workflow_instance_id: req.workflow_instance_id,
+            approval_id: req.approval_id,
+            is_read: false,
+            created_at: now,
+        };
+
+        let query = r#"
+            INSERT INTO flow.notifications (id, user_id, title, content, notification_type, workflow_instance_id, approval_id, is_read, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id, user_id, title, content, notification_type, workflow_instance_id, approval_id, is_read, created_at
+        "#;
+
+        sqlx::query_as::<_, Notification>(query)
+            .bind(notification.id)
+            .bind(notification.user_id)
+            .bind(&notification.title)
+            .bind(&notification.content)
+            .bind(&notification.notification_type)
+            .bind(notification.workflow_instance_id)
+            .bind(notification.approval_id)
+            .bind(notification.is_read)
+            .bind(notification.created_at)
+            .fetch_one(&self.pool)
+            .await
+    }
+
+    pub async fn get_notifications_by_user(&self, user_id: Uuid, limit: i64, offset: i64) -> Result<Vec<Notification>, sqlx::Error> {
+        let query = r#"
+            SELECT id, user_id, title, content, notification_type, workflow_instance_id, approval_id, is_read, created_at
+            FROM flow.notifications
+            WHERE user_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2 OFFSET $3
+        "#;
+        sqlx::query_as::<_, Notification>(query)
+            .bind(user_id)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
+    }
+
+    pub async fn mark_notifications_as_read(&self, user_id: Uuid) -> Result<usize, sqlx::Error> {
+        let query = r#"
+            UPDATE flow.notifications
+            SET is_read = true
+            WHERE user_id = $1 AND is_read = false
+        "#;
+        let result = sqlx::query(query)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(result.rows_affected() as usize)
+    }
+
+    pub async fn get_unread_count(&self, user_id: Uuid) -> Result<i64, sqlx::Error> {
+        let query = r#"
+            SELECT COUNT(*) FROM flow.notifications
+            WHERE user_id = $1 AND is_read = false
+        "#;
+        let count: i64 = sqlx::query_scalar(query)
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(count)
     }
 }

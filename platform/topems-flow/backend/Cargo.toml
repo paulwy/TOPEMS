@@ -6,10 +6,11 @@ authors = ["TOPEMS Team"]
 description = "TOPEMS Workflow & OA Service"
 
 [dependencies]
-axum = "0.7"
+axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tower-http = { version = "0.5", features = ["cors"] }
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }

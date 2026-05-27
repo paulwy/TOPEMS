@@ -1,367 +1,83 @@
 use axum::{
-    extract::{Path, State},
     routing::{delete, get, post, put},
-    Json, Router,
+    Router,
+    http::header,
 };
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use tower_http::cors::{AllowOrigin, CorsLayer};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use dotenv::dotenv;
+use sqlx::PgPool;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponse<T> {
-    pub code: i32,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
+mod api;
+mod db;
+mod models;
+mod services;
+mod state;
 
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        ApiResponse {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
+use api::handlers::*;
+use state::{AppState, RepositoryType, StorageMode};
 
-    pub fn error(code: i32, message: &str) -> Self {
-        ApiResponse {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn ok(message: &str) -> Self {
-        ApiResponse {
-            code: 200,
-            success: true,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Workflow {
-    id: Uuid,
-    name: String,
-    description: Option<String>,
-    definition: Option<serde_json::Value>,
-    is_active: bool,
-    created_at: String,
-    updated_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct WorkflowInstance {
-    id: Uuid,
-    workflow_id: Uuid,
-    status: String,
-    initiator_id: Option<String>,
-    data: Option<serde_json::Value>,
-    started_at: Option<String>,
-    completed_at: Option<String>,
-    created_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Approval {
-    id: Uuid,
-    workflow_instance_id: Uuid,
-    task_name: String,
-    assignee_id: Option<String>,
-    status: String,
-    comment: Option<String>,
-    approved_by: Option<String>,
-    approved_at: Option<String>,
-    created_at: String,
-}
-
-#[derive(Debug, Clone)]
-struct AppState {
-    workflows: Arc<Mutex<Vec<Workflow>>>,
-    instances: Arc<Mutex<Vec<WorkflowInstance>>>,
-    approvals: Arc<Mutex<Vec<Approval>>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct CreateWorkflowRequest {
-    name: String,
-    description: Option<String>,
-    definition: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Deserialize)]
-struct CreateInstanceRequest {
-    workflow_id: Uuid,
-    initiator_id: Option<String>,
-    data: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Deserialize)]
-struct UpdateInstanceStatusRequest {
-    status: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct CreateApprovalRequest {
-    workflow_instance_id: Uuid,
-    task_name: String,
-    assignee_id: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ProcessApprovalRequest {
-    status: String,
-    comment: Option<String>,
+async fn health() -> &'static str {
+    "OK"
 }
 
 async fn home() -> &'static str {
-    "TOPEMS-FLOW 工作流服务 API\n\n健康检查: GET /health\n\n工作流接口:\n- POST /api/v1/workflows - 创建工作流\n- GET /api/v1/workflows - 获取工作流列表\n- GET /api/v1/workflows/:id - 获取工作流详情\n- PUT /api/v1/workflows/:id - 更新工作流\n- DELETE /api/v1/workflows/:id - 删除工作流\n\n工作流实例接口:\n- POST /api/v1/instances - 创建实例\n- GET /api/v1/instances - 获取实例列表\n- GET /api/v1/instances/:id - 获取实例详情\n- PATCH /api/v1/instances/:id/status - 更新实例状态\n\n审批接口:\n- POST /api/v1/approvals - 创建审批\n- GET /api/v1/approvals - 获取审批列表\n- GET /api/v1/approvals/:id - 获取审批详情\n- POST /api/v1/approvals/:id/action - 处理审批\n"
+    "TOPEMS-FLOW Workflow Engine API\n\nHealth Check: GET /health\n\nAPI Endpoints:\n- Workflows: GET/POST /api/v1/workflows, GET/PUT/DELETE /api/v1/workflows/:id\n- Instances: GET/POST /api/v1/instances, GET /api/v1/instances/:id, GET /api/v1/instances/:id/details\n- Approvals: GET/POST /api/v1/approvals, GET /api/v1/approvals/:id, POST /api/v1/approvals/:id/process\n- Records: GET /api/v1/records, GET /api/v1/records/:approval_id"
 }
 
-async fn health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success(
-        "TOPEMS-FLOW is running!".to_string(),
-        "OK",
-    ))
-}
-
-async fn create_workflow(
-    State(state): State<AppState>,
-    Json(req): Json<CreateWorkflowRequest>,
-) -> Json<ApiResponse<Workflow>> {
-    let now = Utc::now().to_rfc3339();
-    let workflow = Workflow {
-        id: Uuid::new_v4(),
-        name: req.name,
-        description: req.description,
-        definition: req.definition,
-        is_active: true,
-        created_at: now.clone(),
-        updated_at: now,
-    };
-
-    state.workflows.lock().unwrap().push(workflow.clone());
-
-    Json(ApiResponse::success(
-        workflow,
-        "Workflow created successfully",
-    ))
-}
-
-async fn get_workflow(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Workflow>> {
-    let workflows = state.workflows.lock().unwrap();
-    if let Some(workflow) = workflows.iter().find(|w| w.id == id) {
-        Json(ApiResponse::success(
-            workflow.clone(),
-            "Workflow retrieved successfully",
-        ))
-    } else {
-        Json(ApiResponse::error(404, "Workflow not found"))
-    }
-}
-
-async fn list_workflows(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<Workflow>>> {
-    let workflows = state.workflows.lock().unwrap().clone();
-    Json(ApiResponse::success(
-        workflows,
-        "Workflows retrieved successfully",
-    ))
-}
-
-async fn update_workflow(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Json(req): Json<CreateWorkflowRequest>,
-) -> Json<ApiResponse<Workflow>> {
-    let mut workflows = state.workflows.lock().unwrap();
-    if let Some(workflow) = workflows.iter_mut().find(|w| w.id == id) {
-        workflow.name = req.name;
-        workflow.description = req.description;
-        workflow.definition = req.definition;
-        workflow.updated_at = Utc::now().to_rfc3339();
-        Json(ApiResponse::success(
-            workflow.clone(),
-            "Workflow updated successfully",
-        ))
-    } else {
-        Json(ApiResponse::error(404, "Workflow not found"))
-    }
-}
-
-async fn delete_workflow(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
-    let mut workflows = state.workflows.lock().unwrap();
-    if let Some(pos) = workflows.iter().position(|w| w.id == id) {
-        workflows.remove(pos);
-        Json(ApiResponse::ok("Workflow deleted successfully"))
-    } else {
-        Json(ApiResponse::error(404, "Workflow not found"))
-    }
-}
-
-async fn create_instance(
-    State(state): State<AppState>,
-    Json(req): Json<CreateInstanceRequest>,
-) -> Json<ApiResponse<WorkflowInstance>> {
-    let now = Utc::now().to_rfc3339();
-    let instance = WorkflowInstance {
-        id: Uuid::new_v4(),
-        workflow_id: req.workflow_id,
-        status: "pending".to_string(),
-        initiator_id: req.initiator_id,
-        data: req.data,
-        started_at: None,
-        completed_at: None,
-        created_at: now,
-    };
-
-    state.instances.lock().unwrap().push(instance.clone());
-
-    Json(ApiResponse::success(
-        instance,
-        "Workflow instance created successfully",
-    ))
-}
-
-async fn get_instance(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowInstance>> {
-    let instances = state.instances.lock().unwrap();
-    if let Some(instance) = instances.iter().find(|i| i.id == id) {
-        Json(ApiResponse::success(
-            instance.clone(),
-            "Workflow instance retrieved successfully",
-        ))
-    } else {
-        Json(ApiResponse::error(404, "Workflow instance not found"))
-    }
-}
-
-async fn list_instances(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<WorkflowInstance>>> {
-    let instances = state.instances.lock().unwrap().clone();
-    Json(ApiResponse::success(
-        instances,
-        "Workflow instances retrieved successfully",
-    ))
-}
-
-async fn update_instance_status(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Json(req): Json<UpdateInstanceStatusRequest>,
-) -> Json<ApiResponse<WorkflowInstance>> {
-    let mut instances = state.instances.lock().unwrap();
-    if let Some(instance) = instances.iter_mut().find(|i| i.id == id) {
-        instance.status = req.status.clone();
-        if req.status == "running" && instance.started_at.is_none() {
-            instance.started_at = Some(Utc::now().to_rfc3339());
+async fn try_connect_db() -> (Option<PgPool>, StorageMode) {
+    // 检查是否强制使用内存模式（仅用于开发测试）
+    if let Ok(use_memory) = std::env::var("USE_MEMORY_STORAGE") {
+        if use_memory.to_lowercase() == "true" {
+            tracing::warn!("⚠️ USE_MEMORY_STORAGE=true 强制使用内存模式，生产环境不推荐！");
+            return (None, StorageMode::Memory);
         }
-        if req.status == "completed" {
-            instance.completed_at = Some(Utc::now().to_rfc3339());
+    }
+
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/topems".to_string());
+    
+    tracing::info!("🔌 正在连接数据库: {}", database_url);
+    
+    match PgPool::connect(&database_url).await {
+        Ok(pool) => {
+            tracing::info!("✅ 数据库连接成功");
+            // 初始化数据库表
+            if let Err(e) = init_database_tables(&pool).await {
+                tracing::warn!("⚠️ 数据库表初始化警告: {}", e);
+            }
+            (Some(pool), StorageMode::Database)
         }
-        Json(ApiResponse::success(
-            instance.clone(),
-            "Workflow instance status updated successfully",
-        ))
-    } else {
-        Json(ApiResponse::error(404, "Workflow instance not found"))
+        Err(e) => {
+            tracing::error!("❌ 数据库连接失败: {}", e);
+            tracing::error!("💡 请确保 PostgreSQL 服务已启动并配置正确的 DATABASE_URL");
+            // 不再回退到内存模式，直接报错（生产环境必须使用数据库）
+            panic!("无法连接到数据库: {}", e);
+        }
     }
 }
 
-async fn create_approval(
-    State(state): State<AppState>,
-    Json(req): Json<CreateApprovalRequest>,
-) -> Json<ApiResponse<Approval>> {
-    let now = Utc::now().to_rfc3339();
-    let approval = Approval {
-        id: Uuid::new_v4(),
-        workflow_instance_id: req.workflow_instance_id,
-        task_name: req.task_name,
-        assignee_id: req.assignee_id,
-        status: "pending".to_string(),
-        comment: None,
-        approved_by: None,
-        approved_at: None,
-        created_at: now,
-    };
-
-    state.approvals.lock().unwrap().push(approval.clone());
-
-    Json(ApiResponse::success(
-        approval,
-        "Approval created successfully",
-    ))
-}
-
-async fn get_approval(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Approval>> {
-    let approvals = state.approvals.lock().unwrap();
-    if let Some(approval) = approvals.iter().find(|a| a.id == id) {
-        Json(ApiResponse::success(
-            approval.clone(),
-            "Approval retrieved successfully",
-        ))
-    } else {
-        Json(ApiResponse::error(404, "Approval not found"))
+async fn init_database_tables(pool: &PgPool) -> anyhow::Result<()> {
+    // 直接执行每个迁移文件，不分割语句
+    let migrations = vec![
+        include_str!("../migrations/001_create_workflow_tables.sql"),
+        include_str!("../migrations/003_add_notifications.sql"),
+    ];
+    
+    for migration in migrations {
+        // 使用简单的方法：使用数据库客户端的执行器直接运行整个文件
+        sqlx::raw_sql(migration).execute(pool).await?;
     }
-}
-
-async fn list_approvals(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<Approval>>> {
-    let approvals = state.approvals.lock().unwrap().clone();
-    Json(ApiResponse::success(
-        approvals,
-        "Approvals retrieved successfully",
-    ))
-}
-
-async fn process_approval(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Json(req): Json<ProcessApprovalRequest>,
-) -> Json<ApiResponse<Approval>> {
-    let mut approvals = state.approvals.lock().unwrap();
-    if let Some(approval) = approvals.iter_mut().find(|a| a.id == id) {
-        approval.status = req.status;
-        approval.comment = req.comment;
-        approval.approved_by = Some("admin".to_string());
-        approval.approved_at = Some(Utc::now().to_rfc3339());
-        Json(ApiResponse::success(
-            approval.clone(),
-            "Approval processed successfully",
-        ))
-    } else {
-        Json(ApiResponse::error(404, "Approval not found"))
-    }
+    
+    tracing::info!("🗄️ 数据库表初始化完成");
+    Ok(())
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -370,72 +86,114 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    tracing::info!("🚀 TOPEMS-FLOW 工作流服务启动中...");
-    dotenv::dotenv().ok();
+    tracing::info!("Starting TOPEMS-FLOW Workflow Engine...");
+    dotenv().ok();
 
-    let now = Utc::now().to_rfc3339();
-    let state = AppState {
-        workflows: Arc::new(Mutex::new(vec![
-            Workflow {
-                id: Uuid::new_v4(),
-                name: "文件上传审批".to_string(),
-                description: Some("文件上传到特定目录需要审批".to_string()),
-                definition: None,
-                is_active: true,
-                created_at: now.clone(),
-                updated_at: now.clone(),
-            },
-            Workflow {
-                id: Uuid::new_v4(),
-                name: "请假流程".to_string(),
-                description: Some("员工请假审批流程".to_string()),
-                definition: None,
-                is_active: true,
-                created_at: now.clone(),
-                updated_at: now,
-            },
-        ])),
-        instances: Arc::new(Mutex::new(vec![])),
-        approvals: Arc::new(Mutex::new(vec![])),
+    let (pool, storage_mode) = try_connect_db().await;
+
+    // 配置 CORS：从环境变量读取允许的来源
+    let cors_origins = std::env::var("CORS_ORIGINS")
+        .unwrap_or_else(|_| "http://localhost:3000,http://localhost:5173".to_string());
+    
+    // 解析允许的来源列表
+    let allowed_origins: Vec<axum::http::HeaderValue> = cors_origins
+        .split(',')
+        .filter_map(|origin| {
+            origin.trim().parse().ok()
+        })
+        .collect();
+    
+    let cors = CorsLayer::new()
+        .allow_origin(if allowed_origins.is_empty() {
+            AllowOrigin::any() // 如果没有配置，回退到允许任意来源（开发环境）
+        } else {
+            AllowOrigin::list(allowed_origins) // 只允许配置的来源
+        })
+        .allow_methods(tower_http::cors::Any)
+        .allow_headers([
+            header::AUTHORIZATION,
+            header::CONTENT_TYPE,
+            header::ACCEPT,
+            header::ORIGIN,
+            header::ACCESS_CONTROL_REQUEST_HEADERS,
+            header::ACCESS_CONTROL_REQUEST_METHOD,
+        ]);
+
+    let app_state = if let Some(pool) = pool {
+        let repo = db::WorkflowRepository::new(pool.clone());
+        let engine = services::WorkflowEngine::new(RepositoryType::Database(repo.clone()));
+        AppState { 
+            repo: RepositoryType::Database(repo), 
+            engine,
+            storage_mode: StorageMode::Database
+        }
+    } else {
+        let repo = db::memory::MemoryWorkflowRepository::new();
+        let engine = services::WorkflowEngine::new(RepositoryType::Memory(repo.clone()));
+        AppState { 
+            repo: RepositoryType::Memory(repo),
+            engine,
+            storage_mode: StorageMode::Memory
+        }
     };
+
+    let engine_clone = app_state.engine.clone();
 
     let app = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/v1/workflows", post(create_workflow))
-        .route("/api/v1/workflows/:id", get(get_workflow))
-        .route("/api/v1/workflows", get(list_workflows))
-        .route("/api/v1/workflows/:id", put(update_workflow))
-        .route("/api/v1/workflows/:id", delete(delete_workflow))
-        .route("/api/v1/instances", post(create_instance))
-        .route("/api/v1/instances/:id", get(get_instance))
-        .route("/api/v1/instances", get(list_instances))
+        .route("/api/v1/workflows", get(list_workflows).post(create_workflow))
         .route(
-            "/api/v1/instances/:id/status",
-            put(update_instance_status),
+            "/api/v1/workflows/{id}",
+            get(get_workflow)
+                .put(update_workflow)
+                .delete(delete_workflow),
         )
-        .route("/api/v1/approvals", post(create_approval))
-        .route("/api/v1/approvals/:id", get(get_approval))
-        .route("/api/v1/approvals", get(list_approvals))
-        .route(
-            "/api/v1/approvals/:id/action",
-            post(process_approval),
-        )
-        .with_state(state);
+        .route("/api/v1/instances", get(list_instances).post(start_instance))
+        .route("/api/v1/instances/{id}", get(get_instance))
+        .route("/api/v1/instances/{id}/details", get(get_instance_details))
+        .route("/api/v1/approvals", get(list_approvals).post(create_approval))
+        .route("/api/v1/approvals/{id}", get(get_approval))
+        .route("/api/v1/approvals/{id}/process", post(process_approval))
+        .route("/api/v1/records", get(get_approval_records))
+        .route("/api/v1/records/{approval_id}", get(get_records_by_approval))
+        .route("/api/v1/notifications/{user_id}", get(get_notifications))
+        .route("/api/v1/notifications/{user_id}/count", get(get_unread_count))
+        .route("/api/v1/notifications/{user_id}/read", post(mark_as_read))
+        .route("/api/v1/notifications", post(create_notification))
+        .layer(cors)
+        .with_state(app_state);
 
-    let host = std::env::var("SERVER_HOST").unwrap_or("0.0.0.0".to_string());
+    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or("8004".to_string())
+        .unwrap_or_else(|_| "8004".to_string())
         .parse()
         .unwrap_or(8004);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_mins(5));
+        loop {
+            interval.tick().await;
+            match engine_clone.process_expired_approvals().await {
+                Ok(count) => {
+                    if count > 0 {
+                        tracing::info!("Processed {} expired approvals", count);
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to process expired approvals: {}", e);
+                }
+            }
+        }
+    });
 
-    tracing::info!("✅ TOPEMS-FLOW 服务运行在 http://{}", addr);
+    tracing::info!("TOPEMS-FLOW Workflow Engine listening on {}", addr);
 
     axum::serve(
-        tokio::net::TcpListener::bind(&addr).await.unwrap(),
+        tokio::net::TcpListener::bind(&addr).await?,
         app.into_make_service(),
     )
-    .await
-    .unwrap();
+    .await?;
+
+    Ok(())
 }

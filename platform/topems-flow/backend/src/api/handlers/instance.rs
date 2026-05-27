@@ -3,11 +3,11 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-use crate::api::response;
-use crate::db::WorkflowRepository;
+use crate::api::response::ApiResponse;
+use crate::state::AppState;
 use crate::models::*;
 
 #[derive(Debug, Deserialize)]
@@ -19,126 +19,202 @@ pub struct ListInstancesQuery {
     pub offset: Option<i64>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct StartInstanceRequest {
+    pub workflow_id: Uuid,
+    pub initiator_id: Option<Uuid>,
+    pub data: Option<serde_json::Value>,
+}
+
 pub async fn list_instances(
-    State(repo): State<WorkflowRepository>,
+    State(state): State<AppState>,
     Query(query): Query<ListInstancesQuery>,
-) -> (StatusCode, Json<response::ApiResponse<Vec<WorkflowInstance>>>) {
+) -> (StatusCode, Json<ApiResponse<Vec<WorkflowInstance>>>) {
     let limit = query.limit.unwrap_or(50);
     let offset = query.offset.unwrap_or(0);
-    match repo
-        .list_instances(
-            query.workflow_id,
-            query.status,
-            query.initiator_id,
-            limit,
-            offset,
-        )
-        .await
-    {
-        Ok(instances) => (
-            StatusCode::OK,
-            Json(response::ApiResponse {
-                success: true,
-                data: Some(instances),
-                message: "Success".to_string(),
-            }),
-        ),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(response::ApiResponse {
-                success: false,
-                data: None,
-                message: e.to_string(),
-            }),
-        ),
+    match &state.repo {
+        crate::state::RepositoryType::Database(repo) => {
+            match repo
+                .list_instances(
+                    query.workflow_id,
+                    query.status,
+                    query.initiator_id,
+                    limit,
+                    offset,
+                )
+                .await
+            {
+                Ok(instances) => (
+                    StatusCode::OK,
+                    Json(ApiResponse::success(instances)),
+                ),
+                Err(e) => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(e.to_string())),
+                ),
+            }
+        }
+        crate::state::RepositoryType::Memory(repo) => {
+            match repo
+                .list_instances(
+                    query.workflow_id,
+                    query.status,
+                    query.initiator_id,
+                    limit,
+                    offset,
+                )
+                .await
+            {
+                Ok(instances) => (
+                    StatusCode::OK,
+                    Json(ApiResponse::success(instances)),
+                ),
+                Err(e) => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(e.to_string())),
+                ),
+            }
+        }
     }
 }
 
-pub async fn create_instance(
-    State(repo): State<WorkflowRepository>,
-    Json(req): Json<CreateWorkflowInstanceRequest>,
-) -> (StatusCode, Json<response::ApiResponse<WorkflowInstance>>) {
-    match repo.create_instance(req).await {
+pub async fn start_instance(
+    State(state): State<AppState>,
+    Json(req): Json<StartInstanceRequest>,
+) -> (StatusCode, Json<ApiResponse<WorkflowInstance>>) {
+    match state
+        .engine
+        .start_workflow_instance(req.workflow_id, req.initiator_id, req.data)
+        .await
+    {
         Ok(instance) => (
             StatusCode::CREATED,
-            Json(response::ApiResponse {
-                success: true,
-                data: Some(instance),
-                message: "Instance created".to_string(),
-            }),
+            Json(ApiResponse::success_with_message(instance, "Workflow instance started successfully".to_string())),
+        ),
+        Err(crate::services::WorkflowEngineError::WorkflowNotFound) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error("Workflow not found".to_string())),
+        ),
+        Err(crate::services::WorkflowEngineError::WorkflowNotActive) => (
+            StatusCode::BAD_REQUEST,
+            Json(ApiResponse::error("Workflow is not active".to_string())),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(response::ApiResponse {
-                success: false,
-                data: None,
-                message: e.to_string(),
-            }),
+            Json(ApiResponse::error(e.to_string())),
         ),
     }
 }
 
 pub async fn get_instance(
-    State(repo): State<WorkflowRepository>,
+    State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> (StatusCode, Json<response::ApiResponse<WorkflowInstance>>) {
-    match repo.get_instance(id).await {
-        Ok(Some(instance)) => (
+) -> (StatusCode, Json<ApiResponse<WorkflowInstance>>) {
+    match &state.repo {
+        crate::state::RepositoryType::Database(repo) => {
+            match repo.get_instance(id).await {
+                Ok(Some(instance)) => (
+                    StatusCode::OK,
+                    Json(ApiResponse::success(instance)),
+                ),
+                Ok(None) => (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiResponse::error("Workflow instance not found".to_string())),
+                ),
+                Err(e) => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(e.to_string())),
+                ),
+            }
+        }
+        crate::state::RepositoryType::Memory(repo) => {
+            match repo.get_instance(id).await {
+                Ok(Some(instance)) => (
+                    StatusCode::OK,
+                    Json(ApiResponse::success(instance)),
+                ),
+                Ok(None) => (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiResponse::error("Workflow instance not found".to_string())),
+                ),
+                Err(e) => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(e.to_string())),
+                ),
+            }
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InstanceDetailsResponse {
+    pub instance: WorkflowInstance,
+    pub approvals: Vec<Approval>,
+    pub records: Vec<ApprovalRecord>,
+}
+
+#[axum::debug_handler]
+pub async fn get_instance_details(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> (StatusCode, Json<ApiResponse<InstanceDetailsResponse>>) {
+    match state.engine.get_instance_details(id).await {
+        Ok((instance, approvals, records)) => (
             StatusCode::OK,
-            Json(response::ApiResponse {
-                success: true,
-                data: Some(instance),
-                message: "Success".to_string(),
-            }),
+            Json(ApiResponse::success(InstanceDetailsResponse {
+                instance,
+                approvals,
+                records,
+            })),
         ),
-        Ok(None) => (
+        Err(crate::services::WorkflowEngineError::InstanceNotFound) => (
             StatusCode::NOT_FOUND,
-            Json(response::ApiResponse {
-                success: false,
-                data: None,
-                message: "Instance not found".to_string(),
-            }),
+            Json(ApiResponse::error("Workflow instance not found".to_string())),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(response::ApiResponse {
-                success: false,
-                data: None,
-                message: e.to_string(),
-            }),
+            Json(ApiResponse::error(e.to_string())),
         ),
     }
 }
 
 pub async fn update_instance_status(
-    State(repo): State<WorkflowRepository>,
+    State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInstanceStatusRequest>,
-) -> (StatusCode, Json<response::ApiResponse<WorkflowInstance>>) {
-    match repo.update_instance_status(id, req).await {
-        Ok(Some(instance)) => (
-            StatusCode::OK,
-            Json(response::ApiResponse {
-                success: true,
-                data: Some(instance),
-                message: "Instance status updated".to_string(),
-            }),
-        ),
-        Ok(None) => (
-            StatusCode::NOT_FOUND,
-            Json(response::ApiResponse {
-                success: false,
-                data: None,
-                message: "Instance not found".to_string(),
-            }),
-        ),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(response::ApiResponse {
-                success: false,
-                data: None,
-                message: e.to_string(),
-            }),
-        ),
+) -> (StatusCode, Json<ApiResponse<WorkflowInstance>>) {
+    match &state.repo {
+        crate::state::RepositoryType::Database(repo) => {
+            match repo.update_instance_status(id, req).await {
+                Ok(Some(instance)) => (
+                    StatusCode::OK,
+                    Json(ApiResponse::success_with_message(instance, "Instance status updated successfully".to_string())),
+                ),
+                Ok(None) => (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiResponse::error("Workflow instance not found".to_string())),
+                ),
+                Err(e) => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(e.to_string())),
+                ),
+            }
+        }
+        crate::state::RepositoryType::Memory(repo) => {
+            match repo.update_instance_status(id, req).await {
+                Ok(Some(instance)) => (
+                    StatusCode::OK,
+                    Json(ApiResponse::success_with_message(instance, "Instance status updated successfully".to_string())),
+                ),
+                Ok(None) => (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiResponse::error("Workflow instance not found".to_string())),
+                ),
+                Err(e) => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(e.to_string())),
+                ),
+            }
+        }
     }
 }
