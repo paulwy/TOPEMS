@@ -68,11 +68,22 @@ certs/
 config/secrets.yml
 secret.json
 credentials.json
-
+# ================================
 # 临时文件
+# ================================
 tmp/
 temp/
 .cache/
+test/
+test-rust/
+packages/
+images/
+docs/my/
+
+# 大文件和归档
+*.tar
+*.tar.gz
+*.zip
 
 # ================================
 # 使用说明
