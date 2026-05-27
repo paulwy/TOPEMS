@@ -1,0 +1,1541 @@
+use axum::{
+    extract::{State, Path, Query},
+    routing::{get, post, put, delete},
+    Json, Router, middleware,
+    http::{header, Method},
+};
+use tower_http::cors::{Any, CorsLayer};
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
+use chrono::{Utc, DateTime, Duration};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use uuid::Uuid;
+use sqlx::{postgres::PgPoolOptions, PgPool, Row};
+use bcrypt::{hash, verify, DEFAULT_COST};
+use jsonwebtoken::{encode, decode, Header, Validation, Algorithm, TokenData, EncodingKey, DecodingKey};
+use axum::response::{IntoResponse, Response};
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApiResponse<T> {
+    pub code: i32,
+    pub success: bool,
+    pub data: Option<T>,
+    pub message: String,
+    pub timestamp: String,
+}
+
+impl<T> ApiResponse<T> {
+    pub fn success(data: T, message: String) -> Self {
+        ApiResponse {
+            code: 200,
+            success: true,
+            data: Some(data),
+            message,
+            timestamp: Utc::now().to_rfc3339(),
+        }
+    }
+
+    pub fn error(code: i32, message: String) -> ApiResponse<()> {
+        ApiResponse {
+            code,
+            success: false,
+            data: None,
+            message,
+            timestamp: Utc::now().to_rfc3339(),
+        }
+    }
+}
+
+pub fn error_response<T>(code: i32, message: String) -> ApiResponse<T> {
+    ApiResponse {
+        code,
+        success: false,
+        data: None,
+        message,
+        timestamp: Utc::now().to_rfc3339(),
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct User {
+    pub id: Uuid,
+    pub username: String,
+    pub email: String,
+    pub full_name: Option<String>,
+    pub avatar_url: Option<String>,
+    pub is_active: bool,
+    pub is_superuser: bool,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub last_login_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateUserRequest {
+    pub username: String,
+    pub email: String,
+    pub password: String,
+    pub full_name: Option<String>,
+    pub avatar_url: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateUserRequest {
+    pub email: Option<String>,
+    pub full_name: Option<String>,
+    pub avatar_url: Option<String>,
+    pub is_active: Option<bool>,
+    pub is_superuser: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Role {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateRoleRequest {
+    pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Permission {
+    pub id: Uuid,
+    pub name: String,
+    pub resource: String,
+    pub action: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreatePermissionRequest {
+    pub name: String,
+    pub resource: String,
+    pub action: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LoginResponse {
+    pub access_token: String,
+    pub refresh_token: String,
+    pub token_type: String,
+    pub expires_in: usize,
+    pub user: User,
+    pub expires_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Claims {
+    pub sub: String,
+    pub exp: usize,
+    pub username: String,
+    pub is_superuser: bool,
+    pub roles: Vec<String>,
+    pub permissions: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct UserRoleResponse {
+    pub user_id: Uuid,
+    pub username: String,
+    pub role_id: Uuid,
+    pub role_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, sqlx::FromRow)]
+pub struct RolePermission {
+    pub id: Uuid,
+    pub role_id: Uuid,
+    pub permission_id: Uuid,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct AccessLog {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub username: String,
+    pub action: String,
+    pub resource: String,
+    pub resource_id: Option<String>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub success: bool,
+    pub error_message: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateAccessLogRequest {
+    pub user_id: Uuid,
+    pub username: String,
+    pub action: String,
+    pub resource: String,
+    pub resource_id: Option<String>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub success: bool,
+    pub error_message: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PermissionCheckRequest {
+    pub permission: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PermissionCheckResponse {
+    pub allowed: bool,
+    pub permission: String,
+    pub user_id: String,
+    pub username: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserWithPermissions {
+    pub user: User,
+    pub roles: Vec<Role>,
+    pub permissions: Vec<Permission>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PermissionLevel {
+    Read,
+    Write,
+    Delete,
+    Admin,
+}
+
+impl PermissionLevel {
+    pub fn from_str_level(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "read" => PermissionLevel::Read,
+            "write" => PermissionLevel::Write,
+            "delete" => PermissionLevel::Delete,
+            "admin" => PermissionLevel::Admin,
+            _ => PermissionLevel::Read,
+        }
+    }
+    
+    pub fn as_str(&self) -> &str {
+        match self {
+            PermissionLevel::Read => "read",
+            PermissionLevel::Write => "write",
+            PermissionLevel::Delete => "delete",
+            PermissionLevel::Admin => "admin",
+        }
+    }
+}
+
+#[derive(Clone)]
+struct AppState {
+    pool: PgPool,
+    jwt_secret: String,
+}
+
+impl AppState {
+    fn new(pool: PgPool, jwt_secret: String) -> Self {
+        Self {
+            pool,
+            jwt_secret,
+        }
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "topems_iam=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+    tracing::info!("🚀 TOPEMS IAM Service starting...");
+
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://topems:topems@localhost:5432/topems".to_string());
+
+    let pool = match PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+    {
+        Ok(pool) => {
+            tracing::info!("✅ Connected to PostgreSQL database");
+            pool
+        }
+        Err(e) => {
+            tracing::error!("❌ Failed to connect to PostgreSQL: {}", e);
+            panic!("Failed to connect to database");
+        }
+    };
+
+    let jwt_secret = match std::env::var("JWT_SECRET") {
+        Ok(secret) => {
+            if secret.len() < 32 {
+                tracing::warn!("⚠️ JWT_SECRET is shorter than recommended 32 characters");
+            }
+            secret
+        }
+        Err(_) => {
+            tracing::error!("❌ JWT_SECRET environment variable is not set");
+            panic!("JWT_SECRET environment variable is required");
+        }
+    };
+
+    let state = AppState::new(pool, jwt_secret);
+
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, header::ACCEPT]);
+
+    let app = Router::new()
+        .route("/", get(home))
+        .route("/health", get(health))
+        .route("/api/v1/auth/login", post(login))
+        .route("/api/v1/auth/verify", post(verify_token))
+        .route("/api/v1/auth/refresh", post(refresh_token))
+        .route("/api/v1/users", get(list_users))
+        .route("/api/v1/users", post(create_user))
+        .route("/api/v1/users/me", get(get_current_user))
+        .route("/api/v1/users/me/permissions", get(get_my_permissions))
+        .route("/api/v1/users/me/permissions/check", post(check_my_permission))
+        .route("/api/v1/users/:id", get(get_user))
+        .route("/api/v1/users/:id", put(update_user))
+        .route("/api/v1/users/:id", delete(delete_user))
+        .route("/api/v1/users/:id/permissions", get(get_user_permissions))
+        .route("/api/v1/roles", get(list_roles))
+        .route("/api/v1/roles", post(create_role))
+        .route("/api/v1/roles/:id", get(get_role))
+        .route("/api/v1/roles/:id", delete(delete_role))
+        .route("/api/v1/roles/:id/permissions", get(get_role_permissions))
+        .route("/api/v1/roles/:role_id/permissions/:permission_id", post(add_role_permission))
+        .route("/api/v1/roles/:role_id/permissions/:permission_id", delete(remove_role_permission))
+        .route("/api/v1/permissions", get(list_permissions))
+        .route("/api/v1/permissions", post(create_permission))
+        .route("/api/v1/permissions/:id", delete(delete_permission))
+        .route("/api/v1/users/:user_id/roles", get(get_user_roles))
+        .route("/api/v1/users/:user_id/roles/:role_id", post(add_user_role))
+        .route("/api/v1/users/:user_id/roles/:role_id", delete(remove_user_role))
+        .route("/api/v1/access-logs", get(list_access_logs))
+        .route("/api/v1/access-logs", post(create_access_log))
+        .route("/api/v1/access-logs/user/:user_id", get(get_user_access_logs))
+        .route_layer(middleware::from_fn_with_state(state.clone(), auth_middleware))
+        .with_state(state)
+        .layer(cors);
+
+    let port = std::env::var("SERVICE_PORT")
+        .unwrap_or_else(|_| "8002".to_string())
+        .parse()
+        .unwrap_or(8002);
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    tracing::info!("✅ TOPEMS IAM service is running at http://{}", addr);
+
+    let listener = tokio::net::TcpListener::bind(&addr)
+        .await
+        .unwrap_or_else(|e| {
+            tracing::error!("❌ Failed to bind to address {}: {}", addr, e);
+            std::process::exit(1);
+        });
+
+    axum::serve(listener, app.into_make_service())
+        .await
+        .unwrap_or_else(|e| {
+            tracing::error!("❌ Server error: {}", e);
+            std::process::exit(1);
+        });
+}
+
+async fn home() -> &'static str {
+    "TOPEMS IAM Service API\n\nCheck out the API at /health"
+}
+
+async fn health() -> Json<ApiResponse<String>> {
+    Json(ApiResponse::success(
+        "TOPEMS IAM Service is running!".to_string(),
+        "OK".to_string(),
+    ))
+}
+
+async fn login(
+    State(state): State<AppState>,
+    Json(req): Json<LoginRequest>,
+) -> Json<ApiResponse<LoginResponse>> {
+    let query_result = sqlx::query(r#"SELECT id, username, email, full_name, avatar_url, 
+                  is_active, is_superuser, password_hash, created_at, updated_at, last_login_at
+           FROM iam.users WHERE username = $1"#)
+    .bind(&req.username)
+    .fetch_one(&state.pool)
+    .await;
+
+    match query_result {
+        Ok(row) => {
+            let id: Uuid = row.get("id");
+            let username: String = row.get("username");
+            let email: String = row.get("email");
+            let full_name: Option<String> = row.get("full_name");
+            let avatar_url: Option<String> = row.get("avatar_url");
+            let is_active: bool = row.get("is_active");
+            let is_superuser: bool = row.get("is_superuser");
+            let password_hash: String = row.get("password_hash");
+            let created_at: Option<DateTime<Utc>> = row.get("created_at");
+            let _updated_at: Option<DateTime<Utc>> = row.get("updated_at");
+            let _last_login_at: Option<DateTime<Utc>> = row.get("last_login_at");
+
+            if !is_active {
+                return Json(error_response(401, "用户已被禁用".to_string()));
+            }
+
+            if !verify(&req.password, &password_hash).unwrap_or(false) {
+                return Json(error_response(401, "用户名或密码错误".to_string()));
+            }
+
+            let user_id = id;
+            
+            let (roles, permissions) = match get_user_roles_and_permissions(&state.pool, user_id).await {
+                Ok((r, p)) => (r, p),
+                Err(e) => {
+                    tracing::error!("Failed to get user roles and permissions: {}", e);
+                    (Vec::new(), Vec::new())
+                }
+            };
+
+            let expiration = (Utc::now() + Duration::hours(24)).timestamp() as usize;
+            let claims = Claims {
+                sub: id.to_string(),
+                exp: expiration,
+                username: username.clone(),
+                is_superuser,
+                roles: roles.clone(),
+                permissions: permissions.clone(),
+            };
+
+            let token = match encode(
+                &Header::default(),
+                &claims,
+                &EncodingKey::from_secret(state.jwt_secret.as_ref()),
+            ) {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("Failed to generate JWT token: {}", e);
+                    return Json(error_response(500, "生成认证令牌失败".to_string()));
+                }
+            };
+
+            let expires_at = DateTime::<Utc>::from_timestamp(expiration as i64, 0)
+                .unwrap_or_else(Utc::now)
+                .to_rfc3339();
+
+            let _ = sqlx::query("UPDATE iam.users SET last_login_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.pool)
+            .await;
+
+            let _ = create_access_log_internal(
+                &state.pool,
+                CreateAccessLogParams {
+                    user_id,
+                    username: username.clone(),
+                    action: "login".to_string(),
+                    resource: "auth".to_string(),
+                    resource_id: None,
+                    ip_address: None,
+                    user_agent: None,
+                    success: true,
+                    error_message: None,
+                }
+            ).await;
+
+            let refresh_token = match encode(
+                &Header::default(),
+                &claims,
+                &EncodingKey::from_secret(state.jwt_secret.as_ref()),
+            ) {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("Failed to generate refresh token: {}", e);
+                    return Json(error_response(500, "生成认证令牌失败".to_string()));
+                }
+            };
+
+            Json(ApiResponse::success(
+                LoginResponse {
+                    access_token: token,
+                    refresh_token,
+                    token_type: "Bearer".to_string(),
+                    expires_in: 3600,
+                    user: User {
+                        id,
+                        username,
+                        email,
+                        full_name,
+                        avatar_url,
+                        is_active,
+                        is_superuser,
+                        created_at,
+                        updated_at: Some(Utc::now()),
+                        last_login_at: Some(Utc::now()),
+                    },
+                    expires_at,
+                },
+                "登录成功".to_string(),
+            ))
+        }
+        Err(sqlx::Error::RowNotFound) => Json(error_response(401, "用户名或密码错误".to_string())),
+        Err(e) => {
+            tracing::error!("Login error: {}", e);
+            Json(error_response(500, format!("登录失败: {}", e)))
+        }
+    }
+}
+
+async fn verify_token(
+    State(state): State<AppState>,
+    Json(body): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let token = body.get("token").and_then(|t| t.as_str()).unwrap_or("");
+    
+    match decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(state.jwt_secret.as_ref()),
+        &Validation::new(Algorithm::HS256),
+    ) {
+        Ok(TokenData { claims, .. }) => {
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "valid": true,
+                    "user_id": claims.sub,
+                    "username": claims.username,
+                    "is_superuser": claims.is_superuser,
+                    "exp": claims.exp
+                }),
+                "Token is valid".to_string(),
+            ))
+        }
+        Err(e) => Json(error_response(401, format!("Token invalid: {}", e))),
+    }
+}
+
+async fn list_users(State(state): State<AppState>) -> Json<ApiResponse<Vec<User>>> {
+    match sqlx::query(r#"SELECT id, username, email, full_name, avatar_url, 
+                  is_active, is_superuser, created_at, updated_at, last_login_at
+           FROM iam.users ORDER BY created_at DESC"#)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => {
+            let users: Vec<User> = rows
+                .into_iter()
+                .map(|row| User {
+                    id: row.get("id"),
+                    username: row.get("username"),
+                    email: row.get("email"),
+                    full_name: row.get("full_name"),
+                    avatar_url: row.get("avatar_url"),
+                    is_active: row.get("is_active"),
+                    is_superuser: row.get("is_superuser"),
+                    created_at: row.get("created_at"),
+                    updated_at: row.get("updated_at"),
+                    last_login_at: row.get("last_login_at"),
+                })
+                .collect();
+            Json(ApiResponse::success(users, "用户列表获取成功".to_string()))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch users: {}", e);
+            Json(error_response(500, format!("获取用户列表失败: {}", e)))
+        }
+    }
+}
+
+async fn create_user(
+    State(state): State<AppState>,
+    Json(req): Json<CreateUserRequest>,
+) -> Json<ApiResponse<User>> {
+    let password_hash = match hash(&req.password, DEFAULT_COST) {
+        Ok(hash) => hash,
+        Err(e) => {
+            tracing::error!("Failed to hash password: {}", e);
+            return Json(error_response(500, "密码加密失败".to_string()));
+        }
+    };
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    match sqlx::query(r#"INSERT INTO iam.users (id, username, email, password_hash, full_name, avatar_url, 
+                                 is_active, is_superuser, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           RETURNING id, username, email, full_name, avatar_url, 
+                     is_active, is_superuser, created_at, updated_at, last_login_at"#).bind(id).bind(req.username).bind(req.email).bind(password_hash).bind(req.full_name).bind(req.avatar_url).bind(true).bind(false).bind(now).bind(now)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => Json(ApiResponse::success(
+            User {
+                id: row.get("id"),
+                username: row.get("username"),
+                email: row.get("email"),
+                full_name: row.get("full_name"),
+                avatar_url: row.get("avatar_url"),
+                is_active: row.get("is_active"),
+                is_superuser: row.get("is_superuser"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+                last_login_at: row.get("last_login_at"),
+            },
+            "用户创建成功".to_string(),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to create user: {}", e);
+            Json(error_response(500, format!("创建用户失败: {}", e)))
+        }
+    }
+}
+
+async fn get_user(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<User>> {
+    match sqlx::query(r#"SELECT id, username, email, full_name, avatar_url, 
+                  is_active, is_superuser, created_at, updated_at, last_login_at
+           FROM iam.users WHERE id = $1"#).bind(id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => Json(ApiResponse::success(
+            User {
+                id: row.get("id"),
+                username: row.get("username"),
+                email: row.get("email"),
+                full_name: row.get("full_name"),
+                avatar_url: row.get("avatar_url"),
+                is_active: row.get("is_active"),
+                is_superuser: row.get("is_superuser"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+                last_login_at: row.get("last_login_at"),
+            },
+            "用户信息获取成功".to_string(),
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(error_response(404, "用户不存在".to_string())),
+        Err(e) => {
+            tracing::error!("Failed to fetch user: {}", e);
+            Json(error_response(500, format!("获取用户信息失败: {}", e)))
+        }
+    }
+}
+
+async fn update_user(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateUserRequest>,
+) -> Json<ApiResponse<User>> {
+    match sqlx::query(r#"UPDATE iam.users 
+           SET email = COALESCE($1, email),
+               full_name = COALESCE($2, full_name),
+               avatar_url = COALESCE($3, avatar_url),
+               is_active = COALESCE($4, is_active),
+               is_superuser = COALESCE($5, is_superuser),
+               updated_at = NOW()
+           WHERE id = $6
+           RETURNING id, username, email, full_name, avatar_url, 
+                     is_active, is_superuser, created_at, updated_at, last_login_at"#).bind(req.email).bind(req.full_name).bind(req.avatar_url).bind(req.is_active).bind(req.is_superuser).bind(id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => Json(ApiResponse::success(
+            User {
+                id: row.get("id"),
+                username: row.get("username"),
+                email: row.get("email"),
+                full_name: row.get("full_name"),
+                avatar_url: row.get("avatar_url"),
+                is_active: row.get("is_active"),
+                is_superuser: row.get("is_superuser"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+                last_login_at: row.get("last_login_at"),
+            },
+            "用户信息更新成功".to_string(),
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(error_response(404, "用户不存在".to_string())),
+        Err(e) => {
+            tracing::error!("Failed to update user: {}", e);
+            Json(error_response(500, format!("更新用户信息失败: {}", e)))
+        }
+    }
+}
+
+async fn delete_user(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    match sqlx::query("DELETE FROM iam.users WHERE id = $1").bind(id)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                Json(error_response(404, "用户不存在".to_string()))
+            } else {
+                Json(ApiResponse::success(
+                    "用户删除成功".to_string(),
+                    "用户删除成功".to_string(),
+                ))
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to delete user: {}", e);
+            Json(error_response(500, format!("删除用户失败: {}", e)))
+        }
+    }
+}
+
+async fn list_roles(State(state): State<AppState>) -> Json<ApiResponse<Vec<Role>>> {
+    match sqlx::query(r#"SELECT id, name, description, created_at FROM iam.roles ORDER BY name"#)
+        .fetch_all(&state.pool)
+        .await
+    {
+        Ok(rows) => {
+            let roles: Vec<Role> = rows
+                .into_iter()
+                .map(|row| Role {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    description: row.get("description"),
+                    created_at: row.get("created_at"),
+                })
+                .collect();
+            Json(ApiResponse::success(roles, "角色列表获取成功".to_string()))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch roles: {}", e);
+            Json(error_response(500, format!("获取角色列表失败: {}", e)))
+        }
+    }
+}
+
+async fn create_role(
+    State(state): State<AppState>,
+    Json(req): Json<CreateRoleRequest>,
+) -> Json<ApiResponse<Role>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    match sqlx::query(r#"INSERT INTO iam.roles (id, name, description, created_at)
+           VALUES ($1, $2, $3, $4)
+           RETURNING id, name, description, created_at"#).bind(id).bind(req.name).bind(req.description).bind(now)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => Json(ApiResponse::success(
+            Role {
+                id: row.get("id"),
+                name: row.get("name"),
+                description: row.get("description"),
+                created_at: row.get("created_at"),
+            },
+            "角色创建成功".to_string(),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to create role: {}", e);
+            Json(error_response(500, format!("创建角色失败: {}", e)))
+        }
+    }
+}
+
+async fn get_role(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Role>> {
+    match sqlx::query(r#"SELECT id, name, description, created_at FROM iam.roles WHERE id = $1"#).bind(id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(row) => Json(ApiResponse::success(
+            Role {
+                id: row.get("id"),
+                name: row.get("name"),
+                description: row.get("description"),
+                created_at: row.get("created_at"),
+            },
+            "角色信息获取成功".to_string(),
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(error_response(404, "角色不存在".to_string())),
+        Err(e) => {
+            tracing::error!("Failed to fetch role: {}", e);
+            Json(error_response(500, format!("获取角色信息失败: {}", e)))
+        }
+    }
+}
+
+async fn delete_role(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    match sqlx::query("DELETE FROM iam.roles WHERE id = $1").bind(id)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                Json(error_response(404, "角色不存在".to_string()))
+            } else {
+                Json(ApiResponse::success(
+                    "角色删除成功".to_string(),
+                    "角色删除成功".to_string(),
+                ))
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to delete role: {}", e);
+            Json(error_response(500, format!("删除角色失败: {}", e)))
+        }
+    }
+}
+
+async fn list_permissions(State(state): State<AppState>) -> Json<ApiResponse<Vec<Permission>>> {
+    match sqlx::query(r#"SELECT id, name, resource, action, description FROM iam.permissions ORDER BY resource, action"#)
+        .fetch_all(&state.pool)
+        .await
+    {
+        Ok(rows) => {
+            let permissions: Vec<Permission> = rows
+                .into_iter()
+                .map(|row| Permission {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    resource: row.get("resource"),
+                    action: row.get("action"),
+                    description: row.get("description"),
+                })
+                .collect();
+            Json(ApiResponse::success(permissions, "权限列表获取成功".to_string()))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch permissions: {}", e);
+            Json(error_response(500, format!("获取权限列表失败: {}", e)))
+        }
+    }
+}
+
+async fn create_permission(
+    State(state): State<AppState>,
+    Json(req): Json<CreatePermissionRequest>,
+) -> Json<ApiResponse<Permission>> {
+    let id = Uuid::new_v4();
+
+    match sqlx::query(r#"INSERT INTO iam.permissions (id, name, resource, action, description)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id, name, resource, action, description"#).bind(id).bind(req.name).bind(req.resource).bind(req.action).bind(req.description)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => Json(ApiResponse::success(
+            Permission {
+                id: row.get("id"),
+                name: row.get("name"),
+                resource: row.get("resource"),
+                action: row.get("action"),
+                description: row.get("description"),
+            },
+            "权限创建成功".to_string(),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to create permission: {}", e);
+            Json(error_response(500, format!("创建权限失败: {}", e)))
+        }
+    }
+}
+
+async fn delete_permission(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    match sqlx::query("DELETE FROM iam.permissions WHERE id = $1").bind(id)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                Json(error_response(404, "权限不存在".to_string()))
+            } else {
+                Json(ApiResponse::success(
+                    "权限删除成功".to_string(),
+                    "权限删除成功".to_string(),
+                ))
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to delete permission: {}", e);
+            Json(error_response(500, format!("删除权限失败: {}", e)))
+        }
+    }
+}
+
+async fn get_user_roles(
+    State(state): State<AppState>,
+    Path(user_id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<UserRoleResponse>>> {
+    match sqlx::query(r#"SELECT ur.user_id, u.username, ur.role_id, r.name as role_name
+           FROM iam.user_roles ur
+           JOIN iam.users u ON ur.user_id = u.id
+           JOIN iam.roles r ON ur.role_id = r.id
+           WHERE ur.user_id = $1"#).bind(user_id)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => {
+            let user_roles: Vec<UserRoleResponse> = rows
+                .into_iter()
+                .map(|row| UserRoleResponse {
+                    user_id: row.get("user_id"),
+                    username: row.get("username"),
+                    role_id: row.get("role_id"),
+                    role_name: row.get("role_name"),
+                })
+                .collect();
+            Json(ApiResponse::success(user_roles, "用户角色列表获取成功".to_string()))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch user roles: {}", e);
+            Json(error_response(500, format!("获取用户角色列表失败: {}", e)))
+        }
+    }
+}
+
+async fn add_user_role(
+    State(state): State<AppState>,
+    Path((user_id, role_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<String>> {
+    match sqlx::query(r#"INSERT INTO iam.user_roles (user_id, role_id, created_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT DO NOTHING"#).bind(user_id).bind(role_id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(_) => Json(ApiResponse::success(
+            "角色分配成功".to_string(),
+            "角色分配成功".to_string(),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to add user role: {}", e);
+            Json(error_response(500, format!("分配角色失败: {}", e)))
+        }
+    }
+}
+
+async fn remove_user_role(
+    State(state): State<AppState>,
+    Path((user_id, role_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<String>> {
+    match sqlx::query("DELETE FROM iam.user_roles WHERE user_id = $1 AND role_id = $2").bind(user_id).bind(role_id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                Json(error_response(404, "用户角色关系不存在".to_string()))
+            } else {
+                Json(ApiResponse::success(
+                    "角色移除成功".to_string(),
+                    "角色移除成功".to_string(),
+                ))
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to remove user role: {}", e);
+            Json(error_response(500, format!("移除角色失败: {}", e)))
+        }
+    }
+}
+
+async fn get_role_permissions(
+    State(state): State<AppState>,
+    Path(role_id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<Permission>>> {
+    match sqlx::query(r#"SELECT p.id, p.name, p.resource, p.action, p.description
+           FROM iam.role_permissions rp
+           JOIN iam.permissions p ON rp.permission_id = p.id
+           WHERE rp.role_id = $1"#).bind(role_id)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => {
+            let permissions: Vec<Permission> = rows
+                .into_iter()
+                .map(|row| Permission {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    resource: row.get("resource"),
+                    action: row.get("action"),
+                    description: row.get("description"),
+                })
+                .collect();
+            Json(ApiResponse::success(permissions, "角色权限列表获取成功".to_string()))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch role permissions: {}", e);
+            Json(error_response(500, format!("获取角色权限列表失败: {}", e)))
+        }
+    }
+}
+
+async fn add_role_permission(
+    State(state): State<AppState>,
+    Path((role_id, permission_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<String>> {
+    match sqlx::query(r#"INSERT INTO iam.role_permissions (role_id, permission_id)
+           VALUES ($1, $2)
+           ON CONFLICT DO NOTHING"#).bind(role_id).bind(permission_id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(_) => Json(ApiResponse::success(
+            "权限分配成功".to_string(),
+            "权限分配成功".to_string(),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to add role permission: {}", e);
+            Json(error_response(500, format!("分配权限失败: {}", e)))
+        }
+    }
+}
+
+async fn remove_role_permission(
+    State(state): State<AppState>,
+    Path((role_id, permission_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<String>> {
+    match sqlx::query("DELETE FROM iam.role_permissions WHERE role_id = $1 AND permission_id = $2").bind(role_id).bind(permission_id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                Json(error_response(404, "角色权限关系不存在".to_string()))
+            } else {
+                Json(ApiResponse::success(
+                    "权限移除成功".to_string(),
+                    "权限移除成功".to_string(),
+                ))
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to remove role permission: {}", e);
+            Json(error_response(500, format!("移除权限失败: {}", e)))
+        }
+    }
+}
+
+async fn auth_middleware(
+    State(state): State<AppState>,
+    request: axum::http::Request<axum::body::Body>,
+    next: middleware::Next,
+) -> Response {
+    let path = request.uri().path().to_string();
+    
+    if path == "/" || path == "/health" || path.starts_with("/api/v1/auth/") {
+        return next.run(request).await;
+    }
+
+    let auth_header = request
+        .headers()
+        .get(header::AUTHORIZATION)
+        .and_then(|h| h.to_str().ok());
+
+    let token = match auth_header {
+        Some(header) if header.starts_with("Bearer ") => &header[7..],
+        _ => {
+            tracing::warn!("Missing or invalid Authorization header");
+            return Json(ApiResponse::<()>::error(401, "未授权：缺少有效的认证令牌".to_string())).into_response();
+        }
+    };
+
+    match decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(state.jwt_secret.as_ref()),
+        &Validation::new(Algorithm::HS256),
+    ) {
+        Ok(TokenData { claims, .. }) => {
+            if claims.exp < Utc::now().timestamp() as usize {
+                tracing::warn!("Token expired for user: {}", claims.username);
+                return Json(ApiResponse::<()>::error(401, "令牌已过期，请重新登录".to_string())).into_response();
+            }
+
+            let mut req = request;
+            req.extensions_mut().insert(claims);
+            next.run(req).await
+        }
+        Err(e) => {
+            tracing::error!("Token verification failed: {}", e);
+            Json(ApiResponse::<()>::error(401, format!("认证失败: {}", e))).into_response()
+        }
+    }
+}
+
+async fn get_current_user(
+    State(state): State<AppState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+) -> Json<ApiResponse<User>> {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(error_response(400, "无效的用户ID".to_string()));
+        }
+    };
+
+    match sqlx::query(r#"SELECT id, username, email, full_name, avatar_url, 
+                  is_active, is_superuser, created_at, updated_at, last_login_at
+           FROM iam.users WHERE id = $1"#).bind(user_id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => Json(ApiResponse::success(
+            User {
+                id: row.get("id"),
+                username: row.get("username"),
+                email: row.get("email"),
+                full_name: row.get("full_name"),
+                avatar_url: row.get("avatar_url"),
+                is_active: row.get("is_active"),
+                is_superuser: row.get("is_superuser"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+                last_login_at: row.get("last_login_at"),
+            },
+            "用户信息获取成功".to_string(),
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(error_response(404, "用户不存在".to_string())),
+        Err(e) => {
+            tracing::error!("Failed to fetch user: {}", e);
+            Json(error_response(500, format!("获取用户信息失败: {}", e)))
+        }
+    }
+}
+
+async fn get_my_permissions(
+    State(state): State<AppState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+) -> Json<ApiResponse<UserWithPermissions>> {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(error_response(400, "无效的用户ID".to_string()));
+        }
+    };
+
+    match sqlx::query(r#"SELECT id, username, email, full_name, avatar_url, 
+                  is_active, is_superuser, created_at, updated_at, last_login_at
+           FROM iam.users WHERE id = $1"#).bind(user_id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => {
+            let roles = if claims.roles.is_empty() {
+                Vec::new()
+            } else {
+                let role_ids: Vec<Uuid> = claims.roles.iter()
+                    .filter_map(|r| Uuid::parse_str(r).ok())
+                    .collect();
+                
+                if role_ids.is_empty() {
+                    Vec::new()
+                } else {
+                    sqlx::query_as::<_, Role>(
+                        "SELECT id, name, description, created_at FROM iam.roles WHERE id = ANY($1)"
+                    )
+                    .bind(&role_ids)
+                    .fetch_all(&state.pool)
+                    .await
+                    .unwrap_or_default()
+                }
+            };
+
+            let permissions = if claims.permissions.is_empty() {
+                Vec::new()
+            } else {
+                let perm_ids: Vec<Uuid> = claims.permissions.iter()
+                    .filter_map(|p| Uuid::parse_str(p).ok())
+                    .collect();
+                
+                if perm_ids.is_empty() {
+                    Vec::new()
+                } else {
+                    sqlx::query_as::<_, Permission>(
+                        "SELECT id, name, resource, action, description FROM iam.permissions WHERE id = ANY($1)"
+                    )
+                    .bind(&perm_ids)
+                    .fetch_all(&state.pool)
+                    .await
+                    .unwrap_or_default()
+                }
+            };
+
+            Json(ApiResponse::success(
+                UserWithPermissions {
+                    user: User {
+                        id: row.get("id"),
+                        username: row.get("username"),
+                        email: row.get("email"),
+                        full_name: row.get("full_name"),
+                        avatar_url: row.get("avatar_url"),
+                        is_active: row.get("is_active"),
+                        is_superuser: row.get("is_superuser"),
+                        created_at: row.get("created_at"),
+                        updated_at: row.get("updated_at"),
+                        last_login_at: row.get("last_login_at"),
+                    },
+                    roles,
+                    permissions,
+                },
+                "用户权限信息获取成功".to_string(),
+            ))
+        }
+        Err(sqlx::Error::RowNotFound) => Json(error_response(404, "用户不存在".to_string())),
+        Err(e) => {
+            tracing::error!("Failed to fetch user: {}", e);
+            Json(error_response(500, format!("获取用户信息失败: {}", e)))
+        }
+    }
+}
+
+async fn check_my_permission(
+    State(state): State<AppState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    Json(req): Json<PermissionCheckRequest>,
+) -> Json<ApiResponse<PermissionCheckResponse>> {
+    let has_permission = claims.is_superuser || claims.permissions.contains(&req.permission);
+    
+    let _ = create_access_log_internal(
+        &state.pool,
+        CreateAccessLogParams {
+            user_id: Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil()),
+            username: claims.username.clone(),
+            action: "check_permission".to_string(),
+            resource: req.permission.clone(),
+            resource_id: None,
+            ip_address: None,
+            user_agent: None,
+            success: has_permission,
+            error_message: None,
+        }
+    ).await;
+
+    Json(ApiResponse::success(
+        PermissionCheckResponse {
+            allowed: has_permission,
+            permission: req.permission,
+            user_id: claims.sub,
+            username: claims.username,
+        },
+        if has_permission { "权限验证通过".to_string() } else { "权限不足".to_string() },
+    ))
+}
+
+async fn get_user_permissions(
+    State(state): State<AppState>,
+    Path(user_id): Path<Uuid>,
+) -> Json<ApiResponse<UserWithPermissions>> {
+    match sqlx::query(r#"SELECT id, username, email, full_name, avatar_url, 
+                  is_active, is_superuser, created_at, updated_at, last_login_at
+           FROM iam.users WHERE id = $1"#).bind(user_id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => {
+            let roles = sqlx::query_as::<_, Role>(
+                r#"SELECT r.id, r.name, r.description, r.created_at
+                   FROM iam.roles r
+                   JOIN iam.user_roles ur ON r.id = ur.role_id
+                   WHERE ur.user_id = $1"#
+            )
+            .bind(user_id)
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
+
+            let permissions = sqlx::query_as::<_, Permission>(
+                r#"SELECT DISTINCT p.id, p.name, p.resource, p.action, p.description
+                   FROM iam.permissions p
+                   JOIN iam.role_permissions rp ON p.id = rp.permission_id
+                   JOIN iam.user_roles ur ON rp.role_id = ur.role_id
+                   WHERE ur.user_id = $1"#
+            )
+            .bind(user_id)
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
+
+            Json(ApiResponse::success(
+                UserWithPermissions {
+                    user: User {
+                        id: row.get("id"),
+                        username: row.get("username"),
+                        email: row.get("email"),
+                        full_name: row.get("full_name"),
+                        avatar_url: row.get("avatar_url"),
+                        is_active: row.get("is_active"),
+                        is_superuser: row.get("is_superuser"),
+                        created_at: row.get("created_at"),
+                        updated_at: row.get("updated_at"),
+                        last_login_at: row.get("last_login_at"),
+                    },
+                    roles,
+                    permissions,
+                },
+                "用户权限信息获取成功".to_string(),
+            ))
+        }
+        Err(sqlx::Error::RowNotFound) => Json(error_response(404, "用户不存在".to_string())),
+        Err(e) => {
+            tracing::error!("Failed to fetch user: {}", e);
+            Json(error_response(500, format!("获取用户权限失败: {}", e)))
+        }
+    }
+}
+
+async fn refresh_token(
+    State(state): State<AppState>,
+    Json(body): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let token = body.get("token").and_then(|t| t.as_str()).unwrap_or("");
+    
+    match decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(state.jwt_secret.as_ref()),
+        &Validation::new(Algorithm::HS256),
+    ) {
+        Ok(TokenData { claims, .. }) => {
+            let user_id = match Uuid::parse_str(&claims.sub) {
+                Ok(id) => id,
+                Err(e) => {
+                    tracing::error!("Invalid user ID in token: {}", e);
+                    return Json(error_response(400, "无效的用户标识".to_string()));
+                }
+            };
+            
+            let (roles, permissions) = match get_user_roles_and_permissions(&state.pool, user_id).await {
+                Ok((r, p)) => (r, p),
+                Err(e) => {
+                    return Json(error_response(500, format!("获取用户权限失败: {}", e)));
+                }
+            };
+
+            let expiration = (Utc::now() + Duration::hours(24)).timestamp() as usize;
+            let new_claims = Claims {
+                sub: claims.sub,
+                exp: expiration,
+                username: claims.username,
+                is_superuser: claims.is_superuser,
+                roles,
+                permissions,
+            };
+
+            let new_token = match encode(
+                &Header::default(),
+                &new_claims,
+                &EncodingKey::from_secret(state.jwt_secret.as_ref()),
+            ) {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("Failed to generate JWT token: {}", e);
+                    return Json(error_response(500, "生成认证令牌失败".to_string()));
+                }
+            };
+
+            let expires_at = DateTime::<Utc>::from_timestamp(expiration as i64, 0)
+                .unwrap_or_else(Utc::now)
+                .to_rfc3339();
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "token": new_token,
+                    "expires_at": expires_at,
+                    "username": new_claims.username,
+                    "is_superuser": new_claims.is_superuser,
+                    "roles": new_claims.roles,
+                    "permissions": new_claims.permissions,
+                }),
+                "令牌刷新成功".to_string(),
+            ))
+        }
+        Err(e) => Json(error_response(401, format!("令牌刷新失败: {}", e))),
+    }
+}
+
+async fn get_user_roles_and_permissions(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<(Vec<String>, Vec<String>), String> {
+    let roles: Vec<String> = sqlx::query(r#"SELECT r.id::text as role_id
+           FROM iam.roles r
+           JOIN iam.user_roles ur ON r.id = ur.role_id
+           WHERE ur.user_id = $1"#)
+        .bind(user_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|row| row.get::<Option<String>, _>("role_id"))
+        .collect();
+
+    let permissions: Vec<String> = sqlx::query(r#"SELECT DISTINCT p.id::text as permission_id
+           FROM iam.permissions p
+           JOIN iam.role_permissions rp ON p.id = rp.permission_id
+           JOIN iam.user_roles ur ON rp.role_id = ur.role_id
+           WHERE ur.user_id = $1"#)
+        .bind(user_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|row| row.get::<Option<String>, _>("permission_id"))
+        .collect();
+
+    Ok((roles, permissions))
+}
+
+async fn list_access_logs(
+    State(state): State<AppState>,
+    Query(params): Query<AccessLogQueryParams>,
+) -> Json<ApiResponse<Vec<AccessLog>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+
+    match sqlx::query_as::<_, AccessLog>(
+        r#"SELECT id, user_id, username, action, resource, resource_id,
+                  ip_address, user_agent, success, error_message, created_at
+           FROM iam.access_logs
+           ORDER BY created_at DESC
+           LIMIT $1 OFFSET $2"#
+    )
+    .bind(limit)
+    .bind(offset)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(logs) => Json(ApiResponse::success(logs, "访问日志列表获取成功".to_string())),
+        Err(e) => {
+            tracing::error!("Failed to fetch access logs: {}", e);
+            Json(error_response(500, format!("获取访问日志失败: {}", e)))
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct AccessLogQueryParams {
+    limit: Option<i64>,
+    offset: Option<i64>,
+}
+
+async fn create_access_log(
+    State(state): State<AppState>,
+    Json(req): Json<CreateAccessLogRequest>,
+) -> Json<ApiResponse<AccessLog>> {
+    match create_access_log_internal(
+        &state.pool,
+        CreateAccessLogParams {
+            user_id: req.user_id,
+            username: req.username,
+            action: req.action,
+            resource: req.resource,
+            resource_id: req.resource_id,
+            ip_address: req.ip_address,
+            user_agent: req.user_agent,
+            success: req.success,
+            error_message: req.error_message,
+        }
+    ).await {
+        Ok(log) => Json(ApiResponse::success(log, "访问日志创建成功".to_string())),
+        Err(e) => {
+            tracing::error!("Failed to create access log: {}", e);
+            Json(error_response(500, format!("创建访问日志失败: {}", e)))
+        }
+    }
+}
+
+struct CreateAccessLogParams {
+    user_id: Uuid,
+    username: String,
+    action: String,
+    resource: String,
+    resource_id: Option<String>,
+    ip_address: Option<String>,
+    user_agent: Option<String>,
+    success: bool,
+    error_message: Option<String>,
+}
+
+async fn create_access_log_internal(
+    pool: &PgPool,
+    params: CreateAccessLogParams,
+) -> Result<AccessLog, String> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    sqlx::query_as::<_, AccessLog>(
+        r#"INSERT INTO iam.access_logs 
+           (id, user_id, username, action, resource, resource_id, ip_address, user_agent, success, error_message, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           RETURNING id, user_id, username, action, resource, resource_id, ip_address, user_agent, success, error_message, created_at"#
+    )
+    .bind(id)
+    .bind(params.user_id)
+    .bind(params.username)
+    .bind(params.action)
+    .bind(params.resource)
+    .bind(params.resource_id)
+    .bind(params.ip_address)
+    .bind(params.user_agent)
+    .bind(params.success)
+    .bind(params.error_message)
+    .bind(now)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Database error: {}", e))
+}
+
+async fn get_user_access_logs(
+    State(state): State<AppState>,
+    Path(user_id): Path<Uuid>,
+    Query(params): Query<AccessLogQueryParams>,
+) -> Json<ApiResponse<Vec<AccessLog>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+
+    match sqlx::query_as::<_, AccessLog>(
+        r#"SELECT id, user_id, username, action, resource, resource_id,
+                  ip_address, user_agent, success, error_message, created_at
+           FROM iam.access_logs
+           WHERE user_id = $1
+           ORDER BY created_at DESC
+           LIMIT $2 OFFSET $3"#
+    )
+    .bind(user_id)
+    .bind(limit)
+    .bind(offset)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(logs) => Json(ApiResponse::success(logs, "用户访问日志获取成功".to_string())),
+        Err(e) => {
+            tracing::error!("Failed to fetch user access logs: {}", e);
+            Json(error_response(500, format!("获取用户访问日志失败: {}", e)))
+        }
+    }
+}

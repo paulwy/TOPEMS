@@ -1,0 +1,28 @@
+[package]
+name = "topems-iam"
+version = "1.0.0"
+edition = "2021"
+authors = ["TOPEMS Team"]
+description = "TOPEMS Identity and Access Management Service"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full", "sync"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sqlx = { version = "0.6", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "offline"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+dotenv = "0.15"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+thiserror = "2"
+anyhow = "1"
+tower-http = { version = "0.5", features = ["cors", "trace", "sensitive-headers"] }
+bcrypt = "0.15"
+jsonwebtoken = { version = "9", features = ["default"] }
+jwt-compact = "0.8"
+validator = { version = "0.18", features = ["derive"] }
+regex = "1"
+lazy_static = "1"
+tower = { version = "0.4", features = ["util"] }
