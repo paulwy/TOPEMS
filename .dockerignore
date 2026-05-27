@@ -1,0 +1,123 @@
+# 版本控制
+.git
+.gitignore
+.gitattributes
+
+# IDE 和编辑器
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 依赖目录
+node_modules/
+target/
+vendor/
+*.egg-info/
+dist/
+build/
+
+# 测试和覆盖率
+coverage/
+*.lcov
+htmlcov/
+.tox/
+.pytest_cache/
+.cargo/
+
+# 文档
+docs/
+*.md
+!README.md
+
+# 环境配置
+.env
+.env.*
+!.env.example
+
+# 日志文件
+*.log
+logs/
+*.log.*
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+*.temp
+
+# 数据库和缓存
+*.db
+*.sqlite
+*.sqlite3
+.cache/
+
+# 备份文件
+*.bak
+*.backup
+*_backup*
+
+# 编译文件
+*.o
+*.so
+*.a
+*.dylib
+
+# 开发文件
+*.orig
+*.rej
+*.patch
+
+# 镜像和媒体
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.ico
+*.svg
+*.webp
+!docs/**/*.png
+!docs/**/*.jpg
+
+# Office 文件
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+~*.doc
+~*.docx
+~*.xls
+~*.xlsx
+
+# 压缩文件
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# 密钥和证书
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+ssl/
+certs/
+
+# 配置文件（不应该被打包的）
+docker-compose*.yml
+docker-compose*.yaml
+*.toml.example
+Makefile
+.dockerignore
+
+# 其他
+Thumbs.db
+desktop.ini

@@ -392,13 +392,430 @@ CREATE INDEX IF NOT EXISTS idx_formulas_project_id ON rs.formulas(project_id);
 CREATE INDEX IF NOT EXISTS idx_ingredients_formula_id ON rs.ingredients(formula_id);
 
 -- ========================
+-- topems-qms 质量管理系统数据库
+-- ========================
+CREATE SCHEMA IF NOT EXISTS qms;
+
+-- 质量标准表
+CREATE TABLE IF NOT EXISTS qms.quality_standards (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(100) UNIQUE NOT NULL,
+    category VARCHAR(100),
+    version VARCHAR(50) NOT NULL DEFAULT '1.0',
+    description TEXT,
+    content TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'draft',  -- draft, active, inactive
+    effective_date DATE,
+    expiry_date DATE,
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 质量检查表
+CREATE TABLE IF NOT EXISTS qms.quality_checks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    check_no VARCHAR(100) UNIQUE NOT NULL,
+    project_id UUID,
+    check_type VARCHAR(100) NOT NULL,
+    inspector VARCHAR(255),
+    check_date DATE,
+    location VARCHAR(255),
+    result VARCHAR(50),  -- pass, fail, pending
+    conclusion TEXT,
+    attachments TEXT[],
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',  -- pending, in_progress, completed, cancelled
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 检查项表
+CREATE TABLE IF NOT EXISTS qms.check_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    check_id UUID NOT NULL REFERENCES qms.quality_checks(id) ON DELETE CASCADE,
+    standard_id UUID REFERENCES qms.quality_standards(id) ON DELETE SET NULL,
+    item_name VARCHAR(255) NOT NULL,
+    check_method TEXT,
+    standard_value VARCHAR(255),
+    actual_value VARCHAR(255),
+    is_conform BOOLEAN,
+    remarks TEXT,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 质量异常表
+CREATE TABLE IF NOT EXISTS qms.quality_issues (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    issue_no VARCHAR(100) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    severity VARCHAR(50) NOT NULL DEFAULT 'medium',  -- low, medium, high, critical
+    category VARCHAR(100),
+    status VARCHAR(50) NOT NULL DEFAULT 'open',  -- open, in_progress, resolved, closed
+    assignee UUID,
+    due_date DATE,
+    resolution TEXT,
+    closed_at TIMESTAMPTZ,
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 质量改进表
+CREATE TABLE IF NOT EXISTS qms.quality_improvements (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    improvement_no VARCHAR(100) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    issue_id UUID REFERENCES qms.quality_issues(id) ON DELETE SET NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',  -- pending, in_progress, completed
+    priority VARCHAR(50) NOT NULL DEFAULT 'medium',  -- low, medium, high
+    owner UUID,
+    start_date DATE,
+    end_date DATE,
+    actual_end_date DATE,
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_quality_standards_code ON qms.quality_standards(code);
+CREATE INDEX IF NOT EXISTS idx_quality_standards_status ON qms.quality_standards(status);
+CREATE INDEX IF NOT EXISTS idx_quality_checks_check_no ON qms.quality_checks(check_no);
+CREATE INDEX IF NOT EXISTS idx_quality_checks_status ON qms.quality_checks(status);
+CREATE INDEX IF NOT EXISTS idx_check_items_check_id ON qms.check_items(check_id);
+CREATE INDEX IF NOT EXISTS idx_quality_issues_issue_no ON qms.quality_issues(issue_no);
+CREATE INDEX IF NOT EXISTS idx_quality_issues_status ON qms.quality_issues(status);
+CREATE INDEX IF NOT EXISTS idx_quality_issues_severity ON qms.quality_issues(severity);
+CREATE INDEX IF NOT EXISTS idx_quality_improvements_status ON qms.quality_improvements(status);
+
+-- ========================
+-- topems-ehs 环境健康安全系统数据库
+-- ========================
+CREATE SCHEMA IF NOT EXISTS ehs;
+
+-- 危险源表
+CREATE TABLE IF NOT EXISTS ehs.safety_hazards (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hazard_no VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    category VARCHAR(100),
+    level VARCHAR(50) NOT NULL DEFAULT 'medium',  -- low, medium, high, critical
+    description TEXT,
+    location VARCHAR(255),
+    risk_assessment JSONB,
+    control_measures TEXT[],
+    status VARCHAR(50) NOT NULL DEFAULT 'active',  -- active, mitigated, closed
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 安全检查表
+CREATE TABLE IF NOT EXISTS ehs.safety_checks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    check_no VARCHAR(100) UNIQUE NOT NULL,
+    check_type VARCHAR(100) NOT NULL,
+    inspector VARCHAR(255),
+    check_date DATE,
+    location VARCHAR(255),
+    result VARCHAR(50),  -- pass, fail, pending
+    issues TEXT[],
+    attachments TEXT[],
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',  -- pending, in_progress, completed, cancelled
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 安全检查项表
+CREATE TABLE IF NOT EXISTS ehs.safety_check_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    check_id UUID NOT NULL REFERENCES ehs.safety_checks(id) ON DELETE CASCADE,
+    hazard_id UUID REFERENCES ehs.safety_hazards(id) ON DELETE SET NULL,
+    item_name VARCHAR(255) NOT NULL,
+    check_method TEXT,
+    standard TEXT,
+    is_conform BOOLEAN,
+    remarks TEXT,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 应急预案表
+CREATE TABLE IF NOT EXISTS ehs.emergency_plans (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    plan_no VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(100),
+    scope TEXT,
+    trigger_conditions TEXT,
+    response_procedures TEXT,
+    responsible_persons TEXT[],
+    contact_info TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'draft',  -- draft, active, inactive
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 演练记录表
+CREATE TABLE IF NOT EXISTS ehs.drill_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    plan_id UUID REFERENCES ehs.emergency_plans(id) ON DELETE CASCADE,
+    drill_name VARCHAR(255) NOT NULL,
+    drill_date DATE NOT NULL,
+    participants TEXT[],
+    duration INTERVAL,
+    location VARCHAR(255),
+    summary TEXT,
+    issues_found TEXT,
+    improvements TEXT,
+    attachments TEXT[],
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_safety_hazards_hazard_no ON ehs.safety_hazards(hazard_no);
+CREATE INDEX IF NOT EXISTS idx_safety_hazards_level ON ehs.safety_hazards(level);
+CREATE INDEX IF NOT EXISTS idx_safety_hazards_status ON ehs.safety_hazards(status);
+CREATE INDEX IF NOT EXISTS idx_safety_checks_check_no ON ehs.safety_checks(check_no);
+CREATE INDEX IF NOT EXISTS idx_safety_checks_status ON ehs.safety_checks(status);
+CREATE INDEX IF NOT EXISTS idx_safety_check_items_check_id ON ehs.safety_check_items(check_id);
+CREATE INDEX IF NOT EXISTS idx_emergency_plans_plan_no ON ehs.emergency_plans(plan_no);
+CREATE INDEX IF NOT EXISTS idx_emergency_plans_status ON ehs.emergency_plans(status);
+CREATE INDEX IF NOT EXISTS idx_drill_records_plan_id ON ehs.drill_records(plan_id);
+
+-- ========================
+-- topems-srm 供应商关系管理系统数据库
+-- ========================
+CREATE SCHEMA IF NOT EXISTS srm;
+
+-- 供应商表
+CREATE TABLE IF NOT EXISTS srm.suppliers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    supplier_no VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    legal_name VARCHAR(255),
+    category VARCHAR(100),
+    status VARCHAR(50) NOT NULL DEFAULT 'active',  -- active, inactive, suspended
+    tax_id VARCHAR(100),
+    address TEXT,
+    contact_person VARCHAR(255),
+    phone VARCHAR(50),
+    email VARCHAR(255),
+    website VARCHAR(500),
+    credit_rating VARCHAR(50),
+    risk_level VARCHAR(50) DEFAULT 'low',  -- low, medium, high
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 供应商评估表
+CREATE TABLE IF NOT EXISTS srm.supplier_evaluations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    supplier_id UUID NOT NULL REFERENCES srm.suppliers(id) ON DELETE CASCADE,
+    evaluation_no VARCHAR(100) UNIQUE NOT NULL,
+    evaluation_date DATE NOT NULL,
+    evaluator VARCHAR(255),
+    overall_score NUMERIC(5,2),
+    quality_score NUMERIC(5,2),
+    delivery_score NUMERIC(5,2),
+    service_score NUMERIC(5,2),
+    price_score NUMERIC(5,2),
+    comments TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'completed',  -- pending, in_progress, completed
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 采购订单表
+CREATE TABLE IF NOT EXISTS srm.purchase_orders (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    po_no VARCHAR(100) UNIQUE NOT NULL,
+    supplier_id UUID NOT NULL REFERENCES srm.suppliers(id) ON DELETE CASCADE,
+    order_date DATE NOT NULL,
+    expected_date DATE,
+    actual_date DATE,
+    total_amount NUMERIC(15,2),
+    currency VARCHAR(10) DEFAULT 'CNY',
+    status VARCHAR(50) NOT NULL DEFAULT 'draft',  -- draft, sent, confirmed, partial, complete, cancelled
+    remarks TEXT,
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 采购订单项表
+CREATE TABLE IF NOT EXISTS srm.purchase_order_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    po_id UUID NOT NULL REFERENCES srm.purchase_orders(id) ON DELETE CASCADE,
+    item_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    quantity NUMERIC(15,2) NOT NULL,
+    unit_price NUMERIC(15,2) NOT NULL,
+    unit VARCHAR(50),
+    line_total NUMERIC(15,2) NOT NULL,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_suppliers_supplier_no ON srm.suppliers(supplier_no);
+CREATE INDEX IF NOT EXISTS idx_suppliers_status ON srm.suppliers(status);
+CREATE INDEX IF NOT EXISTS idx_suppliers_category ON srm.suppliers(category);
+CREATE INDEX IF NOT EXISTS idx_supplier_evaluations_supplier_id ON srm.supplier_evaluations(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_supplier_evaluations_evaluation_no ON srm.supplier_evaluations(evaluation_no);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_po_no ON srm.purchase_orders(po_no);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier_id ON srm.purchase_orders(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_status ON srm.purchase_orders(status);
+CREATE INDEX IF NOT EXISTS idx_purchase_order_items_po_id ON srm.purchase_order_items(po_id);
+
+-- ========================
+-- topems-pdm 生产数据管理系统数据库
+-- ========================
+CREATE SCHEMA IF NOT EXISTS pdm;
+
+-- 生产工艺表
+CREATE TABLE IF NOT EXISTS pdm.production_processes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    process_no VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    version VARCHAR(50) NOT NULL DEFAULT '1.0',
+    status VARCHAR(50) NOT NULL DEFAULT 'draft',  -- draft, active, inactive
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 生产工序表
+CREATE TABLE IF NOT EXISTS pdm.production_steps (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    process_id UUID NOT NULL REFERENCES pdm.production_processes(id) ON DELETE CASCADE,
+    step_no VARCHAR(50) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    duration INTERVAL,
+    equipment_required TEXT,
+    sort_order INT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 生产配方表
+CREATE TABLE IF NOT EXISTS pdm.production_formulas (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    formula_no VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    version VARCHAR(50) NOT NULL DEFAULT '1.0',
+    process_id UUID REFERENCES pdm.production_processes(id) ON DELETE SET NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'draft',  -- draft, active, inactive
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 生产配方原料表
+CREATE TABLE IF NOT EXISTS pdm.formula_ingredients (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    formula_id UUID NOT NULL REFERENCES pdm.production_formulas(id) ON DELETE CASCADE,
+    material_name VARCHAR(255) NOT NULL,
+    quantity NUMERIC(15,4) NOT NULL,
+    unit VARCHAR(50) NOT NULL,
+    percentage NUMERIC(5,2),
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 生产批次表
+CREATE TABLE IF NOT EXISTS pdm.production_batches (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    batch_no VARCHAR(100) UNIQUE NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    formula_id UUID REFERENCES pdm.production_formulas(id) ON DELETE SET NULL,
+    process_id UUID REFERENCES pdm.production_processes(id) ON DELETE SET NULL,
+    planned_quantity NUMERIC(15,2),
+    actual_quantity NUMERIC(15,2),
+    unit VARCHAR(50),
+    start_date TIMESTAMPTZ,
+    end_date TIMESTAMPTZ,
+    status VARCHAR(50) NOT NULL DEFAULT 'planned',  -- planned, in_progress, completed, cancelled
+    operator VARCHAR(255),
+    remarks TEXT,
+    created_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 生产统计数据表
+CREATE TABLE IF NOT EXISTS pdm.production_statistics (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    batch_id UUID REFERENCES pdm.production_batches(id) ON DELETE CASCADE,
+    stat_date DATE NOT NULL,
+    output_quantity NUMERIC(15,2),
+    reject_quantity NUMERIC(15,2),
+    pass_rate NUMERIC(5,2),
+    cycle_time INTERVAL,
+    energy_consumption NUMERIC(15,2),
+    remarks TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(batch_id, stat_date)
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_production_processes_process_no ON pdm.production_processes(process_no);
+CREATE INDEX IF NOT EXISTS idx_production_processes_status ON pdm.production_processes(status);
+CREATE INDEX IF NOT EXISTS idx_production_steps_process_id ON pdm.production_steps(process_id);
+CREATE INDEX IF NOT EXISTS idx_production_formulas_formula_no ON pdm.production_formulas(formula_no);
+CREATE INDEX IF NOT EXISTS idx_production_formulas_status ON pdm.production_formulas(status);
+CREATE INDEX IF NOT EXISTS idx_formula_ingredients_formula_id ON pdm.formula_ingredients(formula_id);
+CREATE INDEX IF NOT EXISTS idx_production_batches_batch_no ON pdm.production_batches(batch_no);
+CREATE INDEX IF NOT EXISTS idx_production_batches_status ON pdm.production_batches(status);
+CREATE INDEX IF NOT EXISTS idx_production_batches_formula_id ON pdm.production_batches(formula_id);
+CREATE INDEX IF NOT EXISTS idx_production_statistics_batch_id ON pdm.production_statistics(batch_id);
+CREATE INDEX IF NOT EXISTS idx_production_statistics_stat_date ON pdm.production_statistics(stat_date);
+
+-- ========================
+-- topems-integration 系统集成数据库
+-- ========================
+CREATE SCHEMA IF NOT EXISTS integration;
+
+-- 系统关联表
+CREATE TABLE IF NOT EXISTS integration.links (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    source_system VARCHAR(50) NOT NULL,
+    source_type VARCHAR(100),
+    source_id UUID NOT NULL,
+    target_system VARCHAR(50) NOT NULL,
+    target_type VARCHAR(100),
+    target_id UUID NOT NULL,
+    link_type VARCHAR(100),
+    metadata JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_links_source_system ON integration.links(source_system);
+CREATE INDEX IF NOT EXISTS idx_links_target_system ON integration.links(target_system);
+CREATE INDEX IF NOT EXISTS idx_links_source_id ON integration.links(source_id);
+CREATE INDEX IF NOT EXISTS idx_links_target_id ON integration.links(target_id);
+
+-- ========================
 -- 初始化完成提示
 -- ========================
 DO $$
 BEGIN
     RAISE NOTICE 'TOPEMS 数据库初始化完成！';
     RAISE NOTICE '管理员账户: admin / admin123';
-    RAISE NOTICE 'Schemas created: doc, iam, ai, flow';
+    RAISE NOTICE 'Schemas created: doc, iam, ai, flow, lims, rs, qms, ehs, srm, pdm';
 END
 $$;
 

@@ -28,7 +28,7 @@
 3. 运行：
 
 ```bash
-cd /Users/air/TOPEMS/infrastructure/docker
+cd /Users/xingzhai/TOPEMS/infrastructure/docker
 docker-compose up -d
 ```
 

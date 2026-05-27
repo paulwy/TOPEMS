@@ -85,7 +85,7 @@ services:
 直接运行即可：
 
 ```bash
-cd /Users/air/TOPEMS/infrastructure/docker
+cd /Users/xingzhai/TOPEMS/infrastructure/docker
 docker-compose up -d
 ```
 
@@ -149,7 +149,7 @@ docker pull docker.mirrors.ustc.edu.cn/library/postgres:16-alpine
 ### 1. 清理旧容器（如果有）
 
 ```bash
-cd /Users/air/TOPEMS/infrastructure/docker
+cd /Users/xingzhai/TOPEMS/infrastructure/docker
 docker-compose down
 docker-compose rm -f
 ```
@@ -247,7 +247,7 @@ docker system prune -a
 
 1. **启动 topems-doc 后端**
    ```bash
-   cd /Users/air/TOPEMS/platform/topems-doc/backend
+   cd /Users/xingzhai/TOPEMS/platform/topems-doc/backend
    cargo run
    ```
 
