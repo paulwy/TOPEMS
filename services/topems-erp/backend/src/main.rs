@@ -1,300 +1,198 @@
+mod api;
+mod models;
+
+use anyhow::Result;
 use axum::{
-    extract::State,
-    routing::{get, post},
-    Json, Router,
+    extract::FromRef,
+    routing::get,
+    Json,
+    Router,
 };
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use sqlx::postgres::PgPoolOptions;
+use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use uuid::Uuid;
-use chrono::Utc;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ProductionPlan {
-    id: String,
-    product_name: String,
-    product_code: String,
-    planned_quantity: i32,
-    start_date: String,
-    end_date: String,
-    status: String,
-    created_by: String,
-}
+use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CreateProductionPlanRequest {
-    product_name: String,
-    product_code: String,
-    planned_quantity: i32,
-    start_date: String,
-    end_date: String,
-    created_by: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SupplyChainOrder {
-    id: String,
-    order_type: String,
-    material_name: String,
-    quantity: i32,
-    supplier_customer: String,
-    status: String,
-    order_date: String,
-    expected_date: String,
-    created_by: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CreateSupplyChainOrderRequest {
-    order_type: String,
-    material_name: String,
-    quantity: i32,
-    supplier_customer: String,
-    expected_date: String,
-    created_by: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct FinancialRecord {
-    id: String,
-    record_type: String,
-    description: String,
-    amount: f64,
-    category: String,
-    date: String,
-    reference_number: String,
-    created_by: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CreateFinancialRecordRequest {
-    record_type: String,
-    description: String,
-    amount: f64,
-    category: String,
-    reference_number: String,
-    created_by: String,
-}
-
-#[derive(Debug)]
+#[derive(Clone)]
 struct AppState {
-    production_plans: Mutex<Vec<ProductionPlan>>,
-    supply_chain_orders: Mutex<Vec<SupplyChainOrder>>,
-    financial_records: Mutex<Vec<FinancialRecord>>,
+    pool: sqlx::PgPool,
+    auth_state: AuthState,
 }
 
-impl AppState {
-    fn new() -> Self {
-        let now = Utc::now().format("%Y-%m-%d").to_string();
-        let next_week = (Utc::now() + chrono::Duration::days(7)).format("%Y-%m-%d").to_string();
-        let next_month = (Utc::now() + chrono::Duration::days(30)).format("%Y-%m-%d").to_string();
-        
-        AppState {
-            production_plans: Mutex::new(vec![
-                ProductionPlan {
-                    id: Uuid::new_v4().to_string(),
-                    product_name: "高性能复合材料 A".to_string(),
-                    product_code: "MAT-A-001".to_string(),
-                    planned_quantity: 1000,
-                    start_date: now.clone(),
-                    end_date: next_week.clone(),
-                    status: "计划中".to_string(),
-                    created_by: "生产经理".to_string(),
-                },
-            ]),
-            supply_chain_orders: Mutex::new(vec![
-                SupplyChainOrder {
-                    id: Uuid::new_v4().to_string(),
-                    order_type: "采购".to_string(),
-                    material_name: "化工原料 X".to_string(),
-                    quantity: 500,
-                    supplier_customer: "供应商 A".to_string(),
-                    status: "待处理".to_string(),
-                    order_date: now.clone(),
-                    expected_date: next_month.clone(),
-                    created_by: "采购员".to_string(),
-                },
-            ]),
-            financial_records: Mutex::new(vec![
-                FinancialRecord {
-                    id: Uuid::new_v4().to_string(),
-                    record_type: "收入".to_string(),
-                    description: "产品销售订单".to_string(),
-                    amount: 50000.0,
-                    category: "销售收入".to_string(),
-                    date: now.clone(),
-                    reference_number: "INV-2026-001".to_string(),
-                    created_by: "财务".to_string(),
-                },
-            ]),
-        }
+impl FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct ApiResponse<T> {
-    success: bool,
-    data: Option<T>,
-    message: String,
-}
-
-async fn home() -> &'static str {
-    "TOPEMS ERP System API"
-}
-
-async fn health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse {
-        success: true,
-        data: Some("TOPEMS ERP is running!".to_string()),
-        message: "OK".to_string(),
-    })
-}
-
-async fn get_production_plans(State(state): State<Arc<AppState>>) -> Json<ApiResponse<Vec<ProductionPlan>>> {
-    let plans = state.production_plans.lock().unwrap().clone();
-    Json(ApiResponse {
-        success: true,
-        data: Some(plans),
-        message: "Success".to_string(),
-    })
-}
-
-async fn create_production_plan(
-    State(state): State<Arc<AppState>>,
-    Json(request): Json<CreateProductionPlanRequest>,
-) -> Json<ApiResponse<ProductionPlan>> {
-    let plan = ProductionPlan {
-        id: Uuid::new_v4().to_string(),
-        product_name: request.product_name,
-        product_code: request.product_code,
-        planned_quantity: request.planned_quantity,
-        start_date: request.start_date,
-        end_date: request.end_date,
-        status: "计划中".to_string(),
-        created_by: request.created_by,
-    };
-
-    state.production_plans.lock().unwrap().push(plan.clone());
-    
-    Json(ApiResponse {
-        success: true,
-        data: Some(plan),
-        message: "创建成功".to_string(),
-    })
-}
-
-async fn get_supply_chain_orders(State(state): State<Arc<AppState>>) -> Json<ApiResponse<Vec<SupplyChainOrder>>> {
-    let orders = state.supply_chain_orders.lock().unwrap().clone();
-    Json(ApiResponse {
-        success: true,
-        data: Some(orders),
-        message: "Success".to_string(),
-    })
-}
-
-async fn create_supply_chain_order(
-    State(state): State<Arc<AppState>>,
-    Json(request): Json<CreateSupplyChainOrderRequest>,
-) -> Json<ApiResponse<SupplyChainOrder>> {
-    let now = Utc::now().format("%Y-%m-%d").to_string();
-    let order = SupplyChainOrder {
-        id: Uuid::new_v4().to_string(),
-        order_type: request.order_type,
-        material_name: request.material_name,
-        quantity: request.quantity,
-        supplier_customer: request.supplier_customer,
-        status: "待处理".to_string(),
-        order_date: now,
-        expected_date: request.expected_date,
-        created_by: request.created_by,
-    };
-
-    state.supply_chain_orders.lock().unwrap().push(order.clone());
-    
-    Json(ApiResponse {
-        success: true,
-        data: Some(order),
-        message: "创建成功".to_string(),
-    })
-}
-
-async fn get_financial_records(State(state): State<Arc<AppState>>) -> Json<ApiResponse<Vec<FinancialRecord>>> {
-    let records = state.financial_records.lock().unwrap().clone();
-    Json(ApiResponse {
-        success: true,
-        data: Some(records),
-        message: "Success".to_string(),
-    })
-}
-
-async fn create_financial_record(
-    State(state): State<Arc<AppState>>,
-    Json(request): Json<CreateFinancialRecordRequest>,
-) -> Json<ApiResponse<FinancialRecord>> {
-    let now = Utc::now().format("%Y-%m-%d").to_string();
-    let record = FinancialRecord {
-        id: Uuid::new_v4().to_string(),
-        record_type: request.record_type,
-        description: request.description,
-        amount: request.amount,
-        category: request.category,
-        date: now,
-        reference_number: request.reference_number,
-        created_by: request.created_by,
-    };
-
-    state.financial_records.lock().unwrap().push(record.clone());
-    
-    Json(ApiResponse {
-        success: true,
-        data: Some(record),
-        message: "创建成功".to_string(),
-    })
-}
-
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    dotenv::dotenv().ok();
+
     tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "topems_erp=debug,tower_http=debug".into()),
-        )
+        .with(tracing_subscriber::EnvFilter::new(
+            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
+        ))
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    tracing::info!("🚀 TOPEMS ERP System starting...");
-    dotenv::dotenv().ok();
+    let database_url = env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://topems_dev:topems_dev@localhost/topems_dev".to_string());
 
-    let state = Arc::new(AppState::new());
+    let pool = PgPoolOptions::new()
+        .max_connections(10)
+        .connect(&database_url)
+        .await?;
 
-    let cors = tower_http::cors::CorsLayer::new()
-        .allow_origin(tower_http::cors::Any)
-        .allow_methods(tower_http::cors::Any)
-        .allow_headers(tower_http::cors::Any);
+    tracing::info!("🔗 数据库连接成功");
+
+    if let Err(e) = init_db(&pool).await {
+        tracing::warn!("数据库初始化警告: {}", e);
+    }
+
+    let jwt_secret = env::var("JWT_SECRET")
+        .unwrap_or_else(|_| {
+            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
+            "topems-default-jwt-secret-change-me-in-production".to_string()
+        });
+    
+    let refresh_secret = env::var("REFRESH_SECRET")
+        .unwrap_or_else(|_| {
+            tracing::warn!("REFRESH_SECRET not set, using default (not recommended for production)");
+            "topems-default-refresh-secret-change-me-in-production".to_string()
+        });
+
+    let token_expiry_hours: i64 = env::var("JWT_EXPIRY_HOURS")
+        .unwrap_or_else(|_| "24".to_string())
+        .parse()
+        .unwrap_or(24);
+
+    let app_state = AppState {
+        pool: pool.clone(),
+        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
+    };
+
+    let cors = create_cors_layer();
 
     let app = Router::new()
-        .route("/", get(home))
-        .route("/health", get(health))
-        .route("/api/v1/production-plans", get(get_production_plans).post(create_production_plan))
-        .route("/api/v1/supply-chain-orders", get(get_supply_chain_orders).post(create_supply_chain_order))
-        .route("/api/v1/financial-records", get(get_financial_records).post(create_financial_record))
-        .layer(cors)
-        .with_state(state);
+        .route("/health", get(health_check))
+        .merge(api::company::create_routes(pool.clone()).await?)
+        .merge(api::department::create_routes(pool.clone()).await?)
+        .merge(api::employee::create_routes(pool.clone()).await?)
+        .merge(api::asset::create_routes(pool.clone()).await?)
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .layer(cors);
 
-    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8009".to_string())
-        .parse()
-        .unwrap_or(8009);
+    let port = env::var("PORT").unwrap_or_else(|_| "8006".to_string());
+    let addr = format!("0.0.0.0:{}", port);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ TOPEMS ERP running on http://{}", addr);
+    tracing::info!("🚀 TOPEMS-ERP 企业资源计划系统启动中...");
+    tracing::info!("📦 端口: {}", port);
+    tracing::info!("🔒 认证保护已启用");
 
-    axum::serve(
-        tokio::net::TcpListener::bind(&addr).await.unwrap(),
-        app.into_make_service(),
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+async fn health_check() -> Json<ApiResponse<&'static str>> {
+    Json(ApiResponse::success("TOPEMS-ERP is running", "健康检查"))
+}
+
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS companies (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            name VARCHAR(255) NOT NULL,
+            short_name VARCHAR(100),
+            registration_number VARCHAR(100),
+            tax_number VARCHAR(100),
+            address VARCHAR(500),
+            contact_phone VARCHAR(50),
+            email VARCHAR(255),
+            website VARCHAR(255),
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
     )
-    .await
-    .unwrap();
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS departments (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            name VARCHAR(255) NOT NULL,
+            code VARCHAR(100),
+            parent_id UUID REFERENCES departments(id),
+            company_id UUID REFERENCES companies(id),
+            description TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS employees (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            employee_number VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            gender VARCHAR(10),
+            birth_date TIMESTAMPTZ,
+            hire_date TIMESTAMPTZ,
+            department_id UUID REFERENCES departments(id),
+            position VARCHAR(100),
+            email VARCHAR(255),
+            phone VARCHAR(50),
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS assets (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            asset_number VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            category VARCHAR(100),
+            brand VARCHAR(100),
+            model VARCHAR(100),
+            purchase_date TIMESTAMPTZ,
+            purchase_amount NUMERIC(15,2),
+            location VARCHAR(255),
+            responsible_id UUID REFERENCES employees(id),
+            status VARCHAR(50) NOT NULL DEFAULT 'in_use',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    tracing::info!("✅ 数据库表初始化完成");
+
+    Ok(())
 }

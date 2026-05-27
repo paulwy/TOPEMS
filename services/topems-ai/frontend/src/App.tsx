@@ -1,19 +1,70 @@
 import { useState, useEffect, useRef } from 'react';
 
+// 更新类型定义以匹配新的后端API
 interface Document {
   id: string;
   title: string;
-  content: string;
-  created_at: string;
   filename: string;
-  path: string;
+  file_path: string | null;
+  file_size: number | null;
+  mime_type: string | null;
+  content_hash: string | null;
+  created_at: string;
+  updated_at: string;
+  status: 'pending' | 'processing' | 'processed' | 'error';
+  error_message: string | null;
+}
+
+interface SearchResult {
+  chunk: {
+    id: string;
+    document_id: string;
+    chunk_index: number;
+    content: string;
+    embedding: any;
+    created_at: string;
+    metadata: any;
+  };
+  document: Document;
+  similarity: number;
+}
+
+interface ChatResponse {
+  answer: string;
+  sources: SearchResult[];
 }
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  sources?: SearchResult[];
 }
+
+interface ApiResponse<T> {
+  code: number;
+  success: boolean;
+  data: T | null;
+  message: string;
+  timestamp: string;
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 120000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const res = await fetch(`${API_BASE_URL}${url}`, {
+      ...options,
+      signal: controller.signal,
+    });
+    return res;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
 
 function App() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -21,7 +72,6 @@ function App() {
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [apiConfigured, setApiConfigured] = useState<boolean | null>(null);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +79,6 @@ function App() {
 
   useEffect(() => {
     fetchDocuments();
-    checkApiStatus();
   }, []);
 
   useEffect(() => {
@@ -40,20 +89,11 @@ function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const checkApiStatus = async () => {
-    try {
-      // 直接设置为 true，因为我们已经配置了 Ollama
-      setApiConfigured(true);
-    } catch (err) {
-      console.error('Failed to check API status:', err);
-    }
-  };
-
   const fetchDocuments = async () => {
     try {
-      const res = await fetch('/api/v1/documents');
-      const data = await res.json();
-      if (data.success) {
+      const res = await fetchWithTimeout('/api/v1/documents');
+      const data: ApiResponse<Document[]> = await res.json();
+      if (data.success && data.data) {
         setDocuments(data.data);
       }
     } catch (err) {
@@ -63,19 +103,22 @@ function App() {
     }
   };
 
-  const handleReloadDocuments = async () => {
-    setLoading(true);
+  const handleDeleteDocument = async (docId: string) => {
+    if (!confirm('确定要删除这个文档吗？')) return;
+    
     try {
-      const res = await fetch('/api/v1/documents/reload', { method: 'POST' });
-      const data = await res.json();
+      const res = await fetchWithTimeout(`/api/v1/documents/${docId}`, {
+        method: 'DELETE',
+      });
+      const data: ApiResponse<void> = await res.json();
       if (data.success) {
-        setDocuments(data.data);
+        fetchDocuments();
+      } else {
         alert(data.message);
       }
     } catch (err) {
-      console.error('Failed to reload documents:', err);
-    } finally {
-      setLoading(false);
+      console.error('Failed to delete document:', err);
+      alert('删除失败');
     }
   };
 
@@ -93,11 +136,11 @@ function App() {
       const formData = new FormData();
       formData.append('file', selectedFile);
       
-      const res = await fetch('/api/v1/documents/upload', {
+      const res = await fetchWithTimeout('/api/v1/documents/upload', {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data: ApiResponse<Document> = await res.json();
       if (data.success) {
         alert(data.message);
         setSelectedFile(null);
@@ -129,30 +172,60 @@ function App() {
     setIsTyping(true);
 
     try {
-      const res = await fetch('/api/v1/ai/chat', {
+      const res = await fetchWithTimeout('/api/v1/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: currentQuery }),
       });
-      const data = await res.json();
-      if (data.success) {
+      const data: ApiResponse<ChatResponse> = await res.json();
+      if (data.success && data.data) {
         const assistantMessage: ChatMessage = {
           role: 'assistant',
           content: data.data.answer,
           timestamp: new Date(),
+          sources: data.data.sources,
         };
         setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        throw new Error(data.message);
       }
     } catch (err) {
+      let errorContent = '抱歉，发生了错误，请稍后重试。';
+      if (err instanceof Error && err.name === 'AbortError') {
+        errorContent = '请求超时，请检查网络连接或稍后重试。';
+      }
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: '抱歉，发生了错误，请稍后重试。',
+        content: errorContent,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
     }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { bg: '#fef3c7', color: '#92400e', text: '待处理' },
+      processing: { bg: '#dbeafe', color: '#1e40af', text: '处理中' },
+      processed: { bg: '#d1fae5', color: '#065f46', text: '已处理' },
+      error: { bg: '#fee2e2', color: '#991b1b', text: '处理失败' },
+    };
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return (
+      <span style={{
+        display: 'inline-block',
+        padding: '2px 8px',
+        borderRadius: '4px',
+        fontSize: '0.75rem',
+        fontWeight: 500,
+        background: config.bg,
+        color: config.color,
+      }}>
+        {config.text}
+      </span>
+    );
   };
 
   return (
@@ -164,7 +237,7 @@ function App() {
     }}>
       {/* 侧边栏 - 知识库 */}
       <div style={{ 
-        width: '300px', 
+        width: '320px', 
         background: '#fff', 
         borderRight: '1px solid #e2e8f0',
         display: 'flex',
@@ -188,154 +261,129 @@ function App() {
           </p>
         </div>
 
-        <div style={{ padding: '1rem' }}>
-          {apiConfigured === false && (
-            <div style={{ 
-              background: '#fffbeb', 
-              border: '1px solid #fcd34d', 
-              borderRadius: '0.5rem', 
+        <div style={{ 
+          padding: '1rem',
+          borderBottom: '1px solid #e2e8f0',
+        }}>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              width: '100%',
               padding: '0.75rem',
-              marginBottom: '1rem',
-              fontSize: '0.8125rem'
-            }}>
-              <p style={{ margin: 0, color: '#92400e' }}>
-                ⚠️  当前使用模拟 AI
-              </p>
-              <p style={{ margin: '0.5rem 0 0 0', color: '#b45309' }}>
-                请配置 <code>OPENAI_API_KEY</code> 启用真实 AI
-              </p>
-            </div>
-          )}
-          {apiConfigured === true && (
-            <div style={{ 
-              background: '#f0fdf4', 
-              border: '1px solid #86efac', 
-              borderRadius: '0.5rem', 
-              padding: '0.75rem',
-              marginBottom: '1rem',
-              fontSize: '0.8125rem'
-            }}>
-              <p style={{ margin: 0, color: '#166534' }}>
-                ✅ 使用真实 AI 服务
-              </p>
-            </div>
-          )}
+              background: 'linear-gradient(135deg, #0288D1 0%, #0277BD 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            📄 上传文档
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            style={{ display: 'none' }}
+            onChange={handleFileSelect}
+          />
         </div>
 
+        {selectedFile && (
+          <div style={{
+            padding: '1rem',
+            borderBottom: '1px solid #e2e8f0',
+            background: '#f0fdf4',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div>
+                <div style={{ fontWeight: 500, color: '#166534' }}>
+                  📄 {selectedFile.name}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#4ade80' }}>
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedFile(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#dc2626',
+                  cursor: 'pointer',
+                  fontSize: '1.25rem',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <button
+              onClick={handleFileUpload}
+              disabled={uploading}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                background: uploading ? '#94a3b8' : '#16a34a',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '0.375rem',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+              }}
+            >
+              {uploading ? '上传中...' : '确认上传'}
+            </button>
+          </div>
+        )}
+
         <div style={{ 
-          padding: '0 1rem', 
+          padding: '1rem', 
           flex: 1,
           overflowY: 'auto'
         }}>
-          <div style={{ marginBottom: '1rem' }}>
-            <h3 style={{ 
-              fontSize: '0.875rem', 
-              fontWeight: 600, 
-              color: '#475569',
-              margin: '0 0 0.75rem 0'
-            }}>
-              📚 知识库文档
-            </h3>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  flex: 1,
-                  padding: '0.5rem 0.75rem',
-                  background: '#0288D1',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  fontSize: '0.8125rem',
-                  fontWeight: 500
-                }}
-              >
-                📄 上传文档
-              </button>
-              <button
-                onClick={handleReloadDocuments}
-                disabled={loading}
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  background: '#64748b',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  fontSize: '0.8125rem',
-                  fontWeight: 500
-                }}
-              >
-                🔄 刷新
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                style={{ display: 'none' }}
-                onChange={handleFileSelect}
-              />
-            </div>
-            {selectedFile && (
-              <div style={{
-                background: '#f0fdf4',
-                border: '1px solid #86efac',
-                borderRadius: '0.375rem',
-                padding: '0.5rem 0.75rem',
-                marginBottom: '0.75rem',
-                fontSize: '0.8125rem'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#166534' }}>📄 {selectedFile.name}</span>
-                  <button
-                    onClick={() => setSelectedFile(null)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#dc2626',
-                      cursor: 'pointer',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-                <button
-                  onClick={handleFileUpload}
-                  disabled={uploading}
-                  style={{
-                    marginTop: '0.5rem',
-                    width: '100%',
-                    padding: '0.5rem',
-                    background: uploading ? '#94a3b8' : '#16a34a',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    cursor: uploading ? 'not-allowed' : 'pointer',
-                    fontSize: '0.8125rem'
-                  }}
-                >
-                  {uploading ? '上传中...' : '上传'}
-                </button>
-              </div>
-            )}
-          </div>
+          <h3 style={{ 
+            fontSize: '0.875rem', 
+            fontWeight: 600, 
+            color: '#475569',
+            margin: '0 0 1rem 0'
+          }}>
+            📚 知识库文档 ({documents.length})
+          </h3>
           
           {loading ? (
-            <p style={{ color: '#94a3b8' }}>加载中...</p>
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+              加载中...
+            </div>
+          ) : documents.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
+              <div>暂无文档，请上传</div>
+            </div>
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {documents.map((doc) => (
                 <li key={doc.id} style={{ 
-                  padding: '0.75rem', 
+                  padding: '1rem', 
                   background: '#f8fafc', 
-                  borderRadius: '0.375rem',
-                  marginBottom: '0.5rem',
+                  borderRadius: '0.5rem',
+                  marginBottom: '0.75rem',
                   cursor: 'pointer',
-                  transition: 'background 0.2s'
+                  transition: 'all 0.2s',
+                  border: '1px solid #e2e8f0',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#f8fafc'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f1f5f9';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#f8fafc';
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                }}
                 onClick={() => {
                   const userMessage: ChatMessage = {
                     role: 'user',
@@ -346,19 +394,47 @@ function App() {
                   setQuery(`请介绍一下 ${doc.title}`);
                 }}
                 >
-                  <div style={{ fontWeight: 500, color: '#1e293b' }}>
-                    {doc.title}
-                  </div>
-                  <div style={{ 
-                    fontSize: '0.75rem', 
-                    color: '#64748b',
-                    marginTop: '0.25rem',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}>
-                    {doc.content}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 500, color: '#1e293b', marginBottom: '0.25rem' }}>
+                        {doc.title}
+                      </div>
+                      <div style={{ 
+                        fontSize: '0.75rem', 
+                        color: '#64748b',
+                        marginBottom: '0.5rem',
+                      }}>
+                        {doc.filename}
+                      </div>
+                      {getStatusBadge(doc.status)}
+                      {doc.error_message && (
+                        <div style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>
+                          {doc.error_message}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDocument(doc.id);
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: '0.25rem',
+                        fontSize: '0.875rem',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#dc2626';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = '#94a3b8';
+                      }}
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </li>
               ))}
@@ -419,14 +495,23 @@ function App() {
                       display: 'block',
                       width: '100%',
                       textAlign: 'left',
-                      padding: '0.75rem',
-                      marginBottom: '0.5rem',
+                      padding: '0.875rem 1rem',
+                      marginBottom: '0.75rem',
                       background: '#fff',
                       border: '1px solid #e2e8f0',
                       borderRadius: '0.5rem',
                       cursor: 'pointer',
                       fontSize: '0.875rem',
-                      color: '#0288D1'
+                      color: '#0288D1',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#f0f9ff';
+                      e.currentTarget.style.borderColor = '#0288D1';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#fff';
+                      e.currentTarget.style.borderColor = '#e2e8f0';
                     }}
                   >
                     {q}
@@ -435,7 +520,7 @@ function App() {
               </div>
             </div>
           ) : (
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div style={{ maxWidth: '850px', margin: '0 auto' }}>
               {messages.map((msg, index) => (
                 <div key={index} style={{ 
                   display: 'flex',
@@ -443,33 +528,74 @@ function App() {
                   marginBottom: '1.5rem'
                 }}>
                   <div style={{ 
-                    maxWidth: '80%',
-                    padding: '1rem 1.25rem',
-                    borderRadius: '0.75rem',
-                    background: msg.role === 'user' 
-                      ? 'linear-gradient(135deg, #0288D1 0%, #0277BD 100%)' 
-                      : '#fff',
-                    color: msg.role === 'user' ? '#fff' : '#1e293b',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    maxWidth: '85%',
                   }}>
                     <div style={{ 
-                      whiteSpace: 'pre-wrap',
-                      lineHeight: '1.6'
+                      padding: '1rem 1.25rem',
+                      borderRadius: '0.75rem',
+                      background: msg.role === 'user' 
+                        ? 'linear-gradient(135deg, #0288D1 0%, #0277BD 100%)' 
+                        : '#fff',
+                      color: msg.role === 'user' ? '#fff' : '#1e293b',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      marginBottom: msg.sources && msg.sources.length > 0 ? '0.75rem' : 0,
                     }}>
-                      {msg.content}
+                      <div style={{ 
+                        whiteSpace: 'pre-wrap',
+                        lineHeight: '1.7',
+                      }}>
+                        {msg.content}
+                      </div>
+                      <div style={{ 
+                        fontSize: '0.75rem', 
+                        opacity: 0.7, 
+                        marginTop: '0.75rem'
+                      }}>
+                        {msg.role === 'user' ? '你' : 'AI 助手'} · {
+                          msg.timestamp.toLocaleTimeString('zh-CN', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })
+                        }
+                      </div>
                     </div>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      opacity: 0.7, 
-                      marginTop: '0.5rem'
-                    }}>
-                      {msg.role === 'user' ? '你' : 'AI 助手'} · {
-                        msg.timestamp.toLocaleTimeString('zh-CN', { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })
-                      }
-                    </div>
+                    
+                    {msg.sources && msg.sources.length > 0 && (
+                      <div style={{
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '0.5rem',
+                        padding: '0.75rem',
+                      }}>
+                        <div style={{ 
+                          fontSize: '0.75rem', 
+                          fontWeight: 600, 
+                          color: '#475569', 
+                          marginBottom: '0.5rem' 
+                        }}>
+                          📚 参考来源：
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          {msg.sources.slice(0, 3).map((source, i) => (
+                            <div key={i} style={{
+                              background: '#fff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '0.375rem',
+                              padding: '0.5rem 0.75rem',
+                              fontSize: '0.75rem',
+                              maxWidth: '200px',
+                            }}>
+                              <div style={{ fontWeight: 500, color: '#0288D1', marginBottom: '0.25rem' }}>
+                                {source.document.title}
+                              </div>
+                              <div style={{ color: '#64748b', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                {source.chunk.content.substring(0, 100)}...
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -484,7 +610,7 @@ function App() {
                     padding: '1rem 1.25rem',
                     background: '#fff',
                     borderRadius: '0.75rem',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                   }}>
                     <span style={{ 
                       display: 'inline-block',
@@ -532,7 +658,7 @@ function App() {
           <form onSubmit={handleChat} style={{ 
             display: 'flex', 
             gap: '0.75rem',
-            maxWidth: '800px',
+            maxWidth: '850px',
             margin: '0 auto'
           }}>
             <input 
@@ -542,15 +668,22 @@ function App() {
               placeholder="输入您的问题..."
               style={{ 
                 flex: 1, 
-                padding: '0.875rem 1.25rem', 
-                border: '1px solid #e2e8f0', 
+                padding: '1rem 1.25rem', 
+                border: '2px solid #e2e8f0', 
                 borderRadius: '0.75rem', 
                 fontSize: '1rem',
                 outline: 'none',
-                transition: 'border 0.2s'
+                transition: 'all 0.2s',
+                background: '#f8fafc',
               }}
-              onFocus={(e) => e.target.style.borderColor = '#0288D1'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#0288D1';
+                e.target.style.background = '#fff';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.background = '#f8fafc';
+              }}
               disabled={isTyping}
             />
             <button 
@@ -562,11 +695,12 @@ function App() {
                   : 'linear-gradient(135deg, #0288D1 0%, #0277BD 100%)', 
                 color: '#fff', 
                 border: 'none', 
-                padding: '0.875rem 2rem', 
+                padding: '1rem 2rem', 
                 borderRadius: '0.75rem', 
                 cursor: isTyping || !query.trim() ? 'not-allowed' : 'pointer',
                 fontWeight: 600,
-                fontSize: '1rem'
+                fontSize: '1rem',
+                transition: 'all 0.2s',
               }}
             >
               发送

@@ -1,0 +1,242 @@
+use anyhow::Result;
+use axum::{
+    extract::{Path, Query, State},
+    routing::{delete, get, post, put},
+    Json, Router,
+};
+use chrono::Utc;
+use serde::Deserialize;
+use sqlx::postgres::PgPool;
+use std::sync::Arc;
+use uuid::Uuid;
+
+use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
+use topems_shared::{ApiResponse, api_error};
+
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+}
+
+pub struct AppState {
+    pub db: PgPool,
+}
+
+pub async fn create_routes(db: PgPool) -> Result<Router> {
+    let state = Arc::new(AppState { db });
+
+    let app = Router::new()
+        .route("/api/v1/employees", get(list_employees).post(create_employee))
+        .route(
+            "/api/v1/employees/{id}",
+            get(get_employee).put(update_employee).delete(delete_employee),
+        )
+        .with_state(state);
+
+    Ok(app)
+}
+
+async fn list_employees(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<PaginationParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
+    let status_filter = params.status.clone();
+
+    let result = sqlx::query_as::<_, Employee>(
+        r#"
+        SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at
+        FROM employees
+        WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4
+        "#,
+    )
+    .bind(&search_pattern)
+    .bind(&status_filter)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(employees) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM employees
+                WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                "#,
+            )
+            .bind(&search_pattern)
+            .bind(&status_filter)
+            .fetch_one(&state.db)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "employees": employees,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "获取员工列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取员工列表失败: {}", e);
+            Json(api_error(500, "获取员工列表失败"))
+        }
+    }
+}
+
+async fn create_employee(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateEmployeeRequest>,
+) -> Json<ApiResponse<Employee>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, Employee>(
+        r#"
+        INSERT INTO employees (id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', $11, $12)
+        RETURNING id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&req.employee_number)
+    .bind(&req.name)
+    .bind(&req.gender)
+    .bind(req.birth_date)
+    .bind(req.hire_date)
+    .bind(req.department_id)
+    .bind(&req.position)
+    .bind(&req.email)
+    .bind(&req.phone)
+    .bind(now)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(employee) => Json(ApiResponse::success(employee, "员工创建成功")),
+        Err(e) => {
+            tracing::error!("创建员工失败: {}", e);
+            Json(api_error(500, "员工创建失败"))
+        }
+    }
+}
+
+async fn get_employee(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Employee>> {
+    let result = sqlx::query_as::<_, Employee>(
+        r#"
+        SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at
+        FROM employees WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(employee)) => Json(ApiResponse::success(employee, "获取员工成功")),
+        Ok(None) => Json(api_error(404, "员工不存在")),
+        Err(e) => {
+            tracing::error!("获取员工失败: {}", e);
+            Json(api_error(500, "获取员工失败"))
+        }
+    }
+}
+
+async fn update_employee(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateEmployeeRequest>,
+) -> Json<ApiResponse<Employee>> {
+    let existing = sqlx::query_as::<_, Employee>(
+        "SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at FROM employees WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(e)) => e,
+        Ok(None) => return Json(api_error(404, "员工不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询员工失败: {}", e))),
+    };
+
+    let name = req.name.unwrap_or(existing.name);
+    let gender = req.gender.or(existing.gender);
+    let birth_date = req.birth_date.or(existing.birth_date);
+    let hire_date = req.hire_date.or(existing.hire_date);
+    let department_id = req.department_id.or(existing.department_id);
+    let position = req.position.or(existing.position);
+    let email = req.email.or(existing.email);
+    let phone = req.phone.or(existing.phone);
+    let status = req.status.unwrap_or(existing.status);
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, Employee>(
+        r#"
+        UPDATE employees SET
+            name = $2, gender = $3, birth_date = $4, hire_date = $5, department_id = $6, position = $7, email = $8, phone = $9, status = $10, updated_at = $11
+        WHERE id = $1
+        RETURNING id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&name)
+    .bind(&gender)
+    .bind(birth_date)
+    .bind(hire_date)
+    .bind(department_id)
+    .bind(&position)
+    .bind(&email)
+    .bind(&phone)
+    .bind(&status)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(employee) => Json(ApiResponse::success(employee, "员工更新成功")),
+        Err(e) => {
+            tracing::error!("更新员工失败: {}", e);
+            Json(api_error(500, "员工更新失败"))
+        }
+    }
+}
+
+async fn delete_employee(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query("DELETE FROM employees WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "员工删除成功")),
+        Ok(_) => Json(api_error(404, "员工不存在")),
+        Err(e) => {
+            tracing::error!("删除员工失败: {}", e);
+            Json(api_error(500, "员工删除失败"))
+        }
+    }
+}
