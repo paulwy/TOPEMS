@@ -1,8 +1,9 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SafetyHazard {
     pub id: Uuid,
     pub hazard_no: String,
@@ -12,7 +13,7 @@ pub struct SafetyHazard {
     pub description: Option<String>,
     pub location: Option<String>,
     pub risk_assessment: Option<String>,
-    pub control_measures: Vec<String>,
+    pub control_measures: serde_json::Value,
     pub status: String,
     pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -45,7 +46,7 @@ pub struct UpdateSafetyHazardRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SafetyCheck {
     pub id: Uuid,
     pub check_no: String,
@@ -54,8 +55,8 @@ pub struct SafetyCheck {
     pub check_date: Option<DateTime<Utc>>,
     pub location: Option<String>,
     pub result: String,
-    pub issues: Vec<String>,
-    pub attachments: Option<Vec<String>>,
+    pub issues: serde_json::Value,
+    pub attachments: Option<serde_json::Value>,
     pub status: String,
     pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -88,16 +89,15 @@ pub struct UpdateSafetyCheckRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct EmergencyPlan {
     pub id: Uuid,
     pub plan_no: String,
-    pub name: String,
     pub plan_type: String,
     pub scope: Option<String>,
     pub trigger_conditions: Option<String>,
     pub response_procedures: Option<String>,
-    pub responsible_persons: Vec<String>,
+    pub responsible_persons: serde_json::Value,
     pub contact_info: Option<String>,
     pub status: String,
     pub created_by: Option<String>,
@@ -131,19 +131,19 @@ pub struct UpdateEmergencyPlanRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct DrillRecord {
     pub id: Uuid,
     pub plan_id: Option<Uuid>,
     pub drill_name: String,
     pub drill_date: Option<DateTime<Utc>>,
-    pub participants: Vec<String>,
+    pub participants: serde_json::Value,
     pub duration_hours: f64,
     pub location: Option<String>,
     pub summary: Option<String>,
     pub issues_found: Option<String>,
     pub improvements: Option<String>,
-    pub attachments: Option<Vec<String>>,
+    pub attachments: Option<serde_json::Value>,
     pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
