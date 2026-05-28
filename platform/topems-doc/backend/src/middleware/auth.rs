@@ -171,7 +171,6 @@ pub async fn optional_auth_middleware(
     next.run(req).await
 }
 
-#[axum::async_trait]
 impl<S> FromRequestParts<S> for Claims
 where
     S: Send + Sync,
@@ -187,7 +186,6 @@ where
     }
 }
 
-#[axum::async_trait]
 impl<S> FromRequestParts<S> for OptionalClaims
 where
     S: Send + Sync,

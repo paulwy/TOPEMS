@@ -1,5 +1,4 @@
 use axum::{
-    async_trait,
     extract::{FromRequestParts, Path, Request, State},
     http::{request::Parts, StatusCode},
     middleware::{self, Next},
@@ -194,7 +193,6 @@ struct ChangePasswordRequest {
 // Custom extractor for claims
 struct AuthenticatedUser(Claims);
 
-#[async_trait]
 impl<S> FromRequestParts<S> for AuthenticatedUser
 where
     S: Send + Sync,
