@@ -1,56 +1,19 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
+use topems_shared::{ApiResponse, PaginationParams, api_error};
 use crate::api::audit::log_audit_event;
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
 
 pub struct AppState {
     pub db: PgPool,
@@ -126,7 +89,7 @@ async fn list_suppliers(
         }
         Err(e) => {
             tracing::error!("获取供应商列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取供应商列表失败"))
+            Json(api_error(500, "获取供应商列表失败"))
         }
     }
 }
@@ -136,6 +99,7 @@ async fn create_supplier(
     headers: HeaderMap,
     Json(req): Json<CreateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -169,14 +133,13 @@ async fn create_supplier(
         Err(e) => {
             tracing::error!("创建供应商失败: {}", e);
             (
-                Json(ApiResponse::error(500, "供应商创建失败")),
+                Json(api_error(500, "供应商创建失败")),
                 "error",
                 Some(e.to_string())
             )
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(supplier) = &result {
         serde_json::to_value(supplier).ok()
     } else {
@@ -217,10 +180,10 @@ async fn get_supplier(
 
     match result {
         Ok(Some(supplier)) => Json(ApiResponse::success(supplier, "获取供应商成功")),
-        Ok(None) => Json(ApiResponse::error(404, "供应商不存在")),
+        Ok(None) => Json(api_error(404, "供应商不存在")),
         Err(e) => {
             tracing::error!("获取供应商失败: {}", e);
-            Json(ApiResponse::error(500, "获取供应商失败"))
+            Json(api_error(500, "获取供应商失败"))
         }
     }
 }
@@ -231,6 +194,9 @@ async fn update_supplier(
     headers: HeaderMap,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    // 先获取 request_data 避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+    
     let existing = sqlx::query_as::<_, Supplier>(
         "SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at FROM suppliers WHERE id = $1",
     )
@@ -240,8 +206,8 @@ async fn update_supplier(
 
     let existing = match existing {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(ApiResponse::error(404, "供应商不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询供应商失败: {}", e))),
+        Ok(None) => return Json(api_error(404, "供应商不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询供应商失败: {}", e))),
     };
 
     let name = req.name.unwrap_or(existing.name);
@@ -286,14 +252,13 @@ async fn update_supplier(
         Err(e) => {
             tracing::error!("更新供应商失败: {}", e);
             (
-                Json(ApiResponse::error(500, "供应商更新失败")),
+                Json(api_error(500, "供应商更新失败")),
                 "error",
                 Some(e.to_string())
             )
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(supplier) = &result {
         serde_json::to_value(supplier).ok()
     } else {
@@ -335,14 +300,14 @@ async fn delete_supplier(
             None
         ),
         Ok(_) => (
-            Json(ApiResponse::error(404, "供应商不存在")),
+            Json(api_error(404, "供应商不存在")),
             "error",
             Some("供应商不存在".to_string())
         ),
         Err(e) => {
             tracing::error!("删除供应商失败: {}", e);
             (
-                Json(ApiResponse::error(500, "供应商删除失败")),
+                Json(api_error(500, "供应商删除失败")),
                 "error",
                 Some(e.to_string())
             )

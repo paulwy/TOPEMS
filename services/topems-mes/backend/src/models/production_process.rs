@@ -17,7 +17,7 @@ pub struct ProductionProcess {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateProductionProcessRequest {
     pub name: String,
     pub code: Option<String>,
@@ -27,7 +27,7 @@ pub struct CreateProductionProcessRequest {
     pub work_station_id: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateProductionProcessRequest {
     pub name: Option<String>,
     pub code: Option<String>,

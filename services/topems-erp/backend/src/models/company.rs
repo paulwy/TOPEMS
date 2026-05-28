@@ -19,7 +19,7 @@ pub struct Company {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateCompanyRequest {
     pub name: String,
     pub short_name: Option<String>,
@@ -31,7 +31,7 @@ pub struct CreateCompanyRequest {
     pub website: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateCompanyRequest {
     pub name: Option<String>,
     pub short_name: Option<String>,

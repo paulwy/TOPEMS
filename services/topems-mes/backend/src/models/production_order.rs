@@ -21,7 +21,7 @@ pub struct ProductionOrder {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateProductionOrderRequest {
     pub order_number: String,
     pub product_name: String,
@@ -33,7 +33,7 @@ pub struct CreateProductionOrderRequest {
     pub priority: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateProductionOrderRequest {
     pub product_name: Option<String>,
     pub product_code: Option<String>,

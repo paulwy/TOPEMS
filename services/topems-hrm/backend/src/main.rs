@@ -3,7 +3,8 @@ mod models;
 
 use anyhow::Result;
 use axum::{
-    extract::{FromRef, HeaderMap},
+    extract::FromRef,
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -82,7 +83,6 @@ async fn main() -> Result<()> {
         .merge(api::contract::create_routes(pool.clone()).await?)
         .merge(api::attendance::create_routes(pool.clone()).await?)
         .merge(audit_router)
-        .with_state(app_state.clone())
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

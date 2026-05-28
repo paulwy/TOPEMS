@@ -20,7 +20,7 @@ pub struct ProductionRecord {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateProductionRecordRequest {
     pub order_id: Uuid,
     pub process_id: Option<Uuid>,
@@ -31,7 +31,7 @@ pub struct CreateProductionRecordRequest {
     pub start_time: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateProductionRecordRequest {
     pub quantity_completed: Option<i32>,
     pub quantity_rejected: Option<i32>,

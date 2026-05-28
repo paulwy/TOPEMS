@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -98,6 +99,7 @@ async fn create_process(
     headers: HeaderMap,
     Json(req): Json<CreateProductionProcessRequest>,
 ) -> Json<ApiResponse<ProductionProcess>> {
+    let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -136,7 +138,6 @@ async fn create_process(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(process) = &result {
         serde_json::to_value(process).ok()
     } else {
@@ -191,6 +192,9 @@ async fn update_process(
     headers: HeaderMap,
     Json(req): Json<UpdateProductionProcessRequest>,
 ) -> Json<ApiResponse<ProductionProcess>> {
+    // 先获取 request_data 避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+    
     let existing = sqlx::query_as::<_, ProductionProcess>(
         "SELECT id, name, code, description, sequence, standard_time, work_station_id, status, created_at, updated_at FROM production_processes WHERE id = $1",
     )
@@ -249,7 +253,6 @@ async fn update_process(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(process) = &result {
         serde_json::to_value(process).ok()
     } else {

@@ -20,7 +20,7 @@ pub struct Employee {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateEmployeeRequest {
     pub employee_number: String,
     pub name: String,
@@ -33,7 +33,7 @@ pub struct CreateEmployeeRequest {
     pub phone: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateEmployeeRequest {
     pub name: Option<String>,
     pub gender: Option<String>,

@@ -1,51 +1,22 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest};
+use topems_shared::{ApiResponse, PaginationParams, api_error};
 use crate::api::audit::log_audit_event;
 
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
-
 #[derive(Debug, Deserialize)]
-pub struct PaginationParams {
+pub struct SupplierEvaluationQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
     pub supplier_id: Option<Uuid>,
@@ -71,7 +42,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
 async fn list_evaluations(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<SupplierEvaluationQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -118,7 +89,7 @@ async fn list_evaluations(
         }
         Err(e) => {
             tracing::error!("获取供应商评估列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取供应商评估列表失败"))
+            Json(api_error(500, "获取供应商评估列表失败"))
         }
     }
 }
@@ -128,6 +99,7 @@ async fn create_evaluation(
     headers: HeaderMap,
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -162,14 +134,13 @@ async fn create_evaluation(
         Err(e) => {
             tracing::error!("创建供应商评估失败: {}", e);
             (
-                Json(ApiResponse::error(500, "供应商评估创建失败")),
+                Json(api_error(500, "供应商评估创建失败")),
                 "error",
                 Some(e.to_string())
             )
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(evaluation) = &result {
         serde_json::to_value(evaluation).ok()
     } else {
@@ -210,10 +181,10 @@ async fn get_evaluation(
 
     match result {
         Ok(Some(evaluation)) => Json(ApiResponse::success(evaluation, "获取供应商评估成功")),
-        Ok(None) => Json(ApiResponse::error(404, "供应商评估不存在")),
+        Ok(None) => Json(api_error(404, "供应商评估不存在")),
         Err(e) => {
             tracing::error!("获取供应商评估失败: {}", e);
-            Json(ApiResponse::error(500, "获取供应商评估失败"))
+            Json(api_error(500, "获取供应商评估失败"))
         }
     }
 }
@@ -224,6 +195,9 @@ async fn update_evaluation(
     headers: HeaderMap,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    // 先获取 request_data 避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+    
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
         "SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at FROM supplier_evaluations WHERE id = $1",
     )
@@ -233,8 +207,8 @@ async fn update_evaluation(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::error(404, "供应商评估不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询供应商评估失败: {}", e))),
+        Ok(None) => return Json(api_error(404, "供应商评估不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询供应商评估失败: {}", e))),
     };
 
     let quality_score = req.quality_score.or(existing.quality_score);
@@ -275,14 +249,13 @@ async fn update_evaluation(
         Err(e) => {
             tracing::error!("更新供应商评估失败: {}", e);
             (
-                Json(ApiResponse::error(500, "供应商评估更新失败")),
+                Json(api_error(500, "供应商评估更新失败")),
                 "error",
                 Some(e.to_string())
             )
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(evaluation) = &result {
         serde_json::to_value(evaluation).ok()
     } else {

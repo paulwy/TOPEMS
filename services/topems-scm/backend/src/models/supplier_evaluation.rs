@@ -19,7 +19,7 @@ pub struct SupplierEvaluation {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateSupplierEvaluationRequest {
     pub supplier_id: Uuid,
     pub evaluation_date: DateTime<Utc>,
@@ -32,7 +32,7 @@ pub struct CreateSupplierEvaluationRequest {
     pub evaluator: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateSupplierEvaluationRequest {
     pub quality_score: Option<f64>,
     pub delivery_score: Option<f64>,

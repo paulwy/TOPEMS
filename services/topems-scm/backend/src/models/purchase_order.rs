@@ -17,7 +17,7 @@ pub struct PurchaseOrder {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreatePurchaseOrderRequest {
     pub order_number: String,
     pub supplier_id: Option<Uuid>,
@@ -27,7 +27,7 @@ pub struct CreatePurchaseOrderRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdatePurchaseOrderRequest {
     pub supplier_id: Option<Uuid>,
     pub delivery_date: Option<DateTime<Utc>>,

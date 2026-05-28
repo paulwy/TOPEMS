@@ -19,7 +19,7 @@ pub struct Supplier {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateSupplierRequest {
     pub name: String,
     pub short_name: Option<String>,
@@ -31,7 +31,7 @@ pub struct CreateSupplierRequest {
     pub tax_number: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateSupplierRequest {
     pub name: Option<String>,
     pub short_name: Option<String>,

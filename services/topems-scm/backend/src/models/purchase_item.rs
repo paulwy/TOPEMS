@@ -18,7 +18,7 @@ pub struct PurchaseItem {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreatePurchaseItemRequest {
     pub order_id: Uuid,
     pub product_code: Option<String>,
@@ -30,7 +30,7 @@ pub struct CreatePurchaseItemRequest {
     pub amount: Option<f64>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdatePurchaseItemRequest {
     pub product_code: Option<String>,
     pub product_name: Option<String>,

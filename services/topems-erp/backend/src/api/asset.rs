@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -216,6 +217,9 @@ async fn update_asset(
         Err(e) => return Json(api_error(500, &format!("查询资产失败: {}", e))),
     };
 
+    // 先获取 request_data，避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+
     let name = req.name.unwrap_or(existing.name);
     let category = req.category.or(existing.category);
     let brand = req.brand.or(existing.brand);
@@ -265,7 +269,6 @@ async fn update_asset(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(asset) = &result {
         serde_json::to_value(asset).ok()
     } else {

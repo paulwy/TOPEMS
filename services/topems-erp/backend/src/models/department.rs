@@ -16,7 +16,7 @@ pub struct Department {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateDepartmentRequest {
     pub name: String,
     pub code: Option<String>,
@@ -25,7 +25,7 @@ pub struct CreateDepartmentRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateDepartmentRequest {
     pub name: Option<String>,
     pub code: Option<String>,

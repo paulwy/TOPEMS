@@ -1,56 +1,19 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest};
+use topems_shared::{ApiResponse, PaginationParams, api_error};
 use crate::api::audit::log_audit_event;
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
 
 pub struct AppState {
     pub db: PgPool,
@@ -126,7 +89,7 @@ async fn list_orders(
         }
         Err(e) => {
             tracing::error!("获取采购订单列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取采购订单列表失败"))
+            Json(api_error(500, "获取采购订单列表失败"))
         }
     }
 }
@@ -136,6 +99,7 @@ async fn create_order(
     headers: HeaderMap,
     Json(req): Json<CreatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -167,14 +131,13 @@ async fn create_order(
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
             (
-                Json(ApiResponse::error(500, "采购订单创建失败")),
+                Json(api_error(500, "采购订单创建失败")),
                 "error",
                 Some(e.to_string())
             )
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(order) = &result {
         serde_json::to_value(order).ok()
     } else {
@@ -215,10 +178,10 @@ async fn get_order(
 
     match result {
         Ok(Some(order)) => Json(ApiResponse::success(order, "获取采购订单成功")),
-        Ok(None) => Json(ApiResponse::error(404, "采购订单不存在")),
+        Ok(None) => Json(api_error(404, "采购订单不存在")),
         Err(e) => {
             tracing::error!("获取采购订单失败: {}", e);
-            Json(ApiResponse::error(500, "获取采购订单失败"))
+            Json(api_error(500, "获取采购订单失败"))
         }
     }
 }
@@ -229,6 +192,9 @@ async fn update_order(
     headers: HeaderMap,
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    // 先获取 request_data 避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+    
     let existing = sqlx::query_as::<_, PurchaseOrder>(
         "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM purchase_orders WHERE id = $1",
     )
@@ -238,8 +204,8 @@ async fn update_order(
 
     let existing = match existing {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(ApiResponse::error(404, "采购订单不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询采购订单失败: {}", e))),
+        Ok(None) => return Json(api_error(404, "采购订单不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询采购订单失败: {}", e))),
     };
 
     let supplier_id = req.supplier_id.or(existing.supplier_id);
@@ -276,14 +242,13 @@ async fn update_order(
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
             (
-                Json(ApiResponse::error(500, "采购订单更新失败")),
+                Json(api_error(500, "采购订单更新失败")),
                 "error",
                 Some(e.to_string())
             )
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(order) = &result {
         serde_json::to_value(order).ok()
     } else {

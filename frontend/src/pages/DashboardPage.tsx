@@ -1,24 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  FileText, Bot, GitBranch, 
+  FileText, GitBranch, 
   FlaskConical, ClipboardList, Shield, AlertCircle, Users, Package,
   LogOut, User, Activity, Clock,
-  Database, Brain, X, MapPin, Smartphone, MessageSquare, Key,
+  Database, X, Key,
   Building, Folder, BarChart3
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
-import { aiApi } from '../api/ai';
-import { flowApi } from '../api/flow';
-import { gisApi } from '../api/gis';
-import { mobileApi } from '../api/mobile';
-import { imApi } from '../api/im';
-import type { User as UserType } from '../api/iam';
 import MobileNav from '../components/MobileNav';
 import MobileHeader from '../components/MobileHeader';
 import { usePermission } from '../hooks/usePermission';
 import { useRole } from '../hooks/useRole';
+import { useAuth } from '../hooks/useAuth';
 import { NotificationBell } from '../components/notifications';
 
 interface DashboardPageProps {
@@ -28,7 +23,7 @@ interface DashboardPageProps {
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [user, setUser] = useState<UserType | null>(null);
+  const { user, logout: authLogout, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [stats, setStats] = useState({
@@ -38,12 +33,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   });
   const [serviceStatuses, setServiceStatuses] = useState<Record<string, boolean>>({
     iam: false,
-    doc: false,
-    ai: false,
-    flow: false,
-    gis: false,
-    mobile: false,
-    im: false
+    doc: false
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -51,45 +41,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const { getRoleName } = useRole();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-
     const init = async () => {
       try {
-        // 先尝试用保存的用户信息显示
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        }
-
-        // 然后尝试刷新用户信息（但不要因为失败而重定向）
-        try {
-          const userRes = await authApi.getCurrentUser();
-          if (userRes.success && userRes.data) {
-            setUser(userRes.data);
-          }
-        } catch (userError) {
-          console.warn('获取用户信息失败，继续使用缓存数据:', userError);
-        }
-        
-        // 检查服务状态和加载统计（使用 Promise.allSettled 防止单个失败影响其他）
-        const serviceChecks = [
-          checkServiceStatus('iam', authApi).catch(() => {}),
-          checkServiceStatus('doc', docApi).catch(() => {}),
-          checkServiceStatus('ai', aiApi).catch(() => {}),
-          checkServiceStatus('flow', flowApi).catch(() => {}),
-          checkServiceStatus('gis', gisApi).catch(() => {}),
-          checkServiceStatus('mobile', mobileApi).catch(() => {}),
-          checkServiceStatus('im', imApi).catch(() => {})
-        ];
+        // 检查服务状态和加载统计（只检查实际正在运行的服务：8001/8002）
+    const serviceChecks = [
+      checkServiceStatus('iam', authApi).catch(() => {}),
+      checkServiceStatus('doc', docApi).catch(() => {})
+    ];
         
         const statsPromise = loadStats().catch((err) => {
           console.warn('加载统计数据失败:', err);
@@ -104,7 +67,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     };
 
     init();
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
 
   const checkServiceStatus = async (key: string, api: any) => {
     try {
@@ -117,16 +80,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
   const loadStats = async () => {
     try {
-      const [docRes, flowRes, aiRes] = await Promise.allSettled([
-        docApi.list(),
-        flowApi.listWorkflows(),
-        aiApi.listDocuments()
+      const [docRes] = await Promise.allSettled([
+        docApi.list()
       ]);
 
       const newStats = {
         fileCount: docRes.status === 'fulfilled' && docRes.value.success && docRes.value.data?.files?.length || 0,
-        workflowCount: flowRes.status === 'fulfilled' && flowRes.value.success && flowRes.value.data?.length || 0,
-        docCount: aiRes.status === 'fulfilled' && aiRes.value.success && aiRes.value.data?.length || 0
+        workflowCount: 0,
+        docCount: 0
       };
 
       setStats(newStats);
@@ -143,9 +104,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    onLogout?.();
+    authLogout();
     navigate('/login');
   };
 
@@ -579,11 +538,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             {[
               { name: '身份认证', status: serviceStatuses.iam },
               { name: '文档管理', status: serviceStatuses.doc },
-              { name: 'AI 知识库', status: serviceStatuses.ai },
-              { name: '工作流', status: serviceStatuses.flow },
-              { name: '厂区空间', status: serviceStatuses.gis },
-              { name: '移动工作台', status: serviceStatuses.mobile },
-              { name: '即时通讯', status: serviceStatuses.im },
             ].map((service) => (
               <div key={service.name} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                 <span className="text-sm text-slate-700">{service.name}</span>
@@ -716,15 +670,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             <Activity className="w-5 h-5 mr-2 text-green-500" />
             服务状态监控
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {[
               { name: '身份认证', service: 'IAM', port: 8002, key: 'iam', icon: Shield },
               { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
-              { name: 'AI 知识库', service: 'AI', port: 8003, key: 'ai', icon: Brain },
-              { name: '工作流', service: 'FLOW', port: 8004, key: 'flow', icon: GitBranch },
-              { name: '厂区空间', service: 'GIS', port: 8011, key: 'gis', icon: MapPin },
-              { name: '移动工作台', service: 'MOBILE', port: 8013, key: 'mobile', icon: Smartphone },
-              { name: '即时通讯', service: 'IM', port: 8014, key: 'im', icon: MessageSquare },
             ].map((service) => (
               <ServiceStatusCard
                 key={service.key}
