@@ -5,10 +5,10 @@ mod db;
 mod middleware;
 
 use axum::{
-    async_trait,
+    body::Body,
     extract::{FromRequestParts, Path, Query, Request, State},
     http::{request::Parts, StatusCode},
-    middleware::{self, Next},
+    middleware::Next,
     response::{IntoResponse, Response},
     routing::{get, post, put, delete},
     Json, Router,
@@ -82,7 +82,7 @@ enum ErrorCode {
     InternalServerError = 500,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct ErrorDetail {
     code: i32,
     message: String,
@@ -284,7 +284,6 @@ struct ChangePasswordRequest {
 // Custom extractor for claims
 struct AuthenticatedUser(Claims);
 
-#[async_trait]
 impl<S> FromRequestParts<S> for AuthenticatedUser
 where
     S: Send + Sync,
@@ -2223,13 +2222,13 @@ async fn main() {
         .nest("/roles", role_routes)
         .nest("/permissions", permission_routes)
         .nest("/security", security_routes)
-        .layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
+        .layer(axum::middleware::from_fn(middleware::auth_middleware));
 
     async fn rate_limit_middleware(
         State(state): State<AppState>,
-        req: Request,
+        req: Request<Body>,
         next: Next,
-    ) -> Result<Response, Json<ApiResponse<()>>> {
+    ) -> Response<Body> {
         let client_ip = req.headers()
             .get("X-Forwarded-For")
             .and_then(|h| h.to_str().ok())
@@ -2255,18 +2254,21 @@ async fn main() {
             if entry.count >= max_requests {
                 let retry_after = entry.reset_time - now;
                 tracing::warn!("Rate limit exceeded for IP: {}", client_ip);
-                return Err(Json(ApiResponse::error(429, &format!("请求过于频繁，请{}秒后重试", retry_after))));
+                return (
+                    axum::http::StatusCode::TOO_MANY_REQUESTS,
+                    Json(ApiResponse::<()>::error(429, &format!("请求过于频繁，请{}秒后重试", retry_after)))
+                ).into_response();
             }
             entry.count += 1;
         }
 
-        Ok(next.run(req).await)
+        next.run(req).await
     }
 
     let app = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .nest("/api/v1/auth", auth_routes.layer(middleware::from_fn_with_state(state.clone(), rate_limit_middleware)))
+        .nest("/api/v1/auth", auth_routes.layer(axum::middleware::from_fn_with_state(state.clone(), rate_limit_middleware)))
         .nest("/api/v1", protected_routes)
         .with_state(state)
         .layer(cors)

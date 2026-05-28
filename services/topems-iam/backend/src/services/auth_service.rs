@@ -5,6 +5,7 @@ use bcrypt::{hash, verify, DEFAULT_COST};
 use uuid::Uuid;
 use sqlx::PgPool;
 use tracing;
+use crate::models::User;
 
 pub struct AuthService {
     pool: PgPool,
@@ -17,12 +18,12 @@ impl AuthService {
     }
 
     pub async fn login(&self, username: &str, password: &str) -> Result<(User, String), IamError> {
-        let row = sqlx::query!(
+        let row: User = sqlx::query_as::<_, User>(
             r#"SELECT id, username, email, full_name, avatar_url, 
                       is_active, is_superuser, password_hash, created_at, updated_at, last_login_at
                FROM iam.users WHERE username = $1"#,
-            username
         )
+        .bind(username)
         .fetch_one(&self.pool)
         .await?;
 
@@ -53,27 +54,14 @@ impl AuthService {
             &EncodingKey::from_secret(self.jwt_secret.as_ref()),
         )?;
 
-        let _ = sqlx::query!(
+        let _ = sqlx::query(
             "UPDATE iam.users SET last_login_at = NOW() WHERE id = $1",
-            row.id
         )
+        .bind(row.id)
         .execute(&self.pool)
         .await;
 
-        let user = User {
-            id: row.id,
-            username: row.username,
-            email: row.email,
-            full_name: row.full_name,
-            avatar_url: row.avatar_url,
-            is_active: row.is_active,
-            is_superuser: row.is_superuser,
-            created_at: row.created_at,
-            updated_at: Some(Utc::now()),
-            last_login_at: Some(Utc::now()),
-        };
-
-        Ok((user, token))
+        Ok((row, token))
     }
 
     pub async fn verify_token(&self, token: &str) -> Result<Claims, IamError> {
@@ -126,31 +114,29 @@ impl AuthService {
     }
 
     pub async fn get_user_roles_and_permissions(&self, user_id: Uuid) -> Result<(Vec<String>, Vec<String>), IamError> {
-        let roles: Vec<String> = sqlx::query_scalar!(
+        let roles: Vec<String> = sqlx::query_scalar::<_, String>(
             r#"SELECT r.id::text as role_id
                FROM iam.roles r
                JOIN iam.user_roles ur ON r.id = ur.role_id
                WHERE ur.user_id = $1"#,
-            user_id
         )
+        .bind(user_id)
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .flatten()
         .collect();
 
-        let permissions: Vec<String> = sqlx::query_scalar!(
+        let permissions: Vec<String> = sqlx::query_scalar::<_, String>(
             r#"SELECT DISTINCT p.id::text as permission_id
                FROM iam.permissions p
                JOIN iam.role_permissions rp ON p.id = rp.permission_id
                JOIN iam.user_roles ur ON rp.role_id = ur.role_id
                WHERE ur.user_id = $1"#,
-            user_id
         )
+        .bind(user_id)
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .flatten()
         .collect();
 
         Ok((roles, permissions))
