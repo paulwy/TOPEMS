@@ -11,6 +11,8 @@ pub struct User {
     pub avatar_url: Option<String>,
     pub is_active: bool,
     pub is_superuser: bool,
+    #[serde(skip_serializing)]
+    pub password_hash: String,
     pub created_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
     pub last_login_at: Option<DateTime<Utc>>,
