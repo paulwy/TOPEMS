@@ -1,8 +1,9 @@
 mod models;
+mod api;
 
 use anyhow::Result;
 use axum::{
-    extract::{FromRef, Path, Query, State},
+    extract::{FromRef, Path, Query, State, HeaderMap},
     routing::{delete, get, post, put},
     Json,
     Router,
@@ -21,6 +22,8 @@ use models::{
     CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest,
     CreateInteractionRequest, Interaction, UpdateInteractionRequest,
 };
+
+use api::audit::log_audit_event;
 
 #[derive(Clone)]
 struct AppState {
@@ -114,6 +117,8 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
+    let audit_router = api::audit::create_routes(pool.clone()).await?;
+    
     let app = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/customers", get(list_customers).post(create_customer))
@@ -124,6 +129,7 @@ async fn main() -> Result<()> {
         .route("/api/v1/opportunities/{id}", get(get_opportunity).put(update_opportunity).delete(delete_opportunity))
         .route("/api/v1/interactions", get(list_interactions).post(create_interaction))
         .route("/api/v1/interactions/{id}", get(get_interaction).put(update_interaction).delete(delete_interaction))
+        .merge(audit_router)
         .with_state(app_state.clone())
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -212,6 +218,7 @@ async fn list_customers(
 
 async fn create_customer(
     State(pool): State<sqlx::PgPool>,
+    headers: HeaderMap,
     Json(req): Json<CreateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
     let id = Uuid::new_v4();
@@ -239,13 +246,45 @@ async fn create_customer(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(customer) => Json(ApiResponse::success(customer, "客户创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(customer) => (
+            Json(ApiResponse::success(customer.clone(), "客户创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建客户失败: {}", e);
-            Json(api_error(500, "客户创建失败"))
+            (
+                Json(api_error(500, "客户创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(customer) = &result {
+        serde_json::to_value(customer).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "create".to_string(),
+        "customer".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_customer(
@@ -275,6 +314,7 @@ async fn get_customer(
 async fn update_customer(
     State(pool): State<sqlx::PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
     let existing = sqlx::query_as::<_, Customer>(
@@ -326,32 +366,100 @@ async fn update_customer(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(customer) => Json(ApiResponse::success(customer, "客户更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(customer) => (
+            Json(ApiResponse::success(customer.clone(), "客户更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新客户失败: {}", e);
-            Json(api_error(500, "客户更新失败"))
+            (
+                Json(api_error(500, "客户更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(customer) = &result {
+        serde_json::to_value(customer).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "update".to_string(),
+        "customer".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn delete_customer(
     State(pool): State<sqlx::PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM customers WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "客户删除成功")),
-        Ok(_) => Json(api_error(404, "客户不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "客户删除成功")),
+            "success",
+            None
+        ),
+        Ok(_) => (
+            Json(api_error(404, "客户不存在")),
+            "error",
+            Some("客户不存在".to_string())
+        ),
         Err(e) => {
             tracing::error!("删除客户失败: {}", e);
-            Json(api_error(500, "客户删除失败"))
+            (
+                Json(api_error(500, "客户删除失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "delete".to_string(),
+        "customer".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 // Contacts
@@ -423,6 +531,7 @@ async fn list_contacts(
 
 async fn create_contact(
     State(pool): State<sqlx::PgPool>,
+    headers: HeaderMap,
     Json(req): Json<CreateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
     let id = Uuid::new_v4();
@@ -449,13 +558,45 @@ async fn create_contact(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(contact) => Json(ApiResponse::success(contact, "联系人创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(contact) => (
+            Json(ApiResponse::success(contact.clone(), "联系人创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建联系人失败: {}", e);
-            Json(api_error(500, "联系人创建失败"))
+            (
+                Json(api_error(500, "联系人创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(contact) = &result {
+        serde_json::to_value(contact).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "create".to_string(),
+        "contact".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_contact(
@@ -485,6 +626,7 @@ async fn get_contact(
 async fn update_contact(
     State(pool): State<sqlx::PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
     let existing = sqlx::query_as::<_, Contact>(
@@ -534,32 +676,100 @@ async fn update_contact(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(contact) => Json(ApiResponse::success(contact, "联系人更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(contact) => (
+            Json(ApiResponse::success(contact.clone(), "联系人更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新联系人失败: {}", e);
-            Json(api_error(500, "联系人更新失败"))
+            (
+                Json(api_error(500, "联系人更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(contact) = &result {
+        serde_json::to_value(contact).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "update".to_string(),
+        "contact".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn delete_contact(
     State(pool): State<sqlx::PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM contacts WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "联系人删除成功")),
-        Ok(_) => Json(api_error(404, "联系人不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "联系人删除成功")),
+            "success",
+            None
+        ),
+        Ok(_) => (
+            Json(api_error(404, "联系人不存在")),
+            "error",
+            Some("联系人不存在".to_string())
+        ),
         Err(e) => {
             tracing::error!("删除联系人失败: {}", e);
-            Json(api_error(500, "联系人删除失败"))
+            (
+                Json(api_error(500, "联系人删除失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "delete".to_string(),
+        "contact".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 // Opportunities
@@ -631,6 +841,7 @@ async fn list_opportunities(
 
 async fn create_opportunity(
     State(pool): State<sqlx::PgPool>,
+    headers: HeaderMap,
     Json(req): Json<CreateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
     let id = Uuid::new_v4();
@@ -656,13 +867,45 @@ async fn create_opportunity(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(opportunity) => Json(ApiResponse::success(opportunity, "销售机会创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(opportunity) => (
+            Json(ApiResponse::success(opportunity.clone(), "销售机会创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建销售机会失败: {}", e);
-            Json(api_error(500, "销售机会创建失败"))
+            (
+                Json(api_error(500, "销售机会创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(opportunity) = &result {
+        serde_json::to_value(opportunity).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "create".to_string(),
+        "opportunity".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_opportunity(
@@ -692,6 +935,7 @@ async fn get_opportunity(
 async fn update_opportunity(
     State(pool): State<sqlx::PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
     let existing = sqlx::query_as::<_, Opportunity>(
@@ -739,32 +983,100 @@ async fn update_opportunity(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(opportunity) => Json(ApiResponse::success(opportunity, "销售机会更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(opportunity) => (
+            Json(ApiResponse::success(opportunity.clone(), "销售机会更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新销售机会失败: {}", e);
-            Json(api_error(500, "销售机会更新失败"))
+            (
+                Json(api_error(500, "销售机会更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(opportunity) = &result {
+        serde_json::to_value(opportunity).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "update".to_string(),
+        "opportunity".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn delete_opportunity(
     State(pool): State<sqlx::PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM opportunities WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "销售机会删除成功")),
-        Ok(_) => Json(api_error(404, "销售机会不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "销售机会删除成功")),
+            "success",
+            None
+        ),
+        Ok(_) => (
+            Json(api_error(404, "销售机会不存在")),
+            "error",
+            Some("销售机会不存在".to_string())
+        ),
         Err(e) => {
             tracing::error!("删除销售机会失败: {}", e);
-            Json(api_error(500, "销售机会删除失败"))
+            (
+                Json(api_error(500, "销售机会删除失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "delete".to_string(),
+        "opportunity".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 // Interactions
@@ -841,6 +1153,7 @@ async fn list_interactions(
 
 async fn create_interaction(
     State(pool): State<sqlx::PgPool>,
+    headers: HeaderMap,
     Json(req): Json<CreateInteractionRequest>,
 ) -> Json<ApiResponse<Interaction>> {
     let id = Uuid::new_v4();
@@ -867,13 +1180,45 @@ async fn create_interaction(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(interaction) => Json(ApiResponse::success(interaction, "交互记录创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(interaction) => (
+            Json(ApiResponse::success(interaction.clone(), "交互记录创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建交互记录失败: {}", e);
-            Json(api_error(500, "交互记录创建失败"))
+            (
+                Json(api_error(500, "交互记录创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(interaction) = &result {
+        serde_json::to_value(interaction).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "create".to_string(),
+        "interaction".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_interaction(
@@ -903,6 +1248,7 @@ async fn get_interaction(
 async fn update_interaction(
     State(pool): State<sqlx::PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateInteractionRequest>,
 ) -> Json<ApiResponse<Interaction>> {
     let existing = sqlx::query_as::<_, Interaction>(
@@ -953,32 +1299,100 @@ async fn update_interaction(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(interaction) => Json(ApiResponse::success(interaction, "交互记录更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(interaction) => (
+            Json(ApiResponse::success(interaction.clone(), "交互记录更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新交互记录失败: {}", e);
-            Json(api_error(500, "交互记录更新失败"))
+            (
+                Json(api_error(500, "交互记录更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(interaction) = &result {
+        serde_json::to_value(interaction).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "update".to_string(),
+        "interaction".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn delete_interaction(
     State(pool): State<sqlx::PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM interactions WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "交互记录删除成功")),
-        Ok(_) => Json(api_error(404, "交互记录不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "交互记录删除成功")),
+            "success",
+            None
+        ),
+        Ok(_) => (
+            Json(api_error(404, "交互记录不存在")),
+            "error",
+            Some("交互记录不存在".to_string())
+        ),
         Err(e) => {
             tracing::error!("删除交互记录失败: {}", e);
-            Json(api_error(500, "交互记录删除失败"))
+            (
+                Json(api_error(500, "交互记录删除失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "delete".to_string(),
+        "interaction".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
@@ -1065,6 +1479,45 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     )
     .execute(pool)
     .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            action VARCHAR(50) NOT NULL,
+            entity_type VARCHAR(50) NOT NULL,
+            entity_id UUID,
+            entity_ids JSONB,
+            user_id VARCHAR(255),
+            user_name VARCHAR(255),
+            request_details JSONB,
+            response_details JSONB,
+            status VARCHAR(50) NOT NULL,
+            error_message TEXT,
+            ip_address VARCHAR(255),
+            user_agent TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status)"#)
+        .execute(pool)
+        .await?;
 
     tracing::info!("✅ 数据库表初始化完成");
 

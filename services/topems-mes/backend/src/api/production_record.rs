@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{get, post, put},
     Json, Router,
 };
@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateProductionRecordRequest, ProductionRecord, UpdateProductionRecordRequest};
 use topems_shared::{ApiResponse, PaginationParams, api_error};
+use crate::api::audit::log_audit_event;
 
 pub struct AppState {
     pub db: PgPool,
@@ -89,6 +90,7 @@ async fn list_records(
 
 async fn create_record(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateProductionRecordRequest>,
 ) -> Json<ApiResponse<ProductionRecord>> {
     let id = Uuid::new_v4();
@@ -114,13 +116,45 @@ async fn create_record(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(record) => Json(ApiResponse::success(record, "生产记录创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(record) => (
+            Json(ApiResponse::success(record.clone(), "生产记录创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建生产记录失败: {}", e);
-            Json(api_error(500, "生产记录创建失败"))
+            (
+                Json(api_error(500, "生产记录创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(record) = &result {
+        serde_json::to_value(record).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "production_record".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_record(
@@ -150,6 +184,7 @@ async fn get_record(
 async fn update_record(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateProductionRecordRequest>,
 ) -> Json<ApiResponse<ProductionRecord>> {
     let existing = sqlx::query_as::<_, ProductionRecord>(
@@ -190,11 +225,43 @@ async fn update_record(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(record) => Json(ApiResponse::success(record, "生产记录更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(record) => (
+            Json(ApiResponse::success(record.clone(), "生产记录更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新生产记录失败: {}", e);
-            Json(api_error(500, "生产记录更新失败"))
+            (
+                Json(api_error(500, "生产记录更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(record) = &result {
+        serde_json::to_value(record).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "production_record".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

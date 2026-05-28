@@ -76,6 +76,21 @@ export interface UpdateExperimentRequest {
   conclusion?: string;
 }
 
+export interface BatchCreateProjectsRequest {
+  projects: CreateProjectRequest[];
+}
+
+export interface BatchDeleteProjectsRequest {
+  ids: string[];
+}
+
+export interface BatchOperationResult {
+  total: number;
+  success: number;
+  failed: number;
+  errors: string[];
+}
+
 export const rsApi = {
   listProjects: async (): Promise<ApiResponse<Project[]>> => {
     return apiClient.rs.get<Project[]>('/api/v1/projects');
@@ -95,6 +110,29 @@ export const rsApi = {
 
   deleteProject: async (id: string): Promise<ApiResponse<boolean>> => {
     return apiClient.rs.delete<boolean>(`/api/v1/projects/${id}`);
+  },
+
+  batchCreateProjects: async (data: BatchCreateProjectsRequest): Promise<ApiResponse<BatchOperationResult>> => {
+    return apiClient.rs.post<BatchOperationResult>('/api/v1/projects/batch', data);
+  },
+
+  batchDeleteProjects: async (data: BatchDeleteProjectsRequest): Promise<ApiResponse<BatchOperationResult>> => {
+    return apiClient.rs.delete<BatchOperationResult>('/api/v1/projects/batch', { data });
+  },
+
+  exportProjects: async (): Promise<Blob> => {
+    return apiClient.rs.get('/api/v1/projects/export', {
+      responseType: 'blob',
+    });
+  },
+
+  importProjects: async (file: File): Promise<ApiResponse<BatchOperationResult>> => {
+    const content = await file.text();
+    return apiClient.rs.post('/api/v1/projects/import', content, {
+      headers: {
+        'Content-Type': 'text/csv',
+      },
+    });
   },
 
   listExperiments: async (): Promise<ApiResponse<ExperimentRecord[]>> => {
@@ -123,5 +161,54 @@ export const rsApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.rs.get<string>('/health');
+  },
+};
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id?: string;
+  entity_ids?: string[] | null;
+  user_id?: string;
+  user_name?: string;
+  request_details?: any;
+  response_details?: any;
+  status: 'success' | 'partial' | 'error';
+  error_message?: string;
+  ip_address?: string;
+  user_agent?: string;
+  created_at: string;
+}
+
+export interface AuditLogQueryParams {
+  action?: string;
+  entity_type?: string;
+  user_id?: string;
+  status?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export const auditRsApi = {
+  listAuditLogs: async (params?: AuditLogQueryParams): Promise<ApiResponse<{ audit_logs: AuditLog[], total: number }>> => {
+    let url = '/api/v1/audit-logs';
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+      const queryString = searchParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+    return apiClient.rs.get(url);
+  },
+
+  getAuditLog: async (id: string): Promise<ApiResponse<AuditLog>> => {
+    return apiClient.rs.get(`/api/v1/audit-logs/${id}`);
   },
 };

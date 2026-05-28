@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{get, post, put},
     Json, Router,
 };
@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateWorkStationRequest, UpdateWorkStationRequest, WorkStation};
 use topems_shared::{ApiResponse, PaginationParams, api_error};
+use crate::api::audit::log_audit_event;
 
 pub struct AppState {
     pub db: PgPool,
@@ -94,6 +95,7 @@ async fn list_workstations(
 
 async fn create_workstation(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateWorkStationRequest>,
 ) -> Json<ApiResponse<WorkStation>> {
     let id = Uuid::new_v4();
@@ -117,13 +119,45 @@ async fn create_workstation(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(ws) => Json(ApiResponse::success(ws, "工作站创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(ws) => (
+            Json(ApiResponse::success(ws.clone(), "工作站创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建工作站失败: {}", e);
-            Json(api_error(500, "工作站创建失败"))
+            (
+                Json(api_error(500, "工作站创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(ws) = &result {
+        serde_json::to_value(ws).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "work_station".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_workstation(
@@ -153,6 +187,7 @@ async fn get_workstation(
 async fn update_workstation(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateWorkStationRequest>,
 ) -> Json<ApiResponse<WorkStation>> {
     let existing = sqlx::query_as::<_, WorkStation>(
@@ -195,11 +230,43 @@ async fn update_workstation(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(ws) => Json(ApiResponse::success(ws, "工作站更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(ws) => (
+            Json(ApiResponse::success(ws.clone(), "工作站更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新工作站失败: {}", e);
-            Json(api_error(500, "工作站更新失败"))
+            (
+                Json(api_error(500, "工作站更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(ws) = &result {
+        serde_json::to_value(ws).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "work_station".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

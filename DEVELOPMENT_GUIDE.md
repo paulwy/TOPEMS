@@ -339,8 +339,8 @@ edition = "2021"
 
 ## 下一步优先级
 
-1. 完善 LIMS 服务（已有基础）
-2. 完善 RS 服务（已有基础）
+1. 完善 LIMS 服务（已有基础）- 阶段二重点
+2. 完善 RS 服务（已有基础）- 阶段二重点
 3. 实现 QMS 服务
 4. 实现 EHS 服务
 5. 实现 SRM 服务
@@ -348,6 +348,250 @@ edition = "2021"
 7. 添加完整测试
 8. 配置 CI/CD
 9. 性能优化
+
+---
+
+## LIMS/RS 数据库集成指南
+
+### 1. 数据库 Schema 结构
+
+#### LIMS 模块表结构
+```sql
+-- 样品表
+CREATE TABLE lims.samples (
+    id UUID PRIMARY KEY,
+    sample_code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(200) NOT NULL,
+    type VARCHAR(50),
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 检验记录表
+CREATE TABLE lims.inspection_records (
+    id UUID PRIMARY KEY,
+    sample_id UUID REFERENCES lims.samples(id),
+    inspector_id VARCHAR(50),
+    inspection_date TIMESTAMP,
+    status VARCHAR(50) DEFAULT 'pending',
+    results JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 检验项目表
+CREATE TABLE lims.inspection_items (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    unit VARCHAR(50),
+    min_value DECIMAL,
+    max_value DECIMAL,
+    standard_value DECIMAL
+);
+```
+
+#### RS 模块表结构
+```sql
+-- 项目表
+CREATE TABLE rs.projects (
+    id UUID PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'active',
+    progress INT DEFAULT 0,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 试验记录表
+CREATE TABLE rs.experiments (
+    id UUID PRIMARY KEY,
+    project_id UUID REFERENCES rs.projects(id),
+    name VARCHAR(200) NOT NULL,
+    type VARCHAR(50),
+    parameters JSONB,
+    results JSONB,
+    conclusion TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 材料表
+CREATE TABLE rs.materials (
+    id UUID PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    spec TEXT,
+    supplier VARCHAR(200),
+    stock_quantity DECIMAL DEFAULT 0,
+    unit VARCHAR(50)
+);
+```
+
+### 2. LIMS 服务数据库集成步骤
+
+#### 步骤 1: 添加数据库依赖
+```toml
+# services/topems-lims/backend/Cargo.toml
+[dependencies]
+sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-native-tls", "macros", "chrono", "uuid", "json"] }
+```
+
+#### 步骤 2: 创建 db 模块
+```bash
+cd services/topems-lims/backend
+mkdir -p src/db
+cp -r ../../../platform/topems-iam/backend/src/db/ src/
+```
+
+#### 步骤 3: 更新 main.rs
+```rust
+use dotenvy::dotenv;
+use std::env;
+
+enum StorageMode {
+    Memory,
+    Database,
+}
+
+#[derive(Clone)]
+struct AppState {
+    db_pool: Option<sqlx::PgPool>,
+    storage_mode: StorageMode,
+}
+
+async fn try_connect_db() -> (Option<sqlx::PgPool>, StorageMode) {
+    if let Ok(use_memory) = env::var("USE_MEMORY_STORAGE") {
+        if use_memory.to_lowercase() == "true" {
+            return (None, StorageMode::Memory);
+        }
+    }
+    
+    let database_url = env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    
+    match db::create_pool(&database_url).await {
+        Ok(pool) => {
+            tracing::info!("✅ LIMS 数据库连接成功");
+            (Some(pool), StorageMode::Database)
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ LIMS 数据库连接失败: {}, 使用内存模式", e);
+            (None, StorageMode::Memory)
+        }
+    }
+}
+```
+
+#### 步骤 4: 实现 LIMS Repository
+```rust
+// src/db/repository.rs
+pub async fn list_samples(pool: &sqlx::PgPool) -> Result<Vec<Sample>, sqlx::Error> {
+    let samples = sqlx::query_as!(
+        Sample,
+        "SELECT id, sample_code, name, type, status, created_at FROM lims.samples ORDER BY created_at DESC"
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(samples)
+}
+
+pub async fn get_sample(pool: &sqlx::PgPool, sample_id: &str) -> Result<Option<Sample>, sqlx::Error> {
+    let sample = sqlx::query_as!(
+        Sample,
+        "SELECT id, sample_code, name, type, status, created_at FROM lims.samples WHERE id = $1",
+        sample_id
+    )
+    .fetch_optional(pool)
+    .await?;
+    Ok(sample)
+}
+```
+
+### 3. RS 服务数据库集成步骤
+
+#### 步骤 1: 添加数据库依赖
+```toml
+# services/topems-rs/backend/Cargo.toml
+[dependencies]
+sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-native-tls", "macros", "chrono", "uuid", "json"] }
+```
+
+#### 步骤 2: 创建 db 模块
+```bash
+cd services/topems-rs/backend
+mkdir -p src/db
+cp -r ../../../platform/topems-iam/backend/src/db/ src/
+```
+
+#### 步骤 3: 更新 main.rs
+参考 LIMS 的数据库连接模式实现
+
+#### 步骤 4: 实现 RS Repository
+```rust
+// src/db/repository.rs
+pub async fn list_projects(pool: &sqlx::PgPool) -> Result<Vec<Project>, sqlx::Error> {
+    let projects = sqlx::query_as!(
+        Project,
+        "SELECT id, name, code, description, status, progress, start_date, end_date, created_at FROM rs.projects ORDER BY created_at DESC"
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(projects)
+}
+
+pub async fn create_project(pool: &sqlx::PgPool, project: &NewProject) -> Result<Project, sqlx::Error> {
+    let new_project = sqlx::query_as!(
+        Project,
+        r#"INSERT INTO rs.projects (id, name, code, description, status, progress, start_date, end_date)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"#,
+        project.id,
+        project.name,
+        project.code,
+        project.description,
+        project.status,
+        project.progress,
+        project.start_date,
+        project.end_date
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(new_project)
+}
+```
+
+### 4. API 处理函数适配
+
+```rust
+async fn list_samples(State(state): State<AppState>) -> Json<ApiResponse<Vec<Sample>>> {
+    match state.storage_mode {
+        StorageMode::Database => {
+            let samples = db::repository::list_samples(&state.db_pool.unwrap()).await?;
+            Json(ApiResponse::success(samples, "查询成功".to_string()))
+        }
+        StorageMode::Memory => {
+            let samples = state.samples.lock().unwrap().clone();
+            Json(ApiResponse::success(samples, "查询成功".to_string()))
+        }
+    }
+}
+```
+
+### 5. 环境变量配置
+
+在 `.env` 文件中添加：
+```env
+# LIMS 数据库配置
+LIMS_DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+
+# RS 数据库配置
+RS_DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+
+# 存储模式
+USE_MEMORY_STORAGE=false
+```
 
 ## 参考资源
 

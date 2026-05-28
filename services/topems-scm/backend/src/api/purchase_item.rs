@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{get, post, put},
     Json, Router,
 };
@@ -11,6 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreatePurchaseItemRequest, PurchaseItem, UpdatePurchaseItemRequest};
+use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
@@ -131,6 +132,7 @@ async fn list_items(
 
 async fn create_item(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreatePurchaseItemRequest>,
 ) -> Json<ApiResponse<PurchaseItem>> {
     let id = Uuid::new_v4();
@@ -157,13 +159,45 @@ async fn create_item(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(item) => Json(ApiResponse::success(item, "采购明细创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(item) => (
+            Json(ApiResponse::success(item.clone(), "采购明细创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建采购明细失败: {}", e);
-            Json(ApiResponse::error(500, "采购明细创建失败"))
+            (
+                Json(ApiResponse::error(500, "采购明细创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(item) = &result {
+        serde_json::to_value(item).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "purchase_item".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_item(
@@ -193,6 +227,7 @@ async fn get_item(
 async fn update_item(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdatePurchaseItemRequest>,
 ) -> Json<ApiResponse<PurchaseItem>> {
     let existing = sqlx::query_as::<_, PurchaseItem>(
@@ -237,11 +272,43 @@ async fn update_item(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(item) => Json(ApiResponse::success(item, "采购明细更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(item) => (
+            Json(ApiResponse::success(item.clone(), "采购明细更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新采购明细失败: {}", e);
-            Json(ApiResponse::error(500, "采购明细更新失败"))
+            (
+                Json(ApiResponse::error(500, "采购明细更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(item) = &result {
+        serde_json::to_value(item).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "purchase_item".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

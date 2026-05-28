@@ -1,64 +1,62 @@
 -- TOPEMS IAM 数据库架构迁移
 -- 创建 IAM 相关的表结构
 
+-- 启用 UUID 扩展
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 -- 创建 IAM schema
 CREATE SCHEMA IF NOT EXISTS iam;
 
--- 创建用户表
+-- 用户表
 CREATE TABLE IF NOT EXISTS iam.users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username VARCHAR(255) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    full_name VARCHAR(255),
-    avatar_url VARCHAR(512),
-    department VARCHAR(255),
-    role VARCHAR(50) DEFAULT 'user',
-    is_active BOOLEAN DEFAULT true,
-    is_superuser BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_login_at TIMESTAMP WITH TIME ZONE
+    full_name VARCHAR(100),
+    is_active BOOLEAN DEFAULT TRUE,
+    is_superuser BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_login_at TIMESTAMPTZ
 );
 
--- 创建角色表
+-- 角色表
 CREATE TABLE IF NOT EXISTS iam.roles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL UNIQUE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(50) UNIQUE NOT NULL,
     description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 创建权限表
-CREATE TABLE IF NOT EXISTS iam.permissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL,
-    resource VARCHAR(100) NOT NULL,
-    action VARCHAR(50) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(resource, action)
-);
-
--- 创建用户-角色关联表
+-- 用户角色关联表
 CREATE TABLE IF NOT EXISTS iam.user_roles (
-    user_id UUID NOT NULL REFERENCES iam.users(id) ON DELETE CASCADE,
-    role_id UUID NOT NULL REFERENCES iam.roles(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    user_id UUID REFERENCES iam.users(id) ON DELETE CASCADE,
+    role_id UUID REFERENCES iam.roles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (user_id, role_id)
 );
 
--- 创建角色-权限关联表
+-- 权限表
+CREATE TABLE IF NOT EXISTS iam.permissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) UNIQUE NOT NULL,
+    resource VARCHAR(100) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    description TEXT
+);
+
+-- 角色权限关联表
 CREATE TABLE IF NOT EXISTS iam.role_permissions (
-    role_id UUID NOT NULL REFERENCES iam.roles(id) ON DELETE CASCADE,
-    permission_id UUID NOT NULL REFERENCES iam.permissions(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    role_id UUID REFERENCES iam.roles(id) ON DELETE CASCADE,
+    permission_id UUID REFERENCES iam.permissions(id) ON DELETE CASCADE,
     PRIMARY KEY (role_id, permission_id)
 );
 
--- 创建审计日志表
+-- 审计日志表
 CREATE TABLE IF NOT EXISTS iam.audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES iam.users(id) ON DELETE SET NULL,
     action VARCHAR(100) NOT NULL,
     resource VARCHAR(100),
@@ -66,7 +64,7 @@ CREATE TABLE IF NOT EXISTS iam.audit_logs (
     ip_address VARCHAR(45),
     user_agent TEXT,
     details JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 创建索引
@@ -79,101 +77,149 @@ CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON iam.user_roles(user_id);
 CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON iam.role_permissions(role_id);
 
 -- 插入默认管理员用户
--- 注意：密码是 'Admin123' 的 bcrypt 哈希（包含大小写字母和数字）
-INSERT INTO iam.users (id, username, email, password_hash, full_name, role, is_active, is_superuser)
+-- 注意：密码是 'admin123' 的 bcrypt 哈希
+INSERT INTO iam.users (username, email, password_hash, full_name, is_superuser, is_active)
 VALUES (
-    'a0000000-0000-0000-0000-000000000001',
     'admin',
     'admin@topems.com',
-    '$2b$12$ckaJ.Wko3mpeII8ELRUroun/prc3hHlIy61bEPicbz8pXTRJ20hUm',
-    'System Administrator',
-    'admin',
-    true,
-    true
-) ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, updated_at = CURRENT_TIMESTAMP;
+    '$2b$12$H4IHbFRqjjFSRy6tTWnlZeT3b5iHFrALcfBAUstpE8gOZi3blVINy',
+    '系统管理员',
+    TRUE,
+    TRUE
+)
+ON CONFLICT (username) DO UPDATE SET 
+    email = EXCLUDED.email,
+    password_hash = EXCLUDED.password_hash,
+    full_name = EXCLUDED.full_name,
+    is_superuser = EXCLUDED.is_superuser,
+    is_active = EXCLUDED.is_active;
 
 -- 插入普通用户
--- 注意：密码是 'User123' 的 bcrypt 哈希（包含大小写字母和数字）
-INSERT INTO iam.users (id, username, email, password_hash, full_name, role, is_active, is_superuser)
+-- 注意：密码是 'user123' 的 bcrypt 哈希
+INSERT INTO iam.users (username, email, password_hash, full_name, is_superuser, is_active)
 VALUES (
-    'a0000000-0000-0000-0000-000000000002',
     'user',
     'user@topems.com',
-    '$2b$12$D35hGfBnmP5pqLU9LIhuWuQmZfdfOknQQqjg8SLldZuBx4jTNHOSC',
-    'Regular User',
-    'user',
-    true,
-    false
-) ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, updated_at = CURRENT_TIMESTAMP;
+    '$2b$12$01KTZjzKbR6oWpUkl.1Yu.SdZ721sCrtoG0NYIJGHSl0n0gPk8QQu',
+    '普通用户',
+    FALSE,
+    TRUE
+)
+ON CONFLICT (username) DO UPDATE SET 
+    email = EXCLUDED.email,
+    password_hash = EXCLUDED.password_hash,
+    full_name = EXCLUDED.full_name,
+    is_superuser = EXCLUDED.is_superuser,
+    is_active = EXCLUDED.is_active;
 
 -- 插入访客用户
--- 注意：密码是 'Guest123' 的 bcrypt 哈希（包含大小写字母和数字）
-INSERT INTO iam.users (id, username, email, password_hash, full_name, role, is_active, is_superuser)
+-- 注意：密码是 'guest123' 的 bcrypt 哈希
+INSERT INTO iam.users (username, email, password_hash, full_name, is_superuser, is_active)
 VALUES (
-    'a0000000-0000-0000-0000-000000000003',
     'guest',
     'guest@topems.com',
-    '$2b$12$kbpIQEbg/tjDtjgb/q14C.9Tg8/L4xZ2inRj.QUj8kLIu6nDFRQwW',
-    'Guest User',
-    'guest',
-    true,
-    false
-) ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, updated_at = CURRENT_TIMESTAMP;
+    '$2b$12$SUV5f8K6jn8gSPmUSFS.Fu7e7k4bF5RcwLxNuqDXlcgvcglkHrARy',
+    '访客用户',
+    FALSE,
+    TRUE
+)
+ON CONFLICT (username) DO UPDATE SET 
+    email = EXCLUDED.email,
+    password_hash = EXCLUDED.password_hash,
+    full_name = EXCLUDED.full_name,
+    is_superuser = EXCLUDED.is_superuser,
+    is_active = EXCLUDED.is_active;
 
--- 插入默认角色
-INSERT INTO iam.roles (id, name, description)
+-- 插入默认角色（中文名称）
+INSERT INTO iam.roles (name, description)
 VALUES 
-    ('b0000000-0000-0000-0000-000000000001', 'admin', 'System Administrator with full access'),
-    ('b0000000-0000-0000-0000-000000000002', 'user', 'Regular user with standard access'),
-    ('b0000000-0000-0000-0000-000000000003', 'guest', 'Guest user with limited access')
+    ('管理员', '拥有所有权限的管理员角色'),
+    ('普通用户', '普通用户角色'),
+    ('访客', '访客角色')
 ON CONFLICT (name) DO NOTHING;
 
--- 为管理员用户分配 admin 角色
+-- 为管理员用户分配管理员角色
 INSERT INTO iam.user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM iam.users u, iam.roles r
-WHERE u.username = 'admin' AND r.name = 'admin'
+WHERE u.username = 'admin' AND r.name = '管理员'
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
--- 为普通用户分配 user 角色
+-- 为普通用户分配普通用户角色
 INSERT INTO iam.user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM iam.users u, iam.roles r
-WHERE u.username = 'user' AND r.name = 'user'
+WHERE u.username = 'user' AND r.name = '普通用户'
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
--- 为访客用户分配 guest 角色
+-- 为访客用户分配访客角色
 INSERT INTO iam.user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM iam.users u, iam.roles r
-WHERE u.username = 'guest' AND r.name = 'guest'
+WHERE u.username = 'guest' AND r.name = '访客'
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
 -- 插入默认权限
-INSERT INTO iam.permissions (id, name, resource, action, description)
+INSERT INTO iam.permissions (name, resource, action, description)
 VALUES 
-    ('c0000000-0000-0000-0000-000000000001', 'read_users', 'users', 'read', 'Read user information'),
-    ('c0000000-0000-0000-0000-000000000002', 'create_users', 'users', 'create', 'Create new users'),
-    ('c0000000-0000-0000-0000-000000000003', 'update_users', 'users', 'update', 'Update user information'),
-    ('c0000000-0000-0000-0000-000000000004', 'delete_users', 'users', 'delete', 'Delete users'),
-    ('c0000000-0000-0000-0000-000000000005', 'read_roles', 'roles', 'read', 'Read role information'),
-    ('c0000000-0000-0000-0000-000000000006', 'create_roles', 'roles', 'create', 'Create new roles'),
-    ('c0000000-0000-0000-0000-000000000007', 'delete_roles', 'roles', 'delete', 'Delete roles'),
-    ('c0000000-0000-0000-0000-000000000008', 'read_permissions', 'permissions', 'read', 'Read permission information'),
-    ('c0000000-0000-0000-0000-000000000009', 'create_permissions', 'permissions', 'create', 'Create new permissions'),
-    ('c0000000-0000-0000-0000-000000000010', 'delete_permissions', 'permissions', 'delete', 'Delete permissions')
-ON CONFLICT (resource, action) DO NOTHING;
+    ('rs_read', 'rs', 'read', 'RS模块读取权限'),
+    ('rs_write', 'rs', 'write', 'RS模块写入权限'),
+    ('rs_delete', 'rs', 'delete', 'RS模块删除权限'),
+    ('rs_admin', 'rs', 'admin', 'RS模块管理权限'),
+    ('lims_read', 'lims', 'read', 'LIMS模块读取权限'),
+    ('lims_write', 'lims', 'write', 'LIMS模块写入权限'),
+    ('lims_delete', 'lims', 'delete', 'LIMS模块删除权限'),
+    ('lims_admin', 'lims', 'admin', 'LIMS模块管理权限'),
+    ('qms_read', 'qms', 'read', 'QMS模块读取权限'),
+    ('qms_write', 'qms', 'write', 'QMS模块写入权限'),
+    ('qms_delete', 'qms', 'delete', 'QMS模块删除权限'),
+    ('qms_admin', 'qms', 'admin', 'QMS模块管理权限'),
+    ('ehs_read', 'ehs', 'read', 'EHS模块读取权限'),
+    ('ehs_write', 'ehs', 'write', 'EHS模块写入权限'),
+    ('ehs_delete', 'ehs', 'delete', 'EHS模块删除权限'),
+    ('ehs_admin', 'ehs', 'admin', 'EHS模块管理权限'),
+    ('srm_read', 'srm', 'read', 'SRM模块读取权限'),
+    ('srm_write', 'srm', 'write', 'SRM模块写入权限'),
+    ('srm_delete', 'srm', 'delete', 'SRM模块删除权限'),
+    ('srm_admin', 'srm', 'admin', 'SRM模块管理权限'),
+    ('pdm_read', 'pdm', 'read', 'PDM模块读取权限'),
+    ('pdm_write', 'pdm', 'write', 'PDM模块写入权限'),
+    ('pdm_delete', 'pdm', 'delete', 'PDM模块删除权限'),
+    ('pdm_admin', 'pdm', 'admin', 'PDM模块管理权限'),
+    ('workflow_read', 'workflow', 'read', 'Workflow模块读取权限'),
+    ('workflow_write', 'workflow', 'write', 'Workflow模块写入权限'),
+    ('workflow_delete', 'workflow', 'delete', 'Workflow模块删除权限'),
+    ('workflow_admin', 'workflow', 'admin', 'Workflow模块管理权限'),
+    ('doc_read', 'doc', 'read', '文档模块读取权限'),
+    ('doc_write', 'doc', 'write', '文档模块写入权限'),
+    ('doc_delete', 'doc', 'delete', '文档模块删除权限'),
+    ('doc_admin', 'doc', 'admin', '文档模块管理权限'),
+    ('ai_read', 'ai', 'read', 'AI模块读取权限'),
+    ('ai_write', 'ai', 'write', 'AI模块写入权限'),
+    ('ai_delete', 'ai', 'delete', 'AI模块删除权限'),
+    ('ai_admin', 'ai', 'admin', 'AI模块管理权限')
+ON CONFLICT (name) DO NOTHING;
 
--- 为 admin 角色分配所有权限
+-- 为管理员角色分配所有权限
 INSERT INTO iam.role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM iam.roles r, iam.permissions p
-WHERE r.name = 'admin'
+WHERE r.name = '管理员'
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
--- 为 user 角色分配读权限
+-- 为普通用户角色分配只读权限
 INSERT INTO iam.role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM iam.roles r, iam.permissions p
-WHERE r.name = 'user' AND p.action = 'read'
+WHERE r.name = '普通用户' 
+  AND p.action = 'read'
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- 为访客角色分配部分只读权限
+INSERT INTO iam.role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM iam.roles r, iam.permissions p
+WHERE r.name = '访客' 
+  AND p.action = 'read'
+  AND p.resource IN ('rs', 'lims', 'qms', 'ehs', 'srm', 'pdm')
 ON CONFLICT (role_id, permission_id) DO NOTHING;

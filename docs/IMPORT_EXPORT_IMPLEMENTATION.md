@@ -384,14 +384,28 @@ const MyPage = () => {
 5. **必填字段**：导入前确保必填字段已填写
 6. **关联数据**：确保引用的数据（如项目）已存在
 
+## 前端 UI 优化（2026-05-29）
+
+### 新增功能
+1. **模板下载** - 在导入界面提供标准模板下载
+2. **文件预览** - 上传后显示前 5 行数据，便于用户确认内容正确
+3. **拖放上传** - 更友好的上传界面
+4. **文件大小显示** - 清晰显示文件大小信息
+5. **错误提示优化** - 更详细的导入错误反馈
+
+### 优化页面
+- [Limspage.tsx](file:///Users/xingzhai/TOPEMS/frontend/src/pages/Limspage.tsx) - LIMS 样品管理页面
+- [Rspage.tsx](file:///Users/xingzhai/TOPEMS/frontend/src/pages/Rspage.tsx) - RS 项目管理页面
+
 ## 待完成工作
 
 1. ✅ topems-rs 导入导出实现
 2. ✅ topems-lims 导入导出实现
-3. ⏳ topems-qms 导入导出实现
-4. ⏳ topems-ehs 导入导出实现
-5. ⏳ topems-srm 导入导出实现
-6. ⏳ topems-pdm 导入导出实现
+3. ✅ 前端导入导出 UI 优化
+4. ⏳ topems-qms 导入导出实现
+5. ⏳ topems-ehs 导入导出实现
+6. ⏳ topems-srm 导入导出实现
+7. ⏳ topems-pdm 导入导出实现
 
 ## 技术支持
 

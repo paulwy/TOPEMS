@@ -1,23 +1,30 @@
 mod api;
 mod models;
 
-use anyhow::Result;
 use axum::{
     extract::FromRef,
     routing::get,
     Json,
     Router,
 };
-use sqlx::postgres::PgPoolOptions;
-use std::env;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse,
+    AuthState,
+    auth_middleware,
+    create_cors_layer,
+    init_logging,
+    create_database_pool,
+    test_database_connection,
+    Config,
+    Result,
+};
+use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(Clone)]
 struct AppState {
     pool: sqlx::PgPool,
     auth_state: AuthState,
+    config: Config,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -30,37 +37,26 @@ impl FromRef<AppState> for AuthState {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // 1. 初始化统一日志
+    init_logging("topems-lims");
 
-    let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/topems_lims".to_string());
+    // 2. 加载配置
+    let config = Config::load().await?;
+    tracing::info!("Configuration loaded, environment: {}", config.env());
 
-    let pool = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await?;
+    // 3. 创建数据库连接池
+    let pool = create_database_pool(&config.get_database().await).await?;
+    test_database_connection(&pool).await?;
 
-    tracing::info!("🔗 数据库连接成功");
-
-    // 初始化数据库表
+    // 4. 初始化数据库表
     if let Err(e) = init_db(&pool).await {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-
     let app_state = AppState {
         pool: pool.clone(),
-        auth_state: AuthState::new(jwt_secret),
+        auth_state: AuthState::from_env(),
+        config,
     };
 
     let cors = create_cors_layer();
@@ -76,13 +72,15 @@ async fn main() -> Result<()> {
         .merge(api::reagent::create_routes(pool.clone()).await?)
         .merge(api::doc_integration::create_routes(pool.clone()).await?)
         .merge(api::ai_integration::create_routes(pool.clone()).await?)
+        .merge(SwaggerUi::new("/swagger-ui"))
+        .route("/api-docs/openapi.json", get(serve_openapi_json))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
         ))
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8003".to_string());
+    let port = app_state.config.get_server().await.port;
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-LIMS 实验室信息管理系统启动中...");
@@ -97,6 +95,10 @@ async fn main() -> Result<()> {
 
 async fn health_check() -> Json<ApiResponse<&'static str>> {
     Json(ApiResponse::success("TOPEMS-LIMS is running", "健康检查"))
+}
+
+async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+    axum::Json(api::openapi::ApiDoc::openapi())
 }
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
@@ -178,6 +180,47 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     )
     .execute(pool)
     .await?;
+
+    // 创建审计日志表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            action VARCHAR(50) NOT NULL,
+            entity_type VARCHAR(50) NOT NULL,
+            entity_id UUID,
+            entity_ids JSONB,
+            user_id VARCHAR(100),
+            user_name VARCHAR(100),
+            request_details JSONB,
+            response_details JSONB,
+            status VARCHAR(20) NOT NULL DEFAULT 'success',
+            error_message TEXT,
+            ip_address VARCHAR(50),
+            user_agent TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 创建审计日志索引
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status)"#)
+        .execute(pool)
+        .await?;
 
     tracing::info!("✅ 数据库表初始化完成");
 

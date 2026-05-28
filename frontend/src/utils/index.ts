@@ -4,6 +4,6 @@ export { default as session, type SessionUser } from './session';
 export * from './errors';
 
 export const utils = {
-  createLogger,
-  session,
+  createLogger: createLogger,
+  session: session,
 };

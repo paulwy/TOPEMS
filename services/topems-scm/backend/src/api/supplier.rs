@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -11,6 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
+use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
@@ -132,6 +133,7 @@ async fn list_suppliers(
 
 async fn create_supplier(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
     let id = Uuid::new_v4();
@@ -158,13 +160,45 @@ async fn create_supplier(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(supplier) => Json(ApiResponse::success(supplier, "供应商创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(supplier) => (
+            Json(ApiResponse::success(supplier.clone(), "供应商创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建供应商失败: {}", e);
-            Json(ApiResponse::error(500, "供应商创建失败"))
+            (
+                Json(ApiResponse::error(500, "供应商创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(supplier) = &result {
+        serde_json::to_value(supplier).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "supplier".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_supplier(
@@ -194,6 +228,7 @@ async fn get_supplier(
 async fn update_supplier(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
     let existing = sqlx::query_as::<_, Supplier>(
@@ -242,30 +277,98 @@ async fn update_supplier(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(supplier) => Json(ApiResponse::success(supplier, "供应商更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(supplier) => (
+            Json(ApiResponse::success(supplier.clone(), "供应商更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新供应商失败: {}", e);
-            Json(ApiResponse::error(500, "供应商更新失败"))
+            (
+                Json(ApiResponse::error(500, "供应商更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(supplier) = &result {
+        serde_json::to_value(supplier).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "supplier".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn delete_supplier(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM suppliers WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "供应商删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "供应商不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "供应商删除成功")),
+            "success",
+            None
+        ),
+        Ok(_) => (
+            Json(ApiResponse::error(404, "供应商不存在")),
+            "error",
+            Some("供应商不存在".to_string())
+        ),
         Err(e) => {
             tracing::error!("删除供应商失败: {}", e);
-            Json(ApiResponse::error(500, "供应商删除失败"))
+            (
+                Json(ApiResponse::error(500, "供应商删除失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "supplier".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -11,6 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateWarehouseRequest, Warehouse, UpdateWarehouseRequest};
+use crate::api::audit::log_audit_event;
 use topems_shared::{ApiResponse, PaginationParams, api_error};
 
 pub struct AppState {
@@ -94,6 +95,7 @@ async fn list_warehouses(
 
 async fn create_warehouse(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
     let id = Uuid::new_v4();
@@ -117,13 +119,45 @@ async fn create_warehouse(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(warehouse) => Json(ApiResponse::success(warehouse, "仓库创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(warehouse) => (
+            Json(ApiResponse::success(warehouse.clone(), "仓库创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建仓库失败: {}", e);
-            Json(api_error(500, "仓库创建失败"))
+            (
+                Json(api_error(500, "仓库创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(warehouse) = &result {
+        serde_json::to_value(warehouse).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "warehouse".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_warehouse(
@@ -153,6 +187,7 @@ async fn get_warehouse(
 async fn update_warehouse(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
     let existing = sqlx::query_as::<_, Warehouse>(
@@ -195,30 +230,98 @@ async fn update_warehouse(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(warehouse) => Json(ApiResponse::success(warehouse, "仓库更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(warehouse) => (
+            Json(ApiResponse::success(warehouse.clone(), "仓库更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新仓库失败: {}", e);
-            Json(api_error(500, "仓库更新失败"))
+            (
+                Json(api_error(500, "仓库更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(warehouse) = &result {
+        serde_json::to_value(warehouse).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "warehouse".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn delete_warehouse(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM warehouses WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "仓库删除成功")),
-        Ok(_) => Json(api_error(404, "仓库不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "仓库删除成功")),
+            "success",
+            None
+        ),
+        Ok(_) => (
+            Json(api_error(404, "仓库不存在")),
+            "error",
+            Some("仓库不存在".to_string())
+        ),
         Err(e) => {
             tracing::error!("删除仓库失败: {}", e);
-            Json(api_error(500, "仓库删除失败"))
+            (
+                Json(api_error(500, "仓库删除失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "warehouse".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateProductionOrderRequest, ProductionOrder, UpdateProductionOrderRequest};
 use topems_shared::{ApiResponse, PaginationParams, api_error};
+use crate::api::audit::log_audit_event;
 
 pub struct AppState {
     pub db: PgPool,
@@ -94,6 +95,7 @@ async fn list_orders(
 
 async fn create_order(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let id = Uuid::new_v4();
@@ -120,13 +122,45 @@ async fn create_order(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(order) => Json(ApiResponse::success(order, "生产工单创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(order) => (
+            Json(ApiResponse::success(order.clone(), "生产工单创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建生产工单失败: {}", e);
-            Json(api_error(500, "生产工单创建失败"))
+            (
+                Json(api_error(500, "生产工单创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(order) = &result {
+        serde_json::to_value(order).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "production_order".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_order(
@@ -156,6 +190,7 @@ async fn get_order(
 async fn update_order(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let existing = sqlx::query_as::<_, ProductionOrder>(
@@ -206,30 +241,98 @@ async fn update_order(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(order) => Json(ApiResponse::success(order, "生产工单更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(order) => (
+            Json(ApiResponse::success(order.clone(), "生产工单更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新生产工单失败: {}", e);
-            Json(api_error(500, "生产工单更新失败"))
+            (
+                Json(api_error(500, "生产工单更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(order) = &result {
+        serde_json::to_value(order).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "production_order".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn delete_order(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM production_orders WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "生产工单删除成功")),
-        Ok(_) => Json(api_error(404, "生产工单不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "生产工单删除成功")),
+            "success",
+            None
+        ),
+        Ok(_) => (
+            Json(api_error(404, "生产工单不存在")),
+            "error",
+            Some("生产工单不存在".to_string())
+        ),
         Err(e) => {
             tracing::error!("删除生产工单失败: {}", e);
-            Json(api_error(500, "生产工单删除失败"))
+            (
+                Json(api_error(500, "生产工单删除失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "production_order".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

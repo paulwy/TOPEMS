@@ -1,0 +1,78 @@
+# TopEMS Testing Docker Compose
+# Provides ephemeral test environment for integration testing
+# Usage: docker-compose -f docker-compose.test.yml up -d
+# Then run cargo test -- --ignored
+
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    platform: linux/amd64
+    container_name: topems-test-postgres
+    environment:
+      POSTGRES_USER: topems
+      POSTGRES_PASSWORD: topems_secret
+      POSTGRES_DB: topems_test
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U topems"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: topems-test-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  iam-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.iam
+    container_name: topems-test-iam
+    environment:
+      DATABASE_URL: postgres://topems:topems_secret@postgres:5432/topems_test
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: topems-jwt-secret-testing-only
+      PORT: 8001
+      RUST_LOG: info
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: on-failure
+
+  lims-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.lims
+    container_name: topems-test-lims
+    environment:
+      DATABASE_URL: postgres://topems:topems_secret@postgres:5432/topems_test
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: topems-jwt-secret-testing-only
+      PORT: 8002
+      RUST_LOG: info
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: on-failure

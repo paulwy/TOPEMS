@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -11,6 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateInboundOrderRequest, InboundOrder, UpdateInboundOrderRequest};
+use crate::api::audit::log_audit_event;
 use topems_shared::{ApiResponse, PaginationParams, api_error};
 
 pub struct AppState {
@@ -95,6 +96,7 @@ async fn list_inbound_orders(
 
 async fn create_inbound_order(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateInboundOrderRequest>,
 ) -> Json<ApiResponse<InboundOrder>> {
     let id = Uuid::new_v4();
@@ -103,7 +105,7 @@ async fn create_inbound_order(
     let result = sqlx::query_as::<_, InboundOrder>(
         r#"
         INSERT INTO inbound_orders (id, order_number, warehouse_id, supplier_id, order_date, 
-                                    expected_arrival, total_amount, status, remarks, created_at, updated_at)
+                                     expected_arrival, total_amount, status, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
         RETURNING id, order_number, warehouse_id, supplier_id, order_date, expected_arrival, 
                   actual_arrival, total_amount, status, remarks, created_at, updated_at
@@ -122,13 +124,45 @@ async fn create_inbound_order(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(order) => Json(ApiResponse::success(order, "入库订单创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(order) => (
+            Json(ApiResponse::success(order.clone(), "入库订单创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建入库订单失败: {}", e);
-            Json(api_error(500, "入库订单创建失败"))
+            (
+                Json(api_error(500, "入库订单创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(order) = &result {
+        serde_json::to_value(order).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "inbound_order".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_inbound_order(
@@ -159,6 +193,7 @@ async fn get_inbound_order(
 async fn update_inbound_order(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateInboundOrderRequest>,
 ) -> Json<ApiResponse<InboundOrder>> {
     let existing = sqlx::query_as::<_, InboundOrder>(
@@ -209,30 +244,98 @@ async fn update_inbound_order(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(order) => Json(ApiResponse::success(order, "入库订单更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(order) => (
+            Json(ApiResponse::success(order.clone(), "入库订单更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新入库订单失败: {}", e);
-            Json(api_error(500, "入库订单更新失败"))
+            (
+                Json(api_error(500, "入库订单更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(order) = &result {
+        serde_json::to_value(order).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "inbound_order".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn delete_inbound_order(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM inbound_orders WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "入库订单删除成功")),
-        Ok(_) => Json(api_error(404, "入库订单不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "入库订单删除成功")),
+            "success",
+            None
+        ),
+        Ok(_) => (
+            Json(api_error(404, "入库订单不存在")),
+            "error",
+            Some("入库订单不存在".to_string())
+        ),
         Err(e) => {
             tracing::error!("删除入库订单失败: {}", e);
-            Json(api_error(500, "入库订单删除失败"))
+            (
+                Json(api_error(500, "入库订单删除失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "inbound_order".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

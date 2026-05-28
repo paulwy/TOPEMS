@@ -1,11 +1,13 @@
 services:
   postgres:
     image: postgres:16-alpine
+    platform: linux/amd64
     container_name: topems-postgres
     environment:
       - POSTGRES_USER=topems
       - POSTGRES_PASSWORD=topems_secret
       - POSTGRES_DB=topems
+      - PGDATA=/var/lib/postgresql/data/postgres
     ports:
       - "5432:5432"
     volumes:
@@ -22,6 +24,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    platform: linux/amd64
     container_name: topems-redis
     ports:
       - "6379:6379"
