@@ -19,7 +19,7 @@ pub struct OutboundOrder {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateOutboundOrderRequest {
     pub order_number: String,
     pub warehouse_id: Option<Uuid>,
@@ -30,7 +30,7 @@ pub struct CreateOutboundOrderRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateOutboundOrderRequest {
     pub warehouse_id: Option<Uuid>,
     pub customer_id: Option<Uuid>,

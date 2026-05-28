@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -212,6 +213,9 @@ async fn update_department(
         Err(e) => return Json(api_error(500, &format!("查询部门失败: {}", e))),
     };
 
+    // 先获取 request_data，避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+
     let name = req.name.unwrap_or(existing.name);
     let code = req.code.or(existing.code);
     let parent_id = req.parent_id.or(existing.parent_id);
@@ -255,7 +259,6 @@ async fn update_department(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(department) = &result {
         serde_json::to_value(department).ok()
     } else {

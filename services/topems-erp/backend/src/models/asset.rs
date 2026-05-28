@@ -20,7 +20,7 @@ pub struct Asset {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateAssetRequest {
     pub asset_number: String,
     pub name: String,
@@ -33,7 +33,7 @@ pub struct CreateAssetRequest {
     pub responsible_id: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateAssetRequest {
     pub name: Option<String>,
     pub category: Option<String>,

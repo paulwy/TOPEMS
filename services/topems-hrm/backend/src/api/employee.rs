@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -243,6 +244,9 @@ async fn update_employee(
         Err(e) => return Json(api_error(500, &format!("查询员工失败: {}", e))),
     };
 
+    // 先获取 request_data，避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+
     let name = req.name.unwrap_or(existing.name);
     let gender = req.gender.or(existing.gender);
     let birth_date = req.birth_date.or(existing.birth_date);
@@ -307,7 +311,6 @@ async fn update_employee(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(employee) = &result {
         serde_json::to_value(employee).ok()
     } else {

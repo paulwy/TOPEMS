@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -99,6 +100,7 @@ async fn create_outbound_order(
     headers: HeaderMap,
     Json(req): Json<CreateOutboundOrderRequest>,
 ) -> Json<ApiResponse<OutboundOrder>> {
+    let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -140,7 +142,6 @@ async fn create_outbound_order(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(order) = &result {
         serde_json::to_value(order).ok()
     } else {
@@ -196,6 +197,9 @@ async fn update_outbound_order(
     headers: HeaderMap,
     Json(req): Json<UpdateOutboundOrderRequest>,
 ) -> Json<ApiResponse<OutboundOrder>> {
+    // 先获取 request_data 避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+    
     let existing = sqlx::query_as::<_, OutboundOrder>(
         r#"
         SELECT id, order_number, warehouse_id, customer_id, order_date, expected_delivery, 
@@ -260,7 +264,6 @@ async fn update_outbound_order(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(order) = &result {
         serde_json::to_value(order).ok()
     } else {

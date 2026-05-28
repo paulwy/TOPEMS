@@ -16,7 +16,7 @@ pub struct WorkStation {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateWorkStationRequest {
     pub name: String,
     pub code: Option<String>,
@@ -25,7 +25,7 @@ pub struct CreateWorkStationRequest {
     pub supervisor: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateWorkStationRequest {
     pub name: Option<String>,
     pub code: Option<String>,

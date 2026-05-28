@@ -64,9 +64,20 @@ async fn main() -> Result<()> {
             "topems-default-jwt-secret-change-me-in-production".to_string()
         });
 
+    let refresh_secret = env::var("REFRESH_SECRET")
+        .unwrap_or_else(|_| {
+            tracing::warn!("REFRESH_SECRET not set, using default (not recommended for production)");
+            "topems-default-refresh-secret-change-me-in-production".to_string()
+        });
+
+    let token_expiry_hours: i64 = env::var("JWT_EXPIRY_HOURS")
+        .unwrap_or_else(|_| "24".to_string())
+        .parse()
+        .unwrap_or(24);
+
     let app_state = AppState {
         pool: pool.clone(),
-        auth_state: AuthState::new(jwt_secret),
+        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
     };
 
     let cors = create_cors_layer();

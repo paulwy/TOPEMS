@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -193,6 +194,9 @@ async fn update_order(
     headers: HeaderMap,
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    // 先获取 request_data 避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+    
     let existing = sqlx::query_as::<_, ProductionOrder>(
         "SELECT id, order_number, product_name, product_code, quantity, unit, scheduled_start_date, scheduled_end_date, actual_start_date, actual_end_date, status, priority, created_at, updated_at FROM production_orders WHERE id = $1",
     )
@@ -257,7 +261,6 @@ async fn update_order(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(order) = &result {
         serde_json::to_value(order).ok()
     } else {

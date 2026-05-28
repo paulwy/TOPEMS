@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -98,6 +99,7 @@ async fn create_workstation(
     headers: HeaderMap,
     Json(req): Json<CreateWorkStationRequest>,
 ) -> Json<ApiResponse<WorkStation>> {
+    let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -135,7 +137,6 @@ async fn create_workstation(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(ws) = &result {
         serde_json::to_value(ws).ok()
     } else {
@@ -190,6 +191,9 @@ async fn update_workstation(
     headers: HeaderMap,
     Json(req): Json<UpdateWorkStationRequest>,
 ) -> Json<ApiResponse<WorkStation>> {
+    // 先获取 request_data 避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+    
     let existing = sqlx::query_as::<_, WorkStation>(
         "SELECT id, name, code, location, capacity, status, supervisor, created_at, updated_at FROM work_stations WHERE id = $1",
     )
@@ -246,7 +250,6 @@ async fn update_workstation(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(ws) = &result {
         serde_json::to_value(ws).ok()
     } else {

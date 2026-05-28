@@ -16,7 +16,7 @@ pub struct Warehouse {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateWarehouseRequest {
     pub name: String,
     pub code: Option<String>,
@@ -25,7 +25,7 @@ pub struct CreateWarehouseRequest {
     pub phone: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateWarehouseRequest {
     pub name: Option<String>,
     pub code: Option<String>,

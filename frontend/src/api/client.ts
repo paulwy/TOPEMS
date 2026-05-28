@@ -23,6 +23,11 @@ type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' |
 const DEFAULT_TIMEOUT = 30000;
 const AI_TIMEOUT = 120000;
 
+// 判断是否是不需要认证的路径
+const isPublicPath = (url: string): boolean => {
+  return url === '/health' || url.startsWith('/api/v1/auth/');
+};
+
 export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
   const client = axios.create({
     baseURL,
@@ -32,7 +37,8 @@ export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
   client.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem('token');
-      if (token && !config.headers['Authorization']) {
+      // 只对非公开路径添加认证头
+      if (token && !config.headers['Authorization'] && !isPublicPath(config.url || '')) {
         config.headers['Authorization'] = `Bearer ${token}`;
       }
       return config;
@@ -59,7 +65,8 @@ class ApiClient {
       client.interceptors.request.use(
         (config) => {
           const token = localStorage.getItem('token');
-          if (token && !config.headers['Authorization']) {
+          // 只对非公开路径添加认证头
+          if (token && !config.headers['Authorization'] && !isPublicPath(config.url || '')) {
             config.headers['Authorization'] = `Bearer ${token}`;
           }
           return config;
@@ -75,6 +82,11 @@ class ApiClient {
           return response.data;
         },
         (error) => {
+          // 对于网络错误或未运行的服务，不要记录错误日志（避免控制台噪音）
+          if (!error.response || error.code === 'ERR_NETWORK') {
+            return Promise.reject(error);
+          }
+          
           if (error.response?.status === 401) {
             const currentPath = window.location.pathname;
             if (currentPath !== '/login' && currentPath !== '/register') {

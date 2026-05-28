@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State, HeaderMap},
+    extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -210,6 +211,9 @@ async fn update_company(
         Err(e) => return Json(api_error(500, &format!("查询公司失败: {}", e))),
     };
 
+    // 先获取 request_data，避免所有权问题
+    let request_data = serde_json::to_value(&req).ok();
+
     let name = req.name.unwrap_or(existing.name);
     let short_name = req.short_name.or(existing.short_name);
     let registration_number = req.registration_number.or(existing.registration_number);
@@ -259,7 +263,6 @@ async fn update_company(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(company) = &result {
         serde_json::to_value(company).ok()
     } else {
