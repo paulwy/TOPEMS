@@ -1426,6 +1426,7 @@ async fn update_user(
 
     match result {
         Ok(Some(row)) => {
+            let user_id_clone = user_id.clone();
             let (roles, permissions) = get_user_roles_and_permissions(&state.db, &user_id).await;
             let primary_role = roles.first().cloned().unwrap_or_else(|| "user".to_string());
             
@@ -1442,11 +1443,34 @@ async fn update_user(
                 is_superuser: row.get("is_superuser"),
             };
             
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "update_user",
+                "user",
+                Some(&user_id_clone),
+                None,
+                None,
+                true,
+                None
+            ).await;
+            
             Json(ApiResponse::success(user_info, "用户更新成功"))
         }
         Ok(None) => Json(ApiResponse::error(404, "用户不存在")),
         Err(e) => {
             tracing::error!("数据库更新错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "update_user_failed",
+                "user",
+                Some(&user_id),
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1585,9 +1609,33 @@ async fn add_user_role(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(String::new(), "添加角色成功")),
+        Ok(_) => {
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "assign_role_to_user",
+                "user_role",
+                Some(&user_id),
+                None,
+                None,
+                true,
+                None
+            ).await;
+            Json(ApiResponse::success(String::new(), "添加角色成功"))
+        }
         Err(e) => {
             tracing::error!("数据库插入错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "assign_role_to_user_failed",
+                "user_role",
+                Some(&user_id),
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1616,6 +1664,17 @@ async fn remove_user_role(
     match result {
         Ok(res) => {
             if res.rows_affected() > 0 {
+                let _ = state.security_service.log_access(
+                    Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                    &claims.username,
+                    "unassign_role_from_user",
+                    "user_role",
+                    Some(&user_id),
+                    None,
+                    None,
+                    true,
+                    None
+                ).await;
                 Json(ApiResponse::success(String::new(), "移除角色成功"))
             } else {
                 Json(ApiResponse::error(404, "角色不存在"))
@@ -1623,6 +1682,17 @@ async fn remove_user_role(
         }
         Err(e) => {
             tracing::error!("数据库删除错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "unassign_role_from_user_failed",
+                "user_role",
+                Some(&user_id),
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1681,17 +1751,42 @@ async fn create_role(
 
     match result {
         Ok(Some(role)) => {
+            let role_id_str = role.get::<uuid::Uuid, _>("id").to_string();
             let role_info = RoleInfo {
-                id: role.get::<uuid::Uuid, _>("id").to_string(),
+                id: role_id_str.clone(),
                 name: role.get::<String, _>("name"),
                 description: role.get::<Option<String>, _>("description"),
                 created_at: role.get::<chrono::DateTime<Utc>, _>("created_at").to_rfc3339(),
             };
+            
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "create_role",
+                "role",
+                Some(&role_id_str),
+                None,
+                None,
+                true,
+                None
+            ).await;
+            
             Json(ApiResponse::success(role_info, "创建角色成功"))
         }
         Ok(None) => Json(ApiResponse::error(500, "创建角色失败")),
         Err(e) => {
             tracing::error!("数据库插入错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "create_role_failed",
+                "role",
+                None,
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1750,6 +1845,17 @@ async fn delete_role(
     match result {
         Ok(res) => {
             if res.rows_affected() > 0 {
+                let _ = state.security_service.log_access(
+                    Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                    &claims.username,
+                    "delete_role",
+                    "role",
+                    Some(&role_id),
+                    None,
+                    None,
+                    true,
+                    None
+                ).await;
                 Json(ApiResponse::success(String::new(), "删除角色成功"))
             } else {
                 Json(ApiResponse::error(404, "角色不存在"))
@@ -1757,6 +1863,17 @@ async fn delete_role(
         }
         Err(e) => {
             tracing::error!("数据库删除错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "delete_role_failed",
+                "role",
+                Some(&role_id),
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1834,9 +1951,33 @@ async fn add_role_permission(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(String::new(), "添加权限成功")),
+        Ok(_) => {
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "assign_permission_to_role",
+                "role_permission",
+                Some(&role_id),
+                None,
+                None,
+                true,
+                None
+            ).await;
+            Json(ApiResponse::success(String::new(), "添加权限成功"))
+        }
         Err(e) => {
             tracing::error!("数据库插入错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "assign_permission_to_role_failed",
+                "role_permission",
+                Some(&role_id),
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1865,6 +2006,17 @@ async fn remove_role_permission(
     match result {
         Ok(res) => {
             if res.rows_affected() > 0 {
+                let _ = state.security_service.log_access(
+                    Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                    &claims.username,
+                    "unassign_permission_from_role",
+                    "role_permission",
+                    Some(&role_id),
+                    None,
+                    None,
+                    true,
+                    None
+                ).await;
                 Json(ApiResponse::success(String::new(), "移除权限成功"))
             } else {
                 Json(ApiResponse::error(404, "权限不存在"))
@@ -1872,6 +2024,17 @@ async fn remove_role_permission(
         }
         Err(e) => {
             tracing::error!("数据库删除错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "unassign_permission_from_role_failed",
+                "role_permission",
+                Some(&role_id),
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1933,18 +2096,43 @@ async fn create_permission(
 
     match result {
         Ok(Some(perm)) => {
+            let perm_id_str = perm.get::<uuid::Uuid, _>("id").to_string();
             let perm_info = PermissionInfo {
-                id: perm.get::<uuid::Uuid, _>("id").to_string(),
+                id: perm_id_str.clone(),
                 name: perm.get::<String, _>("name"),
                 resource: perm.get::<String, _>("resource"),
                 action: perm.get::<String, _>("action"),
                 description: perm.get::<Option<String>, _>("description"),
             };
+            
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "create_permission",
+                "permission",
+                Some(&perm_id_str),
+                None,
+                None,
+                true,
+                None
+            ).await;
+            
             Json(ApiResponse::success(perm_info, "创建权限成功"))
         }
         Ok(None) => Json(ApiResponse::error(500, "创建权限失败")),
         Err(e) => {
             tracing::error!("数据库插入错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "create_permission_failed",
+                "permission",
+                None,
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
