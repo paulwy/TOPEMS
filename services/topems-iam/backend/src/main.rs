@@ -197,6 +197,7 @@ struct LoginResponse {
     token_type: String,
     expires_in: usize,
     user: UserInfo,
+    must_change_password: bool,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -278,6 +279,22 @@ struct UpdateUserRequest {
 #[derive(Debug, Deserialize)]
 struct ChangePasswordRequest {
     current_password: String,
+    new_password: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct AdminResetPasswordRequest {
+    new_password: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ForgotPasswordRequest {
+    email: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ResetPasswordRequest {
+    token: String,
     new_password: String,
 }
 
@@ -423,8 +440,8 @@ async fn login(
 ) -> Json<ApiResponse<LoginResponse>> {
     let policy = state.security_service.policy();
     
-    let result = sqlx::query_as::<_, (uuid::Uuid, String, String, Option<String>, String, bool, bool, chrono::DateTime<Utc>, chrono::DateTime<Utc>, Option<bool>, Option<chrono::DateTime<Utc>>, Option<i32>)>(
-        "SELECT id, username, email, full_name, password_hash, is_active, is_superuser, created_at, updated_at, account_locked, account_locked_until, failed_login_count FROM iam.users WHERE username = $1"
+    let result = sqlx::query_as::<_, (uuid::Uuid, String, String, Option<String>, String, bool, bool, chrono::DateTime<Utc>, chrono::DateTime<Utc>, Option<bool>, Option<chrono::DateTime<Utc>>, Option<i32>, Option<bool>, Option<chrono::DateTime<Utc>>)>(
+        "SELECT id, username, email, full_name, password_hash, is_active, is_superuser, created_at, updated_at, account_locked, account_locked_until, failed_login_count, must_change_password, password_expires_at FROM iam.users WHERE username = $1"
     )
     .bind(&req.username)
     .fetch_optional(&state.db)
@@ -500,6 +517,9 @@ async fn login(
                     None
                 ).await;
                 
+                let must_change_password = user.12.unwrap_or(false) || 
+                    user.13.map(|expires_at| expires_at <= Utc::now()).unwrap_or(false);
+                
                 let (user_roles, user_permissions) = get_user_roles_and_permissions(&state.db, &user.0.to_string()).await;
                 let primary_role = user_roles.first().cloned().unwrap_or_else(|| "user".to_string());
                 
@@ -538,10 +558,17 @@ async fn login(
                     token_type: "Bearer".to_string(),
                     expires_in: 3600,
                     user: user_info,
+                    must_change_password,
+                };
+                
+                let message = if must_change_password {
+                    "登录成功，请尽快修改密码"
+                } else {
+                    &format!("欢迎回来，{}！", user.3.as_ref().unwrap_or(&user.1))
                 };
                 
                 tracing::info!("✅ 用户登录成功: {}", user.1);
-                Json(ApiResponse::success(resp, &format!("欢迎回来，{}！", user.3.as_ref().unwrap_or(&user.1))))
+                Json(ApiResponse::success(resp, message))
             } else {
                 let current_failed = user.11.unwrap_or(0) + 1;
                 let _ = state.security_service.increment_failed_login(user.0).await;
@@ -785,6 +812,7 @@ async fn register(
                 token_type: "Bearer".to_string(),
                 expires_in: 3600,
                 user: user_info,
+                must_change_password: true,
             };
             
             Json(ApiResponse::success(resp, "注册成功！"))
@@ -1179,7 +1207,7 @@ async fn change_password(
             let new_password_hash = bcrypt::hash(&change_req.new_password, bcrypt::DEFAULT_COST).unwrap();
             
             let update_result = sqlx::query(
-                "UPDATE iam.users SET password_hash = $1, password_changed_at = NOW(), password_expires_at = $2, updated_at = NOW() WHERE id = $3"
+                "UPDATE iam.users SET password_hash = $1, password_changed_at = NOW(), password_expires_at = $2, must_change_password = false, updated_at = NOW() WHERE id = $3"
             )
             .bind(&new_password_hash)
             .bind(&(Utc::now() + Duration::days(policy.expire_days as i64)))
@@ -2317,6 +2345,260 @@ async fn unlock_user(
     }
 }
 
+async fn admin_reset_user_password(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+    Json(req): Json<AdminResetPasswordRequest>,
+) -> Json<ApiResponse<()>> {
+    if claims.role != "admin" {
+        return Json(ApiResponse::error(403, "仅管理员可重置用户密码"));
+    }
+    
+    let policy = state.security_service.policy();
+    let user_uuid = match Uuid::parse_str(&user_id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的用户ID")),
+    };
+    
+    let exists = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)"
+    )
+    .bind(user_uuid)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(false);
+    
+    if !exists {
+        return Json(ApiResponse::error(404, "用户不存在"));
+    }
+    
+    if let Err(msg) = state.security_service.validate_password(&req.new_password) {
+        return Json(ApiResponse::error(400, &msg));
+    }
+    
+    let new_password_hash = bcrypt::hash(&req.new_password, bcrypt::DEFAULT_COST).unwrap();
+    
+    let update_result = sqlx::query(
+        "UPDATE iam.users SET password_hash = $1, password_changed_at = NOW(), password_expires_at = $2, must_change_password = true, updated_at = NOW() WHERE id = $3"
+    )
+    .bind(&new_password_hash)
+    .bind(&(Utc::now() + Duration::days(policy.expire_days as i64)))
+    .bind(user_uuid)
+    .execute(&state.db)
+    .await;
+
+    match update_result {
+        Ok(_) => {
+            let _ = state.security_service.save_password_history(user_uuid, &new_password_hash).await;
+            let _ = state.security_service.log_access(
+                Some(Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil())),
+                &claims.username,
+                "admin_reset_password",
+                "user",
+                Some(&user_id),
+                None,
+                None,
+                true,
+                None
+            ).await;
+            tracing::info!("🔑 管理员重置用户密码成功: {}", user_id);
+            Json(ApiResponse::ok("密码重置成功，请通知用户首次登录时修改密码"))
+        }
+        Err(e) => {
+            tracing::error!("数据库更新错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil())),
+                &claims.username,
+                "admin_reset_password_failed",
+                "user",
+                Some(&user_id),
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn forgot_password(
+    State(state): State<AppState>,
+    Json(req): Json<ForgotPasswordRequest>,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query_as::<_, (uuid::Uuid, String, String, Option<String>)>(
+        "SELECT id, username, email, full_name FROM iam.users WHERE email = $1"
+    )
+    .bind(&req.email)
+    .fetch_optional(&state.db)
+    .await;
+    
+    match result {
+        Ok(Some(user)) => {
+            let token = generate_reset_token();
+            let expires_at = Utc::now() + Duration::hours(1);
+            
+            let insert_result = sqlx::query(
+                "INSERT INTO iam.password_reset_tokens (id, user_id, token, expires_at) 
+                 VALUES ($1, $2, $3, $4)"
+            )
+            .bind(Uuid::new_v4())
+            .bind(user.0)
+            .bind(&token)
+            .bind(expires_at)
+            .execute(&state.db)
+            .await;
+            
+            match insert_result {
+                Ok(_) => {
+                    tracing::info!("📧 密码重置令牌已创建: {}", user.2);
+                    let _ = state.security_service.log_access(
+                        Some(user.0),
+                        &user.1,
+                        "forgot_password",
+                        "auth",
+                        None,
+                        None,
+                        None,
+                        true,
+                        None
+                    ).await;
+                    Json(ApiResponse::success(
+                        token.clone(),
+                        &format!("密码重置令牌已生成，请在1小时内使用。令牌: {}", token)
+                    ))
+                }
+                Err(e) => {
+                    tracing::error!("创建密码重置令牌失败: {}", e);
+                    Json(ApiResponse::error(500, "服务器内部错误"))
+                }
+            }
+        }
+        Ok(None) => {
+            tracing::warn!("❌ 忘记密码 - 邮箱不存在: {}", req.email);
+            Json(ApiResponse::success(
+                String::new(),
+                "如果该邮箱已注册，密码重置链接将发送到您的邮箱"
+            ))
+        }
+        Err(e) => {
+            tracing::error!("数据库查询错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn reset_password(
+    State(state): State<AppState>,
+    Json(req): Json<ResetPasswordRequest>,
+) -> Json<ApiResponse<()>> {
+    let policy = state.security_service.policy();
+    
+    let token_result = sqlx::query_as::<_, (uuid::Uuid, uuid::Uuid, String, chrono::DateTime<Utc>, bool, Option<chrono::DateTime<Utc>>)>(
+        "SELECT id, user_id, token, expires_at, used, used_at FROM iam.password_reset_tokens 
+         WHERE token = $1 AND used = false ORDER BY created_at DESC LIMIT 1"
+    )
+    .bind(&req.token)
+    .fetch_optional(&state.db)
+    .await;
+    
+    match token_result {
+        Ok(Some(token_row)) => {
+            let token_id = token_row.0;
+            let user_id = token_row.1;
+            let expires_at = token_row.3;
+            
+            if expires_at < Utc::now() {
+                return Json(ApiResponse::error(400, "密码重置令牌已过期"));
+            }
+            
+            if let Err(msg) = state.security_service.validate_password(&req.new_password) {
+                return Json(ApiResponse::error(400, &msg));
+            }
+            
+            match state.security_service.check_password_history(user_id, &req.new_password).await {
+                Ok(true) => {
+                    let msg = format!("密码不能与最近{}个密码重复", policy.max_history_count);
+                    return Json(ApiResponse::error(400, &msg));
+                }
+                _ => {}
+            }
+            
+            let new_password_hash = bcrypt::hash(&req.new_password, bcrypt::DEFAULT_COST).unwrap();
+            
+            let update_result = sqlx::query(
+                "UPDATE iam.users SET password_hash = $1, password_changed_at = NOW(), password_expires_at = $2, must_change_password = false, updated_at = NOW() WHERE id = $3"
+            )
+            .bind(&new_password_hash)
+            .bind(&(Utc::now() + Duration::days(policy.expire_days as i64)))
+            .bind(user_id)
+            .execute(&state.db)
+            .await;
+            
+            if update_result.is_err() {
+                return Json(ApiResponse::error(500, "服务器内部错误"));
+            }
+            
+            let mark_used_result = sqlx::query(
+                "UPDATE iam.password_reset_tokens SET used = true, used_at = NOW() WHERE id = $1"
+            )
+            .bind(token_id)
+            .execute(&state.db)
+            .await;
+            
+            if mark_used_result.is_err() {
+                return Json(ApiResponse::error(500, "服务器内部错误"));
+            }
+            
+            let _ = state.security_service.save_password_history(user_id, &new_password_hash).await;
+            
+            let user_result = sqlx::query_as::<_, (String,)>(
+                "SELECT username FROM iam.users WHERE id = $1"
+            )
+            .bind(user_id)
+            .fetch_optional(&state.db)
+            .await;
+            
+            let username = user_result.ok().flatten().map(|u| u.0).unwrap_or_default();
+            
+            let _ = state.security_service.log_access(
+                Some(user_id),
+                &username,
+                "reset_password",
+                "auth",
+                None,
+                None,
+                None,
+                true,
+                None
+            ).await;
+            
+            tracing::info!("🔑 用户通过令牌重置密码成功: {}", user_id);
+            Json(ApiResponse::ok("密码重置成功"))
+        }
+        Ok(None) => {
+            tracing::warn!("❌ 无效的密码重置令牌");
+            Json(ApiResponse::error(400, "无效的密码重置令牌"))
+        }
+        Err(e) => {
+            tracing::error!("数据库查询错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+fn generate_reset_token() -> String {
+    use rand::{Rng, thread_rng};
+    use rand::distributions::Alphanumeric;
+    
+    thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(64)
+        .map(char::from)
+        .collect()
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::registry()
@@ -2369,7 +2651,9 @@ async fn main() {
     let auth_routes = Router::new()
         .route("/login", post(login))
         .route("/register", post(register))
-        .route("/refresh", post(refresh_token));
+        .route("/refresh", post(refresh_token))
+        .route("/forgot-password", post(forgot_password))
+        .route("/reset-password", post(reset_password));
     
     let user_routes = Router::new()
         .route("/me", get(get_current_user))
@@ -2385,7 +2669,8 @@ async fn main() {
         .route("/:user_id/roles", get(get_user_roles))
         .route("/:user_id/roles/:role_id", post(add_user_role))
         .route("/:user_id/roles/:role_id", delete(remove_user_role))
-        .route("/:user_id/unlock", post(unlock_user));
+        .route("/:user_id/unlock", post(unlock_user))
+        .route("/:user_id/reset-password", post(admin_reset_user_password));
     
     let role_routes = Router::new()
         .route("/", get(list_roles))

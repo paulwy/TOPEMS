@@ -26,3 +26,4 @@ validator = { version = "0.18", features = ["derive"] }
 regex = "1"
 lazy_static = "1"
 tower = { version = "0.5", features = ["util"] }
+rand = { version = "0.8", features = ["std"] }
