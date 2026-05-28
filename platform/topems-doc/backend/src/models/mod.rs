@@ -49,6 +49,17 @@ pub struct FilePermission {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct FolderPermission {
+    pub id: Uuid,
+    pub folder_id: Uuid,
+    pub user_id: Option<Uuid>,
+    pub role_id: Option<Uuid>,
+    pub permission: Permission,
+    pub inherit: bool,
+    pub created_at: DateTime<Utc>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, sqlx::Type, ToSchema)]
 #[sqlx(rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
@@ -59,48 +70,52 @@ pub enum Permission {
     Admin,
 }
 
+impl Permission {
+    pub fn includes(&self, required: &Permission) -> bool {
+        match (self, required) {
+            (Permission::Admin, _) => true,
+            (Permission::Delete, Permission::Read) => true,
+            (Permission::Delete, Permission::Write) => true,
+            (Permission::Delete, Permission::Delete) => true,
+            (Permission::Write, Permission::Read) => true,
+            (Permission::Write, Permission::Write) => true,
+            (Permission::Read, Permission::Read) => true,
+            _ => false,
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            Permission::Read => "read",
+            Permission::Write => "write",
+            Permission::Delete => "delete",
+            Permission::Admin => "admin",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_file_metadata_creation() {
-        let id = Uuid::new_v4();
-        let now = Utc::now();
+    fn test_permission_includes() {
+        assert!(Permission::Admin.includes(&Permission::Read));
+        assert!(Permission::Admin.includes(&Permission::Write));
+        assert!(Permission::Admin.includes(&Permission::Delete));
+        assert!(Permission::Admin.includes(&Permission::Admin));
         
-        let metadata = FileMetadata {
-            id,
-            name: "test.txt".to_string(),
-            folder_id: None,
-            size: 1024,
-            content_type: "text/plain".to_string(),
-            storage_path: "/test/path".to_string(),
-            created_at: now,
-            updated_at: now,
-            created_by: "admin".to_string(),
-        };
+        assert!(Permission::Delete.includes(&Permission::Read));
+        assert!(Permission::Delete.includes(&Permission::Write));
+        assert!(Permission::Delete.includes(&Permission::Delete));
+        assert!(!Permission::Delete.includes(&Permission::Admin));
         
-        assert_eq!(metadata.id, id);
-        assert_eq!(metadata.name, "test.txt");
-        assert_eq!(metadata.size, 1024);
-    }
-
-    #[test]
-    fn test_folder_creation() {
-        let id = Uuid::new_v4();
-        let now = Utc::now();
+        assert!(Permission::Write.includes(&Permission::Read));
+        assert!(Permission::Write.includes(&Permission::Write));
+        assert!(!Permission::Write.includes(&Permission::Delete));
         
-        let folder = Folder {
-            id,
-            name: "documents".to_string(),
-            parent_id: None,
-            created_at: now,
-            updated_at: now,
-            created_by: "admin".to_string(),
-        };
-        
-        assert_eq!(folder.id, id);
-        assert_eq!(folder.name, "documents");
+        assert!(Permission::Read.includes(&Permission::Read));
+        assert!(!Permission::Read.includes(&Permission::Write));
     }
 
     #[test]

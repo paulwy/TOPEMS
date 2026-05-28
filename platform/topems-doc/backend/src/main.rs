@@ -23,9 +23,10 @@ mod middleware;
 
 use middleware::auth::Claims;
 use db::repository::{FileRepository, FolderRepository, FileVersionRepository};
-use models::FileMetadata;
+use models::{FileMetadata, Permission};
 use services::storage_service::StorageService;
 use services::conversion_service::ConversionService;
+use services::permission_service::PermissionService;
 use middleware::auth::{AuthState, optional_auth_middleware, OptionalClaims};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -102,6 +103,7 @@ pub struct AppState {
     file_version_repo: Option<FileVersionRepository>,
     storage_service: Option<StorageService>,
     conversion_service: ConversionService,
+    permission_service: Option<PermissionService>,
     storage_mode: StorageMode,
     jwt_secret: String,
 }
@@ -495,6 +497,7 @@ async fn upload_file(
 
     let now = Utc::now();
     let id = Uuid::new_v4();
+    let uploader = claims.0.username.clone();
     
     match state.storage_mode {
         StorageMode::Database => {
@@ -510,12 +513,12 @@ async fn upload_file(
                             storage_path,
                             created_at: now,
                             updated_at: now,
-                            created_by: "admin".to_string(),
+                            created_by: uploader.clone(),
                         };
                         
                         match repo.create(file.clone()).await {
                             Ok(saved_file) => {
-                                // TODO: 在数据库模式下保存版本（暂时简化）
+                                let _ = save_file_version(&state, id, 1, file_content.clone(), uploader).await;
                                 return Json(ApiResponse::success(saved_file, "文件上传成功"));
                             }
                             Err(e) => {
@@ -584,7 +587,30 @@ async fn get_file(
 ) -> Json<ApiResponse<FileMetadata>> {
     tracing::debug!("获取文件: {}, 用户: {}", id, claims.0.username);
     
-    // 简化权限检查：任何已登录用户都可以读取（开发阶段）
+    if let Some(user_id) = claims.0.get_user_id() {
+        if let Some(service) = &state.permission_service {
+            if !claims.0.is_admin() {
+                match service.check_file_permission(
+                    id,
+                    user_id,
+                    &[],
+                    &Permission::Read,
+                ).await {
+                    Ok(true) => {
+                        tracing::debug!("用户 {} 有文件 {} 的读取权限", claims.0.username, id);
+                    }
+                    Ok(false) => {
+                        tracing::warn!("用户 {} 没有文件 {} 的读取权限", claims.0.username, id);
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                    Err(e) => {
+                        tracing::error!("检查文件权限失败: {}", e);
+                    }
+                }
+            }
+        }
+    }
+    
     tracing::debug!("用户 {} 已通过身份验证，允许获取文件", claims.0.username);
     
     if let Some(file) = get_file_by_id(&state, id).await {
@@ -698,7 +724,30 @@ async fn delete_file(
 ) -> Json<ApiResponse<()>> {
     tracing::debug!("删除文件: {}, 用户: {}", id, claims.0.username);
     
-    // 简化权限检查：任何已登录用户都可以删除（开发阶段）
+    if let Some(user_id) = claims.0.get_user_id() {
+        if let Some(service) = &state.permission_service {
+            if !claims.0.is_admin() {
+                match service.check_file_permission(
+                    id,
+                    user_id,
+                    &[],
+                    &Permission::Delete,
+                ).await {
+                    Ok(true) => {
+                        tracing::debug!("用户 {} 有文件 {} 的删除权限", claims.0.username, id);
+                    }
+                    Ok(false) => {
+                        tracing::warn!("用户 {} 没有文件 {} 的删除权限", claims.0.username, id);
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                    Err(e) => {
+                        tracing::error!("检查文件权限失败: {}", e);
+                    }
+                }
+            }
+        }
+    }
+    
     tracing::debug!("用户 {} 已通过身份验证，允许删除文件", claims.0.username);
     
     match state.storage_mode {
@@ -729,7 +778,30 @@ async fn extract_text(
 ) -> Json<ApiResponse<String>> {
     tracing::debug!("提取文本: {}, 用户: {}", id, claims.0.username);
     
-    // 简化权限检查：任何已登录用户都可以提取文本（开发阶段）
+    if let Some(user_id) = claims.0.get_user_id() {
+        if let Some(service) = &state.permission_service {
+            if !claims.0.is_admin() {
+                match service.check_file_permission(
+                    id,
+                    user_id,
+                    &[],
+                    &Permission::Read,
+                ).await {
+                    Ok(true) => {
+                        tracing::debug!("用户 {} 有文件 {} 的读取权限", claims.0.username, id);
+                    }
+                    Ok(false) => {
+                        tracing::warn!("用户 {} 没有文件 {} 的读取权限", claims.0.username, id);
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                    Err(e) => {
+                        tracing::error!("检查文件权限失败: {}", e);
+                    }
+                }
+            }
+        }
+    }
+    
     tracing::debug!("用户 {} 已通过身份验证，允许提取文本", claims.0.username);
     
     if let Some(content) = get_file_content(&state, id).await {
@@ -938,7 +1010,30 @@ async fn get_folder(
 ) -> Json<ApiResponse<models::Folder>> {
     tracing::debug!("获取文件夹: {}, 用户: {}", id, claims.0.username);
     
-    // 简化权限检查：任何已登录用户都可以获取文件夹（开发阶段）
+    if let Some(user_id) = claims.0.get_user_id() {
+        if let Some(service) = &state.permission_service {
+            if !claims.0.is_admin() {
+                match service.check_folder_permission(
+                    id,
+                    user_id,
+                    &[],
+                    &Permission::Read,
+                ).await {
+                    Ok(true) => {
+                        tracing::debug!("用户 {} 有文件夹 {} 的读取权限", claims.0.username, id);
+                    }
+                    Ok(false) => {
+                        tracing::warn!("用户 {} 没有文件夹 {} 的读取权限", claims.0.username, id);
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                    Err(e) => {
+                        tracing::error!("检查文件夹权限失败: {}", e);
+                    }
+                }
+            }
+        }
+    }
+    
     tracing::debug!("用户 {} 已通过身份验证，允许获取文件夹", claims.0.username);
     
     if let Some(folder) = get_folder_by_id(&state, id).await {
@@ -976,12 +1071,48 @@ async fn update_folder(
 ) -> Json<ApiResponse<models::Folder>> {
     tracing::debug!("更新文件夹: {}, 请求: {:?}, 用户: {}", id, req, claims.0.username);
     
-    // 简化权限检查：任何已登录用户都可以更新文件夹（开发阶段）
+    if let Some(user_id) = claims.0.get_user_id() {
+        if let Some(service) = &state.permission_service {
+            if !claims.0.is_admin() {
+                match service.check_folder_permission(
+                    id,
+                    user_id,
+                    &[],
+                    &Permission::Write,
+                ).await {
+                    Ok(true) => {
+                        tracing::debug!("用户 {} 有文件夹 {} 的写入权限", claims.0.username, id);
+                    }
+                    Ok(false) => {
+                        tracing::warn!("用户 {} 没有文件夹 {} 的写入权限", claims.0.username, id);
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                    Err(e) => {
+                        tracing::error!("检查文件夹权限失败: {}", e);
+                    }
+                }
+            }
+        }
+    }
+    
     tracing::debug!("用户 {} 已通过身份验证，允许更新文件夹", claims.0.username);
     
     match state.storage_mode {
         StorageMode::Database => {
-            // 注意：FolderRepository 目前没有 update 方法，暂时只实现内存存储的更新
+            if let Some(repo) = &state.folder_repo {
+                match repo.update(id, &req.name, req.parent_id).await {
+                    Ok(Some(folder)) => {
+                        return Json(ApiResponse::success(folder, "文件夹更新成功"));
+                    }
+                    Ok(None) => {
+                        return Json(ApiResponse::error(404, "文件夹不存在"));
+                    }
+                    Err(e) => {
+                        tracing::error!("更新文件夹失败: {}", e);
+                        return Json(ApiResponse::error(500, "更新文件夹失败"));
+                    }
+                }
+            }
         }
         StorageMode::Memory => {
             let mut folders = state.memory_folders.lock().unwrap();
@@ -1022,11 +1153,31 @@ async fn delete_folder(
 ) -> Json<ApiResponse<()>> {
     tracing::debug!("删除文件夹: {}, 用户: {}", id, claims.0.username);
     
-    // 权限检查：验证用户是否拥有 doc_delete 权限
-    if !claims.0.has_permission("doc_delete") {
-        tracing::warn!("用户 {} 缺少 doc_delete 权限，拒绝删除文件夹", claims.0.username);
-        return Json(ApiResponse::error(403, "权限不足：缺少删除文档的权限"));
+    if !claims.0.is_admin() {
+        if let Some(user_id) = claims.0.get_user_id() {
+            if let Some(service) = &state.permission_service {
+                match service.check_folder_permission(
+                    id,
+                    user_id,
+                    &[],
+                    &Permission::Delete,
+                ).await {
+                    Ok(true) => {
+                        tracing::debug!("用户 {} 有文件夹 {} 的删除权限", claims.0.username, id);
+                    }
+                    Ok(false) => {
+                        tracing::warn!("用户 {} 没有文件夹 {} 的删除权限", claims.0.username, id);
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                    Err(e) => {
+                        tracing::error!("检查文件夹权限失败: {}", e);
+                    }
+                }
+            }
+        }
     }
+    
+    tracing::debug!("用户 {} 已通过权限检查，允许删除文件夹", claims.0.username);
     
     match state.storage_mode {
         StorageMode::Database => {
@@ -1152,7 +1303,30 @@ async fn list_file_versions(
 ) -> Json<ApiResponse<ListFileVersionsResponse>> {
     tracing::debug!("获取文件 {} 的版本列表，用户: {}", file_id, claims.0.username);
     
-    // 简化权限检查：任何已登录用户都可以查看版本（开发阶段）
+    if let Some(user_id) = claims.0.get_user_id() {
+        if let Some(service) = &state.permission_service {
+            if !claims.0.is_admin() {
+                match service.check_file_permission(
+                    file_id,
+                    user_id,
+                    &[],
+                    &Permission::Read,
+                ).await {
+                    Ok(true) => {
+                        tracing::debug!("用户 {} 有文件 {} 的读取权限", claims.0.username, file_id);
+                    }
+                    Ok(false) => {
+                        tracing::warn!("用户 {} 没有文件 {} 的读取权限", claims.0.username, file_id);
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                    Err(e) => {
+                        tracing::error!("检查文件权限失败: {}", e);
+                    }
+                }
+            }
+        }
+    }
+    
     tracing::debug!("用户 {} 已通过身份验证，允许查看文件版本", claims.0.username);
     
     let page = query.page.unwrap_or(1);
@@ -1160,8 +1334,17 @@ async fn list_file_versions(
     
     let versions: Vec<models::FileVersion> = match state.storage_mode {
         StorageMode::Database => {
-            // 数据库版本管理暂时简化
-            vec![]
+            if let Some(repo) = &state.file_version_repo {
+                match repo.list_by_file_id(file_id).await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        tracing::error!("获取文件版本列表失败: {}", e);
+                        vec![]
+                    }
+                }
+            } else {
+                vec![]
+            }
         }
         StorageMode::Memory => {
             let all_versions = state.memory_file_versions.lock().unwrap();
@@ -1219,11 +1402,47 @@ async fn get_file_version(
 ) -> Json<ApiResponse<models::FileVersion>> {
     tracing::debug!("获取文件 {} 的版本 {}，用户: {}", file_id, version_id, claims.0.username);
     
-    // 简化权限检查：任何已登录用户都可以获取版本（开发阶段）
+    if let Some(user_id) = claims.0.get_user_id() {
+        if let Some(service) = &state.permission_service {
+            if !claims.0.is_admin() {
+                match service.check_file_permission(
+                    file_id,
+                    user_id,
+                    &[],
+                    &Permission::Read,
+                ).await {
+                    Ok(true) => {
+                        tracing::debug!("用户 {} 有文件 {} 的读取权限", claims.0.username, file_id);
+                    }
+                    Ok(false) => {
+                        tracing::warn!("用户 {} 没有文件 {} 的读取权限", claims.0.username, file_id);
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                    Err(e) => {
+                        tracing::error!("检查文件权限失败: {}", e);
+                    }
+                }
+            }
+        }
+    }
+    
     tracing::debug!("用户 {} 已通过身份验证，允许获取文件版本", claims.0.username);
     
     let version: Option<models::FileVersion> = match state.storage_mode {
-        StorageMode::Database => None,
+        StorageMode::Database => {
+            if let Some(repo) = &state.file_version_repo {
+                match repo.find_by_id(version_id).await {
+                    Ok(Some(v)) if v.file_id == file_id => Some(v),
+                    Ok(_) => None,
+                    Err(e) => {
+                        tracing::error!("获取文件版本失败: {}", e);
+                        None
+                    }
+                }
+            } else {
+                None
+            }
+        }
         StorageMode::Memory => {
             state
                 .memory_file_versions
@@ -1425,6 +1644,216 @@ async fn upload_file_with_versioning(
     save_file_version(state, file_id, next_version, file_content, created_by).await
 }
 
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct SetFilePermissionRequest {
+    pub user_id: Option<Uuid>,
+    pub role_id: Option<Uuid>,
+    pub permission: Permission,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct SetFolderPermissionRequest {
+    pub user_id: Option<Uuid>,
+    pub role_id: Option<Uuid>,
+    pub permission: Permission,
+    pub inherit: bool,
+}
+
+async fn set_file_permission(
+    State(state): State<AppState>,
+    Path(file_id): Path<Uuid>,
+    claims: OptionalClaims,
+    Json(req): Json<SetFilePermissionRequest>,
+) -> Json<ApiResponse<models::FilePermission>> {
+    if !claims.0.is_admin() {
+        return Json(ApiResponse::error(403, "权限不足：需要管理员权限"));
+    }
+
+    if req.user_id.is_none() && req.role_id.is_none() {
+        return Json(ApiResponse::error(400, "必须指定用户ID或角色ID"));
+    }
+
+    if let Some(service) = &state.permission_service {
+        match service.set_file_permission(
+            file_id,
+            req.user_id,
+            req.role_id,
+            req.permission,
+        ).await {
+            Ok(perm) => Json(ApiResponse::success(perm, "文件权限设置成功")),
+            Err(e) => {
+                tracing::error!("设置文件权限失败: {}", e);
+                Json(ApiResponse::error(500, "设置文件权限失败"))
+            }
+        }
+    } else {
+        Json(ApiResponse::error(500, "权限服务不可用"))
+    }
+}
+
+async fn get_file_permissions(
+    State(state): State<AppState>,
+    Path(file_id): Path<Uuid>,
+    claims: OptionalClaims,
+) -> Json<ApiResponse<Vec<models::FilePermission>>> {
+    let user_id = claims.0.get_user_id();
+    
+    if !claims.0.is_admin() {
+        if let Some(uid) = user_id {
+            if let Some(service) = &state.permission_service {
+                if let Ok(has_access) = service.check_file_permission(
+                    file_id,
+                    uid,
+                    &[],
+                    &Permission::Read,
+                ).await {
+                    if !has_access {
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                }
+            }
+        }
+    }
+
+    if let Some(service) = &state.permission_service {
+        match service.get_file_permissions(file_id).await {
+            Ok(perms) => Json(ApiResponse::success(perms, "获取文件权限成功")),
+            Err(e) => {
+                tracing::error!("获取文件权限失败: {}", e);
+                Json(ApiResponse::error(500, "获取文件权限失败"))
+            }
+        }
+    } else {
+        Json(ApiResponse::error(500, "权限服务不可用"))
+    }
+}
+
+async fn delete_file_permission(
+    State(state): State<AppState>,
+    Path((file_id, permission_id)): Path<(Uuid, Uuid)>,
+    claims: OptionalClaims,
+) -> Json<ApiResponse<()>> {
+    if !claims.0.is_admin() {
+        return Json(ApiResponse::error(403, "权限不足：需要管理员权限"));
+    }
+
+    if let Some(service) = &state.permission_service {
+        match service.remove_file_permission(permission_id).await {
+            Ok(success) => {
+                if success {
+                    Json(ApiResponse::ok("文件权限删除成功"))
+                } else {
+                    Json(ApiResponse::error(404, "权限不存在"))
+                }
+            }
+            Err(e) => {
+                tracing::error!("删除文件权限失败: {}", e);
+                Json(ApiResponse::error(500, "删除文件权限失败"))
+            }
+        }
+    } else {
+        Json(ApiResponse::error(500, "权限服务不可用"))
+    }
+}
+
+async fn set_folder_permission(
+    State(state): State<AppState>,
+    Path(folder_id): Path<Uuid>,
+    claims: OptionalClaims,
+    Json(req): Json<SetFolderPermissionRequest>,
+) -> Json<ApiResponse<models::FolderPermission>> {
+    if !claims.0.is_admin() {
+        return Json(ApiResponse::error(403, "权限不足：需要管理员权限"));
+    }
+
+    if req.user_id.is_none() && req.role_id.is_none() {
+        return Json(ApiResponse::error(400, "必须指定用户ID或角色ID"));
+    }
+
+    if let Some(service) = &state.permission_service {
+        match service.set_folder_permission(
+            folder_id,
+            req.user_id,
+            req.role_id,
+            req.permission,
+            req.inherit,
+        ).await {
+            Ok(perm) => Json(ApiResponse::success(perm, "文件夹权限设置成功")),
+            Err(e) => {
+                tracing::error!("设置文件夹权限失败: {}", e);
+                Json(ApiResponse::error(500, "设置文件夹权限失败"))
+            }
+        }
+    } else {
+        Json(ApiResponse::error(500, "权限服务不可用"))
+    }
+}
+
+async fn get_folder_permissions(
+    State(state): State<AppState>,
+    Path(folder_id): Path<Uuid>,
+    claims: OptionalClaims,
+) -> Json<ApiResponse<Vec<models::FolderPermission>>> {
+    let user_id = claims.0.get_user_id();
+    
+    if !claims.0.is_admin() {
+        if let Some(uid) = user_id {
+            if let Some(service) = &state.permission_service {
+                if let Ok(has_access) = service.check_folder_permission(
+                    folder_id,
+                    uid,
+                    &[],
+                    &Permission::Read,
+                ).await {
+                    if !has_access {
+                        return Json(ApiResponse::error(403, "权限不足"));
+                    }
+                }
+            }
+        }
+    }
+
+    if let Some(service) = &state.permission_service {
+        match service.get_folder_permissions(folder_id).await {
+            Ok(perms) => Json(ApiResponse::success(perms, "获取文件夹权限成功")),
+            Err(e) => {
+                tracing::error!("获取文件夹权限失败: {}", e);
+                Json(ApiResponse::error(500, "获取文件夹权限失败"))
+            }
+        }
+    } else {
+        Json(ApiResponse::error(500, "权限服务不可用"))
+    }
+}
+
+async fn delete_folder_permission(
+    State(state): State<AppState>,
+    Path((folder_id, permission_id)): Path<(Uuid, Uuid)>,
+    claims: OptionalClaims,
+) -> Json<ApiResponse<()>> {
+    if !claims.0.is_admin() {
+        return Json(ApiResponse::error(403, "权限不足：需要管理员权限"));
+    }
+
+    if let Some(service) = &state.permission_service {
+        match service.remove_folder_permission(permission_id).await {
+            Ok(success) => {
+                if success {
+                    Json(ApiResponse::ok("文件夹权限删除成功"))
+                } else {
+                    Json(ApiResponse::error(404, "权限不存在"))
+                }
+            }
+            Err(e) => {
+                tracing::error!("删除文件夹权限失败: {}", e);
+                Json(ApiResponse::error(500, "删除文件夹权限失败"))
+            }
+        }
+    } else {
+        Json(ApiResponse::error(500, "权限服务不可用"))
+    }
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::registry()
@@ -1466,6 +1895,9 @@ async fn main() {
     let now = Utc::now();
     
     let file_version_repo = pool.as_ref().map(|p| FileVersionRepository::new(p.clone()));
+    let permission_service = pool.as_ref().map(|p| PermissionService::new(p.clone()));
+    
+    let admin_user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or_else(|_| Uuid::new_v4());
     
     let state = AppState {
         memory_files: Arc::new(Mutex::new(vec![
@@ -1522,6 +1954,7 @@ async fn main() {
         file_version_repo,
         storage_service,
         conversion_service,
+        permission_service,
         storage_mode,
         jwt_secret: jwt_secret.clone(),
     };
@@ -1577,6 +2010,13 @@ async fn main() {
         .route("/folders/:id", delete(delete_folder))
         .route("/files/:file_id/versions", get(list_file_versions))
         .route("/files/:file_id/versions/:version_id", get(get_file_version))
+        // 权限管理API
+        .route("/files/:file_id/permissions", get(get_file_permissions))
+        .route("/files/:file_id/permissions", post(set_file_permission))
+        .route("/files/:file_id/permissions/:permission_id", delete(delete_file_permission))
+        .route("/folders/:folder_id/permissions", get(get_folder_permissions))
+        .route("/folders/:folder_id/permissions", post(set_folder_permission))
+        .route("/folders/:folder_id/permissions/:permission_id", delete(delete_folder_permission))
         // .route("/files/restore-version", post(restore_file_version))
         .layer(axum_middleware::from_fn_with_state(auth_state, optional_auth_middleware));
     

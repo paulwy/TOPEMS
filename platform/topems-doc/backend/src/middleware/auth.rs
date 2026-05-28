@@ -16,6 +16,8 @@ pub struct Claims {
     pub sub: String,
     pub username: String,
     pub role: String,
+    #[serde(default = "Vec::new")]
+    pub roles: Vec<String>,
     pub exp: usize,
     pub iat: usize,
 }
@@ -32,6 +34,14 @@ impl Claims {
 
     pub fn has_permission(&self, _permission: &str) -> bool {
         self.role == "admin" || self.role == "user"
+    }
+
+    pub fn get_user_id(&self) -> Option<Uuid> {
+        Uuid::parse_str(&self.sub).ok()
+    }
+
+    pub fn is_admin(&self) -> bool {
+        self.role == "admin"
     }
 }
 
@@ -151,6 +161,7 @@ pub async fn optional_auth_middleware(
         sub: if is_development { "admin".to_string() } else { "guest".to_string() },
         username: if is_development { "admin".to_string() } else { "guest".to_string() },
         role: if is_development { "admin".to_string() } else { "guest".to_string() },
+        roles: vec![],
         exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
         iat: Utc::now().timestamp() as usize,
     });
@@ -192,6 +203,7 @@ where
                 sub: "guest".to_string(),
                 username: "guest".to_string(),
                 role: "guest".to_string(),
+                roles: vec![],
                 exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
                 iat: Utc::now().timestamp() as usize,
             })))
