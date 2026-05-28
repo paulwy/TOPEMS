@@ -180,3 +180,81 @@ impl PermissionLevel {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PasswordHistory {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub password_hash: String,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct LoginAttempt {
+    pub id: Uuid,
+    pub username: String,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub success: bool,
+    pub error_message: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct UserLockout {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub locked_until: DateTime<Utc>,
+    pub reason: Option<String>,
+    pub locked_by: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PasswordPolicy {
+    pub min_length: usize,
+    pub require_uppercase: bool,
+    pub require_lowercase: bool,
+    pub require_number: bool,
+    pub require_special: bool,
+    pub max_history_count: usize,
+    pub expire_days: usize,
+    pub max_failed_attempts: usize,
+    pub lockout_minutes: usize,
+}
+
+impl Default for PasswordPolicy {
+    fn default() -> Self {
+        PasswordPolicy {
+            min_length: 8,
+            require_uppercase: true,
+            require_lowercase: true,
+            require_number: true,
+            require_special: true,
+            max_history_count: 5,
+            expire_days: 90,
+            max_failed_attempts: 5,
+            lockout_minutes: 15,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ListAccessLogsRequest {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub user_id: Option<String>,
+    pub action: Option<String>,
+    pub resource: Option<String>,
+    pub success: Option<bool>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ListAccessLogsResponse {
+    pub logs: Vec<AccessLog>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
+}

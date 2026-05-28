@@ -1,7 +1,13 @@
+mod models;
+mod errors;
+mod services;
+mod db;
+mod middleware;
+
 use axum::{
     async_trait,
-    extract::{FromRequestParts, Path, Request, State},
-    http::{request::Parts, StatusCode, HeaderValue},
+    extract::{FromRequestParts, Path, Query, Request, State},
+    http::{request::Parts, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post, put, delete},
@@ -19,6 +25,10 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use uuid::Uuid;
+
+use services::SecurityService;
+use models::{ListAccessLogsResponse, AccessLog};
 
 // JWT Claims
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,10 +64,11 @@ struct RateLimitEntry {
     reset_time: i64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct AppState {
     db: PgPool,
     jwt_secret: String,
+    security_service: Arc<SecurityService>,
     rate_limit_store: Arc<RwLock<HashMap<String, RateLimitEntry>>>,
 }
 
@@ -80,18 +91,18 @@ struct ErrorDetail {
 }
 
 // Api response
-#[derive(Debug, Serialize, Deserialize)]
-struct ApiResponse<T> {
-    code: i32,
-    success: bool,
-    data: Option<T>,
-    message: String,
-    timestamp: String,
-    error: Option<ErrorDetail>,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ApiResponse<T> {
+    pub code: i32,
+    pub success: bool,
+    pub data: Option<T>,
+    pub message: String,
+    pub timestamp: String,
+    pub error: Option<ErrorDetail>,
 }
 
 impl<T> ApiResponse<T> {
-    fn success(data: T, message: &str) -> Self {
+    pub fn success(data: T, message: &str) -> Self {
         ApiResponse {
             code: 200,
             success: true,
@@ -102,7 +113,7 @@ impl<T> ApiResponse<T> {
         }
     }
 
-    fn error(code: i32, message: &str) -> Self {
+    pub fn error(code: i32, message: &str) -> Self {
         let error_type = match code {
             400 => "BadRequest",
             401 => "Unauthorized",
@@ -127,7 +138,7 @@ impl<T> ApiResponse<T> {
         }
     }
 
-    fn error_with_request_id(code: i32, message: &str, request_id: &str) -> Self {
+    pub fn error_with_request_id(code: i32, message: &str, request_id: &str) -> Self {
         let error_type = match code {
             400 => "BadRequest",
             401 => "Unauthorized",
@@ -152,7 +163,7 @@ impl<T> ApiResponse<T> {
         }
     }
 
-    fn ok(message: &str) -> Self {
+    pub fn ok(message: &str) -> Self {
         ApiResponse {
             code: 200,
             success: true,
@@ -411,8 +422,10 @@ async fn login(
     State(state): State<AppState>,
     Json(req): Json<LoginRequest>,
 ) -> Json<ApiResponse<LoginResponse>> {
-    let result = sqlx::query_as::<_, (uuid::Uuid, String, String, Option<String>, String, bool, bool, chrono::DateTime<Utc>, chrono::DateTime<Utc>)>(
-        "SELECT id, username, email, full_name, password_hash, is_active, is_superuser, created_at, updated_at FROM iam.users WHERE username = $1"
+    let policy = state.security_service.policy();
+    
+    let result = sqlx::query_as::<_, (uuid::Uuid, String, String, Option<String>, String, bool, bool, chrono::DateTime<Utc>, chrono::DateTime<Utc>, Option<bool>, Option<chrono::DateTime<Utc>>, Option<i32>)>(
+        "SELECT id, username, email, full_name, password_hash, is_active, is_superuser, created_at, updated_at, account_locked, account_locked_until, failed_login_count FROM iam.users WHERE username = $1"
     )
     .bind(&req.username)
     .fetch_optional(&state.db)
@@ -421,10 +434,73 @@ async fn login(
     match result {
         Ok(Some(user)) => {
             if !user.5 {
+                let _ = state.security_service.log_access(
+                    Some(user.0),
+                    &user.1,
+                    "login",
+                    "auth",
+                    None,
+                    None,
+                    None,
+                    false,
+                    Some("账号已被禁用")
+                ).await;
                 return Json(ApiResponse::error(403, "该账号已被禁用"));
             }
             
-            if bcrypt::verify(&req.password, &user.4).unwrap_or(false) {
+            let is_locked = if user.9.unwrap_or(false) {
+                if let Some(locked_until) = user.10 {
+                    if locked_until > Utc::now() {
+                        true
+                    } else {
+                        let _ = state.security_service.unlock_user(user.0).await;
+                        false
+                    }
+                } else {
+                    true
+                }
+            } else {
+                false
+            };
+            
+            if is_locked {
+                let _ = state.security_service.log_access(
+                    Some(user.0),
+                    &user.1,
+                    "login",
+                    "auth",
+                    None,
+                    None,
+                    None,
+                    false,
+                    Some("账号已被锁定")
+                ).await;
+                return Json(ApiResponse::error(403, "该账号已被锁定，请稍后再试"));
+            }
+            
+            let password_verified = bcrypt::verify(&req.password, &user.4).unwrap_or(false);
+            
+            if password_verified {
+                let _ = state.security_service.reset_failed_login(user.0).await;
+                let _ = state.security_service.record_login_attempt(
+                    &user.1,
+                    None,
+                    None,
+                    true,
+                    None
+                ).await;
+                let _ = state.security_service.log_access(
+                    Some(user.0),
+                    &user.1,
+                    "login",
+                    "auth",
+                    None,
+                    None,
+                    None,
+                    true,
+                    None
+                ).await;
+                
                 let (user_roles, user_permissions) = get_user_roles_and_permissions(&state.db, &user.0.to_string()).await;
                 let primary_role = user_roles.first().cloned().unwrap_or_else(|| "user".to_string());
                 
@@ -466,14 +542,58 @@ async fn login(
                 };
                 
                 tracing::info!("✅ 用户登录成功: {}", user.1);
-                
                 Json(ApiResponse::success(resp, &format!("欢迎回来，{}！", user.3.as_ref().unwrap_or(&user.1))))
             } else {
-                tracing::warn!("❌ 密码错误: {}", req.username);
-                Json(ApiResponse::error(401, "密码错误"))
+                let current_failed = user.11.unwrap_or(0) + 1;
+                let _ = state.security_service.increment_failed_login(user.0).await;
+                let _ = state.security_service.record_login_attempt(
+                    &user.1,
+                    None,
+                    None,
+                    false,
+                    Some("密码错误")
+                ).await;
+                let _ = state.security_service.log_access(
+                    Some(user.0),
+                    &user.1,
+                    "login_failed",
+                    "auth",
+                    None,
+                    None,
+                    None,
+                    false,
+                    Some("密码错误")
+                ).await;
+                
+                if current_failed >= policy.max_failed_attempts as i32 {
+                    let _ = state.security_service.lock_user(user.0, Some("多次登录失败")).await;
+                    tracing::warn!("🔒 账号因多次登录失败被锁定: {}", req.username);
+                    return Json(ApiResponse::error(403, &format!("密码错误次数过多，账号已锁定{}分钟", policy.lockout_minutes)));
+                }
+                
+                tracing::warn!("❌ 密码错误: {} (失败次数: {}/{})", req.username, current_failed, policy.max_failed_attempts);
+                Json(ApiResponse::error(401, &format!("密码错误（还剩{}次机会）", policy.max_failed_attempts as i32 - current_failed)))
             }
         }
         Ok(None) => {
+            let _ = state.security_service.record_login_attempt(
+                &req.username,
+                None,
+                None,
+                false,
+                Some("用户不存在")
+            ).await;
+            let _ = state.security_service.log_access(
+                None,
+                &req.username,
+                "login_failed",
+                "auth",
+                None,
+                None,
+                None,
+                false,
+                Some("用户不存在")
+            ).await;
             tracing::warn!("❌ 用户不存在: {}", req.username);
             Json(ApiResponse::error(404, "用户不存在"))
         }
@@ -586,17 +706,18 @@ async fn register(
         return Json(ApiResponse::error(400, &msg));
     }
     
-    if let Err(msg) = validate_password(&req.password) {
+    if let Err(msg) = state.security_service.validate_password(&req.password) {
         tracing::warn!("❌ 密码验证失败: {}", msg);
         return Json(ApiResponse::error(400, &msg));
     }
     
+    let policy = state.security_service.policy();
     let password_hash = bcrypt::hash(&req.password, bcrypt::DEFAULT_COST).unwrap();
     
     let result = sqlx::query(
         r#"
-        INSERT INTO iam.users (username, email, password_hash, full_name, is_active, is_superuser)
-        VALUES ($1, $2, $3, $4, true, false)
+        INSERT INTO iam.users (username, email, password_hash, full_name, is_active, is_superuser, password_changed_at, password_expires_at)
+        VALUES ($1, $2, $3, $4, true, false, NOW(), $5)
         ON CONFLICT (username) DO UPDATE SET username = EXCLUDED.username
         RETURNING id, username, email, full_name, is_active, is_superuser, created_at
         "#
@@ -605,18 +726,33 @@ async fn register(
     .bind(&req.email)
     .bind(&password_hash)
     .bind(&req.full_name)
+    .bind(&(Utc::now() + Duration::days(policy.expire_days as i64)))
     .fetch_optional(&state.db)
     .await;
 
     match result {
         Ok(Some(user)) => {
+            let user_id = user.get::<uuid::Uuid, _>("id");
             tracing::info!("🆕 用户注册成功: {}", user.get::<String, _>("username"));
             
-            let (user_roles, user_permissions) = get_user_roles_and_permissions(&state.db, &user.get::<uuid::Uuid, _>("id").to_string()).await;
+            let _ = state.security_service.save_password_history(user_id, &password_hash).await;
+            let _ = state.security_service.log_access(
+                Some(user_id),
+                &user.get::<String, _>("username"),
+                "register",
+                "user",
+                Some(&user_id.to_string()),
+                None,
+                None,
+                true,
+                None
+            ).await;
+            
+            let (user_roles, user_permissions) = get_user_roles_and_permissions(&state.db, &user_id.to_string()).await;
             let primary_role = user_roles.first().cloned().unwrap_or_else(|| "user".to_string());
             
             let user_info = UserInfo {
-                id: user.get::<uuid::Uuid, _>("id").to_string(),
+                id: user_id.to_string(),
                 username: user.get::<String, _>("username"),
                 email: user.get::<String, _>("email"),
                 full_name: user.get::<Option<String>, _>("full_name"),
@@ -974,6 +1110,12 @@ async fn change_password(
     AuthenticatedUser(claims): AuthenticatedUser,
     Json(change_req): Json<ChangePasswordRequest>,
 ) -> Json<ApiResponse<()>> {
+    let policy = state.security_service.policy();
+    let user_uuid = match Uuid::parse_str(&claims.sub) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的用户ID")),
+    };
+
     let result = sqlx::query_scalar::<_, String>(
         "SELECT password_hash FROM iam.users WHERE id = $1"
     )
@@ -984,25 +1126,82 @@ async fn change_password(
     match result {
         Ok(Some(password_hash)) => {
             if !bcrypt::verify(&change_req.current_password, &password_hash).unwrap_or(false) {
+                let _ = state.security_service.log_access(
+                    Some(user_uuid),
+                    &claims.username,
+                    "change_password_failed",
+                    "user",
+                    None,
+                    None,
+                    None,
+                    false,
+                    Some("当前密码不正确")
+                ).await;
                 return Json(ApiResponse::error(401, "当前密码不正确"));
             }
             
-            if let Err(msg) = validate_password(&change_req.new_password) {
+            if let Err(msg) = state.security_service.validate_password(&change_req.new_password) {
+                let _ = state.security_service.log_access(
+                    Some(user_uuid),
+                    &claims.username,
+                    "change_password_failed",
+                    "user",
+                    None,
+                    None,
+                    None,
+                    false,
+                    Some(&msg)
+                ).await;
                 return Json(ApiResponse::error(400, &msg));
+            }
+            
+            match state.security_service.check_password_history(user_uuid, &change_req.new_password).await {
+                Ok(true) => {
+                    let msg = format!("密码不能与最近{}个密码重复", policy.max_history_count);
+                    let _ = state.security_service.log_access(
+                        Some(user_uuid),
+                        &claims.username,
+                        "change_password_failed",
+                        "user",
+                        None,
+                        None,
+                        None,
+                        false,
+                        Some(&msg)
+                    ).await;
+                    return Json(ApiResponse::error(400, &msg));
+                }
+                Err(e) => {
+                    tracing::error!("检查密码历史失败: {}", e);
+                }
+                _ => {}
             }
             
             let new_password_hash = bcrypt::hash(&change_req.new_password, bcrypt::DEFAULT_COST).unwrap();
             
             let update_result = sqlx::query(
-                "UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2"
+                "UPDATE iam.users SET password_hash = $1, password_changed_at = NOW(), password_expires_at = $2, updated_at = NOW() WHERE id = $3"
             )
             .bind(&new_password_hash)
+            .bind(&(Utc::now() + Duration::days(policy.expire_days as i64)))
             .bind(&claims.sub)
             .execute(&state.db)
             .await;
 
             match update_result {
                 Ok(_) => {
+                    let _ = state.security_service.save_password_history(user_uuid, &new_password_hash).await;
+                    let _ = state.security_service.log_access(
+                        Some(user_uuid),
+                        &claims.username,
+                        "change_password",
+                        "user",
+                        None,
+                        None,
+                        None,
+                        true,
+                        None
+                    ).await;
                     tracing::info!("🔑 用户密码修改成功: {}", claims.username);
                     Json(ApiResponse::ok("密码修改成功"))
                 }
@@ -1131,16 +1330,17 @@ async fn create_user(
         return Json(ApiResponse::error(400, &msg));
     }
     
-    if let Err(msg) = validate_password(&req.password) {
+    if let Err(msg) = state.security_service.validate_password(&req.password) {
         return Json(ApiResponse::error(400, &msg));
     }
     
+    let policy = state.security_service.policy();
     let password_hash = bcrypt::hash(&req.password, bcrypt::DEFAULT_COST).unwrap();
     let new_user_id = uuid::Uuid::new_v4();
     
     let result = sqlx::query(
-        "INSERT INTO iam.users (id, username, email, password_hash, full_name, is_active, is_superuser) 
-         VALUES ($1, $2, $3, $4, $5, true, false) 
+        "INSERT INTO iam.users (id, username, email, password_hash, full_name, is_active, is_superuser, password_changed_at, password_expires_at) 
+         VALUES ($1, $2, $3, $4, $5, true, false, NOW(), $6) 
          RETURNING id, username, email, full_name, created_at"
     )
     .bind(new_user_id)
@@ -1148,12 +1348,26 @@ async fn create_user(
     .bind(&req.email)
     .bind(&password_hash)
     .bind(&req.full_name)
+    .bind(&(Utc::now() + Duration::days(policy.expire_days as i64)))
     .fetch_optional(&state.db)
     .await;
 
     match result {
         Ok(Some(row)) => {
             let user_id = row.get::<uuid::Uuid, _>("id").to_string();
+            
+            let _ = state.security_service.save_password_history(new_user_id, &password_hash).await;
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "create_user",
+                "user",
+                Some(&user_id),
+                None,
+                None,
+                true,
+                None
+            ).await;
             
             let (roles, permissions) = get_user_roles_and_permissions(&state.db, &user_id).await;
             let primary_role = roles.first().cloned().unwrap_or_else(|| "user".to_string());
@@ -1263,6 +1477,17 @@ async fn delete_user(
     match result {
         Ok(res) => {
             if res.rows_affected() > 0 {
+                let _ = state.security_service.log_access(
+                    Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                    &claims.username,
+                    "delete_user",
+                    "user",
+                    Some(&user_id),
+                    None,
+                    None,
+                    true,
+                    None
+                ).await;
                 Json(ApiResponse::success(String::new(), "用户删除成功"))
             } else {
                 Json(ApiResponse::error(404, "用户不存在"))
@@ -1270,6 +1495,17 @@ async fn delete_user(
         }
         Err(e) => {
             tracing::error!("数据库删除错误: {}", e);
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "delete_user",
+                "user",
+                Some(&user_id),
+                None,
+                None,
+                false,
+                Some(&e.to_string())
+            ).await;
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1736,6 +1972,17 @@ async fn delete_permission(
     match result {
         Ok(res) => {
             if res.rows_affected() > 0 {
+                let _ = state.security_service.log_access(
+                    Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                    &claims.username,
+                    "delete_permission",
+                    "permission",
+                    Some(&permission_id),
+                    None,
+                    None,
+                    true,
+                    None
+                ).await;
                 Json(ApiResponse::success(String::new(), "删除权限成功"))
             } else {
                 Json(ApiResponse::error(404, "权限不存在"))
@@ -1744,6 +1991,141 @@ async fn delete_permission(
         Err(e) => {
             tracing::error!("数据库删除错误: {}", e);
             Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct ListAccessLogsQuery {
+    page: Option<i64>,
+    page_size: Option<i64>,
+    user_id: Option<String>,
+    action: Option<String>,
+    resource: Option<String>,
+    success: Option<bool>,
+    start_date: Option<String>,
+    end_date: Option<String>,
+}
+
+async fn list_access_logs(
+    State(state): State<AppState>,
+    Query(query): Query<ListAccessLogsQuery>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+) -> Json<ApiResponse<ListAccessLogsResponse>> {
+    if claims.role != "admin" {
+        return Json(ApiResponse::error(403, "仅管理员可查看审计日志"));
+    }
+    
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(20).min(100);
+    
+    let logs_query = sqlx::query_as::<_, AccessLog>(
+        r#"
+        SELECT id, user_id, username, action, resource, resource_id, ip_address, user_agent, success, error_message, created_at
+        FROM iam.access_logs
+        WHERE ($1::text IS NULL OR user_id::text = $1)
+          AND ($2::text IS NULL OR action = $2)
+          AND ($3::text IS NULL OR resource = $3)
+          AND ($4::boolean IS NULL OR success = $4)
+        ORDER BY created_at DESC
+        LIMIT $5 OFFSET $6
+        "#
+    )
+    .bind(&query.user_id)
+    .bind(&query.action)
+    .bind(&query.resource)
+    .bind(query.success)
+    .bind(page_size)
+    .bind((page - 1) * page_size)
+    .fetch_all(&state.db)
+    .await;
+
+    let count_query = sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*) FROM iam.access_logs
+        WHERE ($1::text IS NULL OR user_id::text = $1)
+          AND ($2::text IS NULL OR action = $2)
+          AND ($3::text IS NULL OR resource = $3)
+          AND ($4::boolean IS NULL OR success = $4)
+        "#
+    )
+    .bind(&query.user_id)
+    .bind(&query.action)
+    .bind(&query.resource)
+    .bind(query.success)
+    .fetch_one(&state.db)
+    .await;
+
+    match (logs_query, count_query) {
+        (Ok(logs), Ok(total)) => {
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "view_access_logs",
+                "audit",
+                None,
+                None,
+                None,
+                true,
+                None
+            ).await;
+            Json(ApiResponse::success(ListAccessLogsResponse {
+                logs,
+                total,
+                page,
+                page_size,
+            }, "获取审计日志成功"))
+        }
+        (Err(e), _) => {
+            tracing::error!("查询审计日志失败: {}", e);
+            Json(ApiResponse::error(500, "查询审计日志失败"))
+        }
+        (_, Err(e)) => {
+            tracing::error!("统计审计日志失败: {}", e);
+            Json(ApiResponse::error(500, "查询审计日志失败"))
+        }
+    }
+}
+
+async fn get_password_policy(
+    State(state): State<AppState>,
+    AuthenticatedUser(_): AuthenticatedUser,
+) -> Json<ApiResponse<models::PasswordPolicy>> {
+    Json(ApiResponse::success(state.security_service.policy().clone(), "获取密码策略成功"))
+}
+
+async fn unlock_user(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+) -> Json<ApiResponse<String>> {
+    if claims.role != "admin" {
+        return Json(ApiResponse::error(403, "仅管理员可解锁用户"));
+    }
+    
+    let user_uuid = match uuid::Uuid::parse_str(&user_id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的用户ID")),
+    };
+    
+    match state.security_service.unlock_user(user_uuid).await {
+        Ok(_) => {
+            let _ = state.security_service.log_access(
+                Some(uuid::Uuid::parse_str(&claims.sub).unwrap_or(uuid::Uuid::nil())),
+                &claims.username,
+                "unlock_user",
+                "user",
+                Some(&user_id),
+                None,
+                None,
+                true,
+                None
+            ).await;
+            Json(ApiResponse::success(String::new(), "用户解锁成功"))
+        }
+        Err(e) => {
+            tracing::error!("解锁用户失败: {}", e);
+            Json(ApiResponse::error(500, "解锁用户失败"))
         }
     }
 }
@@ -1786,9 +2168,12 @@ async fn main() {
     
     tracing::info!("📋 测试账号：admin/admin123 | user/user123 | guest/guest123");
     
+    let security_service = Arc::new(SecurityService::new(pool.clone()));
+    
     let state = AppState {
         db: pool,
         jwt_secret,
+        security_service: security_service.clone(),
         rate_limit_store: Arc::new(RwLock::new(HashMap::new())),
     };
 
@@ -1812,7 +2197,8 @@ async fn main() {
         .route("/:user_id", delete(delete_user))
         .route("/:user_id/roles", get(get_user_roles))
         .route("/:user_id/roles/:role_id", post(add_user_role))
-        .route("/:user_id/roles/:role_id", delete(remove_user_role));
+        .route("/:user_id/roles/:role_id", delete(remove_user_role))
+        .route("/:user_id/unlock", post(unlock_user));
     
     let role_routes = Router::new()
         .route("/", get(list_roles))
@@ -1828,10 +2214,15 @@ async fn main() {
         .route("/", post(create_permission))
         .route("/:permission_id", delete(delete_permission));
     
+    let security_routes = Router::new()
+        .route("/access-logs", get(list_access_logs))
+        .route("/password-policy", get(get_password_policy));
+    
     let protected_routes = Router::new()
         .nest("/users", user_routes)
         .nest("/roles", role_routes)
         .nest("/permissions", permission_routes)
+        .nest("/security", security_routes)
         .layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
 
     async fn rate_limit_middleware(

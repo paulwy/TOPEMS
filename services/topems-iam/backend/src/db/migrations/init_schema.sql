@@ -56,3 +56,49 @@ CREATE TABLE IF NOT EXISTS iam.access_logs (
     error_message TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS iam.password_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES iam.users(id) ON DELETE CASCADE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_history_user_id ON iam.password_history(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS iam.login_attempts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(255) NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    success BOOLEAN NOT NULL,
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_login_attempts_username ON iam.login_attempts(username, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip ON iam.login_attempts(ip_address, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS iam.user_lockouts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES iam.users(id) ON DELETE CASCADE,
+    locked_until TIMESTAMP WITH TIME ZONE NOT NULL,
+    reason TEXT,
+    locked_by VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_lockouts_user_id ON iam.user_lockouts(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_access_logs_user_id ON iam.access_logs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_access_logs_action ON iam.access_logs(action, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_access_logs_resource ON iam.access_logs(resource, created_at DESC);
+
+ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS failed_login_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS last_failed_login_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS last_password_change_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS password_expires_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS account_locked BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS account_locked_until TIMESTAMP WITH TIME ZONE;
