@@ -7,25 +7,11 @@ use axum::{
     Json,
     Router,
 };
-use std::sync::{Arc, Mutex};
+use sqlx::postgres::PgPoolOptions;
+use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use api::{
-    list_hazards, create_hazard, get_hazard, update_hazard, delete_hazard,
-    list_checks, create_check, get_check, update_check, delete_check,
-    list_plans, create_plan, get_plan, update_plan, delete_plan,
-    list_drills, create_drill, get_drill, update_drill, delete_drill,
-};
-use models::{SafetyHazard, SafetyCheck, EmergencyPlan, DrillRecord};
 use topems_shared::{ApiResponse, create_cors_layer};
-
-#[derive(Clone)]
-struct AppState {
-    hazards: Arc<Mutex<Vec<SafetyHazard>>>,
-    checks: Arc<Mutex<Vec<SafetyCheck>>>,
-    plans: Arc<Mutex<Vec<EmergencyPlan>>>,
-    drills: Arc<Mutex<Vec<DrillRecord>>>,
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -41,29 +27,31 @@ async fn main() -> Result<()> {
 
     tracing::info!("🚀 TOPEMS-EHS 环境健康安全系统启动中...");
 
-    let state = AppState {
-        hazards: Arc::new(Mutex::new(Vec::new())),
-        checks: Arc::new(Mutex::new(Vec::new())),
-        plans: Arc::new(Mutex::new(Vec::new())),
-        drills: Arc::new(Mutex::new(Vec::new())),
-    };
+    let database_url = env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+
+    let pool = PgPoolOptions::new()
+        .max_connections(10)
+        .connect(&database_url)
+        .await?;
+
+    tracing::info!("🔗 数据库连接成功");
+
+    if let Err(e) = init_db(&pool).await {
+        tracing::warn!("数据库初始化警告: {}", e);
+    }
 
     let cors = create_cors_layer();
 
     let app = Router::new()
         .route("/health", get(health_check))
-        .route("/api/v1/hazards", get(list_hazards).post(create_hazard))
-        .route("/api/v1/hazards/{id}", get(get_hazard).put(update_hazard).delete(delete_hazard))
-        .route("/api/v1/checks", get(list_checks).post(create_check))
-        .route("/api/v1/checks/{id}", get(get_check).put(update_check).delete(delete_check))
-        .route("/api/v1/plans", get(list_plans).post(create_plan))
-        .route("/api/v1/plans/{id}", get(get_plan).put(update_plan).delete(delete_plan))
-        .route("/api/v1/drills", get(list_drills).post(create_drill))
-        .route("/api/v1/drills/{id}", get(get_drill).put(update_drill).delete(delete_drill))
-        .layer(cors)
-        .with_state(state);
+        .merge(api::create_hazard_routes(pool.clone()).await?)
+        .merge(api::create_check_routes(pool.clone()).await?)
+        .merge(api::create_plan_routes(pool.clone()).await?)
+        .merge(api::create_drill_routes(pool.clone()).await?)
+        .layer(cors);
 
-    let port = std::env::var("PORT").unwrap_or_else(|_| "8013".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8013".to_string());
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
     tracing::info!("📦 端口: {}", port);
     tracing::info!("✅ TOPEMS-EHS 已就绪");
@@ -75,4 +63,121 @@ async fn main() -> Result<()> {
 
 async fn health_check() -> Json<ApiResponse<&'static str>> {
     Json(ApiResponse::success("TOPEMS-EHS is running", "健康检查"))
+}
+
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS ehs"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.safety_hazards (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            hazard_no VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            category VARCHAR(100) NOT NULL,
+            level VARCHAR(50) NOT NULL,
+            description TEXT,
+            location VARCHAR(255),
+            risk_assessment TEXT,
+            control_measures JSONB DEFAULT '[]',
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.safety_checks (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            check_no VARCHAR(100) NOT NULL UNIQUE,
+            check_type VARCHAR(100) NOT NULL,
+            inspector VARCHAR(255) NOT NULL,
+            check_date TIMESTAMPTZ,
+            location VARCHAR(255),
+            result VARCHAR(100) NOT NULL,
+            issues JSONB DEFAULT '[]',
+            attachments JSONB DEFAULT '[]',
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.emergency_plans (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            plan_no VARCHAR(100) NOT NULL UNIQUE,
+            plan_type VARCHAR(100) NOT NULL,
+            scope TEXT,
+            trigger_conditions TEXT,
+            response_procedures TEXT,
+            responsible_persons JSONB DEFAULT '[]',
+            contact_info TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.drill_records (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            plan_id UUID REFERENCES ehs.emergency_plans(id),
+            drill_name VARCHAR(255) NOT NULL,
+            drill_date TIMESTAMPTZ,
+            participants JSONB DEFAULT '[]',
+            duration_hours DOUBLE PRECISION NOT NULL DEFAULT 0,
+            location VARCHAR(255),
+            summary TEXT,
+            issues_found TEXT,
+            improvements TEXT,
+            attachments JSONB DEFAULT '[]',
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_hazards_status ON ehs.safety_hazards(status)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_checks_status ON ehs.safety_checks(status)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_plans_status ON ehs.emergency_plans(status)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_drills_plan_id ON ehs.drill_records(plan_id)"#)
+        .execute(pool)
+        .await?;
+
+    tracing::info!("🗄️ EHS数据库表初始化完成");
+    Ok(())
 }
