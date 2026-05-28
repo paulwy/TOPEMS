@@ -25,11 +25,15 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
   },
+  setupFiles: ['<rootDir>/src/__tests__/setup-env.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: 'tsconfig.json',
+      diagnostics: {
+        ignoreCodes: [151001],
+      },
     }],
   },
   transformIgnorePatterns: [

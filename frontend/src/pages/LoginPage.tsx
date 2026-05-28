@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { FieldError, ValidationHint } from '../components/ValidationError';
 import { patterns } from '../utils/validation';
+import { isDevelopment } from '../config/runtime';
 
 interface LoginPageProps {
   onLogin?: () => void;
@@ -258,7 +259,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         </div>
 
         {/* 演示账号仅在开发环境显示 */}
-        {import.meta.env.DEV && (
+        {isDevelopment() && (
           <div className="mt-6 pt-6 border-t border-slate-200">
             <p className="text-xs text-slate-500 text-center">
               演示账号: admin / admin123 (管理员) | user / user123 (普通员工) | guest / guest123 (访客)

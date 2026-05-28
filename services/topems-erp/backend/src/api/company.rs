@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::models::{Company, CreateCompanyRequest, UpdateCompanyRequest};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Deserialize)]
 pub struct CompanyQueryParams {
@@ -97,6 +98,7 @@ async fn list_companies(
 
 async fn create_company(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
     let id = Uuid::new_v4();
@@ -123,13 +125,46 @@ async fn create_company(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(company) => Json(ApiResponse::success(company, "公司创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(company) => (
+            Json(ApiResponse::success(company.clone(), "公司创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建公司失败: {}", e);
-            Json(api_error(500, "公司创建失败"))
+            (
+                Json(api_error(500, "公司创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(company) = &result {
+        serde_json::to_value(company).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "company".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_company(
@@ -159,6 +194,7 @@ async fn get_company(
 async fn update_company(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
     let existing = sqlx::query_as::<_, Company>(
@@ -207,30 +243,100 @@ async fn update_company(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(company) => Json(ApiResponse::success(company, "公司更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(company) => (
+            Json(ApiResponse::success(company.clone(), "公司更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新公司失败: {}", e);
-            Json(ApiResponse::<()>::error(500, "公司更新失败"))
+            (
+                Json(api_error(500, "公司更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(company) = &result {
+        serde_json::to_value(company).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "company".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_company(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM companies WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "公司删除成功")),
-        Ok(_) => Json(api_error(404, "公司不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "公司删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "公司不存在")),
+            "error".to_string(),
+            Some("公司不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除公司失败: {}", e);
-            Json(api_error(500, "公司删除失败"))
+            (
+                Json(api_error(500, "公司删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "company".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

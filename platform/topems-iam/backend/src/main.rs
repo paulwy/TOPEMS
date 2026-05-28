@@ -322,7 +322,7 @@ async fn auth_middleware(
 
 // Handlers
 async fn home() -> &'static str {
-    "TOPEMS-IAM 身份认证服务 API\n\n健康检查: GET /health\n\n认证接口:\n- POST /api/v1/auth/login (登录)\n- POST /api/v1/auth/register (注册)\n- POST /api/v1/auth/refresh (刷新token)\n\n用户接口 (需要认证):\n- GET /api/v1/users/me (获取当前用户)\n- PUT /api/v1/users/me (更新当前用户)\n- POST /api/v1/users/me/password (修改密码)\n- GET /api/v1/users (获取用户列表 - 仅管理员)\n- GET /api/v1/users/:id (获取特定用户)\n- GET /api/v1/users/:user_id/roles (获取用户角色)\n- POST /api/v1/users/:user_id/roles/:role_id (为用户添加角色 - 仅管理员)\n- DELETE /api/v1/users/:user_id/roles/:role_id (移除用户角色 - 仅管理员)\n\n角色接口 (需要认证):\n- GET /api/v1/roles (获取角色列表)\n- POST /api/v1/roles (创建角色 - 仅管理员)\n- GET /api/v1/roles/:id (获取特定角色)\n- DELETE /api/v1/roles/:id (删除角色 - 仅管理员)\n- GET /api/v1/roles/:role_id/permissions (获取角色权限)\n- POST /api/v1/roles/:role_id/permissions/:permission_id (为角色添加权限 - 仅管理员)\n- DELETE /api/v1/roles/:role_id/permissions/:permission_id (移除角色权限 - 仅管理员)\n\n权限接口 (需要认证):\n- GET /api/v1/permissions (获取权限列表)\n- POST /api/v1/permissions (创建权限 - 仅管理员)\n- DELETE /api/v1/permissions/:id (删除权限 - 仅管理员)\n\n测试账号:\n- admin / admin123 (管理员)\n- user / user123 (普通用户)\n- guest / guest123 (访客)"
+    "TOPEMS-IAM 身份认证服务 API\n\n健康检查: GET /health\n\n认证接口:\n- POST /api/v1/auth/login (登录)\n- POST /api/v1/auth/register (注册)\n- POST /api/v1/auth/refresh (刷新token)\n\n用户接口 (需要认证):\n- GET /api/v1/users/me (获取当前用户)\n- PUT /api/v1/users/me (更新当前用户)\n- POST /api/v1/users/me/password (修改密码)\n- GET /api/v1/users (获取用户列表 - 仅管理员)\n- GET /api/v1/users/{id} (获取特定用户)\n- GET /api/v1/users/{user_id}/roles (获取用户角色)\n- POST /api/v1/users/{user_id}/roles/{role_id} (为用户添加角色 - 仅管理员)\n- DELETE /api/v1/users/{user_id}/roles/{role_id} (移除用户角色 - 仅管理员)\n\n角色接口 (需要认证):\n- GET /api/v1/roles (获取角色列表)\n- POST /api/v1/roles (创建角色 - 仅管理员)\n- GET /api/v1/roles/{id} (获取特定角色)\n- DELETE /api/v1/roles/{id} (删除角色 - 仅管理员)\n- GET /api/v1/roles/{role_id}/permissions (获取角色权限)\n- POST /api/v1/roles/{role_id}/permissions/{permission_id} (为角色添加权限 - 仅管理员)\n- DELETE /api/v1/roles/{role_id}/permissions/{permission_id} (移除角色权限 - 仅管理员)\n\n权限接口 (需要认证):\n- GET /api/v1/permissions (获取权限列表)\n- POST /api/v1/permissions (创建权限 - 仅管理员)\n- DELETE /api/v1/permissions/{id} (删除权限 - 仅管理员)\n\n测试账号:\n- admin / admin123 (管理员)\n- user / user123 (普通用户)\n- guest / guest123 (访客)"
 }
 
 async fn health() -> Json<ApiResponse<String>> {
@@ -1303,7 +1303,7 @@ async fn main() {
     dotenv::dotenv().ok();
 
     let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "CHANGE_ME_IN_PRODUCTION".to_string());
+        .unwrap_or_else(|_| "topems-jwt-secret".to_string());
     
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -1344,24 +1344,27 @@ async fn main() {
         .route("/me", put(update_current_user))
         .route("/me/password", post(change_password))
         .route("/", get(list_users))
-        .route("/:user_id", get(get_user))
-        .route("/:user_id/roles", get(get_user_roles))
-        .route("/:user_id/roles/:role_id", post(add_user_role))
-        .route("/:user_id/roles/:role_id", delete(remove_user_role));
+        .route("/{user_id}", get(get_user))
+        .route("/{user_id}/roles", get(get_user_roles))
+        .route("/{user_id}/roles/{role_id}", post(add_user_role))
+        .route("/{user_id}/roles/{role_id}", delete(remove_user_role))
+        .without_v07_checks();
     
     let role_routes = Router::new()
         .route("/", get(list_roles))
         .route("/", post(create_role))
-        .route("/:role_id", get(get_role))
-        .route("/:role_id", delete(delete_role))
-        .route("/:role_id/permissions", get(get_role_permissions))
-        .route("/:role_id/permissions/:permission_id", post(add_role_permission))
-        .route("/:role_id/permissions/:permission_id", delete(remove_role_permission));
+        .route("/{role_id}", get(get_role))
+        .route("/{role_id}", delete(delete_role))
+        .route("/{role_id}/permissions", get(get_role_permissions))
+        .route("/{role_id}/permissions/{permission_id}", post(add_role_permission))
+        .route("/{role_id}/permissions/{permission_id}", delete(remove_role_permission))
+        .without_v07_checks();
     
     let permission_routes = Router::new()
         .route("/", get(list_permissions))
         .route("/", post(create_permission))
-        .route("/:permission_id", delete(delete_permission));
+        .route("/{permission_id}", delete(delete_permission))
+        .without_v07_checks();
     
     let protected_routes = Router::new()
         .nest("/users", user_routes)
@@ -1376,7 +1379,8 @@ async fn main() {
         .nest("/api/v1", protected_routes)
         .with_state(state)
         .layer(cors)
-        .layer(tower_http::trace::TraceLayer::new_for_http());
+        .layer(tower_http::trace::TraceLayer::new_for_http())
+        .without_v07_checks();
 
     let port = std::env::var("PORT")
         .unwrap_or_else(|_| "8002".to_string())

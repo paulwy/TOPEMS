@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -11,6 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
+use crate::api::audit::log_audit_event;
 use topems_shared::{ApiResponse, api_error};
 
 #[derive(Debug, Deserialize)]
@@ -109,6 +110,7 @@ async fn list_inventory(
 
 async fn create_inventory(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateInventoryItemRequest>,
 ) -> Json<ApiResponse<InventoryItem>> {
     let id = Uuid::new_v4();
@@ -138,13 +140,45 @@ async fn create_inventory(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(item) => Json(ApiResponse::success(item, "库存创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(item) => (
+            Json(ApiResponse::success(item.clone(), "库存创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建库存失败: {}", e);
-            Json(api_error(500, "库存创建失败"))
+            (
+                Json(api_error(500, "库存创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(item) = &result {
+        serde_json::to_value(item).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "inventory".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_inventory(
@@ -175,6 +209,7 @@ async fn get_inventory(
 async fn update_inventory(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateInventoryItemRequest>,
 ) -> Json<ApiResponse<InventoryItem>> {
     let existing = sqlx::query_as::<_, InventoryItem>(
@@ -231,30 +266,98 @@ async fn update_inventory(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(item) => Json(ApiResponse::success(item, "库存更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(item) => (
+            Json(ApiResponse::success(item.clone(), "库存更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新库存失败: {}", e);
-            Json(api_error(500, "库存更新失败"))
+            (
+                Json(api_error(500, "库存更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(item) = &result {
+        serde_json::to_value(item).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "inventory".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn delete_inventory(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM inventory_items WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "库存删除成功")),
-        Ok(_) => Json(api_error(404, "库存不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "库存删除成功")),
+            "success",
+            None
+        ),
+        Ok(_) => (
+            Json(api_error(404, "库存不存在")),
+            "error",
+            Some("库存不存在".to_string())
+        ),
         Err(e) => {
             tracing::error!("删除库存失败: {}", e);
-            Json(api_error(500, "库存删除失败"))
+            (
+                Json(api_error(500, "库存删除失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "inventory".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

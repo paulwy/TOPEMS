@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{get, post, put},
     Json, Router,
 };
@@ -11,6 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest};
+use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
@@ -124,6 +125,7 @@ async fn list_evaluations(
 
 async fn create_evaluation(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     let id = Uuid::new_v4();
@@ -151,13 +153,45 @@ async fn create_evaluation(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(evaluation) => Json(ApiResponse::success(evaluation, "供应商评估创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(evaluation) => (
+            Json(ApiResponse::success(evaluation.clone(), "供应商评估创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建供应商评估失败: {}", e);
-            Json(ApiResponse::error(500, "供应商评估创建失败"))
+            (
+                Json(ApiResponse::error(500, "供应商评估创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(evaluation) = &result {
+        serde_json::to_value(evaluation).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "supplier_evaluation".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_evaluation(
@@ -187,6 +221,7 @@ async fn get_evaluation(
 async fn update_evaluation(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
@@ -231,11 +266,43 @@ async fn update_evaluation(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(evaluation) => Json(ApiResponse::success(evaluation, "供应商评估更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(evaluation) => (
+            Json(ApiResponse::success(evaluation.clone(), "供应商评估更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新供应商评估失败: {}", e);
-            Json(ApiResponse::error(500, "供应商评估更新失败"))
+            (
+                Json(ApiResponse::error(500, "供应商评估更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(evaluation) = &result {
+        serde_json::to_value(evaluation).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "supplier_evaluation".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

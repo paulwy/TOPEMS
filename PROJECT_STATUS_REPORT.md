@@ -1,8 +1,29 @@
 # TOPEMS 项目状态报告
 
-**更新日期**: 2026-05-27  
-**项目阶段**: MVP (最小可行产品) 完成 ✅  
-**下一步**: 集成测试与生产准备
+**更新日期**: 2026-05-28  
+**项目阶段**: 阶段二进行中 🔄  
+**下一步**: 修复 RS 数据库初始化 → 集成测试 → 阶段三启动
+
+---
+
+## 🎯 四阶段实施计划
+
+| 阶段 | 状态 | 时间 | 核心目标 | 完成度 |
+|------|------|------|----------|--------|
+| **阶段一** | ✅ 已完成 | 完成 | IAM、DOC、AI、FLOW 核心服务上线 | 100% |
+| **阶段二** | 🔄 进行中 | 2周 | LIMS、RS 业务服务完善 | ~85% |
+| **阶段三** | 📋 待启动 | 2周 | 集成测试与生产准备 | 0% |
+| **阶段四** | 📋 待启动 | 1周 | CI/CD 与部署上线 | 0% |
+
+### 阶段二详细进度
+
+| 任务 | 状态 | 完成度 | 说明 |
+|------|------|--------|------|
+| LIMS 数据库集成 | ✅ 完成 | 95% | 8个模块完整实现 |
+| LIMS API 完善 | ✅ 完成 | 100% | 所有 CRUD 接口就绪 |
+| RS 数据库集成 | 🔄 进行中 | 80% | 缺少 init_db 代码 |
+| RS API 完善 | ✅ 完成 | 95% | 6个模块实现，专利模块待开发 |
+| 前端页面集成 | ✅ 完成 | 100% | LIMS/RS 页面对接完成 |
 
 ---
 
@@ -17,6 +38,8 @@
 | **AI** | 8003 | ✅ 运行中 | Rust + Axum + Ollama | AI 知识库、聊天机器人 |
 | **FLOW** | 8004 | ✅ 运行中 | Rust + Axum | 工作流、审批管理 |
 | **GIS** | 8017 | ✅ 运行中 | Rust + Axum | 厂区空间数字化 |
+| **LIMS** | 8006 | ✅ 就绪 | Rust + Axum + SQLx | 实验室信息管理 (8个模块) |
+| **RS** | 8005 | 🔄 待修复 | Rust + Axum + SQLx | 科研研发管理 (6个模块) |
 | **IM** | 8019 | ✅ Mock | Node.js | 即时通讯 (Mock) |
 | **MOBILE** | 8022 | ✅ Mock | Node.js | 移动工作台 (Mock) |
 
@@ -29,6 +52,8 @@
 | 用户管理 | ✅ 完成 | 用户列表、创建、编辑、删除 |
 | 角色管理 | ✅ 完成 | 角色列表、权限分配 |
 | 权限管理 | ✅ 完成 | 权限列表、权限配置 |
+| LIMS 页面 | ✅ 完成 | 样品/流程/任务/记录管理 |
+| RS 页面 | ✅ 完成 | 项目/配方/试验/材料管理 |
 | API 客户端 | ✅ 完成 | 统一的后端服务集成 |
 | UI 组件 | ✅ 完成 | Tailwind CSS 组件库 |
 
@@ -126,7 +151,35 @@ curl http://localhost:3000/
 
 ```bash
 # 检查所有服务端口
-lsof -i :3000 -i :8001 -i :8002 -i :8003 -i :8004 -i :8017 -i :8019 -i :8022 -i :5433 -i :6379
+lsof -i :3000 -i :8001 -i :8002 -i :8003 -i :8004 -i :8005 -i :8006 -i :8017 -i :8019 -i :8022 -i :5433 -i :6379
+```
+
+### LIMS 服务健康检查
+
+```bash
+# LIMS 服务
+curl http://localhost:8006/health
+# ✅ 返回: {"code":200,"success":true,"data":"TOPEMS-LIMS is running"}
+
+# LIMS API - 样品管理
+curl http://localhost:8006/api/v1/samples
+
+# LIMS API - 检验流程
+curl http://localhost:8006/api/v1/processes
+```
+
+### RS 服务健康检查
+
+```bash
+# RS 服务
+curl http://localhost:8005/health
+# ✅ 返回: {"code":200,"success":true,"data":"TOPEMS-RS is running"}
+
+# RS API - 项目管理
+curl http://localhost:8005/api/v1/projects
+
+# RS API - 配方管理
+curl http://localhost:8005/api/v1/formulas
 ```
 
 ---
@@ -200,6 +253,44 @@ curl http://localhost:8004/api/v1/workflows
 curl -X POST http://localhost:8004/api/v1/instances \
   -H "Content-Type: application/json" \
   -d '{"workflow_id":"your-workflow-id","initiator_id":"user1"}'
+```
+
+### 8. LIMS 实验室管理
+
+```bash
+# 获取样品列表
+curl http://localhost:8006/api/v1/samples
+
+# 创建样品
+curl -X POST http://localhost:8006/api/v1/samples \
+  -H "Content-Type: application/json" \
+  -d '{"name":"测试样品A","description":"新材料样品"}'
+
+# 获取检验流程列表
+curl http://localhost:8006/api/v1/processes
+
+# 创建检验任务
+curl -X POST http://localhost:8006/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"sample_id":"<sample-uuid>","process_id":"<process-uuid>","inspector":"张三"}'
+```
+
+### 9. RS 科研研发管理
+
+```bash
+# 获取项目列表
+curl http://localhost:8005/api/v1/projects
+
+# 创建项目
+curl -X POST http://localhost:8005/api/v1/projects \
+  -H "Content-Type: application/json" \
+  -d '{"name":"新型材料研发","code":"RS-2024-001","project_type":"research","leader":"李四"}'
+
+# 获取配方列表
+curl http://localhost:8005/api/v1/formulas
+
+# 获取试验列表
+curl http://localhost:8005/api/v1/experiments
 ```
 
 ---
@@ -318,52 +409,38 @@ TOPEMS/
 
 ## 📋 下一步计划
 
-### 短期 (1-2 周) 🔥
+### 🔥 阶段二收尾任务 (当前)
 
-- [ ] **完善前端门户**
-  - [x] 添加用户管理页面 ✅
-  - [x] 添加角色管理页面 ✅
-  - [x] 添加权限管理页面 ✅
-  - [ ] 添加文档管理页面
-  - [ ] 添加 AI 聊天界面
-  - [ ] 添加工作流管理页面
+| 任务 | 状态 | 负责人 | 时间 | 说明 |
+|------|------|--------|------|------|
+| RS 数据库初始化 | 🔄 | 开发组 | 1天 | 修复 main.rs 缺少 init_db 的问题 |
+| 数据库配置统一 | 📋 | 开发组 | 1天 | 可选：统一使用 topems 数据库 |
+| 集成测试 | � | QA组 | 2天 | 验证 LIMS/RS API 功能 |
+| 前端集成测试 | 📋 | 前端组 | 1天 | 验证页面 CRUD 操作 |
 
-- [x] 集成测试 ✅
-  - [x] 用户认证流程测试 ✅
-  - [x] 用户管理 API 测试 ✅
-  - [x] 角色管理 API 测试 ✅
-  - [x] 权限管理 API 测试 ✅
-  - [x] API 端到端测试 ✅
-  - [x] 前后端集成测试 ✅
+### 阶段三: 集成测试与生产准备 (2周)
 
-- [ ] 文档完善
-  - [ ] API 接口文档更新
-  - [x] 项目状态报告更新 ✅
-  - [x] README 更新 ✅
+| 任务 | 状态 | 负责人 | 时间 |
+|------|------|--------|------|
+| API 集成测试 | 📋 | QA组 | 3天 |
+| 前后端集成测试 | 📋 | QA组 | 4天 |
+| 安全加固 (CORS/限流) | 📋 | 运维组 | 3天 |
+| 日志监控配置 | 📋 | 运维组 | 3天 |
+| 数据库性能优化 | 📋 | DBA组 | 2天 |
 
-### 中期 (1 个月) 📋
+### 阶段四: 部署上线 (1周)
 
-- [ ] **生产环境准备**
-  - [ ] 数据库持久化配置
-  - [ ] 安全加固 (CORS、限流、审计)
-  - [ ] 日志和监控
-  - [ ] 性能优化
+| 任务 | 状态 | 负责人 | 时间 |
+|------|------|--------|------|
+| Docker Compose 生产配置 | 📋 | 运维组 | 2天 |
+| K8s 部署方案 | 📋 | 运维组 | 3天 |
+| CI/CD 流水线配置 | 📋 | DevOps | 2天 |
+| 上线演练 | 📋 | 全体 | 2天 |
 
-- [ ] **API 网关**
-  - [ ] 统一认证入口
-  - [ ] 路由管理
-  - [ ] 限流熔断
-
-- [ ] **业务系统开发**
-  - [ ] TOPEMS-RS (研发管理)
-  - [ ] TOPEMS-LIMS (实验室管理)
-  - [ ] TOPEMS-QMS (质量管理)
-
-### 长期 (3 个月+) 🚀
+### 长期计划 (3个月+) 🚀
 
 - [ ] **DevOps 自动化**
   - [ ] CI/CD 流水线
-  - [ ] Docker Compose 生产配置
   - [ ] Kubernetes 部署方案
 
 - [ ] **监控告警**
@@ -400,12 +477,33 @@ TOPEMS/
    - 问题: 前端访问后端 API 遇到跨域问题
    - 解决方案: 配置后端 CORS 允许所有来源
 
+### 阶段二待解决
+
+1. **🔴 RS 服务数据库初始化缺失**
+   - 问题: `services/topems-rs/backend/src/main.rs` 中没有 `init_db` 函数调用
+   - 影响: 服务启动时不会自动创建数据库表
+   - 解决方案: 参考 LIMS 服务的 `init_db` 实现，添加 RS 的数据库初始化代码
+   - 参考: `services/topems-lims/backend/src/main.rs` 中的 `init_db` 函数
+
+2. **⚠️ 数据库配置优化建议**
+   - 问题: LIMS 使用 `topems_lims` 数据库，RS 使用 `topems_rs` 数据库
+   - 建议: 统一使用 `topems` 数据库，使用 schema 隔离 (lims.*, rs.*)
+   - 好处: 方便数据关联查询，简化运维
+
 ### 中优先级
 
 1. **内存存储限制**
    - 问题: 部分服务使用内存存储
    - 影响: 服务重启后数据丢失
    - 解决方案: 配置 PostgreSQL 数据库
+
+2. **API 限流未配置**
+   - 问题: 没有 API 访问限流
+   - 建议: 添加 rate limiting 中间件
+
+3. **日志监控缺失**
+   - 问题: 没有统一的日志收集和监控
+   - 建议: 配置 ELK 或类似日志系统
 
 ---
 
@@ -463,6 +561,7 @@ TOPEMS/
 - [架构设计](./docs/architecture/overview.md)
 - [服务测试报告](./SERVICE_TEST_REPORT_FINAL.md)
 - [权限系统使用指南](./docs/权限系统使用指南.md)
+- [阶段二评估与实施方案](./PHASE2_ASSESSMENT.md) ⭐
 
 ### 外部资源
 
@@ -543,20 +642,29 @@ cargo fmt --check
 - [x] 统一前端门户
 - [x] Docker 容器化
 - [x] 服务健康检查
-- [x] 集成测试
+- [x] LIMS 服务数据库集成 (95%)
+- [x] LIMS 服务 API 开发
+- [x] LIMS 前端页面开发
+- [x] RS 服务 API 开发
+- [x] RS 前端页面开发
+- [x] 阶段一全部任务完成
 
 ### 🔄 进行中
 
+- [ ] RS 服务数据库初始化 (待修复)
 - [ ] 前后端功能集成
-- [ ] 数据库持久化
 - [ ] 完整的 API 文档
+- [ ] 数据库持久化全面配置
+- [ ] 集成测试
 
 ### 📋 计划中
 
 - [ ] API 网关
 - [ ] 监控系统
 - [ ] CI/CD 流水线
-- [ ] 业务系统开发
+- [ ] QMS/EHS/SRM/PDM 业务系统开发
+- [ ] 阶段三集成测试
+- [ ] 阶段四部署上线
 
 ---
 

@@ -1991,34 +1991,36 @@ async fn main() {
 
     // 不需要认证的路由（预览、下载）
     let public_routes = Router::new()
-        .route("/files/:id/download", get(download_file))
-        .route("/files/:id/preview", get(preview_file))
-        .route("/files/:id/preview-pdf", get(preview_file))
-        .route("/files/:file_id/versions/:version_id/download", get(download_file_version));
+        .route("/files/{id}/download", get(download_file))
+        .route("/files/{id}/preview", get(preview_file))
+        .route("/files/{id}/preview-pdf", get(preview_file))
+        .route("/files/{file_id}/versions/{version_id}/download", get(download_file_version))
+        .without_v07_checks();
     
     // 需要认证的路由
     let api_routes = Router::new()
         .route("/files", get(list_files))
         .route("/files", post(upload_file))
-        .route("/files/:id", get(get_file))
-        .route("/files/:id", delete(delete_file))
-        .route("/files/:id/extract-text", get(extract_text))
+        .route("/files/{id}", get(get_file))
+        .route("/files/{id}", delete(delete_file))
+        .route("/files/{id}/extract-text", get(extract_text))
         .route("/folders", get(list_folders))
         .route("/folders", post(create_folder))
-        .route("/folders/:id", get(get_folder))
-        .route("/folders/:id", put(update_folder))
-        .route("/folders/:id", delete(delete_folder))
-        .route("/files/:file_id/versions", get(list_file_versions))
-        .route("/files/:file_id/versions/:version_id", get(get_file_version))
+        .route("/folders/{id}", get(get_folder))
+        .route("/folders/{id}", put(update_folder))
+        .route("/folders/{id}", delete(delete_folder))
+        .route("/files/{file_id}/versions", get(list_file_versions))
+        .route("/files/{file_id}/versions/{version_id}", get(get_file_version))
         // 权限管理API
-        .route("/files/:file_id/permissions", get(get_file_permissions))
-        .route("/files/:file_id/permissions", post(set_file_permission))
-        .route("/files/:file_id/permissions/:permission_id", delete(delete_file_permission))
-        .route("/folders/:folder_id/permissions", get(get_folder_permissions))
-        .route("/folders/:folder_id/permissions", post(set_folder_permission))
-        .route("/folders/:folder_id/permissions/:permission_id", delete(delete_folder_permission))
+        .route("/files/{file_id}/permissions", get(get_file_permissions))
+        .route("/files/{file_id}/permissions", post(set_file_permission))
+        .route("/files/{file_id}/permissions/{permission_id}", delete(delete_file_permission))
+        .route("/folders/{folder_id}/permissions", get(get_folder_permissions))
+        .route("/folders/{folder_id}/permissions", post(set_folder_permission))
+        .route("/folders/{folder_id}/permissions/{permission_id}", delete(delete_folder_permission))
         // .route("/files/restore-version", post(restore_file_version))
-        .layer(axum_middleware::from_fn_with_state(auth_state, optional_auth_middleware));
+        .layer(axum_middleware::from_fn_with_state(auth_state, optional_auth_middleware))
+        .without_v07_checks();
     
     // 合并路由
     let combined_routes = Router::new()
@@ -2033,7 +2035,8 @@ async fn main() {
         .layer(cors)
         .layer(tower_http::trace::TraceLayer::new_for_http())
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024))
-        .with_state(state);
+        .with_state(state)
+        .without_v07_checks();
 
     let _host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = std::env::var("SERVER_PORT")

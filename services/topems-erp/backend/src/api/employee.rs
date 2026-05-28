@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use topems_shared::{ApiResponse, api_error};
+use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -102,6 +103,7 @@ async fn list_employees(
 
 async fn create_employee(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
     let id = Uuid::new_v4();
@@ -129,13 +131,46 @@ async fn create_employee(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(employee) => Json(ApiResponse::success(employee, "员工创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(employee) => (
+            Json(ApiResponse::success(employee.clone(), "员工创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建员工失败: {}", e);
-            Json(api_error(500, "员工创建失败"))
+            (
+                Json(api_error(500, "员工创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(employee) = &result {
+        serde_json::to_value(employee).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "employee".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_employee(
@@ -165,6 +200,7 @@ async fn get_employee(
 async fn update_employee(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
     let existing = sqlx::query_as::<_, Employee>(
@@ -213,30 +249,100 @@ async fn update_employee(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(employee) => Json(ApiResponse::success(employee, "员工更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(employee) => (
+            Json(ApiResponse::success(employee.clone(), "员工更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新员工失败: {}", e);
-            Json(api_error(500, "员工更新失败"))
+            (
+                Json(api_error(500, "员工更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(employee) = &result {
+        serde_json::to_value(employee).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "employee".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_employee(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM employees WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "员工删除成功")),
-        Ok(_) => Json(api_error(404, "员工不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "员工删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "员工不存在")),
+            "error".to_string(),
+            Some("员工不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除员工失败: {}", e);
-            Json(api_error(500, "员工删除失败"))
+            (
+                Json(api_error(500, "员工删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "employee".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

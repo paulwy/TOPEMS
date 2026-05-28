@@ -149,3 +149,27 @@ CREATE TRIGGER update_experiments_updated_at BEFORE UPDATE ON experiments
 
 CREATE TRIGGER update_achievements_updated_at BEFORE UPDATE ON achievements
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 8. 审计日志表
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    action VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID,
+    entity_ids JSONB,
+    user_id VARCHAR(100),
+    user_name VARCHAR(100),
+    request_details JSONB,
+    response_details JSONB,
+    status VARCHAR(20) NOT NULL DEFAULT 'success',
+    error_message TEXT,
+    ip_address VARCHAR(50),
+    user_agent TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX idx_audit_logs_entity_type ON audit_logs(entity_type);
+CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
+CREATE INDEX idx_audit_logs_status ON audit_logs(status);

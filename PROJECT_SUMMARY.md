@@ -1,335 +1,268 @@
-# TOPEMS 项目状态总结
+# TOPEMS 项目第一阶段工作总结
 
-## 📋 项目概览
+## 📋 项目概述
 
-**更新日期**: 2026-05-24  
-**当前状态**: ✅ 核心功能已完成，数据库持久化已配置
+TOPEMS 是一个企业级的科研管理系统，包含多个微服务：
+- **IAM** (8002) - 身份认证服务
+- **DOC** (8001) - 文档管理服务
+- **AI** (8003) - 智能助手服务
+- **FLOW** (8004) - 工作流引擎
+- **RS** (8005) - 科研项目管理
+- **LIMS** (8006) - 实验室信息管理
 
----
+## ✅ 完成的工作
 
-## ✅ 已完成工作
+### 1. 问题诊断与修复
 
-### 1. 数据库持久化配置
+#### 问题 1：数据库容器兼容性问题
+- **症状**: PostgreSQL 容器在 M1/M2 芯片上启动失败
+- **根本原因**: 架构兼容性和数据目录配置问题
+- **解决方案**:
+  - 添加 `platform: linux/amd64` 配置
+  - 设置 `PGDATA=/var/lib/postgresql/data/postgres`
+- **影响文件**: `infrastructure/docker/docker-compose.yml`
+- **状态**: ✅ 已修复
 
-**完成时间**: 2026-05-24  
-**状态**: ✅ 完成
+#### 问题 2：Axum 路由参数语法错误
+- **症状**: 服务启动失败，报错 `Path segments must not start with ':'`
+- **根本原因**: Axum 0.8+ 不再支持 `:param` 语法
+- **解决方案**: 批量替换为 `{param}` 语法
+- **影响文件**: IAM 服务的所有路由定义
+- **状态**: ✅ 已修复
 
-- 配置了 PostgreSQL 数据库作为持久化存储
-- 创建了完整的数据库初始化脚本 (`infrastructure/docker/init.sql`)
-- 修改了服务代码，支持在内存模式和数据库模式之间切换
-- 文档管理服务和身份认证服务现在默认使用数据库模式
-- 创建了环境变量配置文件 `.env`
+#### 问题 3：用户认证失败
+- **症状**: 测试账号密码验证失败
+- **根本原因**:
+  - 密码哈希不正确
+  - JWT_SECRET 配置不一致
+- **解决方案**:
+  - 更新密码哈希为正确的 bcrypt 值
+  - 统一 JWT_SECRET 为 `topems-jwt-secret`
+- **测试账号**: admin/admin123, user/user123, guest/guest123
+- **状态**: ✅ 已修复
 
-**数据库 Schema 包含**:
+#### 问题 4：RS 服务数据库错误
+- **症状**: 获取项目列表返回 500 错误
+- **根本原因**: 数据库表未初始化
+- **解决方案**: 执行 `schema.sql` 创建数据库表
+- **状态**: ✅ 已修复
 
-- `doc` - 文档管理模块（文件夹、文件、文件版本、权限）
-- `iam` - 身份认证模块（用户、角色、权限、审计日志）
-- `ai` - 智能知识库模块（文档、标签）
-- `flow` - 工作流模块（工作流定义、实例、审批任务）
-- `lims` - LIMS 实验室管理模块
-- `rs` - RS 研发管理模块
-- `qms` - QMS 质量管理模块
-- `ehs` - EHS 环境健康安全模块
-- `srm` - SRM 供应商关系管理模块
-- `pdm` - PDM 生产数据管理模块
-- `integration` - 系统集成模块
+#### 问题 5：服务端口冲突
+- **症状**: RS 服务端口与 IAM 冲突
+- **解决方案**: 修改 RS 服务默认端口为 8005
+- **状态**: ✅ 已修复
 
-**默认账号**:
+#### 问题 6：LIMS 服务 JWT 认证失败
+- **症状**: API 调用返回 401 Unauthorized，错误信息 `InvalidSignature`
+- **根本原因**: LIMS 服务启动时未正确读取 JWT_SECRET 环境变量
+- **解决方案**:
+  - 创建 `/services/topems-lims/backend/start.sh` 启动脚本
+  - 在启动前设置正确的环境变量
+- **状态**: ✅ 已修复
 
-- 管理员: `admin` / `admin123`
+#### 问题 7：RS 项目创建 API 422 错误
+- **症状**: 创建项目时返回 HTTP 422 错误
+- **根本原因**: 日期字段格式不符合 API 要求
+- **解决方案**: 将日期格式从 `"2026-01-01"` 改为 `"2026-01-01T00:00:00Z"` (RFC 3339)
+- **状态**: ✅ 已修复
 
-### 2. 核心服务开发
+### 2. 测试脚本开发
 
-**状态**: ✅ 全部运行正常
+#### 脚本 1: test_api.py
+- **功能**: 基础 API 健康检查和功能测试
+- **位置**: `/scripts/test_api.py`
+- **测试覆盖**: 6 个服务的健康检查和核心 API
 
-| 服务 | 端口 | 状态 | 功能 |
-| ------ ------ ------ |
-| IAM (身份认证) | 8002 | ✅ 运行中 | 用户认证、权限管理、JWT 令牌 |
-| DOC (文档管理) | 8001 | ✅ 运行中 | 文件上传、下载、预览、文件夹管理 |
-| AI (智能知识库) | 8003 | ✅ 运行中 | 知识库管理、AI 对话 |
-| FLOW (工作流) | 8004 | ✅ 运行中 | 工作流定义、流程审批 |
-| 前端门户 | 3000 / 3005 | ✅ 运行中 | 用户界面 |
+#### 脚本 2: comprehensive_test.py
+- **功能**: 完整的 CRUD 功能测试
+- **位置**: `/scripts/comprehensive_test.py`
+- **测试覆盖**:
+  - 用户认证
+  - LIMS 样品管理（创建、读取）
+  - RS 科研项目管理（创建、读取）
+  - DOC 文档管理
+  - AI 智能助手
+  - FLOW 工作流引擎
 
-### 3. 文档预览功能
+#### 脚本 3: debug_lims_auth.py
+- **功能**: JWT 认证调试工具
+- **位置**: `/scripts/debug_lims_auth.py`
+- **用途**: 分析 token 结构，调试认证问题
 
-**状态**: ✅ 完成
+#### 脚本 4: debug_rs_project.py
+- **功能**: RS 项目 API 调试工具
+- **位置**: `/scripts/debug_rs_project.py`
+- **用途**: 分析 API 请求格式
 
-- 支持图片预览
-- 支持 PDF 预览
-- 支持 DOCX 文件预览（使用 docx-preview 库）
-- 支持 Markdown / 纯文本预览
-- 修复了容器渲染问题
-- 添加了详细的调试日志
+### 3. 配置与文档
 
-### 4. 开发工具和脚本
+#### 环境配置
+- **文件**: `.env.shared`
+- **内容**: 所有服务共享的认证和数据库配置
+- **关键配置**:
+  - JWT_SECRET=topems-jwt-secret
+  - DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
 
-**状态**: ✅ 完成
+#### 启动脚本
+- **文件**: `scripts/start-service.sh`
+- **功能**: 为所有服务提供统一的启动方式
 
-- `start.sh` - 一键启动所有服务
-- `stop.sh` - 一键停止所有服务
-- `start-dev.sh` - 开发模式启动脚本
-- `docker-*.sh` - Docker 相关脚本
-- 完整的环境变量配置示例
+#### 文档
+1. **PHASE1_FINAL_TEST_REPORT.md** - 第一阶段测试报告
+2. **LIMS_AUTH_FIX_REPORT.md** - LIMS 认证问题修复报告
+3. **README.md** - 项目说明文档
 
----
+## 📊 测试结果
 
-## 🚀 快速开始
+### 最终测试结果：100% 通过
 
-### 前置要求
+```
+🚀 TOPEMS 系统完整功能测试
+============================================================
 
-1. **Rust** (1.70+) - 使用 `rustup` 安装
-2. **Node.js** (18+) - 使用 `nvm` 或 Homebrew 安装
-3. **PostgreSQL** (14+) - 使用 Homebrew 安装 (`brew install postgresql@16`)
+0. 服务健康检查 (6/6)
+   ✅ IAM 服务健康 - 状态码: 200
+   ✅ DOC 服务健康 - 状态码: 200
+   ✅ AI 服务健康 - 状态码: 200
+   ✅ FLOW 服务健康 - 状态码: 200
+   ✅ RS 服务健康 - 状态码: 200
+   ✅ LIMS 服务健康 - 状态码: 200
 
-### 启动系统
+1. 用户认证测试
+   ✅ 登录成功 - 用户: admin
 
-#### 方式 1: 使用启动脚本（推荐）
+2. LIMS 样品管理测试 (3/3)
+   ✅ 获取样品列表成功 - 总数: 1
+   ✅ 创建样品成功
+   ✅ 获取单个样品成功
 
-```bash
-# 进入项目目录
-cd /Users/xingzhai/TOPEMS
+3. RS 科研项目管理测试 (2/2)
+   ✅ 获取项目列表成功
+   ✅ 创建项目成功
 
-# 启动所有服务
-./start.sh
+4. DOC 文档管理测试 (2/2)
+   ✅ 获取文件列表成功
+   ✅ 获取文件夹列表成功
+
+5. AI 智能助手测试 (1/1)
+   ✅ AI 响应成功
+
+6. FLOW 工作流引擎测试 (1/1)
+   ✅ 获取工作流列表成功
+
+============================================================
+总计: 16 项测试
+通过: 16 ✅
+失败: 0 ❌
+通过率: 100.0%
+============================================================
 ```
 
-#### 方式 2: 手动启动
+## 🔧 技术细节
 
-```bash
-# 1. 确保 PostgreSQL 正在运行
-brew services start postgresql@16
+### 数据库配置
+- **数据库**: PostgreSQL 16 Alpine
+- **连接**: postgres://topems:topems_secret@localhost:5432/topems
+- **用户**: topems
+- **密码**: topems_secret
 
-# 2. 创建并初始化数据库（如果还没有）
-createdb topems
-psql -d topems -f infrastructure/docker/init.sql
+### 认证配置
+- **JWT 密钥**: topems-jwt-secret
+- **刷新密钥**: topems-refresh-secret
+- **Token 过期时间**: 24 小时
+- **算法**: HS256
 
-# 3. 在不同终端中分别启动各个服务
+### 服务端口
+- IAM: 8002
+- DOC: 8001
+- AI: 8003
+- FLOW: 8004
+- RS: 8005
+- LIMS: 8006
 
-# IAM 服务 (端口 8002)
-cd platform/topems-iam/backend
-cargo run
+## 📁 项目文件结构
 
-# 文档服务 (端口 8001)
-cd platform/topems-doc/backend
-cargo run
-
-# AI 服务 (端口 8003)
-cd services/topems-ai/backend
-cargo run
-
-# 工作流服务 (端口 8004)
-cd platform/topems-flow/backend
-cargo run
-
-# 前端 (端口 3000)
-cd frontend
-npm run dev
+```
+/TOPEMS
+├── .env.shared                      # 统一环境配置
+├── PHASE1_FINAL_TEST_REPORT.md     # 测试报告
+├── LIMS_AUTH_FIX_REPORT.md         # 认证问题修复报告
+│
+├── scripts/
+│   ├── test_api.py                 # 基础 API 测试
+│   ├── comprehensive_test.py        # 完整功能测试
+│   ├── debug_lims_auth.py          # 认证调试
+│   ├── debug_rs_project.py          # 项目 API 调试
+│   └── start-service.sh            # 统一启动脚本
+│
+├── platform/
+│   ├── topems-iam/backend/         # IAM 服务
+│   ├── topems-doc/backend/          # DOC 服务
+│   └── topems-flow/backend/         # FLOW 服务
+│
+├── services/
+│   ├── topems-ai/backend/          # AI 服务
+│   ├── topems-rs/backend/           # RS 服务
+│   └── topems-lims/backend/         # LIMS 服务
+│       └── start.sh                # LIMS 启动脚本
+│
+└── shared/lib/                     # 共享库
+    └── src/auth.rs                 # 认证模块
 ```
 
-### 停止系统
+## 🎯 总结
 
-```bash
-cd /Users/xingzhai/TOPEMS
-./stop.sh
-```
+### 完成的工作
+1. ✅ 修复了所有已知问题
+2. ✅ 建立了完整的测试体系
+3. ✅ 实现了统一的服务启动方式
+4. ✅ 解决了 JWT 认证问题
+5. ✅ 修复了 API 数据格式问题
+6. ✅ 所有服务正常健康运行
 
----
+### 测试覆盖
+- ✅ 健康检查
+- ✅ 用户认证
+- ✅ CRUD 操作
+- ✅ JWT 认证
+- ✅ 跨服务集成
 
-## 🌐 访问地址
+### 质量指标
+- **代码质量**: 无编译错误
+- **功能完整性**: 100% 测试通过
+- **文档完整性**: 详细的测试报告和修复文档
+- **配置统一性**: 统一的环境变量管理
 
-| 服务 | 地址 | 说明 |
-| ------ ------ ------ |
-| 前端门户 | <http://localhost:3000> | 主用户界面 |
-| IAM 健康检查 | <http://localhost:8002/health> | 身份认证服务状态 |
-| DOC 健康检查 | <http://localhost:8001/health> | 文档管理服务状态 |
-| AI 健康检查 | <http://localhost:8003/health> | 智能知识库服务状态 |
-| FLOW 健康检查 | <http://localhost:8004/health> | 工作流服务状态 |
+## 🚀 下一步建议
 
----
+### 短期（1-2 周）
+1. 完善单元测试和集成测试
+2. 添加性能测试
+3. 优化错误处理和日志记录
+4. 添加 API 文档（使用 Swagger/OpenAPI）
 
-## 👤 测试账号
+### 中期（1-2 月）
+1. 实现前端界面
+2. 添加更多的业务功能模块
+3. 实现数据备份和恢复
+4. 添加监控和告警
 
-| 用户名 | 密码 | 角色 | 说明 |
-| ------ ------ ------ |
-| admin | admin123 | 管理员 | 完整系统权限 |
-| testuser | Test123456 | 普通用户 | 基本操作权限 |
-| guestuser | Guest123 | 访客 | 只读权限 |
-
----
-
-## 📝 配置说明
-
-### 环境变量配置
-
-主要配置文件：`.env`
-
-**关键配置项**:
-
-```env
-# 数据库配置
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_USER=topems
-POSTGRES_PASSWORD=topems_secret
-POSTGRES_DB=topems
-
-# 存储模式
-USE_MEMORY_STORAGE=false  # 设置为 true 启用内存模式，false 使用数据库
-
-# JWT 配置
-JWT_SECRET=topems_secret_key_2024_development
-JWT_EXPIRATION=86400
-
-# AI 配置（可选）
-OLLAMA_API_URL=http://localhost:11434
-OLLAMA_MODEL=llama3
-```
-
-### 生产环境配置
-
-复制 `.env.production.example` 为 `.env.production` 并修改配置：
-
-```bash
-cp .env.production.example .env.production
-```
-
-**生产环境注意事项**:
-
-- 必须更改 `JWT_SECRET` 为强随机密钥
-- 必须更改数据库密码
-- 配置正确的数据库和 Redis 主机地址
-- 配置 HTTPS 和正确的 CORS 策略
-- 设置日志级别为 `info` 或 `warn`
-- 禁用 `RUST_BACKTRACE`
+### 长期（3-6 月）
+1. 容器化部署（Docker）
+2. 服务网格（可选）
+3. 微服务治理
+4. 性能优化和扩展
 
 ---
 
-## 📊 当前架构
+**项目状态**: ✅ 第一阶段完成
+**测试状态**: ✅ 100% 通过
+**文档状态**: ✅ 完整
+**准备状态**: ✅ 可以进入下一阶段
 
-```text
-TOPEMS/
-├── frontend/                    # 前端门户 (React + TypeScript + Vite)
-│   ├── src/
-│   │   ├── pages/              # 页面组件
-│   │   ├── components/         # 通用组件
-│   │   ├── api/                # API 客户端
-│   │   └── ...
-│   └── ...
-├── platform/                    # 核心平台服务
-│   ├── topems-iam/             # 身份认证服务 (Rust + Axum)
-│   ├── topems-doc/             # 文档管理服务 (Rust + Axum)
-│   ├── topems-flow/            # 工作流服务 (Rust + Axum)
-│   └── ...
-├── services/                    # 业务服务
-│   ├── topems-ai/              # 智能知识库服务 (Rust + Axum)
-│   └── ...
-├── infrastructure/              # 基础设施
-│   └── docker/                 # Docker 配置
-├── docs/                        # 项目文档
-├── .env                        # 环境变量配置
-├── start.sh                    # 启动脚本
-└── stop.sh                     # 停止脚本
-```
+**完成时间**: 2026-05-28
+**修复问题数**: 7 个
+**测试覆盖**: 16 项
+**通过率**: 100%
 
----
-
-## 🔍 故障排查
-
-### 服务无法启动
-
-1. **检查端口占用**
-
-   ```bash
-   lsof -ti :8001 :8002 :8003 :8004 :3000
-   ```
-
-2. **查看服务日志**
-
-   ```bash
-   # 查看特定服务日志
-   tail -f logs/iam.log
-   tail -f logs/doc.log
-   tail -f logs/ai.log
-   tail -f logs/flow.log
-   tail -f logs/frontend.log
-   ```
-
-3. **检查数据库连接**
-
-   ```bash
-   # 测试数据库连接
-   psql -h localhost -p 5432 -U topems -d topems
-   ```
-
-### 文档预览问题
-
-1. **DOCX 预览失败**
-   - 检查浏览器控制台是否有错误
-   - 确认文件大小在限制范围内（默认 100MB）
-
-2. **PDF 预览失败**
-   - 确认文件本身不是损坏的
-   - 尝试下载文件后在本地查看
-
-### 数据库连接失败
-
-1. **检查 PostgreSQL 是否运行**
-
-   ```bash
-   brew services list
-   ```
-
-2. **检查数据库是否存在**
-
-   ```bash
-   psql -lqt | grep topems
-   ```
-
-3. **重新初始化数据库**
-
-   ```bash
-   dropdb topems
-   createdb topems
-   psql -d topems -f infrastructure/docker/init.sql
-   ```
-
----
-
-## 📈 下一步建议
-
-### 高优先级
-
-- [ ] 完善剩余服务（LIMS、RS、QMS、EHS、SRM、PDM）
-- [ ] 添加完整的单元测试和集成测试
-- [ ] 配置 CI/CD 流水线
-- [ ] 添加 API 认证和限流
-
-### 中优先级
-
-- [ ] 配置 Redis 缓存
-- [ ] 添加文件病毒扫描
-- [ ] 实现文件 OCR 功能
-- [ ] 添加操作审计日志
-
-### 低优先级
-
-- [ ] 添加系统监控和告警
-- [ ] 优化数据库查询性能
-- [ ] 国际化（多语言）支持
-- [ ] 暗色主题支持
-
----
-
-## 📞 技术支持
-
-如有问题，请查看：
-
-1. 项目文档: `/Users/xingzhai/TOPEMS/docs/`
-2. 代码注释
-3. 服务日志: `/Users/xingzhai/TOPEMS/logs/`
-
----
-
-## 📄 许可证
-
-TOPEMS - 企业级智慧研发管理平台
+**总评价**: 第一阶段工作圆满完成，所有核心功能正常运行，可以进入下一阶段的开发工作。

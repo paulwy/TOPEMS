@@ -363,14 +363,8 @@ async fn main() {
         use_ollama,
     }).unwrap();
 
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-
     let app_state = AppState {
-        auth_state: AuthState::new(jwt_secret),
+        auth_state: AuthState::from_env(),
     };
 
     let cors = create_cors_layer();

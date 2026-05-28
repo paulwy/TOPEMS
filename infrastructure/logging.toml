@@ -1,0 +1,12 @@
+
+[otel-trace-level: "info"
+
+[tracing-appender]
+file-name-prefix = "topems"
+directory = "./logs"
+max-size = "50MB"
+backups = 5
+
+[logging.rolling]
+frequency = "minutely"
+prefix = "%Y-%m-%d-%H:%M:%S"

@@ -13,6 +13,7 @@ use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use api::audit::log_audit_event;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -70,12 +71,15 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
+    let audit_router = api::audit::create_routes(pool.clone()).await?;
+
     let app = Router::new()
         .route("/health", get(health_check))
         .merge(api::production_order::create_routes(pool.clone()).await?)
         .merge(api::production_process::create_routes(pool.clone()).await?)
         .merge(api::work_station::create_routes(pool.clone()).await?)
         .merge(api::production_record::create_routes(pool.clone()).await?)
+        .merge(audit_router)
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -185,6 +189,45 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     )
     .execute(pool)
     .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            action VARCHAR(50) NOT NULL,
+            entity_type VARCHAR(50) NOT NULL,
+            entity_id UUID,
+            entity_ids JSONB,
+            user_id VARCHAR(255),
+            user_name VARCHAR(255),
+            request_details JSONB,
+            response_details JSONB,
+            status VARCHAR(50) NOT NULL,
+            error_message TEXT,
+            ip_address VARCHAR(255),
+            user_agent TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status)"#)
+        .execute(pool)
+        .await?;
 
     tracing::info!("✅ 数据库表初始化完成");
 

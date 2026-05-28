@@ -25,7 +25,7 @@ async fn health() -> &'static str {
 }
 
 async fn home() -> &'static str {
-    "TOPEMS-FLOW Workflow Engine API\n\nHealth Check: GET /health\n\nAPI Endpoints:\n- Workflows: GET/POST /api/v1/workflows, GET/PUT/DELETE /api/v1/workflows/:id\n- Instances: GET/POST /api/v1/instances, GET /api/v1/instances/:id, GET /api/v1/instances/:id/details\n- Approvals: GET/POST /api/v1/approvals, GET /api/v1/approvals/:id, POST /api/v1/approvals/:id/process\n- Records: GET /api/v1/records, GET /api/v1/records/:approval_id"
+    "TOPEMS-FLOW Workflow Engine API\n\nHealth Check: GET /health\n\nAPI Endpoints:\n- Workflows: GET/POST /api/v1/workflows, GET/PUT/DELETE /api/v1/workflows/{id}\n- Instances: GET/POST /api/v1/instances, GET /api/v1/instances/{id}, GET /api/v1/instances/{id}/details\n- Approvals: GET/POST /api/v1/approvals, GET /api/v1/approvals/{id}, POST /api/v1/approvals/{id}/process\n- Records: GET /api/v1/records, GET /api/v1/records/{approval_id}"
 }
 
 async fn try_connect_db() -> (Option<PgPool>, StorageMode) {
@@ -38,7 +38,7 @@ async fn try_connect_db() -> (Option<PgPool>, StorageMode) {
     }
 
     let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/topems".to_string());
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
     
     tracing::info!("🔌 正在连接数据库: {}", database_url);
     

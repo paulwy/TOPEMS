@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{get, post, put},
     Json, Router,
 };
@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateProductionProcessRequest, ProductionProcess, UpdateProductionProcessRequest};
 use topems_shared::{ApiResponse, PaginationParams, api_error};
+use crate::api::audit::log_audit_event;
 
 pub struct AppState {
     pub db: PgPool,
@@ -94,6 +95,7 @@ async fn list_processes(
 
 async fn create_process(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateProductionProcessRequest>,
 ) -> Json<ApiResponse<ProductionProcess>> {
     let id = Uuid::new_v4();
@@ -118,13 +120,45 @@ async fn create_process(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(process) => Json(ApiResponse::success(process, "生产工序创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(process) => (
+            Json(ApiResponse::success(process.clone(), "生产工序创建成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("创建生产工序失败: {}", e);
-            Json(api_error(500, "生产工序创建失败"))
+            (
+                Json(api_error(500, "生产工序创建失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(process) = &result {
+        serde_json::to_value(process).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "production_process".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }
 
 async fn get_process(
@@ -154,6 +188,7 @@ async fn get_process(
 async fn update_process(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateProductionProcessRequest>,
 ) -> Json<ApiResponse<ProductionProcess>> {
     let existing = sqlx::query_as::<_, ProductionProcess>(
@@ -198,11 +233,43 @@ async fn update_process(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(process) => Json(ApiResponse::success(process, "生产工序更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(process) => (
+            Json(ApiResponse::success(process.clone(), "生产工序更新成功")),
+            "success",
+            None
+        ),
         Err(e) => {
             tracing::error!("更新生产工序失败: {}", e);
-            Json(api_error(500, "生产工序更新失败"))
+            (
+                Json(api_error(500, "生产工序更新失败")),
+                "error",
+                Some(e.to_string())
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(process) = &result {
+        serde_json::to_value(process).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "production_process".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers
+    ).await;
+
+    response
 }

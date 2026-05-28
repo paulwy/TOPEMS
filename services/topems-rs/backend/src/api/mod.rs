@@ -5,3 +5,4 @@ pub mod experiment;
 pub mod material;
 pub mod doc_integration;
 pub mod ai_integration;
+pub mod audit;

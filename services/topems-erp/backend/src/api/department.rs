@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, HeaderMap},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
 use topems_shared::{ApiResponse, api_error};
+use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -102,6 +103,7 @@ async fn list_departments(
 
 async fn create_department(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let id = Uuid::new_v4();
@@ -125,13 +127,46 @@ async fn create_department(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(department) => Json(ApiResponse::success(department, "部门创建成功")),
+    let (response, status, error_msg) = match &result {
+        Ok(department) => (
+            Json(ApiResponse::success(department.clone(), "部门创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建部门失败: {}", e);
-            Json(api_error(500, "部门创建失败"))
+            (
+                Json(api_error(500, "部门创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(department) = &result {
+        serde_json::to_value(department).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "department".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_department(
@@ -161,6 +196,7 @@ async fn get_department(
 async fn update_department(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let existing = sqlx::query_as::<_, Department>(
@@ -203,30 +239,100 @@ async fn update_department(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(department) => Json(ApiResponse::success(department, "部门更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(department) => (
+            Json(ApiResponse::success(department.clone(), "部门更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新部门失败: {}", e);
-            Json(api_error(500, "部门更新失败"))
+            (
+                Json(api_error(500, "部门更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(department) = &result {
+        serde_json::to_value(department).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "department".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_department(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM departments WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "部门删除成功")),
-        Ok(_) => Json(api_error(404, "部门不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "部门删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "部门不存在")),
+            "error".to_string(),
+            Some("部门不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除部门失败: {}", e);
-            Json(api_error(500, "部门删除失败"))
+            (
+                Json(api_error(500, "部门删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "department".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

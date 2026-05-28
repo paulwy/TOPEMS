@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   FlaskConical, Plus, Search, Clock, ChevronRight, 
   FileText, Edit, Trash2, Loader2, X, CheckCircle,
-  Beaker, Eye
+  Beaker, Eye, Download, Upload
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { rsApi, Project, CreateProjectRequest, ExperimentRecord, CreateExperimentRequest, UpdateExperimentRequest } from '../api/rs';
+import { rsApi, Project, CreateProjectRequest, ExperimentRecord, CreateExperimentRequest, UpdateExperimentRequest, BatchCreateProjectsRequest, BatchDeleteProjectsRequest, BatchOperationResult } from '../api/rs';
 import { FieldError, ValidationHint } from '../components/ValidationError';
 import { patterns } from '../utils/validation';
+import { ModuleGate } from '../components/PermissionGate';
+import { MODULES } from '../config/permissions';
 
 const Rspage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,6 +47,14 @@ const Rspage: React.FC = () => {
   const [projectErrors, setProjectErrors] = useState<Record<string, string>>({});
   const [experimentErrors, setExperimentErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
+  const [showBatchCreateModal, setShowBatchCreateModal] = useState(false);
+  const [batchCreateData, setBatchCreateData] = useState<CreateProjectRequest[]>([
+    { name: '', description: '', status: '立项' }
+  ]);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<string[][] | null>(null);
 
   const validateProjectField = (field: string, value: string): string | null => {
     switch (field) {
@@ -483,6 +493,185 @@ const Rspage: React.FC = () => {
     (e.experimenter || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // 批量操作相关
+  const toggleProjectSelect = useCallback((id: string) => {
+    setSelectedProjectIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllProjects = useCallback(() => {
+    setSelectedProjectIds(new Set(filteredProjects.map(p => p.id)));
+  }, [filteredProjects]);
+
+  const deselectAllProjects = useCallback(() => {
+    setSelectedProjectIds(new Set());
+  }, []);
+
+  const handleBatchDelete = async () => {
+    if (!confirm(`确定要删除 ${selectedProjectIds.size} 个项目吗？`)) return;
+
+    try {
+      setCreating(true);
+      const response = await rsApi.batchDeleteProjects({
+        ids: Array.from(selectedProjectIds)
+      });
+
+      if (response.success) {
+        const result = response.data!;
+        showNotification('success', `批量删除完成：成功 ${result.success} 个，失败 ${result.failed} 个`);
+        deselectAllProjects();
+        loadProjects();
+      } else {
+        showNotification('error', response.message || '批量删除失败');
+      }
+    } catch (err) {
+      showNotification('error', '批量删除失败');
+      console.error('批量删除失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const addBatchCreateItem = () => {
+    setBatchCreateData(prev => [...prev, { name: '', description: '', status: '立项' }]);
+  };
+
+  const removeBatchCreateItem = (index: number) => {
+    setBatchCreateData(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateBatchCreateItem = (index: number, field: keyof CreateProjectRequest, value: string) => {
+    setBatchCreateData(prev => {
+      const newData = [...prev];
+      newData[index] = { ...newData[index], [field]: value };
+      return newData;
+    });
+  };
+
+  const handleBatchCreate = async () => {
+    const validProjects = batchCreateData.filter(item => item.name.trim() !== '');
+    if (validProjects.length === 0) {
+      showNotification('error', '请至少填写一个项目的名称');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await rsApi.batchCreateProjects({ projects: validProjects });
+
+      if (response.success) {
+        const result = response.data!;
+        showNotification('success', `批量创建完成：成功 ${result.success} 个，失败 ${result.failed} 个`);
+        setShowBatchCreateModal(false);
+        setBatchCreateData([{ name: '', description: '', status: '立项' }]);
+        loadProjects();
+      } else {
+        showNotification('error', response.message || '批量创建失败');
+      }
+    } catch (err) {
+      showNotification('error', '批量创建失败');
+      console.error('批量创建失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setCreating(true);
+      const blob = await rsApi.exportProjects();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `projects_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showNotification('success', '导出成功');
+    } catch (err) {
+      showNotification('error', '导出失败');
+      console.error('导出失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImportFile(file);
+      
+      // 预览 CSV 文件
+      try {
+        const content = await file.text();
+        const lines = content.split('\n').slice(0, 6); // 只预览前5行
+        const preview = lines.map(line => line.split(','));
+        setImportPreview(preview);
+      } catch {
+        setImportPreview(null);
+      }
+    }
+  };
+
+  const downloadTemplate = () => {
+    const headers = ['name', 'description', 'status'];
+    const sampleRow = ['项目1', '项目描述', '立项'];
+    const content = [headers, sampleRow].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'projects_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      showNotification('error', '请选择要导入的文件');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await rsApi.importProjects(importFile);
+
+      if (response.success) {
+        const result = response.data!;
+        let message = `导入完成：成功 ${result.success} 个`;
+        if (result.failed > 0) {
+          message += `，失败 ${result.failed} 个`;
+          if (result.errors && result.errors.length > 0) {
+            message += ` - ${result.errors.slice(0, 2).join('; ')}`;
+          }
+        }
+        showNotification('success', message);
+        setShowImportModal(false);
+        setImportFile(null);
+        setImportPreview(null);
+        loadProjects();
+      } else {
+        showNotification('error', response.message || '导入失败');
+      }
+    } catch (err) {
+      showNotification('error', '导入失败');
+      console.error('导入失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const getProjectName = (projectId: string) => {
     const project = safeProjects.find(p => p.id === projectId);
     return project ? project.name : '未知项目';
@@ -544,13 +733,56 @@ const Rspage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>新建项目</span>
-              </button>
+              {activeTab === 'projects' && (
+                <>
+                  <ModuleGate module={MODULES.RS} action="write" showDisabled={true}>
+                    <button
+                      onClick={() => setShowModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>新建项目</span>
+                    </button>
+                  </ModuleGate>
+                  <ModuleGate module={MODULES.RS} action="write" showDisabled={true}>
+                    <button
+                      onClick={() => setShowBatchCreateModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>批量创建</span>
+                    </button>
+                  </ModuleGate>
+                  <ModuleGate module={MODULES.RS} action="read" showDisabled={true}>
+                    <button
+                      onClick={handleExport}
+                      disabled={creating}
+                      className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>导出</span>
+                    </button>
+                  </ModuleGate>
+                  <ModuleGate module={MODULES.RS} action="write" showDisabled={true}>
+                    <button
+                      onClick={() => setShowImportModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span>导入</span>
+                    </button>
+                  </ModuleGate>
+                </>
+              )}
+              {activeTab === 'projects' === false && (
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>新建项目</span>
+                </button>
+              )}
               {activeTab === 'experiments' && (
                 <button
                   onClick={() => openExperimentModal()}
@@ -675,69 +907,119 @@ const Rspage: React.FC = () => {
         {/* List */}
         {activeTab === 'projects' ? (
           /* Projects List */
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">项目列表</h2>
-            </div>
-            <div className="divide-y divide-slate-200">
-              {filteredProjects.length === 0 ? (
-                <div className="p-12 text-center">
-                  <FlaskConical className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500">暂无项目</p>
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm">
+              {/* 批量操作栏 */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <div className="flex items-center space-x-3">
+                  <label className="flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={selectedProjectIds.size === filteredProjects.length && filteredProjects.length > 0}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          selectAllProjects();
+                        } else {
+                          deselectAllProjects();
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-slate-600">
+                      {selectedProjectIds.size > 0 
+                        ? `已选择 ${selectedProjectIds.size} 项` 
+                        : '全部选择'}
+                    </span>
+                  </label>
                 </div>
-              ) : (
-                filteredProjects.map((project) => (
-                  <div key={project.id} className="p-6 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-slate-900">{project.name}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                            {project.status}
-                          </span>
+                {selectedProjectIds.size > 0 && (
+                  <ModuleGate module={MODULES.RS} action="delete" showDisabled={true}>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleBatchDelete()}
+                        disabled={creating}
+                        className="flex items-center space-x-2 px-3 py-1.5 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>批量删除</span>
+                      </button>
+                    </div>
+                  </ModuleGate>
+                )}
+              </div>
+              <div className="p-6 border-b border-slate-200">
+                <h2 className="text-lg font-semibold text-slate-900">项目列表</h2>
+              </div>
+              <div className="divide-y divide-slate-200">
+                {filteredProjects.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <FlaskConical className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500">暂无项目</p>
+                  </div>
+                ) : (
+                  filteredProjects.map((project) => (
+                    <div key={project.id} className="p-6 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-4">
+                          <label className="flex items-center cursor-pointer select-none pt-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedProjectIds.has(project.id)}
+                              onChange={() => toggleProjectSelect(project.id)}
+                              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                            />
+                          </label>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <h3 className="text-lg font-semibold text-slate-900">{project.name}</h3>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                                {project.status}
+                              </span>
+                            </div>
+                            <p className="text-slate-600 mb-3">{project.description}</p>
+                            <div className="flex items-center space-x-4 text-sm text-slate-500">
+                              <span className="flex items-center">
+                                <Clock className="w-4 h-4 mr-1" />
+                                开始时间: {new Date(project.start_date).toLocaleDateString('zh-CN')}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-slate-600 mb-3">{project.description}</p>
-                        <div className="flex items-center space-x-4 text-sm text-slate-500">
-                          <span className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1" />
-                            开始时间: {new Date(project.start_date).toLocaleDateString('zh-CN')}
-                          </span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => openDetailModal(project)}
+                            className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+                            title="查看详情"
+                          >
+                            <span className="flex items-center">查看详情</span>
+                          </button>
+                          <button
+                            onClick={() => openExperimentModal(project)}
+                            className="px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded-lg"
+                            title="添加试验"
+                          >
+                            <span className="flex items-center"><Beaker className="w-4 h-4 mr-1" />添加试验</span>
+                          </button>
+                          <button 
+                            onClick={() => openEditModal(project)}
+                            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+                            title="编辑"
+                          >
+                            <Edit className="w-5 h-5" />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(project.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                            title="删除"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => openDetailModal(project)}
-                          className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
-                          title="查看详情"
-                        >
-                          <span className="flex items-center">查看详情</span>
-                        </button>
-                        <button
-                          onClick={() => openExperimentModal(project)}
-                          className="px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded-lg"
-                          title="添加试验"
-                        >
-                          <span className="flex items-center"><Beaker className="w-4 h-4 mr-1" />添加试验</span>
-                        </button>
-                        <button 
-                          onClick={() => openEditModal(project)}
-                          className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                          title="编辑"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(project.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                          title="删除"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
           </div>
         ) : (
@@ -1233,6 +1515,243 @@ const Rspage: React.FC = () => {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Create Modal */}
+      {showBatchCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-900">批量创建项目</h3>
+              <button
+                onClick={() => { 
+                  setShowBatchCreateModal(false); 
+                  setBatchCreateData([{ name: '', description: '', status: '立项' }]);
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              {batchCreateData.map((item, index) => (
+                <div key={index} className="p-4 border border-slate-200 rounded-lg relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-slate-700">项目 {index + 1}</h4>
+                    {batchCreateData.length > 1 && (
+                      <button
+                        onClick={() => removeBatchCreateItem(index)}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        项目名称 *
+                      </label>
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => updateBatchCreateItem(index, 'name', e.target.value)}
+                        placeholder="请输入项目名称"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        项目状态
+                      </label>
+                      <select
+                        value={item.status}
+                        onChange={(e) => updateBatchCreateItem(index, 'status', e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="立项">立项</option>
+                        <option value="进行中">进行中</option>
+                        <option value="已完成">已完成</option>
+                        <option value="已终止">已终止</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        项目描述
+                      </label>
+                      <textarea
+                        value={item.description}
+                        onChange={(e) => updateBatchCreateItem(index, 'description', e.target.value)}
+                        placeholder="请输入项目描述"
+                        rows={2}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button
+                onClick={addBatchCreateItem}
+                className="flex items-center space-x-2 w-full justify-center py-3 border border-dashed border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>添加项目</span>
+              </button>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+              <button
+                onClick={() => { 
+                  setShowBatchCreateModal(false); 
+                  setBatchCreateData([{ name: '', description: '', status: '立项' }]);
+                }}
+                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleBatchCreate}
+                disabled={creating}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    创建中...
+                  </span>
+                ) : (
+                  '批量创建'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-900">导入项目</h3>
+              <button
+                onClick={() => { 
+                  setShowImportModal(false); 
+                  setImportFile(null);
+                  setImportPreview(null);
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-sm font-medium text-slate-700">
+                    选择 CSV 文件
+                  </label>
+                  <button
+                    onClick={downloadTemplate}
+                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>下载模板</span>
+                  </button>
+                </div>
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-slate-400 transition-colors cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    id="rs-file-upload"
+                    onChange={handleImportFileChange}
+                    className="hidden"
+                  />
+                  <label htmlFor="rs-file-upload" className="cursor-pointer">
+                    <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+                    <p className="text-slate-700 mb-1">点击或拖拽文件到这里</p>
+                    <p className="text-sm text-slate-500">支持 CSV 格式</p>
+                  </label>
+                </div>
+                {importFile && (
+                  <div className="mt-4 p-3 bg-slate-50 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="w-5 h-5 text-orange-600" />
+                      <span className="text-sm text-slate-700">{importFile.name}</span>
+                      <span className="text-xs text-slate-500">({(importFile.size / 1024).toFixed(1)} KB)</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setImportFile(null);
+                        setImportPreview(null);
+                      }}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 文件预览 */}
+              {importPreview && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-slate-700 mb-3">文件预览（前5行）</h4>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        {importPreview.map((row, rowIndex) => (
+                          <tr key={rowIndex} className={rowIndex === 0 ? 'bg-slate-50' : ''}>
+                            {row.map((cell, cellIndex) => (
+                              <td key={cellIndex} className={`px-3 py-2 border-b border-slate-200 ${rowIndex === importPreview.length - 1 ? 'border-b-0' : ''}`}>
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 格式说明 */}
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-orange-900 mb-2">CSV 格式说明</h4>
+                <div className="text-sm text-orange-800 space-y-1">
+                  <p>• <code className="bg-orange-100 px-1 rounded">name</code>：项目名称（必填）</p>
+                  <p>• <code className="bg-orange-100 px-1 rounded">description</code>：项目描述</p>
+                  <p>• <code className="bg-orange-100 px-1 rounded">status</code>：状态（立项、进行中、已完成、已终止）</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+              <button
+                onClick={() => { 
+                  setShowImportModal(false); 
+                  setImportFile(null);
+                  setImportPreview(null);
+                }}
+                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={creating || !importFile}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    导入中...
+                  </span>
+                ) : (
+                  '导入'
+                )}
+              </button>
             </div>
           </div>
         </div>

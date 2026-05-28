@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   ClipboardList, Plus, Search, Clock, ChevronRight, 
   Beaker, Edit, Trash2, Loader2, X, CheckCircle, Filter,
-  Play, FileText, ClipboardCheck
+  Play, FileText, ClipboardCheck, Download, Upload
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { limsApi, Sample, CreateSampleRequest, InspectionProcess, InspectionTask, InspectionRecord, CreateInspectionTaskRequest, CreateInspectionRecordRequest } from '../api/lims';
+import { limsApi, Sample, CreateSampleRequest, InspectionProcess, InspectionTask, InspectionRecord, CreateInspectionTaskRequest, CreateInspectionRecordRequest, BatchCreateSamplesRequest, BatchDeleteSamplesRequest, BatchOperationResult } from '../api/lims';
+import { ModuleGate } from '../components/PermissionGate';
+import { MODULES } from '../config/permissions';
 
 const Limspage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,6 +48,14 @@ const Limspage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [creating, setCreating] = useState(false);
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [selectedSampleIds, setSelectedSampleIds] = useState<Set<string>>(new Set());
+  const [showBatchCreateModal, setShowBatchCreateModal] = useState(false);
+  const [batchCreateData, setBatchCreateData] = useState<CreateSampleRequest[]>([
+    { name: '', description: '', status: '待测试' }
+  ]);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<string[][] | null>(null);
 
   useEffect(() => {
     loadAllData();
@@ -405,6 +415,187 @@ const Limspage: React.FC = () => {
     getProcessName(t.process_id).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // 批量操作相关
+  const toggleSampleSelect = useCallback((id: string) => {
+    setSelectedSampleIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllSamples = useCallback(() => {
+    setSelectedSampleIds(new Set(filteredSamples.map(s => s.id)));
+  }, [filteredSamples]);
+
+  const deselectAllSamples = useCallback(() => {
+    setSelectedSampleIds(new Set());
+  }, []);
+
+  const handleBatchDelete = async () => {
+    if (!confirm(`确定要删除 ${selectedSampleIds.size} 个样品吗？`)) return;
+
+    try {
+      setCreating(true);
+      const response = await limsApi.batchDeleteSamples({
+        ids: Array.from(selectedSampleIds)
+      });
+
+      if (response.success) {
+        const result = response.data!;
+        showNotification('success', `批量删除完成：成功 ${result.success} 个，失败 ${result.failed} 个`);
+        deselectAllSamples();
+        loadSamples();
+      } else {
+        showNotification('error', response.message || '批量删除失败');
+      }
+    } catch (err) {
+      showNotification('error', '批量删除失败');
+      console.error('批量删除失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const addBatchCreateItem = () => {
+    setBatchCreateData(prev => [...prev, { name: '', description: '', status: '待测试' }]);
+  };
+
+  const removeBatchCreateItem = (index: number) => {
+    setBatchCreateData(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateBatchCreateItem = (index: number, field: keyof CreateSampleRequest, value: string) => {
+    setBatchCreateData(prev => {
+      const newData = [...prev];
+      newData[index] = { ...newData[index], [field]: value };
+      return newData;
+    });
+  };
+
+  const handleBatchCreate = async () => {
+    // 过滤掉没有名称的项
+    const validSamples = batchCreateData.filter(item => item.name.trim() !== '');
+    if (validSamples.length === 0) {
+      showNotification('error', '请至少填写一个样品的名称');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await limsApi.batchCreateSamples({ samples: validSamples });
+
+      if (response.success) {
+        const result = response.data!;
+        showNotification('success', `批量创建完成：成功 ${result.success} 个，失败 ${result.failed} 个`);
+        setShowBatchCreateModal(false);
+        setBatchCreateData([{ name: '', description: '', status: '待测试' }]);
+        loadSamples();
+      } else {
+        showNotification('error', response.message || '批量创建失败');
+      }
+    } catch (err) {
+      showNotification('error', '批量创建失败');
+      console.error('批量创建失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setCreating(true);
+      const blob = await limsApi.exportSamples();
+      // 下载文件
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `samples_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showNotification('success', '导出成功');
+    } catch (err) {
+      showNotification('error', '导出失败');
+      console.error('导出失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImportFile(file);
+      
+      // 预览 CSV 文件
+      try {
+        const content = await file.text();
+        const lines = content.split('\n').slice(0, 6); // 只预览前5行
+        const preview = lines.map(line => line.split(','));
+        setImportPreview(preview);
+      } catch {
+        setImportPreview(null);
+      }
+    }
+  };
+
+  const downloadTemplate = () => {
+    const headers = ['name', 'description', 'status', 'project_id'];
+    const sampleRow = ['样品1', '样品描述', '待测试', ''];
+    const content = [headers, sampleRow].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'samples_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      showNotification('error', '请选择要导入的文件');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await limsApi.importSamples(importFile);
+
+      if (response.success) {
+        const result = response.data!;
+        let message = `导入完成：成功 ${result.success} 个`;
+        if (result.failed > 0) {
+          message += `，失败 ${result.failed} 个`;
+          if (result.errors && result.errors.length > 0) {
+            message += ` - ${result.errors.slice(0, 2).join('; ')}`;
+          }
+        }
+        showNotification('success', message);
+        setShowImportModal(false);
+        setImportFile(null);
+        setImportPreview(null);
+        loadSamples();
+      } else {
+        showNotification('error', response.message || '导入失败');
+      }
+    } catch (err) {
+      showNotification('error', '导入失败');
+      console.error('导入失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800';
     switch (status) {
@@ -453,13 +644,45 @@ const Limspage: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               {activeTab === 'samples' && (
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>新建样品</span>
-                </button>
+                <>
+                  <ModuleGate module={MODULES.LIMS} action="write" showDisabled={true}>
+                    <button
+                      onClick={() => setShowModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>新建样品</span>
+                    </button>
+                  </ModuleGate>
+                  <ModuleGate module={MODULES.LIMS} action="write" showDisabled={true}>
+                    <button
+                      onClick={() => setShowBatchCreateModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>批量创建</span>
+                    </button>
+                  </ModuleGate>
+                  <ModuleGate module={MODULES.LIMS} action="read" showDisabled={true}>
+                    <button
+                      onClick={handleExport}
+                      disabled={creating}
+                      className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>导出</span>
+                    </button>
+                  </ModuleGate>
+                  <ModuleGate module={MODULES.LIMS} action="write" showDisabled={true}>
+                    <button
+                      onClick={() => setShowImportModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span>导入</span>
+                    </button>
+                  </ModuleGate>
+                </>
               )}
               {activeTab === 'tasks' && (
                 <button
@@ -588,6 +811,44 @@ const Limspage: React.FC = () => {
           /* Samples List */
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-sm">
+              {/* 批量操作栏 */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <div className="flex items-center space-x-3">
+                  <label className="flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={selectedSampleIds.size === filteredSamples.length && filteredSamples.length > 0}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          selectAllSamples();
+                        } else {
+                          deselectAllSamples();
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-slate-600">
+                      {selectedSampleIds.size > 0 
+                        ? `已选择 ${selectedSampleIds.size} 项` 
+                        : '全部选择'}
+                    </span>
+                  </label>
+                </div>
+                {selectedSampleIds.size > 0 && (
+                  <ModuleGate module={MODULES.LIMS} action="delete" showDisabled={true}>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleBatchDelete()}
+                        disabled={creating}
+                        className="flex items-center space-x-2 px-3 py-1.5 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>批量删除</span>
+                      </button>
+                    </div>
+                  </ModuleGate>
+                )}
+              </div>
               <div className="p-6 border-b border-slate-200">
                 <h2 className="text-lg font-semibold text-slate-900">样品列表</h2>
               </div>
@@ -601,19 +862,29 @@ const Limspage: React.FC = () => {
                   filteredSamples.map((sample) => (
                     <div key={sample.id} className="p-6 hover:bg-slate-50 transition-colors">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-slate-900">{sample.name}</h3>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(sample.status)}`}>
-                              {sample.status}
-                            </span>
-                          </div>
-                          <p className="text-slate-600 mb-3">{sample.description}</p>
-                          <div className="flex items-center space-x-4 text-sm text-slate-500">
-                            <span className="flex items-center">
-                              <Clock className="w-4 h-4 mr-1" />
-                              接收日期: {new Date(sample.received_date).toLocaleDateString('zh-CN')}
-                            </span>
+                        <div className="flex items-start space-x-4">
+                          <label className="flex items-center cursor-pointer select-none pt-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedSampleIds.has(sample.id)}
+                              onChange={() => toggleSampleSelect(sample.id)}
+                              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                            />
+                          </label>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <h3 className="text-lg font-semibold text-slate-900">{sample.name}</h3>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(sample.status)}`}>
+                                {sample.status}
+                              </span>
+                            </div>
+                            <p className="text-slate-600 mb-3">{sample.description}</p>
+                            <div className="flex items-center space-x-4 text-sm text-slate-500">
+                              <span className="flex items-center">
+                                <Clock className="w-4 h-4 mr-1" />
+                                接收日期: {new Date(sample.received_date).toLocaleDateString('zh-CN')}
+                              </span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -1088,6 +1359,244 @@ const Limspage: React.FC = () => {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Create Modal */}
+      {showBatchCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-900">批量创建样品</h3>
+              <button
+                onClick={() => { 
+                  setShowBatchCreateModal(false); 
+                  setBatchCreateData([{ name: '', description: '', status: '待测试' }]);
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              {batchCreateData.map((item, index) => (
+                <div key={index} className="p-4 border border-slate-200 rounded-lg relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-slate-700">样品 {index + 1}</h4>
+                    {batchCreateData.length > 1 && (
+                      <button
+                        onClick={() => removeBatchCreateItem(index)}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        样品名称 *
+                      </label>
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => updateBatchCreateItem(index, 'name', e.target.value)}
+                        placeholder="请输入样品名称"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        状态
+                      </label>
+                      <select
+                        value={item.status}
+                        onChange={(e) => updateBatchCreateItem(index, 'status', e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="待测试">待测试</option>
+                        <option value="测试中">测试中</option>
+                        <option value="已完成">已完成</option>
+                        <option value="已终止">已终止</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      样品描述
+                    </label>
+                    <textarea
+                      value={item.description}
+                      onChange={(e) => updateBatchCreateItem(index, 'description', e.target.value)}
+                      placeholder="请输入样品描述"
+                      rows={2}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              ))}
+              <button
+                onClick={addBatchCreateItem}
+                className="flex items-center space-x-2 w-full justify-center py-3 border border-dashed border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>添加样品</span>
+              </button>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+              <button
+                onClick={() => { 
+                  setShowBatchCreateModal(false); 
+                  setBatchCreateData([{ name: '', description: '', status: '待测试' }]);
+                }}
+                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleBatchCreate}
+                disabled={creating}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    创建中...
+                  </span>
+                ) : (
+                  '批量创建'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-900">导入样品</h3>
+              <button
+                onClick={() => { 
+                  setShowImportModal(false); 
+                  setImportFile(null);
+                  setImportPreview(null);
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-sm font-medium text-slate-700">
+                    选择 CSV 文件
+                  </label>
+                  <button
+                    onClick={downloadTemplate}
+                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>下载模板</span>
+                  </button>
+                </div>
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-slate-400 transition-colors cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    id="file-upload"
+                    onChange={handleImportFileChange}
+                    className="hidden"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+                    <p className="text-slate-700 mb-1">点击或拖拽文件到这里</p>
+                    <p className="text-sm text-slate-500">支持 CSV 格式</p>
+                  </label>
+                </div>
+                {importFile && (
+                  <div className="mt-4 p-3 bg-slate-50 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="w-5 h-5 text-cyan-600" />
+                      <span className="text-sm text-slate-700">{importFile.name}</span>
+                      <span className="text-xs text-slate-500">({(importFile.size / 1024).toFixed(1)} KB)</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setImportFile(null);
+                        setImportPreview(null);
+                      }}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 文件预览 */}
+              {importPreview && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-slate-700 mb-3">文件预览（前5行）</h4>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        {importPreview.map((row, rowIndex) => (
+                          <tr key={rowIndex} className={rowIndex === 0 ? 'bg-slate-50' : ''}>
+                            {row.map((cell, cellIndex) => (
+                              <td key={cellIndex} className={`px-3 py-2 border-b border-slate-200 ${rowIndex === importPreview.length - 1 ? 'border-b-0' : ''}`}>
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 格式说明 */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">CSV 格式说明</h4>
+                <div className="text-sm text-blue-800 space-y-1">
+                  <p>• <code className="bg-blue-100 px-1 rounded">name</code>：样品名称（必填）</p>
+                  <p>• <code className="bg-blue-100 px-1 rounded">description</code>：样品描述</p>
+                  <p>• <code className="bg-blue-100 px-1 rounded">status</code>：状态（待测试、测试中、已完成、已终止）</p>
+                  <p>• <code className="bg-blue-100 px-1 rounded">project_id</code>：关联项目ID</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+              <button
+                onClick={() => { 
+                  setShowImportModal(false); 
+                  setImportFile(null);
+                  setImportPreview(null);
+                }}
+                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={creating || !importFile}
+                className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    导入中...
+                  </span>
+                ) : (
+                  '导入'
+                )}
+              </button>
             </div>
           </div>
         </div>
