@@ -48,8 +48,26 @@ CREATE TABLE IF NOT EXISTS doc_service.file_permissions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 文件夹权限表（支持权限继承）
+CREATE TABLE IF NOT EXISTS doc_service.folder_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    folder_id UUID NOT NULL REFERENCES doc_service.folders(id) ON DELETE CASCADE,
+    user_id UUID,
+    role_id UUID,
+    permission VARCHAR(50) NOT NULL, -- read, write, delete, admin
+    inherit BOOLEAN NOT NULL DEFAULT true, -- 是否继承到子文件夹和文件
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_files_folder_id ON doc_service.files(folder_id);
 CREATE INDEX IF NOT EXISTS idx_files_created_by ON doc_service.files(created_by);
 CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON doc_service.folders(parent_id);
+CREATE INDEX IF NOT EXISTS idx_folders_created_by ON doc_service.folders(created_by);
 CREATE INDEX IF NOT EXISTS idx_file_versions_file_id ON doc_service.file_versions(file_id);
+CREATE INDEX IF NOT EXISTS idx_file_permissions_file_id ON doc_service.file_permissions(file_id);
+CREATE INDEX IF NOT EXISTS idx_file_permissions_user_id ON doc_service.file_permissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_file_permissions_role_id ON doc_service.file_permissions(role_id);
+CREATE INDEX IF NOT EXISTS idx_folder_permissions_folder_id ON doc_service.folder_permissions(folder_id);
+CREATE INDEX IF NOT EXISTS idx_folder_permissions_user_id ON doc_service.folder_permissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_folder_permissions_role_id ON doc_service.folder_permissions(role_id);

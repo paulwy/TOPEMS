@@ -1,4 +1,4 @@
-use crate::models::{FileMetadata, Folder, FileVersion, FilePermission};
+use crate::models::{FileMetadata, Folder, FileVersion, FilePermission, FolderPermission, Permission};
 use sqlx::{PgPool, Row};
 use thiserror::Error;
 use uuid::Uuid;
@@ -85,6 +85,43 @@ impl FileRepository {
         Ok(files)
     }
 
+    pub async fn list_accessible(
+        &self,
+        folder_id: Option<Uuid>,
+        limit: i64,
+        offset: i64,
+        user_id: Uuid,
+        user_roles: &[Uuid],
+    ) -> Result<Vec<FileMetadata>, RepositoryError> {
+        let files = sqlx::query_as::<_, FileMetadata>(
+            r#"
+            SELECT DISTINCT f.id, f.name, f.folder_id, f.size, f.content_type, f.storage_path, f.created_at, f.updated_at, f.created_by
+            FROM doc_service.files f
+            LEFT JOIN doc_service.file_permissions fp ON fp.file_id = f.id
+            LEFT JOIN doc_service.folder_permissions fop ON fop.folder_id = f.folder_id AND fop.inherit = true
+            WHERE (f.folder_id = $1 OR ($1 IS NULL AND f.folder_id IS NULL))
+            AND (
+                f.created_by = $2
+                OR (fp.user_id = $2 AND fp.permission = 'read')
+                OR (fp.role_id = ANY($3) AND fp.permission = 'read')
+                OR (fop.user_id = $2 AND fop.permission = 'read')
+                OR (fop.role_id = ANY($3) AND fop.permission = 'read')
+            )
+            ORDER BY f.updated_at DESC
+            LIMIT $4 OFFSET $5
+            "#,
+        )
+        .bind(folder_id)
+        .bind(user_id)
+        .bind(user_roles)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(files)
+    }
+
     pub async fn count(&self, folder_id: Option<Uuid>) -> Result<i64, RepositoryError> {
         let count = sqlx::query(
             r#"
@@ -155,6 +192,25 @@ impl FolderRepository {
         Ok(folder)
     }
 
+    pub async fn get_ancestors(&self, folder_id: Uuid) -> Result<Vec<Uuid>, RepositoryError> {
+        let rows = sqlx::query(
+            r#"
+            WITH RECURSIVE folder_hierarchy AS (
+                SELECT id, parent_id FROM doc_service.folders WHERE id = $1
+                UNION ALL
+                SELECT f.id, f.parent_id FROM doc_service.folders f
+                JOIN folder_hierarchy fh ON f.id = fh.parent_id
+            )
+            SELECT id FROM folder_hierarchy WHERE id != $1
+            "#,
+        )
+        .bind(folder_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.iter().map(|r| r.get::<Uuid, _>("id")).collect())
+    }
+
     pub async fn list(
         &self,
         parent_id: Option<Uuid>,
@@ -181,6 +237,31 @@ impl FolderRepository {
             .await?;
 
         Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn update(
+        &self,
+        id: Uuid,
+        name: &str,
+        parent_id: Option<Uuid>,
+    ) -> Result<Option<Folder>, RepositoryError> {
+        let now = chrono::Utc::now();
+        let folder = sqlx::query_as::<_, Folder>(
+            r#"
+            UPDATE doc_service.folders
+            SET name = $2, parent_id = $3, updated_at = $4
+            WHERE id = $1
+            RETURNING id, name, parent_id, created_at, updated_at, created_by
+            "#,
+        )
+        .bind(id)
+        .bind(name)
+        .bind(parent_id)
+        .bind(now)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(folder)
     }
 }
 
@@ -248,6 +329,21 @@ impl FileVersionRepository {
 
         Ok(version)
     }
+
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<FileVersion>, RepositoryError> {
+        let version = sqlx::query_as::<_, FileVersion>(
+            r#"
+            SELECT id, file_id, version, size, checksum, storage_path, created_at, created_by
+            FROM doc_service.file_versions
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(version)
+    }
 }
 
 #[derive(Clone)]
@@ -289,6 +385,93 @@ impl FilePermissionRepository {
             "#,
         )
         .bind(file_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(permissions)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<bool, RepositoryError> {
+        let result = sqlx::query(r#"DELETE FROM doc_service.file_permissions WHERE id = $1"#)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+}
+
+#[derive(Clone)]
+pub struct FolderPermissionRepository {
+    pool: PgPool,
+}
+
+impl FolderPermissionRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
+    pub async fn create(&self, permission: FolderPermission) -> Result<FolderPermission, RepositoryError> {
+        let permission = sqlx::query_as::<_, FolderPermission>(
+            r#"
+            INSERT INTO doc_service.folder_permissions (id, folder_id, user_id, role_id, permission, inherit, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id, folder_id, user_id, role_id, permission, inherit, created_at
+            "#,
+        )
+        .bind(permission.id)
+        .bind(permission.folder_id)
+        .bind(permission.user_id)
+        .bind(permission.role_id)
+        .bind(permission.permission)
+        .bind(permission.inherit)
+        .bind(permission.created_at)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(permission)
+    }
+
+    pub async fn list_by_folder_id(&self, folder_id: Uuid) -> Result<Vec<FolderPermission>, RepositoryError> {
+        let permissions = sqlx::query_as::<_, FolderPermission>(
+            r#"
+            SELECT id, folder_id, user_id, role_id, permission, inherit, created_at
+            FROM doc_service.folder_permissions
+            WHERE folder_id = $1
+            "#,
+        )
+        .bind(folder_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(permissions)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<bool, RepositoryError> {
+        let result = sqlx::query(r#"DELETE FROM doc_service.folder_permissions WHERE id = $1"#)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn list_for_folder_hierarchy(
+        &self,
+        folder_ids: &[Uuid],
+    ) -> Result<Vec<FolderPermission>, RepositoryError> {
+        if folder_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let permissions = sqlx::query_as::<_, FolderPermission>(
+            r#"
+            SELECT id, folder_id, user_id, role_id, permission, inherit, created_at
+            FROM doc_service.folder_permissions
+            WHERE folder_id = ANY($1) AND inherit = true
+            "#,
+        )
+        .bind(folder_ids)
         .fetch_all(&self.pool)
         .await?;
 
