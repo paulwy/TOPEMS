@@ -40,6 +40,7 @@ export interface Employee {
   email?: string;
   phone?: string;
   status: string;
+  user_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -103,6 +104,15 @@ export const companyApi = {
   },
 };
 
+function cleanEmptyUuids<T extends Record<string, any>>(data: T): T {
+  const result = { ...data };
+  if (result.parent_id === '') delete (result as any).parent_id;
+  if (result.company_id === '') delete (result as any).company_id;
+  if (result.department_id === '') delete (result as any).department_id;
+  if (result.responsible_id === '') delete (result as any).responsible_id;
+  return result;
+}
+
 export const departmentApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Department>>> {
     const searchParams = new URLSearchParams();
@@ -120,11 +130,11 @@ export const departmentApi = {
   },
   
   async create(data: Partial<Department>): Promise<ApiResponse<Department>> {
-    return apiClient.erp.post('/api/v1/departments', data);
+    return apiClient.erp.post('/api/v1/departments', cleanEmptyUuids(data));
   },
   
   async update(id: string, data: Partial<Department>): Promise<ApiResponse<Department>> {
-    return apiClient.erp.put(`/api/v1/departments/${id}`, data);
+    return apiClient.erp.put(`/api/v1/departments/${id}`, cleanEmptyUuids(data));
   },
   
   async delete(id: string): Promise<ApiResponse<string>> {
@@ -149,11 +159,11 @@ export const employeeApi = {
   },
   
   async create(data: Partial<Employee>): Promise<ApiResponse<Employee>> {
-    return apiClient.erp.post('/api/v1/employees', data);
+    return apiClient.erp.post('/api/v1/employees', cleanEmptyUuids(data));
   },
   
   async update(id: string, data: Partial<Employee>): Promise<ApiResponse<Employee>> {
-    return apiClient.erp.put(`/api/v1/employees/${id}`, data);
+    return apiClient.erp.put(`/api/v1/employees/${id}`, cleanEmptyUuids(data));
   },
   
   async delete(id: string): Promise<ApiResponse<string>> {
@@ -178,14 +188,20 @@ export const assetApi = {
   },
   
   async create(data: Partial<Asset>): Promise<ApiResponse<Asset>> {
-    return apiClient.erp.post('/api/v1/assets', data);
+    return apiClient.erp.post('/api/v1/assets', cleanEmptyUuids(data));
   },
   
   async update(id: string, data: Partial<Asset>): Promise<ApiResponse<Asset>> {
-    return apiClient.erp.put(`/api/v1/assets/${id}`, data);
+    return apiClient.erp.put(`/api/v1/assets/${id}`, cleanEmptyUuids(data));
   },
   
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.erp.delete(`/api/v1/assets/${id}`);
+  },
+};
+
+export const erpApi = {
+  async health(): Promise<ApiResponse<string>> {
+    return apiClient.erp.get<string>('/health');
   },
 };

@@ -17,11 +17,17 @@ impl WorkflowRepository {
 
     pub async fn create_workflow(&self, req: CreateWorkflowRequest) -> Result<Workflow, sqlx::Error> {
         let now = Utc::now();
+        let definition = req.definition.unwrap_or(serde_json::json!({
+            "version": "1.0",
+            "nodes": [],
+            "start_node": "",
+            "end_nodes": []
+        }));
         let workflow = Workflow {
             id: Uuid::new_v4(),
             name: req.name,
             description: req.description,
-            definition: req.definition,
+            definition,
             is_active: true,
             created_by: req.created_by,
             created_at: now,

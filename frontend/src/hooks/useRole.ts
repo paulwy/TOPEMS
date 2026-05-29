@@ -14,19 +14,19 @@ export const useRole = () => {
   };
 
   const isAdmin = (): boolean => {
-    return user?.is_superuser || hasRole('00000000-0000-0000-0000-000000000001');
+    return user?.is_superuser || hasRole('admin');
   };
 
   const isManager = (): boolean => {
-    return hasRole('00000000-0000-0000-0000-000000000002');
+    return hasRole('manager');
   };
 
   const isUser = (): boolean => {
-    return hasRole('00000000-0000-0000-0000-000000000003');
+    return hasRole('user');
   };
 
   const isGuest = (): boolean => {
-    return hasRole('00000000-0000-0000-0000-000000000004');
+    return hasRole('guest');
   };
 
   const getRoleName = (): string => {

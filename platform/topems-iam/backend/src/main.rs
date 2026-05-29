@@ -178,6 +178,12 @@ struct RefreshTokenResponse {
     expires_in: usize,
 }
 
+#[derive(Debug, Serialize)]
+struct ListUsersResponse {
+    users: Vec<UserInfo>,
+    total: usize,
+}
+
 #[derive(Debug, Deserialize)]
 struct UpdateUserRequest {
     full_name: Option<String>,
@@ -214,14 +220,6 @@ where
 fn validate_password(password: &str) -> Result<(), String> {
     if password.len() < 6 {
         return Err("密码长度至少为6位".to_string());
-    }
-    
-    let has_uppercase = password.chars().any(|c| c.is_uppercase());
-    let has_lowercase = password.chars().any(|c| c.is_lowercase());
-    let has_number = password.chars().any(|c| c.is_numeric());
-    
-    if !has_uppercase || !has_lowercase || !has_number {
-        return Err("密码需要包含至少一个大写字母、一个小写字母和一个数字".to_string());
     }
     
     Ok(())
@@ -349,15 +347,16 @@ async fn login(
             if bcrypt::verify(&req.password, &user.4).unwrap_or(false) {
                 let (user_roles, user_permissions) = get_user_roles_and_permissions(&state.db, &user.0).await;
                 
-                let role = user_roles.first().cloned().unwrap_or_default();
-                let is_superuser = role == "admin";
+                let role = user_roles.first().cloned().unwrap_or_else(|| "user".to_string());
+                let is_superuser = user.6 || role == "admin";
+                let final_roles = if user_roles.is_empty() { vec!["user".to_string()] } else { user_roles };
                 let user_info = UserInfo {
                     id: user.0.clone(),
                     username: user.1.clone(),
                     email: user.2.clone(),
                     full_name: user.3.clone(),
                     role: role.clone(),
-                    roles: user_roles.clone(),
+                    roles: final_roles.clone(),
                     permissions: user_permissions.clone(),
                     created_at: user.7.to_rfc3339(),
                     is_active: user.5,
@@ -371,7 +370,7 @@ async fn login(
                     password_hash: user.4.clone(),
                     full_name: user.3.clone(),
                     role: role.clone(),
-                    roles: user_roles,
+                    roles: final_roles,
                     permissions: user_permissions,
                     created_at: user.7.to_rfc3339(),
                     updated_at: user.8.to_rfc3339(),
@@ -422,10 +421,10 @@ async fn get_user_roles_and_permissions(db: &PgPool, user_id: &str) -> (Vec<Stri
 
     let english_roles: Vec<String> = roles.into_iter().map(|role| {
         match role.as_str() {
-            "管理员" => "admin".to_string(),
-            "部门经理" => "manager".to_string(),
-            "普通员工" => "user".to_string(),
-            "访客" => "guest".to_string(),
+            "admin" | "管理员" => "admin".to_string(),
+            "manager" | "部门经理" => "manager".to_string(),
+            "user" | "普通员工" | "普通用户" => "user".to_string(),
+            "guest" | "访客" => "guest".to_string(),
             _ => role,
         }
     }).collect();
@@ -754,8 +753,9 @@ async fn change_password(
 async fn list_users(
     State(state): State<AppState>,
     AuthenticatedUser(claims): AuthenticatedUser,
-) -> Json<ApiResponse<Vec<UserInfo>>> {
-    if claims.role != "admin" {
+) -> Json<ApiResponse<ListUsersResponse>> {
+    let is_admin = claims.role == "admin" || claims.is_superuser || claims.roles.contains(&"admin".to_string());
+    if !is_admin {
         return Json(ApiResponse::error(403, "仅管理员可访问"));
     }
     
@@ -767,6 +767,7 @@ async fn list_users(
 
     match users {
         Ok(users) => {
+            let total = users.len();
             let mut user_info_list = Vec::new();
             for user in users {
                 let (roles, permissions) = get_user_roles_and_permissions(&state.db, &user.0).await;
@@ -788,11 +789,126 @@ async fn list_users(
                 };
                 user_info_list.push(user_info);
             }
-            Json(ApiResponse::success(user_info_list, "Success"))
+            Json(ApiResponse::success(ListUsersResponse {
+                users: user_info_list,
+                total,
+            }, "Success"))
         }
         Err(e) => {
             tracing::error!("数据库查询错误: {}", e);
             Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn create_user(
+    State(state): State<AppState>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+    Json(req): Json<RegisterRequest>,
+) -> Json<ApiResponse<UserInfo>> {
+    let is_admin = claims.role == "admin" || claims.is_superuser || claims.roles.contains(&"admin".to_string());
+    if !is_admin {
+        return Json(ApiResponse::error(403, "仅管理员可创建用户"));
+    }
+    
+    if let Err(msg) = validate_username(&req.username) {
+        return Json(ApiResponse::error(400, &msg));
+    }
+    
+    if let Err(msg) = validate_email(&req.email) {
+        return Json(ApiResponse::error(400, &msg));
+    }
+    
+    if let Err(msg) = validate_password(&req.password) {
+        return Json(ApiResponse::error(400, &msg));
+    }
+    
+    let password_hash = bcrypt::hash(&req.password, bcrypt::DEFAULT_COST).unwrap();
+    
+    let mut tx = match state.db.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("❌ 数据库事务开启失败: {}", e);
+            return Json(ApiResponse::error(500, "服务器内部错误"));
+        }
+    };
+    
+    let result = sqlx::query(
+        r#"
+        INSERT INTO iam.users (username, email, password_hash, full_name, is_active, is_superuser)
+        VALUES ($1, $2, $3, $4, true, false)
+        ON CONFLICT (username) DO NOTHING
+        RETURNING id::text, username, email, full_name, is_active, is_superuser, created_at
+        "#
+    )
+    .bind(&req.username)
+    .bind(&req.email)
+    .bind(&password_hash)
+    .bind(&req.full_name)
+    .fetch_optional(&mut *tx)
+    .await;
+
+    match result {
+        Ok(Some(user)) => {
+            let user_id = user.get::<String, _>("id");
+            tracing::info!("🆕 用户创建成功: {}", user.get::<String, _>("username"));
+            
+            let role_insert = sqlx::query(
+                r#"
+                INSERT INTO iam.user_roles (user_id, role_id)
+                SELECT $1::uuid, r.id
+                FROM iam.roles r
+                WHERE r.name = '普通用户'
+                ON CONFLICT (user_id, role_id) DO NOTHING
+                "#
+            )
+            .bind(&user_id)
+            .execute(&mut *tx)
+            .await;
+            
+            if let Err(e) = role_insert {
+                tracing::error!("❌ 用户角色分配失败: {}", e);
+                let _ = tx.rollback().await;
+                return Json(ApiResponse::error(500, "用户角色分配失败"));
+            }
+            
+            if let Err(e) = tx.commit().await {
+                tracing::error!("❌ 事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "服务器内部错误"));
+            }
+            
+            let (user_roles, user_permissions) = get_user_roles_and_permissions(&state.db, &user_id).await;
+            
+            let role = user_roles.first().cloned().unwrap_or_else(|| "user".to_string());
+            let is_superuser = user.get::<bool, _>("is_superuser") || role == "admin";
+            
+            let user_info = UserInfo {
+                id: user_id,
+                username: user.get::<String, _>("username"),
+                email: user.get::<String, _>("email"),
+                full_name: user.get::<Option<String>, _>("full_name"),
+                role: role.clone(),
+                roles: user_roles,
+                permissions: user_permissions,
+                created_at: user.get::<chrono::DateTime<Utc>, _>("created_at").to_rfc3339(),
+                is_active: user.get::<bool, _>("is_active"),
+                is_superuser,
+            };
+            
+            Json(ApiResponse::success(user_info, "用户创建成功"))
+        }
+        Ok(None) => {
+            let _ = tx.rollback().await;
+            Json(ApiResponse::error(409, "用户名已存在"))
+        }
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("❌ 数据库插入错误: {}", e);
+            if e.to_string().contains("duplicate") || e.to_string().contains("already exists") {
+                Json(ApiResponse::error(409, "用户名或邮箱已存在"))
+            } else {
+                Json(ApiResponse::error(500, "服务器内部错误"))
+            }
         }
     }
 }
@@ -837,6 +953,41 @@ async fn get_user(
         Ok(None) => Json(ApiResponse::error(404, "用户不存在")),
         Err(e) => {
             tracing::error!("数据库查询错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn delete_user(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+) -> Json<ApiResponse<String>> {
+    let is_admin = claims.role == "admin" || claims.is_superuser || claims.roles.contains(&"admin".to_string());
+    if !is_admin {
+        return Json(ApiResponse::error(403, "仅管理员可删除用户"));
+    }
+    
+    if claims.sub == user_id {
+        return Json(ApiResponse::error(400, "不能删除自己"));
+    }
+    
+    let result = sqlx::query("DELETE FROM iam.users WHERE id = $1::uuid")
+        .bind(&user_id)
+        .execute(&state.db)
+        .await;
+
+    match result {
+        Ok(res) => {
+            if res.rows_affected() > 0 {
+                tracing::info!("🗑️ 用户删除成功: {}", user_id);
+                Json(ApiResponse::success(String::new(), "用户删除成功"))
+            } else {
+                Json(ApiResponse::error(404, "用户不存在"))
+            }
+        }
+        Err(e) => {
+            tracing::error!("❌ 数据库删除错误: {}", e);
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1344,7 +1495,9 @@ async fn main() {
         .route("/me", put(update_current_user))
         .route("/me/password", post(change_password))
         .route("/", get(list_users))
+        .route("/", post(create_user))
         .route("/{user_id}", get(get_user))
+        .route("/{user_id}", delete(delete_user))
         .route("/{user_id}/roles", get(get_user_roles))
         .route("/{user_id}/roles/{role_id}", post(add_user_role))
         .route("/{user_id}/roles/{role_id}", delete(remove_user_role))

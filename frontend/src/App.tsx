@@ -23,6 +23,12 @@ import EmployeeManagementPage from './pages/EmployeeManagementPage';
 import AuditLogPage from './pages/AuditLogPage';
 import ReportsPage from './pages/ReportsPage';
 import ConfigDebugPage from './pages/ConfigDebugPage';
+import HrmPositionPage from './pages/HrmPositionPage';
+import HrmLeavePage from './pages/HrmLeavePage';
+import HrmRecruitmentPage from './pages/HrmRecruitmentPage';
+import HrmPayrollPage from './pages/HrmPayrollPage';
+import HrmPerformancePage from './pages/HrmPerformancePage';
+import HrmAttendancePage from './pages/HrmAttendancePage';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
 import { ModuleGate } from './components/PermissionGate';
@@ -251,6 +257,66 @@ const AppContent: React.FC = () => {
             }
           />
         <Route path="/debug" element={<ConfigDebugPage />} />
+        <Route
+            path="/hrm/positions"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="admin">
+                  <HrmPositionPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/hrm/leave"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="admin">
+                  <HrmLeavePage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/hrm/recruitment"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="admin">
+                  <HrmRecruitmentPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/hrm/payroll"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="admin">
+                  <HrmPayrollPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/hrm/performance"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="admin">
+                  <HrmPerformancePage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/hrm/attendance"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="admin">
+                  <HrmAttendancePage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
         <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

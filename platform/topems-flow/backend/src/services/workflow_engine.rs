@@ -1,7 +1,5 @@
 use crate::db::WorkflowRepository;
-use crate::db::memory::MemoryWorkflowRepository;
 use crate::models::*;
-use crate::state::RepositoryType;
 use serde_json::Value;
 use std::fmt;
 use uuid::Uuid;
@@ -39,182 +37,92 @@ impl From<sqlx::Error> for WorkflowEngineError {
 
 #[derive(Clone)]
 pub struct WorkflowEngine {
-    repo: RepositoryType,
+    repo: WorkflowRepository,
 }
 
 impl WorkflowEngine {
-    pub fn new(repo: RepositoryType) -> Self {
+    pub fn new(repo: WorkflowRepository) -> Self {
         Self { repo }
     }
     
     async fn get_workflow(&self, id: Uuid) -> Result<Option<Workflow>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.get_workflow(id).await,
-            RepositoryType::Memory(repo) => repo.get_workflow(id).await,
-        }
+        self.repo.get_workflow(id).await
     }
     
     async fn create_workflow(&self, req: CreateWorkflowRequest) -> Result<Workflow, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.create_workflow(req).await,
-            RepositoryType::Memory(repo) => repo.create_workflow(req).await,
-        }
+        self.repo.create_workflow(req).await
     }
     
     async fn list_workflows(&self, is_active: Option<bool>, limit: i64, offset: i64) -> Result<Vec<Workflow>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.list_workflows(is_active, limit, offset).await,
-            RepositoryType::Memory(repo) => repo.list_workflows(is_active, limit, offset).await,
-        }
+        self.repo.list_workflows(is_active, limit, offset).await
     }
     
     async fn update_workflow(&self, id: Uuid, req: UpdateWorkflowRequest) -> Result<Option<Workflow>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.update_workflow(id, req).await,
-            RepositoryType::Memory(repo) => repo.update_workflow(id, req).await,
-        }
+        self.repo.update_workflow(id, req).await
     }
     
     async fn delete_workflow(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.delete_workflow(id).await,
-            RepositoryType::Memory(repo) => repo.delete_workflow(id).await,
-        }
+        self.repo.delete_workflow(id).await
     }
     
     async fn create_instance(&self, req: CreateWorkflowInstanceRequest) -> Result<WorkflowInstance, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.create_instance(req).await,
-            RepositoryType::Memory(repo) => repo.create_instance(req).await,
-        }
+        self.repo.create_instance(req).await
     }
     
     async fn get_instance(&self, id: Uuid) -> Result<Option<WorkflowInstance>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.get_instance(id).await,
-            RepositoryType::Memory(repo) => repo.get_instance(id).await,
-        }
+        self.repo.get_instance(id).await
     }
     
     async fn list_instances(&self, workflow_id: Option<Uuid>, status: Option<String>, initiator_id: Option<Uuid>, limit: i64, offset: i64) -> Result<Vec<WorkflowInstance>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.list_instances(workflow_id, status, initiator_id, limit, offset).await,
-            RepositoryType::Memory(repo) => repo.list_instances(workflow_id, status, initiator_id, limit, offset).await,
-        }
+        self.repo.list_instances(workflow_id, status, initiator_id, limit, offset).await
     }
     
     async fn update_instance(&self, id: Uuid, status: Option<String>, current_node: Option<String>, data: Option<Value>) -> Result<Option<WorkflowInstance>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.update_instance(id, status, current_node, data).await,
-            RepositoryType::Memory(repo) => repo.update_instance(id, status, current_node, data).await,
-        }
+        self.repo.update_instance(id, status, current_node, data).await
     }
     
     async fn create_approval(&self, req: CreateApprovalRequest) -> Result<Approval, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.create_approval(req).await,
-            RepositoryType::Memory(repo) => repo.create_approval(req).await,
-        }
+        self.repo.create_approval(req).await
     }
     
     async fn get_approval(&self, id: Uuid) -> Result<Option<Approval>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.get_approval(id).await,
-            RepositoryType::Memory(repo) => repo.get_approval(id).await,
-        }
+        self.repo.get_approval(id).await
     }
     
     async fn list_approvals(&self, instance_id: Option<Uuid>, assignee_id: Option<Uuid>, status: Option<String>, limit: i64, offset: i64) -> Result<Vec<Approval>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.list_approvals(instance_id, assignee_id, status, limit, offset).await,
-            RepositoryType::Memory(repo) => repo.list_approvals(instance_id, assignee_id, status, limit, offset).await,
-        }
-    }
-    
-    async fn process_approval_repo(&self, id: Uuid, req: ProcessApprovalRequest) -> Result<Option<Approval>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.process_approval(id, req).await,
-            RepositoryType::Memory(repo) => {
-                let result = repo.get_approval(id).await?;
-                if let Some(approval) = result {
-                    let previous_status = approval.status.clone();
-                    let new_status = match req.action.as_str() {
-                        "approve" => "approved".to_string(),
-                        "reject" => "rejected".to_string(),
-                        _ => previous_status.clone(),
-                    };
-                    let record_req = CreateApprovalRecordRequest {
-                        approval_id: id,
-                        action: req.action.clone(),
-                        actor_id: req.actor_id,
-                        actor_name: Some(req.actor_name.clone().unwrap_or_default()),
-                        comment: req.comment.clone(),
-                        previous_status,
-                        new_status: new_status.clone(),
-                    };
-                    let _ = repo.create_approval_record(record_req).await;
-                    repo.update_approval(id, Some(new_status), req.comment, None, Some(req.actor_id), Some(chrono::Utc::now())).await
-                } else {
-                    Ok(None)
-                }
-            },
-        }
+        self.repo.list_approvals(instance_id, assignee_id, status, limit, offset).await
     }
     
     async fn get_approvals_by_instance(&self, id: Uuid) -> Result<Vec<Approval>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.get_approvals_by_instance(id).await,
-            RepositoryType::Memory(repo) => repo.get_approvals_by_instance(id).await,
-        }
+        self.repo.get_approvals_by_instance(id).await
     }
     
     async fn get_approval_records(&self, id: Uuid) -> Result<Vec<ApprovalRecord>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.get_approval_records(id).await,
-            RepositoryType::Memory(repo) => repo.get_approval_records(id).await,
-        }
+        self.repo.get_approval_records(id).await
     }
     
     async fn list_approval_records(&self, approval_id: Option<Uuid>, actor_id: Option<Uuid>, limit: i64, offset: i64) -> Result<Vec<ApprovalRecord>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.list_approval_records(approval_id, actor_id, limit, offset).await,
-            RepositoryType::Memory(repo) => repo.list_approval_records(approval_id, actor_id, limit, offset).await,
-        }
+        self.repo.list_approval_records(approval_id, actor_id, limit, offset).await
     }
     
     async fn create_notification(&self, req: CreateNotificationRequest) -> Result<Notification, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.create_notification(req).await,
-            RepositoryType::Memory(repo) => repo.create_notification(req).await,
-        }
+        self.repo.create_notification(req).await
     }
     
     async fn get_notifications_by_user(&self, id: Uuid, limit: i64, offset: i64) -> Result<Vec<Notification>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.get_notifications_by_user(id, limit, offset).await,
-            RepositoryType::Memory(repo) => repo.get_notifications_by_user(id, limit, offset).await,
-        }
+        self.repo.get_notifications_by_user(id, limit, offset).await
     }
     
     async fn mark_notifications_as_read(&self, id: Uuid) -> Result<usize, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.mark_notifications_as_read(id).await,
-            RepositoryType::Memory(repo) => repo.mark_notifications_as_read(id).await,
-        }
+        self.repo.mark_notifications_as_read(id).await
     }
     
     async fn get_unread_count(&self, id: Uuid) -> Result<i64, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.get_unread_count(id).await,
-            RepositoryType::Memory(repo) => repo.get_unread_count(id).await,
-        }
+        self.repo.get_unread_count(id).await
     }
     
     async fn get_expired_approvals(&self) -> Result<Vec<Approval>, sqlx::Error> {
-        match &self.repo {
-            RepositoryType::Database(repo) => repo.get_expired_approvals().await,
-            RepositoryType::Memory(repo) => repo.get_expired_approvals().await,
-        }
+        self.repo.get_expired_approvals().await
     }
 
     pub async fn start_workflow_instance(
@@ -254,7 +162,7 @@ impl WorkflowEngine {
         req: ProcessApprovalRequest,
     ) -> Result<(Approval, Option<WorkflowInstance>), WorkflowEngineError> {
         let approval = self
-            .process_approval_repo(approval_id, req.clone())
+            .repo.process_approval(approval_id, req.clone())
             .await?;
         let approval = approval.ok_or(WorkflowEngineError::InstanceNotFound)?;
 
@@ -359,8 +267,8 @@ impl WorkflowEngine {
 
             if approvals.is_empty() && !node.approvers.is_empty() {
                 return Err(WorkflowEngineError::InvalidWorkflowDefinition(
-                    "No valid approvers found for node".to_string(),
-                ));
+                    "No valid approvers found for node".to_string()),
+                );
             }
 
             if !approvals.is_empty() || node.approvers.is_empty() && self.get_next_node(instance, definition, &current_node_id).is_none() {

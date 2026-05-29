@@ -56,7 +56,7 @@ pub struct Workflow {
 pub struct CreateWorkflowRequest {
     pub name: String,
     pub description: Option<String>,
-    pub definition: serde_json::Value,
+    pub definition: Option<serde_json::Value>,
     pub created_by: Option<Uuid>,
 }
 

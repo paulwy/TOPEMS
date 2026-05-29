@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use super::uuid_helpers::option_uuid;
+
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Asset {
     pub id: Uuid,
@@ -30,6 +32,7 @@ pub struct CreateAssetRequest {
     pub purchase_date: Option<DateTime<Utc>>,
     pub purchase_amount: Option<f64>,
     pub location: Option<String>,
+    #[serde(default, with = "option_uuid")]
     pub responsible_id: Option<Uuid>,
 }
 
@@ -42,6 +45,7 @@ pub struct UpdateAssetRequest {
     pub purchase_date: Option<DateTime<Utc>>,
     pub purchase_amount: Option<f64>,
     pub location: Option<String>,
+    #[serde(default, with = "option_uuid")]
     pub responsible_id: Option<Uuid>,
     pub status: Option<String>,
 }

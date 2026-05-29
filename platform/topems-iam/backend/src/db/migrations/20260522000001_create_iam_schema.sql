@@ -79,6 +79,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON iam.audit_logs(created_a
 INSERT INTO iam.roles (name, description)
 VALUES 
     ('管理员', '拥有所有权限的管理员角色'),
+    ('部门经理', '部门经理角色'),
     ('普通用户', '普通用户角色'),
     ('访客', '访客角色')
 ON CONFLICT (name) DO NOTHING;

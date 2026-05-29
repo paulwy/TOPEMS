@@ -82,7 +82,6 @@ class ApiClient {
           return response.data;
         },
         (error) => {
-          // 对于网络错误或未运行的服务，不要记录错误日志（避免控制台噪音）
           if (!error.response || error.code === 'ERR_NETWORK') {
             return Promise.reject(error);
           }
@@ -91,7 +90,13 @@ class ApiClient {
             const currentPath = window.location.pathname;
             if (currentPath !== '/login' && currentPath !== '/register') {
               if (localStorage.getItem('token')) {
-                logger.warn('Unauthorized, token may be invalid');
+                logger.warn('Unauthorized, clearing invalid token and redirecting to login');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('roles');
+                localStorage.removeItem('permissions');
+                apiClient.clearAuthToken();
+                window.location.href = '/login';
               }
             }
           }

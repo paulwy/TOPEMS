@@ -8,8 +8,6 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use dotenv::dotenv;
 use sqlx::PgPool;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
-use uuid::Uuid;
 
 mod api;
 mod db;
@@ -18,7 +16,7 @@ mod services;
 mod state;
 
 use api::handlers::*;
-use state::{AppState, RepositoryType, StorageMode};
+use state::AppState;
 
 async fn health() -> &'static str {
     "OK"
@@ -28,15 +26,7 @@ async fn home() -> &'static str {
     "TOPEMS-FLOW Workflow Engine API\n\nHealth Check: GET /health\n\nAPI Endpoints:\n- Workflows: GET/POST /api/v1/workflows, GET/PUT/DELETE /api/v1/workflows/{id}\n- Instances: GET/POST /api/v1/instances, GET /api/v1/instances/{id}, GET /api/v1/instances/{id}/details\n- Approvals: GET/POST /api/v1/approvals, GET /api/v1/approvals/{id}, POST /api/v1/approvals/{id}/process\n- Records: GET /api/v1/records, GET /api/v1/records/{approval_id}"
 }
 
-async fn try_connect_db() -> (Option<PgPool>, StorageMode) {
-    // 检查是否强制使用内存模式（仅用于开发测试）
-    if let Ok(use_memory) = std::env::var("USE_MEMORY_STORAGE") {
-        if use_memory.to_lowercase() == "true" {
-            tracing::warn!("⚠️ USE_MEMORY_STORAGE=true 强制使用内存模式，生产环境不推荐！");
-            return (None, StorageMode::Memory);
-        }
-    }
-
+async fn connect_db() -> PgPool {
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
     
@@ -45,30 +35,27 @@ async fn try_connect_db() -> (Option<PgPool>, StorageMode) {
     match PgPool::connect(&database_url).await {
         Ok(pool) => {
             tracing::info!("✅ 数据库连接成功");
-            // 初始化数据库表
             if let Err(e) = init_database_tables(&pool).await {
                 tracing::warn!("⚠️ 数据库表初始化警告: {}", e);
             }
-            (Some(pool), StorageMode::Database)
+            pool
         }
         Err(e) => {
             tracing::error!("❌ 数据库连接失败: {}", e);
             tracing::error!("💡 请确保 PostgreSQL 服务已启动并配置正确的 DATABASE_URL");
-            // 不再回退到内存模式，直接报错（生产环境必须使用数据库）
             panic!("无法连接到数据库: {}", e);
         }
     }
 }
 
 async fn init_database_tables(pool: &PgPool) -> anyhow::Result<()> {
-    // 直接执行每个迁移文件，不分割语句
     let migrations = vec![
         include_str!("../migrations/001_create_workflow_tables.sql"),
         include_str!("../migrations/003_add_notifications.sql"),
+        include_str!("../migrations/004_migrate_existing_tables.sql"),
     ];
     
     for migration in migrations {
-        // 使用简单的方法：使用数据库客户端的执行器直接运行整个文件
         sqlx::raw_sql(migration).execute(pool).await?;
     }
     
@@ -89,13 +76,11 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Starting TOPEMS-FLOW Workflow Engine...");
     dotenv().ok();
 
-    let (pool, storage_mode) = try_connect_db().await;
+    let pool = connect_db().await;
 
-    // 配置 CORS：从环境变量读取允许的来源
     let cors_origins = std::env::var("CORS_ORIGINS")
         .unwrap_or_else(|_| "http://localhost:3000,http://localhost:5173".to_string());
     
-    // 解析允许的来源列表
     let allowed_origins: Vec<axum::http::HeaderValue> = cors_origins
         .split(',')
         .filter_map(|origin| {
@@ -105,9 +90,9 @@ async fn main() -> anyhow::Result<()> {
     
     let cors = CorsLayer::new()
         .allow_origin(if allowed_origins.is_empty() {
-            AllowOrigin::any() // 如果没有配置，回退到允许任意来源（开发环境）
+            AllowOrigin::any()
         } else {
-            AllowOrigin::list(allowed_origins) // 只允许配置的来源
+            AllowOrigin::list(allowed_origins)
         })
         .allow_methods(tower_http::cors::Any)
         .allow_headers([
@@ -119,22 +104,11 @@ async fn main() -> anyhow::Result<()> {
             header::ACCESS_CONTROL_REQUEST_METHOD,
         ]);
 
-    let app_state = if let Some(pool) = pool {
-        let repo = db::WorkflowRepository::new(pool.clone());
-        let engine = services::WorkflowEngine::new(RepositoryType::Database(repo.clone()));
-        AppState { 
-            repo: RepositoryType::Database(repo), 
-            engine,
-            storage_mode: StorageMode::Database
-        }
-    } else {
-        let repo = db::memory::MemoryWorkflowRepository::new();
-        let engine = services::WorkflowEngine::new(RepositoryType::Memory(repo.clone()));
-        AppState { 
-            repo: RepositoryType::Memory(repo),
-            engine,
-            storage_mode: StorageMode::Memory
-        }
+    let repo = db::WorkflowRepository::new(pool.clone());
+    let engine = services::WorkflowEngine::new(repo.clone());
+    let app_state = AppState { 
+        repo: repo.clone(), 
+        engine,
     };
 
     let engine_clone = app_state.engine.clone();

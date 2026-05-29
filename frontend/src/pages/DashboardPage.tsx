@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  FileText, GitBranch, 
+  FileText, GitBranch, Bot, Brain,
   FlaskConical, ClipboardList, Shield, AlertCircle, Users, Package,
   LogOut, User, Activity, Clock,
   Database, X, Key,
-  Building, Folder, BarChart3
+  Building, Folder, BarChart3,
+  MapPin, Smartphone, MessageSquare
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
+import { aiApi } from '../api/ai';
+import { flowApi } from '../api/flow';
+import { erpApi } from '../api/erp';
+import { hrmApi } from '../api/hrm';
 import MobileNav from '../components/MobileNav';
 import MobileHeader from '../components/MobileHeader';
 import { usePermission } from '../hooks/usePermission';
@@ -33,7 +38,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   });
   const [serviceStatuses, setServiceStatuses] = useState<Record<string, boolean>>({
     iam: false,
-    doc: false
+    doc: false,
+    ai: false,
+    flow: false,
+    erp: false,
+    hrm: false
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -48,10 +57,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
     const init = async () => {
       try {
-        // 检查服务状态和加载统计（只检查实际正在运行的服务：8001/8002）
+        // 检查服务状态和加载统计
     const serviceChecks = [
       checkServiceStatus('iam', authApi).catch(() => {}),
-      checkServiceStatus('doc', docApi).catch(() => {})
+      checkServiceStatus('doc', docApi).catch(() => {}),
+      checkServiceStatus('ai', aiApi).catch(() => {}),
+      checkServiceStatus('flow', flowApi).catch(() => {}),
+      checkServiceStatus('erp', erpApi).catch(() => {}),
+      checkServiceStatus('hrm', hrmApi).catch(() => {})
     ];
         
         const statsPromise = loadStats().catch((err) => {
@@ -441,11 +454,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               <div className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 rounded-lg">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
-                    {user?.username?.charAt(0).toUpperCase()}
+                    {(user?.full_name || user?.username)?.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="hidden md:block">
-                  <p className="text-sm font-medium text-slate-900">{user?.username}</p>
+                  <p className="text-sm font-medium text-slate-900">{user?.full_name || user?.username}</p>
                   <p className="text-xs text-slate-500 capitalize">{getRoleName()}</p>
                 </div>
               </div>
@@ -467,13 +480,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold text-slate-900">
-                👋 欢迎回来，{user?.username || '用户'}！
+                👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
               </h2>
               <p className="text-sm text-slate-600">{getGreeting()}</p>
             </div>
             <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium">
-                {user?.username?.charAt(0).toUpperCase()}
+                {(user?.full_name || user?.username)?.charAt(0).toUpperCase()}
               </span>
             </div>
           </div>
@@ -538,6 +551,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             {[
               { name: '身份认证', status: serviceStatuses.iam },
               { name: '文档管理', status: serviceStatuses.doc },
+              { name: 'AI 服务', status: serviceStatuses.ai },
+              { name: '流程引擎', status: serviceStatuses.flow },
+              { name: '企业资源', status: serviceStatuses.erp },
+              { name: '人力资源', status: serviceStatuses.hrm },
             ].map((service) => (
               <div key={service.name} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                 <span className="text-sm text-slate-700">{service.name}</span>
@@ -549,7 +566,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-slate-900 mb-2">
-            👋 欢迎回来，{user?.username || '用户'}！
+            👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
           </h2>
           <p className="text-slate-600">
             {getGreeting()}，今天有 {quickActions.length} 个待处理事项
@@ -670,10 +687,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             <Activity className="w-5 h-5 mr-2 text-green-500" />
             服务状态监控
           </h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
               { name: '身份认证', service: 'IAM', port: 8002, key: 'iam', icon: Shield },
               { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
+              { name: 'AI 服务', service: 'AI', port: 8003, key: 'ai', icon: Bot },
+              { name: '流程引擎', service: 'FLOW', port: 8004, key: 'flow', icon: GitBranch },
+              { name: '企业资源', service: 'ERP', port: 8006, key: 'erp', icon: Building },
+              { name: '人力资源', service: 'HRM', port: 8010, key: 'hrm', icon: Users },
             ].map((service) => (
               <ServiceStatusCard
                 key={service.key}
