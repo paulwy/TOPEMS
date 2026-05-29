@@ -44,11 +44,14 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({ onN
     try {
       const res = await departmentApi.list();
       if (res.success && res.data) {
-        setDepartments(res.data);
+        setDepartments(res.data.items || []);
+      } else {
+        setDepartments([]);
       }
     } catch (err: any) {
       setError(err.message || '加载部门列表失败');
       showNotification('error', '加载部门列表失败');
+      setDepartments([]);
     } finally {
       setLoading(false);
     }

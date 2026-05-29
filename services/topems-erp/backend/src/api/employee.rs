@@ -12,7 +12,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
-use topems_shared::{ApiResponse, api_error};
+use crate::services::iam_client::{CreateUserRequest, IamClient};
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Deserialize)]
@@ -44,7 +45,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 async fn list_employees(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> Json<ApiResponse<PaginatedResponse<Employee>>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -54,7 +55,7 @@ async fn list_employees(
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at
+        SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at
         FROM employees
         WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -86,12 +87,7 @@ async fn list_employees(
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(
-                serde_json::json!({
-                    "employees": employees,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
+                PaginatedResponse::new(employees, total, page, page_size),
                 "获取员工列表成功",
             ))
         }
@@ -110,11 +106,30 @@ async fn create_employee(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    let username = req.email.clone().unwrap_or_else(|| req.employee_number.clone());
+    let email = req.email.clone().unwrap_or_else(|| format!("{}@topems.local", req.employee_number));
+
+    let iam_client = IamClient::new();
+    let user_req = CreateUserRequest {
+        username: username.clone(),
+        email: email.clone(),
+        password: req.password.clone(),
+        full_name: Some(req.name.clone()),
+    };
+
+    let iam_user = match iam_client.create_user(user_req).await {
+        Ok(user) => user,
+        Err(e) => {
+            tracing::error!("创建 IAM 用户失败: {}", e);
+            return Json(api_error(500, &format!("创建用户账号失败: {}", e)));
+        }
+    };
+
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        INSERT INTO employees (id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', $11, $12)
-        RETURNING id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at
+        INSERT INTO employees (id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', $11, $12, $13)
+        RETURNING id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -127,6 +142,7 @@ async fn create_employee(
     .bind(&req.position)
     .bind(&req.email)
     .bind(&req.phone)
+    .bind(iam_user.id)
     .bind(now)
     .bind(now)
     .fetch_one(&state.db)
@@ -180,7 +196,7 @@ async fn get_employee(
 ) -> Json<ApiResponse<Employee>> {
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at
+        SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at
         FROM employees WHERE id = $1
         "#,
     )
@@ -205,7 +221,7 @@ async fn update_employee(
     Json(req): Json<UpdateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
     let existing = sqlx::query_as::<_, Employee>(
-        "SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at FROM employees WHERE id = $1",
+        "SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at FROM employees WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -299,10 +315,32 @@ async fn delete_employee(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    let employee_result = sqlx::query_as::<_, Employee>(
+        "SELECT id, user_id FROM employees WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let employee = match employee_result {
+        Ok(Some(e)) => e,
+        Ok(None) => return Json(api_error(404, "员工不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询员工失败: {}", e))),
+    };
+
     let result = sqlx::query("DELETE FROM employees WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
+
+    if result.is_ok() {
+        if let Some(user_id) = employee.user_id {
+            let iam_client = IamClient::new();
+            if let Err(e) = iam_client.delete_user(user_id).await {
+                tracing::warn!("删除 IAM 用户失败: {}", e);
+            }
+        }
+    }
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

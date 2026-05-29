@@ -85,9 +85,16 @@ pub struct Claims {
     pub sub: String,
     pub exp: usize,
     pub username: String,
+    #[serde(default)]
     pub is_superuser: bool,
+    #[serde(default)]
     pub roles: Vec<String>,
+    #[serde(default)]
     pub permissions: Vec<String>,
+    #[serde(default)]
+    pub role: String,
+    #[serde(default)]
+    pub iat: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]

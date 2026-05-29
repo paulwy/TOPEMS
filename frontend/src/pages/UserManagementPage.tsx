@@ -62,8 +62,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate }) =
         setRoles(rolesRes.data);
       }
     } catch (err: any) {
-      setError(err.message || '加载数据失败');
-      showNotification('error', '加载数据失败');
+      const errorMsg = err.response?.data?.message || err.message || '加载数据失败';
+      setError(errorMsg);
+      showNotification('error', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -103,7 +104,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate }) =
         showNotification('error', res.message || '创建用户失败');
       }
     } catch (err: any) {
-      showNotification('error', err.message || '创建用户失败');
+      const errorMsg = err.response?.data?.message || err.message || '创建用户失败';
+      showNotification('error', errorMsg);
     }
   };
 
@@ -299,7 +301,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate }) =
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      用户信息
+                      姓名
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       角色

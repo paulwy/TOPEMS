@@ -3,3 +3,8 @@ pub mod department;
 pub mod contract;
 pub mod attendance;
 pub mod audit;
+pub mod position;
+pub mod leave;
+pub mod recruitment;
+pub mod payroll;
+pub mod performance;

@@ -46,11 +46,14 @@ const CompanyManagementPage: React.FC<CompanyManagementPageProps> = ({ onNavigat
     try {
       const res = await companyApi.list();
       if (res.success && res.data) {
-        setCompanies(res.data);
+        setCompanies(res.data.items || []);
+      } else {
+        setCompanies([]);
       }
     } catch (err: any) {
       setError(err.message || '加载公司列表失败');
       showNotification('error', '加载公司列表失败');
+      setCompanies([]);
     } finally {
       setLoading(false);
     }

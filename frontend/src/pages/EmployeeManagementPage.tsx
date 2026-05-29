@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Search, Plus, Edit, Trash2, 
   ChevronLeft, AlertCircle, CheckCircle, XCircle, 
-  Mail, Phone
+  Mail, Phone, Link, Key
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { employeeApi, type Employee } from '../api/erp';
@@ -25,7 +25,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
     message: string;
   } | null>(null);
 
-  const [newEmployee, setNewEmployee] = useState<Partial<Employee>>({
+  const [newEmployee, setNewEmployee] = useState<Partial<Employee> & { password: string }>({
     employee_number: '',
     name: '',
     gender: '',
@@ -36,6 +36,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
     email: '',
     phone: '',
     status: 'active',
+    password: '',
   });
 
   useEffect(() => {
@@ -48,11 +49,14 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
     try {
       const res = await employeeApi.list();
       if (res.success && res.data) {
-        setEmployees(res.data);
+        setEmployees(res.data.items || []);
+      } else {
+        setEmployees([]);
       }
     } catch (err: any) {
       setError(err.message || '加载员工列表失败');
       showNotification('error', '加载员工列表失败');
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
@@ -81,6 +85,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
           email: '',
           phone: '',
           status: 'active',
+          password: '',
         });
         loadEmployees();
       } else {
@@ -245,6 +250,9 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
                     员工信息
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    系统账号
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     职位
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -280,6 +288,19 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
                           </div>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {emp.user_id ? (
+                        <div className="flex items-center">
+                          <Link className="w-3 h-3 text-blue-500 mr-1" />
+                          <span className="text-sm text-blue-600">已关联</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400 flex items-center">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          未关联
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
@@ -432,6 +453,26 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
                         placeholder="请输入电话"
                       />
                     </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <Key className="w-4 h-4 inline mr-1" />
+                        登录密码 *
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={newEmployee.password || ''}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="请输入登录密码"
+                        minLength={6}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">至少6个字符，员工将用此密码登录系统</p>
+                    </div>
+                    <div></div>
                   </div>
                 </div>
                 

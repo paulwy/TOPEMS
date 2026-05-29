@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use super::uuid_helpers::option_uuid;
+
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Department {
     pub id: Uuid,
@@ -20,7 +22,9 @@ pub struct Department {
 pub struct CreateDepartmentRequest {
     pub name: String,
     pub code: Option<String>,
+    #[serde(default, with = "option_uuid")]
     pub parent_id: Option<Uuid>,
+    #[serde(default, with = "option_uuid")]
     pub company_id: Option<Uuid>,
     pub description: Option<String>,
 }
@@ -29,7 +33,9 @@ pub struct CreateDepartmentRequest {
 pub struct UpdateDepartmentRequest {
     pub name: Option<String>,
     pub code: Option<String>,
+    #[serde(default, with = "option_uuid")]
     pub parent_id: Option<Uuid>,
+    #[serde(default, with = "option_uuid")]
     pub company_id: Option<Uuid>,
     pub description: Option<String>,
     pub status: Option<String>,

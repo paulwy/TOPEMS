@@ -1,0 +1,588 @@
+use anyhow::Result;
+use axum::{
+    extract::{Path, Query, State},
+    routing::{delete, get, post, put},
+    Json, Router,
+};
+use chrono::Utc;
+use serde::{Deserialize, Serialize};
+use sqlx::postgres::PgPool;
+use std::sync::Arc;
+use uuid::Uuid;
+
+use topems_shared::ApiResponse;
+
+pub struct AppState {
+    pub db: PgPool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PerformanceReview {
+    pub id: Uuid,
+    pub employee_id: Uuid,
+    pub review_period: String,
+    pub reviewer_id: Option<Uuid>,
+    pub status: String,
+    pub overall_rating: Option<f64>,
+    pub self_rating: Option<f64>,
+    pub manager_rating: Option<f64>,
+    pub final_rating: Option<f64>,
+    pub comments: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PerformanceGoal {
+    pub id: Uuid,
+    pub employee_id: Uuid,
+    pub title: String,
+    pub description: Option<String>,
+    pub target: Option<String>,
+    pub weight: f64,
+    pub achieved: Option<f64>,
+    pub status: String,
+    pub due_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreatePerformanceReviewRequest {
+    pub employee_id: Uuid,
+    pub review_period: String,
+    pub reviewer_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdatePerformanceReviewRequest {
+    pub reviewer_id: Option<Uuid>,
+    pub status: Option<String>,
+    pub overall_rating: Option<f64>,
+    pub self_rating: Option<f64>,
+    pub manager_rating: Option<f64>,
+    pub final_rating: Option<f64>,
+    pub comments: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreatePerformanceGoalRequest {
+    pub employee_id: Uuid,
+    pub title: String,
+    pub description: Option<String>,
+    pub target: Option<String>,
+    pub weight: f64,
+    pub due_date: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdatePerformanceGoalRequest {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub target: Option<String>,
+    pub weight: Option<f64>,
+    pub achieved: Option<f64>,
+    pub status: Option<String>,
+    pub due_date: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct QueryParams {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub employee_id: Option<Uuid>,
+    pub review_period: Option<String>,
+    pub status: Option<String>,
+}
+
+pub async fn create_routes(db: PgPool) -> Result<Router> {
+    let state = Arc::new(AppState { db });
+
+    let router = Router::new()
+        .route("/api/v1/performance-reviews", get(list_reviews).post(create_review))
+        .route("/api/v1/performance-reviews/{id}", get(get_review).put(update_review).delete(delete_review))
+        .route("/api/v1/performance-reviews/{id}/submit", put(submit_review))
+        .route("/api/v1/performance-reviews/{id}/approve", put(approve_review))
+        .route("/api/v1/performance-goals", get(list_goals).post(create_goal))
+        .route("/api/v1/performance-goals/{id}", get(get_goal).put(update_goal).delete(delete_goal))
+        .route("/api/v1/employees/{id}/performance-reviews", get(get_employee_reviews))
+        .route("/api/v1/employees/{id}/performance-goals", get(get_employee_goals))
+        .with_state(state);
+
+    Ok(router)
+}
+
+async fn list_reviews(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<QueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(10).min(100);
+    let offset = (page - 1) * page_size;
+
+    let emp_id = params.employee_id;
+    let review_period = params.review_period.clone();
+    let status_filter = params.status;
+
+    let result = sqlx::query_as::<_, PerformanceReview>(
+        r#"
+        SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
+        FROM performance_reviews
+        WHERE ($1::uuid IS NULL OR employee_id = $1)
+          AND ($2::text IS NULL OR $2 = '' OR review_period ILIKE '%' || $2 || '%')
+          AND ($3::text IS NULL OR status = $3)
+        ORDER BY created_at DESC
+        LIMIT $4 OFFSET $5
+        "#,
+    )
+    .bind(&emp_id)
+    .bind(&review_period)
+    .bind(&status_filter)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(items) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM performance_reviews
+                WHERE ($1::uuid IS NULL OR employee_id = $1)
+                  AND ($2::text IS NULL OR $2 = '' OR review_period ILIKE '%' || $2 || '%')
+                  AND ($3::text IS NULL OR status = $3)
+                "#,
+            )
+            .bind(&emp_id)
+            .bind(&review_period)
+            .bind(&status_filter)
+            .fetch_one(&state.db)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "查询成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("查询绩效评核列表失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(500, "查询绩效评核列表失败"))
+        }
+    }
+}
+
+async fn create_review(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreatePerformanceReviewRequest>,
+) -> Json<ApiResponse<PerformanceReview>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, PerformanceReview>(
+        r#"
+        INSERT INTO performance_reviews (id, employee_id, review_period, reviewer_id, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, 'draft', $5, $6)
+        RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
+        "#
+    )
+    .bind(id)
+    .bind(&req.employee_id)
+    .bind(&req.review_period)
+    .bind(&req.reviewer_id)
+    .bind(now)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(review) => Json(ApiResponse::success(review, "绩效评核创建成功")),
+        Err(e) => {
+            tracing::error!("创建绩效评核失败: {}", e);
+            Json(ApiResponse::<PerformanceReview>::error(500, "创建绩效评核失败"))
+        }
+    }
+}
+
+async fn get_review(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<PerformanceReview>> {
+    let result = sqlx::query_as::<_, PerformanceReview>(
+        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM performance_reviews WHERE id = $1"
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(review)) => Json(ApiResponse::success(review, "查询成功")),
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(404, "绩效评核不存在")),
+        Err(e) => {
+            tracing::error!("查询绩效评核失败: {}", e);
+            Json(ApiResponse::<PerformanceReview>::error(500, "查询绩效评核失败"))
+        }
+    }
+}
+
+async fn update_review(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdatePerformanceReviewRequest>,
+) -> Json<ApiResponse<PerformanceReview>> {
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, PerformanceReview>(
+        r#"
+        UPDATE performance_reviews
+        SET
+            reviewer_id = COALESCE($1, reviewer_id),
+            status = COALESCE($2, status),
+            overall_rating = COALESCE($3, overall_rating),
+            self_rating = COALESCE($4, self_rating),
+            manager_rating = COALESCE($5, manager_rating),
+            final_rating = COALESCE($6, final_rating),
+            comments = COALESCE($7, comments),
+            updated_at = $8
+        WHERE id = $9
+        RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
+        "#
+    )
+    .bind(&req.reviewer_id)
+    .bind(&req.status)
+    .bind(&req.overall_rating)
+    .bind(&req.self_rating)
+    .bind(&req.manager_rating)
+    .bind(&req.final_rating)
+    .bind(&req.comments)
+    .bind(now)
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(review)) => Json(ApiResponse::success(review, "绩效评核更新成功")),
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(404, "绩效评核不存在")),
+        Err(e) => {
+            tracing::error!("更新绩效评核失败: {}", e);
+            Json(ApiResponse::<PerformanceReview>::error(500, "更新绩效评核失败"))
+        }
+    }
+}
+
+async fn delete_review(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query(
+        "DELETE FROM performance_reviews WHERE id = $1 AND status = 'draft'"
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "绩效评核已删除")),
+        Ok(_) => Json(ApiResponse::<String>::error(404, "绩效评核不存在或状态不正确")),
+        Err(e) => {
+            tracing::error!("删除绩效评核失败: {}", e);
+            Json(ApiResponse::<String>::error(500, "删除绩效评核失败"))
+        }
+    }
+}
+
+async fn submit_review(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<PerformanceReview>> {
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, PerformanceReview>(
+        r#"
+        UPDATE performance_reviews
+        SET status = 'submitted', updated_at = $2
+        WHERE id = $1 AND status = 'draft'
+        RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
+        "#
+    )
+    .bind(id)
+    .bind(now)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(review)) => Json(ApiResponse::success(review, "绩效评核已提交")),
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(404, "绩效评核不存在或状态不正确")),
+        Err(e) => {
+            tracing::error!("提交绩效评核失败: {}", e);
+            Json(ApiResponse::<PerformanceReview>::error(500, "提交绩效评核失败"))
+        }
+    }
+}
+
+async fn approve_review(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<PerformanceReview>> {
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, PerformanceReview>(
+        r#"
+        UPDATE performance_reviews
+        SET status = 'approved', updated_at = $2
+        WHERE id = $1 AND status = 'submitted'
+        RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
+        "#
+    )
+    .bind(id)
+    .bind(now)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(review)) => Json(ApiResponse::success(review, "绩效评核已批准")),
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(404, "绩效评核不存在或状态不正确")),
+        Err(e) => {
+            tracing::error!("批准绩效评核失败: {}", e);
+            Json(ApiResponse::<PerformanceReview>::error(500, "批准绩效评核失败"))
+        }
+    }
+}
+
+async fn list_goals(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<QueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(10).min(100);
+    let offset = (page - 1) * page_size;
+
+    let emp_id = params.employee_id;
+    let status_filter = params.status;
+
+    let result = sqlx::query_as::<_, PerformanceGoal>(
+        r#"
+        SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
+        FROM performance_goals
+        WHERE ($1::uuid IS NULL OR employee_id = $1)
+          AND ($2::text IS NULL OR status = $2)
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4
+        "#,
+    )
+    .bind(&emp_id)
+    .bind(&status_filter)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(items) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM performance_goals
+                WHERE ($1::uuid IS NULL OR employee_id = $1)
+                  AND ($2::text IS NULL OR status = $2)
+                "#,
+            )
+            .bind(&emp_id)
+            .bind(&status_filter)
+            .fetch_one(&state.db)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "查询成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("查询绩效目标列表失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(500, "查询绩效目标列表失败"))
+        }
+    }
+}
+
+async fn create_goal(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreatePerformanceGoalRequest>,
+) -> Json<ApiResponse<PerformanceGoal>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, PerformanceGoal>(
+        r#"
+        INSERT INTO performance_goals (id, employee_id, title, description, target, weight, status, due_date, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
+        RETURNING id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
+        "#
+    )
+    .bind(id)
+    .bind(&req.employee_id)
+    .bind(&req.title)
+    .bind(&req.description)
+    .bind(&req.target)
+    .bind(&req.weight)
+    .bind(&req.due_date)
+    .bind(now)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(goal) => Json(ApiResponse::success(goal, "绩效目标创建成功")),
+        Err(e) => {
+            tracing::error!("创建绩效目标失败: {}", e);
+            Json(ApiResponse::<PerformanceGoal>::error(500, "创建绩效目标失败"))
+        }
+    }
+}
+
+async fn get_goal(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<PerformanceGoal>> {
+    let result = sqlx::query_as::<_, PerformanceGoal>(
+        "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM performance_goals WHERE id = $1"
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(goal)) => Json(ApiResponse::success(goal, "查询成功")),
+        Ok(None) => Json(ApiResponse::<PerformanceGoal>::error(404, "绩效目标不存在")),
+        Err(e) => {
+            tracing::error!("查询绩效目标失败: {}", e);
+            Json(ApiResponse::<PerformanceGoal>::error(500, "查询绩效目标失败"))
+        }
+    }
+}
+
+async fn update_goal(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdatePerformanceGoalRequest>,
+) -> Json<ApiResponse<PerformanceGoal>> {
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, PerformanceGoal>(
+        r#"
+        UPDATE performance_goals
+        SET
+            title = COALESCE($1, title),
+            description = COALESCE($2, description),
+            target = COALESCE($3, target),
+            weight = COALESCE($4, weight),
+            achieved = COALESCE($5, achieved),
+            status = COALESCE($6, status),
+            due_date = COALESCE($7, due_date),
+            updated_at = $8
+        WHERE id = $9
+        RETURNING id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
+        "#
+    )
+    .bind(&req.title)
+    .bind(&req.description)
+    .bind(&req.target)
+    .bind(&req.weight)
+    .bind(&req.achieved)
+    .bind(&req.status)
+    .bind(&req.due_date)
+    .bind(now)
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(goal)) => Json(ApiResponse::success(goal, "绩效目标更新成功")),
+        Ok(None) => Json(ApiResponse::<PerformanceGoal>::error(404, "绩效目标不存在")),
+        Err(e) => {
+            tracing::error!("更新绩效目标失败: {}", e);
+            Json(ApiResponse::<PerformanceGoal>::error(500, "更新绩效目标失败"))
+        }
+    }
+}
+
+async fn delete_goal(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query("DELETE FROM performance_goals WHERE id = $1")
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    match result {
+        Ok(_) => Json(ApiResponse::success(id.to_string(), "绩效目标已删除")),
+        Err(e) => {
+            tracing::error!("删除绩效目标失败: {}", e);
+            Json(ApiResponse::<String>::error(500, "删除绩效目标失败"))
+        }
+    }
+}
+
+async fn get_employee_reviews(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query_as::<_, PerformanceReview>(
+        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM performance_reviews WHERE employee_id = $1 ORDER BY created_at DESC"
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(items) => Json(ApiResponse::success(
+            serde_json::json!({
+                "items": items,
+                "total": items.len() as i64
+            }),
+            "查询成功",
+        )),
+        Err(e) => {
+            tracing::error!("查询员工绩效评核失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(500, "查询员工绩效评核失败"))
+        }
+    }
+}
+
+async fn get_employee_goals(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query_as::<_, PerformanceGoal>(
+        "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM performance_goals WHERE employee_id = $1 ORDER BY created_at DESC"
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(items) => Json(ApiResponse::success(
+            serde_json::json!({
+                "items": items,
+                "total": items.len() as i64
+            }),
+            "查询成功",
+        )),
+        Err(e) => {
+            tracing::error!("查询员工绩效目标失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(500, "查询员工绩效目标失败"))
+        }
+    }
+}

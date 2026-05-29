@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use super::uuid_helpers::{option_date_time, option_uuid};
+
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Employee {
     pub id: Uuid,
@@ -16,6 +18,7 @@ pub struct Employee {
     pub email: Option<String>,
     pub phone: Option<String>,
     pub status: String,
+    pub user_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -25,20 +28,27 @@ pub struct CreateEmployeeRequest {
     pub employee_number: String,
     pub name: String,
     pub gender: Option<String>,
+    #[serde(default, with = "option_date_time")]
     pub birth_date: Option<DateTime<Utc>>,
+    #[serde(default, with = "option_date_time")]
     pub hire_date: Option<DateTime<Utc>>,
+    #[serde(default, with = "option_uuid")]
     pub department_id: Option<Uuid>,
     pub position: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
+    pub password: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateEmployeeRequest {
     pub name: Option<String>,
     pub gender: Option<String>,
+    #[serde(default, with = "option_date_time")]
     pub birth_date: Option<DateTime<Utc>>,
+    #[serde(default, with = "option_date_time")]
     pub hire_date: Option<DateTime<Utc>>,
+    #[serde(default, with = "option_uuid")]
     pub department_id: Option<Uuid>,
     pub position: Option<String>,
     pub email: Option<String>,

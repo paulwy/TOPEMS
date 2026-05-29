@@ -32,49 +32,24 @@ pub async fn list_instances(
 ) -> (StatusCode, Json<ApiResponse<Vec<WorkflowInstance>>>) {
     let limit = query.limit.unwrap_or(50);
     let offset = query.offset.unwrap_or(0);
-    match &state.repo {
-        crate::state::RepositoryType::Database(repo) => {
-            match repo
-                .list_instances(
-                    query.workflow_id,
-                    query.status,
-                    query.initiator_id,
-                    limit,
-                    offset,
-                )
-                .await
-            {
-                Ok(instances) => (
-                    StatusCode::OK,
-                    Json(ApiResponse::success(instances)),
-                ),
-                Err(e) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(e.to_string())),
-                ),
-            }
-        }
-        crate::state::RepositoryType::Memory(repo) => {
-            match repo
-                .list_instances(
-                    query.workflow_id,
-                    query.status,
-                    query.initiator_id,
-                    limit,
-                    offset,
-                )
-                .await
-            {
-                Ok(instances) => (
-                    StatusCode::OK,
-                    Json(ApiResponse::success(instances)),
-                ),
-                Err(e) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(e.to_string())),
-                ),
-            }
-        }
+    match state.repo
+        .list_instances(
+            query.workflow_id,
+            query.status,
+            query.initiator_id,
+            limit,
+            offset,
+        )
+        .await
+    {
+        Ok(instances) => (
+            StatusCode::OK,
+            Json(ApiResponse::success(instances)),
+        ),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::error(e.to_string())),
+        ),
     }
 }
 
@@ -110,39 +85,19 @@ pub async fn get_instance(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> (StatusCode, Json<ApiResponse<WorkflowInstance>>) {
-    match &state.repo {
-        crate::state::RepositoryType::Database(repo) => {
-            match repo.get_instance(id).await {
-                Ok(Some(instance)) => (
-                    StatusCode::OK,
-                    Json(ApiResponse::success(instance)),
-                ),
-                Ok(None) => (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiResponse::error("Workflow instance not found".to_string())),
-                ),
-                Err(e) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(e.to_string())),
-                ),
-            }
-        }
-        crate::state::RepositoryType::Memory(repo) => {
-            match repo.get_instance(id).await {
-                Ok(Some(instance)) => (
-                    StatusCode::OK,
-                    Json(ApiResponse::success(instance)),
-                ),
-                Ok(None) => (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiResponse::error("Workflow instance not found".to_string())),
-                ),
-                Err(e) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(e.to_string())),
-                ),
-            }
-        }
+    match state.repo.get_instance(id).await {
+        Ok(Some(instance)) => (
+            StatusCode::OK,
+            Json(ApiResponse::success(instance)),
+        ),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error("Workflow instance not found".to_string())),
+        ),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::error(e.to_string())),
+        ),
     }
 }
 
@@ -183,38 +138,18 @@ pub async fn update_instance_status(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInstanceStatusRequest>,
 ) -> (StatusCode, Json<ApiResponse<WorkflowInstance>>) {
-    match &state.repo {
-        crate::state::RepositoryType::Database(repo) => {
-            match repo.update_instance_status(id, req).await {
-                Ok(Some(instance)) => (
-                    StatusCode::OK,
-                    Json(ApiResponse::success_with_message(instance, "Instance status updated successfully".to_string())),
-                ),
-                Ok(None) => (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiResponse::error("Workflow instance not found".to_string())),
-                ),
-                Err(e) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(e.to_string())),
-                ),
-            }
-        }
-        crate::state::RepositoryType::Memory(repo) => {
-            match repo.update_instance_status(id, req).await {
-                Ok(Some(instance)) => (
-                    StatusCode::OK,
-                    Json(ApiResponse::success_with_message(instance, "Instance status updated successfully".to_string())),
-                ),
-                Ok(None) => (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiResponse::error("Workflow instance not found".to_string())),
-                ),
-                Err(e) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(e.to_string())),
-                ),
-            }
-        }
+    match state.repo.update_instance_status(id, req).await {
+        Ok(Some(instance)) => (
+            StatusCode::OK,
+            Json(ApiResponse::success_with_message(instance, "Instance status updated successfully".to_string())),
+        ),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error("Workflow instance not found".to_string())),
+        ),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::error(e.to_string())),
+        ),
     }
 }

@@ -12,7 +12,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
-use topems_shared::{ApiResponse, api_error};
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Deserialize)]
@@ -44,7 +44,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 async fn list_assets(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> Json<ApiResponse<PaginatedResponse<Asset>>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -86,12 +86,7 @@ async fn list_assets(
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(
-                serde_json::json!({
-                    "assets": assets,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
+                PaginatedResponse::new(assets, total, page, page_size),
                 "获取资产列表成功",
             ))
         }

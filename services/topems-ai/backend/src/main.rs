@@ -344,7 +344,9 @@ async fn main() {
         .unwrap_or_else(|_| "qwen2.5:7b-instruct".to_string());
     
     let use_ollama = std::env::var("OLLAMA_URL").is_ok() || 
-                     std::env::var("OLLAMA_BASE_URL").is_ok();
+                     std::env::var("OLLAMA_BASE_URL").is_ok() ||
+                     base_url.contains("localhost:11434") ||
+                     base_url.contains("127.0.0.1:11434");
 
     let docs = load_documents_from_dir(DOCS_DIR).await;
     tracing::info!("✅ 加载了 {} 个知识库文档", docs.len());

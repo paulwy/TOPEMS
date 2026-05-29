@@ -177,7 +177,7 @@ async fn update_attendance(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => return Json(ApiResponse::<AttendanceRecord>::error(404, "考勤记录不存在")),
-        Err(e) => return Json(ApiResponse::<AttendanceRecord>::error(500, &format!("查询考勤记录失败: {}", e))),
+        Err(e) => return Json(ApiResponse::<AttendanceRecord>::error(500, "查询考勤记录失败")),
     };
 
     let check_in = req.check_in.or(existing.check_in);

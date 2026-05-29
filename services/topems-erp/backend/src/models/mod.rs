@@ -3,6 +3,7 @@ pub mod department;
 pub mod employee;
 pub mod asset;
 pub mod audit_log;
+pub mod uuid_helpers;
 
 pub use company::{Company, CreateCompanyRequest, UpdateCompanyRequest};
 pub use department::{Department, CreateDepartmentRequest, UpdateDepartmentRequest};

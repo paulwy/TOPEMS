@@ -46,6 +46,8 @@ impl AuthService {
             is_superuser: row.is_superuser,
             roles,
             permissions,
+            role: String::new(),
+            iat: Utc::now().timestamp() as usize,
         };
 
         let token = encode(
@@ -98,6 +100,8 @@ impl AuthService {
             is_superuser: decoded.claims.is_superuser,
             roles,
             permissions,
+            role: decoded.claims.role,
+            iat: Utc::now().timestamp() as usize,
         };
 
         let new_token = encode(
