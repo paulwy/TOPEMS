@@ -8,6 +8,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
+  full_name?: string;
   role?: string;
   roles?: string[];
   permissions?: string[];
@@ -58,8 +59,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     permissions: [],
   });
 
+  const refreshToken = useCallback(async () => {
+    const refresh_token = localStorage.getItem('refresh_token');
+    if (!refresh_token) {
+      return false;
+    }
+
+    try {
+      const response = await authApi.refreshToken(refresh_token);
+      if (response.success && response.data) {
+        const { access_token } = response.data;
+        localStorage.setItem('token', access_token);
+        apiClient.setAuthToken(access_token);
+        setState(prev => ({ ...prev, token: access_token }));
+        return true;
+      }
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('roles');
+      localStorage.removeItem('permissions');
+      window.location.href = '/login';
+      return false;
+    }
+    return false;
+  }, []);
+
   useEffect(() => {
-    const initAuth = () => {
+    let refreshInterval: NodeJS.Timeout;
+
+    const initAuth = async () => {
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
       const rolesStr = localStorage.getItem('roles');
@@ -70,8 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const user = JSON.parse(userStr);
           const roles = rolesStr ? JSON.parse(rolesStr) : [];
           const permissions = permissionsStr ? JSON.parse(permissionsStr) : [];
-          
-          // 初始化 API 客户端的认证令牌
+
           apiClient.setAuthToken(token);
 
           setState({
@@ -83,7 +113,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             permissions,
           });
 
-          // 暂时不刷新用户信息，避免 API 调用导致的问题
+          if (refreshInterval) {
+            clearInterval(refreshInterval);
+          }
+          refreshInterval = setInterval(async () => {
+            console.log('Attempting to refresh token...');
+            await refreshToken();
+          }, 50 * 60 * 1000);
+
         } catch (error) {
           console.error('Failed to initialize auth:', error);
           logout();
@@ -94,21 +131,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     initAuth();
-  }, []);
+
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
+  }, [refreshToken]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
       const response = await authApi.login(credentials);
-      
+
       if (response.success && response.data) {
-        const { access_token, user } = response.data;
-        
+        const { access_token, refresh_token, user } = response.data;
+
         localStorage.setItem('token', access_token);
+        if (refresh_token) {
+          localStorage.setItem('refresh_token', refresh_token);
+        }
         localStorage.setItem('user', JSON.stringify(user));
 
         const roles = user.roles || [];
         const permissions = user.permissions || [];
-        
+
         if (roles.length > 0) {
           localStorage.setItem('roles', JSON.stringify(roles));
         }
@@ -125,7 +171,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           permissions,
         });
       }
-      
+
       return response;
     } catch (error) {
       console.error('Login error:', error);
@@ -135,6 +181,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = useCallback(() => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     localStorage.removeItem('roles');
     localStorage.removeItem('permissions');

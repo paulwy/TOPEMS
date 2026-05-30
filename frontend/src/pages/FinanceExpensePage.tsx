@@ -6,13 +6,14 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
+import { NotificationContainer } from '../components/NotificationContainer';
 
 interface ExpenseRecord {
   id: string;
   expense_number: string;
   applicant_name: string;
   department: string;
-  expense_type: 'travel' | ' meals' | 'transport' | 'office' | 'communication' | 'other';
+  expense_type: 'travel' | 'meals' | 'transport' | 'office' | 'communication' | 'other';
   amount: number;
   description: string;
   expense_date: string;

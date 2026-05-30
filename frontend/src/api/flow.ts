@@ -1,32 +1,47 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
 
-export interface Workflow {
-  id: string;
-  name: string;
-  description?: string;
-  definition?: WorkflowDefinition;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+// ========== 类型定义 ==========
+
+export interface StatisticsResponse {
+  total_workflows: number;
+  active_workflows: number;
+  total_instances: number;
+  running_instances: number;
+  completed_instances: number;
+  rejected_instances: number;
+  total_approvals: number;
+  pending_approvals: number;
+  approved_approvals: number;
+  rejected_approvals: number;
+  avg_approval_time: number;
+  approval_rate: number;
+  rejection_rate: number;
+  workflow_stats: WorkflowStat[];
+  monthly_data: MonthlyData[];
 }
 
-export interface WorkflowDefinition {
-  version: string;
-  nodes: ApprovalNode[];
-  start_node: string;
-  end_nodes: string[];
+export interface PerformanceStats {
+  total_requests: number;
+  total_duration_ms: number;
+  avg_duration_ms: number;
+  slow_requests_count: number;
+  slow_requests_threshold_ms: number;
 }
 
-export interface ApprovalNode {
-  node_id: string;
-  name: string;
-  approvers: string[];
-  approval_type: 'single' | 'counter' | 'or';
-  conditions?: Condition[];
-  timeout_hours?: number;
-  auto_action?: string;
-  notification_users?: string[];
+export interface WorkflowStat {
+  workflow_id: string;
+  workflow_name: string;
+  instance_count: number;
+  completion_rate: number;
+  avg_duration: number;
+}
+
+export interface MonthlyData {
+  month: string;
+  instances_started: number;
+  instances_completed: number;
+  approvals_processed: number;
 }
 
 export interface Condition {
@@ -35,19 +50,58 @@ export interface Condition {
   value: any;
 }
 
-export interface Comment {
+export type ApprovalType = 'single' | 'counter' | 'or';
+
+export interface ApprovalNode {
+  node_id: string;
+  name: string;
+  approvers: string[];
+  approval_type: ApprovalType;
+  conditions?: Condition[];
+  timeout_hours?: number;
+  auto_action?: string;
+  notification_users?: string[];
+  next_nodes?: string[];
+}
+
+export interface WorkflowDefinition {
+  version: string;
+  nodes: ApprovalNode[];
+  start_node: string;
+  end_nodes: string[];
+  timeout_action?: string;
+}
+
+export interface Workflow {
   id: string;
-  user_id: string;
-  user_name: string;
-  content: string;
+  name: string;
+  description?: string;
+  definition: WorkflowDefinition | any;
+  is_active: boolean;
+  created_by?: string;
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
+}
+
+export interface CreateWorkflowRequest {
+  name: string;
+  description?: string;
+  definition?: WorkflowDefinition | any;
+  is_active?: boolean;
+  created_by?: string;
+}
+
+export interface UpdateWorkflowRequest {
+  name?: string;
+  description?: string;
+  definition?: WorkflowDefinition | any;
+  is_active?: boolean;
 }
 
 export interface WorkflowInstance {
   id: string;
-  workflow_id: string;
-  status: string;
+  workflow_id?: string;
+  status: 'pending' | 'running' | 'completed' | 'rejected' | string;
   current_node?: string;
   initiator_id?: string;
   data?: any;
@@ -56,14 +110,20 @@ export interface WorkflowInstance {
   created_at: string;
 }
 
+export interface CreateWorkflowInstanceRequest {
+  workflow_id: string;
+  initiator_id?: string;
+  data?: any;
+}
+
 export interface Approval {
   id: string;
-  workflow_instance_id: string;
-  node_id: string;
+  workflow_instance_id?: string;
+  node_id?: string;
   task_name: string;
   assignee_id?: string;
-  status: string;
-  approval_type: 'single' | 'counter' | 'or';
+  status: 'pending' | 'approved' | 'rejected' | string;
+  approval_type?: string;
   comment?: string;
   approved_by?: string;
   approved_at?: string;
@@ -71,186 +131,343 @@ export interface Approval {
   created_at: string;
 }
 
+export interface CreateApprovalRequest {
+  workflow_instance_id: string;
+  node_id?: string;
+  task_name: string;
+  assignee_id?: string;
+  approval_type?: string;
+  timeout_hours?: number;
+}
+
+export interface WorkflowVersion {
+  id: string;
+  workflow_id: string;
+  version: string;
+  definition: any;
+  change_description?: string;
+  created_by?: string;
+  created_at: string;
+  is_active: boolean;
+}
+
+export interface CreateVersionRequest {
+  version: string;
+  definition?: any;
+  change_description?: string;
+  created_by?: string;
+}
+
+export interface RollbackRequest {
+  to_version: string;
+  reason?: string;
+  rolled_back_by?: string;
+}
+
+export interface ProcessApprovalRequest {
+  action: 'approve' | 'reject';
+  comment?: string;
+  actor_id: string;
+  actor_name?: string;
+  delegate_to?: string;
+  delegate_to_name?: string;
+}
+
 export interface ApprovalRecord {
   id: string;
   approval_id: string;
   action: string;
-  user_id: string;
-  user_name: string;
+  actor_id: string;
+  actor_name?: string;
   comment?: string;
   previous_status: string;
   new_status: string;
   created_at: string;
 }
 
-export interface ApprovalQuery {
+export interface Notification {
+  id: string;
+  user_id?: string;
+  title: string;
+  content: string;
+  notification_type: string;
   workflow_instance_id?: string;
-  status?: string;
-  assignee_id?: string;
+  approval_id?: string;
+  is_read: boolean;
+  created_at: string;
 }
 
-export interface RecordQuery {
-  approval_id?: string;
+export interface CreateNotificationRequest {
   user_id?: string;
+  title: string;
+  content: string;
+  notification_type: string;
+  workflow_instance_id?: string;
+  approval_id?: string;
 }
+
+export interface ListParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  status?: string;
+  workflow_id?: string;
+  assignee_id?: string;
+  initiator_id?: string;
+  user_id?: string;
+  is_active?: boolean;
+  [key: string]: string | number | boolean | undefined;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+// ========== 通用工具函数 ==========
+
+function buildQueryString(params?: ListParams): string {
+  if (!params) return '';
+  
+  const searchParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      searchParams.append(key, String(value));
+    }
+  });
+  
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : '';
+}
+
+interface CrudOperations<T> {
+  list: (params?: ListParams) => Promise<ApiResponse<PaginatedResult<T>>>;
+  get: (id: string) => Promise<ApiResponse<T>>;
+  create: (data: Partial<T>) => Promise<ApiResponse<T>>;
+  update: (id: string, data: Partial<T>) => Promise<ApiResponse<T>>;
+  delete: (id: string) => Promise<ApiResponse<string>>;
+}
+
+function createCrudApi<T>(endpoint: string): CrudOperations<T> {
+  return {
+    list: (params?: ListParams) => {
+      const queryString = buildQueryString(params);
+      return apiClient.flow.get(`${endpoint}${queryString}`);
+    },
+
+    get: (id: string) => {
+      return apiClient.flow.get(`${endpoint}/${id}`);
+    },
+
+    create: (data: Partial<T>) => {
+      return apiClient.flow.post(endpoint, data);
+    },
+
+    update: (id: string, data: Partial<T>) => {
+      return apiClient.flow.put(`${endpoint}/${id}`, data);
+    },
+
+    delete: (id: string) => {
+      return apiClient.flow.delete(`${endpoint}/${id}`);
+    },
+  };
+}
+
+// ========== 工作流 API ==========
+
+export const workflowApi = {
+  ...createCrudApi<Workflow>('/api/v1/workflows'),
+
+  listWorkflows: (params?: ListParams) =>
+    createCrudApi<Workflow>('/api/v1/workflows').list(params),
+
+  getWorkflow: (id: string) =>
+    createCrudApi<Workflow>('/api/v1/workflows').get(id),
+
+  createWorkflow: (data: CreateWorkflowRequest) =>
+    createCrudApi<Workflow>('/api/v1/workflows').create(data),
+
+  updateWorkflow: (id: string, data: UpdateWorkflowRequest) =>
+    createCrudApi<Workflow>('/api/v1/workflows').update(id, data),
+
+  deleteWorkflow: (id: string) =>
+    createCrudApi<Workflow>('/api/v1/workflows').delete(id),
+
+  getVersions: (workflowId: string, params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return apiClient.flow.get(`/api/v1/workflows/${workflowId}/versions${queryString}`);
+  },
+
+  createVersion: (workflowId: string, data: CreateVersionRequest) => {
+    return apiClient.flow.post(`/api/v1/workflows/${workflowId}/versions`, data);
+  },
+
+  getVersion: (workflowId: string, versionId: string) => {
+    return apiClient.flow.get(`/api/v1/workflows/${workflowId}/versions/${versionId}`);
+  },
+
+  activateVersion: (workflowId: string, versionId: string) => {
+    return apiClient.flow.post(`/api/v1/workflows/${workflowId}/versions/${versionId}/activate`);
+  },
+
+  rollback: (workflowId: string, data: RollbackRequest) => {
+    return apiClient.flow.post(`/api/v1/workflows/${workflowId}/rollback`, data);
+  },
+
+  compareVersions: (workflowId: string, version1: string, version2: string) => {
+    return apiClient.flow.get(`/api/v1/workflows/${workflowId}/compare/${version1}/${version2}`);
+  },
+
+  deleteVersion: (workflowId: string, versionId: string) => {
+    return apiClient.flow.delete(`/api/v1/workflows/${workflowId}/versions/${versionId}`);
+  },
+};
+
+// ========== 实例 API ==========
+
+export const instanceApi = {
+  list: (params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return apiClient.flow.get(`/api/v1/instances${queryString}`);
+  },
+
+  start: (data: CreateWorkflowInstanceRequest) => {
+    return apiClient.flow.post('/api/v1/instances', data);
+  },
+
+  get: (id: string) => {
+    return apiClient.flow.get(`/api/v1/instances/${id}`);
+  },
+
+  getDetails: (id: string) => {
+    return apiClient.flow.get(`/api/v1/instances/${id}/details`);
+  },
+
+  listInstances: (params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return apiClient.flow.get(`/api/v1/instances${queryString}`);
+  },
+};
+
+// ========== 审批 API ==========
+
+export const approvalApi = {
+  list: (params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return apiClient.flow.get(`/api/v1/approvals${queryString}`);
+  },
+
+  create: (data: CreateApprovalRequest) => {
+    return apiClient.flow.post('/api/v1/approvals', data);
+  },
+
+  get: (id: string) => {
+    return apiClient.flow.get(`/api/v1/approvals/${id}`);
+  },
+
+  process: (id: string, data: ProcessApprovalRequest) => {
+    return apiClient.flow.post(`/api/v1/approvals/${id}/process`, data);
+  },
+
+  listApprovals: (params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return apiClient.flow.get(`/api/v1/approvals${queryString}`);
+  },
+
+  getRecords: (params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return apiClient.flow.get(`/api/v1/records${queryString}`);
+  },
+
+  getRecordsByApproval: (approvalId: string) => {
+    return apiClient.flow.get(`/api/v1/records/${approvalId}`);
+  },
+};
+
+// ========== 通知 API ==========
+
+export const notificationApi = {
+  list: (userId: string, params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return apiClient.flow.get(`/api/v1/notifications/${userId}${queryString}`);
+  },
+
+  getCount: (userId: string) => {
+    return apiClient.flow.get(`/api/v1/notifications/${userId}/count`);
+  },
+
+  markAsRead: (userId: string) => {
+    return apiClient.flow.post(`/api/v1/notifications/${userId}/read`);
+  },
+
+  create: (data: CreateNotificationRequest) => {
+    return apiClient.flow.post('/api/v1/notifications', data);
+  },
+
+  listNotifications: (userId: string, params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return apiClient.flow.get(`/api/v1/notifications/${userId}${queryString}`);
+  },
+};
+
+// ========== 统一导出 ==========
 
 export const flowApi = {
-  listWorkflows: async (): Promise<ApiResponse<Workflow[]>> => {
-    return apiClient.flow.get<Workflow[]>('/api/v1/workflows');
+  workflows: workflowApi,
+  instances: instanceApi,
+  approvals: approvalApi,
+  notifications: notificationApi,
+
+  listWorkflows: workflowApi.listWorkflows,
+  getWorkflow: workflowApi.getWorkflow,
+  createWorkflow: workflowApi.createWorkflow,
+  updateWorkflow: workflowApi.updateWorkflow,
+  deleteWorkflow: workflowApi.deleteWorkflow,
+
+  listInstances: instanceApi.listInstances,
+  startInstance: instanceApi.start,
+  getInstance: instanceApi.get,
+  getInstanceDetails: instanceApi.getDetails,
+
+  listApprovals: approvalApi.listApprovals,
+  createApproval: approvalApi.create,
+  getApproval: approvalApi.get,
+  processApproval: approvalApi.process,
+
+  listNotifications: notificationApi.listNotifications,
+  getNotificationCount: notificationApi.getCount,
+  markNotificationsAsRead: notificationApi.markAsRead,
+  createNotification: notificationApi.create,
+
+  getRecords: approvalApi.getRecords,
+  getRecordsByApproval: approvalApi.getRecordsByApproval,
+
+  getVersions: workflowApi.getVersions,
+  createVersion: workflowApi.createVersion,
+  getVersion: workflowApi.getVersion,
+  activateVersion: workflowApi.activateVersion,
+  rollbackVersion: workflowApi.rollback,
+  compareVersions: workflowApi.compareVersions,
+  deleteVersion: workflowApi.deleteVersion,
+
+  getStatistics: async (): Promise<ApiResponse<StatisticsResponse>> => {
+    return apiClient.flow.get('/api/v1/statistics');
   },
 
-  getWorkflow: async (id: string): Promise<ApiResponse<Workflow>> => {
-    return apiClient.flow.get<Workflow>(`/api/v1/workflows/${id}`);
+  getPerformance: async (): Promise<ApiResponse<PerformanceStats>> => {
+    return apiClient.flow.get('/api/v1/performance');
   },
 
-  createWorkflow: async (data: { 
-    name: string; 
-    description?: string;
-    definition?: WorkflowDefinition;
-  }): Promise<ApiResponse<Workflow>> => {
-    return apiClient.flow.post<Workflow>('/api/v1/workflows', data);
-  },
-
-  updateWorkflow: async (id: string, data: {
-    name: string;
-    description?: string;
-    definition?: WorkflowDefinition;
-  }): Promise<ApiResponse<Workflow>> => {
-    return apiClient.flow.put<Workflow>(`/api/v1/workflows/${id}`, data);
-  },
-
-  deleteWorkflow: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.flow.delete<void>(`/api/v1/workflows/${id}`);
-  },
-
-  listInstances: async (): Promise<ApiResponse<WorkflowInstance[]>> => {
-    return apiClient.flow.get<WorkflowInstance[]>('/api/v1/instances');
-  },
-
-  getInstance: async (id: string): Promise<ApiResponse<WorkflowInstance>> => {
-    return apiClient.flow.get<WorkflowInstance>(`/api/v1/instances/${id}`);
-  },
-
-  createInstance: async (data: { 
-    workflow_id: string; 
-    initiator_id?: string;
-    data?: any;
-  }): Promise<ApiResponse<WorkflowInstance>> => {
-    return apiClient.flow.post<WorkflowInstance>('/api/v1/instances', data);
-  },
-
-  updateInstanceStatus: async (id: string, status: string): Promise<ApiResponse<WorkflowInstance>> => {
-    return apiClient.flow.patch<WorkflowInstance>(
-      `/api/v1/instances/${id}/status`,
-      { status }
-    );
-  },
-
-  listApprovals: async (query?: ApprovalQuery): Promise<ApiResponse<Approval[]>> => {
-    const params = new URLSearchParams();
-    if (query?.workflow_instance_id) params.append('workflow_instance_id', query.workflow_instance_id);
-    if (query?.status) params.append('status', query.status);
-    if (query?.assignee_id) params.append('assignee_id', query.assignee_id);
-    
-    const queryString = params.toString();
-    const url = queryString ? `/api/v1/approvals?${queryString}` : '/api/v1/approvals';
-    return apiClient.flow.get<Approval[]>(url);
-  },
-
-  getApproval: async (id: string): Promise<ApiResponse<Approval>> => {
-    return apiClient.flow.get<Approval>(`/api/v1/approvals/${id}`);
-  },
-
-  createApproval: async (data: {
-    workflow_instance_id: string;
-    node_id: string;
-    task_name: string;
-    assignee_id?: string;
-    approval_type?: 'single' | 'counter' | 'or';
-    timeout_hours?: number;
-  }): Promise<ApiResponse<Approval>> => {
-    return apiClient.flow.post<Approval>('/api/v1/approvals', data);
-  },
-
-  approve: async (id: string, data: {
-    comment?: string;
-    user_id?: string;
-    user_name?: string;
-  }): Promise<ApiResponse<Approval>> => {
-    return apiClient.flow.post<Approval>(
-      `/api/v1/approvals/${id}/action`,
-      { status: 'approved', ...data }
-    );
-  },
-
-  reject: async (id: string, data: {
-    comment?: string;
-    user_id?: string;
-    user_name?: string;
-  }): Promise<ApiResponse<Approval>> => {
-    return apiClient.flow.post<Approval>(
-      `/api/v1/approvals/${id}/action`,
-      { status: 'rejected', ...data }
-    );
-  },
-
-  delegate: async (id: string, data: {
-    delegate_to: string;
-    delegate_to_name: string;
-    reason?: string;
-    user_id: string;
-    user_name: string;
-  }): Promise<ApiResponse<Approval>> => {
-    return apiClient.flow.post<Approval>(
-      `/api/v1/approvals/${id}/delegate`,
-      data
-    );
-  },
-
-  addComment: async (id: string, data: {
-    content: string;
-    user_id: string;
-    user_name: string;
-  }): Promise<ApiResponse<Comment>> => {
-    return apiClient.flow.post<Comment>(
-      `/api/v1/approvals/${id}/comment`,
-      data
-    );
-  },
-
-  getComments: async (id: string): Promise<ApiResponse<Comment[]>> => {
-    return apiClient.flow.get<Comment[]>(`/api/v1/approvals/${id}/comments`);
-  },
-
-  getPendingApprovals: async (): Promise<ApiResponse<Approval[]>> => {
-    return apiClient.flow.get<Approval[]>('/api/v1/approvals/pending');
-  },
-
-  getCompletedApprovals: async (): Promise<ApiResponse<Approval[]>> => {
-    return apiClient.flow.get<Approval[]>('/api/v1/approvals/completed');
-  },
-
-  processTimeout: async (id: string): Promise<ApiResponse<Approval>> => {
-    return apiClient.flow.post<Approval>(`/api/v1/approvals/${id}/timeout`, {});
-  },
-
-  listRecords: async (query?: RecordQuery): Promise<ApiResponse<ApprovalRecord[]>> => {
-    const params = new URLSearchParams();
-    if (query?.approval_id) params.append('approval_id', query.approval_id);
-    if (query?.user_id) params.append('user_id', query.user_id);
-    
-    const queryString = params.toString();
-    const url = queryString ? `/api/v1/records?${queryString}` : '/api/v1/records';
-    return apiClient.flow.get<ApprovalRecord[]>(url);
-  },
-
-  getRecordsByApproval: async (approvalId: string): Promise<ApiResponse<ApprovalRecord[]>> => {
-    return apiClient.flow.get<ApprovalRecord[]>(
-      `/api/v1/records/${approvalId}`
-    );
+  resetPerformance: async (): Promise<ApiResponse<string>> => {
+    return apiClient.flow.post('/api/v1/performance/reset');
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.flow.get<string>('/health');
+    return apiClient.flow.get('/health');
   },
 };
+
+export default flowApi;

@@ -1,6 +1,8 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
 
+// ========== 类型定义 ==========
+
 export interface Sample {
   id: string;
   name: string;
@@ -16,6 +18,8 @@ export interface CreateSampleRequest {
   name: string;
   description: string;
   status: string;
+  project_id?: string;
+  received_date?: string;
 }
 
 export interface InspectionStep {
@@ -91,33 +95,98 @@ export interface BatchOperationResult {
   errors: string[];
 }
 
-export const limsApi = {
-  listSamples: async (): Promise<ApiResponse<Sample[]>> => {
-    return apiClient.lims.get<Sample[]>('/api/v1/samples');
-  },
+export interface ListParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  status?: string;
+  project_id?: string;
+  [key: string]: string | number | undefined;
+}
 
-  getSample: async (id: string): Promise<ApiResponse<Sample>> => {
-    return apiClient.lims.get<Sample>(`/api/v1/samples/${id}`);
-  },
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+}
 
-  createSample: async (data: CreateSampleRequest): Promise<ApiResponse<Sample>> => {
-    return apiClient.lims.post<Sample>('/api/v1/samples', data);
-  },
+// ========== 通用工具函数 ==========
 
-  updateSample: async (id: string, data: CreateSampleRequest): Promise<ApiResponse<Sample>> => {
-    return apiClient.lims.put<Sample>(`/api/v1/samples/${id}`, data);
-  },
+function buildQueryString(params?: ListParams): string {
+  if (!params) return '';
+  
+  const searchParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      searchParams.append(key, String(value));
+    }
+  });
+  
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : '';
+}
 
-  deleteSample: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.lims.delete<boolean>(`/api/v1/samples/${id}`);
-  },
+interface CrudOperations<T> {
+  list: (params?: ListParams) => Promise<ApiResponse<PaginatedResult<T>>>;
+  get: (id: string) => Promise<ApiResponse<T>>;
+  create: (data: Partial<T>) => Promise<ApiResponse<T>>;
+  update: (id: string, data: Partial<T>) => Promise<ApiResponse<T>>;
+  delete: (id: string) => Promise<ApiResponse<string>>;
+}
+
+function createCrudApi<T>(endpoint: string): CrudOperations<T> {
+  return {
+    list: (params?: ListParams) => {
+      const queryString = buildQueryString(params);
+      return apiClient.lims.get(`${endpoint}${queryString}`);
+    },
+
+    get: (id: string) => {
+      return apiClient.lims.get(`${endpoint}/${id}`);
+    },
+
+    create: (data: Partial<T>) => {
+      return apiClient.lims.post(endpoint, data);
+    },
+
+    update: (id: string, data: Partial<T>) => {
+      return apiClient.lims.put(`${endpoint}/${id}`, data);
+    },
+
+    delete: (id: string) => {
+      return apiClient.lims.delete(`${endpoint}/${id}`);
+    },
+  };
+}
+
+// ========== LIMS API 模块 ==========
+
+export const sampleApi = {
+  ...createCrudApi<Sample>('/api/v1/samples'),
+
+  listSamples: (params?: ListParams) => 
+    createCrudApi<Sample>('/api/v1/samples').list(params),
+
+  getSample: (id: string) => 
+    createCrudApi<Sample>('/api/v1/samples').get(id),
+
+  createSample: (data: CreateSampleRequest) => 
+    createCrudApi<Sample>('/api/v1/samples').create(data),
+
+  updateSample: (id: string, data: CreateSampleRequest) => 
+    createCrudApi<Sample>('/api/v1/samples').update(id, data),
+
+  deleteSample: (id: string) => 
+    createCrudApi<Sample>('/api/v1/samples').delete(id),
 
   batchCreateSamples: async (data: BatchCreateSamplesRequest): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.lims.post<BatchOperationResult>('/api/v1/samples/batch', data);
+    return apiClient.lims.post('/api/v1/samples/batch', data);
   },
 
   batchDeleteSamples: async (data: BatchDeleteSamplesRequest): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.lims.delete<BatchOperationResult>('/api/v1/samples/batch', { data });
+    return apiClient.lims.delete('/api/v1/samples/batch', { data });
   },
 
   exportSamples: async (): Promise<Blob> => {
@@ -134,49 +203,49 @@ export const limsApi = {
       },
     });
   },
+};
 
-  listProcesses: async (): Promise<ApiResponse<InspectionProcess[]>> => {
-    return apiClient.lims.get<InspectionProcess[]>('/api/v1/processes');
-  },
+export const processApi = {
+  ...createCrudApi<InspectionProcess>('/api/v1/processes'),
 
-  getProcess: async (id: string): Promise<ApiResponse<InspectionProcess>> => {
-    return apiClient.lims.get<InspectionProcess>(`/api/v1/processes/${id}`);
-  },
+  listProcesses: (params?: ListParams) => 
+    createCrudApi<InspectionProcess>('/api/v1/processes').list(params),
 
-  listTasks: async (): Promise<ApiResponse<InspectionTask[]>> => {
-    return apiClient.lims.get<InspectionTask[]>('/api/v1/tasks');
-  },
+  getProcess: (id: string) => 
+    createCrudApi<InspectionProcess>('/api/v1/processes').get(id),
+};
 
-  createTask: async (data: CreateInspectionTaskRequest): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.lims.post<InspectionTask>('/api/v1/tasks', data);
-  },
+export const taskApi = {
+  ...createCrudApi<InspectionTask>('/api/v1/tasks'),
 
-  getTask: async (id: string): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.lims.get<InspectionTask>(`/api/v1/tasks/${id}`);
-  },
+  listTasks: (params?: ListParams) => 
+    createCrudApi<InspectionTask>('/api/v1/tasks').list(params),
 
-  updateTask: async (id: string, data: CreateInspectionTaskRequest): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.lims.put<InspectionTask>(`/api/v1/tasks/${id}`, data);
-  },
+  createTask: (data: CreateInspectionTaskRequest) => 
+    createCrudApi<InspectionTask>('/api/v1/tasks').create(data),
+
+  getTask: (id: string) => 
+    createCrudApi<InspectionTask>('/api/v1/tasks').get(id),
+
+  updateTask: (id: string, data: CreateInspectionTaskRequest) => 
+    createCrudApi<InspectionTask>('/api/v1/tasks').update(id, data),
 
   completeStep: async (id: string, data: CreateInspectionRecordRequest): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.lims.post<InspectionTask>(`/api/v1/tasks/${id}/complete_step`, data);
+    return apiClient.lims.post(`/api/v1/tasks/${id}/complete_step`, data);
   },
+};
 
-  listRecords: async (): Promise<ApiResponse<InspectionRecord[]>> => {
-    return apiClient.lims.get<InspectionRecord[]>('/api/v1/records');
-  },
+export const recordApi = {
+  ...createCrudApi<InspectionRecord>('/api/v1/records'),
 
-  createRecord: async (data: CreateInspectionRecordRequest): Promise<ApiResponse<InspectionRecord>> => {
-    return apiClient.lims.post<InspectionRecord>('/api/v1/records', data);
-  },
+  listRecords: (params?: ListParams) => 
+    createCrudApi<InspectionRecord>('/api/v1/records').list(params),
+
+  createRecord: (data: CreateInspectionRecordRequest) => 
+    createCrudApi<InspectionRecord>('/api/v1/records').create(data),
 
   listRecordsByTask: async (taskId: string): Promise<ApiResponse<InspectionRecord[]>> => {
-    return apiClient.lims.get<InspectionRecord[]>(`/api/v1/records/task/${taskId}`);
-  },
-
-  health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.lims.get<string>('/health');
+    return apiClient.lims.get(`/api/v1/records/task/${taskId}`);
   },
 };
 
@@ -228,3 +297,42 @@ export const auditLimsApi = {
     return apiClient.lims.get(`/api/v1/audit-logs/${id}`);
   },
 };
+
+// ========== 统一导出 ==========
+
+export const limsApi = {
+  samples: sampleApi,
+  processes: processApi,
+  tasks: taskApi,
+  records: recordApi,
+  audit: auditLimsApi,
+
+  listSamples: sampleApi.listSamples,
+  getSample: sampleApi.getSample,
+  createSample: sampleApi.createSample,
+  updateSample: sampleApi.updateSample,
+  deleteSample: sampleApi.deleteSample,
+  batchCreateSamples: sampleApi.batchCreateSamples,
+  batchDeleteSamples: sampleApi.batchDeleteSamples,
+  exportSamples: sampleApi.exportSamples,
+  importSamples: sampleApi.importSamples,
+  
+  listProcesses: processApi.listProcesses,
+  getProcess: processApi.getProcess,
+  
+  listTasks: taskApi.listTasks,
+  createTask: taskApi.createTask,
+  getTask: taskApi.getTask,
+  updateTask: taskApi.updateTask,
+  completeStep: taskApi.completeStep,
+  
+  listRecords: recordApi.listRecords,
+  createRecord: recordApi.createRecord,
+  listRecordsByTask: recordApi.listRecordsByTask,
+
+  health: async (): Promise<ApiResponse<string>> => {
+    return apiClient.lims.get('/health');
+  },
+};
+
+export default limsApi;

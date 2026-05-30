@@ -18,7 +18,7 @@ use topems_shared::{
     Config,
     Result,
 };
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa::OpenApi;
 
 #[derive(Clone)]
 struct AppState {
@@ -72,7 +72,7 @@ async fn main() -> Result<()> {
         .merge(api::reagent::create_routes(pool.clone()).await?)
         .merge(api::doc_integration::create_routes(pool.clone()).await?)
         .merge(api::ai_integration::create_routes(pool.clone()).await?)
-        .merge(SwaggerUi::new("/swagger-ui"))
+        .route("/swagger-ui", get(swagger_ui_handler))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -101,17 +101,53 @@ async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
     axum::Json(api::openapi::ApiDoc::openapi())
 }
 
-async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    // 启用 uuid 扩展
-    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
-        .execute(pool)
-        .await?;
+async fn swagger_ui_handler() -> axum::response::Html<&'static str> {
+    axum::response::Html(r#"
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TOPEMS LIMS API Documentation</title>
+        <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+        <style>
+            html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+            *, *:before, *:after { box-sizing: inherit; }
+            body { margin:0; background: #fafafa; }
+        </style>
+    </head>
+    <body>
+        <div id="swagger-ui"></div>
+        <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+        <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+        <script>
+            window.onload = function() {
+                const ui = SwaggerUIBundle({
+                    url: '/api-docs/openapi.json',
+                    dom_id: '#swagger-ui',
+                    deepLinking: true,
+                    presets: [
+                        SwaggerUIBundle.presets.apis,
+                        SwaggerUIStandalonePreset
+                    ],
+                    plugins: [
+                        SwaggerUIBundle.plugins.DownloadUrl
+                    ],
+                    layout: "StandaloneLayout"
+                });
+            };
+        </script>
+    </body>
+    </html>
+    "#)
+}
 
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     // 创建样品表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS samples (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS lims.samples (
+            id UUID PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             description TEXT,
             status VARCHAR(50) NOT NULL DEFAULT 'received',
@@ -128,8 +164,8 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     // 创建检验流程表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS inspection_processes (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS lims.inspection_processes (
+            id UUID PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             description TEXT,
             steps JSONB NOT NULL DEFAULT '[]',
@@ -145,10 +181,10 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     // 创建检验任务表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS inspection_tasks (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            sample_id UUID NOT NULL REFERENCES samples(id) ON DELETE CASCADE,
-            process_id UUID NOT NULL REFERENCES inspection_processes(id) ON DELETE CASCADE,
+        CREATE TABLE IF NOT EXISTS lims.inspection_tasks (
+            id UUID PRIMARY KEY,
+            sample_id UUID NOT NULL REFERENCES lims.samples(id) ON DELETE CASCADE,
+            process_id UUID NOT NULL REFERENCES lims.inspection_processes(id) ON DELETE CASCADE,
             current_step INTEGER NOT NULL DEFAULT 1,
             status VARCHAR(50) NOT NULL DEFAULT 'pending',
             inspector VARCHAR(255) NOT NULL,
@@ -165,9 +201,9 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     // 创建检验记录表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS inspection_records (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            task_id UUID NOT NULL REFERENCES inspection_tasks(id) ON DELETE CASCADE,
+        CREATE TABLE IF NOT EXISTS lims.inspection_records (
+            id UUID PRIMARY KEY,
+            task_id UUID NOT NULL REFERENCES lims.inspection_tasks(id) ON DELETE CASCADE,
             step_id UUID NOT NULL,
             step_name VARCHAR(255) NOT NULL,
             result TEXT NOT NULL,
@@ -184,8 +220,8 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     // 创建审计日志表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS audit_logs (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS lims.audit_logs (
+            id UUID PRIMARY KEY,
             action VARCHAR(50) NOT NULL,
             entity_type VARCHAR(50) NOT NULL,
             entity_id UUID,
@@ -206,19 +242,19 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .await?;
 
     // 创建审计日志索引
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON lims.audit_logs(action)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON lims.audit_logs(entity_type)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON lims.audit_logs(user_id)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON lims.audit_logs(created_at)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON lims.audit_logs(status)"#)
         .execute(pool)
         .await?;
 

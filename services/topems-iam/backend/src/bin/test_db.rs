@@ -1,0 +1,1 @@
+use sqlx::PgPool; use tokio; #[tokio::main] async fn main() { let pool = PgPool::connect("postgres://topems:topems_secret@localhost:5432/topems").await.unwrap(); let result: Vec<(String,)> = sqlx::query_as("SELECT username FROM iam.users WHERE username = $1").bind("admin").fetch_all(&pool).await.unwrap(); println!("Users: {:?}", result); }

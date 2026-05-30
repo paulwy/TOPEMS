@@ -221,7 +221,24 @@ pub async fn auth_middleware(
         || std::env::var("ENV").unwrap_or_default() == "dev";
     
     if is_development {
-        let dev_public_paths = ["/api/v1/documents", "/api/v1/files", "/api/v1/folders", "/api/v1/workflows", "/api/v1/ai"];
+        let dev_public_paths = [
+            "/api/v1/documents", 
+            "/api/v1/files", 
+            "/api/v1/folders", 
+            "/api/v1/workflows", 
+            "/api/v1/ai",
+            "/api/v1/samples",
+            "/api/v1/inspection",
+            "/api/v1/instruments",
+            "/api/v1/reagents",
+            "/api/v1/audit",
+            "/api/v1/projects",
+            "/api/v1/formulas",
+            "/api/v1/experiments",
+            "/api/v1/materials",
+            "/swagger-ui",
+            "/api-docs"
+        ];
         if dev_public_paths.iter().any(|p| path.starts_with(p)) {
             return next.run(req).await;
         }

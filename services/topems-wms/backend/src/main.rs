@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
         .init();
 
     let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost/topems_wms".to_string());
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/topems".to_string());
 
     let pool = PgPoolOptions::new()
         .max_connections(10)
@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
         ))
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8008".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8018".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-WMS 仓库管理系统启动中...");

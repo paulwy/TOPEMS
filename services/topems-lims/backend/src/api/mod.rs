@@ -7,3 +7,4 @@ pub mod audit;
 pub mod reagent;
 pub mod doc_integration;
 pub mod ai_integration;
+pub mod openapi;

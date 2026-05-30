@@ -4,7 +4,8 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import DocumentsPage from './pages/DocumentsPage';
 import AIPage from './pages/AIPage';
-import WorkflowsPage from './pages/WorkflowsPage';
+import FlowWorkflowPage from './pages/FlowWorkflowPage';
+import WorkflowDesignerPage from './pages/WorkflowDesignerPage';
 import Rspage from './pages/Rspage';
 import Limspage from './pages/Limspage';
 import Qmspage from './pages/Qmspage';
@@ -29,12 +30,23 @@ import HrmRecruitmentPage from './pages/HrmRecruitmentPage';
 import HrmPayrollPage from './pages/HrmPayrollPage';
 import HrmPerformancePage from './pages/HrmPerformancePage';
 import HrmAttendancePage from './pages/HrmAttendancePage';
+import HrmEmployeeDetailPage from './pages/HrmEmployeeDetailPage';
+import PerformanceMonitorPage from './pages/PerformanceMonitorPage';
+import FlowInstanceListPage from './pages/FlowInstanceListPage';
+import FlowInstanceDetailPage from './pages/FlowInstanceDetailPage';
+import FlowApprovalPage from './pages/FlowApprovalPage';
+import FlowApprovalDetailPage from './pages/FlowApprovalDetailPage';
+import FlowNotificationCenter from './pages/FlowNotificationCenter';
+import FlowStatisticsPage from './pages/FlowStatisticsPage';
+import FlowVersionHistoryPage from './pages/FlowVersionHistoryPage';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
 import { ModuleGate } from './components/PermissionGate';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './components/ToastProvider';
 import { LoadingProvider } from './components/LoadingProvider';
+import { ThemeProvider } from './components/ThemeProvider';
+import { Toaster } from './components/Toaster';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -83,7 +95,17 @@ const AppContent: React.FC = () => {
           element={
             <ProtectedRoute requiredPermissions={['workflow:read']}>
               <ModuleGate module="workflow" action="read">
-                <WorkflowsPage />
+                <FlowWorkflowPage />
+              </ModuleGate>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/workflow-designer"
+          element={
+            <ProtectedRoute requiredPermissions={['workflow:write']}>
+              <ModuleGate module="workflow" action="write">
+                <WorkflowDesignerPage />
               </ModuleGate>
             </ProtectedRoute>
           }
@@ -278,6 +300,16 @@ const AppContent: React.FC = () => {
             }
           />
         <Route
+            path="/hrm/employees/:id"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="admin">
+                  <HrmEmployeeDetailPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
             path="/hrm/recruitment"
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
@@ -317,6 +349,97 @@ const AppContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
+        <Route
+            path="/performance-monitor"
+            element={
+              <ProtectedRoute requiredPermissions={['iam:read']}>
+                <ModuleGate module="iam" action="admin">
+                  <PerformanceMonitorPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        
+        {/* FLOW Service Routes */}
+        <Route
+            path="/flow/workflows"
+            element={
+              <ProtectedRoute requiredPermissions={['workflow:read']}>
+                <ModuleGate module="workflow" action="admin">
+                  <FlowWorkflowPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/flow/instances"
+            element={
+              <ProtectedRoute requiredPermissions={['workflow:read']}>
+                <ModuleGate module="workflow" action="admin">
+                  <FlowInstanceListPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/flow/instances/:id"
+            element={
+              <ProtectedRoute requiredPermissions={['workflow:read']}>
+                <ModuleGate module="workflow" action="admin">
+                  <FlowInstanceDetailPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/flow/approvals"
+            element={
+              <ProtectedRoute requiredPermissions={['workflow:read']}>
+                <ModuleGate module="workflow" action="admin">
+                  <FlowApprovalPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/flow/approvals/:id"
+            element={
+              <ProtectedRoute requiredPermissions={['workflow:read']}>
+                <ModuleGate module="workflow" action="admin">
+                  <FlowApprovalDetailPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/flow/notifications"
+            element={
+              <ProtectedRoute>
+                <FlowNotificationCenter />
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/flow/statistics"
+            element={
+              <ProtectedRoute requiredPermissions={['workflow:read']}>
+                <ModuleGate module="workflow" action="admin">
+                  <FlowStatisticsPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/flow/workflows/:id/versions"
+            element={
+              <ProtectedRoute requiredPermissions={['workflow:read']}>
+                <ModuleGate module="workflow" action="admin">
+                  <FlowVersionHistoryPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          
         <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
@@ -327,13 +450,16 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <ToastProvider>
-          <LoadingProvider>
-            <AppContent />
-          </LoadingProvider>
-        </ToastProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <LoadingProvider>
+              <AppContent />
+              <Toaster />
+            </LoadingProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 };

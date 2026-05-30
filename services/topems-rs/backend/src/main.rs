@@ -18,11 +18,10 @@ use topems_shared::{
     Config,
     Result,
 };
-use utoipa_swagger_ui::SwaggerUi;
+
 
 #[derive(Clone)]
 struct AppState {
-    pool: sqlx::PgPool,
     auth_state: AuthState,
     config: Config,
 }
@@ -54,7 +53,6 @@ async fn main() -> Result<()> {
     }
 
     let app_state = AppState {
-        pool: pool.clone(),
         auth_state: AuthState::from_env(),
         config,
     };
@@ -70,8 +68,8 @@ async fn main() -> Result<()> {
         .merge(api::doc_integration::create_routes(pool.clone()).await?)
         .merge(api::ai_integration::create_routes(pool.clone()).await?)
         .merge(api::audit::create_routes(pool.clone()).await?)
-        .merge(SwaggerUi::new("/swagger-ui"))
-        .route("/api-docs/openapi.json", get(serve_openapi_json))
+        // .merge(SwaggerUi::new("/swagger-ui"))
+        // .route("/api-docs/openapi.json", get(serve_openapi_json))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -95,21 +93,21 @@ async fn health_check() -> Json<ApiResponse<&'static str>> {
     Json(ApiResponse::success("TOPEMS-RS is running", "健康检查"))
 }
 
-async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(api::openapi::ApiDoc::openapi())
-}
+// async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+//     axum::Json(api::openapi::ApiDoc::openapi())
+// }
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    // 启用 uuid 扩展
-    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
+    // 创建 rs schema
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS rs")
         .execute(pool)
         .await?;
-
+        
     // 创建项目表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS projects (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS rs.projects (
+            id UUID PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             code VARCHAR(100) NOT NULL,
             description TEXT,
@@ -133,12 +131,12 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     // 创建配方表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS formulas (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS rs.formulas (
+            id UUID PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             code VARCHAR(100) NOT NULL,
             description TEXT,
-            project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+            project_id UUID NOT NULL REFERENCES rs.projects(id) ON DELETE CASCADE,
             version VARCHAR(50) NOT NULL DEFAULT '1.0',
             ingredients JSONB NOT NULL,
             instructions TEXT,
@@ -155,12 +153,12 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     // 创建实验表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS experiments (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS rs.experiments (
+            id UUID PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             code VARCHAR(100) NOT NULL,
-            project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-            formula_id UUID REFERENCES formulas(id) ON DELETE SET NULL,
+            project_id UUID NOT NULL REFERENCES rs.projects(id) ON DELETE CASCADE,
+            formula_id UUID REFERENCES rs.formulas(id) ON DELETE SET NULL,
             title VARCHAR(255),
             description TEXT,
             experiment_type VARCHAR(100) NOT NULL,
@@ -185,8 +183,8 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     // 创建材料表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS materials (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS rs.materials (
+            id UUID PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             code VARCHAR(100) NOT NULL,
             description TEXT,
@@ -211,8 +209,8 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     // 创建审计日志表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS audit_logs (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS rs.audit_logs (
+            id UUID PRIMARY KEY,
             action VARCHAR(50) NOT NULL,
             entity_type VARCHAR(50) NOT NULL,
             entity_id UUID,
@@ -233,52 +231,52 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .await?;
 
     // 创建索引
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_projects_code ON projects(code)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_projects_code ON rs.projects(code)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_projects_status ON rs.projects(status)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_projects_leader ON projects(leader)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_projects_leader ON rs.projects(leader)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_formulas_code ON formulas(code)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_formulas_code ON rs.formulas(code)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_formulas_project_id ON formulas(project_id)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_formulas_project_id ON rs.formulas(project_id)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_code ON experiments(code)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_code ON rs.experiments(code)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_project_id ON experiments(project_id)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_project_id ON rs.experiments(project_id)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_status ON experiments(status)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_status ON rs.experiments(status)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_materials_code ON materials(code)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_materials_code ON rs.materials(code)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_materials_type ON materials(material_type)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_materials_type ON rs.materials(material_type)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_materials_status ON materials(status)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_materials_status ON rs.materials(status)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON rs.audit_logs(action)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON rs.audit_logs(entity_type)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON rs.audit_logs(user_id)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON rs.audit_logs(created_at)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON rs.audit_logs(status)"#)
         .execute(pool)
         .await?;
 

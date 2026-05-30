@@ -1,3 +1,4 @@
+use sqlx::Error as SqlxError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -31,6 +32,9 @@ pub enum TopemsError {
     
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
+    
+    #[error("SQL error: {0}")]
+    Sql(#[from] SqlxError),
 }
 
 impl TopemsError {
@@ -46,6 +50,7 @@ impl TopemsError {
             TopemsError::Internal(_) => 500,
             TopemsError::Io(_) => 500,
             TopemsError::Serialization(_) => 500,
+            TopemsError::Sql(_) => 500,
         }
     }
 
@@ -61,6 +66,7 @@ impl TopemsError {
             TopemsError::Internal(_) => "INTERNAL_ERROR",
             TopemsError::Io(_) => "IO_ERROR",
             TopemsError::Serialization(_) => "SERIALIZATION_ERROR",
+            TopemsError::Sql(_) => "SQL_ERROR",
         }
     }
 

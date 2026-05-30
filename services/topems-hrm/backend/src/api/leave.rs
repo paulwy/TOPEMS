@@ -4,17 +4,14 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
+use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
-
-pub struct AppState {
-    pub db: PgPool,
-}
+use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct LeaveRequest {
@@ -23,7 +20,7 @@ pub struct LeaveRequest {
     pub leave_type: String,
     pub start_date: chrono::DateTime<chrono::Utc>,
     pub end_date: chrono::DateTime<chrono::Utc>,
-    pub days: f64,
+    pub days: BigDecimal,
     pub reason: Option<String>,
     pub status: String,
     pub approver_id: Option<Uuid>,
@@ -39,7 +36,7 @@ pub struct CreateLeaveRequest {
     pub leave_type: String,
     pub start_date: chrono::DateTime<chrono::Utc>,
     pub end_date: chrono::DateTime<chrono::Utc>,
-    pub days: f64,
+    pub days: BigDecimal,
     pub reason: Option<String>,
 }
 
@@ -48,7 +45,7 @@ pub struct UpdateLeaveRequest {
     pub leave_type: Option<String>,
     pub start_date: Option<chrono::DateTime<chrono::Utc>>,
     pub end_date: Option<chrono::DateTime<chrono::Utc>>,
-    pub days: Option<f64>,
+    pub days: Option<BigDecimal>,
     pub reason: Option<String>,
 }
 

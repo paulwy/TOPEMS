@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Briefcase, TrendingUp, Calendar, UserPlus, 
   Search, Filter, ChevronLeft, Plus, Eye, Edit, 
@@ -7,6 +7,17 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
+import { NotificationContainer } from '../components/NotificationContainer';
+import {
+  jobOpeningApi,
+  candidateApi,
+  interviewApi,
+  departmentApi,
+  type JobOpening,
+  type Candidate as ApiCandidate,
+  type Interview as ApiInterview,
+  type Department
+} from '../api/hrm';
 
 interface Candidate {
   id: string;
@@ -59,119 +70,133 @@ const HrmRecruitmentPage: React.FC = () => {
   const [showCreatePositionModal, setShowCreatePositionModal] = useState(false);
   const [showCreateCandidateModal, setShowCreateCandidateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [positions] = useState<JobPosition[]>([
-    {
-      id: '1',
-      title: '高级前端工程师',
-      department: '研发部',
-      location: '北京',
-      salary_range: '25K-35K',
-      requirements: ['5年以上前端开发经验', '精通React/Vue', '熟悉Node.js', '有大型项目经验'],
-      description: '负责公司核心产品的前端架构设计与开发',
-      status: 'open',
-      headcount: 2,
-      filled_count: 1,
-      published_at: '2026-05-01'
-    },
-    {
-      id: '2',
-      title: '产品经理',
-      department: '产品部',
-      location: '北京',
-      salary_range: '20K-30K',
-      requirements: ['3年以上产品经验', '有B端产品经验优先', '良好的沟通能力'],
-      description: '负责企业级产品的规划与设计',
-      status: 'open',
-      headcount: 1,
-      filled_count: 0,
-      published_at: '2026-05-10'
-    },
-    {
-      id: '3',
-      title: 'Java后端工程师',
-      department: '研发部',
-      location: '北京',
-      salary_range: '20K-28K',
-      requirements: ['3年以上Java开发', '熟悉Spring Boot', '有微服务经验'],
-      description: '负责后端服务的开发与维护',
-      status: 'filled',
-      headcount: 3,
-      filled_count: 3,
-      published_at: '2026-04-15'
-    },
-  ]);
+  const [positions, setPositions] = useState<JobPosition[]>([]);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [interviews, setInterviews] = useState<InterviewRecord[]>([]);
+  const [departments, setDepartments] = useState<Record<string, Department>>({});
 
-  const [candidates] = useState<Candidate[]>([
-    {
-      id: '1',
-      name: '张伟',
-      gender: '男',
-      age: 28,
-      phone: '13800138001',
-      email: 'zhangwei@example.com',
-      position: '高级前端工程师',
-      education: '本科',
-      experience: '5年',
-      status: 'interview',
-      source: 'Boss直聘',
-      salary_expectation: 30000,
-      interview_time: '2026-05-28 10:00',
-      applied_at: '2026-05-20'
-    },
-    {
-      id: '2',
-      name: '李娜',
-      gender: '女',
-      age: 26,
-      phone: '13800138002',
-      email: 'lina@example.com',
-      position: '产品经理',
-      education: '硕士',
-      experience: '3年',
-      status: 'offer',
-      source: '猎聘',
-      salary_expectation: 25000,
-      applied_at: '2026-05-15'
-    },
-    {
-      id: '3',
-      name: '王强',
-      gender: '男',
-      age: 30,
-      phone: '13800138003',
-      email: 'wangqiang@example.com',
-      position: '高级前端工程师',
-      education: '本科',
-      experience: '7年',
-      status: 'hired',
-      source: '内部推荐',
-      salary_expectation: 35000,
-      applied_at: '2026-04-20'
-    },
-  ]);
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const [interviews] = useState<InterviewRecord[]>([
-    {
-      id: '1',
-      candidate_name: '张伟',
-      position: '高级前端工程师',
-      interviewer: '陈技术',
-      interview_time: '2026-05-28 10:00',
-      interview_type: 'first',
-      result: 'pending',
-    },
-    {
-      id: '2',
-      candidate_name: '刘芳',
-      position: '产品经理',
-      interviewer: '赵产品',
-      interview_time: '2026-05-27 14:00',
-      interview_type: 'second',
-      result: 'pass',
-      feedback: '沟通能力强，产品思维清晰',
-    },
-  ]);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // 并行加载所有数据
+      const [openingsRes, candidatesRes, interviewsRes, departmentsRes] = await Promise.all([
+        jobOpeningApi.list({ page_size: 100 }),
+        candidateApi.list({ page_size: 100 }),
+        interviewApi.list({ page_size: 100 }),
+        departmentApi.list({ page_size: 100 })
+      ]);
+
+      // 创建部门映射
+      const deptMap: Record<string, Department> = {};
+      departmentsRes.data?.items?.forEach(dept => {
+        deptMap[dept.id] = dept;
+      });
+      setDepartments(deptMap);
+
+      // 转换职位数据
+      const transformedPositions: JobPosition[] = (openingsRes.data?.items || []).map(opening => {
+        const dept = deptMap[opening.department_id || ''];
+        return {
+          id: opening.id,
+          title: opening.title,
+          department: dept?.name || '',
+          location: opening.location || '',
+          salary_range: opening.salary_min && opening.salary_max 
+            ? `${opening.salary_min}-${opening.salary_max}` 
+            : '',
+          requirements: opening.requirements ? [opening.requirements] : [],
+          description: opening.description || '',
+          status: mapPositionStatus(opening.status),
+          headcount: 1,
+          filled_count: 0,
+          published_at: opening.publish_date || opening.created_at
+        };
+      });
+      setPositions(transformedPositions);
+
+      // 转换候选人数据
+      const transformedCandidates: Candidate[] = (candidatesRes.data?.items || []).map(candidate => ({
+        id: candidate.id,
+        name: candidate.name,
+        gender: '',
+        age: 0,
+        phone: candidate.phone || '',
+        email: candidate.email || '',
+        position: '',
+        education: '',
+        experience: '',
+        status: mapCandidateStatus(candidate.status),
+        source: candidate.source || '',
+        resume_url: candidate.resume_path,
+        salary_expectation: undefined,
+        applied_at: candidate.created_at
+      }));
+      setCandidates(transformedCandidates);
+
+      // 转换面试数据
+      const transformedInterviews: InterviewRecord[] = (interviewsRes.data?.items || []).map(interview => ({
+        id: interview.id,
+        candidate_name: '',
+        position: '',
+        interviewer: '',
+        interview_time: interview.scheduled_at || '',
+        interview_type: mapInterviewType(interview.round),
+        result: mapInterviewResult(interview.result || interview.status),
+        feedback: interview.notes
+      }));
+      setInterviews(transformedInterviews);
+
+    } catch (err) {
+      error('加载数据失败');
+      console.error('Failed to load recruitment data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const mapPositionStatus = (status: string): JobPosition['status'] => {
+    const statusMap: Record<string, JobPosition['status']> = {
+      'open': 'open',
+      'closed': 'closed',
+      'filled': 'filled'
+    };
+    return statusMap[status] || 'open';
+  };
+
+  const mapCandidateStatus = (status: string): Candidate['status'] => {
+    const statusMap: Record<string, Candidate['status']> = {
+      'new': 'new',
+      'interview': 'interview',
+      'offer': 'offer',
+      'hired': 'hired',
+      'rejected': 'rejected'
+    };
+    return statusMap[status] || 'new';
+  };
+
+  const mapInterviewType = (round: number): InterviewRecord['interview_type'] => {
+    const typeMap: Record<number, InterviewRecord['interview_type']> = {
+      1: 'first',
+      2: 'second',
+      3: 'final'
+    };
+    return typeMap[round] || 'first';
+  };
+
+  const mapInterviewResult = (result: string): InterviewRecord['result'] => {
+    const resultMap: Record<string, InterviewRecord['result']> = {
+      'pass': 'pass',
+      'fail': 'fail',
+      'pending': 'pending'
+    };
+    return resultMap[result] || 'pending';
+  };
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, React.ReactNode> = {
@@ -281,156 +306,161 @@ const HrmRecruitmentPage: React.FC = () => {
               />
             </div>
             <button
-              onClick={() => {
-                if (activeTab === 'positions') setShowCreatePositionModal(true);
-                else if (activeTab === 'candidates') setShowCreateCandidateModal(true);
-              }}
+              onClick={loadData}
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-5 h-5 mr-2" />
-              {activeTab === 'positions' ? '新增职位' : '添加候选人'}
+              刷新数据
             </button>
           </div>
         </div>
 
-        {/* Content */}
-        {activeTab === 'positions' && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">职位名称</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">部门</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">薪资范围</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">招聘人数</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发布时间</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredPositions.map((position) => (
-                    <tr key={position.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{position.title}</div>
-                        <div className="text-sm text-gray-500">{position.location}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{position.department}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{position.salary_range}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {position.filled_count}/{position.headcount}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(position.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{position.published_at}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex space-x-2">
-                          <button className="text-blue-600 hover:text-blue-800">查看</button>
-                          <button className="text-blue-600 hover:text-blue-800">编辑</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Content */}
+            {activeTab === 'positions' && (
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">职位名称</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">部门</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">薪资范围</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">招聘人数</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发布时间</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredPositions.map((position) => (
+                        <tr key={position.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{position.title}</div>
+                            <div className="text-sm text-gray-500">{position.location}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{position.department}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{position.salary_range}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {position.filled_count}/{position.headcount}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(position.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{position.published_at}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex space-x-2">
+                              <button className="text-blue-600 hover:text-blue-800">查看</button>
+                              <button className="text-blue-600 hover:text-blue-800">编辑</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
-        {activeTab === 'candidates' && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">姓名</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">应聘职位</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">学历</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">工作经验</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">期望薪资</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">申请时间</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredCandidates.map((candidate) => (
-                    <tr key={candidate.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{candidate.name}</div>
-                        <div className="text-sm text-gray-500">{candidate.phone}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{candidate.position}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{candidate.education}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{candidate.experience}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {candidate.salary_expectation ? `¥${candidate.salary_expectation.toLocaleString()}` : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(candidate.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{candidate.applied_at}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex space-x-2">
-                          <button className="text-blue-600 hover:text-blue-800">查看</button>
-                          <button className="text-blue-600 hover:text-blue-800">面试</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+            {activeTab === 'candidates' && (
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">姓名</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">应聘职位</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">学历</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">工作经验</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">期望薪资</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">申请时间</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredCandidates.map((candidate) => (
+                        <tr key={candidate.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{candidate.name}</div>
+                            <div className="text-sm text-gray-500">{candidate.phone}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{candidate.position}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{candidate.education}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{candidate.experience}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {candidate.salary_expectation ? `¥${candidate.salary_expectation.toLocaleString()}` : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(candidate.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{candidate.applied_at}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex space-x-2">
+                              <button className="text-blue-600 hover:text-blue-800">查看</button>
+                              <button className="text-blue-600 hover:text-blue-800">面试</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
-        {activeTab === 'interviews' && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">候选人</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">应聘职位</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">面试官</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">面试时间</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">面试类型</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">结果</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {interviews.map((interview) => (
-                    <tr key={interview.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{interview.candidate_name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{interview.position}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{interview.interviewer}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{interview.interview_time}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {interview.interview_type === 'first' ? '初试' : interview.interview_type === 'second' ? '复试' : '终面'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(interview.result)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex space-x-2">
-                          <button className="text-blue-600 hover:text-blue-800">查看详情</button>
-                          {interview.result === 'pending' && (
-                            <>
-                              <button className="text-green-600 hover:text-green-800">通过</button>
-                              <button className="text-red-600 hover:text-red-800">拒绝</button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            {activeTab === 'interviews' && (
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">候选人</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">应聘职位</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">面试官</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">面试时间</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">面试类型</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">结果</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {interviews.map((interview) => (
+                        <tr key={interview.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{interview.candidate_name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{interview.position}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{interview.interviewer}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{interview.interview_time}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {interview.interview_type === 'first' ? '初试' : interview.interview_type === 'second' ? '复试' : '终面'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(interview.result)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex space-x-2">
+                              <button className="text-blue-600 hover:text-blue-800">查看详情</button>
+                              {interview.result === 'pending' && (
+                                <>
+                                  <button className="text-green-600 hover:text-green-800">通过</button>
+                                  <button className="text-red-600 hover:text-red-800">拒绝</button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

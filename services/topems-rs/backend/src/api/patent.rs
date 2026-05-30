@@ -10,36 +10,7 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {

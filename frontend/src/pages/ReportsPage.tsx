@@ -21,6 +21,12 @@ import {
   Cell
 } from 'recharts';
 import { reportApi, type ReportsCenterStats, type ExportFormat } from '../api/report';
+import { useAppStore } from '../store';
+import { Button } from '@/components/ui/button';
+import { ModeToggle } from '@/components/ModeToggle';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ReportsPageProps {
   onNavigate?: (page: string) => void;
@@ -30,6 +36,8 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
 const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigate }) => {
   const navigate = useNavigate();
+  const addNotification = useAppStore((state) => state.addNotification);
+
   const [stats, setStats] = useState<ReportsCenterStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -96,6 +104,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigate }) => {
       }, 500);
     } catch (err) {
       console.error('加载数据失败:', err);
+      addNotification({ title: '加载失败', message: '加载数据失败', type: 'error' });
       setLoading(false);
     }
   };
@@ -125,8 +134,10 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigate }) => {
         document.body.removeChild(link);
       }
       setShowExportModal(false);
+      addNotification({ title: '导出成功', message: '报表已成功导出', type: 'success' });
     } catch (err) {
       console.error('导出失败:', err);
+      addNotification({ title: '导出失败', message: '导出报表失败', type: 'error' });
     } finally {
       setExporting(false);
     }
@@ -148,77 +159,76 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigate }) => {
     trend?: number
   }) => {
     const colorClasses: Record<string, string> = {
-      blue: 'bg-blue-50 text-blue-600',
-      green: 'bg-green-50 text-green-600',
-      purple: 'bg-purple-50 text-purple-600',
-      orange: 'bg-orange-50 text-orange-600',
+      blue: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+      green: 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+      purple: 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+      orange: 'bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
     };
 
     return (
-      <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-sm text-gray-500 mb-1">{title}</p>
-            <p className="text-3xl font-bold text-gray-900">{value}</p>
-            {description && (
-              <p className="text-xs text-gray-400 mt-1">{description}</p>
-            )}
-            {trend !== undefined && (
-              <p className={`text-xs mt-1 ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}% 较上月
-              </p>
-            )}
+      <Card className="hover:shadow-md transition-shadow">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{title}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+              {description && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{description}</p>
+              )}
+              {trend !== undefined && (
+                <p className={`text-xs mt-1 ${trend >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}% 较上月
+                </p>
+              )}
+            </div>
+            <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+              <Icon className="h-8 w-8" />
+            </div>
           </div>
-          <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-            <Icon className="h-8 w-8" />
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
+              <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <BarChart3 className="w-7 h-7 mr-3 text-blue-600" />
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
+                  <BarChart3 className="w-7 h-7 mr-3 text-blue-600 dark:text-blue-400" />
                   报表中心
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   用户统计、权限分析
                 </p>
               </div>
             </div>
-            <button
-              onClick={loadData}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <TrendingUp className="w-4 h-4 mr-2" />
-              刷新
-            </button>
+            <div className="flex items-center space-x-3">
+              <ModeToggle />
+              <Button onClick={loadData}>
+                <TrendingUp className="w-4 h-4 mr-2" />
+                刷新
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {loading ? (
             Array(4).fill(0).map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
-                <div className="h-8 bg-gray-200 rounded mb-2" />
-                <div className="h-6 bg-gray-200 rounded w-1/2" />
-              </div>
+              <Card key={i} className="p-6">
+                <Skeleton className="h-8 w-3/4 mb-2" />
+                <Skeleton className="h-6 w-1/2" />
+              </Card>
             ))
           ) : stats ? (
             <>
@@ -261,23 +271,109 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigate }) => {
         {/* 图表区域 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* 用户增长趋势图 */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2 text-blue-600" />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <BarChart3 className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
                 用户增长趋势
-              </h3>
-            </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                {loading ? (
+                  <div className="h-full bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                    <p className="text-gray-500 dark:text-gray-400">加载中...</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={stats?.userGrowth}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="month" stroke="#6b7280" />
+                      <YAxis stroke="#6b7280" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }} 
+                      />
+                      <Legend />
+                      <Line type="monotone" dataKey="新增用户" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="活跃用户" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 角色分布图 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <PieChart className="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" />
+                角色分布
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                {loading ? (
+                  <div className="h-full bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                    <p className="text-gray-500 dark:text-gray-400">加载中...</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RePieChart>
+                      <Pie
+                        data={stats?.roleDistribution}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {stats?.roleDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }} 
+                      />
+                    </RePieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 活动类型统计图 */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
+              活动类型分布
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="h-64">
               {loading ? (
-                <div className="h-full bg-gray-50 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">加载中...</p>
+                <div className="h-full bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-500 dark:text-gray-400">加载中...</p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={stats?.userGrowth}>
+                  <BarChart data={stats?.activityTypes}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="month" stroke="#6b7280" />
+                    <XAxis dataKey="name" stroke="#6b7280" />
                     <YAxis stroke="#6b7280" />
                     <Tooltip 
                       contentStyle={{ 
@@ -287,201 +383,123 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigate }) => {
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                       }} 
                     />
-                    <Legend />
-                    <Line type="monotone" dataKey="新增用户" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line type="monotone" dataKey="活跃用户" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  </LineChart>
+                    <Bar dataKey="count" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
+                  </BarChart>
                 </ResponsiveContainer>
               )}
             </div>
-          </div>
-
-          {/* 角色分布图 */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <PieChart className="w-5 h-5 mr-2 text-purple-600" />
-                角色分布
-              </h3>
-            </div>
-            <div className="h-64">
-              {loading ? (
-                <div className="h-full bg-gray-50 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">加载中...</p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <RePieChart>
-                    <Pie
-                      data={stats?.roleDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {stats?.roleDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                      }} 
-                    />
-                  </RePieChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 活动类型统计图 */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
-              活动类型分布
-            </h3>
-          </div>
-          <div className="h-64">
-            {loading ? (
-              <div className="h-full bg-gray-50 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">加载中...</p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats?.activityTypes}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="name" stroke="#6b7280" />
-                  <YAxis stroke="#6b7280" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }} 
-                  />
-                  <Bar dataKey="count" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* 详细报表 */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">详细报表</h3>
-          </div>
-          <div className="p-6">
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+            <CardTitle className="text-lg">详细报表</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <button 
+              <Button 
+                variant="ghost" 
+                className="h-auto p-4 justify-start border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-all"
                 onClick={() => handleExportReport('users')}
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all text-left group"
               >
-                <div className="flex items-center mb-2">
-                  <Users className="w-5 h-5 mr-2 text-blue-600" />
-                  <span className="font-medium text-gray-900">用户统计报表</span>
+                <div className="text-left">
+                  <div className="flex items-center mb-2">
+                    <Users className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
+                    <span className="font-medium text-gray-900 dark:text-gray-100">用户统计报表</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">导出用户列表和统计信息</p>
+                  <div className="flex items-center text-blue-600 dark:text-blue-400 text-sm">
+                    <Download className="w-4 h-4 mr-1" />
+                    生成报表
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500 mb-3">导出用户列表和统计信息</p>
-                <div className="flex items-center text-blue-600 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Download className="w-4 h-4 mr-1" />
-                  生成报表
-                </div>
-              </button>
-              <button 
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="h-auto p-4 justify-start border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-all"
                 onClick={() => handleExportReport('permissions')}
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-purple-300 transition-all text-left group"
               >
-                <div className="flex items-center mb-2">
-                  <Shield className="w-5 h-5 mr-2 text-purple-600" />
-                  <span className="font-medium text-gray-900">权限分析报表</span>
+                <div className="text-left">
+                  <div className="flex items-center mb-2">
+                    <Shield className="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" />
+                    <span className="font-medium text-gray-900 dark:text-gray-100">权限分析报表</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">分析角色和权限分配情况</p>
+                  <div className="flex items-center text-purple-600 dark:text-purple-400 text-sm">
+                    <Download className="w-4 h-4 mr-1" />
+                    生成报表
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500 mb-3">分析角色和权限分配情况</p>
-                <div className="flex items-center text-purple-600 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Download className="w-4 h-4 mr-1" />
-                  生成报表
-                </div>
-              </button>
-              <button 
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="h-auto p-4 justify-start border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700 transition-all"
                 onClick={() => handleExportReport('activities')}
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-green-300 transition-all text-left group"
               >
-                <div className="flex items-center mb-2">
-                  <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
-                  <span className="font-medium text-gray-900">活动趋势报表</span>
+                <div className="text-left">
+                  <div className="flex items-center mb-2">
+                    <TrendingUp className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
+                    <span className="font-medium text-gray-900 dark:text-gray-100">活动趋势报表</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">用户活动和系统使用情况</p>
+                  <div className="flex items-center text-green-600 dark:text-green-400 text-sm">
+                    <Download className="w-4 h-4 mr-1" />
+                    生成报表
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500 mb-3">用户活动和系统使用情况</p>
-                <div className="flex items-center text-green-600 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Download className="w-4 h-4 mr-1" />
-                  生成报表
-                </div>
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      </main>
 
       {/* 导出模态框 */}
-      {showExportModal && selectedReportType && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">
-                导出{selectedReportType === 'users' ? '用户统计' : selectedReportType === 'permissions' ? '权限分析' : '活动趋势'}报表
-              </h3>
-              <button 
-                onClick={() => setShowExportModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6">
-              <p className="text-gray-600 mb-4">选择导出格式：</p>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  onClick={() => confirmExport('excel')}
-                  disabled={exporting}
-                  className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-green-300 transition-all disabled:opacity-50"
-                >
-                  <FileSpreadsheet className="w-8 h-8 text-green-600 mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Excel</span>
-                </button>
-                <button
-                  onClick={() => confirmExport('pdf')}
-                  disabled={exporting}
-                  className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-red-300 transition-all disabled:opacity-50"
-                >
-                  <FileType className="w-8 h-8 text-red-600 mb-2" />
-                  <span className="text-sm font-medium text-gray-700">PDF</span>
-                </button>
-                <button
-                  onClick={() => confirmExport('csv')}
-                  disabled={exporting}
-                  className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all disabled:opacity-50"
-                >
-                  <FileJson className="w-8 h-8 text-blue-600 mb-2" />
-                  <span className="text-sm font-medium text-gray-700">CSV</span>
-                </button>
-              </div>
-              {exporting && (
-                <div className="flex items-center justify-center mt-4 text-gray-600">
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  正在生成报表...
-                </div>
-              )}
-            </div>
+      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              导出{selectedReportType === 'users' ? '用户统计' : selectedReportType === 'permissions' ? '权限分析' : '活动趋势'}报表
+            </DialogTitle>
+            <DialogDescription>选择导出格式</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => confirmExport('excel')}
+              disabled={exporting}
+              className="flex flex-col items-center p-4 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-green-300 dark:hover:border-green-700 transition-all"
+            >
+              <FileSpreadsheet className="w-8 h-8 text-green-600 dark:text-green-400 mb-2" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Excel</span>
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => confirmExport('pdf')}
+              disabled={exporting}
+              className="flex flex-col items-center p-4 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-red-300 dark:hover:border-red-700 transition-all"
+            >
+              <FileType className="w-8 h-8 text-red-600 dark:text-red-400 mb-2" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">PDF</span>
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => confirmExport('csv')}
+              disabled={exporting}
+              className="flex flex-col items-center p-4 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-700 transition-all"
+            >
+              <FileJson className="w-8 h-8 text-blue-600 dark:text-blue-400 mb-2" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">CSV</span>
+            </Button>
           </div>
-        </div>
-      )}
+          {exporting && (
+            <div className="flex items-center justify-center mt-4 text-gray-600 dark:text-gray-400">
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              正在生成报表...
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

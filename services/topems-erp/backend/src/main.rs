@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
         .init();
 
     let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems_dev:topems_dev@localhost/topems_dev".to_string());
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
 
     let pool = PgPoolOptions::new()
         .max_connections(10)
@@ -117,7 +117,7 @@ async fn main() -> Result<()> {
         ))
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8006".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8009".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-ERP 企业资源计划系统启动中...");
@@ -132,7 +132,7 @@ async fn main() -> Result<()> {
 
 async fn health_check(
     axum::extract::State(state): axum::extract::State<AppState>,
-) -> Json<ApiResponse<ErpHealthSummary>> {
+) -> Json<ApiResponse<String>> {
     let database_health = check_database_health(&state.pool).await;
     let iam_health = check_iam_health().await;
 
@@ -148,14 +148,13 @@ async fn health_check(
         HealthStatus::Degraded
     };
 
-    let summary = ErpHealthSummary {
-        service_name: "topems-erp".to_string(),
-        status: overall_status,
-        uptime: state.metrics.get_uptime(),
-        dependencies: vec![database_health, iam_health],
+    let status_str = match overall_status {
+        HealthStatus::Healthy => "healthy".to_string(),
+        HealthStatus::Degraded => "degraded".to_string(),
+        HealthStatus::Unhealthy => "unhealthy".to_string(),
     };
 
-    Json(ApiResponse::success(summary, "健康检查"))
+    Json(ApiResponse::success(status_str, "健康检查"))
 }
 
 #[derive(Serialize, Clone)]
@@ -282,14 +281,14 @@ async fn check_iam_health() -> DependencyHealth {
 }
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
+    sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS erp"#)
         .execute(pool)
         .await?;
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS companies (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS erp.companies (
+            id UUID PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             short_name VARCHAR(100),
             registration_number VARCHAR(100),
@@ -309,12 +308,12 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS departments (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS erp.departments (
+            id UUID PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             code VARCHAR(100),
-            parent_id UUID REFERENCES departments(id),
-            company_id UUID REFERENCES companies(id),
+            parent_id UUID,
+            company_id UUID,
             description TEXT,
             status VARCHAR(50) NOT NULL DEFAULT 'active',
             created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -327,14 +326,14 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS employees (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS erp.employees (
+            id UUID PRIMARY KEY,
             employee_number VARCHAR(100) NOT NULL UNIQUE,
             name VARCHAR(255) NOT NULL,
             gender VARCHAR(10),
             birth_date TIMESTAMPTZ,
             hire_date TIMESTAMPTZ,
-            department_id UUID REFERENCES departments(id),
+            department_id UUID,
             position VARCHAR(100),
             email VARCHAR(255),
             phone VARCHAR(50),
@@ -349,7 +348,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        ALTER TABLE employees ADD COLUMN IF NOT EXISTS user_id UUID
+        ALTER TABLE erp.employees ADD COLUMN IF NOT EXISTS user_id UUID
         "#,
     )
     .execute(pool)
@@ -357,8 +356,8 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS assets (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS erp.assets (
+            id UUID PRIMARY KEY,
             asset_number VARCHAR(100) NOT NULL UNIQUE,
             name VARCHAR(255) NOT NULL,
             category VARCHAR(100),
@@ -367,7 +366,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             purchase_date TIMESTAMPTZ,
             purchase_amount NUMERIC(15,2),
             location VARCHAR(255),
-            responsible_id UUID REFERENCES employees(id),
+            responsible_id UUID,
             status VARCHAR(50) NOT NULL DEFAULT 'in_use',
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -379,8 +378,8 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS audit_logs (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS erp.audit_logs (
+            id UUID PRIMARY KEY,
             action VARCHAR(50) NOT NULL,
             entity_type VARCHAR(50) NOT NULL,
             entity_id UUID,
@@ -400,23 +399,33 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_erp_audit_logs_action ON erp.audit_logs(action)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_erp_audit_logs_entity_type ON erp.audit_logs(entity_type)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_erp_audit_logs_user_id ON erp.audit_logs(user_id)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_erp_audit_logs_created_at ON erp.audit_logs(created_at DESC)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_erp_audit_logs_status ON erp.audit_logs(status)"#)
         .execute(pool)
         .await?;
 
-    tracing::info!("✅ 数据库表初始化完成");
+    sqlx::query(r#"GRANT ALL PRIVILEGES ON SCHEMA erp TO topems"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA erp TO topems"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA erp TO topems"#)
+        .execute(pool)
+        .await?;
+
+    tracing::info!("✅ ERP数据库表初始化完成");
 
     Ok(())
 }

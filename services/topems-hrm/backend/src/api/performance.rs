@@ -4,17 +4,14 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
+use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
-
-pub struct AppState {
-    pub db: PgPool,
-}
+use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PerformanceReview {
@@ -23,10 +20,10 @@ pub struct PerformanceReview {
     pub review_period: String,
     pub reviewer_id: Option<Uuid>,
     pub status: String,
-    pub overall_rating: Option<f64>,
-    pub self_rating: Option<f64>,
-    pub manager_rating: Option<f64>,
-    pub final_rating: Option<f64>,
+    pub overall_rating: Option<BigDecimal>,
+    pub self_rating: Option<BigDecimal>,
+    pub manager_rating: Option<BigDecimal>,
+    pub final_rating: Option<BigDecimal>,
     pub comments: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
@@ -39,8 +36,8 @@ pub struct PerformanceGoal {
     pub title: String,
     pub description: Option<String>,
     pub target: Option<String>,
-    pub weight: f64,
-    pub achieved: Option<f64>,
+    pub weight: BigDecimal,
+    pub achieved: Option<BigDecimal>,
     pub status: String,
     pub due_date: Option<chrono::DateTime<chrono::Utc>>,
     pub created_at: chrono::DateTime<chrono::Utc>,
@@ -58,10 +55,10 @@ pub struct CreatePerformanceReviewRequest {
 pub struct UpdatePerformanceReviewRequest {
     pub reviewer_id: Option<Uuid>,
     pub status: Option<String>,
-    pub overall_rating: Option<f64>,
-    pub self_rating: Option<f64>,
-    pub manager_rating: Option<f64>,
-    pub final_rating: Option<f64>,
+    pub overall_rating: Option<BigDecimal>,
+    pub self_rating: Option<BigDecimal>,
+    pub manager_rating: Option<BigDecimal>,
+    pub final_rating: Option<BigDecimal>,
     pub comments: Option<String>,
 }
 
@@ -71,7 +68,7 @@ pub struct CreatePerformanceGoalRequest {
     pub title: String,
     pub description: Option<String>,
     pub target: Option<String>,
-    pub weight: f64,
+    pub weight: BigDecimal,
     pub due_date: Option<chrono::DateTime<chrono::Utc>>,
 }
 
@@ -80,8 +77,8 @@ pub struct UpdatePerformanceGoalRequest {
     pub title: Option<String>,
     pub description: Option<String>,
     pub target: Option<String>,
-    pub weight: Option<f64>,
-    pub achieved: Option<f64>,
+    pub weight: Option<BigDecimal>,
+    pub achieved: Option<BigDecimal>,
     pub status: Option<String>,
     pub due_date: Option<chrono::DateTime<chrono::Utc>>,
 }

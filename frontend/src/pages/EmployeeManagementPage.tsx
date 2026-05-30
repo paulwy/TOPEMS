@@ -1,11 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   User, Search, Plus, Edit, Trash2, 
-  ChevronLeft, AlertCircle, CheckCircle, XCircle, 
-  Mail, Phone, Link, Key
+  ChevronLeft, AlertCircle, Mail, Phone, Link, Key
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { employeeApi, type Employee } from '../api/erp';
+import { useAppStore } from '../store';
+import { ColumnDef } from '@tanstack/react-table';
+import { DataTable } from '@/components/DataTable';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ModeToggle } from '@/components/ModeToggle';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface EmployeeManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -13,17 +26,14 @@ interface EmployeeManagementPageProps {
 
 const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavigate }) => {
   const navigate = useNavigate();
+  const addNotification = useAppStore((state) => state.addNotification);
+  
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error' | 'info';
-    message: string;
-  } | null>(null);
 
   const [newEmployee, setNewEmployee] = useState<Partial<Employee> & { password: string }>({
     employee_number: '',
@@ -55,16 +65,11 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
       }
     } catch (err: any) {
       setError(err.message || '加载员工列表失败');
-      showNotification('error', '加载员工列表失败');
+      addNotification({ title: '加载失败', message: '加载员工列表失败', type: 'error' });
       setEmployees([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
   };
 
   const handleCreateEmployee = async (e: React.FormEvent) => {
@@ -72,7 +77,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
     try {
       const res = await employeeApi.create(newEmployee);
       if (res.success) {
-        showNotification('success', '员工创建成功');
+        addNotification({ title: '成功', message: '员工创建成功', type: 'success' });
         setShowCreateModal(false);
         setNewEmployee({
           employee_number: '',
@@ -89,10 +94,10 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
         });
         loadEmployees();
       } else {
-        showNotification('error', res.message || '创建员工失败');
+        addNotification({ title: '失败', message: res.message || '创建员工失败', type: 'error' });
       }
     } catch (err: any) {
-      showNotification('error', err.message || '创建员工失败');
+      addNotification({ title: '失败', message: err.message || '创建员工失败', type: 'error' });
     }
   };
 
@@ -101,13 +106,13 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
     try {
       const res = await employeeApi.delete(id);
       if (res.success) {
-        showNotification('success', '员工删除成功');
+        addNotification({ title: '成功', message: '员工删除成功', type: 'success' });
         loadEmployees();
       } else {
-        showNotification('error', res.message || '删除员工失败');
+        addNotification({ title: '失败', message: res.message || '删除员工失败', type: 'error' });
       }
     } catch (err: any) {
-      showNotification('error', err.message || '删除员工失败');
+      addNotification({ title: '失败', message: err.message || '删除员工失败', type: 'error' });
     }
   };
 
@@ -117,23 +122,23 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
     try {
       const res = await employeeApi.update(selectedEmployee.id, selectedEmployee);
       if (res.success) {
-        showNotification('success', '员工信息更新成功');
+        addNotification({ title: '成功', message: '员工信息更新成功', type: 'success' });
         setShowEditModal(false);
         setSelectedEmployee(null);
         loadEmployees();
       } else {
-        showNotification('error', res.message || '更新员工失败');
+        addNotification({ title: '失败', message: res.message || '更新员工失败', type: 'error' });
       }
     } catch (err: any) {
-      showNotification('error', err.message || '更新员工失败');
+      addNotification({ title: '失败', message: err.message || '更新员工失败', type: 'error' });
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      active: 'bg-green-100 text-green-700',
-      inactive: 'bg-gray-100 text-gray-700',
-      archived: 'bg-orange-100 text-orange-700',
+    const colors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+      active: 'default',
+      inactive: 'secondary',
+      archived: 'outline',
     };
     const labels: Record<string, string> = {
       active: '在职',
@@ -141,482 +146,470 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
       archived: '归档',
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100 text-gray-700'}`}>
+      <Badge variant={colors[status] || 'outline'}>
         {labels[status] || status}
-      </span>
+      </Badge>
     );
   };
 
-  const filteredEmployees = employees.filter(emp =>
-    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.employee_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.position?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const columns = useMemo<ColumnDef<Employee>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: '员工信息',
+      cell: ({ row }) => {
+        const emp = row.original;
+        return (
+          <div className="flex items-center space-x-3">
+            <Avatar>
+              <AvatarFallback className="bg-blue-100 text-blue-700">
+                {emp.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium text-gray-900 dark:text-gray-100">
+                {emp.name}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {emp.employee_number}
+              </div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'user_id',
+      header: '系统账号',
+      cell: ({ row }) => {
+        const emp = row.original;
+        return emp.user_id ? (
+          <div className="flex items-center">
+            <Link className="w-3 h-3 text-blue-500 mr-1" />
+            <span className="text-sm text-blue-600 dark:text-blue-400">已关联</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400 dark:text-gray-500 flex items-center">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            未关联
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'position',
+      header: '职位',
+      cell: ({ row }) => {
+        return (
+          <div className="text-sm text-gray-900 dark:text-gray-100">
+            {row.original.position || '-'}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'contact',
+      header: '联系方式',
+      cell: ({ row }) => {
+        const emp = row.original;
+        return (
+          <div className="text-sm text-gray-900 dark:text-gray-100">
+            {emp.email && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Mail className="w-3 h-3 mr-1" />
+                {emp.email}
+              </div>
+            )}
+            {emp.phone && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <Phone className="w-3 h-3 mr-1" />
+                {emp.phone}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'status',
+      header: '状态',
+      cell: ({ row }) => getStatusBadge(row.original.status),
+    },
+    {
+      accessorKey: 'hire_date',
+      header: '入职日期',
+      cell: ({ row }) => {
+        return (
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {row.original.hire_date ? new Date(row.original.hire_date).toLocaleDateString('zh-CN') : '-'}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => {
+        const emp = row.original;
+        return (
+          <div className="flex items-center justify-end space-x-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedEmployee(emp);
+                      setShowEditModal(true);
+                    }}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>编辑</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 dark:text-red-400"
+                    onClick={() => handleDeleteEmployee(emp.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>删除</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        );
+      },
+    },
+  ], []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/dashboard')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                   <User className="w-7 h-7 mr-3 text-blue-600" />
                   员工管理
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   管理员工信息、任职信息
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              新增员工
-            </button>
+            <div className="flex items-center space-x-2">
+              <ModeToggle />
+              <Button onClick={() => setShowCreateModal(true)}>
+                <Plus className="w-5 h-5 mr-2" />
+                新增员工
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-
-      {notification && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
-          notification.type === 'success' ? 'bg-green-500 text-white' :
-          notification.type === 'error' ? 'bg-red-500 text-white' :
-          'bg-blue-500 text-white'
-        }`}>
-          {notification.message}
-        </div>
-      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="搜索员工姓名、工号、邮箱、电话、职位..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        <Card>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                <p className="mt-2 text-gray-500 dark:text-gray-400">加载中...</p>
+              </div>
+            ) : error ? (
+              <div className="p-8 text-center">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+                <p className="text-red-600 dark:text-red-400">{error}</p>
+                <Button className="mt-4" onClick={loadEmployees}>
+                  重试
+                </Button>
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={employees}
+                searchPlaceholder="搜索员工姓名、工号、邮箱、电话、职位..."
+                searchKey="name"
               />
-            </div>
-            <button
-              onClick={loadEmployees}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              刷新
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {loading ? (
-            <div className="p-8 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-              <p className="mt-2 text-gray-500">加载中...</p>
-            </div>
-          ) : error ? (
-            <div className="p-8 text-center">
-              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-              <p className="text-red-600">{error}</p>
-              <button
-                onClick={loadEmployees}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                重试
-              </button>
-            </div>
-          ) : filteredEmployees.length === 0 ? (
-            <div className="p-8 text-center">
-              <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500">暂无员工数据</p>
-            </div>
-          ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    员工信息
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    系统账号
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    职位
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    联系方式
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    状态
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    入职日期
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredEmployees.map(emp => (
-                  <tr key={emp.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-medium text-sm">
-                            {emp.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {emp.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {emp.employee_number}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {emp.user_id ? (
-                        <div className="flex items-center">
-                          <Link className="w-3 h-3 text-blue-500 mr-1" />
-                          <span className="text-sm text-blue-600">已关联</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-400 flex items-center">
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          未关联
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {emp.position || '-'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {emp.email && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Mail className="w-3 h-3 mr-1" />
-                            {emp.email}
-                          </div>
-                        )}
-                        {emp.phone && (
-                          <div className="flex items-center text-sm text-gray-600 mt-1">
-                            <Phone className="w-3 h-3 mr-1" />
-                            {emp.phone}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(emp.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {emp.hire_date ? new Date(emp.hire_date).toLocaleDateString('zh-CN') : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => {
-                          setSelectedEmployee(emp);
-                          setShowEditModal(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteEmployee(emp.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">新增员工</h3>
-              <form onSubmit={handleCreateEmployee}>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">工号 *</label>
-                      <input
-                        type="text"
-                        required
-                        value={newEmployee.employee_number || ''}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, employee_number: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="请输入工号"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">姓名 *</label>
-                      <input
-                        type="text"
-                        required
-                        value={newEmployee.name || ''}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="请输入姓名"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">性别</label>
-                      <select
-                        value={newEmployee.gender || ''}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, gender: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="">请选择</option>
-                        <option value="male">男</option>
-                        <option value="female">女</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">职位</label>
-                      <input
-                        type="text"
-                        value={newEmployee.position || ''}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="请输入职位"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">出生日期</label>
-                      <input
-                        type="date"
-                        value={newEmployee.birth_date || ''}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, birth_date: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">入职日期</label>
-                      <input
-                        type="date"
-                        value={newEmployee.hire_date || ''}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, hire_date: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
-                      <input
-                        type="email"
-                        value={newEmployee.email || ''}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="请输入邮箱"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">电话</label>
-                      <input
-                        type="text"
-                        value={newEmployee.phone || ''}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="请输入电话"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        <Key className="w-4 h-4 inline mr-1" />
-                        登录密码 *
-                      </label>
-                      <input
-                        type="password"
-                        required
-                        value={newEmployee.password || ''}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="请输入登录密码"
-                        minLength={6}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">至少6个字符，员工将用此密码登录系统</p>
-                    </div>
-                    <div></div>
-                  </div>
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>新增员工</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateEmployee}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="employee_number">工号 *</Label>
+                  <Input
+                    id="employee_number"
+                    type="text"
+                    required
+                    value={newEmployee.employee_number || ''}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, employee_number: e.target.value })}
+                    placeholder="请输入工号"
+                  />
                 </div>
-                
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    创建
-                  </button>
+                <div className="space-y-2">
+                  <Label htmlFor="name">姓名 *</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    required
+                    value={newEmployee.name || ''}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
+                    placeholder="请输入姓名"
+                  />
                 </div>
-              </form>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gender">性别</Label>
+                  <Select
+                    value={newEmployee.gender || ''}
+                    onValueChange={(value) => setNewEmployee({ ...newEmployee, gender: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="请选择" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">请选择</SelectItem>
+                      <SelectItem value="male">男</SelectItem>
+                      <SelectItem value="female">女</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="position">职位</Label>
+                  <Input
+                    id="position"
+                    type="text"
+                    value={newEmployee.position || ''}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })}
+                    placeholder="请输入职位"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="birth_date">出生日期</Label>
+                  <Input
+                    id="birth_date"
+                    type="date"
+                    value={newEmployee.birth_date || ''}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, birth_date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hire_date">入职日期</Label>
+                  <Input
+                    id="hire_date"
+                    type="date"
+                    value={newEmployee.hire_date || ''}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, hire_date: e.target.value })}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">邮箱</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newEmployee.email || ''}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
+                    placeholder="请输入邮箱"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">电话</Label>
+                  <Input
+                    id="phone"
+                    type="text"
+                    value={newEmployee.phone || ''}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
+                    placeholder="请输入电话"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">
+                    <Key className="w-4 h-4 inline mr-1" />
+                    登录密码 *
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    value={newEmployee.password || ''}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+                    placeholder="请输入登录密码"
+                    minLength={6}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">至少6个字符，员工将用此密码登录系统</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+            
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowCreateModal(false)}
+              >
+                取消
+              </Button>
+              <Button type="submit">创建</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      {showEditModal && selectedEmployee && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">编辑员工</h3>
-              <form onSubmit={handleEditEmployee}>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">工号 *</label>
-                      <input
-                        type="text"
-                        required
-                        value={selectedEmployee.employee_number}
-                        onChange={(e) => setSelectedEmployee({ ...selectedEmployee, employee_number: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">姓名 *</label>
-                      <input
-                        type="text"
-                        required
-                        value={selectedEmployee.name}
-                        onChange={(e) => setSelectedEmployee({ ...selectedEmployee, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>编辑员工</DialogTitle>
+          </DialogHeader>
+          {selectedEmployee && (
+            <form onSubmit={handleEditEmployee}>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_employee_number">工号 *</Label>
+                    <Input
+                      id="edit_employee_number"
+                      type="text"
+                      required
+                      value={selectedEmployee.employee_number}
+                      onChange={(e) => setSelectedEmployee({ ...selectedEmployee, employee_number: e.target.value })}
+                    />
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">性别</label>
-                      <select
-                        value={selectedEmployee.gender || ''}
-                        onChange={(e) => setSelectedEmployee({ ...selectedEmployee, gender: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="">请选择</option>
-                        <option value="male">男</option>
-                        <option value="female">女</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">职位</label>
-                      <input
-                        type="text"
-                        value={selectedEmployee.position || ''}
-                        onChange={(e) => setSelectedEmployee({ ...selectedEmployee, position: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">出生日期</label>
-                      <input
-                        type="date"
-                        value={selectedEmployee.birth_date || ''}
-                        onChange={(e) => setSelectedEmployee({ ...selectedEmployee, birth_date: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">入职日期</label>
-                      <input
-                        type="date"
-                        value={selectedEmployee.hire_date || ''}
-                        onChange={(e) => setSelectedEmployee({ ...selectedEmployee, hire_date: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
-                      <input
-                        type="email"
-                        value={selectedEmployee.email || ''}
-                        onChange={(e) => setSelectedEmployee({ ...selectedEmployee, email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">电话</label>
-                      <input
-                        type="text"
-                        value={selectedEmployee.phone || ''}
-                        onChange={(e) => setSelectedEmployee({ ...selectedEmployee, phone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_name">姓名 *</Label>
+                    <Input
+                      id="edit_name"
+                      type="text"
+                      required
+                      value={selectedEmployee.name}
+                      onChange={(e) => setSelectedEmployee({ ...selectedEmployee, name: e.target.value })}
+                    />
                   </div>
                 </div>
                 
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setSelectedEmployee(null);
-                    }}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    保存
-                  </button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_gender">性别</Label>
+                    <Select
+                      value={selectedEmployee.gender || ''}
+                      onValueChange={(value) => setSelectedEmployee({ ...selectedEmployee, gender: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="请选择" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">请选择</SelectItem>
+                        <SelectItem value="male">男</SelectItem>
+                        <SelectItem value="female">女</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_position">职位</Label>
+                    <Input
+                      id="edit_position"
+                      type="text"
+                      value={selectedEmployee.position || ''}
+                      onChange={(e) => setSelectedEmployee({ ...selectedEmployee, position: e.target.value })}
+                    />
+                  </div>
                 </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_birth_date">出生日期</Label>
+                    <Input
+                      id="edit_birth_date"
+                      type="date"
+                      value={selectedEmployee.birth_date || ''}
+                      onChange={(e) => setSelectedEmployee({ ...selectedEmployee, birth_date: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_hire_date">入职日期</Label>
+                    <Input
+                      id="edit_hire_date"
+                      type="date"
+                      value={selectedEmployee.hire_date || ''}
+                      onChange={(e) => setSelectedEmployee({ ...selectedEmployee, hire_date: e.target.value })}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_email">邮箱</Label>
+                    <Input
+                      id="edit_email"
+                      type="email"
+                      value={selectedEmployee.email || ''}
+                      onChange={(e) => setSelectedEmployee({ ...selectedEmployee, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_phone">电话</Label>
+                    <Input
+                      id="edit_phone"
+                      type="text"
+                      value={selectedEmployee.phone || ''}
+                      onChange={(e) => setSelectedEmployee({ ...selectedEmployee, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <DialogFooter className="mt-6">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedEmployee(null);
+                  }}
+                >
+                  取消
+                </Button>
+                <Button type="submit">保存</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

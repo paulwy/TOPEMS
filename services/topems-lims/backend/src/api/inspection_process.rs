@@ -1,4 +1,4 @@
-use anyhow::Result;
+use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -11,37 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateInspectionProcessRequest, InspectionProcess, UpdateInspectionProcessRequest};
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -84,7 +54,7 @@ async fn list_processes(
     let result = sqlx::query_as::<_, InspectionProcess>(
         r#"
         SELECT id, name, description, steps, status, created_at, updated_at
-        FROM inspection_processes
+        FROM lims.inspection_processes
         WHERE ($1::text IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -102,7 +72,7 @@ async fn list_processes(
         Ok(processes) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM inspection_processes
+                SELECT COUNT(*) FROM lims.inspection_processes
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR description ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -141,7 +111,7 @@ async fn create_process(
 
     let result = sqlx::query_as::<_, InspectionProcess>(
         r#"
-        INSERT INTO inspection_processes (id, name, description, steps, status, created_at, updated_at)
+        INSERT INTO lims.inspection_processes (id, name, description, steps, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, 'active', $5, $6)
         RETURNING id, name, description, steps, status, created_at, updated_at
         "#,
@@ -171,7 +141,7 @@ async fn get_process(
     let result = sqlx::query_as::<_, InspectionProcess>(
         r#"
         SELECT id, name, description, steps, status, created_at, updated_at
-        FROM inspection_processes WHERE id = $1
+        FROM lims.inspection_processes WHERE id = $1
         "#,
     )
     .bind(id)
@@ -194,7 +164,7 @@ async fn update_process(
     Json(req): Json<UpdateInspectionProcessRequest>,
 ) -> Json<ApiResponse<InspectionProcess>> {
     let existing = sqlx::query_as::<_, InspectionProcess>(
-        "SELECT id, name, description, steps, status, created_at, updated_at FROM inspection_processes WHERE id = $1",
+        "SELECT id, name, description, steps, status, created_at, updated_at FROM lims.inspection_processes WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -217,7 +187,7 @@ async fn update_process(
 
     let result = sqlx::query_as::<_, InspectionProcess>(
         r#"
-        UPDATE inspection_processes SET
+        UPDATE lims.inspection_processes SET
             name = $2, description = $3, steps = $4, status = $5, updated_at = $6
         WHERE id = $1
         RETURNING id, name, description, steps, status, created_at, updated_at
@@ -245,7 +215,7 @@ async fn delete_process(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM inspection_processes WHERE id = $1")
+    let result = sqlx::query("DELETE FROM lims.inspection_processes WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

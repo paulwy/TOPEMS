@@ -1,13 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8001',
+        target: 'http://localhost:8002',
         changeOrigin: true,
       },
       '/iam': {
@@ -30,15 +36,20 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/doc/, ''),
       },
-      '/erp': {
-        target: 'http://localhost:8009',
+      '/lims': {
+        target: 'http://localhost:8006',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/erp/, ''),
+        rewrite: (path) => path.replace(/^\/lims/, ''),
       },
       '/hrm': {
         target: 'http://localhost:8010',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/hrm/, ''),
+      },
+      '/erp': {
+        target: 'http://localhost:8005',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/erp/, ''),
       },
     },
   },

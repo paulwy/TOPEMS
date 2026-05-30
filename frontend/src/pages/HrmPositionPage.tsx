@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, X, Check, User, Building2, Briefcase, DollarSign, Calendar } from 'lucide-react';
-import { positionApi, departmentApi, type Position, type PaginatedResult, type PaginationParams } from '../api/hrm';
+import { useNotification } from '../hooks/useNotification';
+import { NotificationContainer } from '../components/NotificationContainer';
+import { positionApi, departmentApi, type Position, type PaginatedResult, type ListParams } from '../api/hrm';
 
 const PositionManagementPage: React.FC = () => {
+  const { success, error, notifications, hideNotification } = useNotification();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PaginatedResult<Position>>({ items: [], total: 0, page: 1, page_size: 10 });
   const [searchText, setSearchText] = useState('');
@@ -15,7 +18,7 @@ const PositionManagementPage: React.FC = () => {
   const [editingPosition, setEditingPosition] = useState<Position | null>(null);
   const [formData, setFormData] = useState<Partial<Position>>({});
 
-  const fetchPositions = async (params?: PaginationParams) => {
+  const fetchPositions = async (params?: ListParams) => {
     setLoading(true);
     try {
       const response = await positionApi.list(params);
@@ -118,7 +121,9 @@ const PositionManagementPage: React.FC = () => {
   const totalPages = Math.ceil(data.total / data.page_size);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50">
+      <NotificationContainer notifications={notifications} onClose={hideNotification} />
+      <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">岗位管理</h2>
         <button
@@ -264,7 +269,7 @@ const PositionManagementPage: React.FC = () => {
             </span>
             <div className="flex gap-2">
               <button
-                onClick={() => data.page > 1 && fetchPositions({ ...data, page: data.page - 1 })}
+                onClick={() => data.page > 1 && fetchPositions({ page: data.page - 1 })}
                 disabled={data.page <= 1}
                 className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
@@ -273,7 +278,7 @@ const PositionManagementPage: React.FC = () => {
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
-                  onClick={() => fetchPositions({ ...data, page })}
+                  onClick={() => fetchPositions({ page })}
                   className={`px-3 py-1 border rounded-lg text-sm ${
                     page === data.page ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'
                   }`}
@@ -282,7 +287,7 @@ const PositionManagementPage: React.FC = () => {
                 </button>
               ))}
               <button
-                onClick={() => data.page < totalPages && fetchPositions({ ...data, page: data.page + 1 })}
+                onClick={() => data.page < totalPages && fetchPositions({ page: data.page + 1 })}
                 disabled={data.page >= totalPages}
                 className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
@@ -479,6 +484,7 @@ const PositionManagementPage: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

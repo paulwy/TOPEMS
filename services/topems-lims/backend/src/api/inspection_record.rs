@@ -1,4 +1,4 @@
-use anyhow::Result;
+use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -11,37 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateInspectionRecordRequest, InspectionRecord};
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -84,7 +54,7 @@ async fn list_records(
     let result = sqlx::query_as::<_, InspectionRecord>(
         r#"
         SELECT id, task_id, step_id, step_name, result, conclusion, inspector, recorded_at, created_at
-        FROM inspection_records
+        FROM lims.inspection_records
         WHERE ($1::text IS NULL OR step_name ILIKE $1 OR result ILIKE $1 OR inspector ILIKE $1)
           AND ($2::text IS NULL OR conclusion = $2)
         ORDER BY created_at DESC
@@ -102,7 +72,7 @@ async fn list_records(
         Ok(records) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM inspection_records
+                SELECT COUNT(*) FROM lims.inspection_records
                 WHERE ($1::text IS NULL OR step_name ILIKE $1 OR result ILIKE $1 OR inspector ILIKE $1)
                   AND ($2::text IS NULL OR conclusion = $2)
                 "#,
@@ -140,7 +110,7 @@ async fn create_record(
 
     let result = sqlx::query_as::<_, InspectionRecord>(
         r#"
-        INSERT INTO inspection_records (id, task_id, step_id, step_name, result, conclusion, inspector, recorded_at, created_at)
+        INSERT INTO lims.inspection_records (id, task_id, step_id, step_name, result, conclusion, inspector, recorded_at, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, task_id, step_id, step_name, result, conclusion, inspector, recorded_at, created_at
         "#,
@@ -173,7 +143,7 @@ async fn list_records_by_task(
     let result = sqlx::query_as::<_, InspectionRecord>(
         r#"
         SELECT id, task_id, step_id, step_name, result, conclusion, inspector, recorded_at, created_at
-        FROM inspection_records WHERE task_id = $1
+        FROM lims.inspection_records WHERE task_id = $1
         ORDER BY recorded_at ASC
         "#,
     )

@@ -14,7 +14,7 @@ export enum ErrorCode {
 }
 
 export interface AppError {
-  code: ErrorCode;
+  code: ErrorCode | number | string;
   message: string;
   details?: unknown;
   originalError?: unknown;

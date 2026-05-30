@@ -1,4 +1,4 @@
-use anyhow::Result;
+
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -11,37 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateExperimentRequest, Experiment, UpdateExperimentRequest};
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -57,7 +27,7 @@ pub struct AppState {
     pub db: PgPool,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
+pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
@@ -93,7 +63,7 @@ async fn list_experiments(
         SELECT id, name, code, project_id, formula_id, experiment_type, status,
                objective, method, results, conclusions, experimenter,
                started_at, completed_at, created_by, created_at, updated_at
-        FROM experiments
+        FROM rs.experiments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR project_id = $3)
@@ -115,7 +85,7 @@ async fn list_experiments(
         Ok(experiments) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM experiments
+                SELECT COUNT(*) FROM rs.experiments
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR project_id = $3)
@@ -158,7 +128,7 @@ async fn create_experiment(
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
-        INSERT INTO experiments (
+        INSERT INTO rs.experiments (
             id, name, code, project_id, formula_id, experiment_type, phase, status,
             objective, method, results, conclusions, experimenter,
             batch_number, scale, scale_unit, started_at, completed_at,
@@ -213,7 +183,7 @@ async fn get_experiment(
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
-        FROM experiments WHERE id = $1
+        FROM rs.experiments WHERE id = $1
         "#,
     )
     .bind(id)
@@ -236,7 +206,7 @@ async fn update_experiment(
     Json(req): Json<UpdateExperimentRequest>,
 ) -> Json<ApiResponse<Experiment>> {
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM experiments WHERE id = $1",
+        "SELECT id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -260,7 +230,7 @@ async fn update_experiment(
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
-        UPDATE experiments SET
+        UPDATE rs.experiments SET
             name = $2, status = $3, results = $4, conclusions = $5,
             completed_at = $6, batch_number = $7, scale = $8, scale_unit = $9, updated_at = $10
         WHERE id = $1
@@ -296,7 +266,7 @@ async fn delete_experiment(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM experiments WHERE id = $1")
+    let result = sqlx::query("DELETE FROM rs.experiments WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -328,7 +298,7 @@ async fn get_experiment_records(
                 'recorded_at', recorded_at
             )
         ) as records
-        FROM experiment_records
+        FROM rs.experiment_records
         WHERE experiment_id = $1
         ORDER BY recorded_at ASC
         "#,
@@ -359,7 +329,7 @@ async fn create_experiment_record(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO experiment_records (
+        INSERT INTO rs.experiment_records (
             id, experiment_id, record_type, content, attachments, recorded_by, recorded_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         "#,
@@ -403,7 +373,7 @@ async fn list_lab_experiments(
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
-        FROM experiments
+        FROM rs.experiments
         WHERE phase = 'lab'
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -422,7 +392,7 @@ async fn list_lab_experiments(
         Ok(experiments) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM experiments
+                SELECT COUNT(*) FROM rs.experiments
                 WHERE phase = 'lab'
                   AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
@@ -466,7 +436,7 @@ async fn list_pilot_experiments(
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
-        FROM experiments
+        FROM rs.experiments
         WHERE phase = 'pilot'
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -485,7 +455,7 @@ async fn list_pilot_experiments(
         Ok(experiments) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM experiments
+                SELECT COUNT(*) FROM rs.experiments
                 WHERE phase = 'pilot'
                   AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
@@ -529,7 +499,7 @@ async fn list_scaleup_experiments(
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
-        FROM experiments
+        FROM rs.experiments
         WHERE phase = 'scaleup'
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -548,7 +518,7 @@ async fn list_scaleup_experiments(
         Ok(experiments) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM experiments
+                SELECT COUNT(*) FROM rs.experiments
                 WHERE phase = 'scaleup'
                   AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
@@ -584,7 +554,7 @@ async fn advance_phase(
     Json(req): Json<AdvancePhaseRequest>,
 ) -> Json<ApiResponse<Experiment>> {
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, phase, status FROM experiments WHERE id = $1",
+        "SELECT id, phase, status FROM rs.experiments WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -605,7 +575,7 @@ async fn advance_phase(
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
-        UPDATE experiments SET
+        UPDATE rs.experiments SET
             phase = $2, status = $3, updated_at = $4
         WHERE id = $1
         RETURNING id, name, code, project_id, formula_id, experiment_type, phase, status,
@@ -650,8 +620,8 @@ async fn trace_batch(
                 'completed_at', e.completed_at
             ) ORDER BY e.started_at ASC
         ) as trace_items
-        FROM experiments e
-        LEFT JOIN formulas f ON e.formula_id = f.id
+        FROM rs.experiments e
+        LEFT JOIN rs.formulas f ON e.formula_id = f.id
         WHERE e.batch_number = $1
         "#,
     )
