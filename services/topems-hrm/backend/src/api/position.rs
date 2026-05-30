@@ -4,17 +4,14 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
+use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
-
-pub struct AppState {
-    pub db: PgPool,
-}
+use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Position {
@@ -23,8 +20,8 @@ pub struct Position {
     pub code: Option<String>,
     pub department_id: Option<Uuid>,
     pub level: Option<String>,
-    pub min_salary: Option<f64>,
-    pub max_salary: Option<f64>,
+    pub min_salary: Option<BigDecimal>,
+    pub max_salary: Option<BigDecimal>,
     pub description: Option<String>,
     pub requirements: Option<String>,
     pub status: String,
@@ -38,8 +35,8 @@ pub struct CreatePositionRequest {
     pub code: Option<String>,
     pub department_id: Option<Uuid>,
     pub level: Option<String>,
-    pub min_salary: Option<f64>,
-    pub max_salary: Option<f64>,
+    pub min_salary: Option<BigDecimal>,
+    pub max_salary: Option<BigDecimal>,
     pub description: Option<String>,
     pub requirements: Option<String>,
 }
@@ -50,8 +47,8 @@ pub struct UpdatePositionRequest {
     pub code: Option<String>,
     pub department_id: Option<Uuid>,
     pub level: Option<String>,
-    pub min_salary: Option<f64>,
-    pub max_salary: Option<f64>,
+    pub min_salary: Option<BigDecimal>,
+    pub max_salary: Option<BigDecimal>,
     pub description: Option<String>,
     pub requirements: Option<String>,
     pub status: Option<String>,
@@ -59,15 +56,15 @@ pub struct UpdatePositionRequest {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct QueryParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
+    #[serde(flatten)]
+    pub pagination: PaginationQuery,
     pub search: Option<String>,
     pub department_id: Option<Uuid>,
     pub status: Option<String>,
 }
 
 pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
+    let state = AppState::new(db).arc();
 
     let router = Router::new()
         .route("/api/v1/positions", get(list_positions).post(create_position))
@@ -83,10 +80,10 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 async fn list_positions(
     State(state): State<Arc<AppState>>,
     Query(params): Query<QueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(10).min(100);
-    let offset = (page - 1) * page_size;
+) -> Json<ApiResponse<PaginatedResult<Position>>> {
+    let pagination = params.pagination;
+    let offset = pagination.offset();
+    let page_size = pagination.page_size();
 
     let search = params.search.unwrap_or_default();
     let dept_id = params.department_id;
@@ -130,18 +127,13 @@ async fn list_positions(
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(
-                serde_json::json!({
-                    "items": items,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
+                PaginatedResult::new(items, total, pagination.page(), page_size),
                 "查询成功",
             ))
         }
         Err(e) => {
             tracing::error!("查询岗位列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询岗位列表失败"))
+            Json(ApiResponse::<PaginatedResult<Position>>::error(500, "查询岗位列表失败"))
         }
     }
 }

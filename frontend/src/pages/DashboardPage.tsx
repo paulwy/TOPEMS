@@ -20,6 +20,7 @@ import { usePermission } from '../hooks/usePermission';
 import { useRole } from '../hooks/useRole';
 import { useAuth } from '../hooks/useAuth';
 import { NotificationBell } from '../components/notifications';
+import { ModeToggle } from '../components/ModeToggle';
 
 interface DashboardPageProps {
   onLogout?: () => void;
@@ -450,6 +451,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               <div className="text-xs text-slate-500 hidden md:block">
                 {currentTime.toLocaleString('zh-CN')}
               </div>
+              <ModeToggle />
               <NotificationBell />
               <div className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 rounded-lg">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
@@ -693,7 +695,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
               { name: 'AI 服务', service: 'AI', port: 8003, key: 'ai', icon: Bot },
               { name: '流程引擎', service: 'FLOW', port: 8004, key: 'flow', icon: GitBranch },
-              { name: '企业资源', service: 'ERP', port: 8006, key: 'erp', icon: Building },
+              { name: '企业资源', service: 'ERP', port: 8005, key: 'erp', icon: Building },
               { name: '人力资源', service: 'HRM', port: 8010, key: 'hrm', icon: Users },
             ].map((service) => (
               <ServiceStatusCard

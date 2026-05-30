@@ -1,5 +1,7 @@
 mod api;
 mod models;
+mod repositories;
+mod services;
 
 use anyhow::Result;
 use axum::{
@@ -51,11 +53,11 @@ async fn main() -> Result<()> {
         .merge(api::create_drill_routes(pool.clone()).await?)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8013".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8008".to_string());
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
     tracing::info!("📦 端口: {}", port);
     tracing::info!("✅ TOPEMS-EHS 已就绪");
-    
+
     axum::serve(listener, app).await?;
 
     Ok(())
@@ -66,10 +68,6 @@ async fn health_check() -> Json<ApiResponse<&'static str>> {
 }
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
-        .execute(pool)
-        .await?;
-
     sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS ehs"#)
         .execute(pool)
         .await?;
@@ -77,7 +75,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS ehs.safety_hazards (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            id UUID PRIMARY KEY,
             hazard_no VARCHAR(100) NOT NULL UNIQUE,
             name VARCHAR(255) NOT NULL,
             category VARCHAR(100) NOT NULL,
@@ -99,7 +97,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS ehs.safety_checks (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            id UUID PRIMARY KEY,
             check_no VARCHAR(100) NOT NULL UNIQUE,
             check_type VARCHAR(100) NOT NULL,
             inspector VARCHAR(255) NOT NULL,
@@ -121,7 +119,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS ehs.emergency_plans (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            id UUID PRIMARY KEY,
             plan_no VARCHAR(100) NOT NULL UNIQUE,
             plan_type VARCHAR(100) NOT NULL,
             scope TEXT,
@@ -142,7 +140,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS ehs.drill_records (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            id UUID PRIMARY KEY,
             plan_id UUID REFERENCES ehs.emergency_plans(id),
             drill_name VARCHAR(255) NOT NULL,
             drill_date TIMESTAMPTZ,
@@ -175,6 +173,16 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .await?;
 
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_drills_plan_id ON ehs.drill_records(plan_id)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"GRANT ALL PRIVILEGES ON SCHEMA ehs TO topems"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA ehs TO topems"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA ehs TO topems"#)
         .execute(pool)
         .await?;
 

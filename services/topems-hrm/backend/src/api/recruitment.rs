@@ -4,17 +4,14 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
+use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
-
-pub struct AppState {
-    pub db: PgPool,
-}
+use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct JobOpening {
@@ -27,8 +24,8 @@ pub struct JobOpening {
     pub location: Option<String>,
     pub description: Option<String>,
     pub requirements: Option<String>,
-    pub salary_min: Option<f64>,
-    pub salary_max: Option<f64>,
+    pub salary_min: Option<BigDecimal>,
+    pub salary_max: Option<BigDecimal>,
     pub status: String,
     pub publish_date: Option<chrono::DateTime<chrono::Utc>>,
     pub close_date: Option<chrono::DateTime<chrono::Utc>>,
@@ -63,7 +60,7 @@ pub struct Interview {
     pub status: String,
     pub result: Option<String>,
     pub notes: Option<String>,
-    pub score: Option<f64>,
+    pub score: Option<BigDecimal>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
@@ -78,8 +75,8 @@ pub struct CreateJobOpeningRequest {
     pub location: Option<String>,
     pub description: Option<String>,
     pub requirements: Option<String>,
-    pub salary_min: Option<f64>,
-    pub salary_max: Option<f64>,
+    pub salary_min: Option<BigDecimal>,
+    pub salary_max: Option<BigDecimal>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -92,8 +89,8 @@ pub struct UpdateJobOpeningRequest {
     pub location: Option<String>,
     pub description: Option<String>,
     pub requirements: Option<String>,
-    pub salary_min: Option<f64>,
-    pub salary_max: Option<f64>,
+    pub salary_min: Option<BigDecimal>,
+    pub salary_max: Option<BigDecimal>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -138,7 +135,7 @@ pub struct UpdateInterviewRequest {
     pub status: Option<String>,
     pub result: Option<String>,
     pub notes: Option<String>,
-    pub score: Option<f64>,
+    pub score: Option<BigDecimal>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

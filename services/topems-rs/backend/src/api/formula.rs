@@ -1,4 +1,4 @@
-use anyhow::Result;
+
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -11,37 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateFormulaRequest, Formula, UpdateFormulaRequest};
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -56,7 +26,7 @@ pub struct AppState {
     pub db: PgPool,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
+pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
@@ -86,7 +56,7 @@ async fn list_formulas(
         r#"
         SELECT id, name, code, version, description, project_id, status,
                properties, created_by, created_at, updated_at
-        FROM formulas
+        FROM rs.formulas
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR project_id = $3)
@@ -106,7 +76,7 @@ async fn list_formulas(
         Ok(formulas) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM formulas
+                SELECT COUNT(*) FROM rs.formulas
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR project_id = $3)
@@ -146,7 +116,7 @@ async fn create_formula(
 
     let result = sqlx::query_as::<_, Formula>(
         r#"
-        INSERT INTO formulas (
+        INSERT INTO rs.formulas (
             id, name, code, version, description, project_id, status,
             ingredients, process_params, properties, created_by,
             created_at, updated_at
@@ -188,7 +158,7 @@ async fn get_formula(
         r#"
         SELECT id, name, code, version, description, project_id, status,
                properties, created_by, created_at, updated_at
-        FROM formulas WHERE id = $1
+        FROM rs.formulas WHERE id = $1
         "#,
     )
     .bind(id)
@@ -211,7 +181,7 @@ async fn update_formula(
     Json(req): Json<UpdateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
     let existing = sqlx::query_as::<_, Formula>(
-        "SELECT id, name, code, version, description, project_id, status, properties, created_by, created_at, updated_at FROM formulas WHERE id = $1",
+        "SELECT id, name, code, version, description, project_id, status, properties, created_by, created_at, updated_at FROM rs.formulas WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -233,7 +203,7 @@ async fn update_formula(
 
     let result = sqlx::query_as::<_, Formula>(
         r#"
-        UPDATE formulas SET
+        UPDATE rs.formulas SET
             name = $2, description = $3, status = $4,
             ingredients = $5, process_params = $6, properties = $7, updated_at = $8
         WHERE id = $1
@@ -265,7 +235,7 @@ async fn delete_formula(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM formulas WHERE id = $1")
+    let result = sqlx::query("DELETE FROM rs.formulas WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -298,7 +268,7 @@ async fn get_formula_versions(
                 'created_at', created_at
             )
         ) as versions
-        FROM formula_versions
+        FROM rs.formula_versions
         WHERE formula_id = $1
         ORDER BY version DESC
         "#,

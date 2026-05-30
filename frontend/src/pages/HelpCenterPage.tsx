@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
+import { NotificationContainer } from '../components/NotificationContainer';
 
 interface HelpArticle {
   id: string;

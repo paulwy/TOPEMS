@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, X, Check, Clock, Calendar, User, Building2 } from 'lucide-react';
-import { leaveApi, employeeApi, type LeaveRequest, type PaginatedResult, type PaginationParams } from '../api/hrm';
+import { useNotification } from '../hooks/useNotification';
+import { NotificationContainer } from '../components/NotificationContainer';
+import { leaveApi, employeeApi, type LeaveRequest, type PaginatedResult, type ListParams } from '../api/hrm';
 
 const LeaveManagementPage: React.FC = () => {
+  const { success, error, notifications, hideNotification } = useNotification();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PaginatedResult<LeaveRequest>>({ items: [], total: 0, page: 1, page_size: 10 });
   const [searchText, setSearchText] = useState('');
@@ -16,7 +19,7 @@ const LeaveManagementPage: React.FC = () => {
   const [editingLeave, setEditingLeave] = useState<LeaveRequest | null>(null);
   const [formData, setFormData] = useState<Partial<LeaveRequest>>({});
 
-  const fetchLeaveRequests = async (params?: PaginationParams) => {
+  const fetchLeaveRequests = async (params?: ListParams) => {
     setLoading(true);
     try {
       const response = await leaveApi.list(params);
@@ -185,7 +188,9 @@ const LeaveManagementPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50">
+      <NotificationContainer notifications={notifications} onClose={hideNotification} />
+      <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">休假管理</h2>
         <button
@@ -361,7 +366,7 @@ const LeaveManagementPage: React.FC = () => {
             </span>
             <div className="flex gap-2">
               <button
-                onClick={() => data.page > 1 && fetchLeaveRequests({ ...data, page: data.page - 1 })}
+                onClick={() => data.page > 1 && fetchLeaveRequests({ page: data.page - 1 })}
                 disabled={data.page <= 1}
                 className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
@@ -370,7 +375,7 @@ const LeaveManagementPage: React.FC = () => {
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
-                  onClick={() => fetchLeaveRequests({ ...data, page })}
+                  onClick={() => fetchLeaveRequests({ page })}
                   className={`px-3 py-1 border rounded-lg text-sm ${
                     page === data.page ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'
                   }`}
@@ -379,7 +384,7 @@ const LeaveManagementPage: React.FC = () => {
                 </button>
               ))}
               <button
-                onClick={() => data.page < totalPages && fetchLeaveRequests({ ...data, page: data.page + 1 })}
+                onClick={() => data.page < totalPages && fetchLeaveRequests({ page: data.page + 1 })}
                 disabled={data.page >= totalPages}
                 className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
@@ -554,6 +559,7 @@ const LeaveManagementPage: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

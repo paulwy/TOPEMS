@@ -1,336 +1,461 @@
-# TOPEMS API 概览
+# TOPEMS API 接口文档汇总
 
-**版本**: v2.1.0
-**更新日期**: 2026-05-22
-**API 版本**: v1
-
----
-
-## 1. 文档概述
-
-本文档是 TOPEMS（化工新材料企业数字化平台）的完整 API 参考文档，涵盖了平台所有微服务的接口规范。
-
-### 1.1 文档结构
-
-| 文档 | 说明 |
-|------|------|
-| [API_OVERVIEW.md](./API_OVERVIEW.md) | API 概览和架构（本文档） |
-| [API_AUTH.md](./API_AUTH.md) | 认证和授权 API |
-| [API_RS.md](./API_RS.md) | 研发管理系统 API |
-| [API_LIMS.md](./API_LIMS.md) | 实验室管理系统 API |
-| [API_QMS.md](./API_QMS.md) | 质量管理系统 API |
-| [API_EHS.md](./API_EHS.md) | 环境健康安全系统 API |
-| [API_SRM.md](./API_SRM.md) | 供应商管理系统 API |
-| [API_PDM.md](./API_PDM.md) | 生产管理系统 API |
-| [API_WORKFLOW.md](./API_WORKFLOW.md) | 工作流系统 API |
-| [API_REPORT.md](./API_REPORT.md) | 报表系统 API |
-| [API_NOTIFICATION.md](./API_NOTIFICATION.md) | 通知系统 API |
+**版本**: v1  
+**更新日期**: 2026-05-30  
+**服务总数**: 11
 
 ---
 
-## 2. 系统架构
+## 目录
 
-### 2.1 微服务架构
+1. [平台服务](#1-平台服务)
+   - [IAM 认证服务](#11-iam-认证服务-topems-iam)
+   - [文档服务](#12-文档服务-topems-doc)
+   - [AI服务](#13-ai服务-topems-ai)
+   - [工作流服务](#14-工作流服务-topems-flow)
 
-TOPEMS 采用微服务架构，包含以下核心服务：
+2. [业务服务](#2-业务服务)
+   - [研发管理服务](#21-研发管理服务-topems-rs)
+   - [实验室管理服务](#22-实验室管理服务-topems-lims)
+   - [质量管理服务](#23-质量管理服务-topems-qms)
+   - [安全环保服务](#24-安全环保服务-topems-ehs)
+   - [供应商管理服务](#25-供应商管理服务-topems-srm)
+   - [产品数据管理服务](#26-产品数据管理服务-topems-pdm)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      统一门户 (Port 3000)                   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-        ▼                     ▼                     ▼
-┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│ 中台底座系统  │    │ 业务系统     │    │ 共享服务     │
-├──────────────┤    ├──────────────┤    ├──────────────┤
-│ IAM (8002)   │    │ RS (8005)    │    │ Notification │
-│ FLOW (8004)  │    │ LIMS (8006)  │    │ (8006)       │
-│ DOC (8001)   │    │ QMS          │    │ Report       │
-│ AI (8003)    │    │ EHS          │    │              │
-└──────────────┘    └──────────────┘    └──────────────┘
-```
+3. [公共服务](#3-公共服务)
+   - [报表服务](#31-报表服务-topems-report)
+   - [通知服务](#32-通知服务)
 
-### 2.2 服务端口映射
-
-| 服务 | 端口 | 协议 | 说明 |
-|------|------|------|------|
-| topems-doc | 8001 | HTTP | 文档管理服务 |
-| topems-iam | 8002 | HTTP | 身份认证与权限管理 |
-| topems-ai | 8003 | HTTP | AI 知识库服务 |
-| topems-flow | 8004 | HTTP | 工作流引擎 |
-| topems-rs | 8005 | HTTP | 研发管理系统 |
-| topems-lims | 8006 | HTTP | 实验室信息管理系统 |
-| topems-qms | 待定 | HTTP | 质量管理系统 |
-| topems-ehs | 待定 | HTTP | 环境健康安全系统 |
-| topems-srm | 待定 | HTTP | 供应商管理系统 |
-| topems-pdm | 待定 | HTTP | 生产管理系统 |
-| notification | 8006 | HTTP | 通知服务 |
+4. [统一规范](#4-统一规范)
+   - [认证方式](#41-认证方式)
+   - [响应格式](#42-响应格式)
+   - [错误码](#43-错误码)
+   - [分页规范](#44-分页规范)
 
 ---
 
-## 3. API 设计规范
+## 1. 平台服务
 
-### 3.1 RESTful 原则
+### 1.1 IAM 认证服务 (topems-iam)
 
-- 使用 HTTP 方法语义
-- 资源命名使用复数名词
-- 使用标准 HTTP 状态码
-- 保持无状态性
+**服务地址**: `http://localhost:8002`
 
-### 3.2 版本控制
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/auth/login` | POST | 用户登录 |
+| `/api/v1/auth/logout` | POST | 用户登出 |
+| `/api/v1/auth/refresh` | POST | 刷新Token |
+| `/api/v1/users` | GET | 获取用户列表 |
+| `/api/v1/users/{id}` | GET | 获取用户详情 |
+| `/api/v1/users` | POST | 创建用户 |
+| `/api/v1/users/{id}` | PUT | 更新用户 |
+| `/api/v1/users/{id}` | DELETE | 删除用户 |
+| `/api/v1/roles` | GET | 获取角色列表 |
+| `/api/v1/roles` | POST | 创建角色 |
+| `/api/v1/permissions` | GET | 获取权限列表 |
+| `/api/v1/health` | GET | 健康检查 |
 
-```
-/api/v1/{resource}    # 当前版本
-/api/v2/{resource}    # 未来版本
-```
+**数据模型**:
+- User（用户）
+- Role（角色）
+- Permission（权限）
+- ApiKey（API密钥）
 
-### 3.3 路径命名规范
+### 1.2 文档服务 (topems-doc)
 
-```
-/api/v1/files                    # 资源列表
-/api/v1/files/{id}               # 特定资源
-/api/v1/files/{id}/versions      # 子资源
-/api/v1/files/{id}/download      # 特定操作
-```
+**服务地址**: `http://localhost:8001`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/files` | GET | 获取文件列表 |
+| `/api/v1/files/{id}` | GET | 获取文件详情 |
+| `/api/v1/files` | POST | 上传文件 |
+| `/api/v1/files/{id}` | PUT | 更新文件 |
+| `/api/v1/files/{id}` | DELETE | 删除文件 |
+| `/api/v1/folders` | GET | 获取文件夹列表 |
+| `/api/v1/folders` | POST | 创建文件夹 |
+| `/api/v1/folders/{id}` | DELETE | 删除文件夹 |
+| `/api/v1/files/{id}/download` | GET | 下载文件 |
+| `/api/v1/files/{id}/versions` | GET | 获取文件版本 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- File（文件）
+- Folder（文件夹）
+- FileVersion（文件版本）
+
+### 1.3 AI服务 (topems-ai)
+
+**服务地址**: `http://localhost:8003`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/ai/chat` | POST | AI对话 |
+| `/api/v1/ai/summary` | POST | 文档摘要 |
+| `/api/v1/ai/search` | GET | 智能搜索 |
+| `/api/v1/ai/knowledge` | GET | 获取知识库列表 |
+| `/api/v1/ai/knowledge` | POST | 添加知识库 |
+| `/api/v1/ai/knowledge/{id}` | DELETE | 删除知识库 |
+| `/api/v1/ai/embeddings` | POST | 生成向量 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- ChatMessage（对话消息）
+- KnowledgeBase（知识库）
+- EmbeddingRecord（向量记录）
+
+### 1.4 工作流服务 (topems-flow)
+
+**服务地址**: `http://localhost:8004`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/workflows` | GET | 获取流程模板列表 |
+| `/api/v1/workflows/{id}` | GET | 获取流程模板详情 |
+| `/api/v1/workflows` | POST | 创建流程模板 |
+| `/api/v1/workflows/{id}` | PUT | 更新流程模板 |
+| `/api/v1/workflows/{id}` | DELETE | 删除流程模板 |
+| `/api/v1/instances` | GET | 获取流程实例列表 |
+| `/api/v1/instances` | POST | 启动流程实例 |
+| `/api/v1/instances/{id}` | GET | 获取流程实例详情 |
+| `/api/v1/tasks` | GET | 获取审批任务列表 |
+| `/api/v1/tasks/{id}` | POST | 处理审批任务 |
+| `/api/v1/notifications` | GET | 获取通知列表 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- Workflow（流程模板）
+- Instance（流程实例）
+- Task（审批任务）
+- Notification（通知）
 
 ---
 
-## 4. 请求格式
+## 2. 业务服务
 
-### 4.1 请求头
+### 2.1 研发管理服务 (topems-rs)
 
-| 请求头 | 必需 | 说明 |
-|--------|------|------|
-| Content-Type | 是 | application/json |
-| Authorization | 是 | Bearer {token} |
-| Accept-Language | 否 | zh-CN, en-US |
-| X-Request-ID | 否 | 请求追踪 ID |
+**服务地址**: `http://localhost:8005`
 
-### 4.2 通用请求头示例
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/projects` | GET | 获取项目列表 |
+| `/api/v1/projects/{id}` | GET | 获取项目详情 |
+| `/api/v1/projects` | POST | 创建项目 |
+| `/api/v1/projects/{id}` | PUT | 更新项目 |
+| `/api/v1/projects/{id}` | DELETE | 删除项目 |
+| `/api/v1/projects/batch` | POST | 批量创建项目 |
+| `/api/v1/projects/batch` | DELETE | 批量删除项目 |
+| `/api/v1/experiments` | GET | 获取试验列表 |
+| `/api/v1/experiments/{id}` | GET | 获取试验详情 |
+| `/api/v1/experiments` | POST | 创建试验 |
+| `/api/v1/experiments/{id}` | PUT | 更新试验 |
+| `/api/v1/experiments/{id}` | DELETE | 删除试验 |
+| `/api/v1/experiments/project/{projectId}` | GET | 获取项目试验列表 |
+| `/api/v1/formulas` | GET | 获取配方列表 |
+| `/api/v1/formulas/{id}` | GET | 获取配方详情 |
+| `/api/v1/formulas` | POST | 创建配方 |
+| `/api/v1/formulas/{id}` | PUT | 更新配方 |
+| `/api/v1/materials` | GET | 获取物料列表 |
+| `/api/v1/materials/{id}` | GET | 获取物料详情 |
+| `/api/v1/patents` | GET | 获取专利列表 |
+| `/api/v1/patents/{id}` | GET | 获取专利详情 |
+| `/api/v1/health` | GET | 健康检查 |
 
-```http
-POST /api/v1/projects HTTP/1.1
-Host: localhost:8005
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Accept-Language: zh-CN
+**数据模型**:
+- Project（项目）
+- Experiment（试验记录）
+- Formula（配方）
+- Material（物料）
+- Patent（专利）
+- AuditLog（审计日志）
+
+### 2.2 实验室管理服务 (topems-lims)
+
+**服务地址**: `http://localhost:8006`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/samples` | GET | 获取样品列表 |
+| `/api/v1/samples/{id}` | GET | 获取样品详情 |
+| `/api/v1/samples` | POST | 创建样品 |
+| `/api/v1/samples/{id}` | PUT | 更新样品 |
+| `/api/v1/samples/{id}` | DELETE | 删除样品 |
+| `/api/v1/processes` | GET | 获取检验流程列表 |
+| `/api/v1/processes/{id}` | GET | 获取检验流程详情 |
+| `/api/v1/processes` | POST | 创建检验流程 |
+| `/api/v1/tasks` | GET | 获取检验任务列表 |
+| `/api/v1/tasks/{id}` | GET | 获取检验任务详情 |
+| `/api/v1/tasks` | POST | 创建检验任务 |
+| `/api/v1/tasks/{id}` | PUT | 更新检验任务 |
+| `/api/v1/tasks/{id}/complete_step` | POST | 完成检验步骤 |
+| `/api/v1/records` | GET | 获取检验记录列表 |
+| `/api/v1/records` | POST | 创建检验记录 |
+| `/api/v1/records/task/{taskId}` | GET | 获取任务检验记录 |
+| `/api/v1/instruments` | GET | 获取仪器列表 |
+| `/api/v1/instruments/{id}` | GET | 获取仪器详情 |
+| `/api/v1/reagents` | GET | 获取试剂列表 |
+| `/api/v1/reagents/{id}` | GET | 获取试剂详情 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- Sample（样品）
+- InspectionProcess（检验流程）
+- InspectionTask（检验任务）
+- InspectionRecord（检验记录）
+- Instrument（仪器）
+- Reagent（试剂）
+
+### 2.3 质量管理服务 (topems-qms)
+
+**服务地址**: `http://localhost:8007`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/standards` | GET | 获取质量标准列表 |
+| `/api/v1/standards/{id}` | GET | 获取质量标准详情 |
+| `/api/v1/standards` | POST | 创建质量标准 |
+| `/api/v1/standards/{id}` | PUT | 更新质量标准 |
+| `/api/v1/standards/{id}` | DELETE | 删除质量标准 |
+| `/api/v1/inspections` | GET | 获取检验记录列表 |
+| `/api/v1/inspections/{id}` | GET | 获取检验记录详情 |
+| `/api/v1/inspections` | POST | 创建检验记录 |
+| `/api/v1/issues` | GET | 获取不合格品列表 |
+| `/api/v1/issues/{id}` | GET | 获取不合格品详情 |
+| `/api/v1/issues` | POST | 创建不合格品记录 |
+| `/api/v1/issues/{id}` | PUT | 更新不合格品处理 |
+| `/api/v1/actions` | GET | 获取纠正措施列表 |
+| `/api/v1/actions/{id}` | GET | 获取纠正措施详情 |
+| `/api/v1/actions` | POST | 创建纠正措施 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- QualityStandard（质量标准）
+- Inspection（检验记录）
+- NonConformity（不合格品）
+- CorrectiveAction（纠正措施）
+
+### 2.4 安全环保服务 (topems-ehs)
+
+**服务地址**: `http://localhost:8008`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/safety/inspections` | GET | 获取安全检查列表 |
+| `/api/v1/safety/inspections/{id}` | GET | 获取安全检查详情 |
+| `/api/v1/safety/inspections` | POST | 创建安全检查 |
+| `/api/v1/environmental/data` | GET | 获取环保数据列表 |
+| `/api/v1/environmental/data/{id}` | GET | 获取环保数据详情 |
+| `/api/v1/environmental/data` | POST | 添加环保数据 |
+| `/api/v1/incidents` | GET | 获取事故记录列表 |
+| `/api/v1/incidents/{id}` | GET | 获取事故记录详情 |
+| `/api/v1/incidents` | POST | 创建事故记录 |
+| `/api/v1/incidents/{id}` | PUT | 更新事故处理 |
+| `/api/v1/trainings` | GET | 获取培训记录列表 |
+| `/api/v1/trainings/{id}` | GET | 获取培训记录详情 |
+| `/api/v1/trainings` | POST | 创建培训记录 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- SafetyInspection（安全检查）
+- EnvironmentalData（环保数据）
+- Incident（事故记录）
+- Training（培训记录）
+
+### 2.5 供应商管理服务 (topems-srm)
+
+**服务地址**: `http://localhost:8010`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/suppliers` | GET | 获取供应商列表 |
+| `/api/v1/suppliers/{id}` | GET | 获取供应商详情 |
+| `/api/v1/suppliers` | POST | 创建供应商 |
+| `/api/v1/suppliers/{id}` | PUT | 更新供应商 |
+| `/api/v1/suppliers/{id}` | DELETE | 删除供应商 |
+| `/api/v1/suppliers/{id}/evaluations` | GET | 获取供应商评估列表 |
+| `/api/v1/suppliers/{id}/evaluations` | POST | 创建供应商评估 |
+| `/api/v1/purchase/orders` | GET | 获取采购订单列表 |
+| `/api/v1/purchase/orders/{id}` | GET | 获取采购订单详情 |
+| `/api/v1/purchase/orders` | POST | 创建采购订单 |
+| `/api/v1/purchase/orders/{id}` | PUT | 更新采购订单 |
+| `/api/v1/purchase/items` | GET | 获取采购项目列表 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- Supplier（供应商）
+- SupplierEvaluation（供应商评估）
+- PurchaseOrder（采购订单）
+- PurchaseItem（采购项目）
+
+### 2.6 产品数据管理服务 (topems-pdm)
+
+**服务地址**: `http://localhost:8015`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/products` | GET | 获取产品列表 |
+| `/api/v1/products/{id}` | GET | 获取产品详情 |
+| `/api/v1/products` | POST | 创建产品 |
+| `/api/v1/products/{id}` | PUT | 更新产品 |
+| `/api/v1/products/{id}` | DELETE | 删除产品 |
+| `/api/v1/products/{id}/versions` | GET | 获取产品版本列表 |
+| `/api/v1/products/{id}/versions` | POST | 创建产品版本 |
+| `/api/v1/boms` | GET | 获取BOM列表 |
+| `/api/v1/boms/{id}` | GET | 获取BOM详情 |
+| `/api/v1/boms` | POST | 创建BOM |
+| `/api/v1/documents` | GET | 获取技术文档列表 |
+| `/api/v1/documents/{id}` | GET | 获取技术文档详情 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- Product（产品）
+- ProductVersion（产品版本）
+- BOM（物料清单）
+- Document（技术文档）
+
+---
+
+## 3. 公共服务
+
+### 3.1 报表服务 (topems-report)
+
+**服务地址**: `http://localhost:8011`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/reports` | GET | 获取报表列表 |
+| `/api/v1/reports/{id}` | GET | 获取报表详情 |
+| `/api/v1/reports/{id}/execute` | POST | 执行报表 |
+| `/api/v1/reports/{id}/export` | GET | 导出报表 |
+| `/api/v1/reports/templates` | GET | 获取报表模板列表 |
+| `/api/v1/dashboards` | GET | 获取仪表盘列表 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- Report（报表）
+- ReportTemplate（报表模板）
+- Dashboard（仪表盘）
+
+### 3.2 通知服务
+
+**服务地址**: 统一通过各服务推送
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/notifications` | GET | 获取通知列表 |
+| `/api/v1/notifications/{id}` | GET | 获取通知详情 |
+| `/api/v1/notifications/{id}` | PUT | 更新通知状态 |
+| `/api/v1/notifications/{id}` | DELETE | 删除通知 |
+| `/api/v1/notifications/read/all` | POST | 批量标记已读 |
+| `/api/v1/notifications/unread/count` | GET | 获取未读数量 |
+
+**数据模型**:
+- Notification（通知）
+
+---
+
+## 4. 统一规范
+
+### 4.1 认证方式
+
+所有 API 接口（除健康检查外）均需要认证。
+
+**JWT Token 认证**:
+```bash
+curl -X GET "http://localhost:8005/api/v1/projects" \
+  -H "Authorization: Bearer <your-token>"
 ```
 
-### 4.3 查询参数
+### 4.2 响应格式
 
-```javascript
-GET /api/v1/projects?page=1&page_size=20&status=active
-```
-
-### 4.4 请求体 (JSON)
-
+**成功响应**:
 ```json
 {
-  "name": "项目名称",
-  "description": "项目描述",
-  "status": "active"
+  "code": 200,
+  "message": "success",
+  "data": {},
+  "timestamp": 1717056000
 }
 ```
 
----
-
-## 5. 响应格式
-
-### 5.1 成功响应
-
+**错误响应**:
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "name": "项目名称",
-    "created_at": "2026-05-22T10:00:00Z"
-  },
-  "error": null
-}
-```
-
-### 5.2 错误响应
-
-```json
-{
-  "success": false,
+  "code": 401,
+  "message": "未认证",
   "data": null,
-  "error": {
-    "code": "RESOURCE_NOT_FOUND",
-    "message": "资源不存在",
-    "details": {
-      "resource_type": "project",
-      "resource_id": "550e8400-e29b-41d4-a716-446655440000"
-    }
-  }
+  "timestamp": 1717056000
 }
 ```
 
-### 5.3 分页响应
+### 4.3 错误码
 
+| 错误码 | 描述 | HTTP状态码 |
+|--------|------|-----------|
+| 200 | 成功 | 200 |
+| 400 | 请求参数错误 | 400 |
+| 401 | 未认证 | 401 |
+| 403 | 无权限 | 403 |
+| 404 | 资源不存在 | 404 |
+| 500 | 服务器错误 | 500 |
+| 1001 | 数据库错误 | 500 |
+| 1002 | 认证失败 | 401 |
+| 1003 | 参数验证失败 | 400 |
+
+### 4.4 分页规范
+
+**请求参数**:
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | integer | 1 | 页码 |
+| page_size | integer | 20 | 每页数量 |
+
+**分页响应**:
 ```json
 {
-  "success": true,
+  "code": 200,
+  "message": "success",
   "data": {
     "items": [],
-    "total": 100,
     "page": 1,
     "page_size": 20,
+    "total": 100,
     "total_pages": 5
-  }
-}
-```
-
-### 5.4 列表响应
-
-```json
-{
-  "success": true,
-  "data": [
-    { "id": "1", "name": "项目1" },
-    { "id": "2", "name": "项目2" }
-  ]
+  },
+  "timestamp": 1717056000
 }
 ```
 
 ---
 
-## 6. HTTP 状态码
+## 附录：服务端口汇总
 
-| 状态码 | 说明 | 使用场景 |
-|--------|------|----------|
-| 200 | OK | 成功获取或更新资源 |
-| 201 | Created | 成功创建资源 |
-| 204 | No Content | 成功删除资源 |
-| 400 | Bad Request | 请求参数错误 |
-| 401 | Unauthorized | 未认证或 Token 过期 |
-| 403 | Forbidden | 无权限访问 |
-| 404 | Not Found | 资源不存在 |
-| 409 | Conflict | 资源冲突 |
-| 422 | Unprocessable Entity | 数据验证失败 |
-| 500 | Internal Server Error | 服务器内部错误 |
+| 服务名称 | 端口 | 状态 |
+|---------|------|------|
+| topems-iam | 8002 | ✅ |
+| topems-doc | 8001 | ✅ |
+| topems-ai | 8003 | ✅ |
+| topems-flow | 8004 | ✅ |
+| topems-rs | 8005 | ✅ |
+| topems-lims | 8006 | ✅ |
+| topems-qms | 8007 | 🔄 |
+| topems-ehs | 8008 | 🔄 |
+| topems-erp | 8009 | 📋 |
+| topems-srm | 8010 | 📋 |
+| topems-bi | 8011 | 🔄 |
+| topems-crm | 8012 | 📋 |
+| topems-hrm | 8013 | 📋 |
+| topems-mes | 8014 | 📋 |
+| topems-pdm | 8015 | 📋 |
+| topems-scm | 8016 | 📋 |
+| topems-gis | 8017 | ✅ |
+| topems-im | 8018 | 📋 |
 
----
-
-## 7. 错误代码
-
-### 7.1 通用错误码
-
-| 错误码 | 说明 |
-|--------|------|
-| INVALID_REQUEST | 无效的请求参数 |
-| UNAUTHORIZED | 未授权访问 |
-| FORBIDDEN | 权限不足 |
-| RESOURCE_NOT_FOUND | 资源不存在 |
-| RESOURCE_CONFLICT | 资源冲突 |
-| VALIDATION_ERROR | 数据验证失败 |
-| INTERNAL_ERROR | 服务器内部错误 |
-| SERVICE_UNAVAILABLE | 服务不可用 |
-
-### 7.2 业务错误码
-
-| 错误码 | 说明 |
-|--------|------|
-| PROJECT_NOT_FOUND | 项目不存在 |
-| PROJECT_INACTIVE | 项目已停用 |
-| SAMPLE_NOT_FOUND | 样品不存在 |
-| CHECK_IN_PROGRESS | 检查进行中 |
-| APPROVAL_PENDING | 审批待处理 |
-| APPROVAL_REJECTED | 审批被拒绝 |
+**状态说明**: ✅ 已实现 | 🔄 开发中 | 📋 规划中
 
 ---
 
-## 8. 认证授权
-
-### 8.1 JWT Token
-
-所有 API 请求（除登录接口外）都需要携带有效的 JWT Token：
-
-```http
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-### 8.2 Token 刷新
-
-Token 有效期为 24 小时，使用 refresh_token 可以刷新：
-
-```bash
-curl -X POST http://localhost:8002/api/v1/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{"token": "refresh_token_here"}'
-```
-
-### 8.3 权限检查
-
-```bash
-curl -X POST http://localhost:8002/api/v1/users/me/permissions/check \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer {token}" \
-  -d '{"permission": "rs:project:create"}'
-```
-
----
-
-## 9. 健康检查
-
-每个服务都提供健康检查接口：
-
-```bash
-# 检查各服务状态
-curl http://localhost:8001/health  # DOC 服务
-curl http://localhost:8002/health  # IAM 服务
-curl http://localhost:8003/health  # AI 服务
-curl http://localhost:8004/health  # FLOW 服务
-curl http://localhost:8005/health  # RS 服务
-curl http://localhost:8006/health  # LIMS 服务
-```
-
-响应示例：
-
-```json
-{
-  "success": true,
-  "data": "OK"
-}
-```
-
----
-
-## 10. API 文档工具
-
-推荐使用 Swagger/OpenAPI 生成在线文档：
-
-- Swagger UI: `/swagger-ui`
-- ReDoc: `/docs`
-- OpenAPI JSON: `/openapi.json`
-
----
-
-## 11. 限流策略
-
-| 级别 | 限制 | 说明 |
-|------|------|------|
-| 全局 | 1000 请求/分钟 | 所有 API |
-| 认证 | 10 请求/秒 | 登录接口 |
-| 数据写入 | 100 请求/分钟 | POST/PUT/DELETE |
-| 数据查询 | 300 请求/分钟 | GET |
-
----
-
-## 12. 支持与反馈
-
-- 📧 技术支持: support@topems.com
-- 🐛 问题反馈: GitHub Issues
-- 💡 功能建议: GitHub Discussions
-
----
-
-**版本历史**
-
-| 版本 | 日期 | 更新内容 |
-|------|------|----------|
-| v2.1.0 | 2026-05-22 | 统一 API 规范，完善错误码 |
-| v1.0.0 | 2026-05-20 | 初始版本 |
+**文档版本**: v1.0  
+**最后更新**: 2026-05-30  
+**文档位置**: `docs/API_OVERVIEW.md`

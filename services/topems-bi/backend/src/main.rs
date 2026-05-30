@@ -102,7 +102,7 @@ async fn create_dashboard(
     Json(payload): Json<CreateDashboard>,
 ) -> Json<ApiResponse<Dashboard>> {
     let mut dashboards = state.dashboards.lock().unwrap();
-    
+
     let dashboard = Dashboard {
         id: Uuid::new_v4(),
         name: payload.name,
@@ -112,7 +112,7 @@ async fn create_dashboard(
         created_at: Utc::now(),
         updated_at: Utc::now(),
     };
-    
+
     dashboards.push(dashboard.clone());
     Json(ApiResponse::success(dashboard, "创建仪表板成功"))
 }
@@ -130,7 +130,7 @@ async fn create_report(
     Json(payload): Json<CreateReport>,
 ) -> Json<ApiResponse<Report>> {
     let mut reports = state.reports.lock().unwrap();
-    
+
     let report = Report {
         id: Uuid::new_v4(),
         name: payload.name,
@@ -142,7 +142,7 @@ async fn create_report(
         created_at: Utc::now(),
         updated_at: Utc::now(),
     };
-    
+
     reports.push(report.clone());
     Json(ApiResponse::success(report, "创建报表成功"))
 }
@@ -179,7 +179,18 @@ async fn main() -> Result<()> {
             "topems-default-jwt-secret-change-me-in-production".to_string()
         });
 
-    let app_state = AppState::new(AuthState::new(jwt_secret));
+    let refresh_secret = env::var("REFRESH_SECRET")
+        .unwrap_or_else(|_| {
+            tracing::warn!("REFRESH_SECRET not set, using default");
+            "topems-default-refresh-secret-change-me".to_string()
+        });
+
+    let token_expiry_hours: i64 = env::var("TOKEN_EXPIRY_HOURS")
+        .unwrap_or_else(|_| "24".to_string())
+        .parse()
+        .unwrap_or(24);
+
+    let app_state = AppState::new(AuthState::new(jwt_secret, refresh_secret, token_expiry_hours));
 
     let cors = create_cors_layer();
 
@@ -195,7 +206,7 @@ async fn main() -> Result<()> {
         .with_state(app_state)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8012".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8011".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-BI 数据大屏报表中台启动中...");

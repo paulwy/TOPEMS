@@ -2,6 +2,7 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
     http::header,
+    Json,
 };
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -14,12 +15,14 @@ mod db;
 mod models;
 mod services;
 mod state;
+mod middleware;
 
 use api::handlers::*;
 use state::AppState;
+use topems_shared::ApiResponse;
 
-async fn health() -> &'static str {
-    "OK"
+async fn health() -> Json<ApiResponse<String>> {
+    Json(ApiResponse::success("OK".to_string(), "Health check"))
 }
 
 async fn home() -> &'static str {
@@ -53,6 +56,7 @@ async fn init_database_tables(pool: &PgPool) -> anyhow::Result<()> {
         include_str!("../migrations/001_create_workflow_tables.sql"),
         include_str!("../migrations/003_add_notifications.sql"),
         include_str!("../migrations/004_migrate_existing_tables.sql"),
+        include_str!("../migrations/005_workflow_version_control.sql"),
     ];
     
     for migration in migrations {
@@ -135,7 +139,17 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/notifications/{user_id}/count", get(get_unread_count))
         .route("/api/v1/notifications/{user_id}/read", post(mark_as_read))
         .route("/api/v1/notifications", post(create_notification))
+        .route("/api/v1/statistics", get(get_statistics))
+        .route("/api/v1/workflows/{id}/versions", get(list_versions).post(create_version))
+        .route("/api/v1/workflows/{id}/versions/{version_id}", get(get_version).delete(delete_version))
+        .route("/api/v1/workflows/{id}/versions/{version_id}/activate", post(activate_version))
+        .route("/api/v1/workflows/{id}/rollback", post(rollback_version))
+        .route("/api/v1/workflows/{id}/compare/{version1}/{version2}", get(compare_versions))
+        .route("/api/v1/performance", get(get_performance))
+        .route("/api/v1/performance/reset", post(reset_performance))
+        .route("/api/v1/performance/threshold", post(set_threshold))
         .layer(cors)
+        .layer(axum::middleware::from_fn(middleware::performance_middleware))
         .with_state(app_state);
 
     let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());

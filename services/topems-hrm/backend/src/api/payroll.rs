@@ -4,24 +4,22 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
-use chrono::{Duration, Utc};
+use bigdecimal::BigDecimal;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
+use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
-
-pub struct AppState {
-    pub db: PgPool,
-}
+use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PayrollRun {
     pub id: Uuid,
     pub pay_period: String,
     pub status: String,
-    pub total_amount: f64,
+    pub total_amount: BigDecimal,
     pub employee_count: i32,
     pub paid_at: Option<chrono::DateTime<chrono::Utc>>,
     pub created_at: chrono::DateTime<chrono::Utc>,
@@ -33,10 +31,10 @@ pub struct PayrollItem {
     pub id: Uuid,
     pub payroll_run_id: Uuid,
     pub employee_id: Uuid,
-    pub gross_amount: f64,
-    pub net_amount: f64,
-    pub deductions: f64,
-    pub taxes: f64,
+    pub gross_amount: BigDecimal,
+    pub net_amount: BigDecimal,
+    pub deductions: BigDecimal,
+    pub taxes: BigDecimal,
     pub status: String,
     pub bank_account: Option<String>,
     pub paid_at: Option<chrono::DateTime<chrono::Utc>>,
@@ -51,7 +49,7 @@ pub struct PayrollDetail {
     pub item_type: String,
     pub category: String,
     pub description: String,
-    pub amount: f64,
+    pub amount: BigDecimal,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -249,7 +247,7 @@ async fn calculate_payroll_run(
     .await;
 
     let emp_count = result.unwrap_or(0);
-    let total_amount = emp_count as f64 * 5000.0;
+    let total_amount = BigDecimal::from(emp_count) * BigDecimal::from(5000);
 
     let result = sqlx::query_as::<_, PayrollRun>(
         r#"
@@ -283,10 +281,10 @@ async fn create_payroll_items(db: &PgPool, payroll_run_id: Uuid, emp_count: i32)
     for i in 1..=emp_count {
         let item_id = Uuid::new_v4();
         let emp_id = Uuid::new_v4();
-        let gross_amount = 5000.0 + (i as f64 * 100.0);
-        let taxes = gross_amount * 0.1;
-        let deductions = gross_amount * 0.05;
-        let net_amount = gross_amount - taxes - deductions;
+        let gross_amount = BigDecimal::from(5000) + (BigDecimal::from(i) * BigDecimal::from(100));
+        let taxes = &gross_amount * BigDecimal::from_str("0.1").unwrap();
+        let deductions = &gross_amount * BigDecimal::from_str("0.05").unwrap();
+        let net_amount = &gross_amount - &taxes - &deductions;
 
         let _ = sqlx::query(
             r#"

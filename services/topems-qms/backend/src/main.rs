@@ -1,5 +1,7 @@
 mod api;
 mod models;
+mod repositories;
+mod services;
 
 use anyhow::Result;
 use axum::{
@@ -57,9 +59,20 @@ async fn main() -> Result<()> {
             "topems-default-jwt-secret-change-me-in-production".to_string()
         });
 
+    let refresh_secret = env::var("REFRESH_SECRET")
+        .unwrap_or_else(|_| {
+            tracing::warn!("REFRESH_SECRET not set, using default (not recommended for production)");
+            "topems-default-refresh-secret-change-me-in-production".to_string()
+        });
+
+    let token_expiry_hours: i64 = env::var("TOKEN_EXPIRY_HOURS")
+        .unwrap_or_else(|_| "24".to_string())
+        .parse()
+        .unwrap_or(24);
+
     let app_state = AppState {
         pool: pool.clone(),
-        auth_state: AuthState::new(jwt_secret),
+        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
     };
 
     let cors = create_cors_layer();
@@ -72,7 +85,7 @@ async fn main() -> Result<()> {
         .merge(api::corrective_action::create_routes(pool.clone()).await?)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8004".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8007".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-QMS 质量管理系统启动中...");
@@ -90,10 +103,6 @@ async fn health_check() -> Json<ApiResponse<&'static str>> {
 }
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
-        .execute(pool)
-        .await?;
-
     sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS qms"#)
         .execute(pool)
         .await?;
@@ -101,7 +110,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS qms.quality_standards (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            id UUID PRIMARY KEY,
             code VARCHAR(100) NOT NULL UNIQUE,
             name VARCHAR(255) NOT NULL,
             description TEXT,
@@ -119,7 +128,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS qms.quality_inspections (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            id UUID PRIMARY KEY,
             title VARCHAR(255) NOT NULL,
             description TEXT,
             inspection_type VARCHAR(100) NOT NULL,
@@ -140,7 +149,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS qms.quality_issues (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            id UUID PRIMARY KEY,
             title VARCHAR(255) NOT NULL,
             description TEXT NOT NULL,
             severity VARCHAR(50) NOT NULL,
@@ -161,7 +170,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS qms.corrective_actions (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            id UUID PRIMARY KEY,
             issue_id UUID NOT NULL REFERENCES qms.quality_issues(id) ON DELETE CASCADE,
             title VARCHAR(255) NOT NULL,
             description TEXT,

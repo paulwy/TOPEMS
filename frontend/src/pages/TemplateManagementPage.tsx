@@ -7,6 +7,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { templateApi, type Template, type TemplateCategory, type CreateTemplateRequest } from '../api/template';
 import { useNotification } from '../hooks/useNotification';
+import { NotificationContainer } from '../components/NotificationContainer';
 
 const TemplateManagementPage: React.FC = () => {
   const navigate = useNavigate();

@@ -14,6 +14,10 @@ impl WorkflowRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+    
+    pub fn get_pool(&self) -> &PgPool {
+        &self.pool
+    }
 
     pub async fn create_workflow(&self, req: CreateWorkflowRequest) -> Result<Workflow, sqlx::Error> {
         let now = Utc::now();

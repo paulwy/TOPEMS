@@ -1,4 +1,4 @@
-use anyhow::Result;
+use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -11,37 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CompleteStepRequest, CreateInspectionTaskRequest, InspectionProcess, InspectionRecord, InspectionTask, UpdateInspectionTaskRequest};
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -88,7 +58,7 @@ async fn list_tasks(
     let result = sqlx::query_as::<_, InspectionTask>(
         r#"
         SELECT id, sample_id, process_id, current_step, status, inspector, started_at, completed_at, created_at, updated_at
-        FROM inspection_tasks
+        FROM lims.inspection_tasks
         WHERE ($1::text IS NULL OR inspector ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -106,7 +76,7 @@ async fn list_tasks(
         Ok(tasks) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM inspection_tasks
+                SELECT COUNT(*) FROM lims.inspection_tasks
                 WHERE ($1::text IS NULL OR inspector ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -144,7 +114,7 @@ async fn create_task(
 
     let result = sqlx::query_as::<_, InspectionTask>(
         r#"
-        INSERT INTO inspection_tasks (id, sample_id, process_id, current_step, status, inspector, started_at, created_at, updated_at)
+        INSERT INTO lims.inspection_tasks (id, sample_id, process_id, current_step, status, inspector, started_at, created_at, updated_at)
         VALUES ($1, $2, $3, 1, 'pending', $4, $5, $6, $7)
         RETURNING id, sample_id, process_id, current_step, status, inspector, started_at, completed_at, created_at, updated_at
         "#,
@@ -175,7 +145,7 @@ async fn get_task(
     let result = sqlx::query_as::<_, InspectionTask>(
         r#"
         SELECT id, sample_id, process_id, current_step, status, inspector, started_at, completed_at, created_at, updated_at
-        FROM inspection_tasks WHERE id = $1
+        FROM lims.inspection_tasks WHERE id = $1
         "#,
     )
     .bind(id)
@@ -198,7 +168,7 @@ async fn update_task(
     Json(req): Json<UpdateInspectionTaskRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
     let existing = sqlx::query_as::<_, InspectionTask>(
-        "SELECT id, sample_id, process_id, current_step, status, inspector, started_at, completed_at, created_at, updated_at FROM inspection_tasks WHERE id = $1",
+        "SELECT id, sample_id, process_id, current_step, status, inspector, started_at, completed_at, created_at, updated_at FROM lims.inspection_tasks WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -218,7 +188,7 @@ async fn update_task(
 
     let result = sqlx::query_as::<_, InspectionTask>(
         r#"
-        UPDATE inspection_tasks SET
+        UPDATE lims.inspection_tasks SET
             sample_id = $2, process_id = $3, inspector = $4, status = $5, updated_at = $6
         WHERE id = $1
         RETURNING id, sample_id, process_id, current_step, status, inspector, started_at, completed_at, created_at, updated_at
@@ -251,7 +221,7 @@ async fn complete_step(
     let task_result = sqlx::query_as::<_, InspectionTask>(
         r#"
         SELECT id, sample_id, process_id, current_step, status, inspector, started_at, completed_at, created_at, updated_at
-        FROM inspection_tasks WHERE id = $1
+        FROM lims.inspection_tasks WHERE id = $1
         "#,
     )
     .bind(task_id)
@@ -268,7 +238,7 @@ async fn complete_step(
     let process_result = sqlx::query_as::<_, InspectionProcess>(
         r#"
         SELECT id, name, description, steps, status, created_at, updated_at
-        FROM inspection_processes WHERE id = $1
+        FROM lims.inspection_processes WHERE id = $1
         "#,
     )
     .bind(task.process_id)
@@ -299,7 +269,7 @@ async fn complete_step(
     let record_id = Uuid::new_v4();
     let record_result = sqlx::query_as::<_, InspectionRecord>(
         r#"
-        INSERT INTO inspection_records (id, task_id, step_id, step_name, result, conclusion, inspector, recorded_at, created_at)
+        INSERT INTO lims.inspection_records (id, task_id, step_id, step_name, result, conclusion, inspector, recorded_at, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, task_id, step_id, step_name, result, conclusion, inspector, recorded_at, created_at
         "#,
@@ -330,7 +300,7 @@ async fn complete_step(
 
     let update_result = sqlx::query_as::<_, InspectionTask>(
         r#"
-        UPDATE inspection_tasks SET
+        UPDATE lims.inspection_tasks SET
             current_step = $2, status = $3, started_at = $4, completed_at = $5, updated_at = $6
         WHERE id = $1
         RETURNING id, sample_id, process_id, current_step, status, inspector, started_at, completed_at, created_at, updated_at

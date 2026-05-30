@@ -1,12 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Bot, Send, MessageSquare, FileText, Brain, 
-  ChevronRight, Plus, Search, Clock, BookOpen, 
+  ChevronLeft, Plus, Search, Clock, BookOpen, 
   Trash2, Settings, Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { aiApi } from '../api/ai';
+import { useAppStore } from '../store';
 import AISettingsModal from '../components/AISettingsModal';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ModeToggle } from '@/components/ModeToggle';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 interface Message {
   id: string;
@@ -24,6 +35,8 @@ interface Conversation {
 
 const AIPage: React.FC = () => {
   const navigate = useNavigate();
+  const addNotification = useAppStore((state) => state.addNotification);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -56,7 +69,8 @@ const AIPage: React.FC = () => {
     try {
       const response = await aiApi.listDocuments();
       if (response.success && response.data) {
-        setDocuments(response.data);
+        const docs = ('items' in response.data) ? response.data.items : response.data;
+        setDocuments(docs);
         const sampleConversations: Conversation[] = [
           {
             id: '1',
@@ -81,6 +95,7 @@ const AIPage: React.FC = () => {
       }
     } catch (err) {
       console.error('加载文档列表失败:', err);
+      addNotification({ title: '加载失败', message: '加载文档列表失败', type: 'error' });
     }
   };
 
@@ -116,9 +131,9 @@ const AIPage: React.FC = () => {
         msg.content.toLowerCase().includes(searchQuery.toLowerCase())
       );
       if (filteredMessages.length > 0) {
-        alert(`找到 ${filteredMessages.length} 条匹配结果`);
+        addNotification({ title: '搜索结果', message: `找到 ${filteredMessages.length} 条匹配结果`, type: 'success' });
       } else {
-        alert('未找到匹配结果');
+        addNotification({ title: '搜索结果', message: '未找到匹配结果', type: 'info' });
       }
     }
   };
@@ -169,6 +184,7 @@ const AIPage: React.FC = () => {
       };
       
       setMessages(prev => [...prev, assistantMessage]);
+      addNotification({ title: '回复完成', message: 'AI已收到回复', type: 'success' });
     } catch (err) {
       console.error('AI 问答失败:', err);
       const errorMessage: Message = {
@@ -178,6 +194,7 @@ const AIPage: React.FC = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
+      addNotification({ title: 'AI服务错误', message: '连接AI服务失败', type: 'error' });
     } finally {
       setIsTyping(false);
       setLoading(false);
@@ -189,45 +206,48 @@ const AIPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="w-72 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-4 border-b border-slate-200">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
               AI 知识库
             </h2>
-            <button onClick={() => navigate('/dashboard')} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
-              <ChevronRight className="w-5 h-5 rotate-180" />
-            </button>
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <ModeToggle />
+            </div>
           </div>
-          <button 
+          <Button 
             onClick={handleNewConversation}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer">
-            <Plus className="w-4 h-4" />
-            <span>新对话</span>
-          </button>
+            className="w-full">
+            <Plus className="w-4 h-4 mr-2" />
+            新对话
+          </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          <h3 className="text-sm font-semibold text-slate-500 mb-3">最近对话</h3>
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">最近对话</h3>
           <div className="space-y-2">
             {conversations.map((conv) => (
               <div 
                 key={conv.id}
                 onClick={() => handleSelectConversation(conv.id)}
-                className={`p-3 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors ${
-                  currentConversationId === conv.id ? 'bg-purple-50 border border-purple-200' : ''
+                className={`p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+                  currentConversationId === conv.id ? 'bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800' : ''
                 }`}>
                 <div className="flex items-start">
                   <div className="flex items-center space-x-3">
-                    <MessageSquare className={`w-5 h-5 ${currentConversationId === conv.id ? 'text-purple-500' : 'text-slate-400'}`} />
+                    <MessageSquare className={`w-5 h-5 ${currentConversationId === conv.id ? 'text-purple-500' : 'text-gray-400'}`} />
                     <div>
-                      <p className={`text-sm font-medium line-clamp-1 ${currentConversationId === conv.id ? 'text-purple-700' : 'text-slate-900'}`}>{conv.title}</p>
-                      <p className="text-xs text-slate-500 line-clamp-1">{conv.lastMessage}</p>
+                      <p className={`text-sm font-medium line-clamp-1 ${currentConversationId === conv.id ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-gray-100'}`}>{conv.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{conv.lastMessage}</p>
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-slate-400 mt-1 flex items-center">
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center">
                   <Clock className="w-3 h-3 mr-1" />
                   {formatTime(conv.updatedAt)}
                 </p>
@@ -236,22 +256,22 @@ const AIPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="space-y-2">
-            <button onClick={handleToggleDocuments} className="w-full flex items-center space-x-3 p-3 hover:bg-slate-100 rounded-lg text-slate-600 cursor-pointer">
-              <BookOpen className="w-4 h-4" />
-              <span>文档库 ({documents.length})</span>
-            </button>
-            <button onClick={handleSettings} className="w-full flex items-center space-x-3 p-3 hover:bg-slate-100 rounded-lg text-slate-600 cursor-pointer">
-              <Settings className="w-4 h-4" />
-              <span>设置</span>
-            </button>
+            <Button variant="ghost" onClick={handleToggleDocuments} className="w-full justify-start">
+              <BookOpen className="w-4 h-4 mr-3" />
+              文档库 ({documents.length})
+            </Button>
+            <Button variant="ghost" onClick={handleSettings} className="w-full justify-start">
+              <Settings className="w-4 h-4 mr-3" />
+              设置
+            </Button>
           </div>
           {showDocuments && (
-            <div className="mt-2 p-3 bg-slate-50 rounded-lg max-h-40 overflow-y-auto">
-              <p className="text-xs text-slate-500 mb-2">知识库文档列表：</p>
+            <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg max-h-40 overflow-y-auto">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">知识库文档列表：</p>
               {documents.map((doc) => (
-                <div key={doc.id} className="text-sm text-slate-700 truncate py-1 hover:text-purple-600 cursor-pointer">
+                <div key={doc.id} className="text-sm text-gray-700 dark:text-gray-300 truncate py-1 hover:text-purple-600 dark:hover:text-purple-400 cursor-pointer">
                   • {doc.title}
                 </div>
               ))}
@@ -261,34 +281,33 @@ const AIPage: React.FC = () => {
       </div>
 
       <div className="flex-1 flex flex-col">
-        <header className="bg-white border-b border-slate-200 p-4">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">TOPEMS AI</h3>
-                <p className="text-sm text-green-600">在线</p>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">TOPEMS AI</h3>
+                <p className="text-sm text-green-600 dark:text-green-400">在线</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <input
+                <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="搜索对话..."
-                  className="pr-10 pl-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
-                <button onClick={handleSearch} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-purple-600">
+                <Button variant="ghost" size="sm" onClick={handleSearch} className="absolute right-2 top-1/2 -translate-y-1/2">
                   <Search className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
-              <button onClick={handleDeleteConversation} className="p-2 text-slate-500 hover:bg-red-50 hover:text-red-500 rounded-lg cursor-pointer transition-colors">
+              <Button variant="ghost" onClick={handleDeleteConversation} className="text-red-600 dark:text-red-400">
                 <Trash2 className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
           </div>
         </header>
@@ -315,10 +334,10 @@ const AIPage: React.FC = () => {
                   <div className={`rounded-lg p-4 max-w-2xl ${
                     message.role === 'user' 
                     ? 'bg-blue-600 text-white' 
-                    : 'bg-white shadow-sm'
+                    : 'bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700'
                   }`}>
-                    <p className={message.role === 'user' ? 'text-white' : 'text-slate-800'}>{message.content}</p>
-                    <p className={`text-xs mt-2 ${message.role === 'user' ? 'text-blue-100' : 'text-slate-400'}`}>
+                    <p className={message.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-200'}>{message.content}</p>
+                    <p className={`text-xs mt-2 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500'}`}>
                       {formatTime(message.timestamp)}
                     </p>
                   </div>
@@ -333,9 +352,9 @@ const AIPage: React.FC = () => {
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
-                <div className="bg-white rounded-lg px-4 py-3 shadow-sm flex items-center space-x-2">
+                <div className="bg-white dark:bg-gray-800 rounded-lg px-4 py-3 shadow-sm flex items-center space-x-2">
                   <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
-                  <span className="text-slate-600 text-sm">正在思考...</span>
+                  <span className="text-gray-600 dark:text-gray-300 text-sm">正在思考...</span>
                 </div>
               </div>
             </div>
@@ -343,39 +362,38 @@ const AIPage: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 bg-white border-t border-slate-200">
+        <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center space-x-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <button className="p-2 text-slate-500 hover:bg-slate-200 rounded-lg">
+            <div className="flex items-center space-x-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+              <Button variant="ghost" size="sm">
                 <Plus className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-slate-500 hover:bg-slate-200 rounded-lg">
+              </Button>
+              <Button variant="ghost" size="sm">
                 <FileText className="w-5 h-5" />
-              </button>
-              <input 
+              </Button>
+              <Input 
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="输入你的问题..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-900 placeholder-slate-500"
+                className="flex-1 bg-transparent border-none"
               />
-              <button 
+              <Button 
                 onClick={handleSend}
                 disabled={!inputText.trim() || isTyping}
-                className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-              </button>
+                {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Send className="w-5 h-5 mr-2" />}
+                发送
+              </Button>
             </div>
-            <p className="text-xs text-slate-500 text-center mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
               AI 基于知识库回答，建议仅作参考
             </p>
           </div>
         </div>
       </div>
 
-      {/* AI Settings Modal */}
       <AISettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}

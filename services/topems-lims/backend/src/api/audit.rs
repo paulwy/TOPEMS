@@ -12,43 +12,14 @@ use uuid::Uuid;
 use utoipa::ToSchema;
 
 use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::Result;
+use topems_shared::response::ApiResponse;
 
 pub struct AppState {
     pub db: PgPool,
 }
 
-pub async fn create_routes(db: PgPool) -> anyhow::Result<Router> {
+pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
@@ -103,7 +74,7 @@ async fn list_audit_logs(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM audit_logs
+        FROM lims.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
           AND ($3::text IS NULL OR user_id = $3)
@@ -129,7 +100,7 @@ async fn list_audit_logs(
         Ok(logs) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM audit_logs
+                SELECT COUNT(*) FROM lims.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
                   AND ($3::text IS NULL OR user_id = $3)
@@ -188,7 +159,7 @@ async fn get_audit_log(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM audit_logs WHERE id = $1
+        FROM lims.audit_logs WHERE id = $1
         "#,
     )
     .bind(id)
@@ -230,15 +201,18 @@ pub async fn log_audit_event(
         .and_then(|h| h.to_str().ok())
         .map(|s| s.to_string());
 
+    let id = Uuid::new_v4();
+
     let result = sqlx::query(
         r#"
-        INSERT INTO audit_logs (
-            action, entity_type, entity_id, entity_ids,
+        INSERT INTO lims.audit_logs (
+            id, action, entity_type, entity_id, entity_ids,
             user_id, user_name, request_details, response_details,
             status, error_message, ip_address, user_agent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         "#,
     )
+    .bind(id)
     .bind(action)
     .bind(entity_type)
     .bind(entity_id)

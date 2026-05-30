@@ -1,4 +1,4 @@
-use anyhow::Result;
+use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -10,36 +10,7 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -144,7 +115,7 @@ async fn list_reagents(
         SELECT id, name, code, category, specification, supplier, batch_number,
                quantity, unit, location, storage_condition, expiration_date,
                status, description, created_at, updated_at
-        FROM reagents
+        FROM lims.reagents
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR category = $3)
@@ -164,7 +135,7 @@ async fn list_reagents(
         Ok(reagents) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM reagents
+                SELECT COUNT(*) FROM lims.reagents
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR category = $3)
@@ -204,7 +175,7 @@ async fn create_reagent(
 
     let result = sqlx::query_as::<_, Reagent>(
         r#"
-        INSERT INTO reagents (
+        INSERT INTO lims.reagents (
             id, name, code, category, specification, supplier, batch_number,
             quantity, unit, location, storage_condition, expiration_date,
             status, description, created_at, updated_at
@@ -251,7 +222,7 @@ async fn get_reagent(
         SELECT id, name, code, category, specification, supplier, batch_number,
                quantity, unit, location, storage_condition, expiration_date,
                status, description, created_at, updated_at
-        FROM reagents WHERE id = $1
+        FROM lims.reagents WHERE id = $1
         "#,
     )
     .bind(id)
@@ -274,7 +245,7 @@ async fn update_reagent(
     Json(req): Json<UpdateReagentRequest>,
 ) -> Json<ApiResponse<Reagent>> {
     let existing = sqlx::query_as::<_, Reagent>(
-        "SELECT id, name, code, category, specification, supplier, batch_number, quantity, unit, location, storage_condition, expiration_date, status, description, created_at, updated_at FROM reagents WHERE id = $1",
+        "SELECT id, name, code, category, specification, supplier, batch_number, quantity, unit, location, storage_condition, expiration_date, status, description, created_at, updated_at FROM lims.reagents WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -294,7 +265,7 @@ async fn update_reagent(
 
     let result = sqlx::query_as::<_, Reagent>(
         r#"
-        UPDATE reagents SET
+        UPDATE lims.reagents SET
             name = $2, category = $3, specification = $4, supplier = $5,
             batch_number = $6, quantity = $7, unit = $8, location = $9,
             storage_condition = $10, expiration_date = $11, status = $12,
@@ -335,7 +306,7 @@ async fn delete_reagent(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM reagents WHERE id = $1")
+    let result = sqlx::query("DELETE FROM lims.reagents WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -356,7 +327,7 @@ async fn record_usage(
     Json(req): Json<ReagentUsageRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let existing = sqlx::query_as::<_, (f64,)>(
-        "SELECT quantity FROM reagents WHERE id = $1",
+        "SELECT quantity FROM lims.reagents WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -377,7 +348,7 @@ async fn record_usage(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO reagent_usages (
+        INSERT INTO lims.reagent_usages (
             id, reagent_id, quantity, usage_date, purpose, used_by, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         "#,
@@ -395,7 +366,7 @@ async fn record_usage(
     if let Ok(_) = result {
         let _ = sqlx::query(
             r#"
-            UPDATE reagents SET
+            UPDATE lims.reagents SET
                 quantity = quantity - $2,
                 updated_at = $3
             WHERE id = $1
@@ -426,7 +397,7 @@ async fn list_low_stock(
         SELECT id, name, code, category, specification, supplier, batch_number,
                quantity, unit, location, storage_condition, expiration_date,
                status, description, created_at, updated_at
-        FROM reagents
+        FROM lims.reagents
         WHERE quantity < 10 AND status = 'in_stock'
         ORDER BY quantity ASC
         "#,

@@ -14,37 +14,7 @@ use uuid::Uuid;
 use utoipa::{ToSchema, IntoParams};
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -84,7 +54,9 @@ pub struct BatchOperationResult {
     pub errors: Vec<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> anyhow::Result<Router> {
+
+
+pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
@@ -132,7 +104,7 @@ async fn list_projects(
         SELECT id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at
-        FROM projects
+        FROM rs.projects
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -150,7 +122,7 @@ async fn list_projects(
         Ok(projects) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM projects
+                SELECT COUNT(*) FROM rs.projects
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -202,7 +174,7 @@ async fn create_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        INSERT INTO projects (
+        INSERT INTO rs.projects (
             id, name, code, description, project_type, status, leader,
             team_members, start_date, end_date, budget, progress, created_by,
             created_at, updated_at
@@ -219,7 +191,7 @@ async fn create_project(
     .bind(&req.project_type)
     .bind("draft")
     .bind(&req.leader)
-    .bind(serde_json::to_value(req.team_members).unwrap_or(serde_json::json!([])))
+    .bind(serde_json::to_value(&req.team_members).unwrap_or(serde_json::json!([])))
     .bind(req.start_date)
     .bind(req.end_date)
     .bind(req.budget)
@@ -296,7 +268,7 @@ async fn get_project(
         SELECT id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at
-        FROM projects WHERE id = $1
+        FROM rs.projects WHERE id = $1
         "#,
     )
     .bind(id)
@@ -337,7 +309,7 @@ async fn update_project(
     Json(req): Json<UpdateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
     let existing = sqlx::query_as::<_, Project>(
-        "SELECT id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at FROM projects WHERE id = $1",
+        "SELECT id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at FROM rs.projects WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -349,11 +321,11 @@ async fn update_project(
         Err(e) => return Json(ApiResponse::error(500, &format!("查询项目失败: {}", e))),
     };
 
-    let name = req.name.unwrap_or(existing.name);
-    let description = req.description.or(existing.description);
-    let status = req.status.unwrap_or(existing.status);
-    let leader = req.leader.unwrap_or(existing.leader);
-    let team_members = req.team_members.unwrap_or(existing.team_members);
+    let name = req.name.clone().unwrap_or(existing.name);
+    let description = req.description.clone().or(existing.description);
+    let status = req.status.clone().unwrap_or(existing.status);
+    let leader = req.leader.clone().unwrap_or(existing.leader);
+    let team_members = req.team_members.clone().unwrap_or(existing.team_members);
     let end_date = req.end_date.or(existing.end_date);
     let budget = req.budget.or(existing.budget);
     let progress = req.progress.unwrap_or(existing.progress);
@@ -361,7 +333,7 @@ async fn update_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        UPDATE projects SET
+        UPDATE rs.projects SET
             name = $2, description = $3, status = $4, leader = $5,
             team_members = $6, end_date = $7, budget = $8, progress = $9, updated_at = $10
         WHERE id = $1
@@ -445,7 +417,7 @@ async fn delete_project(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM projects WHERE id = $1")
+    let result = sqlx::query("DELETE FROM rs.projects WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -522,7 +494,7 @@ async fn batch_create_projects(
 
         let result = sqlx::query_as::<_, Project>(
             r#"
-            INSERT INTO projects (
+            INSERT INTO rs.projects (
                 id, name, code, description, project_type, status, leader,
                 team_members, start_date, end_date, budget, progress, created_by,
                 created_at, updated_at
@@ -619,7 +591,7 @@ async fn batch_delete_projects(
     }
 
     let result = sqlx::query(
-        r#"DELETE FROM projects WHERE id = ANY($1)"#,
+        r#"DELETE FROM rs.projects WHERE id = ANY($1)"#,
     )
     .bind(&req.ids)
     .execute(&state.db)
@@ -704,7 +676,7 @@ async fn export_projects(
         SELECT id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at
-        FROM projects
+        FROM rs.projects
         ORDER BY created_at DESC
         "#,
     )
@@ -713,6 +685,7 @@ async fn export_projects(
 
     match result {
         Ok(projects) => {
+            let project_count = projects.len();
             let mut wtr = csv::Writer::from_writer(vec![]);
             
             // Write header
@@ -736,7 +709,7 @@ async fn export_projects(
                 
                 return (
                     [(header::CONTENT_TYPE, "application/json")],
-                    Json(ApiResponse::error(500, "导出失败")),
+                    Json(ApiResponse::<&str>::error(500, "导出失败")),
                 ).into_response();
             }
             
@@ -751,7 +724,7 @@ async fn export_projects(
                     project.status.clone(),
                     project.leader.clone(),
                     serde_json::to_string(&project.team_members).unwrap_or_default(),
-                    project.start_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                    project.start_date.to_rfc3339(),
                     project.end_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                     project.budget.map(|b| b.to_string()).unwrap_or_default(),
                     project.progress.to_string(),
@@ -780,7 +753,7 @@ async fn export_projects(
                     
                     return (
                         [(header::CONTENT_TYPE, "application/json")],
-                        Json(ApiResponse::error(500, "导出失败")),
+                        Json(ApiResponse::<&str>::error(500, "导出失败")),
                     ).into_response();
                 }
             }
@@ -798,7 +771,7 @@ async fn export_projects(
                         None,
                         None,
                         None,
-                        Some(serde_json::json!({ "count": projects.len(), "filename": filename })),
+                        Some(serde_json::json!({ "count": project_count, "filename": filename })),
                         "success".to_string(),
                         None,
                         &headers,
@@ -824,6 +797,7 @@ async fn export_projects(
                         None,
                         None,
                         None,
+                        None,
                         "error".to_string(),
                         Some(e.to_string()),
                         &headers,
@@ -831,7 +805,7 @@ async fn export_projects(
                     
                     (
                         [(header::CONTENT_TYPE, "application/json")],
-                        Json(ApiResponse::error(500, "导出失败")),
+                        Json(ApiResponse::<&str>::error(500, "导出失败")),
                     ).into_response()
                 }
             }
@@ -848,6 +822,7 @@ async fn export_projects(
                 None,
                 None,
                 None,
+                None,
                 "error".to_string(),
                 Some(e.to_string()),
                 &headers,
@@ -855,7 +830,7 @@ async fn export_projects(
             
             (
                 [(header::CONTENT_TYPE, "application/json")],
-                Json(ApiResponse::error(500, "导出失败")),
+                Json(ApiResponse::<&str>::error(500, "导出失败")),
             ).into_response()
         }
     }
@@ -934,7 +909,7 @@ async fn import_projects(
                 
                 let insert_result = sqlx::query_as::<_, Project>(
                     r#"
-                    INSERT INTO projects (
+                    INSERT INTO rs.projects (
                         id, name, code, description, project_type, status, leader,
                         team_members, start_date, end_date, budget, progress, created_by,
                         created_at, updated_at

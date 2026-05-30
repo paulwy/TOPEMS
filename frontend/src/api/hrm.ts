@@ -202,416 +202,192 @@ export interface PaginatedResult<T> {
   page_size: number;
 }
 
-export const departmentApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Department>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/departments${queryString ? '?' + queryString : ''}`);
-  },
-  
-  async get(id: string): Promise<ApiResponse<Department>> {
-    return apiClient.hrm.get(`/api/v1/departments/${id}`);
-  },
-  
-  async create(data: Partial<Department>): Promise<ApiResponse<Department>> {
-    return apiClient.hrm.post('/api/v1/departments', data);
-  },
-  
-  async update(id: string, data: Partial<Department>): Promise<ApiResponse<Department>> {
-    return apiClient.hrm.put(`/api/v1/departments/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/departments/${id}`);
-  },
-};
+export interface ListParams {
+  page?: number;
+  page_size?: number;
+  [key: string]: string | number | undefined;
+}
 
-export const employeeApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Employee>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/employees${queryString ? '?' + queryString : ''}`);
-  },
+function buildQueryString(params?: ListParams): string {
+  if (!params) return '';
   
-  async get(id: string): Promise<ApiResponse<Employee>> {
-    return apiClient.hrm.get(`/api/v1/employees/${id}`);
-  },
+  const searchParams = new URLSearchParams();
   
-  async create(data: Partial<Employee>): Promise<ApiResponse<Employee>> {
-    return apiClient.hrm.post('/api/v1/employees', data);
-  },
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      searchParams.set(key, value.toString());
+    }
+  });
   
-  async update(id: string, data: Partial<Employee>): Promise<ApiResponse<Employee>> {
-    return apiClient.hrm.put(`/api/v1/employees/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/employees/${id}`);
-  },
-};
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : '';
+}
 
-export const roleApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Role>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+interface CrudOperations<T> {
+  list: (params?: ListParams) => Promise<ApiResponse<PaginatedResult<T>>>;
+  get: (id: string) => Promise<ApiResponse<T>>;
+  create: (data: Partial<T>) => Promise<ApiResponse<T>>;
+  update: (id: string, data: Partial<T>) => Promise<ApiResponse<T>>;
+  delete: (id: string) => Promise<ApiResponse<string>>;
+}
+
+function createCrudApi<T>(endpoint: string): CrudOperations<T> {
+  return {
+    list: (params?: ListParams) => {
+      const queryString = buildQueryString(params);
+      return apiClient.hrm.get(`${endpoint}${queryString}`);
+    },
     
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/roles${queryString ? '?' + queryString : ''}`);
-  },
-  
-  async get(id: string): Promise<ApiResponse<Role>> {
-    return apiClient.hrm.get(`/api/v1/roles/${id}`);
-  },
-  
-  async create(data: Partial<Role>): Promise<ApiResponse<Role>> {
-    return apiClient.hrm.post('/api/v1/roles', data);
-  },
-  
-  async update(id: string, data: Partial<Role>): Promise<ApiResponse<Role>> {
-    return apiClient.hrm.put(`/api/v1/roles/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/roles/${id}`);
-  },
-};
+    get: (id: string) => {
+      return apiClient.hrm.get(`${endpoint}/${id}`);
+    },
+    
+    create: (data: Partial<T>) => {
+      return apiClient.hrm.post(endpoint, data);
+    },
+    
+    update: (id: string, data: Partial<T>) => {
+      return apiClient.hrm.put(`${endpoint}/${id}`, data);
+    },
+    
+    delete: (id: string) => {
+      return apiClient.hrm.delete(`${endpoint}/${id}`);
+    },
+  };
+}
+
+export const departmentApi: CrudOperations<Department> = createCrudApi<Department>('/api/v1/departments');
+
+export const employeeApi: CrudOperations<Employee> = createCrudApi<Employee>('/api/v1/employees');
+
+export const roleApi: CrudOperations<Role> = createCrudApi<Role>('/api/v1/roles');
+
+export const positionApi: CrudOperations<Position> = createCrudApi<Position>('/api/v1/positions');
+
+export const candidateApi: CrudOperations<Candidate> = createCrudApi<Candidate>('/api/v1/candidates');
 
 export const leaveApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<LeaveRequest>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.employee_id) searchParams.set('employee_id', params.employee_id);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/leaves${queryString ? '?' + queryString : ''}`);
-  },
+  ...createCrudApi<LeaveRequest>('/api/v1/leaves'),
   
-  async get(id: string): Promise<ApiResponse<LeaveRequest>> {
-    return apiClient.hrm.get(`/api/v1/leaves/${id}`);
-  },
-  
-  async create(data: Partial<LeaveRequest>): Promise<ApiResponse<LeaveRequest>> {
-    return apiClient.hrm.post('/api/v1/leaves', data);
-  },
-  
-  async update(id: string, data: Partial<LeaveRequest>): Promise<ApiResponse<LeaveRequest>> {
-    return apiClient.hrm.put(`/api/v1/leaves/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/leaves/${id}`);
-  },
-  
-  async approve(id: string, approver_id: string): Promise<ApiResponse<LeaveRequest>> {
+  approve(id: string, approver_id: string): Promise<ApiResponse<LeaveRequest>> {
     return apiClient.hrm.put(`/api/v1/leaves/${id}/approve`, { approver_id });
   },
   
-  async reject(id: string, approver_id: string, reason: string): Promise<ApiResponse<LeaveRequest>> {
+  reject(id: string, approver_id: string, reason: string): Promise<ApiResponse<LeaveRequest>> {
     return apiClient.hrm.put(`/api/v1/leaves/${id}/reject`, { approver_id, reason });
   },
 };
 
 export const attendanceApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<AttendanceRecord>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/attendance${queryString ? '?' + queryString : ''}`);
+  ...createCrudApi<AttendanceRecord>('/api/v1/attendance'),
+  
+  list(params?: ListParams): Promise<ApiResponse<PaginatedResult<AttendanceRecord>>> {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/attendance${queryString}`);
   },
   
-  async get(id: string): Promise<ApiResponse<AttendanceRecord>> {
-    return apiClient.hrm.get(`/api/v1/attendance/${id}`);
-  },
-  
-  async create(data: Partial<AttendanceRecord>): Promise<ApiResponse<AttendanceRecord>> {
-    return apiClient.hrm.post('/api/v1/attendance', data);
-  },
-  
-  async update(id: string, data: Partial<AttendanceRecord>): Promise<ApiResponse<AttendanceRecord>> {
-    return apiClient.hrm.put(`/api/v1/attendance/${id}`, data);
-  },
-  
-  async checkIn(employee_id: string): Promise<ApiResponse<AttendanceRecord>> {
+  checkIn(employee_id: string): Promise<ApiResponse<AttendanceRecord>> {
     return apiClient.hrm.post('/api/v1/attendance/check-in', { employee_id });
   },
   
-  async checkOut(employee_id: string): Promise<ApiResponse<AttendanceRecord>> {
+  checkOut(employee_id: string): Promise<ApiResponse<AttendanceRecord>> {
     return apiClient.hrm.post('/api/v1/attendance/check-out', { employee_id });
   },
 };
 
-export const positionApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Position>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.department_id) searchParams.set('department_id', params.department_id);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/positions${queryString ? '?' + queryString : ''}`);
-  },
-  
-  async get(id: string): Promise<ApiResponse<Position>> {
-    return apiClient.hrm.get(`/api/v1/positions/${id}`);
-  },
-  
-  async create(data: Partial<Position>): Promise<ApiResponse<Position>> {
-    return apiClient.hrm.post('/api/v1/positions', data);
-  },
-  
-  async update(id: string, data: Partial<Position>): Promise<ApiResponse<Position>> {
-    return apiClient.hrm.put(`/api/v1/positions/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/positions/${id}`);
-  },
-};
-
 export const jobOpeningApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<JobOpening>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.department_id) searchParams.set('department_id', params.department_id);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/job-openings${queryString ? '?' + queryString : ''}`);
+  ...createCrudApi<JobOpening>('/api/v1/job-openings'),
+  
+  list(params?: ListParams): Promise<ApiResponse<PaginatedResult<JobOpening>>> {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/job-openings${queryString}`);
   },
   
-  async get(id: string): Promise<ApiResponse<JobOpening>> {
-    return apiClient.hrm.get(`/api/v1/job-openings/${id}`);
-  },
-  
-  async create(data: Partial<JobOpening>): Promise<ApiResponse<JobOpening>> {
-    return apiClient.hrm.post('/api/v1/job-openings', data);
-  },
-  
-  async update(id: string, data: Partial<JobOpening>): Promise<ApiResponse<JobOpening>> {
-    return apiClient.hrm.put(`/api/v1/job-openings/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/job-openings/${id}`);
-  },
-  
-  async publish(id: string): Promise<ApiResponse<JobOpening>> {
+  publish(id: string): Promise<ApiResponse<JobOpening>> {
     return apiClient.hrm.put(`/api/v1/job-openings/${id}/publish`);
   },
   
-  async close(id: string): Promise<ApiResponse<JobOpening>> {
+  close(id: string): Promise<ApiResponse<JobOpening>> {
     return apiClient.hrm.put(`/api/v1/job-openings/${id}/close`);
   },
 };
 
-export const candidateApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Candidate>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/candidates${queryString ? '?' + queryString : ''}`);
-  },
-  
-  async get(id: string): Promise<ApiResponse<Candidate>> {
-    return apiClient.hrm.get(`/api/v1/candidates/${id}`);
-  },
-  
-  async create(data: Partial<Candidate>): Promise<ApiResponse<Candidate>> {
-    return apiClient.hrm.post('/api/v1/candidates', data);
-  },
-  
-  async update(id: string, data: Partial<Candidate>): Promise<ApiResponse<Candidate>> {
-    return apiClient.hrm.put(`/api/v1/candidates/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/candidates/${id}`);
-  },
-};
-
 export const interviewApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Interview>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.employee_id) searchParams.set('candidate_id', params.employee_id);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/interviews${queryString ? '?' + queryString : ''}`);
+  ...createCrudApi<Interview>('/api/v1/interviews'),
+  
+  list(params?: ListParams): Promise<ApiResponse<PaginatedResult<Interview>>> {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/interviews${queryString}`);
   },
   
-  async get(id: string): Promise<ApiResponse<Interview>> {
-    return apiClient.hrm.get(`/api/v1/interviews/${id}`);
-  },
-  
-  async create(data: Partial<Interview>): Promise<ApiResponse<Interview>> {
-    return apiClient.hrm.post('/api/v1/interviews', data);
-  },
-  
-  async update(id: string, data: Partial<Interview>): Promise<ApiResponse<Interview>> {
-    return apiClient.hrm.put(`/api/v1/interviews/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/interviews/${id}`);
-  },
-  
-  async complete(id: string, data: Partial<Interview>): Promise<ApiResponse<Interview>> {
+  complete(id: string, data: Partial<Interview>): Promise<ApiResponse<Interview>> {
     return apiClient.hrm.put(`/api/v1/interviews/${id}/complete`, data);
   },
 };
 
 export const payrollApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<PayrollRun>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('pay_period', params.search);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/payroll-runs${queryString ? '?' + queryString : ''}`);
+  list(params?: ListParams): Promise<ApiResponse<PaginatedResult<PayrollRun>>> {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/payroll-runs${queryString}`);
   },
   
-  async get(id: string): Promise<ApiResponse<{ run: PayrollRun; items: PayrollItem[] }>> {
+  get(id: string): Promise<ApiResponse<{ run: PayrollRun; items: PayrollItem[] }>> {
     return apiClient.hrm.get(`/api/v1/payroll-runs/${id}`);
   },
   
-  async create(data: { pay_period: string }): Promise<ApiResponse<PayrollRun>> {
+  create(data: { pay_period: string }): Promise<ApiResponse<PayrollRun>> {
     return apiClient.hrm.post('/api/v1/payroll-runs', data);
   },
   
-  async delete(id: string): Promise<ApiResponse<string>> {
+  delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.hrm.delete(`/api/v1/payroll-runs/${id}`);
   },
   
-  async calculate(id: string): Promise<ApiResponse<PayrollRun>> {
+  calculate(id: string): Promise<ApiResponse<PayrollRun>> {
     return apiClient.hrm.put(`/api/v1/payroll-runs/${id}/calculate`);
   },
   
-  async pay(id: string): Promise<ApiResponse<PayrollRun>> {
+  pay(id: string): Promise<ApiResponse<PayrollRun>> {
     return apiClient.hrm.put(`/api/v1/payroll-runs/${id}/pay`);
   },
 };
 
 export const payrollItemApi = {
-  async list(params?: { page?: number; page_size?: number; payroll_run_id?: string; employee_id?: string; status?: string }): Promise<ApiResponse<PaginatedResult<PayrollItem>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.payroll_run_id) searchParams.set('payroll_run_id', params.payroll_run_id);
-    if (params?.employee_id) searchParams.set('employee_id', params.employee_id);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/payroll-items${queryString ? '?' + queryString : ''}`);
+  list(params?: ListParams): Promise<ApiResponse<PaginatedResult<PayrollItem>>> {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/payroll-items${queryString}`);
   },
   
-  async get(id: string): Promise<ApiResponse<{ item: PayrollItem; details: any[] }>> {
+  get(id: string): Promise<ApiResponse<{ item: PayrollItem; details: any[] }>> {
     return apiClient.hrm.get(`/api/v1/payroll-items/${id}`);
   },
 };
 
 export const performanceReviewApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<PerformanceReview>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.employee_id) searchParams.set('employee_id', params.employee_id);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/performance-reviews${queryString ? '?' + queryString : ''}`);
+  ...createCrudApi<PerformanceReview>('/api/v1/performance-reviews'),
+  
+  list(params?: ListParams): Promise<ApiResponse<PaginatedResult<PerformanceReview>>> {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/performance-reviews${queryString}`);
   },
   
-  async get(id: string): Promise<ApiResponse<PerformanceReview>> {
-    return apiClient.hrm.get(`/api/v1/performance-reviews/${id}`);
-  },
-  
-  async create(data: Partial<PerformanceReview>): Promise<ApiResponse<PerformanceReview>> {
-    return apiClient.hrm.post('/api/v1/performance-reviews', data);
-  },
-  
-  async update(id: string, data: Partial<PerformanceReview>): Promise<ApiResponse<PerformanceReview>> {
-    return apiClient.hrm.put(`/api/v1/performance-reviews/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/performance-reviews/${id}`);
-  },
-  
-  async submit(id: string): Promise<ApiResponse<PerformanceReview>> {
+  submit(id: string): Promise<ApiResponse<PerformanceReview>> {
     return apiClient.hrm.put(`/api/v1/performance-reviews/${id}/submit`);
   },
   
-  async approve(id: string): Promise<ApiResponse<PerformanceReview>> {
+  approve(id: string): Promise<ApiResponse<PerformanceReview>> {
     return apiClient.hrm.put(`/api/v1/performance-reviews/${id}/approve`);
   },
 };
 
-export const performanceGoalApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<PerformanceGoal>>> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.employee_id) searchParams.set('employee_id', params.employee_id);
-    if (params?.status) searchParams.set('status', params.status);
-    
-    const queryString = searchParams.toString();
-    return apiClient.hrm.get(`/api/v1/performance-goals${queryString ? '?' + queryString : ''}`);
-  },
-  
-  async get(id: string): Promise<ApiResponse<PerformanceGoal>> {
-    return apiClient.hrm.get(`/api/v1/performance-goals/${id}`);
-  },
-  
-  async create(data: Partial<PerformanceGoal>): Promise<ApiResponse<PerformanceGoal>> {
-    return apiClient.hrm.post('/api/v1/performance-goals', data);
-  },
-  
-  async update(id: string, data: Partial<PerformanceGoal>): Promise<ApiResponse<PerformanceGoal>> {
-    return apiClient.hrm.put(`/api/v1/performance-goals/${id}`, data);
-  },
-  
-  async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/v1/performance-goals/${id}`);
-  },
-};
+export const performanceGoalApi: CrudOperations<PerformanceGoal> = createCrudApi<PerformanceGoal>('/api/v1/performance-goals');
 
 export const employeePerformanceApi = {
-  async getReviews(employee_id: string): Promise<ApiResponse<{ items: PerformanceReview[]; total: number }>> {
+  getReviews(employee_id: string): Promise<ApiResponse<{ items: PerformanceReview[]; total: number }>> {
     return apiClient.hrm.get(`/api/v1/employees/${employee_id}/performance-reviews`);
   },
   
-  async getGoals(employee_id: string): Promise<ApiResponse<{ items: PerformanceGoal[]; total: number }>> {
+  getGoals(employee_id: string): Promise<ApiResponse<{ items: PerformanceGoal[]; total: number }>> {
     return apiClient.hrm.get(`/api/v1/employees/${employee_id}/performance-goals`);
   },
 };
@@ -628,4 +404,8 @@ export const hrmApi = {
   payroll: payrollApi,
   performanceReviews: performanceReviewApi,
   performanceGoals: performanceGoalApi,
+  
+  health: async (): Promise<ApiResponse<string>> => {
+    return apiClient.hrm.get('/health');
+  },
 };

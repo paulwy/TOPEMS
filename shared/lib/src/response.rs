@@ -31,7 +31,7 @@ impl<T> ApiResponse<T> {
         }
     }
 
-    pub fn error<U>(code: u16, message: &str) -> ApiResponse<U> {
+    pub fn error(code: u16, message: &str) -> Self {
         ApiResponse {
             code,
             success: false,

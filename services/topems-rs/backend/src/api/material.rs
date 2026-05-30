@@ -1,4 +1,4 @@
-use anyhow::Result;
+
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -10,36 +10,7 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -90,7 +61,7 @@ pub struct UpdateMaterialTestRequest {
     pub conclusion: Option<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
+pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
@@ -118,7 +89,7 @@ async fn list_material_tests(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
                test_results, conclusion, tested_by, tested_at, created_at
-        FROM material_tests
+        FROM rs.material_tests
         WHERE ($1::text IS NULL OR material_name ILIKE $1 OR batch_number ILIKE $1)
           AND ($2::uuid IS NULL OR project_id = $2)
           AND ($3::uuid IS NULL OR experiment_id = $3)
@@ -138,7 +109,7 @@ async fn list_material_tests(
         Ok(records) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM material_tests
+                SELECT COUNT(*) FROM rs.material_tests
                 WHERE ($1::text IS NULL OR material_name ILIKE $1 OR batch_number ILIKE $1)
                   AND ($2::uuid IS NULL OR project_id = $2)
                   AND ($3::uuid IS NULL OR experiment_id = $3)
@@ -177,7 +148,7 @@ async fn list_by_project(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
                test_results, conclusion, tested_by, tested_at, created_at
-        FROM material_tests
+        FROM rs.material_tests
         WHERE project_id = $1
         ORDER BY tested_at DESC
         "#,
@@ -203,7 +174,7 @@ async fn list_by_experiment(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
                test_results, conclusion, tested_by, tested_at, created_at
-        FROM material_tests
+        FROM rs.material_tests
         WHERE experiment_id = $1
         ORDER BY tested_at DESC
         "#,
@@ -230,7 +201,7 @@ async fn create_material_test(
 
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
-        INSERT INTO material_tests (
+        INSERT INTO rs.material_tests (
             id, project_id, experiment_id, material_name, supplier, batch_number,
             test_results, conclusion, tested_by, tested_at, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -269,7 +240,7 @@ async fn get_material_test(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
                test_results, conclusion, tested_by, tested_at, created_at
-        FROM material_tests WHERE id = $1
+        FROM rs.material_tests WHERE id = $1
         "#,
     )
     .bind(id)
@@ -292,7 +263,7 @@ async fn update_material_test(
     Json(req): Json<UpdateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
     let existing = sqlx::query_as::<_, MaterialTest>(
-        "SELECT id, project_id, experiment_id, material_name, supplier, batch_number, test_results, conclusion, tested_by, tested_at, created_at FROM material_tests WHERE id = $1",
+        "SELECT id, project_id, experiment_id, material_name, supplier, batch_number, test_results, conclusion, tested_by, tested_at, created_at FROM rs.material_tests WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -312,7 +283,7 @@ async fn update_material_test(
 
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
-        UPDATE material_tests SET
+        UPDATE rs.material_tests SET
             material_name = $2, supplier = $3, batch_number = $4,
             test_results = $5, conclusion = $6
         WHERE id = $1
@@ -342,7 +313,7 @@ async fn delete_material_test(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM material_tests WHERE id = $1")
+    let result = sqlx::query("DELETE FROM rs.material_tests WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -1,4 +1,4 @@
-use anyhow::Result;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -11,6 +11,8 @@ use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use std::env;
+
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AiAnalysis {
@@ -45,34 +47,6 @@ pub struct AiChatResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponse<T> {
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    fn success(data: T, message: &str) -> Self {
-        ApiResponse {
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    fn error(message: &str) -> Self {
-        ApiResponse {
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct PaginatedResponse<T> {
     pub items: Vec<T>,
     pub total: i64,
@@ -86,7 +60,7 @@ struct ListQueryParams {
     page_size: Option<i32>,
 }
 
-pub async fn create_routes(pool: PgPool) -> Result<axum::Router> {
+pub async fn create_routes(pool: PgPool) -> topems_shared::Result<axum::Router> {
     let router = axum::Router::new()
         .route("/api/v1/ai/analyses", axum::routing::get(list_analyses))
         .route("/api/v1/ai/analyses", axum::routing::post(create_analysis))
@@ -107,7 +81,7 @@ async fn list_analyses(
 
     let result: Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
-         FROM ai_analyses
+         FROM rs.ai_analyses
          ORDER BY created_at DESC
          LIMIT $1 OFFSET $2"
     )
@@ -116,7 +90,7 @@ async fn list_analyses(
     .fetch_all(&pool)
     .await;
 
-    let total: Result<i64, sqlx::Error> = sqlx::query_scalar("SELECT COUNT(*) FROM ai_analyses")
+    let total: Result<i64, sqlx::Error> = sqlx::query_scalar("SELECT COUNT(*) FROM rs.ai_analyses")
         .fetch_one(&pool)
         .await;
 
@@ -134,7 +108,7 @@ async fn list_analyses(
             (StatusCode::OK, Json(response))
         }
         (_, Err(e)) | (Err(e), _) => {
-            let response: ApiResponse<PaginatedResponse<AiAnalysis>> = ApiResponse::error(&format!("获取AI分析列表失败: {}", e));
+            let response = ApiResponse::<PaginatedResponse<AiAnalysis>>::error(500, &format!("获取AI分析列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -151,7 +125,7 @@ async fn create_analysis(
     let ai_response = match call_ai_service(&request.prompt, &ai_service_url).await {
         Ok(resp) => resp,
         Err(e) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error(&format!("AI服务调用失败: {}", e));
+            let response = ApiResponse::<AiAnalysis>::error(500, &format!("AI服务调用失败: {}", e));
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(response));
         }
     };
@@ -160,7 +134,7 @@ async fn create_analysis(
     let now = Utc::now();
 
     let result: Result<AiAnalysis, sqlx::Error> = sqlx::query_as(
-        "INSERT INTO ai_analyses (
+        "INSERT INTO rs.ai_analyses (
             id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at"
@@ -183,7 +157,7 @@ async fn create_analysis(
             (StatusCode::CREATED, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error(&format!("创建AI分析失败: {}", e));
+            let response = ApiResponse::<AiAnalysis>::error(500, &format!("创建AI分析失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -195,7 +169,7 @@ async fn get_analysis(
 ) -> impl IntoResponse {
     let result: Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
-         FROM ai_analyses WHERE id = $1"
+         FROM rs.ai_analyses WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&pool)
@@ -207,11 +181,11 @@ async fn get_analysis(
             (StatusCode::OK, Json(response))
         }
         Ok(None) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error("AI分析不存在");
+            let response = ApiResponse::<AiAnalysis>::error(404, "AI分析不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error(&format!("获取AI分析失败: {}", e));
+            let response = ApiResponse::<AiAnalysis>::error(500, &format!("获取AI分析失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -230,7 +204,7 @@ async fn ai_chat(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<AiChatResponse> = ApiResponse::error(&format!("AI聊天失败: {}", e));
+            let response = ApiResponse::<AiChatResponse>::error(500, &format!("AI聊天失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -242,7 +216,7 @@ async fn get_entity_analyses(
 ) -> impl IntoResponse {
     let result: Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
-         FROM ai_analyses
+         FROM rs.ai_analyses
          WHERE entity_type = $1 AND entity_id = $2
          ORDER BY created_at DESC"
     )
@@ -257,7 +231,7 @@ async fn get_entity_analyses(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<Vec<AiAnalysis>> = ApiResponse::error(&format!("获取实体AI分析列表失败: {}", e));
+            let response = ApiResponse::<Vec<AiAnalysis>>::error(500, &format!("获取实体AI分析列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
