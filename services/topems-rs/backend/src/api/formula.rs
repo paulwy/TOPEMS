@@ -10,7 +10,7 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{CreateFormulaRequest, Formula, UpdateFormulaRequest};
+use crate::models::{CreateFormulaRequest, CreateFormulaVersionRequest, Formula, FormulaVersion, UpdateFormulaRequest};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -35,10 +35,8 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
             "/api/v1/formulas/{id}",
             get(get_formula).put(update_formula).delete(delete_formula),
         )
-        .route(
-            "/api/v1/formulas/{id}/versions",
-            get(get_formula_versions),
-        )
+        .route("/api/v1/formulas/{id}/versions", get(get_formula_versions).post(create_formula_version))
+        .route("/api/v1/formulas/{id}/approve", post(approve_formula))
         .with_state(state);
 
     Ok(app)
@@ -54,8 +52,10 @@ async fn list_formulas(
 
     let result = sqlx::query_as::<_, Formula>(
         r#"
-        SELECT id, name, code, version, description, project_id, status,
-               properties, created_by, created_at, updated_at
+        SELECT id, name, code, version, category, description, project_id, status,
+               approval_status, approved_by, approved_at, effective_date, expiration_date,
+               ingredients, process_steps, properties,
+               created_by, created_at, updated_at
         FROM rs.formulas
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -92,7 +92,7 @@ async fn list_formulas(
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "formulas": formulas,
+                    "items": formulas,
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -117,24 +117,32 @@ async fn create_formula(
     let result = sqlx::query_as::<_, Formula>(
         r#"
         INSERT INTO rs.formulas (
-            id, name, code, version, description, project_id, status,
-            ingredients, process_params, properties, created_by,
+            id, name, code, version, category, description, project_id, status,
+            approval_status, effective_date, expiration_date,
+            ingredients, process_steps, process_params, properties, created_by,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        RETURNING id, name, code, version, description, project_id, status,
-                  properties, created_by, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        RETURNING id, name, code, version, category, description, project_id, status,
+                  approval_status, approved_by, approved_at, effective_date, expiration_date,
+                  ingredients, process_steps, properties,
+                  created_by, created_at, updated_at
         "#,
     )
     .bind(id)
     .bind(&req.name)
     .bind(&req.code)
-    .bind(1)
+    .bind(req.version.unwrap_or_else(|| "v1.0".to_string()))
+    .bind(&req.category)
     .bind(&req.description)
     .bind(req.project_id)
-    .bind("draft")
-    .bind(serde_json::to_value(req.ingredients).unwrap_or(serde_json::json!([])))
-    .bind(req.process_params)
-    .bind(req.properties)
+    .bind(req.status.unwrap_or_else(|| "草稿".to_string()))
+    .bind::<Option<String>>(None)
+    .bind(req.effective_date)
+    .bind(req.expiration_date)
+    .bind(serde_json::to_value(req.ingredients.unwrap_or(vec![])).unwrap_or(serde_json::json!([])))
+    .bind(&req.process_steps)
+    .bind(serde_json::json!({}))
+    .bind(req.properties.unwrap_or(serde_json::json!({})))
     .bind(&req.name)
     .bind(now)
     .bind(now)
@@ -156,8 +164,10 @@ async fn get_formula(
 ) -> Json<ApiResponse<Formula>> {
     let result = sqlx::query_as::<_, Formula>(
         r#"
-        SELECT id, name, code, version, description, project_id, status,
-               properties, created_by, created_at, updated_at
+        SELECT id, name, code, version, category, description, project_id, status,
+               approval_status, approved_by, approved_at, effective_date, expiration_date,
+               ingredients, process_steps, properties,
+               created_by, created_at, updated_at
         FROM rs.formulas WHERE id = $1
         "#,
     )
@@ -181,7 +191,13 @@ async fn update_formula(
     Json(req): Json<UpdateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
     let existing = sqlx::query_as::<_, Formula>(
-        "SELECT id, name, code, version, description, project_id, status, properties, created_by, created_at, updated_at FROM rs.formulas WHERE id = $1",
+        r#"
+        SELECT id, name, code, version, category, description, project_id, status,
+               approval_status, approved_by, approved_at, effective_date, expiration_date,
+               ingredients, process_steps, properties,
+               created_by, created_at, updated_at
+        FROM rs.formulas WHERE id = $1
+        "#,
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -194,29 +210,38 @@ async fn update_formula(
     };
 
     let name = req.name.unwrap_or(existing.name);
+    let category = req.category.or(existing.category);
     let description = req.description.or(existing.description);
     let status = req.status.unwrap_or(existing.status);
-    let ingredients = req.ingredients.unwrap_or(vec![]);
-    let process_params = req.process_params.unwrap_or(existing.properties.clone());
+    let ingredients = req.ingredients.unwrap_or_else(|| {
+        serde_json::from_value(existing.ingredients.clone()).unwrap_or(vec![])
+    });
+    let process_steps = req.process_steps.or(existing.process_steps);
     let properties = req.properties.unwrap_or(existing.properties);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Formula>(
         r#"
         UPDATE rs.formulas SET
-            name = $2, description = $3, status = $4,
-            ingredients = $5, process_params = $6, properties = $7, updated_at = $8
+            name = $2, category = $3, description = $4, status = $5,
+            effective_date = $6, expiration_date = $7,
+            ingredients = $8, process_steps = $9, properties = $10, updated_at = $11
         WHERE id = $1
-        RETURNING id, name, code, version, description, project_id, status,
-                  properties, created_by, created_at, updated_at
+        RETURNING id, name, code, version, category, description, project_id, status,
+                  approval_status, approved_by, approved_at, effective_date, expiration_date,
+                  ingredients, process_steps, properties,
+                  created_by, created_at, updated_at
         "#,
     )
     .bind(id)
     .bind(&name)
+    .bind(&category)
     .bind(&description)
     .bind(&status)
+    .bind(req.effective_date)
+    .bind(req.expiration_date)
     .bind(serde_json::to_value(ingredients).unwrap())
-    .bind(process_params)
+    .bind(&process_steps)
     .bind(properties)
     .bind(now)
     .fetch_one(&state.db)
@@ -253,38 +278,145 @@ async fn delete_formula(
 async fn get_formula_versions(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
+) -> Json<ApiResponse<Vec<FormulaVersion>>> {
+    let result = sqlx::query_as::<_, FormulaVersion>(
         r#"
-        SELECT json_agg(
-            json_build_object(
-                'id', id,
-                'version', version,
-                'ingredients', ingredients,
-                'process_params', process_params,
-                'properties', properties,
-                'change_reason', change_reason,
-                'created_by', created_by,
-                'created_at', created_at
-            )
-        ) as versions
+        SELECT id, formula_id, version, ingredients, process_steps, process_params,
+               properties, changes, approval_status, approved_by, approved_at,
+               created_by, created_at, updated_at
         FROM rs.formula_versions
         WHERE formula_id = $1
-        ORDER BY version DESC
+        ORDER BY version DESC, created_at DESC
         "#,
     )
     .bind(id)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(versions) => Json(ApiResponse::success(versions, "获取配方版本历史成功")),
+        Err(e) => {
+            tracing::error!("获取配方版本历史失败: {}", e);
+            Json(ApiResponse::error(500, "获取配方版本历史失败"))
+        }
+    }
+}
+
+async fn create_formula_version(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<CreateFormulaVersionRequest>,
+) -> Json<ApiResponse<FormulaVersion>> {
+    let version_id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let existing_formula = sqlx::query_as::<_, Formula>(
+        r#"
+        SELECT id, name, code, version, category, description, project_id, status,
+               approval_status, approved_by, approved_at, effective_date, expiration_date,
+               ingredients, process_steps, properties,
+               created_by, created_at, updated_at
+        FROM rs.formulas WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing_formula = match existing_formula {
+        Ok(Some(f)) => f,
+        Ok(None) => return Json(ApiResponse::error(404, "配方不存在")),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询配方失败: {}", e))),
+    };
+
+    let ingredients = req.ingredients.unwrap_or_else(|| {
+        serde_json::from_value(existing_formula.ingredients.clone()).unwrap_or(vec![])
+    });
+
+    let result = sqlx::query_as::<_, FormulaVersion>(
+        r#"
+        INSERT INTO rs.formula_versions (
+            id, formula_id, version, ingredients, process_steps, process_params,
+            properties, changes, created_by, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING id, formula_id, version, ingredients, process_steps, process_params,
+                  properties, changes, approval_status, approved_by, approved_at,
+                  created_by, created_at, updated_at
+        "#,
+    )
+    .bind(version_id)
+    .bind(id)
+    .bind(&req.version)
+    .bind(serde_json::to_value(&ingredients).unwrap())
+    .bind(&req.process_steps)
+    .bind(serde_json::json!({}))
+    .bind(serde_json::json!({}))
+    .bind(&req.changes)
+    .bind(&existing_formula.created_by)
+    .bind(now)
+    .bind(now)
     .fetch_one(&state.db)
     .await;
 
     match result {
-        Ok((versions,)) => {
-            let versions = versions.unwrap_or(serde_json::json!([]));
-            Json(ApiResponse::success(versions.as_array().unwrap_or(&vec![]).clone(), "获取配方版本历史成功"))
+        Ok(version) => {
+            sqlx::query(
+                r#"
+                UPDATE rs.formulas SET
+                    version = $2, ingredients = $3, process_steps = $4, updated_at = $5
+                WHERE id = $1
+                "#,
+            )
+            .bind(id)
+            .bind(&req.version)
+            .bind(serde_json::to_value(ingredients).unwrap())
+            .bind(&req.process_steps)
+            .bind(now)
+            .execute(&state.db)
+            .await
+            .ok();
+
+            Json(ApiResponse::success(version, "配方版本创建成功"))
         }
         Err(e) => {
-            tracing::error!("获取配方版本历史失败: {}", e);
-            Json(ApiResponse::error(500, "获取配方版本历史失败"))
+            tracing::error!("创建配方版本失败: {}", e);
+            Json(ApiResponse::error(500, "创建配方版本失败"))
+        }
+    }
+}
+
+async fn approve_formula(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(_req): Json<crate::models::ApproveFormulaRequest>,
+) -> Json<ApiResponse<Formula>> {
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, Formula>(
+        r#"
+        UPDATE rs.formulas SET
+            status = '已批准',
+            approval_status = 'approved',
+            approved_at = $2,
+            updated_at = $3
+        WHERE id = $1
+        RETURNING id, name, code, version, category, description, project_id, status,
+                  approval_status, approved_by, approved_at, effective_date, expiration_date,
+                  ingredients, process_steps, properties,
+                  created_by, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(now)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(formula) => Json(ApiResponse::success(formula, "配方审批成功")),
+        Err(e) => {
+            tracing::error!("审批配方失败: {}", e);
+            Json(ApiResponse::error(500, "审批配方失败"))
         }
     }
 }

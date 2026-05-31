@@ -1,7 +1,7 @@
-# TOPEMS ERP Service Dockerfile
-FROM rust:nightly
+# TOPEMS topems-erp Service Dockerfile
+FROM rust:1.75-slim
 
-WORKDIR /build
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     pkg-config \
@@ -9,19 +9,18 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /shared/lib /app/logs
+COPY . .
 
-COPY shared/lib /shared/lib
-COPY services/topems-erp/backend/ /build/
+WORKDIR /app/services/topems-erp/backend
 
 RUN cargo build --release
 
-RUN cp /build/target/release/topems-erp /app/
+RUN mkdir -p /app/logs
 
-EXPOSE 8014
+EXPOSE 8009
 
 ENV RUST_LOG=info
-ENV SERVICE_PORT=8014
+ENV SERVICE_PORT=8009
 
-ENTRYPOINT ["/app/topems-erp"]
-CMD ["--host", "0.0.0.0", "--port", "8014"]
+ENTRYPOINT ["/app/services/topems-erp/backend/target/release/topems-erp"]
+CMD ["--host", "0.0.0.0", "--port", "8009"]

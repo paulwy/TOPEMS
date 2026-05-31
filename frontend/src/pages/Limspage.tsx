@@ -2,20 +2,22 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { 
   ClipboardList, Plus, Search, Clock, ChevronRight, 
   Beaker, Edit, Trash2, Loader2, X, CheckCircle, Filter,
-  Play, FileText, ClipboardCheck, Download, Upload
+  Play, FileText, ClipboardCheck, Download, Upload, Settings,
+  Wrench, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { limsApi, Sample, CreateSampleRequest, InspectionProcess, InspectionTask, InspectionRecord, CreateInspectionTaskRequest, CreateInspectionRecordRequest, BatchCreateSamplesRequest, BatchDeleteSamplesRequest, BatchOperationResult } from '../api/lims';
+import { limsApi, Sample, CreateSampleRequest, InspectionProcess, InspectionTask, InspectionRecord, CreateInspectionTaskRequest, CreateInspectionRecordRequest, BatchCreateSamplesRequest, BatchDeleteSamplesRequest, BatchOperationResult, Instrument, CreateInstrumentRequest, MaintenanceRecord, CreateMaintenanceRecordRequest } from '../api/lims';
 import { ModuleGate } from '../components/PermissionGate';
 import { MODULES } from '../config/permissions';
 
 const Limspage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'samples' | 'processes' | 'tasks'>('samples');
+  const [activeTab, setActiveTab] = useState<'samples' | 'processes' | 'tasks' | 'instruments'>('samples');
   const [samples, setSamples] = useState<Sample[]>([]);
   const [processes, setProcesses] = useState<InspectionProcess[]>([]);
   const [tasks, setTasks] = useState<InspectionTask[]>([]);
   const [records, setRecords] = useState<InspectionRecord[]>([]);
+  const [instruments, setInstruments] = useState<Instrument[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('全部');
@@ -23,14 +25,44 @@ const Limspage: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
+  const [showInstrumentModal, setShowInstrumentModal] = useState(false);
+  const [showInstrumentDetailModal, setShowInstrumentDetailModal] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [selectedProcess, setSelectedProcess] = useState<InspectionProcess | null>(null);
   const [selectedTask, setSelectedTask] = useState<InspectionTask | null>(null);
   const [selectedTaskRecords, setSelectedTaskRecords] = useState<InspectionRecord[]>([]);
+  const [selectedInstrument, setSelectedInstrument] = useState<Instrument | null>(null);
+  const [instrumentMaintenanceRecords, setInstrumentMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
   const [formData, setFormData] = useState<CreateSampleRequest>({
     name: '',
     description: '',
     status: '待测试'
+  });
+  const [instrumentFormData, setInstrumentFormData] = useState<CreateInstrumentRequest>({
+    name: '',
+    code: '',
+    type: '',
+    manufacturer: '',
+    model: '',
+    serial_number: '',
+    location: '',
+    status: '正常',
+    purchase_date: '',
+    calibration_date: '',
+    next_calibration_date: '',
+    responsible_person: '',
+    description: ''
+  });
+  const [maintenanceFormData, setMaintenanceFormData] = useState<CreateMaintenanceRecordRequest>({
+    instrument_id: '',
+    maintenance_type: '',
+    description: '',
+    performed_by: '',
+    performed_at: new Date().toISOString().split('T')[0],
+    next_maintenance_date: '',
+    cost: 0,
+    notes: ''
   });
   const [taskFormData, setTaskFormData] = useState<CreateInspectionTaskRequest>({
     sample_id: '',
@@ -46,6 +78,7 @@ const Limspage: React.FC = () => {
     inspector: ''
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingInstrument, setIsEditingInstrument] = useState(false);
   const [creating, setCreating] = useState(false);
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [selectedSampleIds, setSelectedSampleIds] = useState<Set<string>>(new Set());
@@ -67,10 +100,221 @@ const Limspage: React.FC = () => {
       await Promise.all([
         loadSamples(),
         loadProcesses(),
-        loadTasks()
+        loadTasks(),
+        loadInstruments()
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadInstruments = async () => {
+    try {
+      const response = await limsApi.listInstruments();
+      if (response.success && response.data) {
+        let instrumentData = response.data as any;
+        let rawInstruments: any[] = [];
+
+        if (Array.isArray(instrumentData)) {
+          rawInstruments = instrumentData;
+        } else if (instrumentData.items && Array.isArray(instrumentData.items)) {
+          rawInstruments = instrumentData.items;
+        }
+
+        setInstruments(rawInstruments);
+      } else {
+        setInstruments([]);
+      }
+    } catch (err) {
+      console.error('加载仪器失败:', err);
+      setInstruments([]);
+    }
+  };
+
+  // 便捷函数：获取安全的仪器列表
+  const safeInstruments = instruments || [];
+
+  // 便捷函数：打开新建仪器模态框（可选：传入仪器用于编辑）
+  const openInstrumentModal = (instrument?: Instrument) => {
+    if (instrument) {
+      setIsEditingInstrument(true);
+      setSelectedInstrument(instrument);
+      setInstrumentFormData({
+        name: instrument.name || '',
+        code: instrument.code || '',
+        type: instrument.type || '',
+        manufacturer: instrument.manufacturer || '',
+        model: instrument.model || '',
+        serial_number: instrument.serial_number || '',
+        location: instrument.location || '',
+        status: instrument.status || '正常',
+        purchase_date: instrument.purchase_date || '',
+        calibration_date: instrument.calibration_date || '',
+        next_calibration_date: instrument.next_calibration_date || '',
+        responsible_person: instrument.responsible_person || '',
+        description: instrument.description || ''
+      });
+    } else {
+      setIsEditingInstrument(false);
+      setInstrumentFormData({
+        name: '',
+        code: '',
+        type: '',
+        manufacturer: '',
+        model: '',
+        serial_number: '',
+        location: '',
+        status: '正常',
+        purchase_date: '',
+        calibration_date: '',
+        next_calibration_date: '',
+        responsible_person: '',
+        description: ''
+      });
+    }
+    setShowInstrumentModal(true);
+  };
+
+  // 便捷函数：打开仪器详情模态框
+  const openInstrumentDetailModal = (instrument: Instrument) => {
+    setSelectedInstrument(instrument);
+    loadMaintenanceRecords(instrument.id);
+    setShowInstrumentDetailModal(true);
+  };
+
+  // 便捷函数：打开维护记录模态框
+  const openMaintenanceModal = (instrument: Instrument) => {
+    setSelectedInstrument(instrument);
+    setMaintenanceFormData({
+      instrument_id: instrument.id,
+      maintenance_type: '',
+      description: '',
+      performed_by: '',
+      performed_at: new Date().toISOString().split('T')[0],
+      next_maintenance_date: '',
+      cost: 0,
+      notes: ''
+    });
+    setShowMaintenanceModal(true);
+  };
+
+  // 获取仪器类型图标
+  const getInstrumentTypeIcon = (type: string) => {
+    const iconMap: Record<string, any> = {
+      '分析仪器': Beaker,
+      '测量仪器': Settings,
+      '实验设备': Wrench,
+      'default': Settings
+    };
+    return iconMap[type] || iconMap['default'];
+  };
+
+  // 获取仪器状态颜色
+  const getInstrumentStatusColor = (status: string) => {
+    const colorMap: Record<string, string> = {
+      '正常': 'text-green-600 bg-green-50',
+      '校准中': 'text-yellow-600 bg-yellow-50',
+      '维修中': 'text-red-600 bg-red-50',
+      '停用': 'text-gray-600 bg-gray-50',
+      'normal': 'text-green-600 bg-green-50',
+      'calibration': 'text-yellow-600 bg-yellow-50',
+      'maintenance': 'text-red-600 bg-red-50',
+      'disabled': 'text-gray-600 bg-gray-50'
+    };
+    return colorMap[status] || colorMap['normal'];
+  };
+
+  // 加载维护记录
+  const loadMaintenanceRecords = async (instrumentId: string) => {
+    try {
+      const response = await limsApi.listMaintenanceByInstrument(instrumentId);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        setInstrumentMaintenanceRecords(Array.isArray(data) ? data : (data.items || []));
+      }
+    } catch (err) {
+      console.error('加载维护记录失败:', err);
+      setInstrumentMaintenanceRecords([]);
+    }
+  };
+
+  // 处理创建仪器
+  const handleCreateInstrument = async () => {
+    try {
+      setCreating(true);
+      const response = await limsApi.createInstrument(instrumentFormData);
+      if (response.success) {
+        setNotification({ type: 'success', message: '仪器创建成功' });
+        setShowInstrumentModal(false);
+        loadInstruments();
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        setNotification({ type: 'error', message: response.message || '创建失败' });
+      }
+    } catch (err) {
+      setNotification({ type: 'error', message: '创建仪器失败' });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // 处理更新仪器
+  const handleUpdateInstrument = async () => {
+    if (!selectedInstrument) return;
+    try {
+      setCreating(true);
+      const response = await limsApi.updateInstrument(selectedInstrument.id, instrumentFormData);
+      if (response.success) {
+        setNotification({ type: 'success', message: '仪器更新成功' });
+        setShowInstrumentModal(false);
+        loadInstruments();
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        setNotification({ type: 'error', message: response.message || '更新失败' });
+      }
+    } catch (err) {
+      setNotification({ type: 'error', message: '更新仪器失败' });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // 处理删除仪器
+  const handleDeleteInstrument = async (id: string) => {
+    if (!confirm('确定要删除这个仪器吗？')) return;
+    try {
+      const response = await limsApi.deleteInstrument(id);
+      if (response.success) {
+        setNotification({ type: 'success', message: '仪器删除成功' });
+        loadInstruments();
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        setNotification({ type: 'error', message: response.message || '删除失败' });
+      }
+    } catch (err) {
+      setNotification({ type: 'error', message: '删除仪器失败' });
+    }
+  };
+
+  // 处理创建维护记录
+  const handleCreateMaintenance = async () => {
+    try {
+      setCreating(true);
+      const response = await limsApi.createMaintenance(maintenanceFormData);
+      if (response.success) {
+        setNotification({ type: 'success', message: '维护记录创建成功' });
+        setShowMaintenanceModal(false);
+        if (selectedInstrument) {
+          loadMaintenanceRecords(selectedInstrument.id);
+        }
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        setNotification({ type: 'error', message: response.message || '创建失败' });
+      }
+    } catch (err) {
+      setNotification({ type: 'error', message: '创建维护记录失败' });
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -693,6 +937,17 @@ const Limspage: React.FC = () => {
                   <span>新建任务</span>
                 </button>
               )}
+              {activeTab === 'instruments' && (
+                <>
+                  <button
+                    onClick={() => openInstrumentModal()}
+                    className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>添加仪器</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -753,18 +1008,31 @@ const Limspage: React.FC = () => {
               <span>检验任务</span>
             </div>
           </button>
+          <button
+            onClick={() => setActiveTab('instruments')}
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'instruments'
+                ? 'bg-teal-600 text-white'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <Settings className="w-5 h-5" />
+              <span>仪器管理</span>
+            </div>
+          </button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">
-                  {activeTab === 'samples' ? '样品总数' : activeTab === 'processes' ? '流程总数' : '任务总数'}
+                  {activeTab === 'samples' ? '样品总数' : activeTab === 'processes' ? '流程总数' : activeTab === 'tasks' ? '任务总数' : '仪器总数'}
                 </p>
                 <p className="text-3xl font-bold text-slate-900">
-                  {activeTab === 'samples' ? safeSamples.length : activeTab === 'processes' ? safeProcesses.length : safeTasks.length}
+                  {activeTab === 'samples' ? safeSamples.length : activeTab === 'processes' ? safeProcesses.length : activeTab === 'tasks' ? safeTasks.length : safeInstruments.length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
@@ -772,38 +1040,74 @@ const Limspage: React.FC = () => {
                   <Beaker className="w-6 h-6 text-purple-600" />
                 ) : activeTab === 'processes' ? (
                   <FileText className="w-6 h-6 text-purple-600" />
-                ) : (
+                ) : activeTab === 'tasks' ? (
                   <ClipboardCheck className="w-6 h-6 text-purple-600" />
+                ) : (
+                  <Settings className="w-6 h-6 text-teal-600" />
                 )}
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">进行中</p>
-                <p className="text-3xl font-bold text-blue-600">
-                  {activeTab === 'tasks' ? safeTasks.filter(t => t.status === '进行中').length : '-'}
-                </p>
+          {activeTab !== 'instruments' && (
+            <>
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">进行中</p>
+                    <p className="text-3xl font-bold text-blue-600">
+                      {activeTab === 'tasks' ? safeTasks.filter(t => t.status === '进行中').length : '-'}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-blue-600" />
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">已完成</p>
+                    <p className="text-3xl font-bold text-green-600">
+                      {activeTab === 'tasks' ? safeTasks.filter(t => t.status === '已完成').length : '-'}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">已完成</p>
-                <p className="text-3xl font-bold text-green-600">
-                  {activeTab === 'tasks' ? safeTasks.filter(t => t.status === '已完成').length : '-'}
-                </p>
+            </>
+          )}
+          {activeTab === 'instruments' && (
+            <>
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">正常</p>
+                    <p className="text-3xl font-bold text-green-600">
+                      {safeInstruments.filter(i => i.status === '正常').length}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">需维护</p>
+                    <p className="text-3xl font-bold text-orange-600">
+                      {safeInstruments.filter(i => i.status === '维修中').length}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
+                    <Wrench className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Content */}
@@ -1033,7 +1337,91 @@ const Limspage: React.FC = () => {
         )}
       </main>
 
-      {/* Create/Edit Sample Modal */}
+      {/* Instruments List */}
+      {activeTab === 'instruments' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm">
+            <div className="p-6 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-900">仪器设备</h2>
+            </div>
+            <div className="divide-y divide-slate-200">
+              {safeInstruments.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Settings className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">暂无仪器设备</p>
+                </div>
+              ) : (
+                safeInstruments.map((instrument) => (
+                  <div key={instrument.id} className="p-6 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600">
+                          {getInstrumentTypeIcon(instrument.type)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="text-lg font-semibold text-slate-900">{instrument.name}</h3>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getInstrumentStatusColor(instrument.status)}`}>
+                              {instrument.status}
+                            </span>
+                            <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+                              {instrument.type}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 mb-3">
+                            {instrument.manufacturer && instrument.model
+                              ? `${instrument.manufacturer} - ${instrument.model}`
+                              : instrument.manufacturer || instrument.model || '暂无型号信息'}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                            <span>编号: <span className="font-mono">{instrument.code}</span></span>
+                            {instrument.location && <span>位置: {instrument.location}</span>}
+                            {instrument.responsible_person && <span>负责人: {instrument.responsible_person}</span>}
+                            {instrument.next_calibration_date && (
+                              <span className="flex items-center text-orange-600">
+                                <AlertCircle className="w-4 h-4 mr-1" />
+                                下次校准: {new Date(instrument.next_calibration_date).toLocaleDateString('zh-CN')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => openInstrumentDetailModal(instrument)}
+                          className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+                        >
+                          <span className="flex items-center">查看详情</span>
+                        </button>
+                        <button
+                          onClick={() => openMaintenanceModal(instrument)}
+                          className="px-3 py-2 text-sm text-teal-600 hover:bg-teal-50 rounded-lg"
+                        >
+                          <span className="flex items-center"><Wrench className="w-4 h-4 mr-1" />维护记录</span>
+                        </button>
+                        <button
+                          onClick={() => openInstrumentModal(instrument)}
+                          className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteInstrument(instrument.id)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit Instrument Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
@@ -1595,6 +1983,495 @@ const Limspage: React.FC = () => {
                   </span>
                 ) : (
                   '导入'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit Instrument Modal */}
+      {showInstrumentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-900">{isEditingInstrument ? '编辑仪器' : '添加仪器'}</h3>
+              <button
+                onClick={() => { setShowInstrumentModal(false); setIsEditingInstrument(false); }}
+                className="p-2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    仪器名称 *
+                  </label>
+                  <input
+                    type="text"
+                    value={instrumentFormData.name}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, name: e.target.value })}
+                    placeholder="请输入仪器名称"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    仪器编号 *
+                  </label>
+                  <input
+                    type="text"
+                    value={instrumentFormData.code}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, code: e.target.value })}
+                    placeholder="请输入仪器编号"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    仪器类型 *
+                  </label>
+                  <select
+                    value={instrumentFormData.type}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, type: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="">请选择类型</option>
+                    <option value="分析仪器">分析仪器</option>
+                    <option value="测量仪器">测量仪器</option>
+                    <option value="实验设备">实验设备</option>
+                    <option value="其他">其他</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    仪器状态
+                  </label>
+                  <select
+                    value={instrumentFormData.status}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="正常">正常</option>
+                    <option value="维修中">维修中</option>
+                    <option value="校准中">校准中</option>
+                    <option value="报废">报废</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    制造商
+                  </label>
+                  <input
+                    type="text"
+                    value={instrumentFormData.manufacturer}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, manufacturer: e.target.value })}
+                    placeholder="请输入制造商"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    型号
+                  </label>
+                  <input
+                    type="text"
+                    value={instrumentFormData.model}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, model: e.target.value })}
+                    placeholder="请输入型号"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    序列号
+                  </label>
+                  <input
+                    type="text"
+                    value={instrumentFormData.serial_number}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, serial_number: e.target.value })}
+                    placeholder="请输入序列号"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    存放位置
+                  </label>
+                  <input
+                    type="text"
+                    value={instrumentFormData.location}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, location: e.target.value })}
+                    placeholder="请输入存放位置"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    购买日期
+                  </label>
+                  <input
+                    type="date"
+                    value={instrumentFormData.purchase_date}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, purchase_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    上次校准日期
+                  </label>
+                  <input
+                    type="date"
+                    value={instrumentFormData.calibration_date}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, calibration_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    下次校准日期
+                  </label>
+                  <input
+                    type="date"
+                    value={instrumentFormData.next_calibration_date}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, next_calibration_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    负责人
+                  </label>
+                  <input
+                    type="text"
+                    value={instrumentFormData.responsible_person}
+                    onChange={(e) => setInstrumentFormData({ ...instrumentFormData, responsible_person: e.target.value })}
+                    placeholder="请输入负责人"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  备注说明
+                </label>
+                <textarea
+                  value={instrumentFormData.description}
+                  onChange={(e) => setInstrumentFormData({ ...instrumentFormData, description: e.target.value })}
+                  placeholder="请输入备注说明"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+              <button
+                onClick={() => { setShowInstrumentModal(false); setIsEditingInstrument(false); }}
+                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={isEditingInstrument ? handleUpdateInstrument : handleCreateInstrument}
+                disabled={creating}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    {isEditingInstrument ? '更新中...' : '创建中...'}
+                  </span>
+                ) : (
+                  isEditingInstrument ? '更新' : '创建'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Instrument Detail Modal */}
+      {showInstrumentDetailModal && selectedInstrument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-slate-900">仪器详情</h3>
+                <button
+                  onClick={() => setShowInstrumentDetailModal(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold text-slate-800">{selectedInstrument.name}</h4>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getInstrumentStatusColor(selectedInstrument.status)}`}>
+                      {selectedInstrument.status}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 mb-3">
+                    <span className="px-2 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-medium">
+                      {selectedInstrument.type}
+                    </span>
+                    <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium font-mono">
+                      {selectedInstrument.code}
+                    </span>
+                  </div>
+                  <p className="text-slate-600">{selectedInstrument.description || '暂无备注'}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">制造商</p>
+                    <p className="font-medium text-slate-800">{selectedInstrument.manufacturer || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">型号</p>
+                    <p className="font-medium text-slate-800">{selectedInstrument.model || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">序列号</p>
+                    <p className="font-medium text-slate-800 font-mono">{selectedInstrument.serial_number || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">存放位置</p>
+                    <p className="font-medium text-slate-800">{selectedInstrument.location || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">负责人</p>
+                    <p className="font-medium text-slate-800">{selectedInstrument.responsible_person || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">购买日期</p>
+                    <p className="font-medium text-slate-800">
+                      {selectedInstrument.purchase_date ? new Date(selectedInstrument.purchase_date).toLocaleDateString('zh-CN') : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">上次校准</p>
+                    <p className="font-medium text-slate-800">
+                      {selectedInstrument.calibration_date ? new Date(selectedInstrument.calibration_date).toLocaleDateString('zh-CN') : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">下次校准</p>
+                    <p className={`font-medium ${selectedInstrument.next_calibration_date ? 'text-orange-600' : 'text-slate-800'}`}>
+                      {selectedInstrument.next_calibration_date ? new Date(selectedInstrument.next_calibration_date).toLocaleDateString('zh-CN') : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">创建时间</p>
+                    <p className="font-medium text-slate-800">{new Date(selectedInstrument.created_at).toLocaleString('zh-CN')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">更新时间</p>
+                    <p className="font-medium text-slate-800">{new Date(selectedInstrument.updated_at).toLocaleString('zh-CN')}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h5 className="font-semibold text-slate-800 mb-3">维护记录</h5>
+                  {instrumentMaintenanceRecords.length === 0 ? (
+                    <p className="text-slate-500 text-center py-4">暂无维护记录</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {instrumentMaintenanceRecords.map((record) => (
+                        <div key={record.id} className="p-4 bg-white border border-slate-200 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-teal-700">{record.maintenance_type}</span>
+                            <span className="text-sm text-slate-500">{new Date(record.performed_at).toLocaleDateString('zh-CN')}</span>
+                          </div>
+                          <p className="text-slate-700 mb-2">{record.description}</p>
+                          <div className="flex items-center justify-between text-sm text-slate-500">
+                            <span>执行人: {record.performed_by}</span>
+                            {record.cost && <span>费用: ¥{record.cost}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+                  <button
+                    onClick={() => {
+                      setShowInstrumentDetailModal(false);
+                      openMaintenanceModal(selectedInstrument);
+                    }}
+                    className="px-4 py-2 text-teal-600 border border-teal-600 rounded-lg hover:bg-teal-50"
+                  >
+                    添加维护记录
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowInstrumentDetailModal(false);
+                      openInstrumentModal(selectedInstrument);
+                    }}
+                    className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    onClick={() => setShowInstrumentDetailModal(false)}
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
+                  >
+                    关闭
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Maintenance Record Modal */}
+      {showMaintenanceModal && selectedInstrument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-900">添加维护记录</h3>
+              <button
+                onClick={() => setShowMaintenanceModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  仪器名称
+                </label>
+                <p className="text-teal-700 font-medium">{selectedInstrument.name}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  维护类型 *
+                </label>
+                <select
+                  value={maintenanceFormData.maintenance_type}
+                  onChange={(e) => setMaintenanceFormData({ ...maintenanceFormData, maintenance_type: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="">请选择维护类型</option>
+                  <option value="日常维护">日常维护</option>
+                  <option value="定期校准">定期校准</option>
+                  <option value="故障维修">故障维修</option>
+                  <option value="部件更换">部件更换</option>
+                  <option value="性能验证">性能验证</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  维护描述 *
+                </label>
+                <textarea
+                  value={maintenanceFormData.description}
+                  onChange={(e) => setMaintenanceFormData({ ...maintenanceFormData, description: e.target.value })}
+                  placeholder="请输入维护描述"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    执行人 *
+                  </label>
+                  <input
+                    type="text"
+                    value={maintenanceFormData.performed_by}
+                    onChange={(e) => setMaintenanceFormData({ ...maintenanceFormData, performed_by: e.target.value })}
+                    placeholder="请输入执行人"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    执行日期 *
+                  </label>
+                  <input
+                    type="date"
+                    value={maintenanceFormData.performed_at}
+                    onChange={(e) => setMaintenanceFormData({ ...maintenanceFormData, performed_at: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    下次维护日期
+                  </label>
+                  <input
+                    type="date"
+                    value={maintenanceFormData.next_maintenance_date}
+                    onChange={(e) => setMaintenanceFormData({ ...maintenanceFormData, next_maintenance_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    费用（元）
+                  </label>
+                  <input
+                    type="number"
+                    value={maintenanceFormData.cost}
+                    onChange={(e) => setMaintenanceFormData({ ...maintenanceFormData, cost: Number(e.target.value) })}
+                    placeholder="0"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  备注
+                </label>
+                <textarea
+                  value={maintenanceFormData.notes}
+                  onChange={(e) => setMaintenanceFormData({ ...maintenanceFormData, notes: e.target.value })}
+                  placeholder="请输入备注"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowMaintenanceModal(false)}
+                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleCreateMaintenance}
+                disabled={creating}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    创建中...
+                  </span>
+                ) : (
+                  '创建'
                 )}
               </button>
             </div>

@@ -29,6 +29,7 @@ pub struct Instrument {
     pub id: Uuid,
     pub name: String,
     pub code: String,
+    pub instrument_type: String,
     pub model: Option<String>,
     pub manufacturer: Option<String>,
     pub serial_number: Option<String>,
@@ -44,10 +45,25 @@ pub struct Instrument {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct MaintenanceRecord {
+    pub id: Uuid,
+    pub instrument_id: Uuid,
+    pub maintenance_type: String,
+    pub description: String,
+    pub performed_by: String,
+    pub performed_at: chrono::DateTime<chrono::Utc>,
+    pub next_maintenance_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub cost: Option<f64>,
+    pub notes: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateInstrumentRequest {
     pub name: String,
     pub code: String,
+    pub instrument_type: String,
     pub model: Option<String>,
     pub manufacturer: Option<String>,
     pub serial_number: Option<String>,
@@ -63,6 +79,7 @@ pub struct CreateInstrumentRequest {
 #[derive(Debug, Deserialize)]
 pub struct UpdateInstrumentRequest {
     pub name: Option<String>,
+    pub instrument_type: Option<String>,
     pub model: Option<String>,
     pub manufacturer: Option<String>,
     pub serial_number: Option<String>,
@@ -72,6 +89,17 @@ pub struct UpdateInstrumentRequest {
     pub next_calibration_date: Option<String>,
     pub responsible_person: Option<String>,
     pub description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateMaintenanceRequest {
+    pub maintenance_type: String,
+    pub description: String,
+    pub performed_by: String,
+    pub performed_at: String,
+    pub next_maintenance_date: Option<String>,
+    pub cost: Option<f64>,
+    pub notes: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -107,7 +135,7 @@ async fn list_instruments(
 
     let result = sqlx::query_as::<_, Instrument>(
         r#"
-        SELECT id, name, code, model, manufacturer, serial_number, status,
+        SELECT id, name, code, instrument_type as type, model, manufacturer, serial_number, status,
                location, purchase_date, calibration_date, next_calibration_date,
                maintenance_history, responsible_person, description,
                created_at, updated_at
@@ -143,7 +171,7 @@ async fn list_instruments(
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "instruments": instruments,
+                    "items": instruments,
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -168,12 +196,12 @@ async fn create_instrument(
     let result = sqlx::query_as::<_, Instrument>(
         r#"
         INSERT INTO lims.instruments (
-            id, name, code, model, manufacturer, serial_number, status,
+            id, name, code, instrument_type, model, manufacturer, serial_number, status,
             location, purchase_date, calibration_date, next_calibration_date,
             maintenance_history, responsible_person, description,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        RETURNING id, name, code, model, manufacturer, serial_number, status,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        RETURNING id, name, code, instrument_type as type, model, manufacturer, serial_number, status,
                   location, purchase_date, calibration_date, next_calibration_date,
                   maintenance_history, responsible_person, description,
                   created_at, updated_at
@@ -182,6 +210,7 @@ async fn create_instrument(
     .bind(id)
     .bind(&req.name)
     .bind(&req.code)
+    .bind(&req.instrument_type)
     .bind(&req.model)
     .bind(&req.manufacturer)
     .bind(&req.serial_number)
@@ -213,7 +242,7 @@ async fn get_instrument(
 ) -> Json<ApiResponse<Instrument>> {
     let result = sqlx::query_as::<_, Instrument>(
         r#"
-        SELECT id, name, code, model, manufacturer, serial_number, status,
+        SELECT id, name, code, instrument_type as type, model, manufacturer, serial_number, status,
                location, purchase_date, calibration_date, next_calibration_date,
                maintenance_history, responsible_person, description,
                created_at, updated_at
@@ -240,7 +269,7 @@ async fn update_instrument(
     Json(req): Json<UpdateInstrumentRequest>,
 ) -> Json<ApiResponse<Instrument>> {
     let existing = sqlx::query_as::<_, Instrument>(
-        "SELECT id, name, code, model, manufacturer, serial_number, status, location, purchase_date, calibration_date, next_calibration_date, maintenance_history, responsible_person, description, created_at, updated_at FROM lims.instruments WHERE id = $1",
+        "SELECT id, name, code, instrument_type as type, model, manufacturer, serial_number, status, location, purchase_date, calibration_date, next_calibration_date, maintenance_history, responsible_person, description, created_at, updated_at FROM lims.instruments WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -253,18 +282,19 @@ async fn update_instrument(
     };
 
     let name = req.name.unwrap_or(existing.name);
+    let instrument_type = req.instrument_type.unwrap_or(existing.instrument_type);
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Instrument>(
         r#"
         UPDATE lims.instruments SET
-            name = $2, model = $3, manufacturer = $4, serial_number = $5,
-            status = $6, location = $7, calibration_date = $8,
-            next_calibration_date = $9, responsible_person = $10,
-            description = $11, updated_at = $12
+            name = $2, instrument_type = $3, model = $4, manufacturer = $5, serial_number = $6,
+            status = $7, location = $8, calibration_date = $9,
+            next_calibration_date = $10, responsible_person = $11,
+            description = $12, updated_at = $13
         WHERE id = $1
-        RETURNING id, name, code, model, manufacturer, serial_number, status,
+        RETURNING id, name, code, instrument_type as type, model, manufacturer, serial_number, status,
                   location, purchase_date, calibration_date, next_calibration_date,
                   maintenance_history, responsible_person, description,
                   created_at, updated_at
@@ -272,6 +302,7 @@ async fn update_instrument(
     )
     .bind(id)
     .bind(&name)
+    .bind(&instrument_type)
     .bind(&req.model)
     .bind(&req.manufacturer)
     .bind(&req.serial_number)
@@ -406,6 +437,91 @@ async fn add_calibration(
         Err(e) => {
             tracing::error!("添加校准记录失败: {}", e);
             Json(ApiResponse::error(500, "添加校准记录失败"))
+        }
+    }
+}
+
+async fn get_maintenance(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<MaintenanceRecord>>> {
+    let result = sqlx::query_as::<_, MaintenanceRecord>(
+        r#"
+        SELECT id, instrument_id, maintenance_type, description, performed_by,
+               performed_at, next_maintenance_date, cost, notes, created_at
+        FROM lims.instrument_maintenance
+        WHERE instrument_id = $1
+        ORDER BY performed_at DESC
+        "#,
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(records) => Json(ApiResponse::success(records, "获取维护记录成功")),
+        Err(e) => {
+            tracing::error!("获取维护记录失败: {}", e);
+            Json(ApiResponse::error(500, "获取维护记录失败"))
+        }
+    }
+}
+
+async fn add_maintenance(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<CreateMaintenanceRequest>,
+) -> Json<ApiResponse<MaintenanceRecord>> {
+    let record_id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, MaintenanceRecord>(
+        r#"
+        INSERT INTO lims.instrument_maintenance (
+            id, instrument_id, maintenance_type, description, performed_by,
+            performed_at, next_maintenance_date, cost, notes, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id, instrument_id, maintenance_type, description, performed_by,
+                  performed_at, next_maintenance_date, cost, notes, created_at
+        "#,
+    )
+    .bind(record_id)
+    .bind(id)
+    .bind(&req.maintenance_type)
+    .bind(&req.description)
+    .bind(&req.performed_by)
+    .bind(&req.performed_at)
+    .bind(req.next_maintenance_date)
+    .bind(req.cost)
+    .bind(&req.notes)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(record) => Json(ApiResponse::success(record, "维护记录添加成功")),
+        Err(e) => {
+            tracing::error!("添加维护记录失败: {}", e);
+            Json(ApiResponse::error(500, "添加维护记录失败"))
+        }
+    }
+}
+
+async fn delete_maintenance(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query("DELETE FROM lims.instrument_maintenance WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "维护记录删除成功")),
+        Ok(_) => Json(ApiResponse::error(404, "维护记录不存在")),
+        Err(e) => {
+            tracing::error!("删除维护记录失败: {}", e);
+            Json(ApiResponse::error(500, "删除维护记录失败"))
         }
     }
 }

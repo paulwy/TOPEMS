@@ -1,9 +1,7 @@
-# TOPEMS srm Service Dockerfile
-# 单阶段构建，使用 rust:nightly，包含 shared 库支持
+# TOPEMS backend Service Dockerfile
+FROM rust:1.75-slim
 
-FROM rust:nightly
-
-WORKDIR /build
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     pkg-config \
@@ -11,19 +9,18 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /shared/lib /app/logs
+COPY . .
 
-COPY shared/lib /shared/lib
-COPY services/topems-srm/backend/ /build/
+WORKDIR /app/services/backend/backend
 
 RUN cargo build --release
 
-RUN cp /build/target/release/topems-srm /app/
+RUN mkdir -p /app/logs
 
-EXPOSE 8009
+EXPOSE 8016
 
 ENV RUST_LOG=info
-ENV SERVICE_PORT=8009
+ENV SERVICE_PORT=8016
 
-ENTRYPOINT ["/app/topems-srm"]
-CMD ["--host", "0.0.0.0", "--port", "8009"]
+ENTRYPOINT ["/app/services/backend/backend/target/release/backend"]
+CMD ["--host", "0.0.0.0", "--port", "8016"]

@@ -263,10 +263,21 @@ async fn main() {
             tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
             "topems-default-jwt-secret-change-me-in-production".to_string()
         });
+    
+    let refresh_secret = std::env::var("REFRESH_SECRET")
+        .unwrap_or_else(|_| {
+            tracing::warn!("REFRESH_SECRET not set, using default (not recommended for production)");
+            "topems-default-refresh-secret-change-me-in-production".to_string()
+        });
+    
+    let token_expiry_hours = std::env::var("TOKEN_EXPIRY_HOURS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(24);
 
     let app_state = AppState {
         pool: pool.clone(),
-        auth_state: AuthState::new(jwt_secret),
+        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
     };
 
     let cors = create_cors_layer();

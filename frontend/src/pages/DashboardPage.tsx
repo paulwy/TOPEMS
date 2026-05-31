@@ -5,8 +5,8 @@ import {
   FlaskConical, ClipboardList, Shield, AlertCircle, Users, Package,
   LogOut, User, Activity, Clock,
   Database, X, Key,
-  Building, Folder, BarChart3,
-  MapPin, Smartphone, MessageSquare
+  Building, Folder, BarChart3, Box,
+  MapPin, Smartphone, MessageSquare, Receipt, TrendingUp
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
@@ -231,6 +231,39 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       adminOnly: true
     },
     {
+      title: '资产管理',
+      icon: Box,
+      description: '企业资产、设备台账',
+      path: '/assets',
+      color: 'bg-purple-500',
+      status: 'online' as const,
+      permission: 'erp:admin',
+      module: 'erp',
+      adminOnly: true
+    },
+    {
+      title: '预算管理',
+      icon: TrendingUp,
+      description: '部门预算、使用进度、预警',
+      path: '/budget',
+      color: 'bg-green-500',
+      status: 'online' as const,
+      permission: 'erp:admin',
+      module: 'erp',
+      adminOnly: true
+    },
+    {
+      title: '费用管理',
+      icon: Receipt,
+      description: '费用报销、预算、应收应付',
+      path: '/finance',
+      color: 'bg-indigo-500',
+      status: 'online' as const,
+      permission: 'erp:admin',
+      module: 'erp',
+      adminOnly: true
+    },
+    {
       title: '安全审计',
       icon: AlertCircle,
       description: '访问日志、操作审计',
@@ -393,6 +426,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   { id: 'companies', label: '公司管理', icon: Building, adminOnly: true },
                   { id: 'departments', label: '部门管理', icon: Folder, adminOnly: true },
                   { id: 'employees', label: '员工管理', icon: User, adminOnly: true },
+                  { id: 'assets', label: '资产管理', icon: Box, adminOnly: true },
+                  { id: 'budget', label: '预算管理', icon: TrendingUp, adminOnly: true },
+                  { id: 'finance', label: '费用管理', icon: Receipt, adminOnly: true },
                   { id: 'audit', label: '安全审计', icon: AlertCircle, adminOnly: true },
                   { id: 'reports', label: '报表中心', icon: BarChart3, adminOnly: true },
                   { id: 'rs', label: '科研研发', icon: FlaskConical },

@@ -110,11 +110,8 @@ async fn main() -> Result<()> {
         .merge(api::department::create_routes(pool.clone()).await?)
         .merge(api::employee::create_routes(pool.clone()).await?)
         .merge(api::asset::create_routes(pool.clone()).await?)
+        .merge(api::finance::create_routes(pool.clone()).await?)
         .merge(audit_router)
-        .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
-            auth_middleware,
-        ))
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8009".to_string());
@@ -414,6 +411,94 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_erp_audit_logs_status ON erp.audit_logs(status)"#)
         .execute(pool)
         .await?;
+
+    // 费用报销表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS erp.expenses (
+            id UUID PRIMARY KEY,
+            expense_number VARCHAR(100) NOT NULL UNIQUE,
+            applicant_name VARCHAR(255),
+            department_id UUID,
+            expense_type VARCHAR(100),
+            amount NUMERIC(15,2) NOT NULL,
+            description TEXT,
+            expense_date TIMESTAMPTZ,
+            receipt_count INT,
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            approver_id UUID,
+            approved_at TIMESTAMPTZ,
+            reimbursed_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 预算管理表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS erp.budgets (
+            id UUID PRIMARY KEY,
+            department_id UUID,
+            budget_type VARCHAR(100),
+            fiscal_year VARCHAR(20) NOT NULL,
+            total_budget NUMERIC(15,2) NOT NULL,
+            used_amount NUMERIC(15,2) NOT NULL DEFAULT 0,
+            remaining_amount NUMERIC(15,2) NOT NULL,
+            usage_rate NUMERIC(5,2) NOT NULL,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 应收账款表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS erp.receivables (
+            id UUID PRIMARY KEY,
+            invoice_number VARCHAR(100) NOT NULL UNIQUE,
+            customer_name VARCHAR(255),
+            project_name VARCHAR(255),
+            amount NUMERIC(15,2) NOT NULL,
+            invoice_date TIMESTAMPTZ,
+            due_date TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            received_amount NUMERIC(15,2) NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 应付账款表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS erp.payables (
+            id UUID PRIMARY KEY,
+            invoice_number VARCHAR(100) NOT NULL UNIQUE,
+            supplier_name VARCHAR(255),
+            category VARCHAR(100),
+            amount NUMERIC(15,2) NOT NULL,
+            invoice_date TIMESTAMPTZ,
+            due_date TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            paid_amount NUMERIC(15,2) NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query(r#"GRANT ALL PRIVILEGES ON SCHEMA erp TO topems"#)
         .execute(pool)

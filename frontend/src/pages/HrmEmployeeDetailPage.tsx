@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, User, Mail, Phone, Building2, Calendar, BriefCase,
+  ArrowLeft, User, Mail, Phone, Building2, Calendar, Briefcase,
   FileText, Clock, CheckCircle2, XCircle, Edit, Save
 } from 'lucide-react';
 import {
@@ -459,7 +459,7 @@ const EmployeeDetailPage: React.FC = () => {
                     performanceReviews.map((review) => (
                       <tr key={review.id}>
                         <td className="px-4 py-2 text-sm">{review.review_period || '-'}</td>
-                        <td className="px-4 py-2 text-sm">{review.score || '-'}</td>
+                        <td className="px-4 py-2 text-sm">{(review as any).score || '-'}</td>
                         <td className="px-4 py-2 text-sm">{review.comments || '-'}</td>
                         <td className="px-4 py-2">
                           <span className={`px-2 py-1 text-xs rounded-full ${

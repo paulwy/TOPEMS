@@ -111,6 +111,68 @@ export interface PaginatedResult<T> {
   page_size: number;
 }
 
+// ========== 仪器管理类型定义 ==========
+
+export interface Instrument {
+  id: string;
+  name: string;
+  code: string;
+  type: string;
+  manufacturer?: string;
+  model?: string;
+  serial_number?: string;
+  location?: string;
+  status: string;
+  purchase_date?: string;
+  calibration_date?: string;
+  next_calibration_date?: string;
+  responsible_person?: string;
+  description?: string;
+  maintenance_records?: MaintenanceRecord[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateInstrumentRequest {
+  name: string;
+  code: string;
+  type: string;
+  manufacturer?: string;
+  model?: string;
+  serial_number?: string;
+  location?: string;
+  status?: string;
+  purchase_date?: string;
+  calibration_date?: string;
+  next_calibration_date?: string;
+  responsible_person?: string;
+  description?: string;
+}
+
+export interface MaintenanceRecord {
+  id: string;
+  instrument_id: string;
+  maintenance_type: string;
+  description: string;
+  performed_by: string;
+  performed_at: string;
+  next_maintenance_date?: string;
+  cost?: number;
+  notes?: string;
+  created_at: string;
+}
+
+export interface CreateMaintenanceRecordRequest {
+  instrument_id: string;
+  maintenance_type: string;
+  description: string;
+  performed_by: string;
+  performed_at: string;
+  next_maintenance_date?: string;
+  cost?: number;
+  notes?: string;
+}
+
 // ========== 通用工具函数 ==========
 
 function buildQueryString(params?: ListParams): string {
@@ -160,6 +222,39 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
     },
   };
 }
+
+export const instrumentApi = {
+  ...createCrudApi<Instrument>('/api/v1/instruments'),
+
+  listInstruments: (params?: ListParams) =>
+    createCrudApi<Instrument>('/api/v1/instruments').list(params),
+
+  getInstrument: (id: string) =>
+    createCrudApi<Instrument>('/api/v1/instruments').get(id),
+
+  createInstrument: (data: CreateInstrumentRequest) =>
+    createCrudApi<Instrument>('/api/v1/instruments').create(data),
+
+  updateInstrument: (id: string, data: CreateInstrumentRequest) =>
+    createCrudApi<Instrument>('/api/v1/instruments').update(id, data),
+
+  deleteInstrument: (id: string) =>
+    createCrudApi<Instrument>('/api/v1/instruments').delete(id),
+};
+
+export const maintenanceApi = {
+  listByInstrument: async (instrumentId: string): Promise<ApiResponse<MaintenanceRecord[]>> => {
+    return apiClient.lims.get(`/api/v1/instruments/${instrumentId}/maintenance`);
+  },
+
+  create: async (data: CreateMaintenanceRecordRequest): Promise<ApiResponse<MaintenanceRecord>> => {
+    return apiClient.lims.post('/api/v1/maintenance', data);
+  },
+
+  delete: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.lims.delete(`/api/v1/maintenance/${id}`);
+  },
+};
 
 // ========== LIMS API 模块 ==========
 
@@ -305,6 +400,8 @@ export const limsApi = {
   processes: processApi,
   tasks: taskApi,
   records: recordApi,
+  instruments: instrumentApi,
+  maintenance: maintenanceApi,
   audit: auditLimsApi,
 
   listSamples: sampleApi.listSamples,
@@ -316,19 +413,29 @@ export const limsApi = {
   batchDeleteSamples: sampleApi.batchDeleteSamples,
   exportSamples: sampleApi.exportSamples,
   importSamples: sampleApi.importSamples,
-  
+
   listProcesses: processApi.listProcesses,
   getProcess: processApi.getProcess,
-  
+
   listTasks: taskApi.listTasks,
   createTask: taskApi.createTask,
   getTask: taskApi.getTask,
   updateTask: taskApi.updateTask,
   completeStep: taskApi.completeStep,
-  
+
   listRecords: recordApi.listRecords,
   createRecord: recordApi.createRecord,
   listRecordsByTask: recordApi.listRecordsByTask,
+
+  listInstruments: instrumentApi.listInstruments,
+  getInstrument: instrumentApi.getInstrument,
+  createInstrument: instrumentApi.createInstrument,
+  updateInstrument: instrumentApi.updateInstrument,
+  deleteInstrument: instrumentApi.deleteInstrument,
+
+  listMaintenanceByInstrument: maintenanceApi.listByInstrument,
+  createMaintenance: maintenanceApi.create,
+  deleteMaintenance: maintenanceApi.delete,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.lims.get('/health');

@@ -68,3 +68,31 @@ pub struct LocationPhoto {
     pub taken_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StorageLocation {
+    pub id: Uuid,
+    pub name: String,
+    pub code: String,
+    pub location_type: String,
+    pub position: serde_json::Value,
+    pub capacity: Option<i32>,
+    pub current_usage: Option<i32>,
+    pub description: Option<String>,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EvidenceRecord {
+    pub id: Uuid,
+    pub title: String,
+    pub evidence_type: String,
+    pub position: serde_json::Value,
+    pub file_url: Option<String>,
+    pub description: Option<String>,
+    pub recorded_by: String,
+    pub recorded_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+}
