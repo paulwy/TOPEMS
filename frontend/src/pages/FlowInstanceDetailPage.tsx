@@ -51,6 +51,7 @@ const FlowInstanceDetailPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
+      case 'approved':
         return <CheckCircle className="w-5 h-5 text-green-600" />;
       case 'rejected':
         return <XCircle className="w-5 h-5 text-red-600" />;
@@ -58,10 +59,6 @@ const FlowInstanceDetailPage: React.FC = () => {
         return <Play className="w-5 h-5 text-blue-600" />;
       case 'pending':
         return <Clock className="w-5 h-5 text-yellow-600" />;
-      case 'approved':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case 'rejected':
-        return <XCircle className="w-5 h-5 text-red-600" />;
       default:
         return <AlertCircle className="w-5 h-5 text-gray-600" />;
     }

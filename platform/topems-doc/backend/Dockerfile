@@ -1,7 +1,5 @@
-# TOPEMS doc Service Dockerfile
-# 单阶段构建，使用 rust:nightly 既构建也运行
-
-FROM rust:nightly
+# TOPEMS topems-doc Service Dockerfile
+FROM rust:1.75-slim
 
 WORKDIR /app
 
@@ -13,9 +11,9 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 
-RUN cargo build --release
+WORKDIR /app/platform/topems-doc/backend
 
-RUN cp /app/target/release/topems-doc /app/
+RUN cargo build --release
 
 RUN mkdir -p /app/logs
 
@@ -24,5 +22,5 @@ EXPOSE 8001
 ENV RUST_LOG=info
 ENV SERVICE_PORT=8001
 
-ENTRYPOINT ["/app/topems-doc"]
+ENTRYPOINT ["/app/platform/topems-doc/backend/target/release/topems-doc"]
 CMD ["--host", "0.0.0.0", "--port", "8001"]

@@ -21,6 +21,9 @@ import PermissionManagementPage from './pages/PermissionManagementPage';
 import CompanyManagementPage from './pages/CompanyManagementPage';
 import DepartmentManagementPage from './pages/DepartmentManagementPage';
 import EmployeeManagementPage from './pages/EmployeeManagementPage';
+import AssetManagementPage from './pages/AssetManagementPage';
+import FinanceExpensePage from './pages/FinanceExpensePage';
+import BudgetManagementPage from './pages/BudgetManagementPage';
 import AuditLogPage from './pages/AuditLogPage';
 import ReportsPage from './pages/ReportsPage';
 import ConfigDebugPage from './pages/ConfigDebugPage';
@@ -254,6 +257,36 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['erp:read']}>
                 <ModuleGate module="erp" action="admin">
                   <EmployeeManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/assets"
+            element={
+              <ProtectedRoute requiredPermissions={['erp:read']}>
+                <ModuleGate module="erp" action="admin">
+                  <AssetManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/finance"
+            element={
+              <ProtectedRoute requiredPermissions={['erp:read']}>
+                <ModuleGate module="erp" action="admin">
+                  <FinanceExpensePage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/budget"
+            element={
+              <ProtectedRoute requiredPermissions={['erp:read']}>
+                <ModuleGate module="erp" action="admin">
+                  <BudgetManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }

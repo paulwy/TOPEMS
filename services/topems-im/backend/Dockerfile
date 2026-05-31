@@ -1,7 +1,7 @@
-# TOPEMS IM Service Dockerfile
-FROM rust:nightly
+# TOPEMS backend Service Dockerfile
+FROM rust:1.75-slim
 
-WORKDIR /build
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     pkg-config \
@@ -9,19 +9,18 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /shared/lib /app/logs
+COPY . .
 
-COPY shared/lib /shared/lib
-COPY services/topems-im/backend/ /build/
+WORKDIR /app/services/backend/backend
 
 RUN cargo build --release
 
-RUN cp /build/target/release/topems-im /app/
+RUN mkdir -p /app/logs
 
-EXPOSE 8019
+EXPOSE 8013
 
 ENV RUST_LOG=info
-ENV SERVICE_PORT=8019
+ENV SERVICE_PORT=8013
 
-ENTRYPOINT ["/app/topems-im"]
-CMD ["--host", "0.0.0.0", "--port", "8019"]
+ENTRYPOINT ["/app/services/backend/backend/target/release/backend"]
+CMD ["--host", "0.0.0.0", "--port", "8013"]

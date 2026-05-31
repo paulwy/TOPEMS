@@ -4,33 +4,28 @@
 
 ## 🚀 快速开始
 
-### Docker 部署（推荐）
+### 本地开发（推荐）
+
+使用我们的一键启动脚本快速开始：
 
 ```bash
-cd docker
-docker-compose up -d
+# 1. 一键启动所有服务
+cd /Users/air/TOPEMS
+./scripts/start-all.sh
+
+# 2. 访问 http://localhost:3000
+# 账号: admin
+# 密码: admin123
 ```
 
-访问 <http://localhost:3000>，使用 `admin / admin123` 登录。
-
-### 本地开发
-
+### 一键停止所有服务：
 ```bash
-# 1. 环境准备
-cp .env.example .env
-
-# 2. 启动数据库
-docker run -d --name topems-postgres \
-  -e POSTGRES_PASSWORD=topems_secret \
-  -p 5433:5432 \
-  postgres:latest
-
-# 3. 启动后端
-cd platform/topems-iam/backend && cargo run
-
-# 4. 启动前端
-cd frontend && npm install && npm run dev
+./scripts/stop-all.sh
 ```
+
+### Docker 部署
+
+查看 [docker 目录文档](./docker/README.md) 了解 Docker 部署方案。
 
 ## 📦 已实现服务
 
@@ -43,7 +38,14 @@ cd frontend && npm install && npm run dev
 | **FLOW** | 8004 | 工作流引擎 |
 | **RS** | 8005 | 研发项目管理 |
 | **LIMS** | 8006 | 实验室信息管理 |
-| **GIS** | 8017 | 地理信息管理 |
+| **QMS** | 8012 | 质量管理 |
+| **ERP** | 8009 | 企业资源管理 |
+| **HRM** | 8010 | 人力资源管理 |
+| **GIS** | 8011 | 地理信息管理 |
+| **EHS** | 8016 | 环境安全管理 |
+| **PDM** | 8015 | 产品数据管理 |
+| **SRM** | 8018 | 供应商管理 |
+| **IM** | 8017 | 即时通讯 |
 
 ## 📖 文档
 
@@ -51,8 +53,9 @@ cd frontend && npm install && npm run dev
 |------|------|
 | [用户指南](docs/guides/USER_GUIDE.md) | 完整的用户使用指南 |
 | [架构设计](docs/architecture/overview.md) | 系统架构设计文档 |
+| [Docker 部署](docker/README.md) | Docker 部署指南 |
+| [脚本说明](scripts/README.md) | 开发与运维脚本说明 |
 | [API 文档](docs/) | 各服务 API 文档（`docs/API_*.md`） |
-| [服务文档](docs/services/) | 特定服务配置指南 |
 
 ## 🛠 技术栈
 
@@ -68,14 +71,13 @@ cd frontend && npm install && npm run dev
 TOPEMS/
 ├── docs/                    # 项目文档
 │   ├── guides/             # 用户指南
-│   ├── services/           # 服务文档
+│   ├── services/          # 服务文档
 │   ├── architecture/        # 架构文档
-│   └── API_*.md           # API 文档
+│   └── API_*.md          # API 文档
 ├── frontend/               # 前端应用
 ├── services/               # 业务微服务
 ├── platform/               # 平台服务
 ├── shared/                 # 共享库
-├── infrastructure/         # 基础设施配置
 ├── docker/                 # Docker 配置
 └── scripts/                # 工具脚本
 ```
@@ -90,4 +92,4 @@ MIT License
 
 ---
 
-**版本**: v2.2.0 | **更新**: 2026-05-30
+**版本**: v2.2.0 | **更新**: 2026-05-31

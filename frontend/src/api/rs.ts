@@ -76,6 +76,65 @@ export interface UpdateExperimentRequest {
   conclusion?: string;
 }
 
+// ========== 配方管理类型定义 ==========
+
+export interface Formula {
+  id: string;
+  project_id: string;
+  name: string;
+  code: string;
+  version: string;
+  category?: string;
+  description?: string;
+  ingredients?: FormulaIngredient[];
+  process_steps?: string;
+  status: string;
+  approval_status?: string;
+  approved_by?: string;
+  approved_at?: string;
+  effective_date?: string;
+  expiration_date?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FormulaIngredient {
+  id?: string;
+  name: string;
+  quantity: number;
+  unit?: string;
+  purity?: string;
+  supplier?: string;
+  notes?: string;
+}
+
+export interface CreateFormulaRequest {
+  project_id: string;
+  name: string;
+  code: string;
+  version: string;
+  category?: string;
+  description?: string;
+  ingredients?: FormulaIngredient[];
+  process_steps?: string;
+  status: string;
+  effective_date?: string;
+  expiration_date?: string;
+}
+
+export interface FormulaVersion {
+  id: string;
+  formula_id: string;
+  version: string;
+  changes?: string;
+  approved_by?: string;
+  approved_at?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BatchCreateProjectsRequest {
   projects: CreateProjectRequest[];
 }
@@ -161,6 +220,53 @@ export const rsApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.rs.get<string>('/health');
+  },
+};
+
+export const formulaApi = {
+  listFormulas: async (params?: { project_id?: string; status?: string }): Promise<ApiResponse<Formula[]>> => {
+    let url = '/api/v1/formulas';
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+      const queryString = searchParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+    return apiClient.rs.get<Formula[]>(url);
+  },
+
+  getFormula: async (id: string): Promise<ApiResponse<Formula>> => {
+    return apiClient.rs.get<Formula>(`/api/v1/formulas/${id}`);
+  },
+
+  createFormula: async (data: CreateFormulaRequest): Promise<ApiResponse<Formula>> => {
+    return apiClient.rs.post<Formula>('/api/v1/formulas', data);
+  },
+
+  updateFormula: async (id: string, data: CreateFormulaRequest): Promise<ApiResponse<Formula>> => {
+    return apiClient.rs.put<Formula>(`/api/v1/formulas/${id}`, data);
+  },
+
+  deleteFormula: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.rs.delete<boolean>(`/api/v1/formulas/${id}`);
+  },
+
+  listVersions: async (formulaId: string): Promise<ApiResponse<FormulaVersion[]>> => {
+    return apiClient.rs.get<FormulaVersion[]>(`/api/v1/formulas/${formulaId}/versions`);
+  },
+
+  createVersion: async (formulaId: string, data: { version: string; changes: string }): Promise<ApiResponse<FormulaVersion>> => {
+    return apiClient.rs.post<FormulaVersion>(`/api/v1/formulas/${formulaId}/versions`, data);
+  },
+
+  approveFormula: async (id: string): Promise<ApiResponse<Formula>> => {
+    return apiClient.rs.post<Formula>(`/api/v1/formulas/${id}/approve`, {});
   },
 };
 

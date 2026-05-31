@@ -2,10 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { 
   FlaskConical, Plus, Search, Clock, ChevronRight, 
   FileText, Edit, Trash2, Loader2, X, CheckCircle,
-  Beaker, Eye, Download, Upload
+  Beaker, Eye, Download, Upload, BeakerIcon, FileCode,
+  GitBranch, CheckCircle2, XCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { rsApi, Project, CreateProjectRequest, ExperimentRecord, CreateExperimentRequest, UpdateExperimentRequest, BatchCreateProjectsRequest, BatchDeleteProjectsRequest, BatchOperationResult } from '../api/rs';
+import { rsApi, formulaApi, Project, CreateProjectRequest, ExperimentRecord, CreateExperimentRequest, UpdateExperimentRequest, BatchCreateProjectsRequest, BatchDeleteProjectsRequest, BatchOperationResult, Formula, CreateFormulaRequest, FormulaVersion } from '../api/rs';
 import { FieldError, ValidationHint } from '../components/ValidationError';
 import { patterns } from '../utils/validation';
 import { ModuleGate } from '../components/PermissionGate';
@@ -13,22 +14,45 @@ import { MODULES } from '../config/permissions';
 
 const Rspage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'projects' | 'experiments'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'experiments' | 'formulas'>('projects');
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiments, setExperiments] = useState<ExperimentRecord[]>([]);
+  const [formulas, setFormulas] = useState<Formula[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showExperimentModal, setShowExperimentModal] = useState(false);
   const [showExperimentDetailModal, setShowExperimentDetailModal] = useState(false);
+  const [showFormulaModal, setShowFormulaModal] = useState(false);
+  const [showFormulaDetailModal, setShowFormulaDetailModal] = useState(false);
+  const [showFormulaVersionModal, setShowFormulaVersionModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedExperiment, setSelectedExperiment] = useState<ExperimentRecord | null>(null);
   const [selectedProjectForExperiment, setSelectedProjectForExperiment] = useState<Project | null>(null);
+  const [selectedFormula, setSelectedFormula] = useState<Formula | null>(null);
+  const [formulaVersions, setFormulaVersions] = useState<FormulaVersion[]>([]);
   const [formData, setFormData] = useState<CreateProjectRequest>({
     name: '',
     description: '',
     status: '立项'
+  });
+  const [formulaFormData, setFormulaFormData] = useState<CreateFormulaRequest>({
+    project_id: '',
+    name: '',
+    code: '',
+    version: 'v1.0',
+    category: '',
+    description: '',
+    ingredients: [],
+    process_steps: '',
+    status: '草稿',
+    effective_date: '',
+    expiration_date: ''
+  });
+  const [formulaVersionFormData, setFormulaVersionFormData] = useState({
+    version: '',
+    changes: ''
   });
   const [experimentFormData, setExperimentFormData] = useState<CreateExperimentRequest>({
     project_id: '',
@@ -42,6 +66,7 @@ const Rspage: React.FC = () => {
   const [editingExperiment, setEditingExperiment] = useState<ExperimentRecord | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingExperiment, setIsEditingExperiment] = useState(false);
+  const [isEditingFormula, setIsEditingFormula] = useState(false);
   const [creating, setCreating] = useState(false);
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [projectErrors, setProjectErrors] = useState<Record<string, string>>({});
@@ -273,6 +298,29 @@ const Rspage: React.FC = () => {
     }
   };
 
+  const loadFormulas = async () => {
+    try {
+      const response = await formulaApi.listFormulas();
+      if (response.success && response.data) {
+        let formulaData = response.data as any;
+        let rawFormulas: any[] = [];
+        
+        if (Array.isArray(formulaData)) {
+          rawFormulas = formulaData;
+        } else if (formulaData.items && Array.isArray(formulaData.items)) {
+          rawFormulas = formulaData.items;
+        }
+        
+        setFormulas(rawFormulas);
+      } else {
+        setFormulas([]);
+      }
+    } catch (err) {
+      console.error('加载配方失败:', err);
+      setFormulas([]);
+    }
+  };
+
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
@@ -481,6 +529,203 @@ const Rspage: React.FC = () => {
   // 确保 projects 和 experiments 是数组，避免 filter 错误
   const safeProjects = Array.isArray(projects) ? projects : [];
   const safeExperiments = Array.isArray(experiments) ? experiments : [];
+  const safeFormulas = Array.isArray(formulas) ? formulas : [];
+
+  // 配方管理相关函数
+  const openFormulaModal = (formula?: Formula) => {
+    if (formula) {
+      setSelectedFormula(formula);
+      setFormulaFormData({
+        project_id: formula.project_id,
+        name: formula.name,
+        code: formula.code,
+        version: formula.version,
+        category: formula.category || '',
+        description: formula.description || '',
+        ingredients: formula.ingredients || [],
+        process_steps: formula.process_steps || '',
+        status: formula.status,
+        effective_date: formula.effective_date || '',
+        expiration_date: formula.expiration_date || ''
+      });
+      setIsEditingFormula(true);
+    } else {
+      setSelectedFormula(null);
+      setFormulaFormData({
+        project_id: '',
+        name: '',
+        code: '',
+        version: 'v1.0',
+        category: '',
+        description: '',
+        ingredients: [],
+        process_steps: '',
+        status: '草稿',
+        effective_date: '',
+        expiration_date: ''
+      });
+      setIsEditingFormula(false);
+    }
+    setShowFormulaModal(true);
+  };
+
+  const openFormulaDetailModal = async (formula: Formula) => {
+    setSelectedFormula(formula);
+    await loadFormulaVersions(formula.id);
+    setShowFormulaDetailModal(true);
+  };
+
+  const loadFormulaVersions = async (formulaId: string) => {
+    try {
+      const response = await formulaApi.listVersions(formulaId);
+      if (response.success && response.data) {
+        setFormulaVersions(Array.isArray(response.data) ? response.data : []);
+      } else {
+        setFormulaVersions([]);
+      }
+    } catch (err) {
+      console.error('加载配方版本失败:', err);
+      setFormulaVersions([]);
+    }
+  };
+
+  const handleCreateFormula = async () => {
+    if (!formulaFormData.name.trim() || !formulaFormData.code.trim() || !formulaFormData.project_id) {
+      showNotification('error', '请填写必填信息（配方名称、配方编号、关联项目）');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await formulaApi.createFormula(formulaFormData);
+      if (response.success) {
+        showNotification('success', '配方创建成功');
+        setShowFormulaModal(false);
+        loadFormulas();
+      } else {
+        showNotification('error', response.message || '创建失败');
+      }
+    } catch (err) {
+      showNotification('error', '创建配方失败');
+      console.error('创建配方失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleUpdateFormula = async () => {
+    if (!selectedFormula) return;
+
+    if (!formulaFormData.name.trim() || !formulaFormData.code.trim()) {
+      showNotification('error', '请填写必填信息（配方名称、配方编号）');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await formulaApi.updateFormula(selectedFormula.id, formulaFormData);
+      if (response.success) {
+        showNotification('success', '配方更新成功');
+        setShowFormulaModal(false);
+        loadFormulas();
+      } else {
+        showNotification('error', response.message || '更新失败');
+      }
+    } catch (err) {
+      showNotification('error', '更新配方失败');
+      console.error('更新配方失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteFormula = async (id: string) => {
+    if (!confirm('确定要删除这个配方吗？')) return;
+
+    try {
+      const response = await formulaApi.deleteFormula(id);
+      if (response.success) {
+        showNotification('success', '配方删除成功');
+        loadFormulas();
+      } else {
+        showNotification('error', response.message || '删除失败');
+      }
+    } catch (err) {
+      showNotification('error', '删除配方失败');
+      console.error('删除配方失败:', err);
+    }
+  };
+
+  const openFormulaVersionModal = (formula: Formula) => {
+    setSelectedFormula(formula);
+    setFormulaVersionFormData({
+      version: '',
+      changes: ''
+    });
+    setShowFormulaVersionModal(true);
+  };
+
+  const handleCreateFormulaVersion = async () => {
+    if (!selectedFormula || !formulaVersionFormData.version.trim() || !formulaVersionFormData.changes.trim()) {
+      showNotification('error', '请填写版本号和变更说明');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await formulaApi.createVersion(selectedFormula.id, formulaVersionFormData);
+      if (response.success) {
+        showNotification('success', '配方版本创建成功');
+        setShowFormulaVersionModal(false);
+        loadFormulaVersions(selectedFormula.id);
+        loadFormulas();
+      } else {
+        showNotification('error', response.message || '创建失败');
+      }
+    } catch (err) {
+      showNotification('error', '创建配方版本失败');
+      console.error('创建配方版本失败:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleApproveFormula = async (id: string) => {
+    try {
+      const response = await formulaApi.approveFormula(id);
+      if (response.success) {
+        showNotification('success', '配方审批通过');
+        loadFormulas();
+        setShowFormulaDetailModal(false);
+      } else {
+        showNotification('error', response.message || '审批失败');
+      }
+    } catch (err) {
+      showNotification('error', '审批配方失败');
+      console.error('审批配方失败:', err);
+    }
+  };
+
+  const getFormulaStatusColor = (status: string) => {
+    switch (status) {
+      case '草稿': return 'bg-gray-100 text-gray-700';
+      case '待审批': return 'bg-yellow-100 text-yellow-700';
+      case '已批准': return 'bg-green-100 text-green-700';
+      case '已拒绝': return 'bg-red-100 text-red-700';
+      case '已发布': return 'bg-blue-100 text-blue-700';
+      case '已废弃': return 'bg-slate-100 text-slate-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getFormulaApprovalStatusIcon = (status: string) => {
+    switch (status) {
+      case '已批准': return <CheckCircle2 className="w-5 h-5 text-green-600" />;
+      case '已拒绝': return <XCircle className="w-5 h-5 text-red-600" />;
+      case '待审批': return <Clock className="w-5 h-5 text-yellow-600" />;
+      default: return <Clock className="w-5 h-5 text-gray-400" />;
+    }
+  };
 
   const filteredProjects = safeProjects.filter(p => 
     (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -792,6 +1037,17 @@ const Rspage: React.FC = () => {
                   <span>新建试验</span>
                 </button>
               )}
+              {activeTab === 'formulas' && (
+                <>
+                  <button
+                    onClick={() => openFormulaModal()}
+                    className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>添加配方</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -853,21 +1109,40 @@ const Rspage: React.FC = () => {
               <span>试验记录</span>
             </div>
           </button>
+          <button
+            onClick={() => setActiveTab('formulas')}
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'formulas'
+                ? 'bg-indigo-600 text-white'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <FileCode className="w-5 h-5" />
+              <span>配方管理</span>
+            </div>
+          </button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600 mb-1">{activeTab === 'projects' ? '项目总数' : '试验总数'}</p>
-                <p className="text-3xl font-bold text-slate-900">{activeTab === 'projects' ? safeProjects.length : safeExperiments.length}</p>
+                <p className="text-sm text-slate-600 mb-1">
+                  {activeTab === 'projects' ? '项目总数' : activeTab === 'experiments' ? '试验总数' : '配方总数'}
+                </p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {activeTab === 'projects' ? safeProjects.length : activeTab === 'experiments' ? safeExperiments.length : safeFormulas.length}
+                </p>
               </div>
               <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
                 {activeTab === 'projects' ? (
                   <FlaskConical className="w-6 h-6 text-blue-600" />
-                ) : (
+                ) : activeTab === 'experiments' ? (
                   <Beaker className="w-6 h-6 text-blue-600" />
+                ) : (
+                  <FileCode className="w-6 h-6 text-indigo-600" />
                 )}
               </div>
             </div>
@@ -879,7 +1154,9 @@ const Rspage: React.FC = () => {
                 <p className="text-3xl font-bold text-blue-600">
                   {activeTab === 'projects'
                     ? safeProjects.filter(p => p.status === '进行中').length
-                    : safeExperiments.filter(e => e.status === '进行中').length}
+                    : activeTab === 'experiments'
+                    ? safeExperiments.filter(e => e.status === '进行中').length
+                    : safeFormulas.filter(f => f.status === '草稿').length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
@@ -894,7 +1171,9 @@ const Rspage: React.FC = () => {
                 <p className="text-3xl font-bold text-green-600">
                   {activeTab === 'projects'
                     ? safeProjects.filter(p => p.status === '已完成').length
-                    : safeExperiments.filter(e => e.status === '已完成').length}
+                    : activeTab === 'experiments'
+                    ? safeExperiments.filter(e => e.status === '已完成').length
+                    : safeFormulas.filter(f => f.status === '已批准' || f.status === '已发布').length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
@@ -902,6 +1181,21 @@ const Rspage: React.FC = () => {
               </div>
             </div>
           </div>
+          {activeTab === 'formulas' && (
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600 mb-1">待审批</p>
+                  <p className="text-3xl font-bold text-yellow-600">
+                    {safeFormulas.filter(f => f.status === '待审批').length}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
+                  <FileCode className="w-6 h-6 text-yellow-600" />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* List */}
@@ -1091,6 +1385,97 @@ const Rspage: React.FC = () => {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Formulas List */}
+        {activeTab === 'formulas' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm">
+              <div className="p-6 border-b border-slate-200">
+                <h2 className="text-lg font-semibold text-slate-900">配方列表</h2>
+              </div>
+              <div className="divide-y divide-slate-200">
+                {safeFormulas.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <FileCode className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500">暂无配方</p>
+                  </div>
+                ) : (
+                  safeFormulas.map((formula) => (
+                    <div key={formula.id} className="p-6 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-4">
+                          <div className="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
+                            <FileCode className="w-6 h-6" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <h3 className="text-lg font-semibold text-slate-900">{formula.name}</h3>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getFormulaStatusColor(formula.status)}`}>
+                                {formula.status}
+                              </span>
+                              <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-medium">
+                                {formula.version}
+                              </span>
+                              {formula.approval_status && (
+                                <span className="flex items-center">
+                                  {getFormulaApprovalStatusIcon(formula.approval_status)}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-slate-600 mb-3">{formula.description || '暂无描述'}</p>
+                            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                              <span className="font-mono">编号: {formula.code}</span>
+                              {formula.category && <span>分类: {formula.category}</span>}
+                              {formula.ingredients && formula.ingredients.length > 0 && (
+                                <span>配方成分: {formula.ingredients.length} 种</span>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-4 text-sm text-slate-500 mt-2">
+                              <span>项目: {getProjectName(formula.project_id)}</span>
+                              {formula.effective_date && (
+                                <span>生效日期: {new Date(formula.effective_date).toLocaleDateString('zh-CN')}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => openFormulaDetailModal(formula)}
+                            className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+                            title="查看详情"
+                          >
+                            <span className="flex items-center"><Eye className="w-4 h-4 mr-1" />详情</span>
+                          </button>
+                          <button
+                            onClick={() => openFormulaVersionModal(formula)}
+                            className="px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                            title="版本管理"
+                          >
+                            <span className="flex items-center"><GitBranch className="w-4 h-4 mr-1" />版本</span>
+                          </button>
+                          <button
+                            onClick={() => openFormulaModal(formula)}
+                            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+                            title="编辑"
+                          >
+                            <Edit className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteFormula(formula.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                            title="删除"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1750,6 +2135,439 @@ const Rspage: React.FC = () => {
                   </span>
                 ) : (
                   '导入'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit Formula Modal */}
+      {showFormulaModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-900">{isEditingFormula ? '编辑配方' : '添加配方'}</h3>
+              <button
+                onClick={() => { setShowFormulaModal(false); setIsEditingFormula(false); }}
+                className="p-2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    配方名称 *
+                  </label>
+                  <input
+                    type="text"
+                    value={formulaFormData.name}
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, name: e.target.value })}
+                    placeholder="请输入配方名称"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    配方编号 *
+                  </label>
+                  <input
+                    type="text"
+                    value={formulaFormData.code}
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, code: e.target.value })}
+                    placeholder="请输入配方编号"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    关联项目 *
+                  </label>
+                  <select
+                    value={formulaFormData.project_id}
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, project_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    disabled={isEditingFormula}
+                  >
+                    <option value="">请选择项目</option>
+                    {safeProjects.map(project => (
+                      <option key={project.id} value={project.id}>{project.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    版本号
+                  </label>
+                  <input
+                    type="text"
+                    value={formulaFormData.version}
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, version: e.target.value })}
+                    placeholder="如 v1.0"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    分类
+                  </label>
+                  <select
+                    value={formulaFormData.category}
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">请选择分类</option>
+                    <option value="食品配方">食品配方</option>
+                    <option value="药品配方">药品配方</option>
+                    <option value="化妆品配方">化妆品配方</option>
+                    <option value="化工配方">化工配方</option>
+                    <option value="其他">其他</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    状态
+                  </label>
+                  <select
+                    value={formulaFormData.status}
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="草稿">草稿</option>
+                    <option value="待审批">待审批</option>
+                    <option value="已批准">已批准</option>
+                    <option value="已发布">已发布</option>
+                    <option value="已废弃">已废弃</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    生效日期
+                  </label>
+                  <input
+                    type="date"
+                    value={formulaFormData.effective_date}
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, effective_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    失效日期
+                  </label>
+                  <input
+                    type="date"
+                    value={formulaFormData.expiration_date}
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, expiration_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  配方描述
+                </label>
+                <textarea
+                  value={formulaFormData.description}
+                  onChange={(e) => setFormulaFormData({ ...formulaFormData, description: e.target.value })}
+                  placeholder="请输入配方描述"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  工艺流程
+                </label>
+                <textarea
+                  value={formulaFormData.process_steps}
+                  onChange={(e) => setFormulaFormData({ ...formulaFormData, process_steps: e.target.value })}
+                  placeholder="请输入工艺流程步骤"
+                  rows={4}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+              <button
+                onClick={() => { setShowFormulaModal(false); setIsEditingFormula(false); }}
+                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={isEditingFormula ? handleUpdateFormula : handleCreateFormula}
+                disabled={creating}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    {isEditingFormula ? '更新中...' : '创建中...'}
+                  </span>
+                ) : (
+                  isEditingFormula ? '更新' : '创建'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Formula Detail Modal */}
+      {showFormulaDetailModal && selectedFormula && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-slate-900">配方详情</h3>
+                <button
+                  onClick={() => setShowFormulaDetailModal(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold text-slate-800">{selectedFormula.name}</h4>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getFormulaStatusColor(selectedFormula.status)}`}>
+                      {selectedFormula.status}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 mb-3">
+                    <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+                      {selectedFormula.version}
+                    </span>
+                    {selectedFormula.category && (
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+                        {selectedFormula.category}
+                      </span>
+                    )}
+                    {selectedFormula.approval_status && (
+                      <span className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+                        {getFormulaApprovalStatusIcon(selectedFormula.approval_status)}
+                        {selectedFormula.approval_status}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600">{selectedFormula.description || '暂无描述'}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">配方编号</p>
+                    <p className="font-medium text-slate-800 font-mono">{selectedFormula.code}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">关联项目</p>
+                    <p className="font-medium text-slate-800">{getProjectName(selectedFormula.project_id)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">生效日期</p>
+                    <p className="font-medium text-slate-800">
+                      {selectedFormula.effective_date ? new Date(selectedFormula.effective_date).toLocaleDateString('zh-CN') : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">失效日期</p>
+                    <p className="font-medium text-slate-800">
+                      {selectedFormula.expiration_date ? new Date(selectedFormula.expiration_date).toLocaleDateString('zh-CN') : '-'}
+                    </p>
+                  </div>
+                  {selectedFormula.approved_by && (
+                    <div>
+                      <p className="text-sm text-slate-500 mb-1">审批人</p>
+                      <p className="font-medium text-slate-800">{selectedFormula.approved_by}</p>
+                    </div>
+                  )}
+                  {selectedFormula.approved_at && (
+                    <div>
+                      <p className="text-sm text-slate-500 mb-1">审批时间</p>
+                      <p className="font-medium text-slate-800">{new Date(selectedFormula.approved_at).toLocaleString('zh-CN')}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">创建时间</p>
+                    <p className="font-medium text-slate-800">{new Date(selectedFormula.created_at).toLocaleString('zh-CN')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">更新时间</p>
+                    <p className="font-medium text-slate-800">{new Date(selectedFormula.updated_at).toLocaleString('zh-CN')}</p>
+                  </div>
+                </div>
+
+                {selectedFormula.ingredients && selectedFormula.ingredients.length > 0 && (
+                  <div>
+                    <h5 className="font-semibold text-slate-800 mb-3">配方成分</h5>
+                    <div className="space-y-2">
+                      {selectedFormula.ingredients.map((ingredient, idx) => (
+                        <div key={idx} className="p-3 bg-white border border-slate-200 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-slate-700">{ingredient.name}</span>
+                            <span className="text-sm text-indigo-600">{ingredient.quantity} {ingredient.unit || ''}</span>
+                          </div>
+                          {ingredient.purity && (
+                            <p className="text-xs text-slate-500 mt-1">纯度: {ingredient.purity}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedFormula.process_steps && (
+                  <div>
+                    <h5 className="font-semibold text-slate-800 mb-3">工艺流程</h5>
+                    <div className="p-4 bg-white border border-slate-200 rounded-lg">
+                      <p className="text-slate-700 whitespace-pre-wrap">{selectedFormula.process_steps}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <h5 className="font-semibold text-slate-800 mb-3">版本历史</h5>
+                  {formulaVersions.length === 0 ? (
+                    <p className="text-slate-500 text-center py-4">暂无版本记录</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {formulaVersions.map((version) => (
+                        <div key={version.id} className="p-4 bg-white border border-slate-200 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-indigo-700">{version.version}</span>
+                            <span className="text-sm text-slate-500">{new Date(version.created_at).toLocaleDateString('zh-CN')}</span>
+                          </div>
+                          <p className="text-slate-700 mb-2">{version.changes || '无变更说明'}</p>
+                          <div className="flex items-center justify-between text-sm text-slate-500">
+                            <span>创建人: {version.created_by || '-'}</span>
+                            {version.approved_by && <span>审批人: {version.approved_by}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+                  {selectedFormula.status === '待审批' && (
+                    <button
+                      onClick={() => handleApproveFormula(selectedFormula.id)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      审批通过
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowFormulaDetailModal(false);
+                      openFormulaVersionModal(selectedFormula);
+                    }}
+                    className="px-4 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50"
+                  >
+                    新建版本
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowFormulaDetailModal(false);
+                      openFormulaModal(selectedFormula);
+                    }}
+                    className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    onClick={() => setShowFormulaDetailModal(false)}
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
+                  >
+                    关闭
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Formula Version Modal */}
+      {showFormulaVersionModal && selectedFormula && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-900">新建配方版本</h3>
+              <button
+                onClick={() => setShowFormulaVersionModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  配方名称
+                </label>
+                <p className="text-indigo-700 font-medium">{selectedFormula.name}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  当前版本
+                </label>
+                <p className="text-slate-700">{selectedFormula.version}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  新版本号 *
+                </label>
+                <input
+                  type="text"
+                  value={formulaVersionFormData.version}
+                  onChange={(e) => setFormulaVersionFormData({ ...formulaVersionFormData, version: e.target.value })}
+                  placeholder="如 v2.0"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  变更说明 *
+                </label>
+                <textarea
+                  value={formulaVersionFormData.changes}
+                  onChange={(e) => setFormulaVersionFormData({ ...formulaVersionFormData, changes: e.target.value })}
+                  placeholder="请输入本次变更的详细说明"
+                  rows={4}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowFormulaVersionModal(false)}
+                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleCreateFormulaVersion}
+                disabled={creating}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    创建中...
+                  </span>
+                ) : (
+                  '创建版本'
                 )}
               </button>
             </div>

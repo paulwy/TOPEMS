@@ -344,20 +344,29 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/health", axum::routing::get(health_check))
-        .route("/api/v1/chat-rooms", axum::routing::get(list_chat_rooms).post(create_chat_room))
+        .route("/api/v1/chat-rooms", axum::routing::get(list_chat_rooms))
         .route("/api/v1/chat-rooms/{chat_id}", axum::routing::get(get_chat_room))
-        .route("/api/v1/chat-rooms/{chat_id}/messages", axum::routing::get(list_chat_messages).post(create_chat_message))
+        .route("/api/v1/chat-rooms/{chat_id}/messages", axum::routing::get(list_chat_messages))
+        .route("/api/v1/project-groups", axum::routing::get(list_project_groups))
+        .route("/api/v1/notifications/{user_id}", axum::routing::get(list_notifications));
+
+    let protected_routes = Router::new()
+        .route("/api/v1/chat-rooms", axum::routing::post(create_chat_room))
+        .route("/api/v1/chat-rooms/{chat_id}/messages", axum::routing::post(create_chat_message))
         .route("/api/v1/chat-messages/{message_id}/read", axum::routing::put(mark_message_read))
-        .route("/api/v1/project-groups", axum::routing::get(list_project_groups).post(create_project_group))
-        .route("/api/v1/notifications/{user_id}", axum::routing::get(list_notifications).post(create_notification))
+        .route("/api/v1/project-groups", axum::routing::post(create_project_group))
+        .route("/api/v1/notifications/{user_id}", axum::routing::post(create_notification))
         .route("/api/v1/notifications/{notification_id}/read", axum::routing::put(mark_notification_read))
         .route("/api/v1/notifications/{user_id}/read-all", axum::routing::put(mark_all_notifications_read))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
+        ));
+
+    let app = public_routes
+        .merge(protected_routes)
         .with_state(app_state)
         .layer(cors);
 

@@ -2,7 +2,7 @@
 # 多阶段构建优化镜像大小
 
 # 阶段1: 构建阶段
-FROM node:20-alpine as builder
+FROM node:latest as builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # 阶段2: 运行阶段
-FROM nginx:1.25-alpine
+FROM nginx:latest
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 

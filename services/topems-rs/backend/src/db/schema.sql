@@ -32,11 +32,18 @@ CREATE TABLE IF NOT EXISTS formulas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     code VARCHAR(50) NOT NULL UNIQUE,
-    version INTEGER NOT NULL DEFAULT 1,
+    version VARCHAR(20) NOT NULL DEFAULT 'v1.0',
+    category VARCHAR(50),  -- 食品配方, 药品配方, 化妆品配方, 化工配方, 其他
     description TEXT,
     project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'draft',  -- draft, pending_review, approved, rejected, archived
-    ingredients JSONB NOT NULL DEFAULT '[]',
+    status VARCHAR(50) NOT NULL DEFAULT 'draft',  -- draft, pending_review, approved, rejected, published, archived
+    approval_status VARCHAR(50),  -- pending, approved, rejected
+    approved_by VARCHAR(100),
+    approved_at TIMESTAMPTZ,
+    effective_date DATE,
+    expiration_date DATE,
+    ingredients JSONB DEFAULT '[]',
+    process_steps TEXT,
     process_params JSONB DEFAULT '{}',
     properties JSONB DEFAULT '{}',
     created_by VARCHAR(100) NOT NULL,

@@ -400,13 +400,15 @@ async fn main() {
         .route("/api/v1/templates", get(list_templates))
         .route("/api/v1/templates", post(create_template))
         .route("/api/v1/report-types", get(list_report_types))
+        .route("/api/v1/reports-center/stats", get(get_reports_center_stats))
+        .route("/api/v1/reports-center/export/:report_type", post(export_stats_report))
         .layer(cors)
         .with_state(state);
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8010".to_string())
+        .unwrap_or_else(|_| "8024".to_string())
         .parse()
-        .unwrap_or(8010);
+        .unwrap_or(8024);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ TOPEMS Report Service is running at http://{}", addr);
 
@@ -607,4 +609,119 @@ async fn create_template(
     templates.push(template.clone());
 
     Json(ApiResponse::success(template, "Template created successfully".to_string()))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DashboardStats {
+    #[serde(rename = "totalUsers")]
+    pub total_users: i32,
+    #[serde(rename = "activeUsers")]
+    pub active_users: i32,
+    #[serde(rename = "totalRoles")]
+    pub total_roles: i32,
+    #[serde(rename = "totalPermissions")]
+    pub total_permissions: i32,
+    #[serde(rename = "totalCompanies")]
+    pub total_companies: i32,
+    #[serde(rename = "totalDepartments")]
+    pub total_departments: i32,
+    #[serde(rename = "totalEmployees")]
+    pub total_employees: i32,
+    #[serde(rename = "recentActivities")]
+    pub recent_activities: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserGrowthDataPoint {
+    pub month: String,
+    #[serde(rename = "新增用户")]
+    pub new_users: i32,
+    #[serde(rename = "活跃用户")]
+    pub active_users: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RoleDistributionDataPoint {
+    pub name: String,
+    pub value: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActivityTypeDataPoint {
+    pub name: String,
+    pub count: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportsCenterStats {
+    pub dashboard: DashboardStats,
+    #[serde(rename = "userGrowth")]
+    pub user_growth: Vec<UserGrowthDataPoint>,
+    #[serde(rename = "roleDistribution")]
+    pub role_distribution: Vec<RoleDistributionDataPoint>,
+    #[serde(rename = "activityTypes")]
+    pub activity_types: Vec<ActivityTypeDataPoint>,
+}
+
+async fn get_reports_center_stats() -> Json<ApiResponse<ReportsCenterStats>> {
+    let dashboard = DashboardStats {
+        total_users: 128,
+        active_users: 89,
+        total_roles: 12,
+        total_permissions: 156,
+        total_companies: 3,
+        total_departments: 15,
+        total_employees: 245,
+        recent_activities: 42,
+    };
+
+    let user_growth = vec![
+        UserGrowthDataPoint { month: "2026-01".to_string(), new_users: 15, active_users: 65 },
+        UserGrowthDataPoint { month: "2026-02".to_string(), new_users: 22, active_users: 78 },
+        UserGrowthDataPoint { month: "2026-03".to_string(), new_users: 18, active_users: 85 },
+        UserGrowthDataPoint { month: "2026-04".to_string(), new_users: 25, active_users: 92 },
+        UserGrowthDataPoint { month: "2026-05".to_string(), new_users: 20, active_users: 89 },
+    ];
+
+    let role_distribution = vec![
+        RoleDistributionDataPoint { name: "管理员".to_string(), value: 12 },
+        RoleDistributionDataPoint { name: "研发人员".to_string(), value: 45 },
+        RoleDistributionDataPoint { name: "检验员".to_string(), value: 32 },
+        RoleDistributionDataPoint { name: "质量人员".to_string(), value: 18 },
+        RoleDistributionDataPoint { name: "安全员".to_string(), value: 10 },
+        RoleDistributionDataPoint { name: "普通用户".to_string(), value: 11 },
+    ];
+
+    let activity_types = vec![
+        ActivityTypeDataPoint { name: "创建报表".to_string(), count: 128 },
+        ActivityTypeDataPoint { name: "导出报表".to_string(), count: 256 },
+        ActivityTypeDataPoint { name: "查看报表".to_string(), count: 512 },
+        ActivityTypeDataPoint { name: "创建模板".to_string(), count: 34 },
+        ActivityTypeDataPoint { name: "系统登录".to_string(), count: 890 },
+    ];
+
+    let stats = ReportsCenterStats {
+        dashboard,
+        user_growth,
+        role_distribution,
+        activity_types,
+    };
+
+    Json(ApiResponse::success(stats, "Reports center stats retrieved successfully".to_string()))
+}
+
+async fn export_stats_report(
+    axum::extract::Path(report_type): axum::extract::Path<String>,
+    Json(req): Json<ExportReportRequest>,
+) -> Json<ApiResponse<HashMap<String, serde_json::Value>>> {
+    let filename = format!("stats_{}_{}.{}", report_type, Utc::now().format("%Y%m%d_%H%M%S"), req.format.extension());
+    
+    let mut result = HashMap::new();
+    result.insert("filename".to_string(), serde_json::json!(filename));
+    result.insert("format".to_string(), serde_json::json!(req.format.extension()));
+    result.insert("content_type".to_string(), serde_json::json!(req.format.content_type()));
+    result.insert("report_type".to_string(), serde_json::json!(report_type));
+    result.insert("download_url".to_string(), serde_json::json!(format!("/api/v1/reports-center/download/{}", filename)));
+
+    Json(ApiResponse::success(result, "Export ready".to_string()))
 }

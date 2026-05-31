@@ -1,68 +1,68 @@
 #!/bin/bash
 
-# TOPEMS 停止脚本
-# 用法: ./scripts/stop-all.sh
+# TOPEMS 一键停止脚本
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+set -e
 
-echo "=========================================="
-echo "  TOPEMS 服务停止脚本"
-echo "=========================================="
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║          TOPEMS 系统一键停止脚本                              ║"
+echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-RED='\033[0;31m'
+# 颜色定义
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
-SERVICES=(
-    "topems-iam"
-    "topems-rs"
-    "topems-lims"
-    "topems-qms"
-    "topems-mes"
-    "topems-erp"
-    "topems-scm"
-    "topems-wms"
-    "topems-crm"
-    "topems-hrm"
-    "topems-gis"
-    "topems-bi"
-    "topems-ehs"
-    "topems-pdm"
-    "topems-srm"
-    "topems-im"
-    "topems-ai"
-    "topems-mobile"
-    "topems-integration"
-    "topems-portal"
-)
-
-stop_service() {
-    local service_name=$1
-    local pid_file="$PROJECT_DIR/pids/$service_name.pid"
-
-    if [ -f "$pid_file" ]; then
-        local pid=$(cat "$pid_file")
-        if ps -p $pid > /dev/null 2>&1; then
-            echo -e "→ 停止 $service_name (PID: $pid)..."
-            kill $pid 2>/dev/null || true
-            rm -f "$pid_file"
-            echo -e "  ${GREEN}✓${NC} 已停止"
-        else
-            echo -e "  ${RED}✗${NC} $service_name 未运行"
-            rm -f "$pid_file"
-        fi
-    else
-        echo -e "  ${YELLOW}⚠${NC} $service_name 无 PID 文件"
-    fi
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
 }
 
-for service in "${SERVICES[@]}"; do
-    stop_service "$service"
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+# 获取项目根目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# 1. 停止后端服务
+log_info "停止后端服务..."
+
+# 检查并停止所有服务端口
+for port in 8001 8002 8003 8004 8005 8006 8009 8010 8011 8012 8015 8016 8017 8018; do
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+        log_warn "发现端口 $port 被占用，正在停止..."
+        lsof -ti :$port | xargs -r kill -9 2>/dev/null || true
+    fi
 done
 
+# 2. 停止前端
+log_info "停止前端服务..."
+for port in 3000; do
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+        lsof -ti :$port | xargs -r kill -9 2>/dev/null || true
+    fi
+done
+
+# 3. 停止 Docker 服务
+log_info "停止数据库和 Redis 服务..."
+cd "$PROJECT_ROOT/docker"
+docker-compose down 2>/dev/null || true
+cd "$PROJECT_ROOT"
+
+# 4. 清理残留进程
+log_info "清理残留进程..."
+pkill -f "topems-" 2>/dev/null || true
+
+log_success "所有服务已停止"
 echo ""
-echo "=========================================="
-echo -e "${GREEN}所有服务已停止${NC}"
-echo "=========================================="
+echo "如果需要完全清理数据卷，请执行:"
+echo "  cd $PROJECT_ROOT/docker && docker-compose down -v"
+echo ""

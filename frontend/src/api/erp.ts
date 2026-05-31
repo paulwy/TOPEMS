@@ -61,6 +61,66 @@ export interface Asset {
   updated_at: string;
 }
 
+export interface Expense {
+  id: string;
+  expense_number: string;
+  applicant_name?: string;
+  department_id?: string;
+  expense_type: string;
+  amount: number;
+  description?: string;
+  expense_date?: string;
+  receipt_count?: number;
+  status: string;
+  approver_id?: string;
+  approved_at?: string;
+  reimbursed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Budget {
+  id: string;
+  department_id?: string;
+  budget_type?: string;
+  fiscal_year?: string;
+  total_budget: number;
+  used_amount?: number;
+  remaining_amount?: number;
+  usage_rate?: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Receivable {
+  id: string;
+  invoice_number: string;
+  customer_name?: string;
+  project_name?: string;
+  amount: number;
+  invoice_date?: string;
+  due_date?: string;
+  status: string;
+  received_amount?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Payable {
+  id: string;
+  invoice_number: string;
+  supplier_name?: string;
+  category?: string;
+  amount: number;
+  invoice_date?: string;
+  due_date?: string;
+  status: string;
+  paid_amount?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PaginationParams {
   page?: number;
   page_size?: number;
@@ -203,5 +263,121 @@ export const assetApi = {
 export const erpApi = {
   async health(): Promise<ApiResponse<string>> {
     return apiClient.erp.get<string>('/health');
+  },
+};
+
+export const expenseApi = {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Expense>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/expenses${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async get(id: string): Promise<ApiResponse<Expense>> {
+    return apiClient.erp.get(`/api/v1/expenses/${id}`);
+  },
+  
+  async create(data: Partial<Expense>): Promise<ApiResponse<Expense>> {
+    return apiClient.erp.post('/api/v1/expenses', cleanEmptyUuids(data));
+  },
+  
+  async update(id: string, data: Partial<Expense>): Promise<ApiResponse<Expense>> {
+    return apiClient.erp.put(`/api/v1/expenses/${id}`, cleanEmptyUuids(data));
+  },
+  
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/expenses/${id}`);
+  },
+};
+
+export const budgetApi = {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Budget>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/budgets${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async get(id: string): Promise<ApiResponse<Budget>> {
+    return apiClient.erp.get(`/api/v1/budgets/${id}`);
+  },
+  
+  async create(data: Partial<Budget>): Promise<ApiResponse<Budget>> {
+    return apiClient.erp.post('/api/v1/budgets', cleanEmptyUuids(data));
+  },
+  
+  async update(id: string, data: Partial<Budget>): Promise<ApiResponse<Budget>> {
+    return apiClient.erp.put(`/api/v1/budgets/${id}`, cleanEmptyUuids(data));
+  },
+  
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/budgets/${id}`);
+  },
+};
+
+export const receivableApi = {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Receivable>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/receivables${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async get(id: string): Promise<ApiResponse<Receivable>> {
+    return apiClient.erp.get(`/api/v1/receivables/${id}`);
+  },
+  
+  async create(data: Partial<Receivable>): Promise<ApiResponse<Receivable>> {
+    return apiClient.erp.post('/api/v1/receivables', cleanEmptyUuids(data));
+  },
+  
+  async update(id: string, data: Partial<Receivable>): Promise<ApiResponse<Receivable>> {
+    return apiClient.erp.put(`/api/v1/receivables/${id}`, cleanEmptyUuids(data));
+  },
+  
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/receivables/${id}`);
+  },
+};
+
+export const payableApi = {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Payable>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/payables${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async get(id: string): Promise<ApiResponse<Payable>> {
+    return apiClient.erp.get(`/api/v1/payables/${id}`);
+  },
+  
+  async create(data: Partial<Payable>): Promise<ApiResponse<Payable>> {
+    return apiClient.erp.post('/api/v1/payables', cleanEmptyUuids(data));
+  },
+  
+  async update(id: string, data: Partial<Payable>): Promise<ApiResponse<Payable>> {
+    return apiClient.erp.put(`/api/v1/payables/${id}`, cleanEmptyUuids(data));
+  },
+  
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/payables/${id}`);
   },
 };

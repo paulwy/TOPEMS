@@ -29,7 +29,10 @@ impl StorageService {
     }
 
     pub async fn from_env() -> Result<Self, StorageError> {
-        let base_path = std::env::var("STORAGE_LOCAL_PATH").unwrap_or_else(|_| "./storage/files".to_string());
+        // 使用固定的绝对路径
+        let base_path = std::env::var("STORAGE_LOCAL_PATH")
+            .unwrap_or_else(|_| "/Users/air/TOPEMS/platform/topems-doc/backend/storage/files".to_string());
+        
         info!("Using local storage at: {}", base_path);
         Self::new_local(base_path)
     }

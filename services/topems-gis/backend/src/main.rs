@@ -14,7 +14,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 
 mod models;
-use models::{FactoryMap, DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto};
+use models::{FactoryMap, DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto, StorageLocation, EvidenceRecord};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CreateFactoryMap {
@@ -69,6 +69,29 @@ struct CreateLocationPhoto {
     pub taken_at: Option<DateTime<Utc>>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct CreateStorageLocation {
+    pub name: String,
+    pub code: String,
+    pub location_type: String,
+    pub position: serde_json::Value,
+    pub capacity: Option<i32>,
+    pub current_usage: Option<i32>,
+    pub description: Option<String>,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct CreateEvidenceRecord {
+    pub title: String,
+    pub evidence_type: String,
+    pub position: serde_json::Value,
+    pub file_url: Option<String>,
+    pub description: Option<String>,
+    pub recorded_by: String,
+    pub recorded_at: Option<DateTime<Utc>>,
+}
+
 #[derive(Clone)]
 struct AppState {
     factory_maps: Arc<Mutex<Vec<FactoryMap>>>,
@@ -76,6 +99,8 @@ struct AppState {
     pipelines: Arc<Mutex<Vec<Pipeline>>>,
     warehouse_locations: Arc<Mutex<Vec<WarehouseLocation>>>,
     location_photos: Arc<Mutex<Vec<LocationPhoto>>>,
+    storage_locations: Arc<Mutex<Vec<StorageLocation>>>,
+    evidence_records: Arc<Mutex<Vec<EvidenceRecord>>>,
     auth_state: AuthState,
 }
 
@@ -93,6 +118,8 @@ impl AppState {
             pipelines: Arc::new(Mutex::new(Vec::new())),
             warehouse_locations: Arc::new(Mutex::new(Vec::new())),
             location_photos: Arc::new(Mutex::new(Vec::new())),
+            storage_locations: Arc::new(Mutex::new(Vec::new())),
+            evidence_records: Arc::new(Mutex::new(Vec::new())),
             auth_state,
         }
     }
@@ -269,6 +296,68 @@ async fn create_location_photo(
     Json(ApiResponse::success(photo, "创建位置照片成功"))
 }
 
+async fn list_storage_locations(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+    let locations = state.storage_locations.lock().unwrap();
+    Json(ApiResponse::success(serde_json::json!({
+        "storage_locations": locations.clone(),
+        "total": locations.len()
+    }), "获取存储位置列表成功"))
+}
+
+async fn create_storage_location(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateStorageLocation>,
+) -> Json<ApiResponse<StorageLocation>> {
+    let mut locations = state.storage_locations.lock().unwrap();
+    
+    let location = StorageLocation {
+        id: Uuid::new_v4(),
+        name: payload.name,
+        code: payload.code,
+        location_type: payload.location_type,
+        position: payload.position,
+        capacity: payload.capacity,
+        current_usage: payload.current_usage,
+        description: payload.description,
+        status: payload.status,
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+    };
+    
+    locations.push(location.clone());
+    Json(ApiResponse::success(location, "创建存储位置成功"))
+}
+
+async fn list_evidence_records(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+    let records = state.evidence_records.lock().unwrap();
+    Json(ApiResponse::success(serde_json::json!({
+        "evidence_records": records.clone(),
+        "total": records.len()
+    }), "获取证据记录列表成功"))
+}
+
+async fn create_evidence_record(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateEvidenceRecord>,
+) -> Json<ApiResponse<EvidenceRecord>> {
+    let mut records = state.evidence_records.lock().unwrap();
+    
+    let record = EvidenceRecord {
+        id: Uuid::new_v4(),
+        title: payload.title,
+        evidence_type: payload.evidence_type,
+        position: payload.position,
+        file_url: payload.file_url,
+        description: payload.description,
+        recorded_by: payload.recorded_by,
+        recorded_at: payload.recorded_at.unwrap_or_else(Utc::now),
+        created_at: Utc::now(),
+    };
+    
+    records.push(record.clone());
+    Json(ApiResponse::success(record, "创建证据记录成功"))
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
@@ -291,18 +380,32 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/health", axum::routing::get(health_check))
-        .route("/api/v1/factory-maps", axum::routing::get(list_factory_maps).post(create_factory_map))
+        .route("/api/v1/factory-maps", axum::routing::get(list_factory_maps))
         .route("/api/v1/factory-maps/{id}", axum::routing::get(get_factory_map))
-        .route("/api/v1/device-locations", axum::routing::get(list_device_locations).post(create_device_location))
-        .route("/api/v1/pipelines", axum::routing::get(list_pipelines).post(create_pipeline))
-        .route("/api/v1/warehouse-locations", axum::routing::get(list_warehouse_locations).post(create_warehouse_location))
-        .route("/api/v1/location-photos", axum::routing::get(list_location_photos).post(create_location_photo))
+        .route("/api/v1/device-locations", axum::routing::get(list_device_locations))
+        .route("/api/v1/pipelines", axum::routing::get(list_pipelines))
+        .route("/api/v1/warehouse-locations", axum::routing::get(list_warehouse_locations))
+        .route("/api/v1/location-photos", axum::routing::get(list_location_photos))
+        .route("/api/v1/storage-locations", axum::routing::get(list_storage_locations))
+        .route("/api/v1/evidence-records", axum::routing::get(list_evidence_records));
+
+    let protected_api = Router::new()
+        .route("/api/v1/factory-maps", axum::routing::post(create_factory_map))
+        .route("/api/v1/device-locations", axum::routing::post(create_device_location))
+        .route("/api/v1/pipelines", axum::routing::post(create_pipeline))
+        .route("/api/v1/warehouse-locations", axum::routing::post(create_warehouse_location))
+        .route("/api/v1/location-photos", axum::routing::post(create_location_photo))
+        .route("/api/v1/storage-locations", axum::routing::post(create_storage_location))
+        .route("/api/v1/evidence-records", axum::routing::post(create_evidence_record))
         .layer(axum::middleware::from_fn_with_state(
             auth_state,
             auth_middleware,
-        ))
+        ));
+
+    let app = public_routes
+        .merge(protected_api)
         .with_state(state)
         .layer(cors);
 
