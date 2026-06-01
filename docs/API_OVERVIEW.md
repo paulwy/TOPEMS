@@ -1,8 +1,8 @@
 # TOPEMS API 接口文档汇总
 
 **版本**: v1  
-**更新日期**: 2026-05-30  
-**服务总数**: 11
+**更新日期**: 2026-06-01  
+**服务总数**: 12
 
 ---
 
@@ -21,6 +21,7 @@
    - [安全环保服务](#24-安全环保服务-topems-ehs)
    - [供应商管理服务](#25-供应商管理服务-topems-srm)
    - [产品数据管理服务](#26-产品数据管理服务-topems-pdm)
+   - [移动工作台服务](#27-移动工作台服务-topems-mobile)
 
 3. [公共服务](#3-公共服务)
    - [报表服务](#31-报表服务-topems-report)
@@ -314,6 +315,28 @@
 - BOM（物料清单）
 - Document（技术文档）
 
+### 2.7 移动工作台服务 (topems-mobile)
+
+**服务地址**: `http://localhost:8019`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/dashboard/stats` | GET | 获取仪表盘统计数据 |
+| `/api/v1/tasks` | GET | 获取任务列表 |
+| `/api/v1/tasks/{id}` | GET | 获取任务详情 |
+| `/api/v1/tasks/{id}/complete` | POST | 完成任务 |
+| `/api/v1/inspections` | GET | 获取巡检列表 |
+| `/api/v1/inspections/{id}` | GET | 获取巡检详情 |
+| `/api/v1/inspections` | POST | 创建巡检记录 |
+| `/api/v1/scans` | POST | 扫码操作 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- DashboardStats（仪表盘统计）
+- Task（任务）
+- Inspection（巡检记录）
+- ScanRecord（扫码记录）
+
 ---
 
 ## 3. 公共服务
@@ -339,16 +362,19 @@
 
 ### 3.2 通知服务
 
-**服务地址**: 统一通过各服务推送
+**服务地址**: `http://localhost:8023`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
 | `/api/v1/notifications` | GET | 获取通知列表 |
-| `/api/v1/notifications/{id}` | GET | 获取通知详情 |
-| `/api/v1/notifications/{id}` | PUT | 更新通知状态 |
+| `/api/v1/notifications` | POST | 创建通知 |
+| `/api/v1/notifications/unread` | GET | 获取未读通知列表 |
+| `/api/v1/notifications/unread-count` | GET | 获取未读通知数量 |
+| `/api/v1/notifications/{id}/read` | PUT | 标记通知为已读 |
+| `/api/v1/notifications/read-all` | PUT | 批量标记所有通知为已读 |
 | `/api/v1/notifications/{id}` | DELETE | 删除通知 |
-| `/api/v1/notifications/read/all` | POST | 批量标记已读 |
-| `/api/v1/notifications/unread/count` | GET | 获取未读数量 |
+| `/ws/notifications` | WebSocket | WebSocket通知订阅 |
+| `/health` | GET | 健康检查 |
 
 **数据模型**:
 - Notification（通知）
@@ -439,18 +465,20 @@ curl -X GET "http://localhost:8005/api/v1/projects" \
 | topems-flow | 8004 | ✅ |
 | topems-rs | 8005 | ✅ |
 | topems-lims | 8006 | ✅ |
-| topems-qms | 8007 | 🔄 |
-| topems-ehs | 8008 | 🔄 |
+| topems-qms | 8012 | 🔄 |
+| topems-ehs | 8013 | 🔄 |
 | topems-erp | 8009 | 📋 |
-| topems-srm | 8010 | 📋 |
-| topems-bi | 8011 | 🔄 |
-| topems-crm | 8012 | 📋 |
-| topems-hrm | 8013 | 📋 |
+| topems-srm | 8018 | 📋 |
+| topems-bi | 8022 | 🔄 |
+| topems-crm | 8014 | 📋 |
+| topems-hrm | 8010 | 📋 |
 | topems-mes | 8014 | 📋 |
 | topems-pdm | 8015 | 📋 |
 | topems-scm | 8016 | 📋 |
-| topems-gis | 8017 | ✅ |
-| topems-im | 8018 | 📋 |
+| topems-gis | 8011 | ✅ |
+| topems-im | 8016 | 📋 |
+| topems-mobile | 8019 | ✅ |
+| topems-notification | 8023 | ✅ |
 
 **状态说明**: ✅ 已实现 | 🔄 开发中 | 📋 规划中
 

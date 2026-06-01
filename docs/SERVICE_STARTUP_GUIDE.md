@@ -10,6 +10,9 @@
 - ✅ FLOW (8004) - 工作流
 - ✅ LIMS (8006) - 实验室管理
 - ✅ HRM (8010) - 人力资源
+- ✅ ERP (8009) - 企业资源计划
+- ✅ MOBILE (8019) - 移动工作台
+- ✅ NOTIFICATION (8023) - 通知服务
 
 ### 启动其他服务
 
@@ -20,40 +23,49 @@ cargo run
 ```
 > 监听端口: 8012
 
-#### 2. 启动 ERP (企业资源计划)
+#### 2. 启动 EHS (安全环保)
 ```bash
-cd services/topems-erp/backend
+cd services/topems-ehs/backend
 cargo run
 ```
-> 监听端口: 8005
+> 监听端口: 8013
 
 #### 3. 启动 RS (研发管理)
 ```bash
 cd services/topems-rs/backend
 cargo run
 ```
-> 监听端口: 8007
+> 监听端口: 8005
 
 #### 4. 启动其他服务 (示例)
 ```bash
-# CRM (客户关系管理) - 端口 8009
+# CRM (客户关系管理) - 端口 8014
 cd services/topems-crm/backend && cargo run
 
-# WMS (仓库管理) - 端口 8008
-cd services/topems-wms/backend && cargo run
-
-# BI (商业智能) - 端口 8020
+# BI (商业智能) - 端口 8022
 cd services/topems-bi/backend && cargo run
+
+# PDM (产品数据管理) - 端口 8015
+cd services/topems-pdm/backend && cargo run
+
+# SRM (供应商管理) - 端口 8018
+cd services/topems-srm/backend && cargo run
 ```
 
 ## 🔍 检查服务状态
 
-### 方法1: 使用 lsof
+### 方法1: 使用 manage-services.sh
 ```bash
-lsof -i :8001 -i :8002 -i :8003 -i :8004 -i :8005 -i :8006 -i :8007 -i :8008 -i :8009 -i :8010
+cd /Users/xingzhai/TOPEMS
+bash scripts/manage-services.sh status
 ```
 
-### 方法2: 使用健康检查
+### 方法2: 使用 lsof
+```bash
+lsof -i :8001 -i :8002 -i :8003 -i :8004 -i :8005 -i :8006 -i :8009 -i :8010 -i :8019 -i :8023
+```
+
+### 方法3: 使用健康检查
 ```bash
 # 测试单个服务
 curl http://localhost:8002/health  # IAM
@@ -62,6 +74,9 @@ curl http://localhost:8003/health  # AI
 curl http://localhost:8004/health  # FLOW
 curl http://localhost:8006/health  # LIMS
 curl http://localhost:8010/health  # HRM
+curl http://localhost:8009/health  # ERP
+curl http://localhost:8019/health  # MOBILE
+curl http://localhost:8023/health  # NOTIFICATION
 ```
 
 ## ⚠️ 常见问题
@@ -117,19 +132,23 @@ curl http://localhost:8010/health  # HRM
 | 服务名 | 目录 | 端口 | 状态 |
 |--------|------|------|------|
 | IAM | topems-iam | 8002 | ✅ 运行中 |
-| DOC | backend | 8001 | ✅ 运行中 |
+| DOC | topems-doc | 8001 | ✅ 运行中 |
 | AI | topems-ai | 8003 | ✅ 运行中 |
 | FLOW | topems-flow | 8004 | ✅ 运行中 |
 | LIMS | topems-lims | 8006 | ✅ 运行中 |
 | HRM | topems-hrm | 8010 | ✅ 运行中 |
-| ERP | topems-erp | 8005 | ❌ 未启动 |
+| ERP | topems-erp | 8009 | ✅ 运行中 |
+| MOBILE | topems-mobile | 8019 | ✅ 运行中 |
+| NOTIFICATION | notification-service | 8023 | ✅ 运行中 |
 | QMS | topems-qms | 8012 | ❌ 未启动 |
-| RS | topems-rs | 8007 | ❌ 未启动 |
-| CRM | topems-crm | 8009 | ❌ 未启动 |
-| WMS | topems-wms | 8008 | ❌ 未启动 |
-| BI | topems-bi | 8020 | ❌ 未启动 |
-| MES | topems-mes | 8013 | ❌ 未启动 |
-| EHS | topems-ehs | 8016 | ❌ 未启动 |
+| EHS | topems-ehs | 8013 | ❌ 未启动 |
+| RS | topems-rs | 8005 | ❌ 未启动 |
+| CRM | topems-crm | 8014 | ❌ 未启动 |
+| BI | topems-bi | 8022 | ❌ 未启动 |
+| PDM | topems-pdm | 8015 | ❌ 未启动 |
+| SRM | topems-srm | 8018 | ❌ 未启动 |
+| IM | topems-im | 8016 | ❌ 未启动 |
+| GIS | topems-gis | 8011 | ❌ 未启动 |
 
 ## 🎯 推荐的启动顺序
 
@@ -137,13 +156,13 @@ curl http://localhost:8010/health  # HRM
 
 1. **先启动 IAM** (如果未运行)
    ```bash
-   cd services/topems-iam/backend && cargo run
+   cd platform/topems-iam/backend && cargo run
    ```
 
 2. **然后启动其他服务**
    ```bash
    # 每个服务在单独的终端中运行
-   cd services/topems-qms/backend && cargo run
+   cd services/topems-erp/backend && cargo run --bin topems-erp
    ```
 
 ## 📝 启动多个服务的终端配置
@@ -157,8 +176,9 @@ curl http://localhost:8010/health  # HRM
 终端 4: FLOW (8004)
 终端 5: LIMS (8006)
 终端 6: HRM (8010)
-终端 7: ERP (8005) - 可选
-终端 8: QMS (8012) - 可选
+终端 7: ERP (8009)
+终端 8: MOBILE (8019)
+终端 9: NOTIFICATION (8023)
 ```
 
 ## 🔧 停止服务
@@ -166,10 +186,19 @@ curl http://localhost:8010/health  # HRM
 ### 方法1: Ctrl+C
 在运行 `cargo run` 的终端中按 `Ctrl+C`
 
-### 方法2: 使用 kill
+### 方法2: 使用 manage-services.sh
+```bash
+# 停止单个服务
+bash scripts/manage-services.sh stop notification
+
+# 停止所有服务
+bash scripts/manage-services.sh stop-all
+```
+
+### 方法3: 使用 kill
 ```bash
 # 查找进程
-lsof -i :8005
+lsof -i :8023
 
 # 停止进程 (将 <PID> 替换为实际的进程ID)
 kill -9 <PID>
@@ -190,6 +219,18 @@ curl http://localhost:端口/health
 lsof -i :端口号
 ```
 
+## 🗄️ 数据库服务
+
+所有服务使用共享的 PostgreSQL 数据库：
+
+- **主机**: localhost
+- **端口**: 5432
+- **数据库名**: topems
+- **用户名**: topems
+- **密码**: topems_secret
+
+数据库初始化脚本位于: `database/postgres/init.sql`
+
 ---
 
-**提示**: 服务启动后，前端会自动通过 Vite 代理连接到后端服务，无需额外配置！
+**提示**: 使用 `bash scripts/start-all.sh` 可以一键启动所有服务！

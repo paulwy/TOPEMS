@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, Row};
 use std::net::SocketAddr;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{CorsLayer, Any};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 // JWT Claims
@@ -1004,7 +1004,7 @@ async fn get_user_roles(
     }
     
     let roles = sqlx::query_as::<_, (String, String, Option<String>, chrono::DateTime<Utc>)>(
-        "SELECT r.id, r.name, r.description, r.created_at FROM iam.roles r 
+        "SELECT r.id::text, r.name, r.description, r.created_at FROM iam.roles r 
          INNER JOIN iam.user_roles ur ON r.id = ur.role_id 
          WHERE ur.user_id = $1"
     )
@@ -1176,7 +1176,7 @@ async fn get_role(
     AuthenticatedUser(_): AuthenticatedUser,
 ) -> Json<ApiResponse<RoleInfo>> {
     let result = sqlx::query_as::<_, (String, String, Option<String>, chrono::DateTime<Utc>)>(
-        "SELECT id, name, description, created_at FROM iam.roles WHERE id = $1"
+        "SELECT id::text, name, description, created_at FROM iam.roles WHERE id = $1"
     )
     .bind(&role_id)
     .fetch_optional(&state.db)
@@ -1238,7 +1238,7 @@ async fn get_role_permissions(
     AuthenticatedUser(_): AuthenticatedUser,
 ) -> Json<ApiResponse<Vec<PermissionInfo>>> {
     let permissions = sqlx::query_as::<_, (String, String, String, String, Option<String>)>(
-        "SELECT p.id, p.name, p.resource, p.action, p.description FROM iam.permissions p 
+        "SELECT p.id::text, p.name, p.resource, p.action, p.description FROM iam.permissions p 
          INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id 
          WHERE rp.role_id = $1"
     )
@@ -1483,7 +1483,11 @@ async fn main() {
         jwt_secret,
     };
 
-    let cors = CorsLayer::permissive();
+    // 允许所有来源的CORS配置
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
 
     let auth_routes = Router::new()
         .route("/login", post(login))

@@ -53,26 +53,9 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-
-    let refresh_secret = env::var("REFRESH_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("REFRESH_SECRET not set, using default (not recommended for production)");
-            "topems-default-refresh-secret-change-me-in-production".to_string()
-        });
-
-    let token_expiry_hours: i64 = env::var("TOKEN_EXPIRY_HOURS")
-        .unwrap_or_else(|_| "24".to_string())
-        .parse()
-        .unwrap_or(24);
-
     let app_state = AppState {
         pool: pool.clone(),
-        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
+        auth_state: AuthState::from_env(),
     };
 
     let cors = create_cors_layer();
@@ -85,7 +68,8 @@ async fn main() -> Result<()> {
         .merge(api::corrective_action::create_routes(pool.clone()).await?)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8007".to_string());
+    let port = env::var("SERVER_PORT")
+        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8012".to_string()));
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-QMS 质量管理系统启动中...");

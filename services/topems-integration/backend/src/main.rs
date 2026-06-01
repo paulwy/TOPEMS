@@ -182,12 +182,6 @@ async fn main() {
     let wms_url = std::env::var("WMS_URL").unwrap_or_else(|_| "http://localhost:8011".to_string());
     let scm_url = std::env::var("SCM_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
 
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-
     let app_state = AppState {
         pool,
         lims_url,
@@ -196,7 +190,7 @@ async fn main() {
         erp_url,
         wms_url,
         scm_url,
-        auth_state: AuthState::new(jwt_secret),
+        auth_state: AuthState::from_env(),
     };
 
     let cors = create_cors_layer();

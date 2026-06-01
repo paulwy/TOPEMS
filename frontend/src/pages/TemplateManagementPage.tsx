@@ -9,6 +9,8 @@ import { templateApi, type Template, type TemplateCategory, type CreateTemplateR
 import { useNotification } from '../hooks/useNotification';
 import { NotificationContainer } from '../components/NotificationContainer';
 
+
+
 const TemplateManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
@@ -23,6 +25,7 @@ const TemplateManagementPage: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [localTemplates, setLocalTemplates] = useState<Map<string, Template>>(new Map());
 
   useEffect(() => {
     loadData();
@@ -31,20 +34,20 @@ const TemplateManagementPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      // Use real API
       const [templatesRes, categoriesRes] = await Promise.all([
         templateApi.list({ search: searchQuery, category: selectedCategory }),
         templateApi.listCategories(),
       ]);
-      
-      if (templatesRes.success) {
-        setTemplates(templatesRes.data.items);
+
+      if (templatesRes.success && templatesRes.data) {
+        setTemplates(templatesRes.data.items || []);
       }
-      
-      if (categoriesRes.success) {
+      if (categoriesRes.success && categoriesRes.data) {
         setCategories(categoriesRes.data);
       }
     } catch (err: any) {
-      error(err.message || '加载数据失败');
+      console.error('Error loading templates:', err);
     } finally {
       setLoading(false);
     }
@@ -156,13 +159,15 @@ const TemplateManagementPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              新增模板
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                新增模板
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -252,7 +257,7 @@ const TemplateManagementPage: React.FC = () => {
                   <p className="text-sm text-gray-600 mb-2">{template.code}</p>
                   
                   <div className="space-y-1 text-sm text-gray-500 mb-4">
-                    <div>分类：{template.category}</div>
+                    <div>分类：{categories.find(c => c.code === template.category)?.name || template.category}</div>
                     <div>模块：{template.module}</div>
                     <div>变量数：{template.variables?.length || 0}</div>
                   </div>
@@ -313,7 +318,7 @@ const TemplateManagementPage: React.FC = () => {
                           {template.is_active ? '已启用' : '已禁用'}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500">{template.code} · {template.category}</p>
+                      <p className="text-sm text-gray-500">{template.code} · {categories.find(c => c.code === template.category)?.name || template.category}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -512,7 +517,7 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({ template, onClose
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"
                 rows={10}
-                placeholder="请输入模板内容"
+                placeholder="请输入模板内容，使用 {{variable_name}} 格式定义变量"
               />
               <p className="text-xs text-gray-500 mt-1">
                 使用 {"{{variable_name}}"} 格式定义变量

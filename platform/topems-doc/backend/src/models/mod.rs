@@ -135,3 +135,112 @@ mod tests {
         assert_eq!(deserialized, Permission::Read);
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct TemplateCategory {
+    pub id: Uuid,
+    pub name: String,
+    pub code: String,
+    pub icon: Option<String>,
+    pub description: Option<String>,
+    pub sort_order: Option<i32>,
+    pub is_active: Option<bool>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub created_by: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct Template {
+    pub id: Uuid,
+    pub name: String,
+    pub code: String,
+    pub category_id: Option<Uuid>,
+    pub module: String,
+    pub description: Option<String>,
+    pub content: String,
+    pub variables: Option<serde_json::Value>,
+    pub is_active: Option<bool>,
+    pub is_system: Option<bool>,
+    pub sort_order: Option<i32>,
+    pub view_count: Option<i32>,
+    pub use_count: Option<i32>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub created_by: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TemplateResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub code: String,
+    pub category_id: Option<Uuid>,
+    pub category_name: Option<String>,
+    pub module: String,
+    pub description: Option<String>,
+    pub content: String,
+    pub variables: Option<serde_json::Value>,
+    pub is_active: bool,
+    pub is_system: bool,
+    pub view_count: i32,
+    pub use_count: i32,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub created_by: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TemplateCategoryResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub code: String,
+    pub icon: Option<String>,
+    pub description: Option<String>,
+    pub template_count: i64,
+    pub is_active: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CreateTemplateRequest {
+    pub name: String,
+    pub code: String,
+    pub category_id: Option<Uuid>,
+    pub module: String,
+    pub description: Option<String>,
+    pub content: String,
+    pub variables: Option<serde_json::Value>,
+    pub is_active: Option<bool>,
+    pub sort_order: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UpdateTemplateRequest {
+    pub name: Option<String>,
+    pub code: Option<String>,
+    pub category_id: Option<Uuid>,
+    pub module: Option<String>,
+    pub description: Option<String>,
+    pub content: Option<String>,
+    pub variables: Option<serde_json::Value>,
+    pub is_active: Option<bool>,
+    pub sort_order: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ListTemplatesQuery {
+    pub page: Option<u32>,
+    pub page_size: Option<u32>,
+    pub search: Option<String>,
+    pub category: Option<String>,
+    pub module: Option<String>,
+    pub is_active: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ListTemplatesResponse {
+    pub items: Vec<TemplateResponse>,
+    pub total: i64,
+    pub page: u32,
+    pub page_size: u32,
+}

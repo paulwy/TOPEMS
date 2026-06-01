@@ -163,6 +163,8 @@ cleanup_port 8015 || true
 cleanup_port 8016 || true
 cleanup_port 8017 || true
 cleanup_port 8018 || true
+cleanup_port 8019 || true
+cleanup_port 8023 || true
 cleanup_port 3000 || true
 
 # 5. 依次启动各个服务
@@ -286,15 +288,15 @@ fi
 
 # EHS服务
 echo "----------------------------------------"
-log_info "处理服务: ehs (端口 8016)"
+log_info "处理服务: ehs (端口 8013)"
 EHS_PID=""
 if check_executable "services/topems-ehs/backend" "ehs"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-ehs/backend"
-    SERVER_PORT=8016 ./target/release/topems-ehs &
+    SERVER_PORT=8013 ./target/release/topems-ehs &
     EHS_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "ehs 服务已启动 (PID: $EHS_PID, 端口: 8016)"
+    log_success "ehs 服务已启动 (PID: $EHS_PID, 端口: 8013)"
 else
     log_warn "跳过 ehs 服务"
 fi
@@ -376,17 +378,47 @@ fi
 
 # IM服务
 echo "----------------------------------------"
-log_info "处理服务: im (端口 8017)"
+log_info "处理服务: im (端口 8016)"
 IM_PID=""
 if check_executable "services/topems-im/backend" "im"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-im/backend"
-    SERVER_PORT=8017 ./target/release/topems-im &
+    SERVER_PORT=8016 ./target/release/topems-im &
     IM_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "im 服务已启动 (PID: $IM_PID, 端口: 8017)"
+    log_success "im 服务已启动 (PID: $IM_PID, 端口: 8016)"
 else
     log_warn "跳过 im 服务"
+fi
+
+# MOBILE服务
+echo "----------------------------------------"
+log_info "处理服务: mobile (端口 8019)"
+MOBILE_PID=""
+if check_executable "services/topems-mobile/backend" "mobile"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-mobile/backend"
+    PORT=8019 ./target/release/topems-mobile &
+    MOBILE_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "mobile 服务已启动 (PID: $MOBILE_PID, 端口: 8019)"
+else
+    log_warn "跳过 mobile 服务"
+fi
+
+# NOTIFICATION服务
+echo "----------------------------------------"
+log_info "处理服务: notification (端口 8023)"
+NOTIFICATION_PID=""
+if check_executable "services/notification-service" "notification"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/notification-service"
+    SERVER_PORT=8023 ./target/release/notification-service &
+    NOTIFICATION_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "notification 服务已启动 (PID: $NOTIFICATION_PID, 端口: 8023)"
+else
+    log_warn "跳过 notification 服务"
 fi
 
 # 6. 启动前端
@@ -520,14 +552,14 @@ fi
 # EHS检查
 total_count=$((total_count + 1))
 if [ -n "$EHS_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8016/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} EHS (8016) - 运行正常"
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8013/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} EHS (8013) - 运行正常"
         success_count=$((success_count + 1))
     else
-        echo -e "${YELLOW}⏳${NC} EHS (8016) - 启动中/检查失败"
+        echo -e "${YELLOW}⏳${NC} EHS (8013) - 启动中/检查失败"
     fi
 else
-    echo -e "${RED}❌${NC} EHS (8016) - 未启动"
+    echo -e "${RED}❌${NC} EHS (8013) - 未启动"
 fi
 
 # ERP检查
@@ -598,14 +630,40 @@ fi
 # IM检查
 total_count=$((total_count + 1))
 if [ -n "$IM_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8017/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} IM (8017) - 运行正常"
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8016/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} IM (8016) - 运行正常"
         success_count=$((success_count + 1))
     else
-        echo -e "${YELLOW}⏳${NC} IM (8017) - 启动中/检查失败"
+        echo -e "${YELLOW}⏳${NC} IM (8016) - 启动中/检查失败"
     fi
 else
-    echo -e "${RED}❌${NC} IM (8017) - 未启动"
+    echo -e "${RED}❌${NC} IM (8016) - 未启动"
+fi
+
+# MOBILE检查
+total_count=$((total_count + 1))
+if [ -n "$MOBILE_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8019/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} MOBILE (8019) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} MOBILE (8019) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} MOBILE (8019) - 未启动"
+fi
+
+# NOTIFICATION检查
+total_count=$((total_count + 1))
+if [ -n "$NOTIFICATION_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8023/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} NOTIFICATION (8023) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} NOTIFICATION (8023) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} NOTIFICATION (8023) - 未启动"
 fi
 
 # 前端检查
@@ -641,6 +699,7 @@ echo "   GIS: http://localhost:8011"
 echo "   PDM: http://localhost:8015"
 echo "   SRM: http://localhost:8018"
 echo "   IM: http://localhost:8017"
+echo "   MOBILE: http://localhost:8019"
 echo ""
 echo "📄 文档管理页面: http://localhost:3000/documents"
 echo ""
@@ -664,6 +723,7 @@ if [ -n "$GIS_PID" ]; then echo "   GIS: $GIS_PID"; fi
 if [ -n "$PDM_PID" ]; then echo "   PDM: $PDM_PID"; fi
 if [ -n "$SRM_PID" ]; then echo "   SRM: $SRM_PID"; fi
 if [ -n "$IM_PID" ]; then echo "   IM: $IM_PID"; fi
+if [ -n "$MOBILE_PID" ]; then echo "   MOBILE: $MOBILE_PID"; fi
 echo "   Frontend: $FRONTEND_PID"
 echo ""
 echo "按 Ctrl+C 停止所有服务"
@@ -689,6 +749,8 @@ cleanup() {
     [ -n "$PDM_PID" ] && kill $PDM_PID 2>/dev/null || true
     [ -n "$SRM_PID" ] && kill $SRM_PID 2>/dev/null || true
     [ -n "$IM_PID" ] && kill $IM_PID 2>/dev/null || true
+    [ -n "$MOBILE_PID" ] && kill $MOBILE_PID 2>/dev/null || true
+    [ -n "$NOTIFICATION_PID" ] && kill $NOTIFICATION_PID 2>/dev/null || true
     
     # 停止前端
     [ -n "$FRONTEND_PID" ] && kill $FRONTEND_PID 2>/dev/null || true

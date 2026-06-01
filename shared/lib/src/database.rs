@@ -8,9 +8,7 @@ use tracing::info;
 pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
     let options = PgPoolOptions::new()
         .max_connections(config.pool_max_size)
-        .min_connections(config.pool_min_size)
-        .acquire_timeout(std::time::Duration::from_secs(config.connect_timeout))
-        .idle_timeout(std::time::Duration::from_secs(config.idle_timeout));
+        .min_connections(config.pool_min_size);
 
     let pool = options
         .connect(&config.url)

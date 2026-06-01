@@ -10,8 +10,6 @@ use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
-use topems_shared::response::ApiResponse;
-
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DocumentRelation {
     pub id: Uuid,
@@ -39,6 +37,34 @@ pub struct CreateDocumentRelationRequest {
     pub file_type: Option<String>,
     pub description: Option<String>,
     pub created_by: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApiResponse<T> {
+    pub success: bool,
+    pub data: Option<T>,
+    pub message: String,
+    pub timestamp: String,
+}
+
+impl<T> ApiResponse<T> {
+    fn success(data: T, message: &str) -> Self {
+        ApiResponse {
+            success: true,
+            data: Some(data),
+            message: message.to_string(),
+            timestamp: Utc::now().to_rfc3339(),
+        }
+    }
+
+    fn error(message: &str) -> Self {
+        ApiResponse {
+            success: false,
+            data: None,
+            message: message.to_string(),
+            timestamp: Utc::now().to_rfc3339(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -74,9 +100,9 @@ async fn list_documents(
     let page_size = params.page_size.unwrap_or(20);
     let offset = ((page - 1) * page_size) as i64;
 
-    let result = sqlx::query_as(
+    let result: Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
-         FROM lims.document_relations
+         FROM document_relations
          ORDER BY created_at DESC
          LIMIT $1 OFFSET $2"
     )
@@ -85,7 +111,7 @@ async fn list_documents(
     .fetch_all(&pool)
     .await;
 
-    let total = sqlx::query_scalar("SELECT COUNT(*) FROM lims.document_relations")
+    let total: Result<i64, sqlx::Error> = sqlx::query_scalar("SELECT COUNT(*) FROM document_relations")
         .fetch_one(&pool)
         .await;
 
@@ -103,7 +129,7 @@ async fn list_documents(
             (StatusCode::OK, Json(response))
         }
         (_, Err(e)) | (Err(e), _) => {
-            let response = ApiResponse::<PaginatedResponse<DocumentRelation>>::error(500, &format!("获取文档关联列表失败: {}", e));
+            let response: ApiResponse<PaginatedResponse<DocumentRelation>> = ApiResponse::error(&format!("获取文档关联列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -116,8 +142,8 @@ async fn create_document_relation(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query_as(
-        "INSERT INTO lims.document_relations (
+    let result: Result<DocumentRelation, sqlx::Error> = sqlx::query_as(
+        "INSERT INTO document_relations (
             id, entity_type, entity_id, doc_service_file_id, doc_service_url, 
             file_name, file_size, file_type, description, created_by, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -144,7 +170,7 @@ async fn create_document_relation(
             (StatusCode::CREATED, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<DocumentRelation>::error(500, &format!("创建文档关联失败: {}", e));
+            let response: ApiResponse<DocumentRelation> = ApiResponse::error(&format!("创建文档关联失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -154,9 +180,9 @@ async fn get_document_relation(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let result = sqlx::query_as(
+    let result: Result<Option<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
-         FROM lims.document_relations WHERE id = $1"
+         FROM document_relations WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&pool)
@@ -168,11 +194,11 @@ async fn get_document_relation(
             (StatusCode::OK, Json(response))
         }
         Ok(None) => {
-            let response = ApiResponse::<DocumentRelation>::error(404, "文档关联不存在");
+            let response: ApiResponse<DocumentRelation> = ApiResponse::error("文档关联不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<DocumentRelation>::error(500, &format!("获取文档关联失败: {}", e));
+            let response: ApiResponse<DocumentRelation> = ApiResponse::error(&format!("获取文档关联失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -182,8 +208,8 @@ async fn delete_document_relation(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let result = sqlx::query(
-        "DELETE FROM lims.document_relations WHERE id = $1"
+    let result: Result<sqlx::postgres::PgQueryResult, sqlx::Error> = sqlx::query(
+        "DELETE FROM document_relations WHERE id = $1"
     )
     .bind(id)
     .execute(&pool)
@@ -195,11 +221,11 @@ async fn delete_document_relation(
             (StatusCode::OK, Json(response))
         }
         Ok(_) => {
-            let response = ApiResponse::<()>::error(404, "文档关联不存在");
+            let response: ApiResponse<()> = ApiResponse::error("文档关联不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<()>::error(500, &format!("删除文档关联失败: {}", e));
+            let response: ApiResponse<()> = ApiResponse::error(&format!("删除文档关联失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -209,9 +235,9 @@ async fn get_entity_documents(
     State(pool): State<PgPool>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
-    let result = sqlx::query_as(
+    let result: Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
-         FROM lims.document_relations
+         FROM document_relations
          WHERE entity_type = $1 AND entity_id = $2
          ORDER BY created_at DESC"
     )
@@ -226,7 +252,7 @@ async fn get_entity_documents(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<Vec<DocumentRelation>>::error(500, &format!("获取实体文档列表失败: {}", e));
+            let response: ApiResponse<Vec<DocumentRelation>> = ApiResponse::error(&format!("获取实体文档列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }

@@ -11,25 +11,12 @@ import {
   payrollApi, 
   payrollItemApi, 
   employeeApi,
+  salaryAdjustmentApi,
   type PayrollRun, 
   type PayrollItem,
-  type Employee
+  type Employee,
+  type SalaryAdjustment
 } from '../api/hrm';
-
-interface SalaryAdjustment {
-  id: string;
-  employee_name: string;
-  department: string;
-  adjustment_type: 'promotion' | 'demotion' | 'bonus' | 'deduction';
-  old_salary: number;
-  new_salary: number;
-  adjustment_amount: number;
-  reason: string;
-  effective_date: string;
-  status: 'pending' | 'approved' | 'rejected';
-  applicant: string;
-  applied_at: string;
-}
 
 interface PayrollSummary {
   total_employees: number;
@@ -51,16 +38,10 @@ const HrmPayrollPage: React.FC = () => {
   const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>([]);
   const [payrollItems, setPayrollItems] = useState<PayrollItem[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [adjustments, setAdjustments] = useState<SalaryAdjustment[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [calculating, setCalculating] = useState(false);
   const [paying, setPaying] = useState(false);
-
-  // 模拟的调薪记录
-  const [adjustments] = useState<SalaryAdjustment[]>([
-    { id: '1', employee_name: '张伟', department: '研发部', adjustment_type: 'promotion', old_salary: 25000, new_salary: 30000, adjustment_amount: 5000, reason: '晋升为高级工程师', effective_date: '2026-06-01', status: 'approved', applicant: '刘经理', applied_at: '2026-05-20' },
-    { id: '2', employee_name: '李娜', department: '产品部', adjustment_type: 'bonus', old_salary: 25000, new_salary: 25000, adjustment_amount: 3000, reason: 'Q1绩效奖金', effective_date: '2026-05-01', status: 'approved', applicant: '赵总', applied_at: '2026-04-25' },
-    { id: '3', employee_name: '王强', department: '销售部', adjustment_type: 'bonus', old_salary: 20000, new_salary: 20000, adjustment_amount: 8000, reason: '4月销售冠军奖励', effective_date: '2026-05-01', status: 'pending', applicant: '孙经理', applied_at: '2026-05-01' },
-  ]);
 
   // 加载数据
   useEffect(() => {
@@ -70,17 +51,33 @@ const HrmPayrollPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [payrollRes, employeeRes] = await Promise.all([
+      const [payrollRes, employeeRes, adjustmentRes] = await Promise.all([
         payrollApi.list(),
-        employeeApi.list()
+        employeeApi.list(),
+        salaryAdjustmentApi.list()
       ]);
+      
+      let empList: Employee[] = [];
       
       if (payrollRes.success && payrollRes.data) {
         setPayrollRuns(payrollRes.data.items);
       }
       
       if (employeeRes.success && employeeRes.data) {
-        setEmployees(employeeRes.data.items);
+        empList = employeeRes.data.items;
+        setEmployees(empList);
+      }
+      
+      if (adjustmentRes.success && adjustmentRes.data) {
+        const adjustedData = adjustmentRes.data.items.map(adj => {
+          const emp = empList.find(e => e.id === adj.employee_id);
+          return {
+            ...adj,
+            employee_name: emp?.name || adj.employee_name || '未知员工',
+            department: ''
+          };
+        });
+        setAdjustments(adjustedData);
       }
     } catch (err) {
       error('加载数据失败');

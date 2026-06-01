@@ -20,8 +20,7 @@ mod db;
 mod services;
 mod middleware;
 
-use middleware::auth::Claims;
-use db::repository::{FileRepository, FolderRepository, FileVersionRepository};
+use db::repository::{FileRepository, FolderRepository, FileVersionRepository, TemplateRepository, TemplateCategoryRepository};
 use models::{FileMetadata, Permission};
 use services::storage_service::StorageService;
 use services::conversion_service::ConversionService;
@@ -74,6 +73,8 @@ pub struct AppState {
     file_repo: FileRepository,
     folder_repo: FolderRepository,
     file_version_repo: FileVersionRepository,
+    template_repo: TemplateRepository,
+    template_category_repo: TemplateCategoryRepository,
     storage_service: StorageService,
     conversion_service: ConversionService,
     permission_service: PermissionService,
@@ -150,6 +151,50 @@ pub struct RestoreFileVersionRequest {
     pub version_id: Uuid,
 }
 
+#[derive(Debug, Serialize, Deserialize, ToSchema, utoipa::IntoParams)]
+pub struct ListTemplatesQuery {
+    pub page: Option<u32>,
+    pub page_size: Option<u32>,
+    pub search: Option<String>,
+    pub category: Option<String>,
+    pub module: Option<String>,
+    pub is_active: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CreateTemplateRequest {
+    pub name: String,
+    pub code: String,
+    pub category_id: Option<Uuid>,
+    pub module: String,
+    pub description: Option<String>,
+    pub content: String,
+    pub variables: Option<serde_json::Value>,
+    pub is_active: Option<bool>,
+    pub sort_order: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UpdateTemplateRequest {
+    pub name: Option<String>,
+    pub code: Option<String>,
+    pub category_id: Option<Uuid>,
+    pub module: Option<String>,
+    pub description: Option<String>,
+    pub content: Option<String>,
+    pub variables: Option<serde_json::Value>,
+    pub is_active: Option<bool>,
+    pub sort_order: Option<i32>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ListTemplatesResponse {
+    pub items: Vec<models::TemplateResponse>,
+    pub total: u64,
+    pub page: u32,
+    pub page_size: u32,
+}
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -165,7 +210,15 @@ pub struct RestoreFileVersionRequest {
         delete_folder,
         list_file_versions,
         get_file_version,
-        download_file_version
+        download_file_version,
+        list_templates,
+        get_template,
+        create_template,
+        update_template,
+        delete_template,
+        list_template_categories,
+        duplicate_template,
+        toggle_template_status
     ),
     components(
         schemas(
@@ -189,7 +242,15 @@ pub struct RestoreFileVersionRequest {
             ListFileVersionsResponse,
             RestoreFileVersionRequest,
             ApiResponse::<models::FileVersion>,
-            ApiResponse::<ListFileVersionsResponse>
+            ApiResponse::<ListFileVersionsResponse>,
+            ListTemplatesQuery,
+            CreateTemplateRequest,
+            UpdateTemplateRequest,
+            ListTemplatesResponse,
+            ApiResponse::<ListTemplatesResponse>,
+            ApiResponse::<models::Template>,
+            ApiResponse::<models::TemplateCategory>,
+            ApiResponse::<Vec<models::TemplateCategoryResponse>>
         )
     ),
     info(
@@ -223,10 +284,34 @@ async fn connect_db() -> sqlx::PgPool {
 }
 
 async fn init_database_tables(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    let migration = include_str!("./db/migrations/20260523000001_create_doc_schema.sql");
-
-    sqlx::query(migration).execute(pool).await?;
-
+    // 定义所有迁移的 SQL
+    let migrations: Vec<(&str, &str)> = vec![
+        ("基础表结构", include_str!("./db/migrations/20260523000001_create_doc_schema.sql")),
+        ("模板和帮助中心表", include_str!("./db/migrations/20260527000001_create_templates_and_help_center_schema.sql")),
+        ("预置数据", include_str!("./db/migrations/20260527000002_seed_templates_and_help_center.sql")),
+    ];
+    
+    for (name, migration) in migrations {
+        tracing::info!("🔄 执行迁移: {}", name);
+        
+        // 将 SQL 文件分割成单独的语句
+        for statement in migration.split(';') {
+            let statement = statement.trim();
+            if !statement.is_empty() && !statement.starts_with("--") {
+                match sqlx::query(statement).execute(pool).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        // 忽略已经存在的表的错误
+                        if !e.to_string().contains("already exists") && 
+                           !e.to_string().contains("duplicate key") {
+                            tracing::warn!("⚠️ 迁移 {} 执行警告: {}", name, e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     tracing::info!("🗄️ 数据库表初始化完成");
     Ok(())
 }
@@ -1212,6 +1297,523 @@ async fn restore_file_version(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/templates",
+    tag = "templates",
+    params(ListTemplatesQuery),
+    responses(
+        (status = 200, description = "List templates successfully", body = ApiResponse<ListTemplatesResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn list_templates(
+    State(state): State<AppState>,
+    claims: OptionalClaims,
+    Query(query): Query<ListTemplatesQuery>,
+) -> Json<ApiResponse<ListTemplatesResponse>> {
+    tracing::debug!("获取模板列表: {:?}, 用户: {}", query, claims.0.username);
+
+    let page = query.page.unwrap_or(1);
+    let page_size = query.page_size.unwrap_or(20);
+    let limit = page_size as i64;
+    let offset = ((page - 1) * page_size) as i64;
+
+    let (templates, total) = state.template_repo.list(
+        query.search.as_deref(),
+        query.category.as_deref(),
+        query.module.as_deref(),
+        query.is_active,
+        limit,
+        offset,
+    ).await.unwrap_or_else(|e| {
+        tracing::error!("获取模板列表失败: {}", e);
+        (vec![], 0)
+    });
+
+    // Enrich templates with category names
+    let mut enriched_templates = vec![];
+    for template in templates {
+        let category_name = if let Some(cat_id) = template.category_id {
+            state.template_category_repo.find_by_code(&cat_id.to_string()).await
+                .ok()
+                .flatten()
+                .map(|c| c.name)
+        } else {
+            None
+        };
+
+        enriched_templates.push(models::TemplateResponse {
+            id: template.id,
+            name: template.name,
+            code: template.code,
+            category_id: template.category_id,
+            category_name,
+            module: template.module,
+            description: template.description,
+            content: template.content,
+            variables: template.variables,
+            is_active: template.is_active.unwrap_or(true),
+            is_system: template.is_system.unwrap_or(false),
+            view_count: template.view_count.unwrap_or(0),
+            use_count: template.use_count.unwrap_or(0),
+            created_at: template.created_at,
+            updated_at: template.updated_at,
+            created_by: template.created_by,
+        });
+    }
+
+    Json(ApiResponse::success(
+        ListTemplatesResponse {
+            items: enriched_templates,
+            total: total as u64,
+            page,
+            page_size,
+        },
+        "获取模板列表成功",
+    ))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/templates/{id}",
+    tag = "templates",
+    params(
+        ("id" = Uuid, Path, description = "Template UUID")
+    ),
+    responses(
+        (status = 200, description = "Get template successfully", body = ApiResponse<models::Template>),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn get_template(
+    State(state): State<AppState>,
+    claims: OptionalClaims,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<models::Template>> {
+    tracing::debug!("获取模板: {}, 用户: {}", id, claims.0.username);
+
+    match state.template_repo.find_by_id(id).await {
+        Ok(Some(template)) => {
+            // Increment view count
+            let _ = state.template_repo.increment_view_count(id).await;
+            Json(ApiResponse::success(template, "获取模板成功"))
+        }
+        Ok(None) => Json(ApiResponse::error(404, "模板不存在")),
+        Err(e) => {
+            tracing::error!("获取模板失败: {}", e);
+            Json(ApiResponse::error(500, "获取模板失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/templates",
+    tag = "templates",
+    request_body(content = CreateTemplateRequest, description = "Create template data", content_type = "application/json"),
+    responses(
+        (status = 200, description = "Template created successfully", body = ApiResponse<models::Template>),
+        (status = 400, description = "Invalid request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 409, description = "Template code already exists"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn create_template(
+    State(state): State<AppState>,
+    claims: OptionalClaims,
+    Json(req): Json<CreateTemplateRequest>,
+) -> Json<ApiResponse<models::Template>> {
+    tracing::debug!("创建模板: {:?}, 用户: {}", req, claims.0.username);
+
+    if !claims.0.has_permission("doc_write") {
+        return Json(ApiResponse::error(403, "权限不足"));
+    }
+
+    // Check if code already exists
+    if let Ok(Some(_)) = state.template_repo.find_by_code(&req.code).await {
+        return Json(ApiResponse::error(409, "模板编码已存在"));
+    }
+
+    let now = Utc::now();
+    let template = models::Template {
+        id: Uuid::new_v4(),
+        name: req.name,
+        code: req.code,
+        category_id: req.category_id,
+        module: req.module,
+        description: req.description,
+        content: req.content,
+        variables: req.variables,
+        is_active: req.is_active.or(Some(true)),
+        is_system: Some(false),
+        sort_order: req.sort_order.or(Some(0)),
+        view_count: Some(0),
+        use_count: Some(0),
+        created_at: now,
+        updated_at: now,
+        created_by: claims.0.username.clone(),
+    };
+
+    match state.template_repo.create(&template).await {
+        Ok(created) => Json(ApiResponse::success(created, "模板创建成功")),
+        Err(e) => {
+            tracing::error!("创建模板失败: {}", e);
+            Json(ApiResponse::error(500, "创建模板失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/v1/templates/{id}",
+    tag = "templates",
+    params(
+        ("id" = Uuid, Path, description = "Template UUID")
+    ),
+    request_body(content = UpdateTemplateRequest, description = "Update template data", content_type = "application/json"),
+    responses(
+        (status = 200, description = "Template updated successfully", body = ApiResponse<models::Template>),
+        (status = 400, description = "Invalid request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Cannot modify system template"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn update_template(
+    State(state): State<AppState>,
+    claims: OptionalClaims,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateTemplateRequest>,
+) -> Json<ApiResponse<models::Template>> {
+    tracing::debug!("更新模板: {}, 请求: {:?}, 用户: {}", id, req, claims.0.username);
+
+    if !claims.0.has_permission("doc_write") {
+        return Json(ApiResponse::error(403, "权限不足"));
+    }
+
+    let existing = match state.template_repo.find_by_id(id).await {
+        Ok(Some(t)) => t,
+        Ok(None) => return Json(ApiResponse::error(404, "模板不存在")),
+        Err(e) => {
+            tracing::error!("查找模板失败: {}", e);
+            return Json(ApiResponse::error(500, "查找模板失败"));
+        }
+    };
+
+    // Cannot modify system templates
+    if existing.is_system.unwrap_or(false) {
+        return Json(ApiResponse::error(403, "不能修改系统模板"));
+    }
+
+    let now = Utc::now();
+    let updated_template = models::Template {
+        id,
+        name: req.name.unwrap_or(existing.name),
+        code: req.code.unwrap_or(existing.code),
+        category_id: req.category_id.or(existing.category_id),
+        module: req.module.unwrap_or(existing.module),
+        description: req.description.or(existing.description),
+        content: req.content.unwrap_or(existing.content),
+        variables: req.variables.or(existing.variables),
+        is_active: req.is_active.or(existing.is_active),
+        is_system: existing.is_system,
+        sort_order: req.sort_order.or(existing.sort_order),
+        view_count: existing.view_count,
+        use_count: existing.use_count,
+        created_at: existing.created_at,
+        updated_at: now,
+        created_by: existing.created_by,
+    };
+
+    match state.template_repo.update(id, &updated_template).await {
+        Ok(Some(template)) => Json(ApiResponse::success(template, "模板更新成功")),
+        Ok(None) => Json(ApiResponse::error(404, "模板不存在")),
+        Err(e) => {
+            tracing::error!("更新模板失败: {}", e);
+            Json(ApiResponse::error(500, "更新模板失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    delete,
+    path = "/api/v1/templates/{id}",
+    tag = "templates",
+    params(
+        ("id" = Uuid, Path, description = "Template UUID")
+    ),
+    responses(
+        (status = 200, description = "Template deleted successfully", body = ApiResponse<()>),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Cannot delete system template"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn delete_template(
+    State(state): State<AppState>,
+    claims: OptionalClaims,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("删除模板: {}, 用户: {}", id, claims.0.username);
+
+    if !claims.0.has_permission("doc_write") {
+        return Json(ApiResponse::error(403, "权限不足"));
+    }
+
+    // Check if it's a system template
+    if let Ok(Some(template)) = state.template_repo.find_by_id(id).await {
+        if template.is_system.unwrap_or(false) {
+            return Json(ApiResponse::error(403, "不能删除系统模板"));
+        }
+    }
+
+    match state.template_repo.delete(id).await {
+        Ok(true) => Json(ApiResponse::ok("模板删除成功")),
+        Ok(false) => Json(ApiResponse::error(404, "模板不存在")),
+        Err(e) => {
+            tracing::error!("删除模板失败: {}", e);
+            Json(ApiResponse::error(500, "删除模板失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/templates/categories",
+    tag = "templates",
+    responses(
+        (status = 200, description = "List template categories successfully", body = ApiResponse<Vec<models::TemplateCategoryResponse>>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn list_template_categories(
+    State(state): State<AppState>,
+    claims: OptionalClaims,
+) -> Json<ApiResponse<Vec<models::TemplateCategoryResponse>>> {
+    tracing::debug!("获取模板分类列表, 用户: {}", claims.0.username);
+
+    match state.template_category_repo.list(Some(true)).await {
+        Ok(categories) => {
+            let mut responses = vec![];
+            for cat in categories {
+                let template_count = state.template_category_repo.get_template_count(cat.id).await.unwrap_or(0);
+                responses.push(models::TemplateCategoryResponse {
+                    id: cat.id,
+                    name: cat.name,
+                    code: cat.code,
+                    icon: cat.icon,
+                    description: cat.description,
+                    template_count,
+                    is_active: cat.is_active.unwrap_or(true),
+                });
+            }
+            Json(ApiResponse::success(responses, "获取模板分类列表成功"))
+        }
+        Err(e) => {
+            tracing::error!("获取模板分类列表失败: {}", e);
+            Json(ApiResponse::error(500, "获取模板分类列表失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/templates/{id}/duplicate",
+    tag = "templates",
+    params(
+        ("id" = Uuid, Path, description = "Template UUID to duplicate")
+    ),
+    responses(
+        (status = 200, description = "Template duplicated successfully", body = ApiResponse<models::Template>),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn duplicate_template(
+    State(state): State<AppState>,
+    claims: OptionalClaims,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<models::Template>> {
+    tracing::debug!("复制模板: {}, 用户: {}", id, claims.0.username);
+
+    if !claims.0.has_permission("doc_write") {
+        return Json(ApiResponse::error(403, "权限不足"));
+    }
+
+    let original = match state.template_repo.find_by_id(id).await {
+        Ok(Some(t)) => t,
+        Ok(None) => return Json(ApiResponse::error(404, "模板不存在")),
+        Err(e) => {
+            tracing::error!("查找模板失败: {}", e);
+            return Json(ApiResponse::error(500, "查找模板失败"));
+        }
+    };
+
+    let now = Utc::now();
+    let new_code = format!("{}-copy", original.code);
+    
+    // Check if new code already exists
+    if let Ok(Some(_)) = state.template_repo.find_by_code(&new_code).await {
+        // Generate unique code
+        let new_code = format!("{}-{}-copy", original.code, Uuid::new_v4().to_string()[..8].to_string());
+        let duplicated = models::Template {
+            id: Uuid::new_v4(),
+            name: format!("{} (副本)", original.name),
+            code: new_code,
+            category_id: original.category_id,
+            module: original.module,
+            description: original.description,
+            content: original.content,
+            variables: original.variables,
+            is_active: original.is_active,
+            is_system: Some(false),
+            sort_order: original.sort_order,
+            view_count: Some(0),
+            use_count: Some(0),
+            created_at: now,
+            updated_at: now,
+            created_by: claims.0.username.clone(),
+        };
+
+        match state.template_repo.create(&duplicated).await {
+            Ok(created) => Json(ApiResponse::success(created, "模板复制成功")),
+            Err(e) => {
+                tracing::error!("复制模板失败: {}", e);
+                Json(ApiResponse::error(500, "复制模板失败"))
+            }
+        }
+    } else {
+        let duplicated = models::Template {
+            id: Uuid::new_v4(),
+            name: format!("{} (副本)", original.name),
+            code: new_code,
+            category_id: original.category_id,
+            module: original.module,
+            description: original.description,
+            content: original.content,
+            variables: original.variables,
+            is_active: original.is_active,
+            is_system: Some(false),
+            sort_order: original.sort_order,
+            view_count: Some(0),
+            use_count: Some(0),
+            created_at: now,
+            updated_at: now,
+            created_by: claims.0.username.clone(),
+        };
+
+        match state.template_repo.create(&duplicated).await {
+            Ok(created) => Json(ApiResponse::success(created, "模板复制成功")),
+            Err(e) => {
+                tracing::error!("复制模板失败: {}", e);
+                Json(ApiResponse::error(500, "复制模板失败"))
+            }
+        }
+    }
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/v1/templates/{id}/toggle-status",
+    tag = "templates",
+    params(
+        ("id" = Uuid, Path, description = "Template UUID")
+    ),
+    responses(
+        (status = 200, description = "Template status toggled successfully", body = ApiResponse<models::Template>),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Cannot toggle system template status"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn toggle_template_status(
+    State(state): State<AppState>,
+    claims: OptionalClaims,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<models::Template>> {
+    tracing::debug!("切换模板状态: {}, 用户: {}", id, claims.0.username);
+
+    if !claims.0.has_permission("doc_write") {
+        return Json(ApiResponse::error(403, "权限不足"));
+    }
+
+    let existing = match state.template_repo.find_by_id(id).await {
+        Ok(Some(t)) => t,
+        Ok(None) => return Json(ApiResponse::error(404, "模板不存在")),
+        Err(e) => {
+            tracing::error!("查找模板失败: {}", e);
+            return Json(ApiResponse::error(500, "查找模板失败"));
+        }
+    };
+
+    // Cannot toggle system templates
+    if existing.is_system.unwrap_or(false) {
+        return Json(ApiResponse::error(403, "不能切换系统模板状态"));
+    }
+
+    let now = Utc::now();
+    let updated_template = models::Template {
+        id,
+        name: existing.name,
+        code: existing.code,
+        category_id: existing.category_id,
+        module: existing.module,
+        description: existing.description,
+        content: existing.content,
+        variables: existing.variables,
+        is_active: Some(!existing.is_active.unwrap_or(true)),
+        is_system: existing.is_system,
+        sort_order: existing.sort_order,
+        view_count: existing.view_count,
+        use_count: existing.use_count,
+        created_at: existing.created_at,
+        updated_at: now,
+        created_by: existing.created_by,
+    };
+
+    match state.template_repo.update(id, &updated_template).await {
+        Ok(Some(template)) => Json(ApiResponse::success(template, "模板状态切换成功")),
+        Ok(None) => Json(ApiResponse::error(404, "模板不存在")),
+        Err(e) => {
+            tracing::error!("切换模板状态失败: {}", e);
+            Json(ApiResponse::error(500, "切换模板状态失败"))
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SetFilePermissionRequest {
     pub user_id: Option<Uuid>,
@@ -1288,7 +1890,7 @@ async fn get_file_permissions(
 
 async fn delete_file_permission(
     State(state): State<AppState>,
-    Path((file_id, permission_id)): Path<(Uuid, Uuid)>,
+    Path((_file_id, permission_id)): Path<(Uuid, Uuid)>,
     claims: OptionalClaims,
 ) -> Json<ApiResponse<()>> {
     if !claims.0.is_admin() {
@@ -1372,7 +1974,7 @@ async fn get_folder_permissions(
 
 async fn delete_folder_permission(
     State(state): State<AppState>,
-    Path((folder_id, permission_id)): Path<(Uuid, Uuid)>,
+    Path((_folder_id, permission_id)): Path<(Uuid, Uuid)>,
     claims: OptionalClaims,
 ) -> Json<ApiResponse<()>> {
     if !claims.0.is_admin() {
@@ -1415,6 +2017,8 @@ async fn main() {
     let file_repo = FileRepository::new(pool.clone());
     let folder_repo = FolderRepository::new(pool.clone());
     let file_version_repo = FileVersionRepository::new(pool.clone());
+    let template_repo = TemplateRepository::new(pool.clone());
+    let template_category_repo = TemplateCategoryRepository::new(pool.clone());
 
     let storage_service = match StorageService::from_env().await {
         Ok(service) => service,
@@ -1437,6 +2041,8 @@ async fn main() {
         file_repo,
         folder_repo,
         file_version_repo,
+        template_repo,
+        template_category_repo,
         storage_service,
         conversion_service,
         permission_service,
@@ -1497,6 +2103,14 @@ async fn main() {
         .route("/folders/{folder_id}/permissions", get(get_folder_permissions))
         .route("/folders/{folder_id}/permissions", post(set_folder_permission))
         .route("/folders/{folder_id}/permissions/{permission_id}", delete(delete_folder_permission))
+        .route("/templates", get(list_templates))
+        .route("/templates", post(create_template))
+        .route("/templates/{id}", get(get_template))
+        .route("/templates/{id}", put(update_template))
+        .route("/templates/{id}", delete(delete_template))
+        .route("/templates/{id}/duplicate", post(duplicate_template))
+        .route("/templates/{id}/toggle-status", put(toggle_template_status))
+        .route("/templates/categories", get(list_template_categories))
         .layer(axum_middleware::from_fn_with_state(auth_state, optional_auth_middleware))
         .without_v07_checks();
 

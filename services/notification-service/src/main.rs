@@ -6,81 +6,21 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use futures_util::{sink::SinkExt, stream::StreamExt};
-use parking_lot::RwLock;
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::net::SocketAddr;
 use tokio::sync::broadcast;
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
+use sqlx::PgPool;
+use dotenv::dotenv;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum NotificationType {
-    System,
-    Workflow,
-    Reminder,
-    Alert,
-    Message,
-}
-
-impl std::fmt::Display for NotificationType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            NotificationType::System => write!(f, "system"),
-            NotificationType::Workflow => write!(f, "workflow"),
-            NotificationType::Reminder => write!(f, "reminder"),
-            NotificationType::Alert => write!(f, "alert"),
-            NotificationType::Message => write!(f, "message"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Notification {
-    pub id: String,
-    pub user_id: String,
-    pub notification_type: NotificationType,
-    pub title: String,
-    pub content: String,
-    pub data: Option<serde_json::Value>,
-    pub is_read: bool,
-    pub priority: u8,
-    pub created_at: DateTime<Utc>,
-    pub read_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateNotificationRequest {
-    pub user_id: String,
-    pub notification_type: NotificationType,
-    pub title: String,
-    pub content: String,
-    pub data: Option<serde_json::Value>,
-    pub priority: Option<u8>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct NotificationListQuery {
-    pub page: Option<usize>,
-    pub page_size: Option<usize>,
-    pub notification_type: Option<NotificationType>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct NotificationListResponse {
-    pub notifications: Vec<Notification>,
-    pub total: usize,
-    pub page: usize,
-    pub page_size: usize,
-    pub unread_count: usize,
-}
+mod models;
+mod db;
+use models::*;
+use db::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "payload")]
@@ -143,165 +83,20 @@ impl<T> ApiResponse<T> {
 
 #[derive(Clone)]
 struct AppState {
-    notifications: Arc<RwLock<HashMap<String, Notification>>>,
-    user_notifications: Arc<RwLock<HashMap<String, Vec<String>>>>,
     tx: broadcast::Sender<WsMessage>,
+    pool: PgPool,
 }
 
-impl AppState {
-    fn new() -> Self {
-        let (tx, _) = broadcast::channel(1000);
-        Self {
-            notifications: Arc::new(RwLock::new(HashMap::new())),
-            user_notifications: Arc::new(RwLock::new(HashMap::new())),
-            tx,
-        }
-    }
-
-    fn add_notification(&self, notification: Notification) {
-        let user_id = notification.user_id.clone();
-        let id = notification.id.clone();
-        
-        self.notifications.write().insert(id.clone(), notification.clone());
-        
-        let mut user_ntf = self.user_notifications.write();
-        user_ntf.entry(user_id.clone())
-            .or_insert_with(Vec::new)
-            .push(id.clone());
-        
-        let _ = self.tx.send(WsMessage::NewNotification(notification.clone()));
-        
-        if let Some(count) = self.get_unread_count(&user_id).ok() {
-            let _ = self.tx.send(WsMessage::UnreadCount(count));
-        }
-    }
-
-    fn get_user_notifications(&self, user_id: &str) -> Vec<Notification> {
-        let user_ntf = self.user_notifications.read();
-        let notifications = self.notifications.read();
-        
-        user_ntf.get(user_id)
-            .map(|ids| {
-                ids.iter()
-                    .filter_map(|id| notifications.get(id).cloned())
-                    .collect()
-            })
-            .unwrap_or_default()
-    }
-
-    fn get_unread_count(&self, user_id: &str) -> Result<usize, String> {
-        let notifications = self.get_user_notifications(user_id);
-        Ok(notifications.iter().filter(|n| !n.is_read).count())
-    }
-
-    fn mark_as_read(&self, notification_id: &str) -> Result<Notification, String> {
-        let user_id = {
-            let notifications = self.notifications.read();
-            notifications.get(notification_id)
-                .map(|n| n.user_id.clone())
-                .ok_or_else(|| "Notification not found".to_string())?
-        };
-
-        {
-            let mut notifications = self.notifications.write();
-            if let Some(ntf) = notifications.get_mut(notification_id) {
-                ntf.is_read = true;
-                ntf.read_at = Some(Utc::now());
-            }
-        }
-
-        let notification = self.notifications.read()
-            .get(notification_id)
-            .cloned()
-            .ok_or_else(|| "Notification not found".to_string())?;
-
-        if let Some(count) = self.get_unread_count(&user_id).ok() {
-            let _ = self.tx.send(WsMessage::UnreadCount(count));
-        }
-
-        Ok(notification)
-    }
-
-    fn mark_all_as_read(&self, user_id: &str) -> Result<usize, String> {
-        let user_ntf = self.user_notifications.read();
-        let ids = user_ntf.get(user_id)
-            .ok_or_else(|| "User not found".to_string())?
-            .clone();
-        drop(user_ntf);
-
-        let mut count = 0;
-        {
-            let mut notifications = self.notifications.write();
-            for id in &ids {
-                if let Some(ntf) = notifications.get_mut(id) {
-                    if !ntf.is_read {
-                        ntf.is_read = true;
-                        ntf.read_at = Some(Utc::now());
-                        count += 1;
-                    }
-                }
-            }
-        }
-
-        if count > 0 {
-            let _ = self.tx.send(WsMessage::UnreadCount(0));
-        }
-
-        Ok(count)
-    }
-
-    fn delete_notification(&self, notification_id: &str) -> Result<bool, String> {
-        let user_id = {
-            let notifications = self.notifications.read();
-            notifications.get(notification_id)
-                .map(|n| n.user_id.clone())
-                .ok_or_else(|| "Notification not found".to_string())?
-        };
-
-        {
-            let mut notifications = self.notifications.write();
-            notifications.remove(notification_id);
-        }
-
-        {
-            let mut user_ntf = self.user_notifications.write();
-            if let Some(ids) = user_ntf.get_mut(&user_id) {
-                ids.retain(|id| id != notification_id);
-            }
-        }
-
-        if let Some(count) = self.get_unread_count(&user_id).ok() {
-            let _ = self.tx.send(WsMessage::UnreadCount(count));
-        }
-
-        Ok(true)
-    }
-
-    fn archive_old_notifications(&self, days: i64) -> usize {
-        let cutoff = Utc::now() - chrono::Duration::days(days);
-        let mut count = 0;
-        
-        let ids_to_delete: Vec<String> = {
-            let notifications = self.notifications.read();
-            notifications.iter()
-                .filter(|(_, n)| n.created_at < cutoff && n.is_read)
-                .map(|(id, _)| id.clone())
-                .collect()
-        };
-
-        for id in ids_to_delete {
-            if self.delete_notification(&id).is_ok() {
-                count += 1;
-            }
-        }
-
-        count
-    }
+async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(DatabaseSchema::init_tables())
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
 #[tokio::main]
 async fn main() {
-    dotenv::dotenv().ok();
+    dotenv().ok();
     
     tracing_subscriber::registry()
         .with(
@@ -313,51 +108,25 @@ async fn main() {
 
     tracing::info!("🚀 TOPEMS Notification Service starting...");
 
-    let state = AppState::new();
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems_notifications".to_string());
 
-    let demo_user_id = "user_001".to_string();
-    let demo_notifications = vec![
-        Notification {
-            id: Uuid::new_v4().to_string(),
-            user_id: demo_user_id.clone(),
-            notification_type: NotificationType::System,
-            title: "系统维护通知".to_string(),
-            content: "系统将于本周六进行例行维护，预计维护时间2小时".to_string(),
-            data: None,
-            is_read: false,
-            priority: 1,
-            created_at: Utc::now(),
-            read_at: None,
-        },
-        Notification {
-            id: Uuid::new_v4().to_string(),
-            user_id: demo_user_id.clone(),
-            notification_type: NotificationType::Workflow,
-            title: "审批结果通知".to_string(),
-            content: "您的采购申请已通过审批".to_string(),
-            data: Some(serde_json::json!({"workflow_id": "WF001", "step": 2})),
-            is_read: false,
-            priority: 2,
-            created_at: Utc::now(),
-            read_at: None,
-        },
-        Notification {
-            id: Uuid::new_v4().to_string(),
-            user_id: demo_user_id.clone(),
-            notification_type: NotificationType::Alert,
-            title: "库存预警".to_string(),
-            content: "原材料A库存低于安全库存，请及时采购".to_string(),
-            data: Some(serde_json::json!({"material_id": "MAT001", "stock": 100})),
-            is_read: true,
-            priority: 3,
-            created_at: Utc::now() - chrono::Duration::hours(2),
-            read_at: Some(Utc::now() - chrono::Duration::hours(1)),
-        },
-    ];
+    let pool = match PgPool::connect(&database_url).await {
+        Ok(p) => {
+            tracing::info!("Database connection successful");
+            if let Err(e) = init_database(&p).await {
+                tracing::warn!("Database initialization warning: {}", e);
+            }
+            p
+        }
+        Err(e) => {
+            tracing::error!("Failed to connect to database: {}", e);
+            panic!("Cannot connect to database: {}", e);
+        }
+    };
 
-    for notification in demo_notifications {
-        state.add_notification(notification);
-    }
+    let (tx, _) = broadcast::channel(1000);
+    let state = AppState { tx, pool };
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -414,28 +183,31 @@ async fn list_notifications(
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(20);
     
-    let mut notifications = state.get_user_notifications(&user_id);
+    let notifications = match Repository::get_user_notifications(
+        &state.pool,
+        &user_id,
+        query.notification_type.as_ref(),
+        page,
+        page_size,
+    ).await {
+        Ok(n) => n,
+        Err(e) => {
+            tracing::error!("Failed to get notifications: {:?}", e);
+            vec![]
+        }
+    };
     
-    if let Some(ntype) = query.notification_type {
-        notifications.retain(|n| n.notification_type == ntype);
-    }
+    let total = Repository::get_user_notifications_count(
+        &state.pool,
+        &user_id,
+        query.notification_type.as_ref(),
+    ).await.unwrap_or(0);
     
-    notifications.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-    
-    let total = notifications.len();
-    let start = (page - 1) * page_size;
-    let _end = start + page_size;
-    let paginated: Vec<Notification> = notifications
-        .into_iter()
-        .skip(start)
-        .take(page_size)
-        .collect();
-    
-    let unread_count = state.get_unread_count(&user_id).unwrap_or(0);
+    let unread_count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
 
     Json(ApiResponse::success(
         NotificationListResponse {
-            notifications: paginated,
+            notifications,
             total,
             page,
             page_size,
@@ -449,22 +221,20 @@ async fn create_notification(
     State(state): State<AppState>,
     Json(req): Json<CreateNotificationRequest>,
 ) -> Json<ApiResponse<Notification>> {
-    let notification = Notification {
-        id: Uuid::new_v4().to_string(),
-        user_id: req.user_id,
-        notification_type: req.notification_type,
-        title: req.title,
-        content: req.content,
-        data: req.data,
-        is_read: false,
-        priority: req.priority.unwrap_or(2),
-        created_at: Utc::now(),
-        read_at: None,
-    };
-
-    state.add_notification(notification.clone());
-
-    Json(ApiResponse::success(notification, "Notification created successfully".to_string()))
+    match Repository::create_notification(&state.pool, req).await {
+        Ok(notification) => {
+            let _ = state.tx.send(WsMessage::NewNotification(notification.clone()));
+            
+            let unread_count = Repository::get_unread_count(&state.pool, &notification.user_id).await.unwrap_or(0);
+            let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
+            
+            Json(ApiResponse::success(notification, "Notification created successfully".to_string()))
+        }
+        Err(e) => {
+            tracing::error!("Failed to create notification: {}", e);
+            Json(ApiResponse::error(format!("Failed to create notification: {}", e)))
+        }
+    }
 }
 
 async fn get_unread_notifications(
@@ -473,10 +243,7 @@ async fn get_unread_notifications(
     let user_id = std::env::var("CURRENT_USER_ID")
         .unwrap_or_else(|_| "user_001".to_string());
     
-    let notifications: Vec<Notification> = state.get_user_notifications(&user_id)
-        .into_iter()
-        .filter(|n| !n.is_read)
-        .collect();
+    let notifications = Repository::get_unread_notifications(&state.pool, &user_id).await.unwrap_or_default();
 
     Json(ApiResponse::success(notifications, "Unread notifications retrieved successfully".to_string()))
 }
@@ -487,7 +254,7 @@ async fn get_unread_count(
     let user_id = std::env::var("CURRENT_USER_ID")
         .unwrap_or_else(|_| "user_001".to_string());
     
-    let count = state.get_unread_count(&user_id).unwrap_or(0);
+    let count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
 
     Json(ApiResponse::success(count, "Unread count retrieved successfully".to_string()))
 }
@@ -496,9 +263,25 @@ async fn mark_as_read(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Notification>> {
-    match state.mark_as_read(&id) {
-        Ok(notification) => Json(ApiResponse::success(notification, "Notification marked as read".to_string())),
-        Err(e) => Json(ApiResponse::error(e)),
+    match Uuid::parse_str(&id) {
+        Ok(uuid) => {
+            match Repository::mark_as_read(&state.pool, &uuid).await {
+                Ok(Some(notification)) => {
+                    let _ = state.tx.send(WsMessage::NewNotification(notification.clone()));
+                    
+                    let unread_count = Repository::get_unread_count(&state.pool, &notification.user_id).await.unwrap_or(0);
+                    let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
+                    
+                    Json(ApiResponse::success(notification, "Notification marked as read".to_string()))
+                }
+                Ok(None) => Json(ApiResponse::not_found("Notification not found".to_string())),
+                Err(e) => {
+                    tracing::error!("Failed to mark as read: {}", e);
+                    Json(ApiResponse::error(format!("Failed to mark as read: {}", e)))
+                }
+            }
+        }
+        Err(_) => Json(ApiResponse::error("Invalid notification ID".to_string())),
     }
 }
 
@@ -508,9 +291,15 @@ async fn mark_all_as_read(
     let user_id = std::env::var("CURRENT_USER_ID")
         .unwrap_or_else(|_| "user_001".to_string());
     
-    match state.mark_all_as_read(&user_id) {
-        Ok(count) => Json(ApiResponse::success(count, format!("Marked {} notifications as read", count))),
-        Err(e) => Json(ApiResponse::error(e)),
+    match Repository::mark_all_as_read(&state.pool, &user_id).await {
+        Ok(count) => {
+            let _ = state.tx.send(WsMessage::UnreadCount(0));
+            Json(ApiResponse::success(count, format!("Marked {} notifications as read", count)))
+        }
+        Err(e) => {
+            tracing::error!("Failed to mark all as read: {}", e);
+            Json(ApiResponse::error(format!("Failed to mark all as read: {}", e)))
+        }
     }
 }
 
@@ -518,9 +307,29 @@ async fn delete_notification(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<bool>> {
-    match state.delete_notification(&id) {
-        Ok(_) => Json(ApiResponse::success(true, "Notification deleted successfully".to_string())),
-        Err(e) => Json(ApiResponse::error(e)),
+    match Uuid::parse_str(&id) {
+        Ok(uuid) => {
+            let user_id_opt = Repository::get_notification(&state.pool, &uuid).await
+                .ok()
+                .flatten()
+                .map(|n| n.user_id.clone());
+                
+            match Repository::delete_notification(&state.pool, &uuid).await {
+                Ok(true) => {
+                    if let Some(user_id) = user_id_opt {
+                        let unread_count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
+                        let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
+                    }
+                    Json(ApiResponse::success(true, "Notification deleted successfully".to_string()))
+                }
+                Ok(false) => Json(ApiResponse::not_found("Notification not found".to_string())),
+                Err(e) => {
+                    tracing::error!("Failed to delete notification: {}", e);
+                    Json(ApiResponse::error(format!("Failed to delete notification: {}", e)))
+                }
+            }
+        }
+        Err(_) => Json(ApiResponse::error("Invalid notification ID".to_string())),
     }
 }
 
@@ -550,7 +359,7 @@ async fn websocket_handler(socket: WebSocket, state: AppState) {
                                     tracing::info!("User {} subscribed to notifications", user_id.as_ref().unwrap());
                                     
                                     if let Some(uid) = &user_id {
-                                        if let Ok(count) = state.get_unread_count(uid) {
+                                        if let Ok(count) = Repository::get_unread_count(&state.pool, uid).await {
                                             let _ = sender.send(Message::Text(
                                                 serde_json::to_string(&WsMessage::UnreadCount(count)).unwrap()
                                             )).await;

@@ -23,6 +23,12 @@ type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' |
 const DEFAULT_TIMEOUT = 30000;
 const AI_TIMEOUT = 120000;
 
+// 禁用 Axios 的自动错误日志
+axios.interceptors.request.use((config) => {
+  // 不做任何事情，只是为了确保拦截器被注册
+  return config;
+});
+
 // 判断是否是不需要认证的路径
 const isPublicPath = (url: string): boolean => {
   return url === '/health' || url.startsWith('/api/v1/auth/');
@@ -78,32 +84,37 @@ class ApiClient {
       );
 
       client.interceptors.response.use(
-        (response: AxiosResponse) => {
-          return response.data;
-        },
-        (error) => {
-          if (!error.response || error.code === 'ERR_NETWORK') {
-            return Promise.reject(error);
-          }
-          
-          if (error.response?.status === 401) {
-            const currentPath = window.location.pathname;
-            if (currentPath !== '/login' && currentPath !== '/register') {
-              if (localStorage.getItem('token')) {
-                logger.warn('Unauthorized, clearing invalid token and redirecting to login');
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                localStorage.removeItem('roles');
-                localStorage.removeItem('permissions');
-                apiClient.clearAuthToken();
-                window.location.href = '/login';
-              }
-            }
-          }
-          logger.error('Response error:', error);
+      (response: AxiosResponse) => {
+        return response.data;
+      },
+      (error) => {
+        if (!error.response || error.code === 'ERR_NETWORK') {
           return Promise.reject(error);
         }
-      );
+        
+        if (error.response?.status === 401) {
+          const currentPath = window.location.pathname;
+          if (currentPath !== '/login' && currentPath !== '/register') {
+            if (localStorage.getItem('token')) {
+              logger.warn('Unauthorized, clearing invalid token and redirecting to login');
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              localStorage.removeItem('roles');
+              localStorage.removeItem('permissions');
+              apiClient.clearAuthToken();
+              window.location.href = '/login';
+            }
+          }
+        }
+        
+        // 减少 404 错误在开发环境的日志输出
+        if (error.response?.status !== 404 || import.meta.env.PROD) {
+          logger.error('Response error:', error);
+        }
+        
+        return Promise.reject(error);
+      }
+    );
 
       this.clients[name] = client as unknown as TypedAxiosInstance;
     });

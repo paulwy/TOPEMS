@@ -13,23 +13,45 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# 服务配置
-declare -A SERVICES=(
-    ["iam"]="platform/topems-iam/backend 8002"
-    ["doc"]="platform/topems-doc/backend 8001"
-    ["ai"]="services/topems-ai/backend 8003"
-    ["flow"]="platform/topems-flow/backend 8004"
-    ["rs"]="services/topems-rs/backend 8005"
-    ["lims"]="services/topems-lims/backend 8006"
-    ["qms"]="services/topems-qms/backend 8012"
-    ["ehs"]="services/topems-ehs/backend 8016"
-    ["erp"]="services/topems-erp/backend 8009"
-    ["hrm"]="services/topems-hrm/backend 8010"
-    ["gis"]="services/topems-gis/backend 8011"
-    ["pdm"]="services/topems-pdm/backend 8015"
-    ["srm"]="services/topems-srm/backend 8018"
-    ["im"]="services/topems-im/backend 8017"
-)
+# 服务配置 (使用空格分隔，格式: 服务名 路径 端口)
+SERVICES_CONFIG="
+iam platform/topems-iam/backend 8002
+doc platform/topems-doc/backend 8001
+ai services/topems-ai/backend 8003
+flow platform/topems-flow/backend 8004
+rs services/topems-rs/backend 8005
+lims services/topems-lims/backend 8006
+qms services/topems-qms/backend 8012
+ehs services/topems-ehs/backend 8013
+erp services/topems-erp/backend 8009
+hrm services/topems-hrm/backend 8010
+gis services/topems-gis/backend 8011
+pdm services/topems-pdm/backend 8015
+srm services/topems-srm/backend 8018
+im services/topems-im/backend 8016
+bi services/topems-bi/backend 8022
+crm services/topems-crm/backend 8014
+mes services/topems-mes/backend 8014
+mobile services/topems-mobile/backend 8019
+notification services/notification-service 8023
+"
+
+# 获取服务路径
+get_service_path() {
+    local service_name=$1
+    echo "$SERVICES_CONFIG" | grep "^${service_name} " | awk '{print $2}'
+}
+
+# 获取服务端口
+get_service_port() {
+    local service_name=$1
+    echo "$SERVICES_CONFIG" | grep "^${service_name} " | awk '{print $3}'
+}
+
+# 获取所有服务名
+get_all_services() {
+    echo "$SERVICES_CONFIG" | grep -v "^$" | awk '{print $1}' | sort
+}
 
 # 日志函数
 log_info() {
@@ -90,11 +112,20 @@ force_clean_port() {
     fi
 }
 
+# 获取可执行文件名
+get_executable_name() {
+    local service_name=$1
+    if [ "$service_name" = "notification" ]; then
+        echo "notification-service"
+    else
+        echo "topems-${service_name}"
+    fi
+}
+
 # 编译服务
 build_service() {
     local service_name=$1
-    local config=${SERVICES[$service_name]}
-    local service_path=$(echo "$config" | cut -d' ' -f1)
+    local service_path=$(get_service_path "$service_name")
 
     if [ -z "$service_path" ]; then
         log_error "服务 $service_name 不存在"
@@ -104,7 +135,7 @@ build_service() {
     log_info "编译 $service_name 服务..."
     cd "$PROJECT_ROOT/$service_path"
     
-    if cargo build --release; then
+    if cargo build --release 2>&1; then
         log_success "$service_name 编译成功"
         return 0
     else
@@ -117,12 +148,16 @@ build_service() {
 start_service() {
     local service_name=$1
     local force=${2:-false}
-    local config=${SERVICES[$service_name]}
-    local service_path=$(echo "$config" | cut -d' ' -f1)
-    local port=$(echo "$config" | cut -d' ' -f2)
+    local service_path=$(get_service_path "$service_name")
+    local port=$(get_service_port "$service_name")
 
     if [ -z "$service_path" ]; then
         log_error "服务 $service_name 不存在"
+        return 1
+    fi
+
+    if [ -z "$port" ]; then
+        log_error "无法获取服务 $service_name 的端口"
         return 1
     fi
 
@@ -151,7 +186,8 @@ start_service() {
     fi
 
     # 检查可执行文件
-    local executable_path="$PROJECT_ROOT/$service_path/target/release/topems-$service_name"
+    local executable_name=$(get_executable_name "$service_name")
+    local executable_path="$PROJECT_ROOT/$service_path/target/release/${executable_name}"
     if [ ! -f "$executable_path" ]; then
         log_warning "可执行文件不存在，开始编译..."
         build_service "$service_name" || return 1
@@ -161,23 +197,32 @@ start_service() {
     export DATABASE_URL="postgres://topems:topems_secret@localhost:5432/topems"
     export REDIS_URL="redis://localhost:6379"
     export RUST_LOG="info"
+    
+    # 加载服务特定的.env文件
+    if [ -f "$PROJECT_ROOT/$service_path/.env" ]; then
+        log_info "加载服务配置: $PROJECT_ROOT/$service_path/.env"
+        export $(grep -v '^#' "$PROJECT_ROOT/$service_path/.env" | xargs)
+    fi
 
     # 启动服务
     cd "$PROJECT_ROOT/$service_path"
-    nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
+    if [ "$service_name" = "notification" ]; then
+        SERVER_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
+    else
+        nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
+    fi
     local pid=$!
 
     # 等待服务启动
     sleep 3
 
-    # 验证服务是否启动成功
+    # 检查服务是否成功启动
     if check_port $port; then
         log_success "$service_name 服务启动成功 (PID: $pid, 端口: $port)"
-        log_info "日志文件: /tmp/topems-${service_name}.log"
         return 0
     else
         log_error "$service_name 服务启动失败，请查看日志: /tmp/topems-${service_name}.log"
-        kill $pid 2>/dev/null || true
+        tail -20 "/tmp/topems-${service_name}.log" 2>/dev/null | tail -10
         return 1
     fi
 }
@@ -185,33 +230,38 @@ start_service() {
 # 停止服务
 stop_service() {
     local service_name=$1
-    local config=${SERVICES[$service_name]}
-    local port=$(echo "$config" | cut -d' ' -f2)
+    local port=$(get_service_port "$service_name")
 
-    if [ -z "$config" ]; then
-        log_error "服务 $service_name 不存在"
+    if [ -z "$port" ]; then
+        log_error "无法获取服务 $service_name 的端口"
         return 1
     fi
 
     log_info "停止 $service_name 服务..."
 
-    local pid=$(get_service_pid "$service_name" "$port")
-    if [ -n "$pid" ]; then
-        kill $pid 2>/dev/null
-        sleep 1
-
-        # 检查是否停止成功
-        if kill -0 $pid 2>/dev/null; then
-            kill -9 $pid 2>/dev/null
-            sleep 0.5
-        fi
-
-        if ! check_port $port; then
-            log_success "$service_name 服务已停止"
-            return 0
+    if check_port $port; then
+        local pid=$(get_service_pid "$service_name" "$port")
+        if [ -n "$pid" ]; then
+            kill $pid 2>/dev/null
+            sleep 1
+            if ! check_port $port; then
+                log_success "$service_name 服务已停止"
+                return 0
+            else
+                log_warning "正常停止失败，尝试强制停止..."
+                kill -9 $pid 2>/dev/null
+                sleep 1
+                if ! check_port $port; then
+                    log_success "$service_name 服务已强制停止"
+                    return 0
+                else
+                    log_error "无法停止 $service_name 服务 (PID: $pid)"
+                    return 1
+                fi
+            fi
         else
-            log_error "无法停止 $service_name 服务"
-            return 1
+            log_warning "未找到运行中的 $service_name 进程"
+            return 0
         fi
     else
         log_warning "$service_name 服务未运行"
@@ -220,255 +270,210 @@ stop_service() {
 }
 
 # 查看服务状态
-service_status() {
+status_service() {
     local service_name=$1
-    local config=${SERVICES[$service_name]}
-    local port=$(echo "$config" | cut -d' ' -f2)
+    local port=$(get_service_port "$service_name")
 
-    if [ -z "$config" ]; then
-        log_error "服务 $service_name 不存在"
-        return 1
+    if [ -z "$port" ]; then
+        echo -e "${RED}❌ $service_name: 无法获取端口${NC}"
+        return
     fi
 
-    local pid=$(get_service_pid "$service_name" "$port")
-    if [ -n "$pid" ]; then
+    if check_port $port; then
+        local pid=$(get_service_pid "$service_name" "$port")
         echo -e "${GREEN}✅${NC} $service_name (端口 $port) 运行中 (PID: $pid)"
     else
         echo -e "${RED}❌${NC} $service_name (端口 $port) 未运行"
     fi
 }
 
-# 查看所有服务状态
-all_status() {
-    log_info "TOPEMS 服务状态"
-    echo "=================================================="
+# 查看日志
+logs_service() {
+    local service_name=$1
+    local lines=${2:-50}
 
-    for service_name in $(echo "${!SERVICES[@]}" | tr ' ' '\n' | sort); do
-        service_status $service_name
+    if [ -f "/tmp/topems-${service_name}.log" ]; then
+        tail -n $lines "/tmp/topems-${service_name}.log"
+    else
+        log_error "日志文件不存在: /tmp/topems-${service_name}.log"
+        return 1
+    fi
+}
+
+# 显示帮助
+show_help() {
+    echo "TOPEMS 服务管理脚本"
+    echo ""
+    echo "用法: $0 <命令> [服务名] [选项]"
+    echo ""
+    echo "命令:"
+    echo "  start <服务名>        启动指定服务"
+    echo "  stop <服务名>         停止指定服务"
+    echo "  restart <服务名>      重启指定服务"
+    echo "  status [服务名]       查看服务状态"
+    echo "  logs <服务名> [行数]  查看服务日志"
+    echo "  build <服务名>        编译服务"
+    echo "  start-all            启动所有服务"
+    echo "  stop-all             停止所有服务"
+    echo "  restart-all          重启所有服务"
+    echo "  list                 列出所有服务"
+    echo "  help                 显示帮助"
+    echo ""
+    echo "示例:"
+    echo "  $0 start iam         启动 IAM 服务"
+    echo "  $0 stop hrm           停止 HRM 服务"
+    echo "  $0 status             查看所有服务状态"
+    echo "  $0 logs hrm 100      查看 HRM 最近 100 行日志"
+    echo "  $0 start-all          启动所有服务"
+    echo ""
+    echo "可用的服务:"
+    get_all_services | sed 's/^/  - /'
+}
+
+# 列出所有服务
+list_services() {
+    echo "可用的服务:"
+    echo ""
+    printf "%-15s %-50s %s\n" "服务名" "路径" "端口"
+    printf "%-15s %-50s %s\n" "------" "----" "----"
+    for service in $(get_all_services); do
+        local path=$(get_service_path "$service")
+        local port=$(get_service_port "$service")
+        printf "%-15s %-50s %s\n" "$service" "$path" "$port"
+    done
+}
+
+# 启动所有服务
+start_all_services() {
+    log_info "启动所有服务..."
+    local success_count=0
+    local fail_count=0
+    local failed_services=""
+
+    for service in $(get_all_services); do
+        if start_service "$service"; then
+            ((success_count++))
+        else
+            ((fail_count++))
+            failed_services="$failed_services $service"
+        fi
     done
 
-    echo "=================================================="
+    echo ""
+    if [ $fail_count -eq 0 ]; then
+        log_success "所有服务启动完成 ($success_count 成功)"
+    else
+        log_warning "服务启动完成 ($success_count 成功, $fail_count 失败)"
+        log_warning "失败的服务:$failed_services"
+    fi
+}
 
+# 停止所有服务
+stop_all_services() {
+    log_info "停止所有服务..."
+    for service in $(get_all_services); do
+        stop_service "$service"
+    done
+    log_success "所有服务已停止"
+}
+
+# 重启所有服务
+restart_all_services() {
+    log_info "重启所有服务..."
+    stop_all_services
+    sleep 2
+    start_all_services
+}
+
+# 显示所有服务状态
+show_all_status() {
+    echo ""
+    log_info "TOPEMS 服务状态"
+    echo "=================================================="
+    for service in $(get_all_services); do
+        status_service "$service"
+    done
+    
     # 检查前端
-    if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    if check_port 3000; then
         echo -e "${GREEN}✅${NC} 前端 (端口 3000) 运行中"
     else
         echo -e "${RED}❌${NC} 前端 (端口 3000) 未运行"
     fi
+    echo "=================================================="
 }
 
-# 查看服务日志
-view_log() {
-    local service_name=$1
-    local log_file="/tmp/topems-${service_name}.log"
-
-    if [ -f "$log_file" ]; then
-        log_info "查看 $service_name 日志 (Ctrl+C 退出)..."
-        echo "=================================================="
-        tail -f "$log_file"
-    else
-        log_warning "$service_name 日志文件不存在: $log_file"
-    fi
-}
-
-# 查看所有可用服务
-list_services() {
-    log_info "可用的服务:"
-    for service_name in $(echo "${!SERVICES[@]}" | tr ' ' '\n' | sort); do
-        local config=${SERVICES[$service_name]}
-        local port=$(echo "$config" | cut -d' ' -f2)
-        echo "  - $service_name (端口: $port)"
-    done
-}
-
-# 使用说明
-usage() {
-    echo "TOPEMS 服务管理脚本"
-    echo "======================================"
-    echo ""
-    echo "用法: $0 [命令] [服务名] [选项]"
-    echo ""
-    echo "命令:"
-    echo "  start <服务名> [--force]  启动指定服务"
-    echo "  stop <服务名>             停止指定服务"
-    echo "  restart <服务名> [--force] 重启指定服务"
-    echo "  status <服务名>           查看指定服务状态"
-    echo "  all-status                查看所有服务状态"
-    echo "  log <服务名>              查看指定服务日志"
-    echo "  list                      列出所有可用服务"
-    echo "  build <服务名>            编译指定服务"
-    echo "  build-all                 编译所有服务"
-    echo "  clean-port <端口>         强制清理指定端口"
-    echo "  clean-all                 停止所有服务并清理端口"
-    echo "  start-all [--force]       启动所有服务"
-    echo "  stop-all                  停止所有服务"
-    echo "  help                      显示此帮助信息"
-    echo ""
-    echo "选项:"
-    echo "  --force                   强制模式（清理占用端口）"
-    echo ""
-    echo "可用服务:"
-    list_services
-    echo ""
-    echo "示例:"
-    echo "  $0 start iam"
-    echo "  $0 start rs --force"
-    echo "  $0 build lims"
-    echo "  $0 clean-all"
-    echo "  $0 stop-all"
-    echo "  $0 all-status"
-    echo "  $0 log lims"
-}
-
-# 主函数
-main() {
-    local cmd="${1:-}"
-    local arg1="${2:-}"
-    local arg2="${3:-}"
-    
-    case "$cmd" in
-        start)
-            if [ -z "$arg1" ]; then
-                log_error "请指定要启动的服务名"
-                list_services
-                exit 1
-            fi
-            local force=false
-            if [ "$arg2" = "--force" ]; then
-                force=true
-            fi
-            start_service "$arg1" "$force"
-            ;;
-
-        stop)
-            if [ -z "$arg1" ]; then
-                log_error "请指定要停止的服务名"
-                list_services
-                exit 1
-            fi
-            stop_service "$arg1"
-            ;;
-
-        restart)
-            if [ -z "$arg1" ]; then
-                log_error "请指定要重启的服务名"
-                list_services
-                exit 1
-            fi
-            local force=false
-            if [ "$arg2" = "--force" ]; then
-                force=true
-            fi
-            stop_service "$arg1"
-            sleep 1
-            start_service "$arg1" "$force"
-            ;;
-
-        status)
-            if [ -z "$arg1" ]; then
-                log_error "请指定要查看的服务名"
-                list_services
-                exit 1
-            fi
-            service_status "$arg1"
-            ;;
-
-        all-status)
-            all_status
-            ;;
-
-        log)
-            if [ -z "$arg1" ]; then
-                log_error "请指定要查看日志的服务名"
-                list_services
-                exit 1
-            fi
-            view_log "$arg1"
-            ;;
-
-        list)
-            list_services
-            ;;
-
-        build)
-            if [ -z "$arg1" ]; then
-                log_error "请指定要编译的服务名"
-                list_services
-                exit 1
-            fi
-            build_service "$arg1"
-            ;;
-
-        build-all)
-            log_info "编译所有服务..."
-            local success=true
-            for service_name in $(echo "${!SERVICES[@]}" | tr ' ' '\n' | sort); do
-                if ! build_service "$service_name"; then
-                    success=false
-                fi
-            done
-            if [ "$success" = "true" ]; then
-                log_success "所有服务编译成功"
-            else
-                log_error "部分服务编译失败"
-            fi
-            ;;
-
-        clean-port)
-            if [ -z "$arg1" ]; then
-                log_error "请指定要清理的端口"
-                exit 1
-            fi
-            force_clean_port "$arg1"
-            ;;
-
-        clean-all)
-            log_info "停止所有服务并清理端口..."
-            # 先停止所有服务
-            for service_name in $(echo "${!SERVICES[@]}" | tr ' ' '\n' | sort); do
-                stop_service "$service_name" 2>/dev/null || true
-            done
-            # 清理所有端口
-            for service_config in "${SERVICES[@]}"; do
-                local port=$(echo "$service_config" | cut -d' ' -f2)
-                force_clean_port "$port" 2>/dev/null || true
-            done
-            log_success "所有服务已停止，端口已清理"
-            ;;
-
-        start-all)
-            local force=false
-            if [ "$arg1" = "--force" ]; then
-                force=true
-            fi
-            log_info "启动所有服务..."
-            for service_name in $(echo "${!SERVICES[@]}" | tr ' ' '\n' | sort); do
-                start_service "$service_name" "$force" 2>/dev/null || true
-            done
-            log_success "所有服务启动完成"
-            all_status
-            ;;
-
-        stop-all)
-            log_info "停止所有服务..."
-            for service_name in $(echo "${!SERVICES[@]}" | tr ' ' '\n' | sort); do
-                stop_service "$service_name" 2>/dev/null || true
-            done
-            log_success "所有服务停止完成"
-            ;;
-
-        help|--help|-h)
-            usage
-            ;;
-
-        *)
-            log_error "无效的命令: $cmd"
-            echo ""
-            usage
+# 主逻辑
+case "$1" in
+    start)
+        if [ -z "$2" ]; then
+            log_error "请指定服务名"
+            show_help
             exit 1
-            ;;
-    esac
-}
-
-# 启动脚本
-main "$@"
+        fi
+        start_service "$2" "${3:-false}"
+        ;;
+    stop)
+        if [ -z "$2" ]; then
+            log_error "请指定服务名"
+            show_help
+            exit 1
+        fi
+        stop_service "$2"
+        ;;
+    restart)
+        if [ -z "$2" ]; then
+            log_error "请指定服务名"
+            show_help
+            exit 1
+        fi
+        stop_service "$2"
+        sleep 1
+        start_service "$2"
+        ;;
+    status)
+        if [ -z "$2" ]; then
+            show_all_status
+        else
+            status_service "$2"
+        fi
+        ;;
+    logs)
+        if [ -z "$2" ]; then
+            log_error "请指定服务名"
+            show_help
+            exit 1
+        fi
+        logs_service "$2" "${3:-50}"
+        ;;
+    build)
+        if [ -z "$2" ]; then
+            log_error "请指定服务名"
+            show_help
+            exit 1
+        fi
+        build_service "$2"
+        ;;
+    start-all)
+        start_all_services
+        show_all_status
+        ;;
+    stop-all)
+        stop_all_services
+        ;;
+    restart-all)
+        restart_all_services
+        show_all_status
+        ;;
+    list)
+        list_services
+        ;;
+    help|--help|-h)
+        show_help
+        ;;
+    *)
+        log_error "未知命令: $1"
+        show_help
+        exit 1
+        ;;
+esac

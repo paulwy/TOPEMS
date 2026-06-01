@@ -58,31 +58,15 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-
-    let refresh_secret = env::var("REFRESH_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("REFRESH_SECRET not set, using default (not recommended for production)");
-            "topems-default-refresh-secret-change-me-in-production".to_string()
-        });
-
-    let token_expiry_hours: i64 = env::var("JWT_EXPIRY_HOURS")
-        .unwrap_or_else(|_| "24".to_string())
-        .parse()
-        .unwrap_or(24);
-
     let app_state = AppState {
         pool: pool.clone(),
-        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
+        auth_state: AuthState::from_env(),
     };
 
     let cors = create_cors_layer();
 
     let audit_router = api::audit::create_routes(pool.clone()).await?;
+    let equipment_router = api::equipment::create_routes(pool.clone()).await?;
 
     let app = Router::new()
         .route("/health", get(health_check))
@@ -91,6 +75,7 @@ async fn main() -> Result<()> {
         .merge(api::work_station::create_routes(pool.clone()).await?)
         .merge(api::production_record::create_routes(pool.clone()).await?)
         .merge(audit_router)
+        .merge(equipment_router)
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -237,6 +222,70 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .execute(pool)
         .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status)"#)
+        .execute(pool)
+        .await?;
+
+    // 设备点检记录表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS mes.inspection_records (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            equipment_id UUID NOT NULL,
+            equipment_code VARCHAR(100) NOT NULL,
+            equipment_name VARCHAR(255) NOT NULL,
+            inspector VARCHAR(100) NOT NULL,
+            inspection_date DATE NOT NULL,
+            location VARCHAR(255),
+            temperature NUMERIC(5,2),
+            vibration NUMERIC(10,4),
+            noise_level NUMERIC(10,2),
+            status VARCHAR(50) NOT NULL DEFAULT 'normal',
+            items JSONB,
+            abnormalities TEXT,
+            remarks TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 设备维护记录表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS mes.maintenance_records (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            equipment_id UUID NOT NULL,
+            equipment_code VARCHAR(100) NOT NULL,
+            equipment_name VARCHAR(255) NOT NULL,
+            maintenance_type VARCHAR(100) NOT NULL,
+            description TEXT NOT NULL,
+            maintainer VARCHAR(100) NOT NULL,
+            start_time TIMESTAMPTZ NOT NULL,
+            end_time TIMESTAMPTZ,
+            cost NUMERIC(15,2),
+            parts_replaced JSONB,
+            result TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            remarks TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 添加索引
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_inspection_equipment_id ON mes.inspection_records(equipment_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_inspection_date ON mes.inspection_records(inspection_date DESC)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_maintenance_equipment_id ON mes.maintenance_records(equipment_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_maintenance_status ON mes.maintenance_records(status)"#)
         .execute(pool)
         .await?;
 

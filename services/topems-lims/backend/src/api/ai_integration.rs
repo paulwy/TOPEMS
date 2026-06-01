@@ -12,8 +12,6 @@ use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use std::env;
 
-use topems_shared::response::ApiResponse;
-
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AiAnalysis {
     pub id: Uuid,
@@ -44,6 +42,34 @@ pub struct AiChatRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AiChatResponse {
     pub answer: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApiResponse<T> {
+    pub success: bool,
+    pub data: Option<T>,
+    pub message: String,
+    pub timestamp: String,
+}
+
+impl<T> ApiResponse<T> {
+    fn success(data: T, message: &str) -> Self {
+        ApiResponse {
+            success: true,
+            data: Some(data),
+            message: message.to_string(),
+            timestamp: Utc::now().to_rfc3339(),
+        }
+    }
+
+    fn error(message: &str) -> Self {
+        ApiResponse {
+            success: false,
+            data: None,
+            message: message.to_string(),
+            timestamp: Utc::now().to_rfc3339(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,7 +107,7 @@ async fn list_analyses(
 
     let result = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
-         FROM lims.ai_analyses
+         FROM ai_analyses
          ORDER BY created_at DESC
          LIMIT $1 OFFSET $2"
     )
@@ -90,7 +116,7 @@ async fn list_analyses(
     .fetch_all(&pool)
     .await;
 
-    let total = sqlx::query_scalar("SELECT COUNT(*) FROM lims.ai_analyses")
+    let total = sqlx::query_scalar("SELECT COUNT(*) FROM ai_analyses")
         .fetch_one(&pool)
         .await;
 
@@ -108,7 +134,7 @@ async fn list_analyses(
             (StatusCode::OK, Json(response))
         }
         (_, Err(e)) | (Err(e), _) => {
-            let response = ApiResponse::<PaginatedResponse<AiAnalysis>>::error(500, &format!("获取AI分析列表失败: {}", e));
+            let response: ApiResponse<PaginatedResponse<AiAnalysis>> = ApiResponse::error(&format!("获取AI分析列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -125,7 +151,7 @@ async fn create_analysis(
     let ai_response = match call_ai_service(&request.prompt, &ai_service_url).await {
         Ok(resp) => resp,
         Err(e) => {
-            let response = ApiResponse::<AiAnalysis>::error(500, &format!("AI服务调用失败: {}", e));
+            let response: ApiResponse<AiAnalysis> = ApiResponse::error(&format!("AI服务调用失败: {}", e));
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(response));
         }
     };
@@ -134,7 +160,7 @@ async fn create_analysis(
     let now = Utc::now();
 
     let result = sqlx::query_as(
-        "INSERT INTO lims.ai_analyses (
+        "INSERT INTO ai_analyses (
             id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at"
@@ -157,7 +183,7 @@ async fn create_analysis(
             (StatusCode::CREATED, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<AiAnalysis>::error(500, &format!("创建AI分析失败: {}", e));
+            let response: ApiResponse<AiAnalysis> = ApiResponse::error(&format!("创建AI分析失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -167,9 +193,9 @@ async fn get_analysis(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let result = sqlx::query_as(
+    let result: Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
-         FROM lims.ai_analyses WHERE id = $1"
+         FROM ai_analyses WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&pool)
@@ -181,11 +207,11 @@ async fn get_analysis(
             (StatusCode::OK, Json(response))
         }
         Ok(None) => {
-            let response = ApiResponse::<AiAnalysis>::error(404, "AI分析不存在");
+            let response: ApiResponse<AiAnalysis> = ApiResponse::error("AI分析不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<AiAnalysis>::error(500, &format!("获取AI分析失败: {}", e));
+            let response: ApiResponse<AiAnalysis> = ApiResponse::error(&format!("获取AI分析失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -204,7 +230,7 @@ async fn ai_chat(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<AiChatResponse>::error(500, &format!("AI聊天失败: {}", e));
+            let response: ApiResponse<AiChatResponse> = ApiResponse::error(&format!("AI聊天失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -214,9 +240,9 @@ async fn get_entity_analyses(
     State(pool): State<PgPool>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
-    let result = sqlx::query_as(
+    let result: Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
-         FROM lims.ai_analyses
+         FROM ai_analyses
          WHERE entity_type = $1 AND entity_id = $2
          ORDER BY created_at DESC"
     )
@@ -231,13 +257,13 @@ async fn get_entity_analyses(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<Vec<AiAnalysis>>::error(500, &format!("获取实体AI分析列表失败: {}", e));
+            let response: ApiResponse<Vec<AiAnalysis>> = ApiResponse::error(&format!("获取实体AI分析列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
-async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> ::std::result::Result<String, String> {
+async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Result<String, String> {
     let url = ai_service_url.as_deref().unwrap_or("http://localhost:8004");
     let client = Client::new();
 

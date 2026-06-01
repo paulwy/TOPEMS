@@ -22,11 +22,16 @@ import CompanyManagementPage from './pages/CompanyManagementPage';
 import DepartmentManagementPage from './pages/DepartmentManagementPage';
 import EmployeeManagementPage from './pages/EmployeeManagementPage';
 import AssetManagementPage from './pages/AssetManagementPage';
+import EquipmentManagementPage from './pages/EquipmentManagementPage';
 import FinanceExpensePage from './pages/FinanceExpensePage';
+import AdministrationPage from './pages/AdministrationPage';
 import BudgetManagementPage from './pages/BudgetManagementPage';
 import AuditLogPage from './pages/AuditLogPage';
-import ReportsPage from './pages/ReportsPage';
+import ReportPage from './pages/ReportPage';
 import ConfigDebugPage from './pages/ConfigDebugPage';
+import DocumentCenterPage from './pages/DocumentCenterPage';
+import HelpCenterPage from './pages/HelpCenterPage';
+import TemplateManagementPage from './pages/TemplateManagementPage';
 import HrmPositionPage from './pages/HrmPositionPage';
 import HrmLeavePage from './pages/HrmLeavePage';
 import HrmRecruitmentPage from './pages/HrmRecruitmentPage';
@@ -42,6 +47,10 @@ import FlowApprovalDetailPage from './pages/FlowApprovalDetailPage';
 import FlowNotificationCenter from './pages/FlowNotificationCenter';
 import FlowStatisticsPage from './pages/FlowStatisticsPage';
 import FlowVersionHistoryPage from './pages/FlowVersionHistoryPage';
+import MobileWorkstationPage from './pages/MobileWorkstationPage';
+import SystemManagementPage from './pages/SystemManagementPage';
+import DictionaryManagementPage from './pages/DictionaryManagementPage';
+import DatabaseStructurePage from './pages/DatabaseStructurePage';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
 import { ModuleGate } from './components/PermissionGate';
@@ -266,7 +275,7 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute requiredPermissions={['erp:read']}>
                 <ModuleGate module="erp" action="admin">
-                  <AssetManagementPage />
+                  <EquipmentManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
@@ -277,6 +286,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['erp:read']}>
                 <ModuleGate module="erp" action="admin">
                   <FinanceExpensePage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/administration"
+            element={
+              <ProtectedRoute requiredPermissions={['erp:read']}>
+                <ModuleGate module="erp" action="admin">
+                  <AdministrationPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
@@ -302,12 +321,78 @@ const AppContent: React.FC = () => {
             }
           />
         <Route
+            path="/system"
+            element={
+              <ProtectedRoute requiredPermissions={['iam:admin']}>
+                <ModuleGate module="iam" action="admin">
+                  <SystemManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/dictionary"
+            element={
+              <ProtectedRoute requiredPermissions={['iam:admin']}>
+                <ModuleGate module="iam" action="admin">
+                  <DictionaryManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/database"
+            element={
+              <ProtectedRoute requiredPermissions={['iam:admin']}>
+                <ModuleGate module="iam" action="admin">
+                  <DatabaseStructurePage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
             path="/reports"
             element={
               <ProtectedRoute requiredPermissions={['iam:read']}>
                 <ModuleGate module="iam" action="admin">
-                  <ReportsPage />
+                  <ReportPage />
                 </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/document-center"
+            element={
+              <ProtectedRoute requiredPermissions={['doc:read']}>
+                <ModuleGate module="doc" action="read">
+                  <DocumentCenterPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/help"
+            element={
+              <ProtectedRoute>
+                <HelpCenterPage />
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/templates"
+            element={
+              <ProtectedRoute requiredPermissions={['doc:read']}>
+                <ModuleGate module="doc" action="admin">
+                  <TemplateManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/mobile-workstation"
+            element={
+              <ProtectedRoute>
+                <MobileWorkstationPage />
               </ProtectedRoute>
             }
           />

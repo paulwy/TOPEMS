@@ -52,8 +52,9 @@ pub async fn create_routes(db: PgPool) -> anyhow::Result<Router> {
 
     let app = Router::new()
         .route("/api/v1/audit-logs", get(list_audit_logs))
-        .route("/api/v1/audit-logs/:id", get(get_audit_log))
-        .with_state(state);
+        .route("/api/v1/audit-logs/{id}", get(get_audit_log))
+        .with_state(state)
+        .without_v07_checks();
 
     Ok(app)
 }

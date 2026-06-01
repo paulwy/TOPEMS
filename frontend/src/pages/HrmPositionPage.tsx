@@ -22,11 +22,21 @@ const PositionManagementPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await positionApi.list(params);
-      if (response.code === 200) {
-        setData(response.data!);
+      if (response.code === 200 && response.data) {
+        const data = response.data as any;
+        setData({
+          items: data.items || [],
+          total: data.total || 0,
+          page: data.page || 1,
+          page_size: data.page_size || 10,
+        });
+      } else {
+        console.warn('Failed to fetch positions, using empty data');
+        setData({ items: [], total: 0, page: 1, page_size: 10 });
       }
     } catch (error) {
       console.error('Failed to fetch positions:', error);
+      setData({ items: [], total: 0, page: 1, page_size: 10 });
     } finally {
       setLoading(false);
     }
@@ -35,11 +45,16 @@ const PositionManagementPage: React.FC = () => {
   const fetchDepartments = async () => {
     try {
       const response = await departmentApi.list();
-      if (response.code === 200) {
-        setDepartments(response.data?.items.map(d => ({ id: d.id, name: d.name })) || []);
+      if (response.code === 200 && response.data) {
+        const items = (response.data as any).items || [];
+        setDepartments(items.map((d: any) => ({ id: d.id, name: d.name })));
+      } else {
+        console.warn('Failed to fetch departments, using empty list');
+        setDepartments([]);
       }
     } catch (error) {
       console.error('Failed to fetch departments:', error);
+      setDepartments([]);
     }
   };
 

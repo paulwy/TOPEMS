@@ -61,73 +61,11 @@ const FlowStatisticsPage: React.FC = () => {
       if (response.success && response.data) {
         setStats(response.data);
       } else {
-        // Fallback to mock data if API fails
-        const mockStats: Statistics = {
-          total_workflows: 15,
-          active_workflows: 12,
-          total_instances: 128,
-          running_instances: 45,
-          completed_instances: 73,
-          rejected_instances: 10,
-          total_approvals: 342,
-          pending_approvals: 28,
-          approved_approvals: 298,
-          rejected_approvals: 16,
-          avg_approval_time: 2.5,
-          approval_rate: 94.9,
-          rejection_rate: 5.1,
-          workflow_stats: [
-            { workflow_id: 'wf1', workflow_name: '采购审批流程', instance_count: 45, completion_rate: 85, avg_duration: 3.2 },
-            { workflow_id: 'wf2', workflow_name: '请假申请流程', instance_count: 32, completion_rate: 92, avg_duration: 1.8 },
-            { workflow_id: 'wf3', workflow_name: '报销审批流程', instance_count: 28, completion_rate: 88, avg_duration: 2.5 },
-            { workflow_id: 'wf4', workflow_name: '入职审批流程', instance_count: 15, completion_rate: 95, avg_duration: 1.2 },
-            { workflow_id: 'wf5', workflow_name: '离职审批流程', instance_count: 8, completion_rate: 100, avg_duration: 2.0 },
-          ],
-          monthly_data: [
-            { month: '1月', instances_started: 18, instances_completed: 15, approvals_processed: 52 },
-            { month: '2月', instances_started: 22, instances_completed: 19, approvals_processed: 65 },
-            { month: '3月', instances_started: 25, instances_completed: 21, approvals_processed: 72 },
-            { month: '4月', instances_started: 30, instances_completed: 26, approvals_processed: 88 },
-            { month: '5月', instances_started: 33, instances_completed: 12, approvals_processed: 65 },
-          ],
-        };
-        setStats(mockStats);
+        showError(response.message || '加载统计数据失败');
       }
     } catch (err) {
       console.error('加载统计数据失败:', err);
       showError('加载统计数据失败');
-      
-      // Fallback to mock data
-      const mockStats: Statistics = {
-        total_workflows: 15,
-        active_workflows: 12,
-        total_instances: 128,
-        running_instances: 45,
-        completed_instances: 73,
-        rejected_instances: 10,
-        total_approvals: 342,
-        pending_approvals: 28,
-        approved_approvals: 298,
-        rejected_approvals: 16,
-        avg_approval_time: 2.5,
-        approval_rate: 94.9,
-        rejection_rate: 5.1,
-        workflow_stats: [
-          { workflow_id: 'wf1', workflow_name: '采购审批流程', instance_count: 45, completion_rate: 85, avg_duration: 3.2 },
-          { workflow_id: 'wf2', workflow_name: '请假申请流程', instance_count: 32, completion_rate: 92, avg_duration: 1.8 },
-          { workflow_id: 'wf3', workflow_name: '报销审批流程', instance_count: 28, completion_rate: 88, avg_duration: 2.5 },
-          { workflow_id: 'wf4', workflow_name: '入职审批流程', instance_count: 15, completion_rate: 95, avg_duration: 1.2 },
-          { workflow_id: 'wf5', workflow_name: '离职审批流程', instance_count: 8, completion_rate: 100, avg_duration: 2.0 },
-        ],
-        monthly_data: [
-          { month: '1月', instances_started: 18, instances_completed: 15, approvals_processed: 52 },
-          { month: '2月', instances_started: 22, instances_completed: 19, approvals_processed: 65 },
-          { month: '3月', instances_started: 25, instances_completed: 21, approvals_processed: 72 },
-          { month: '4月', instances_started: 30, instances_completed: 26, approvals_processed: 88 },
-          { month: '5月', instances_started: 33, instances_completed: 12, approvals_processed: 65 },
-        ],
-      };
-      setStats(mockStats);
     } finally {
       setLoading(false);
     }

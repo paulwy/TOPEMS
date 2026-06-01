@@ -173,24 +173,7 @@ async fn main() -> Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-
-    let refresh_secret = env::var("REFRESH_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("REFRESH_SECRET not set, using default");
-            "topems-default-refresh-secret-change-me".to_string()
-        });
-
-    let token_expiry_hours: i64 = env::var("TOKEN_EXPIRY_HOURS")
-        .unwrap_or_else(|_| "24".to_string())
-        .parse()
-        .unwrap_or(24);
-
-    let app_state = AppState::new(AuthState::new(jwt_secret, refresh_secret, token_expiry_hours));
+    let app_state = AppState::new(AuthState::from_env());
 
     let cors = create_cors_layer();
 
@@ -206,7 +189,7 @@ async fn main() -> Result<()> {
         .with_state(app_state)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8011".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8022".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-BI 数据大屏报表中台启动中...");

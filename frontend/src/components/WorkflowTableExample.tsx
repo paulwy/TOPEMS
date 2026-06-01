@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react'
 
@@ -12,43 +12,45 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { flowApi } from '../api/flow'
 
-// 模拟工作流数据
 type Workflow = {
   id: string
   name: string
   description: string
   status: 'draft' | 'active' | 'inactive'
-  createdAt: string
-  createdBy: string
+  created_at: string
+  created_by: string
   version: string
 }
 
-// 生成示例数据
-const generateData = (count: number): Workflow[] => {
-  const statuses: ('draft' | 'active' | 'inactive')[] = ['draft', 'active', 'inactive']
-  const data: Workflow[] = []
-  
-  for (let i = 1; i <= count; i++) {
-    data.push({
-      id: `wf-${i}`,
-      name: `工作流 ${i}`,
-      description: `这是工作流 ${i} 的描述`,
-      status: statuses[i % 3],
-      createdAt: new Date(Date.now() - Math.random() * 10000000000).toISOString().split('T')[0],
-      createdBy: ['张三', '李四', '王五'][i % 3],
-      version: `${Math.floor(i / 3) + 1}.${i % 3}`,
-    })
-  }
-  
-  return data
-}
-
 export function WorkflowTableExample() {
-  const [loading, setLoading] = useState(false)
-  const [data] = useState<Workflow[]>(() => generateData(50))
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<Workflow[]>([])
+  const [error, setError] = useState<string | null>(null)
 
-  // 列定义
+  useEffect(() => {
+    loadWorkflows()
+  }, [])
+
+  const loadWorkflows = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await flowApi.list()
+      if (response.success && response.data) {
+        setData(response.data.items || [])
+      } else {
+        setError(response.message || '加载工作流失败')
+      }
+    } catch (err: any) {
+      console.error('加载工作流失败:', err)
+      setError('加载工作流失败: ' + (err.message || '未知错误'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const columns = useMemo<ColumnDef<Workflow>[]>(
     () => [
       {
@@ -105,17 +107,17 @@ export function WorkflowTableExample() {
         },
       },
       {
-        accessorKey: 'createdBy',
+        accessorKey: 'created_by',
         header: () => <div className="text-left">创建者</div>,
         cell: ({ row }) => (
-          <div className="text-left">{row.getValue('createdBy')}</div>
+          <div className="text-left">{row.getValue('created_by')}</div>
         ),
       },
       {
-        accessorKey: 'createdAt',
+        accessorKey: 'created_at',
         header: () => <div className="text-left">创建时间</div>,
         cell: ({ row }) => (
-          <div className="text-left">{row.getValue('createdAt')}</div>
+          <div className="text-left">{row.getValue('created_at')}</div>
         ),
       },
       {
@@ -166,9 +168,23 @@ export function WorkflowTableExample() {
     []
   )
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6">工作流列表</h1>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {error}
+          <Button variant="outline" className="ml-4" onClick={loadWorkflows}>
+            重试
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">工作流列表 (使用 TanStack Table)</h1>
+      <h1 className="text-2xl font-bold mb-6">工作流列表</h1>
       
       <DataTable
         columns={columns}

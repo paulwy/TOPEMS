@@ -52,6 +52,7 @@ get_process_on_port() {
 # 服务定义
 SERVICES="
 iam:services/topems-iam/backend:8002:身份认证服务
+backend:services/backend:8009:主后端服务
 doc:services/backend:8001:文档管理服务
 ai:services/topems-ai/backend:8003:AI服务
 flow:platform/topems-flow/backend:8004:工作流服务

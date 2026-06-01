@@ -1,4 +1,4 @@
-use crate::models::{FileMetadata, Folder, FileVersion, FilePermission, FolderPermission, Permission};
+use crate::models::{FileMetadata, Folder, FileVersion, FilePermission, FolderPermission, Template, TemplateCategory};
 use sqlx::{PgPool, Row};
 use thiserror::Error;
 use uuid::Uuid;
@@ -476,5 +476,281 @@ impl FolderPermissionRepository {
         .await?;
 
         Ok(permissions)
+    }
+}
+
+#[derive(Clone)]
+pub struct TemplateRepository {
+    pool: PgPool,
+}
+
+impl TemplateRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
+    pub async fn create(&self, template: &Template) -> Result<Template, RepositoryError> {
+        let t = sqlx::query_as::<_, Template>(
+            r#"
+            INSERT INTO doc_service.templates 
+            (id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            RETURNING id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by
+            "#,
+        )
+        .bind(template.id)
+        .bind(&template.name)
+        .bind(&template.code)
+        .bind(template.category_id)
+        .bind(&template.module)
+        .bind(&template.description)
+        .bind(&template.content)
+        .bind(&template.variables)
+        .bind(template.is_active)
+        .bind(template.is_system)
+        .bind(template.sort_order)
+        .bind(template.view_count)
+        .bind(template.use_count)
+        .bind(template.created_at)
+        .bind(template.updated_at)
+        .bind(&template.created_by)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(t)
+    }
+
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Template>, RepositoryError> {
+        let template = sqlx::query_as::<_, Template>(
+            r#"
+            SELECT id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by
+            FROM doc_service.templates
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(template)
+    }
+
+    pub async fn find_by_code(&self, code: &str) -> Result<Option<Template>, RepositoryError> {
+        let template = sqlx::query_as::<_, Template>(
+            r#"
+            SELECT id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by
+            FROM doc_service.templates
+            WHERE code = $1
+            "#,
+        )
+        .bind(code)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(template)
+    }
+
+    pub async fn list(
+        &self,
+        search: Option<&str>,
+        category_code: Option<&str>,
+        module: Option<&str>,
+        is_active: Option<bool>,
+        _limit: i64,
+        _offset: i64,
+    ) -> Result<(Vec<Template>, i64), RepositoryError> {
+        let mut query = String::from(
+            r#"
+            SELECT t.id, t.name, t.code, t.category_id, t.module, t.description, t.content, t.variables, t.is_active, t.is_system, t.sort_order, t.view_count, t.use_count, t.created_at, t.updated_at, t.created_by
+            FROM doc_service.templates t
+            LEFT JOIN doc_service.template_categories tc ON t.category_id = tc.id
+            WHERE 1=1
+            "#
+        );
+
+        let mut count_query = String::from(
+            r#"
+            SELECT COUNT(*) as count
+            FROM doc_service.templates t
+            LEFT JOIN doc_service.template_categories tc ON t.category_id = tc.id
+            WHERE 1=1
+            "#
+        );
+
+        let mut params: Vec<String> = vec![];
+        let mut param_idx = 1;
+
+        if let Some(s) = search {
+            let condition = format!(" AND (t.name ILIKE ${} OR t.code ILIKE ${} OR t.description ILIKE ${})", param_idx, param_idx + 1, param_idx + 2);
+            query.push_str(&condition);
+            count_query.push_str(&condition);
+            params.push(format!("%{}%", s));
+            params.push(format!("%{}%", s));
+            params.push(format!("%{}%", s));
+            param_idx += 3;
+        }
+
+        if let Some(cat) = category_code {
+            let condition = format!(" AND tc.code = ${}", param_idx);
+            query.push_str(&condition);
+            count_query.push_str(&condition);
+            params.push(cat.to_string());
+            param_idx += 1;
+        }
+
+        if let Some(mod_) = module {
+            let condition = format!(" AND t.module = ${}", param_idx);
+            query.push_str(&condition);
+            count_query.push_str(&condition);
+            params.push(mod_.to_string());
+            param_idx += 1;
+        }
+
+        if let Some(active) = is_active {
+            let condition = format!(" AND t.is_active = ${}", param_idx);
+            query.push_str(&condition);
+            count_query.push_str(&condition);
+            params.push(if active { "true" } else { "false" }.to_string());
+            param_idx += 1;
+        }
+
+        query.push_str(&format!(" ORDER BY t.sort_order ASC, t.created_at DESC"));
+
+        // Build and execute count query
+        let mut count_q = sqlx::query(&count_query);
+        for param in &params {
+            count_q = count_q.bind(param);
+        }
+        let count_row = count_q.fetch_one(&self.pool).await?;
+        let total: i64 = count_row.get("count");
+
+        // Build and execute main query
+        let mut main_q = sqlx::query_as::<_, Template>(&query);
+        for param in &params {
+            main_q = main_q.bind(param);
+        }
+        let templates = main_q.fetch_all(&self.pool).await?;
+
+        Ok((templates, total))
+    }
+
+    pub async fn update(&self, id: Uuid, template: &Template) -> Result<Option<Template>, RepositoryError> {
+        let t = sqlx::query_as::<_, Template>(
+            r#"
+            UPDATE doc_service.templates
+            SET name = $2, code = $3, category_id = $4, module = $5, description = $6, content = $7, variables = $8, is_active = $9, sort_order = $10, updated_at = $11
+            WHERE id = $1
+            RETURNING id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by
+            "#,
+        )
+        .bind(id)
+        .bind(&template.name)
+        .bind(&template.code)
+        .bind(template.category_id)
+        .bind(&template.module)
+        .bind(&template.description)
+        .bind(&template.content)
+        .bind(&template.variables)
+        .bind(template.is_active)
+        .bind(template.sort_order)
+        .bind(template.updated_at)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(t)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<bool, RepositoryError> {
+        let result = sqlx::query(r#"DELETE FROM doc_service.templates WHERE id = $1"#)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn increment_view_count(&self, id: Uuid) -> Result<(), RepositoryError> {
+        sqlx::query(r#"UPDATE doc_service.templates SET view_count = view_count + 1 WHERE id = $1"#)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn increment_use_count(&self, id: Uuid) -> Result<(), RepositoryError> {
+        sqlx::query(r#"UPDATE doc_service.templates SET use_count = use_count + 1 WHERE id = $1"#)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+}
+
+#[derive(Clone)]
+pub struct TemplateCategoryRepository {
+    pool: PgPool,
+}
+
+impl TemplateCategoryRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
+    pub async fn list(&self, is_active: Option<bool>) -> Result<Vec<TemplateCategory>, RepositoryError> {
+        let query = if is_active.is_some() {
+            sqlx::query_as::<_, TemplateCategory>(
+                r#"
+                SELECT id, name, code, icon, description, sort_order, is_active, created_at, updated_at, created_by
+                FROM doc_service.template_categories
+                WHERE is_active = $1
+                ORDER BY sort_order ASC, name ASC
+                "#,
+            )
+            .bind(is_active.unwrap())
+            .fetch_all(&self.pool)
+            .await?
+        } else {
+            sqlx::query_as::<_, TemplateCategory>(
+                r#"
+                SELECT id, name, code, icon, description, sort_order, is_active, created_at, updated_at, created_by
+                FROM doc_service.template_categories
+                ORDER BY sort_order ASC, name ASC
+                "#,
+            )
+            .fetch_all(&self.pool)
+            .await?
+        };
+
+        Ok(query)
+    }
+
+    pub async fn find_by_code(&self, code: &str) -> Result<Option<TemplateCategory>, RepositoryError> {
+        let category = sqlx::query_as::<_, TemplateCategory>(
+            r#"
+            SELECT id, name, code, icon, description, sort_order, is_active, created_at, updated_at, created_by
+            FROM doc_service.template_categories
+            WHERE code = $1
+            "#,
+        )
+        .bind(code)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(category)
+    }
+
+    pub async fn get_template_count(&self, category_id: Uuid) -> Result<i64, RepositoryError> {
+        let row = sqlx::query(
+            r#"
+            SELECT COUNT(*) as count
+            FROM doc_service.templates
+            WHERE category_id = $1 AND is_active = true
+            "#,
+        )
+        .bind(category_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row.get("count"))
     }
 }

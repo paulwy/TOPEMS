@@ -5,6 +5,7 @@ pub mod asset;
 pub mod audit_log;
 pub mod finance;
 pub mod uuid_helpers;
+pub mod dict;
 
 pub use company::{Company, CreateCompanyRequest, UpdateCompanyRequest};
 pub use department::{Department, CreateDepartmentRequest, UpdateDepartmentRequest};
@@ -16,4 +17,10 @@ pub use finance::{
     Budget, CreateBudgetRequest, UpdateBudgetRequest,
     Receivable, CreateReceivableRequest, UpdateReceivableRequest,
     Payable, CreatePayableRequest, UpdatePayableRequest,
+};
+pub use dict::{
+    DictType, CreateDictTypeRequest, UpdateDictTypeRequest,
+    DictItem, CreateDictItemRequest, UpdateDictItemRequest,
+    DbChange, DbColumnDefinition, AddColumnRequest, ModifyColumnRequest, DropColumnRequest,
+    TableInfo, ColumnInfo,
 };

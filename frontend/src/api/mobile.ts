@@ -5,7 +5,8 @@ export interface PatrolRecord {
   id: string;
   title: string;
   description?: string;
-  location: [number, number];
+  location_lat: number;
+  location_lng: number;
   address?: string;
   patrol_type: string;
   status: string;
@@ -17,7 +18,8 @@ export interface PatrolRecord {
 export interface CreatePatrolRecordRequest {
   title: string;
   description?: string;
-  location: [number, number];
+  location_lat: number;
+  location_lng: number;
   address?: string;
   patrol_type: string;
   status?: string;
@@ -27,7 +29,8 @@ export interface CreatePatrolRecordRequest {
 export interface ScanRecord {
   id: string;
   barcode: string;
-  location: [number, number];
+  location_lat: number;
+  location_lng: number;
   item_type: string;
   quantity?: number;
   operator: string;
@@ -37,7 +40,8 @@ export interface ScanRecord {
 
 export interface CreateScanRecordRequest {
   barcode: string;
-  location: [number, number];
+  location_lat: number;
+  location_lng: number;
   item_type: string;
   quantity?: number;
   operator: string;
@@ -47,7 +51,8 @@ export interface PhotoEvidence {
   id: string;
   title: string;
   description?: string;
-  location: [number, number];
+  location_lat: number;
+  location_lng: number;
   address?: string;
   file_url?: string;
   recorded_by: string;
@@ -58,7 +63,8 @@ export interface PhotoEvidence {
 export interface CreatePhotoEvidenceRequest {
   title: string;
   description?: string;
-  location: [number, number];
+  location_lat: number;
+  location_lng: number;
   address?: string;
   file_url?: string;
   recorded_by: string;
@@ -68,7 +74,8 @@ export interface AudioRecording {
   id: string;
   title: string;
   description?: string;
-  location: [number, number];
+  location_lat: number;
+  location_lng: number;
   address?: string;
   duration_seconds?: number;
   file_url?: string;
@@ -80,7 +87,8 @@ export interface AudioRecording {
 export interface CreateAudioRecordingRequest {
   title: string;
   description?: string;
-  location: [number, number];
+  location_lat: number;
+  location_lng: number;
   address?: string;
   duration_seconds?: number;
   file_url?: string;
@@ -91,8 +99,9 @@ export interface VideoRecording {
   id: string;
   title: string;
   description?: string;
-  start_location: [number, number];
-  location_track: [number, number][];
+  start_location_lat: number;
+  start_location_lng: number;
+  location_track: any;
   duration_seconds?: number;
   file_url?: string;
   thumbnail_url?: string;
@@ -104,7 +113,8 @@ export interface VideoRecording {
 export interface CreateVideoRecordingRequest {
   title: string;
   description?: string;
-  start_location: [number, number];
+  start_location_lat: number;
+  start_location_lng: number;
   duration_seconds?: number;
   file_url?: string;
   thumbnail_url?: string;
@@ -119,7 +129,8 @@ export interface MobileTask {
   priority: string;
   status: string;
   assignee: string;
-  location?: [number, number];
+  location_lat?: number;
+  location_lng?: number;
   due_date?: string;
   created_at: string;
   updated_at: string;
@@ -131,48 +142,66 @@ export interface CreateMobileTaskRequest {
   task_type: string;
   priority?: string;
   assignee: string;
-  location?: [number, number];
+  location_lat?: number;
+  location_lng?: number;
   due_date?: string;
 }
 
+export interface DashboardStats {
+  today_patrols: number;
+  today_scans: number;
+  pending_tasks: number;
+  in_progress_tasks: number;
+  completed_tasks: number;
+}
+
+export interface ListResponse<T> {
+  items: T[];
+  total: number;
+}
+
 export const mobileApi = {
-  listPatrolRecords: async (): Promise<ApiResponse<any>> => {
-    return apiClient.mobile.get<any>('/api/v1/patrol-records');
+  getDashboardStats: async (): Promise<ApiResponse<DashboardStats>> => {
+    return apiClient.mobile.get<DashboardStats>('/api/v1/dashboard/stats');
+  },
+  
+  listPatrolRecords: async (): Promise<ApiResponse<ListResponse<PatrolRecord>>> => {
+    return apiClient.mobile.get<ListResponse<PatrolRecord>>('/api/v1/patrol-records');
   },
   createPatrolRecord: async (data: CreatePatrolRecordRequest): Promise<ApiResponse<PatrolRecord>> => {
     return apiClient.mobile.post<PatrolRecord>('/api/v1/patrol-records', data);
   },
 
-  listScanRecords: async (): Promise<ApiResponse<any>> => {
-    return apiClient.mobile.get<any>('/api/v1/scan-records');
+  listScanRecords: async (): Promise<ApiResponse<ListResponse<ScanRecord>>> => {
+    return apiClient.mobile.get<ListResponse<ScanRecord>>('/api/v1/scan-records');
   },
   createScanRecord: async (data: CreateScanRecordRequest): Promise<ApiResponse<ScanRecord>> => {
     return apiClient.mobile.post<ScanRecord>('/api/v1/scan-records', data);
   },
 
-  listPhotoEvidences: async (): Promise<ApiResponse<any>> => {
-    return apiClient.mobile.get<any>('/api/v1/photo-evidences');
+  listPhotoEvidences: async (): Promise<ApiResponse<ListResponse<PhotoEvidence>>> => {
+    return apiClient.mobile.get<ListResponse<PhotoEvidence>>('/api/v1/photo-evidences');
   },
   createPhotoEvidence: async (data: CreatePhotoEvidenceRequest): Promise<ApiResponse<PhotoEvidence>> => {
     return apiClient.mobile.post<PhotoEvidence>('/api/v1/photo-evidences', data);
   },
 
-  listAudioRecordings: async (): Promise<ApiResponse<any>> => {
-    return apiClient.mobile.get<any>('/api/v1/audio-recordings');
+  listAudioRecordings: async (): Promise<ApiResponse<ListResponse<AudioRecording>>> => {
+    return apiClient.mobile.get<ListResponse<AudioRecording>>('/api/v1/audio-recordings');
   },
   createAudioRecording: async (data: CreateAudioRecordingRequest): Promise<ApiResponse<AudioRecording>> => {
     return apiClient.mobile.post<AudioRecording>('/api/v1/audio-recordings', data);
   },
 
-  listVideoRecordings: async (): Promise<ApiResponse<any>> => {
-    return apiClient.mobile.get<any>('/api/v1/video-recordings');
+  listVideoRecordings: async (): Promise<ApiResponse<ListResponse<VideoRecording>>> => {
+    return apiClient.mobile.get<ListResponse<VideoRecording>>('/api/v1/video-recordings');
   },
   createVideoRecording: async (data: CreateVideoRecordingRequest): Promise<ApiResponse<VideoRecording>> => {
     return apiClient.mobile.post<VideoRecording>('/api/v1/video-recordings', data);
   },
 
-  listMobileTasks: async (): Promise<ApiResponse<any>> => {
-    return apiClient.mobile.get<any>('/api/v1/mobile-tasks');
+  listMobileTasks: async (): Promise<ApiResponse<ListResponse<MobileTask>>> => {
+    return apiClient.mobile.get<ListResponse<MobileTask>>('/api/v1/mobile-tasks');
   },
   createMobileTask: async (data: CreateMobileTaskRequest): Promise<ApiResponse<MobileTask>> => {
     return apiClient.mobile.post<MobileTask>('/api/v1/mobile-tasks', data);
