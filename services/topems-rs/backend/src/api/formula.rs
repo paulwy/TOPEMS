@@ -4,7 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;

@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
-import config from '../config/runtime';
+import config, { isProduction } from '../config/runtime';
 import createLogger from '../utils/logger';
 
 const logger = createLogger('ApiClient');
@@ -108,7 +108,7 @@ class ApiClient {
         }
         
         // 减少 404 错误在开发环境的日志输出
-        if (error.response?.status !== 404 || import.meta.env.PROD) {
+        if (error.response?.status !== 404 || isProduction()) {
           logger.error('Response error:', error);
         }
         

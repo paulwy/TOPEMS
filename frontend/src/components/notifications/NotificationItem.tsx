@@ -14,8 +14,8 @@ const getNotificationIcon = (type: string) => {
       return (
         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
           <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.572c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0a3 3 0 016 0z" />
           </svg>
         </div>
       );
@@ -55,7 +55,7 @@ const getNotificationIcon = (type: string) => {
       return (
         <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0a9 9 0 0118 0z" />
           </svg>
         </div>
       );
@@ -63,16 +63,20 @@ const getNotificationIcon = (type: string) => {
 };
 
 const getPriorityColor = (priority: number) => {
-  if (priority >= 3) return 'text-red-600';
-  if (priority === 2) return 'text-orange-600';
+  if (priority >= 4) return 'text-red-600';
+  if (priority >= 3) return 'text-orange-600';
+  if (priority >= 2) return 'text-yellow-600';
   return 'text-gray-600';
 };
 
 const getPriorityLabel = (priority: number) => {
-  if (priority >= 3) return '紧急';
-  if (priority === 2) return '重要';
-  return '一般';
+  if (priority >= 4) return '紧急';
+  if (priority >= 3) return '高';
+  if (priority >= 2) return '中';
+  return '低';
 };
+
+const getLink = (notification: Notification) => notification.data?.link;
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onUpdate, onDelete }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -105,12 +109,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onUpd
   };
 
   const handleClick = async () => {
-    if (!notification.isRead) {
+    if (!notification.is_read) {
       await handleMarkAsRead({ stopPropagation: () => {} } as React.MouseEvent);
     }
     
-    if (notification.data?.link) {
-      window.location.href = notification.data.link;
+    const link = getLink(notification);
+    if (link) {
+      window.location.href = link;
     }
   };
 
@@ -132,21 +137,21 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onUpd
   return (
     <div
       className={`relative p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-        !notification.isRead ? 'bg-blue-50/50' : ''
+        !notification.is_read ? 'bg-blue-50/50' : ''
       } ${isDeleting ? 'opacity-50' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
       <div className="flex gap-3">
-        {getNotificationIcon(notification.notificationType)}
+        {getNotificationIcon(notification.notification_type)}
         
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <h4 className={`text-sm font-medium truncate ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+            <h4 className={`text-sm font-medium truncate ${!notification.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
               {notification.title}
             </h4>
-            {!notification.isRead && (
+            {!notification.is_read && (
               <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5" />
             )}
           </div>
@@ -157,7 +162,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onUpd
           
           <div className="flex items-center gap-3 text-xs">
             <span className="text-gray-500">
-              {formatTime(notification.createdAt)}
+              {formatTime(notification.created_at)}
             </span>
             <span className={`font-medium ${getPriorityColor(notification.priority)}`}>
               {getPriorityLabel(notification.priority)}
@@ -168,7 +173,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onUpd
 
       {isHovered && (
         <div className="absolute top-2 right-2 flex gap-1">
-          {!notification.isRead && (
+          {!notification.is_read && (
             <button
               onClick={handleMarkAsRead}
               className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -184,11 +189,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onUpd
           >
             <Trash2 className="w-4 h-4" />
           </button>
-          {notification.data?.link && (
+          {getLink(notification) && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                window.location.href = notification.data.link;
+                window.location.href = getLink(notification)!;
               }}
               className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="查看详情"

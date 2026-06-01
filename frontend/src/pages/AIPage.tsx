@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Bot, Send, MessageSquare, FileText, Brain, 
   ChevronLeft, Plus, Search, Clock, BookOpen, 
-  Trash2, Settings, Loader2
+  Trash2, Settings, Loader2, Sparkles, BarChart3, FileSearch, Copy, Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { aiApi } from '../api/ai';
 import { useAppStore } from '../store';
 import AISettingsModal from '../components/AISettingsModal';
@@ -18,6 +22,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Message {
   id: string;
@@ -29,9 +39,55 @@ interface Message {
 interface Conversation {
   id: string;
   title: string;
+  messages: Message[];
   lastMessage: string;
   updatedAt: Date;
+  assistantRole?: AssistantRole;
 }
+
+type AssistantRole = 'general' | 'data' | 'document' | 'code';
+
+interface AssistantRoleConfig {
+  id: AssistantRole;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  systemPrompt: string;
+}
+
+const STORAGE_KEY = 'topems_ai_conversations';
+const CURRENT_CONVO_KEY = 'topems_ai_current_conversation';
+
+const ASSISTANT_ROLES: AssistantRoleConfig[] = [
+  {
+    id: 'general',
+    name: '通用助手',
+    description: '全能型 AI 助手，可处理各种问题',
+    icon: <Sparkles className="w-4 h-4" />,
+    systemPrompt: '你是 TOPEMS 智能助手。请根据以下知识库内容回答用户的问题。'
+  },
+  {
+    id: 'data',
+    name: '数据分析助手',
+    description: '专注于数据处理、分析和可视化',
+    icon: <BarChart3 className="w-4 h-4" />,
+    systemPrompt: '你是 TOPEMS 数据分析助手。专注于帮助用户分析数据、生成统计报告、解释数据趋势和提供数据可视化建议。'
+  },
+  {
+    id: 'document',
+    name: '文档助手',
+    description: '帮助理解文档、提取信息和总结内容',
+    icon: <FileSearch className="w-4 h-4" />,
+    systemPrompt: '你是 TOPEMS 文档助手。专注于帮助用户理解文档内容、提取关键信息、总结文档要点和回答与文档相关的问题。'
+  },
+  {
+    id: 'code',
+    name: '编程助手',
+    description: '提供代码审查、调试和最佳实践建议',
+    icon: <FileText className="w-4 h-4" />,
+    systemPrompt: '你是 TOPEMS 编程助手。专注于帮助用户编写、审查和调试代码，提供编程最佳实践建议，并解释技术概念。'
+  }
+];
 
 const AIPage: React.FC = () => {
   const navigate = useNavigate();
@@ -47,16 +103,48 @@ const AIPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [currentRole, setCurrentRole] = useState<AssistantRole>('general');
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // 从本地存储加载对话历史
   useEffect(() => {
-    const welcomeMessage: Message = {
-      id: 'welcome',
-      role: 'assistant',
-      content: '你好！我是 TOPEMS AI 助手，基于本地知识库为您提供服务。请告诉我有什么可以帮助您的？',
-      timestamp: new Date()
-    };
-    setMessages([welcomeMessage]);
+    const savedConversations = localStorage.getItem(STORAGE_KEY);
+    const savedCurrentConvo = localStorage.getItem(CURRENT_CONVO_KEY);
+    
+    if (savedConversations) {
+      const parsedConversations: Conversation[] = JSON.parse(savedConversations).map((conv: any) => ({
+        ...conv,
+        updatedAt: new Date(conv.updatedAt),
+        messages: conv.messages.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }))
+      }));
+      setConversations(parsedConversations);
+      
+      if (savedCurrentConvo && parsedConversations.some(conv => conv.id === savedCurrentConvo)) {
+        setCurrentConversationId(savedCurrentConvo);
+        const currentConv = parsedConversations.find(conv => conv.id === savedCurrentConvo);
+        if (currentConv) {
+          setMessages(currentConv.messages);
+          if (currentConv.assistantRole) {
+            setCurrentRole(currentConv.assistantRole);
+          }
+        }
+      } else if (parsedConversations.length > 0) {
+        const latestConv = parsedConversations[0];
+        setCurrentConversationId(latestConv.id);
+        setMessages(latestConv.messages);
+        if (latestConv.assistantRole) {
+          setCurrentRole(latestConv.assistantRole);
+        }
+      } else {
+        createNewConversation();
+      }
+    } else {
+      createNewConversation();
+    }
     
     loadDocuments();
   }, []);
@@ -65,33 +153,54 @@ const AIPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // 保存对话到本地存储
+  const saveConversations = useCallback((updatedConversations: Conversation[]) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedConversations));
+    setConversations(updatedConversations);
+  }, []);
+
+  // 保存当前对话 ID
+  const saveCurrentConversation = useCallback((conversationId: string | null) => {
+    if (conversationId) {
+      localStorage.setItem(CURRENT_CONVO_KEY, conversationId);
+    } else {
+      localStorage.removeItem(CURRENT_CONVO_KEY);
+    }
+    setCurrentConversationId(conversationId);
+  }, []);
+
+  // 创建新对话
+  const createNewConversation = useCallback(() => {
+    const id = Date.now().toString();
+    const welcomeMessage: Message = {
+      id: 'welcome',
+      role: 'assistant',
+      content: `你好！我是 TOPEMS ${ASSISTANT_ROLES.find(r => r.id === currentRole)?.name}，基于本地知识库为您提供服务。请告诉我有什么可以帮助您的？`,
+      timestamp: new Date()
+    };
+    
+    const newConversation: Conversation = {
+      id,
+      title: '新对话',
+      messages: [welcomeMessage],
+      lastMessage: '新对话已创建',
+      updatedAt: new Date(),
+      assistantRole: currentRole
+    };
+    
+    const updatedConversations = [newConversation, ...conversations];
+    saveConversations(updatedConversations);
+    saveCurrentConversation(id);
+    setMessages([welcomeMessage]);
+    setInputText('');
+  }, [currentRole, conversations, saveConversations, saveCurrentConversation]);
+
   const loadDocuments = async () => {
     try {
       const response = await aiApi.listDocuments();
       if (response.success && response.data) {
         const docs = ('items' in response.data) ? response.data.items : response.data;
         setDocuments(docs);
-        const sampleConversations: Conversation[] = [
-          {
-            id: '1',
-            title: '项目相关咨询',
-            lastMessage: '关于项目管理的问题...',
-            updatedAt: new Date(Date.now() - 3600000)
-          },
-          {
-            id: '2',
-            title: '文档检索',
-            lastMessage: '查询知识库文档...',
-            updatedAt: new Date(Date.now() - 7200000)
-          },
-          {
-            id: '3',
-            title: '数据分析',
-            lastMessage: '分析试验数据...',
-            updatedAt: new Date(Date.now() - 10800000)
-          }
-        ];
-        setConversations(sampleConversations);
       }
     } catch (err) {
       console.error('加载文档列表失败:', err);
@@ -100,25 +209,18 @@ const AIPage: React.FC = () => {
   };
 
   const handleNewConversation = () => {
-    const welcomeMessage: Message = {
-      id: 'welcome',
-      role: 'assistant',
-      content: '你好！我是 TOPEMS AI 助手，基于本地知识库为您提供服务。请告诉我有什么可以帮助您的？',
-      timestamp: new Date()
-    };
-    setMessages([welcomeMessage]);
-    setCurrentConversationId(null);
-    setInputText('');
+    createNewConversation();
   };
 
   const handleSelectConversation = (conversationId: string) => {
-    setCurrentConversationId(conversationId);
-    setMessages([{
-      id: 'welcome',
-      role: 'assistant',
-      content: `你正在查看会话 ${conversationId}，继续提问吧！`,
-      timestamp: new Date()
-    }]);
+    const conversation = conversations.find(c => c.id === conversationId);
+    if (conversation) {
+      saveCurrentConversation(conversationId);
+      setMessages(conversation.messages);
+      if (conversation.assistantRole) {
+        setCurrentRole(conversation.assistantRole);
+      }
+    }
   };
 
   const handleToggleDocuments = () => {
@@ -138,20 +240,133 @@ const AIPage: React.FC = () => {
     }
   };
 
-  const handleDeleteConversation = () => {
-    if (confirm('确定要删除当前对话吗？')) {
-      const welcomeMessage: Message = {
-        id: 'welcome',
-        role: 'assistant',
-        content: '你好！我是 TOPEMS AI 助手，基于本地知识库为您提供服务。请告诉我有什么可以帮助您的？',
-        timestamp: new Date()
-      };
-      setMessages([welcomeMessage]);
-      setCurrentConversationId(null);
-      if (currentConversationId) {
-        setConversations(prev => prev.filter(c => c.id !== currentConversationId));
+  const handleDeleteConversation = (conversationId: string) => {
+    if (confirm('确定要删除这个对话吗？')) {
+      const updatedConversations = conversations.filter(c => c.id !== conversationId);
+      saveConversations(updatedConversations);
+      
+      if (currentConversationId === conversationId) {
+        if (updatedConversations.length > 0) {
+          handleSelectConversation(updatedConversations[0].id);
+        } else {
+          createNewConversation();
+        }
       }
     }
+  };
+
+  // 切换助手角色
+  const handleRoleChange = (role: AssistantRole) => {
+    setCurrentRole(role);
+    // 更新当前对话的角色
+    if (currentConversationId) {
+      const updatedConversations = conversations.map(conv => 
+        conv.id === currentConversationId 
+          ? { ...conv, assistantRole: role }
+          : conv
+      );
+      saveConversations(updatedConversations);
+    }
+  };
+
+  // 复制代码
+  const handleCopyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+      addNotification({ title: '已复制', message: '代码已复制到剪贴板', type: 'success' });
+    } catch (err) {
+      addNotification({ title: '复制失败', message: '无法复制代码', type: 'error' });
+    }
+  };
+
+  // Markdown 渲染组件
+  const MarkdownRenderer = ({ content, isDark }: { content: string; isDark: boolean }) => {
+    return (
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code({ node, inline, className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || '');
+            const codeContent = String(children).replace(/\n$/, '');
+            
+            if (!inline && match) {
+              return (
+                <div className="relative group">
+                  <button
+                    onClick={() => handleCopyCode(codeContent)}
+                    className="absolute right-2 top-2 p-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="复制代码"
+                  >
+                    {copiedCode === codeContent ? (
+                      <Check className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                  <SyntaxHighlighter
+                    style={isDark ? vscDarkPlus : vs}
+                    language={match[1]}
+                    PreTag="div"
+                    className="rounded-md text-sm my-2"
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
+                    }}
+                    {...props}
+                  >
+                    {codeContent}
+                  </SyntaxHighlighter>
+                </div>
+              );
+            } else {
+              return (
+                <code
+                  className={`${className} px-1.5 py-0.5 rounded text-sm ${
+                    isDark 
+                      ? 'bg-gray-700 text-pink-300' 
+                      : 'bg-gray-100 text-pink-600'
+                  }`}
+                  {...props}
+                >
+                  {children}
+                </code>
+              );
+            }
+          },
+          // 其他 Markdown 元素的样式
+          h1: ({ ...props }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-gray-900 dark:text-gray-100" {...props} />,
+          h2: ({ ...props }) => <h2 className="text-xl font-semibold mb-3 mt-5 text-gray-900 dark:text-gray-100" {...props} />,
+          h3: ({ ...props }) => <h3 className="text-lg font-semibold mb-2 mt-4 text-gray-900 dark:text-gray-100" {...props} />,
+          p: ({ ...props }) => <p className="mb-3 leading-relaxed text-gray-700 dark:text-gray-300" {...props} />,
+          ul: ({ ...props }) => <ul className="list-disc pl-6 mb-3 space-y-1 text-gray-700 dark:text-gray-300" {...props} />,
+          ol: ({ ...props }) => <ol className="list-decimal pl-6 mb-3 space-y-1 text-gray-700 dark:text-gray-300" {...props} />,
+          li: ({ ...props }) => <li className="mb-1" {...props} />,
+          blockquote: ({ ...props }) => (
+            <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 py-1 my-3 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400" {...props} />
+          ),
+          a: ({ ...props }) => (
+            <a className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
+          ),
+          table: ({ ...props }) => (
+            <div className="overflow-x-auto my-3">
+              <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-600" {...props} />
+            </div>
+          ),
+          thead: ({ ...props }) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
+          th: ({ ...props }) => (
+            <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left text-gray-900 dark:text-gray-100 font-semibold" {...props} />
+          ),
+          td: ({ ...props }) => (
+            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-700 dark:text-gray-300" {...props} />
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    );
   };
 
   const handleSettings = () => {
@@ -168,7 +383,8 @@ const AIPage: React.FC = () => {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInputText('');
     setIsTyping(true);
     setLoading(true);
@@ -183,7 +399,32 @@ const AIPage: React.FC = () => {
         timestamp: new Date()
       };
       
-      setMessages(prev => [...prev, assistantMessage]);
+      const finalMessages = [...newMessages, assistantMessage];
+      setMessages(finalMessages);
+      
+      // 更新或创建对话
+      if (currentConversationId) {
+        const updatedConversations = conversations.map(conv => {
+          if (conv.id === currentConversationId) {
+            // 自动生成标题（使用第一条用户消息或前30个字符）
+            const firstUserMessage = finalMessages.find(m => m.role === 'user');
+            const title = firstUserMessage 
+              ? firstUserMessage.content.substring(0, 30) + (firstUserMessage.content.length > 30 ? '...' : '')
+              : conv.title;
+              
+            return {
+              ...conv,
+              messages: finalMessages,
+              title,
+              lastMessage: assistantMessage.content.substring(0, 50) + (assistantMessage.content.length > 50 ? '...' : ''),
+              updatedAt: new Date()
+            };
+          }
+          return conv;
+        });
+        saveConversations(updatedConversations);
+      }
+      
       addNotification({ title: '回复完成', message: 'AI已收到回复', type: 'success' });
     } catch (err) {
       console.error('AI 问答失败:', err);
@@ -193,7 +434,19 @@ const AIPage: React.FC = () => {
         content: '抱歉，连接 AI 服务时出现了问题，请稍后重试。',
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, errorMessage]);
+      
+      const finalMessages = [...newMessages, errorMessage];
+      setMessages(finalMessages);
+      
+      if (currentConversationId) {
+        const updatedConversations = conversations.map(conv => 
+          conv.id === currentConversationId 
+            ? { ...conv, messages: finalMessages, updatedAt: new Date() }
+            : conv
+        );
+        saveConversations(updatedConversations);
+      }
+      
       addNotification({ title: 'AI服务错误', message: '连接AI服务失败', type: 'error' });
     } finally {
       setIsTyping(false);
@@ -228,29 +481,76 @@ const AIPage: React.FC = () => {
           </Button>
         </div>
 
+        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="w-full justify-start">
+                <div className="flex items-center space-x-2">
+                  {ASSISTANT_ROLES.find(r => r.id === currentRole)?.icon}
+                  <span className="text-sm">
+                    {ASSISTANT_ROLES.find(r => r.id === currentRole)?.name}
+                  </span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              {ASSISTANT_ROLES.map((role) => (
+                <DropdownMenuItem
+                  key={role.id}
+                  onClick={() => handleRoleChange(role.id)}
+                  className="cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2">
+                    {role.icon}
+                    <div>
+                      <p className="text-sm font-medium">{role.name}</p>
+                      <p className="text-xs text-gray-500">{role.description}</p>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-4">
           <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">最近对话</h3>
           <div className="space-y-2">
             {conversations.map((conv) => (
-              <div 
-                key={conv.id}
-                onClick={() => handleSelectConversation(conv.id)}
-                className={`p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                  currentConversationId === conv.id ? 'bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800' : ''
-                }`}>
-                <div className="flex items-start">
-                  <div className="flex items-center space-x-3">
-                    <MessageSquare className={`w-5 h-5 ${currentConversationId === conv.id ? 'text-purple-500' : 'text-gray-400'}`} />
-                    <div>
-                      <p className={`text-sm font-medium line-clamp-1 ${currentConversationId === conv.id ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-gray-100'}`}>{conv.title}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{conv.lastMessage}</p>
+              <div key={conv.id} className="group">
+                <div 
+                  onClick={() => handleSelectConversation(conv.id)}
+                  className={`p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+                    currentConversationId === conv.id ? 'bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800' : ''
+                  }`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3 flex-1 min-w-0">
+                      <div className="flex items-center">
+                        {conv.assistantRole && ASSISTANT_ROLES.find(r => r.id === conv.assistantRole)?.icon}
+                        {!conv.assistantRole && <MessageSquare className={`w-5 h-5 ${currentConversationId === conv.id ? 'text-purple-500' : 'text-gray-400'}`} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium line-clamp-1 ${currentConversationId === conv.id ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-gray-100'}`}>{conv.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{conv.lastMessage}</p>
+                      </div>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteConversation(conv.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center">
+                    <Clock className="w-3 h-3 mr-1" />
+                    {formatTime(conv.updatedAt)}
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center">
-                  <Clock className="w-3 h-3 mr-1" />
-                  {formatTime(conv.updatedAt)}
-                </p>
               </div>
             ))}
           </div>
@@ -288,7 +588,9 @@ const AIPage: React.FC = () => {
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">TOPEMS AI</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                  TOPEMS {ASSISTANT_ROLES.find(r => r.id === currentRole)?.name}
+                </h3>
                 <p className="text-sm text-green-600 dark:text-green-400">在线</p>
               </div>
             </div>
@@ -305,9 +607,6 @@ const AIPage: React.FC = () => {
                   <Search className="w-4 h-4" />
                 </Button>
               </div>
-              <Button variant="ghost" onClick={handleDeleteConversation} className="text-red-600 dark:text-red-400">
-                <Trash2 className="w-5 h-5" />
-              </Button>
             </div>
           </div>
         </header>
@@ -318,7 +617,7 @@ const AIPage: React.FC = () => {
               key={message.id}
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className="max-w-3xl">
+              <div className="max-w-3xl w-full">
                 <div className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                     message.role === 'user' 
@@ -336,7 +635,11 @@ const AIPage: React.FC = () => {
                     ? 'bg-blue-600 text-white' 
                     : 'bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700'
                   }`}>
-                    <p className={message.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-200'}>{message.content}</p>
+                    {message.role === 'user' ? (
+                      <p className="text-white whitespace-pre-wrap">{message.content}</p>
+                    ) : (
+                      <MarkdownRenderer content={message.content} isDark={false} />
+                    )}
                     <p className={`text-xs mt-2 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500'}`}>
                       {formatTime(message.timestamp)}
                     </p>
@@ -375,7 +678,7 @@ const AIPage: React.FC = () => {
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                 placeholder="输入你的问题..."
                 className="flex-1 bg-transparent border-none"
               />

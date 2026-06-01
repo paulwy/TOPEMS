@@ -9,3 +9,4 @@ pub mod project_member;
 pub mod project_milestone;
 pub mod project_phase;
 pub mod project_report;
+pub mod openapi;

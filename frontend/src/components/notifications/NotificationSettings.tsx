@@ -1,86 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Bell, Volume2, VolumeX, Monitor, Smartphone } from 'lucide-react';
-
-interface NotificationSettingsData {
-  enableDesktop: boolean;
-  enableSound: boolean;
-  enableMobilePush: boolean;
-  types: {
-    system: boolean;
-    workflow: boolean;
-    reminder: boolean;
-    alert: boolean;
-    message: boolean;
-  };
-  quietHours: {
-    enabled: boolean;
-    start: string;
-    end: string;
-  };
-}
+import useNotificationSettings, { NotificationSettingsData } from '../../hooks/useNotificationSettings';
 
 const NotificationSettings: React.FC = () => {
-  const [settings, setSettings] = useState<NotificationSettingsData>({
-    enableDesktop: true,
-    enableSound: true,
-    enableMobilePush: true,
-    types: {
-      system: true,
-      workflow: true,
-      reminder: true,
-      alert: true,
-      message: true,
-    },
-    quietHours: {
-      enabled: false,
-      start: '22:00',
-      end: '08:00',
-    },
-  });
-
-  useEffect(() => {
-    const savedSettings = localStorage.getItem('notificationSettings');
-    if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings));
-      } catch (error) {
-        console.error('Failed to load notification settings:', error);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('notificationSettings', JSON.stringify(settings));
-  }, [settings]);
-
-  const handleToggle = (key: keyof NotificationSettingsData) => {
-    if (typeof settings[key] === 'boolean') {
-      setSettings(prev => ({
-        ...prev,
-        [key]: !prev[key as keyof typeof prev],
-      }));
-    }
-  };
-
-  const handleTypeToggle = (type: keyof NotificationSettingsData['types']) => {
-    setSettings(prev => ({
-      ...prev,
-      types: {
-        ...prev.types,
-        [type]: !prev.types[type],
-      },
-    }));
-  };
-
-  const handleQuietHoursChange = (field: string, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      quietHours: {
-        ...prev.quietHours,
-        [field]: value,
-      },
-    }));
-  };
+  const {
+    settings,
+    toggleSetting,
+    toggleNotificationType,
+    toggleQuietHours,
+    updateQuietHours,
+  } = useNotificationSettings();
 
   return (
     <div className="p-4 bg-white border-b border-gray-200">
@@ -93,7 +22,7 @@ const NotificationSettings: React.FC = () => {
             <span className="text-sm text-gray-700">桌面通知</span>
           </div>
           <button
-            onClick={() => handleToggle('enableDesktop')}
+            onClick={() => toggleSetting('enableDesktop')}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               settings.enableDesktop ? 'bg-blue-600' : 'bg-gray-200'
             }`}
@@ -116,7 +45,7 @@ const NotificationSettings: React.FC = () => {
             <span className="text-sm text-gray-700">声音提示</span>
           </div>
           <button
-            onClick={() => handleToggle('enableSound')}
+            onClick={() => toggleSetting('enableSound')}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               settings.enableSound ? 'bg-blue-600' : 'bg-gray-200'
             }`}
@@ -135,7 +64,7 @@ const NotificationSettings: React.FC = () => {
             <span className="text-sm text-gray-700">移动推送</span>
           </div>
           <button
-            onClick={() => handleToggle('enableMobilePush')}
+            onClick={() => toggleSetting('enableMobilePush')}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               settings.enableMobilePush ? 'bg-blue-600' : 'bg-gray-200'
             }`}
@@ -151,7 +80,7 @@ const NotificationSettings: React.FC = () => {
         <div className="pt-3 border-t border-gray-200">
           <h5 className="text-xs font-medium text-gray-700 mb-3">通知类型</h5>
           <div className="space-y-2">
-            {Object.entries(settings.types).map(([type, enabled]) => (
+            {(Object.entries(settings.types) as [keyof NotificationSettingsData['types'], boolean][]).map(([type, enabled]) => (
               <div key={type} className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">
                   {type === 'system' && '系统通知'}
@@ -161,7 +90,7 @@ const NotificationSettings: React.FC = () => {
                   {type === 'message' && '消息通知'}
                 </span>
                 <button
-                  onClick={() => handleTypeToggle(type as keyof NotificationSettingsData['types'])}
+                  onClick={() => toggleNotificationType(type)}
                   className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                     enabled ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
@@ -181,7 +110,7 @@ const NotificationSettings: React.FC = () => {
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-gray-700">免打扰时段</span>
             <button
-              onClick={() => handleToggle('quietHours')}
+              onClick={toggleQuietHours}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                 settings.quietHours.enabled ? 'bg-blue-600' : 'bg-gray-200'
               }`}
@@ -199,14 +128,14 @@ const NotificationSettings: React.FC = () => {
               <input
                 type="time"
                 value={settings.quietHours.start}
-                onChange={(e) => handleQuietHoursChange('start', e.target.value)}
+                onChange={(e) => updateQuietHours('start', e.target.value)}
                 className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-xs text-gray-500">至</span>
               <input
                 type="time"
                 value={settings.quietHours.end}
-                onChange={(e) => handleQuietHoursChange('end', e.target.value)}
+                onChange={(e) => updateQuietHours('end', e.target.value)}
                 className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

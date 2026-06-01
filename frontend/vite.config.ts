@@ -3,6 +3,27 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
+// 通用的服务不可用错误处理
+const createServiceProxyConfig = (serviceName: string, target: string) => ({
+  target,
+  changeOrigin: true,
+  rewrite: (path) => path.replace(new RegExp(`^\\/${serviceName}`), ''),
+  configure: (proxy) => {
+    proxy.on('error', (err, req, res) => {
+      console.warn(`[Vite Proxy] ${serviceName.toUpperCase()} service unavailable, error:`, err.message);
+      if (!res.headersSent) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          code: 503,
+          success: false,
+          message: `${serviceName.toUpperCase()} service is currently unavailable`,
+          data: null
+        }));
+      }
+    });
+  }
+});
+
 export default defineConfig({
   plugins: [
     react(),
@@ -177,70 +198,24 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/srm/, ''),
       },
-      '/bi': {
-        target: 'http://localhost:8022',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/bi/, ''),
-      },
+      '/bi': createServiceProxyConfig('bi', 'http://localhost:8022'),
       '/gis': {
         target: 'http://localhost:8011',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/gis/, ''),
       },
-      '/im': {
-        target: 'http://localhost:8016',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/im/, ''),
-        configure: (proxy) => {
-          proxy.on('error', (err, req, res) => {
-            console.warn('[Vite Proxy] IM service unavailable, error:', err.message);
-            if (!res.headersSent) {
-              res.writeHead(503, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({
-                code: 503,
-                success: false,
-                message: 'IM service is currently unavailable',
-                data: null
-              }));
-            }
-          });
-        },
-      },
-      '/wms': {
-        target: 'http://localhost:8020',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/wms/, ''),
-      },
-      '/mobile': {
-        target: 'http://localhost:8019',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/mobile/, ''),
-      },
-      '/integration': {
-        target: 'http://localhost:8022',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/integration/, ''),
-      },
+      '/im': createServiceProxyConfig('im', 'http://localhost:8016'),
+      '/wms': createServiceProxyConfig('wms', 'http://localhost:8020'),
+      '/mobile': createServiceProxyConfig('mobile', 'http://localhost:8019'),
+      '/integration': createServiceProxyConfig('integration', 'http://localhost:8022'),
       '/notification': {
         target: 'http://localhost:8023',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/notification/, ''),
       },
-      '/report': {
-        target: 'http://localhost:8024',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/report/, ''),
-      },
-      '/mes': {
-        target: 'http://localhost:8014',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/mes/, ''),
-      },
-      '/crm': {
-        target: 'http://localhost:8014',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/crm/, ''),
-      },
+      '/report': createServiceProxyConfig('report', 'http://localhost:8024'),
+      '/mes': createServiceProxyConfig('mes', 'http://localhost:8014'),
+      '/crm': createServiceProxyConfig('crm', 'http://localhost:8014'),
       '/pdm': {
         target: 'http://localhost:8015',
         changeOrigin: true,

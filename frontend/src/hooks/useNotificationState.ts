@@ -24,7 +24,7 @@ export const useNotificationState = () => {
         setState(prev => ({
           ...prev,
           notifications: response.data!.notifications,
-          unreadCount: response.data!.unreadCount,
+          unreadCount: response.data!.unread_count,
           loading: false,
         }));
       }
@@ -55,15 +55,15 @@ export const useNotificationState = () => {
     setState(prev => ({
       ...prev,
       notifications: [notification, ...prev.notifications],
-      unreadCount: notification.isRead ? prev.unreadCount : prev.unreadCount + 1,
+      unreadCount: notification.is_read ? prev.unreadCount : prev.unreadCount + 1,
     }));
   }, []);
 
   const updateNotification = useCallback((notification: Notification) => {
     setState(prev => {
       const oldNotification = prev.notifications.find(n => n.id === notification.id);
-      const wasUnread = oldNotification && !oldNotification.isRead;
-      const isUnread = !notification.isRead;
+      const wasUnread = oldNotification && !oldNotification.is_read;
+      const isUnread = !notification.is_read;
       
       return {
         ...prev,
@@ -83,7 +83,7 @@ export const useNotificationState = () => {
       return {
         ...prev,
         notifications: prev.notifications.filter(n => n.id !== id),
-        unreadCount: notification && !notification.isRead 
+        unreadCount: notification && !notification.is_read 
           ? Math.max(0, prev.unreadCount - 1)
           : prev.unreadCount,
       };

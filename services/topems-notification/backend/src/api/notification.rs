@@ -1,19 +1,30 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, State, Query},
     Json, Router,
 };
 use chrono::Utc;
 use serde_json::json;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
+use std::collections::HashMap;
 
 use topems_shared::ApiResponse;
 use lettre::Transport;
 use crate::models::*;
 
+#[derive(Debug, serde::Deserialize)]
+pub struct ListQuery {
+    page: Option<i32>,
+    page_size: Option<i32>,
+    notification_type: Option<String>,
+}
+
 pub async fn create_routes(pool: PgPool) -> anyhow::Result<Router> {
     let router = Router::new()
         .route("/api/v1/notifications", axum::routing::get(list_notifications).post(create_notification))
+        .route("/api/v1/notifications/unread", axum::routing::get(get_unread_notifications))
+        .route("/api/v1/notifications/unread-count", axum::routing::get(get_unread_count))
+        .route("/api/v1/notifications/read-all", axum::routing::put(mark_all_as_read))
         .route("/api/v1/notifications/{id}", axum::routing::get(get_notification).delete(delete_notification))
         .route("/api/v1/notifications/{id}/read", axum::routing::put(mark_as_read))
         .route("/api/v1/notifications/batch-read", axum::routing::put(batch_mark_as_read))
@@ -30,44 +41,163 @@ pub async fn create_routes(pool: PgPool) -> anyhow::Result<Router> {
     Ok(router)
 }
 
+fn convert_notification_to_response(n: &Notification) -> NotificationResponse {
+    NotificationResponse {
+        id: n.id.to_string(),
+        user_id: n.user_id.to_string(),
+        notification_type: n.notification_type.clone(),
+        title: n.title.clone(),
+        content: n.content.clone().unwrap_or_default(),
+        data: n.metadata.clone(),
+        is_read: n.status == "read",
+        priority: 0,
+        created_at: n.created_at.to_rfc3339(),
+        read_at: if n.status == "read" { Some(n.updated_at.to_rfc3339()) } else { None },
+    }
+}
+
 pub async fn list_notifications(
     State(pool): State<PgPool>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let result = match sqlx::query(r#"SELECT json_agg(t) as data FROM (SELECT * FROM notification.notifications ORDER BY created_at DESC) t"#)
-        .fetch_one(&pool)
+    Query(query): Query<ListQuery>,
+) -> Json<ApiResponse<NotificationListResponse>> {
+    let page = query.page.unwrap_or(1);
+    let page_size = query.page_size.unwrap_or(20);
+    let offset = (page - 1) * page_size;
+    
+    let mut sql = String::from("SELECT * FROM notifications");
+    let mut count_sql = String::from("SELECT COUNT(*) FROM notifications");
+    let mut unread_count_sql = String::from("SELECT COUNT(*) FROM notifications WHERE status = 'unread'");
+    
+    if let Some(nt) = &query.notification_type {
+        sql.push_str(&format!(" WHERE notification_type = '{}'", nt));
+        count_sql.push_str(&format!(" WHERE notification_type = '{}'", nt));
+        unread_count_sql.push_str(&format!(" AND notification_type = '{}'", nt));
+    }
+    
+    sql.push_str(" ORDER BY created_at DESC LIMIT $1 OFFSET $2");
+    
+    let notifications = match sqlx::query_as::<_, Notification>(&sql)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&pool)
         .await
     {
-        Ok(row) => {
-            let data: Option<serde_json::Value> = row.get("data");
-            let items = data.unwrap_or(json!([]));
-            let total = items.as_array().map(|arr| arr.len()).unwrap_or(0);
-            json!({ "items": items, "total": total })
-        }
+        Ok(notifs) => notifs,
         Err(e) => {
             tracing::error!("获取通知列表失败: {}", e);
             return Json(ApiResponse::error(500, "获取通知列表失败"));
         }
     };
+    
+    let total: i64 = match sqlx::query_scalar(&count_sql)
+        .fetch_one(&pool)
+        .await
+    {
+        Ok(count) => count,
+        Err(e) => {
+            tracing::error!("获取总数失败: {}", e);
+            0
+        }
+    };
+    
+    let unread_count: i64 = match sqlx::query_scalar(&unread_count_sql)
+        .fetch_one(&pool)
+        .await
+    {
+        Ok(count) => count,
+        Err(e) => {
+            tracing::error!("获取未读数量失败: {}", e);
+            0
+        }
+    };
+    
+    let response_notifications: Vec<NotificationResponse> = notifications
+        .iter()
+        .map(convert_notification_to_response)
+        .collect();
+    
+    let result = NotificationListResponse {
+        notifications: response_notifications,
+        total: total as i32,
+        page,
+        page_size,
+        unread_count: unread_count as i32,
+    };
 
     Json(ApiResponse::success(result, "获取通知列表成功"))
+}
+
+pub async fn get_unread_notifications(
+    State(pool): State<PgPool>,
+) -> Json<ApiResponse<Vec<NotificationResponse>>> {
+    let notifications = match sqlx::query_as::<_, Notification>(
+        "SELECT * FROM notifications WHERE status = 'unread' ORDER BY created_at DESC"
+    )
+        .fetch_all(&pool)
+        .await
+    {
+        Ok(notifs) => notifs,
+        Err(e) => {
+            tracing::error!("获取未读通知失败: {}", e);
+            return Json(ApiResponse::error(500, "获取未读通知失败"));
+        }
+    };
+    
+    let response_notifications: Vec<NotificationResponse> = notifications
+        .iter()
+        .map(convert_notification_to_response)
+        .collect();
+
+    Json(ApiResponse::success(response_notifications, "获取未读通知成功"))
+}
+
+pub async fn get_unread_count(
+    State(pool): State<PgPool>,
+) -> Json<ApiResponse<i32>> {
+    let count: i64 = match sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE status = 'unread'")
+        .fetch_one(&pool)
+        .await
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("获取未读数量失败: {}", e);
+            return Json(ApiResponse::error(500, "获取未读数量失败"));
+        }
+    };
+
+    Json(ApiResponse::success(count as i32, "获取未读数量成功"))
+}
+
+pub async fn mark_all_as_read(
+    State(pool): State<PgPool>,
+) -> Json<ApiResponse<i32>> {
+    let result = match sqlx::query("UPDATE notifications SET status = 'read', updated_at = $1 WHERE status = 'unread'")
+        .bind(Utc::now())
+        .execute(&pool)
+        .await
+    {
+        Ok(r) => r.rows_affected() as i32,
+        Err(e) => {
+            tracing::error!("标记全部已读失败: {}", e);
+            return Json(ApiResponse::error(500, "标记全部已读失败"));
+        }
+    };
+
+    Json(ApiResponse::success(result, "标记全部已读成功"))
 }
 
 pub async fn get_notification(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let result = match sqlx::query(r#"SELECT row_to_json(t) as data FROM (SELECT * FROM notification.notifications WHERE id = $1) t"#)
+) -> Json<ApiResponse<NotificationResponse>> {
+    let notification = match sqlx::query_as::<_, Notification>(
+        "SELECT * FROM notifications WHERE id = $1"
+    )
         .bind(id)
         .fetch_optional(&pool)
         .await
     {
-        Ok(Some(row)) => {
-            let data: Option<serde_json::Value> = row.get("data");
-            match data {
-                Some(d) => d,
-                None => return Json(ApiResponse::error(404, "通知不存在")),
-            }
-        }
+        Ok(Some(n)) => n,
         Ok(None) => return Json(ApiResponse::error(404, "通知不存在")),
         Err(e) => {
             tracing::error!("获取通知失败: {}", e);
@@ -75,21 +205,23 @@ pub async fn get_notification(
         }
     };
 
-    Json(ApiResponse::success(result, "获取通知成功"))
+    let response = convert_notification_to_response(&notification);
+    Json(ApiResponse::success(response, "获取通知成功"))
 }
 
 pub async fn create_notification(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateNotificationRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> Json<ApiResponse<NotificationResponse>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = match sqlx::query(r#"
-        INSERT INTO notification.notifications (id, user_id, title, content, notification_type, action_url, metadata, created_at, updated_at)
+    let _ = match sqlx::query(
+        r#"
+        INSERT INTO notifications (id, user_id, title, content, notification_type, action_url, metadata, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING row_to_json(t) as data FROM notification.notifications t WHERE id = $1
-        "#)
+        "#
+    )
         .bind(id)
         .bind(payload.user_id)
         .bind(payload.title)
@@ -99,28 +231,39 @@ pub async fn create_notification(
         .bind(payload.metadata)
         .bind(now)
         .bind(now)
-        .fetch_optional(&pool)
+        .execute(&pool)
         .await
     {
-        Ok(Some(row)) => {
-            let data: Option<serde_json::Value> = row.get("data");
-            data.unwrap_or_default()
-        }
-        Ok(None) => return Json(ApiResponse::error(500, "创建通知失败")),
+        Ok(_) => (),
         Err(e) => {
             tracing::error!("创建通知失败: {}", e);
             return Json(ApiResponse::error(500, "创建通知失败"));
         }
     };
+    
+    let notification = match sqlx::query_as::<_, Notification>(
+        "SELECT * FROM notifications WHERE id = $1"
+    )
+        .bind(id)
+        .fetch_one(&pool)
+        .await
+    {
+        Ok(n) => n,
+        Err(e) => {
+            tracing::error!("获取创建后的通知失败: {}", e);
+            return Json(ApiResponse::error(500, "获取创建后的通知失败"));
+        }
+    };
 
-    Json(ApiResponse::success(result, "创建通知成功"))
+    let response = convert_notification_to_response(&notification);
+    Json(ApiResponse::success(response, "创建通知成功"))
 }
 
 pub async fn delete_notification(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = match sqlx::query(r#"DELETE FROM notification.notifications WHERE id = $1"#)
+    let result = match sqlx::query(r#"DELETE FROM notifications WHERE id = $1"#)
         .bind(id)
         .execute(&pool)
         .await
@@ -142,33 +285,39 @@ pub async fn delete_notification(
 pub async fn mark_as_read(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let result = match sqlx::query(r#"
-        UPDATE notification.notifications 
-        SET status = 'read', updated_at = $2 
-        WHERE id = $1 
-        RETURNING row_to_json(t) as data FROM notification.notifications t WHERE id = $1
-        "#)
-        .bind(id)
+) -> Json<ApiResponse<NotificationResponse>> {
+    let _ = match sqlx::query(
+        "UPDATE notifications SET status = 'read', updated_at = $1 WHERE id = $2"
+    )
         .bind(Utc::now())
-        .fetch_optional(&pool)
+        .bind(id)
+        .execute(&pool)
         .await
     {
-        Ok(Some(row)) => {
-            let data: Option<serde_json::Value> = row.get("data");
-            match data {
-                Some(d) => d,
-                None => return Json(ApiResponse::error(404, "通知不存在")),
-            }
-        }
-        Ok(None) => return Json(ApiResponse::error(404, "通知不存在")),
+        Ok(_) => (),
         Err(e) => {
             tracing::error!("更新通知状态失败: {}", e);
             return Json(ApiResponse::error(500, "更新通知状态失败"));
         }
     };
+    
+    let notification = match sqlx::query_as::<_, Notification>(
+        "SELECT * FROM notifications WHERE id = $1"
+    )
+        .bind(id)
+        .fetch_optional(&pool)
+        .await
+    {
+        Ok(Some(n)) => n,
+        Ok(None) => return Json(ApiResponse::error(404, "通知不存在")),
+        Err(e) => {
+            tracing::error!("获取更新后的通知失败: {}", e);
+            return Json(ApiResponse::error(500, "获取更新后的通知失败"));
+        }
+    };
 
-    Json(ApiResponse::success(result, "标记已读成功"))
+    let response = convert_notification_to_response(&notification);
+    Json(ApiResponse::success(response, "标记已读成功"))
 }
 
 pub async fn batch_mark_as_read(
@@ -180,7 +329,7 @@ pub async fn batch_mark_as_read(
     }
 
     let query = format!(
-        r#"UPDATE notification.notifications SET status = 'read', updated_at = ${} WHERE id IN ({})"#,
+        r#"UPDATE notifications SET status = 'read', updated_at = ${} WHERE id IN ({})"#,
         payload.ids.len() + 1,
         (1..=payload.ids.len()).map(|i| format!("${}", i)).collect::<Vec<_>>().join(",")
     );

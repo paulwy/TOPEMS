@@ -17,6 +17,8 @@ use topems_shared::{
     ServiceHealth, HealthStatus, DependencyHealth,
     SystemMetrics, check_http_health,
 };
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{default_registry, Gauge};
 
 #[derive(Clone)]
 struct AppState {
@@ -35,6 +37,16 @@ async fn main() -> Result<()> {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    // 初始化 Prometheus 监控
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let custom_gauge = Gauge::new(
+        "topems_notification_custom_metric",
+        "This is a custom metric for TOPEMS-NOTIFICATION",
+    ).unwrap();
+    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    custom_gauge.set(42.0);
+    tracing::info!("✅ Prometheus 监控已初始化");
 
     let database_url = env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -66,6 +78,7 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
+        .route("/metrics", get(move || async move { metric_handle.render() }))
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
@@ -78,6 +91,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .merge(health_router)
         .merge(protected_routes)
+        .layer(prometheus_layer)
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8023".to_string());
@@ -245,13 +259,10 @@ async fn check_iam_health() -> DependencyHealth {
 }
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS notification"#)
-        .execute(pool)
-        .await?;
-
+    // 先尝试在 public schema 中创建表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS notification.notifications (
+        CREATE TABLE IF NOT EXISTS notifications (
             id UUID PRIMARY KEY,
             user_id UUID NOT NULL,
             title VARCHAR(255) NOT NULL,
@@ -270,7 +281,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS notification.email_templates (
+        CREATE TABLE IF NOT EXISTS email_templates (
             id UUID PRIMARY KEY,
             template_name VARCHAR(100) NOT NULL UNIQUE,
             subject VARCHAR(255) NOT NULL,
@@ -286,7 +297,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS notification.sms_templates (
+        CREATE TABLE IF NOT EXISTS sms_templates (
             id UUID PRIMARY KEY,
             template_name VARCHAR(100) NOT NULL UNIQUE,
             content TEXT NOT NULL,
@@ -301,7 +312,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS notification.email_logs (
+        CREATE TABLE IF NOT EXISTS email_logs (
             id UUID PRIMARY KEY,
             from_email VARCHAR(255) NOT NULL,
             to_email VARCHAR(255) NOT NULL,
@@ -315,38 +326,21 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             template_id UUID,
             metadata JSONB,
             created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW(),
-            FOREIGN KEY (template_id) REFERENCES notification.email_templates(id)
+            updated_at TIMESTAMPTZ DEFAULT NOW()
         )
         "#,
     )
     .execute(pool)
     .await?;
 
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notification.notifications(user_id)"#)
+    // 创建索引
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)")
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_notifications_status ON notification.notifications(status)"#)
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_notifications_status ON notifications(status)")
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_notifications_type ON notification.notifications(notification_type)"#)
-        .execute(pool)
-        .await?;
-
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_email_logs_to_email ON notification.email_logs(to_email)"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_email_logs_status ON notification.email_logs(status)"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_email_logs_created_at ON notification.email_logs(created_at)"#)
-        .execute(pool)
-        .await?;
-
-    sqlx::query(r#"GRANT ALL PRIVILEGES ON SCHEMA notification TO topems"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA notification TO topems"#)
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(notification_type)")
         .execute(pool)
         .await?;
 

@@ -9,6 +9,7 @@ import { LoadingProvider } from './components/LoadingProvider';
 import { ThemeProvider } from './components/ThemeProvider';
 import { Toaster } from './components/Toaster';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { AddressbookPage } from './pages/AddressbookPage';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -93,6 +94,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <DashboardPage onLogout={logout} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/addressbook"
+            element={
+              <ProtectedRoute>
+                <AddressbookPage />
               </ProtectedRoute>
             }
           />

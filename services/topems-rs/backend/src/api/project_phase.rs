@@ -10,7 +10,9 @@ use uuid::Uuid;
 
 use crate::models::project_phase::{CreatePhaseRequest, ProjectPhase, UpdatePhaseRequest};
 use crate::services::project_progress;
+use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use topems_shared::response::ApiResponse;
+use std::time::Duration;
 
 pub struct AppState {
     pub db: PgPool,
@@ -87,6 +89,7 @@ pub async fn create_phase(
     match result {
         Ok(phase) => {
             let _ = project_progress::update_project_progress(&state.db, payload.project_id).await;
+            invalidate_project_cache(&payload.project_id.to_string()).await;
             
             tracing::info!(
                 request_id = %request_id,
@@ -127,12 +130,17 @@ pub async fn get_project_phases(
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
+    let cache_key = format!("phases:{}", project_id);
 
     tracing::info!(
         request_id = %request_id,
         project_id = %project_id,
         "获取项目阶段列表请求开始"
     );
+
+    if let Some(cached) = cache_get(&cache_key).await {
+        return Json(ApiResponse::success(cached, "获取项目阶段列表成功"));
+    }
 
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
@@ -151,6 +159,7 @@ pub async fn get_project_phases(
 
     match result {
         Ok(phases) => {
+            cache_set(&cache_key, phases.clone(), Duration::from_secs(300)).await;
             tracing::info!(
                 request_id = %request_id,
                 project_id = %project_id,
@@ -233,6 +242,7 @@ pub async fn update_phase(
     match result {
         Ok(phase) => {
             let _ = project_progress::update_project_progress(&state.db, phase.project_id).await;
+            invalidate_project_cache(&phase.project_id.to_string()).await;
             
             tracing::info!(
                 request_id = %request_id,
@@ -287,6 +297,29 @@ pub async fn delete_phase(
         "删除项目阶段请求开始"
     );
 
+    // First get the project_id to invalidate cache
+    let get_result = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        SELECT project_id FROM rs.project_phases WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let maybe_project_id = match get_result {
+        Ok(pid) => pid,
+        Err(e) => {
+            tracing::error!(
+                request_id = %request_id,
+                phase_id = %id,
+                error = %e,
+                "获取项目阶段项目ID失败"
+            );
+            return Json(ApiResponse::error(500, "数据库操作失败"));
+        }
+    };
+
     let result = sqlx::query(
         r#"
         DELETE FROM rs.project_phases 
@@ -301,6 +334,10 @@ pub async fn delete_phase(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(project_id) = maybe_project_id {
+                let _ = project_progress::update_project_progress(&state.db, project_id).await;
+                invalidate_project_cache(&project_id.to_string()).await;
+            }
             tracing::info!(
                 request_id = %request_id,
                 phase_id = %id,
