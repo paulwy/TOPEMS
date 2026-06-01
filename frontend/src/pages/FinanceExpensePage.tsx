@@ -20,187 +20,6 @@ import { ModeToggle } from '@/components/ModeToggle';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-// 模拟数据
-const mockExpenses: Expense[] = [
-  {
-    id: '1',
-    expense_number: 'EXP-2024-001',
-    applicant_name: '张三',
-    department_id: '1',
-    expense_type: 'travel',
-    amount: 1500.00,
-    description: '出差上海',
-    expense_date: '2024-05-15',
-    receipt_count: 3,
-    status: 'approved',
-    approver_id: '2',
-    approved_at: '2024-05-16',
-    reimbursed_at: '2024-05-18',
-    created_at: '2024-05-15',
-    updated_at: '2024-05-18'
-  },
-  {
-    id: '2',
-    expense_number: 'EXP-2024-002',
-    applicant_name: '李四',
-    department_id: '2',
-    expense_type: 'meals',
-    amount: 350.00,
-    description: '客户招待餐费',
-    expense_date: '2024-05-20',
-    receipt_count: 1,
-    status: 'pending',
-    created_at: '2024-05-20',
-    updated_at: '2024-05-20'
-  },
-  {
-    id: '3',
-    expense_number: 'EXP-2024-003',
-    applicant_name: '王五',
-    department_id: '1',
-    expense_type: 'office',
-    amount: 800.00,
-    description: '办公用品采购',
-    expense_date: '2024-05-25',
-    receipt_count: 5,
-    status: 'reimbursed',
-    created_at: '2024-05-25',
-    updated_at: '2024-05-26'
-  }
-];
-
-const mockBudgets: Budget[] = [
-  {
-    id: '1',
-    department_id: '1',
-    budget_type: 'office',
-    fiscal_year: '2024',
-    total_budget: 50000,
-    used_amount: 28500,
-    remaining_amount: 21500,
-    usage_rate: 57,
-    status: 'active',
-    created_at: '2024-01-01',
-    updated_at: '2024-05-30'
-  },
-  {
-    id: '2',
-    department_id: '2',
-    budget_type: 'marketing',
-    fiscal_year: '2024',
-    total_budget: 80000,
-    used_amount: 64000,
-    remaining_amount: 16000,
-    usage_rate: 80,
-    status: 'active',
-    created_at: '2024-01-01',
-    updated_at: '2024-05-30'
-  },
-  {
-    id: '3',
-    department_id: '3',
-    budget_type: 'development',
-    fiscal_year: '2024',
-    total_budget: 150000,
-    used_amount: 45000,
-    remaining_amount: 105000,
-    usage_rate: 30,
-    status: 'active',
-    created_at: '2024-01-01',
-    updated_at: '2024-05-30'
-  }
-];
-
-const mockReceivables: Receivable[] = [
-  {
-    id: '1',
-    invoice_number: 'INV-2024-001',
-    customer_name: '科技公司A',
-    project_name: 'ERP系统开发',
-    amount: 120000,
-    invoice_date: '2024-05-10',
-    due_date: '2024-06-10',
-    status: 'pending',
-    received_amount: 0,
-    created_at: '2024-05-10',
-    updated_at: '2024-05-10'
-  },
-  {
-    id: '2',
-    invoice_number: 'INV-2024-002',
-    customer_name: '贸易公司B',
-    project_name: '软件许可',
-    amount: 50000,
-    invoice_date: '2024-05-15',
-    due_date: '2024-06-15',
-    status: 'partial',
-    received_amount: 25000,
-    created_at: '2024-05-15',
-    updated_at: '2024-05-20'
-  },
-  {
-    id: '3',
-    invoice_number: 'INV-2024-003',
-    customer_name: '制造企业C',
-    project_name: '咨询服务',
-    amount: 80000,
-    invoice_date: '2024-05-01',
-    due_date: '2024-06-01',
-    status: 'received',
-    received_amount: 80000,
-    created_at: '2024-05-01',
-    updated_at: '2024-05-25'
-  }
-];
-
-const mockPayables: Payable[] = [
-  {
-    id: '1',
-    invoice_number: 'PAY-2024-001',
-    supplier_name: '供应商A',
-    category: 'software',
-    amount: 30000,
-    invoice_date: '2024-05-05',
-    due_date: '2024-06-05',
-    status: 'pending',
-    paid_amount: 0,
-    created_at: '2024-05-05',
-    updated_at: '2024-05-05'
-  },
-  {
-    id: '2',
-    invoice_number: 'PAY-2024-002',
-    supplier_name: '供应商B',
-    category: 'hardware',
-    amount: 25000,
-    invoice_date: '2024-05-10',
-    due_date: '2024-06-10',
-    status: 'paid',
-    paid_amount: 25000,
-    created_at: '2024-05-10',
-    updated_at: '2024-05-22'
-  },
-  {
-    id: '3',
-    invoice_number: 'PAY-2024-003',
-    supplier_name: '服务商C',
-    category: 'service',
-    amount: 15000,
-    invoice_date: '2024-05-18',
-    due_date: '2024-06-18',
-    status: 'pending',
-    paid_amount: 0,
-    created_at: '2024-05-18',
-    updated_at: '2024-05-18'
-  }
-];
-
-const mockDepartments: Department[] = [
-  { id: '1', name: '技术部', code: 'TECH', status: 'active', created_at: '2024-01-01', updated_at: '2024-01-01' },
-  { id: '2', name: '市场部', code: 'MARKET', status: 'active', created_at: '2024-01-01', updated_at: '2024-01-01' },
-  { id: '3', name: '财务部', code: 'FIN', status: 'active', created_at: '2024-01-01', updated_at: '2024-01-01' }
-];
-
 interface FinanceExpensePageProps {
   onNavigate?: (page: string) => void;
 }
@@ -222,6 +41,7 @@ const FinanceExpensePage: React.FC<FinanceExpensePageProps> = ({ onNavigate }) =
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [currentCreateType, setCurrentCreateType] = useState<string>('');
   const [newRecord, setNewRecord] = useState<Partial<Expense | Budget | Receivable | Payable>>({});
+  const [editingRecord, setEditingRecord] = useState<any>(null);
 
   useEffect(() => {
     loadData();
@@ -230,59 +50,135 @@ const FinanceExpensePage: React.FC<FinanceExpensePageProps> = ({ onNavigate }) =
   const loadData = async () => {
     setLoading(true);
     try {
-      // 尝试调用真实API，如果失败则使用模拟数据
-      let expenseSuccess = false, budgetSuccess = false, receivableSuccess = false, payableSuccess = false, deptSuccess = false;
+      const promises: any[] = [
+        expenseApi.list(),
+        budgetApi.list(),
+        receivableApi.list(),
+        payableApi.list(),
+        departmentApi.list()
+      ];
       
-      try {
-        const [expenseRes, budgetRes, receivableRes, payableRes, deptRes] = await Promise.all([
-          expenseApi.list(),
-          budgetApi.list(),
-          receivableApi.list(),
-          payableApi.list(),
-          departmentApi.list()
-        ]);
-        
-        if (expenseRes.success && expenseRes.data) {
-          setExpenses(expenseRes.data.items || []);
-          expenseSuccess = true;
-        }
-        if (budgetRes.success && budgetRes.data) {
-          setBudgets(budgetRes.data.items || []);
-          budgetSuccess = true;
-        }
-        if (receivableRes.success && receivableRes.data) {
-          setReceivables(receivableRes.data.items || []);
-          receivableSuccess = true;
-        }
-        if (payableRes.success && payableRes.data) {
-          setPayables(payableRes.data.items || []);
-          payableSuccess = true;
-        }
-        if (deptRes.success && deptRes.data) {
-          setDepartments(deptRes.data.items || []);
-          deptSuccess = true;
-        }
-      } catch (apiError) {
-        console.log('API调用失败，使用模拟数据');
+      const results = await Promise.allSettled(promises);
+      
+      if (results[0].status === 'fulfilled' && results[0].value.success && results[0].value.data) {
+        setExpenses(results[0].value.data.items || []);
       }
       
-      // 如果API调用失败，使用模拟数据
-      if (!expenseSuccess) setExpenses(mockExpenses);
-      if (!budgetSuccess) setBudgets(mockBudgets);
-      if (!receivableSuccess) setReceivables(mockReceivables);
-      if (!payableSuccess) setPayables(mockPayables);
-      if (!deptSuccess) setDepartments(mockDepartments);
+      if (results[1].status === 'fulfilled' && results[1].value.success && results[1].value.data) {
+        setBudgets(results[1].value.data.items || []);
+      }
+      
+      if (results[2].status === 'fulfilled' && results[2].value.success && results[2].value.data) {
+        setReceivables(results[2].value.data.items || []);
+      }
+      
+      if (results[3].status === 'fulfilled' && results[3].value.success && results[3].value.data) {
+        setPayables(results[3].value.data.items || []);
+      }
+      
+      if (results[4].status === 'fulfilled' && results[4].value.success && results[4].value.data) {
+        setDepartments(results[4].value.data.items || []);
+      }
       
     } catch (err: any) {
-      addNotification({ title: '提示', message: 'API服务不可用，使用演示数据', type: 'info' });
-      // 确保使用模拟数据
-      setExpenses(mockExpenses);
-      setBudgets(mockBudgets);
-      setReceivables(mockReceivables);
-      setPayables(mockPayables);
-      setDepartments(mockDepartments);
+      console.error('加载数据失败:', err);
+      addNotification({ title: '错误', message: '加载数据失败: ' + (err.message || '未知错误'), type: 'error' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 处理创建操作
+  const handleCreate = async (data: any) => {
+    try {
+      let result;
+      switch (currentCreateType) {
+        case 'expense':
+          result = await expenseApi.create(data);
+          break;
+        case 'budget':
+          result = await budgetApi.create(data);
+          break;
+        case 'receivable':
+          result = await receivableApi.create(data);
+          break;
+        case 'payable':
+          result = await payableApi.create(data);
+          break;
+      }
+      
+      if (result?.success) {
+        addNotification({ title: '成功', message: '创建成功', type: 'success' });
+        setShowCreateModal(false);
+        loadData();
+      } else {
+        addNotification({ title: '失败', message: result?.message || '创建失败', type: 'error' });
+      }
+    } catch (err) {
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+    }
+  };
+
+  // 处理更新操作
+  const handleUpdate = async (id: string, data: any) => {
+    try {
+      let result;
+      switch (currentCreateType) {
+        case 'expense':
+          result = await expenseApi.update(id, data);
+          break;
+        case 'budget':
+          result = await budgetApi.update(id, data);
+          break;
+        case 'receivable':
+          result = await receivableApi.update(id, data);
+          break;
+        case 'payable':
+          result = await payableApi.update(id, data);
+          break;
+      }
+      
+      if (result?.success) {
+        addNotification({ title: '成功', message: '更新成功', type: 'success' });
+        setShowCreateModal(false);
+        loadData();
+      } else {
+        addNotification({ title: '失败', message: result?.message || '更新失败', type: 'error' });
+      }
+    } catch (err) {
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+    }
+  };
+
+  // 处理删除操作
+  const handleDelete = async (id: string, type: string) => {
+    if (!confirm('确定要删除吗？')) return;
+    
+    try {
+      let result;
+      switch (type) {
+        case 'expense':
+          result = await expenseApi.delete(id);
+          break;
+        case 'budget':
+          result = await budgetApi.delete(id);
+          break;
+        case 'receivable':
+          result = await receivableApi.delete(id);
+          break;
+        case 'payable':
+          result = await payableApi.delete(id);
+          break;
+      }
+      
+      if (result?.success) {
+        addNotification({ title: '成功', message: '删除成功', type: 'success' });
+        loadData();
+      } else {
+        addNotification({ title: '失败', message: result?.message || '删除失败', type: 'error' });
+      }
+    } catch (err) {
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
     }
   };
 
@@ -431,6 +327,26 @@ const FinanceExpensePage: React.FC<FinanceExpensePageProps> = ({ onNavigate }) =
           <Button variant="ghost" size="sm">
             <Eye className="w-4 h-4" />
           </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              setEditingRecord(row.original);
+              setCurrentCreateType('expense');
+              setNewRecord(row.original);
+              setShowCreateModal(true);
+            }}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-red-600"
+            onClick={() => handleDelete(row.original.id, 'expense')}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
           {row.original.status === 'pending' && (
             <>
               <Button 
@@ -524,6 +440,26 @@ const FinanceExpensePage: React.FC<FinanceExpensePageProps> = ({ onNavigate }) =
           <Button variant="ghost" size="sm">
             <Eye className="w-4 h-4" />
           </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              setEditingRecord(row.original);
+              setCurrentCreateType('receivable');
+              setNewRecord(row.original);
+              setShowCreateModal(true);
+            }}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-red-600"
+            onClick={() => handleDelete(row.original.id, 'receivable')}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
           {row.original.status !== 'received' && (
             <Button 
               variant="ghost" 
@@ -606,6 +542,26 @@ const FinanceExpensePage: React.FC<FinanceExpensePageProps> = ({ onNavigate }) =
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="sm">
             <Eye className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              setEditingRecord(row.original);
+              setCurrentCreateType('payable');
+              setNewRecord(row.original);
+              setShowCreateModal(true);
+            }}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-red-600"
+            onClick={() => handleDelete(row.original.id, 'payable')}
+          >
+            <Trash2 className="w-4 h-4" />
           </Button>
           {row.original.status !== 'paid' && (
             <Button 

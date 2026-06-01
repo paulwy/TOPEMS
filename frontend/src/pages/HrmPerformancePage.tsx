@@ -11,6 +11,7 @@ import {
   performanceReviewApi, 
   performanceGoalApi, 
   employeeApi,
+  departmentApi,
   type PerformanceReview as ApiPerformanceReview,
   type PerformanceGoal as ApiPerformanceGoal,
   type Employee
@@ -80,10 +81,11 @@ const HrmPerformancePage: React.FC = () => {
     setLoading(true);
     try {
       // 并行加载所有数据
-      const [reviewsRes, goalsRes, employeesRes] = await Promise.all([
+      const [reviewsRes, goalsRes, employeesRes, departmentsRes] = await Promise.all([
         performanceReviewApi.list({ page_size: 100 }),
         performanceGoalApi.list({ page_size: 100 }),
-        employeeApi.list({ page_size: 100 })
+        employeeApi.list({ page_size: 100 }),
+        departmentApi.list({ page_size: 100 })
       ]);
 
       // 创建员工映射，方便查找
@@ -92,6 +94,12 @@ const HrmPerformancePage: React.FC = () => {
         employeeMap[emp.id] = emp;
       });
       setEmployees(employeeMap);
+
+      // 创建部门映射
+      const departmentMap: Record<string, any> = {};
+      (departmentsRes.data?.items || []).forEach(dept => {
+        departmentMap[dept.id] = dept;
+      });
 
       // 转换绩效评估数据
       const transformedReviews: PerformanceReview[] = (reviewsRes.data?.items || []).map(review => {
@@ -131,8 +139,8 @@ const HrmPerformancePage: React.FC = () => {
       });
       setGoals(transformedGoals);
 
-      // 生成模拟排名数据（因为 API 中没有直接的排名数据）
-      const mockRankings: EmployeeScore[] = transformedReviews
+      // 基于实际绩效评分数据生成排名
+      const rankings: EmployeeScore[] = transformedReviews
         .filter(r => r.final_score !== undefined)
         .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
         .map((review, index) => ({
@@ -141,13 +149,13 @@ const HrmPerformancePage: React.FC = () => {
           department: review.department,
           position: review.position,
           kpi_score: review.self_score || 0,
-          capability_score: (review.manager_score || 0) - 5,
-          attitude_score: (review.manager_score || 0) + 2,
+          capability_score: Math.max(0, (review.manager_score || 0) - 5),
+          attitude_score: Math.min(100, (review.manager_score || 0) + 2),
           final_score: review.final_score || 0,
           rank: index + 1,
           review_period: review.review_period
         }));
-      setRankings(mockRankings);
+      setRankings(rankings);
 
     } catch (err) {
       error('加载数据失败');

@@ -57,7 +57,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/qms/, ''),
       },
       '/ehs': {
-        target: 'http://localhost:8016',
+        target: 'http://localhost:8013',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/ehs/, ''),
       },
@@ -81,15 +81,34 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/pdm/, ''),
       },
+      '/mes': {
+        target: 'http://localhost:8014',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/mes/, ''),
+      },
       '/srm': {
-        target: 'http://localhost:8016',
+        target: 'http://localhost:8018',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/srm/, ''),
       },
       '/im': {
-        target: 'http://localhost:8017',
+        target: 'http://localhost:8016',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/im/, ''),
+        configure: (proxy) => {
+          proxy.on('error', (err, req, res) => {
+            console.warn('[Vite Proxy] IM service unavailable, error:', err.message);
+            if (!res.headersSent) {
+              res.writeHead(503, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({
+                code: 503,
+                success: false,
+                message: 'IM service is currently unavailable',
+                data: null
+              }));
+            }
+          });
+        },
       },
       '/mobile': {
         target: 'http://localhost:8019',
@@ -117,14 +136,24 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/scm/, ''),
       },
       '/wms': {
-        target: 'http://localhost:8008',
+        target: 'http://localhost:8025',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/wms/, ''),
       },
       '/bi': {
-        target: 'http://localhost:8012',
+        target: 'http://localhost:8022',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/bi/, ''),
+      },
+      '/notification': {
+        target: 'http://localhost:8023',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/notification/, ''),
+      },
+      '/report': {
+        target: 'http://localhost:8024',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/report/, ''),
       },
     },
   },

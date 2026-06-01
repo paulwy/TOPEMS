@@ -13,6 +13,7 @@ import {
   candidateApi,
   interviewApi,
   departmentApi,
+  positionApi,
   type JobOpening,
   type Candidate as ApiCandidate,
   type Interview as ApiInterview,
@@ -85,11 +86,12 @@ const HrmRecruitmentPage: React.FC = () => {
     setLoading(true);
     try {
       // 并行加载所有数据
-      const [openingsRes, candidatesRes, interviewsRes, departmentsRes] = await Promise.all([
+      const [openingsRes, candidatesRes, interviewsRes, departmentsRes, positionsRes] = await Promise.all([
         jobOpeningApi.list({ page_size: 100 }),
         candidateApi.list({ page_size: 100 }),
         interviewApi.list({ page_size: 100 }),
-        departmentApi.list({ page_size: 100 })
+        departmentApi.list({ page_size: 100 }),
+        positionApi.list({ page_size: 100 })
       ]);
 
       // 创建部门映射
@@ -99,9 +101,16 @@ const HrmRecruitmentPage: React.FC = () => {
       });
       setDepartments(deptMap);
 
+      // 创建职位映射
+      const positionMap: Record<string, any> = {};
+      positionsRes.data?.items?.forEach(pos => {
+        positionMap[pos.id] = pos;
+      });
+
       // 转换职位数据
       const transformedPositions: JobPosition[] = (openingsRes.data?.items || []).map(opening => {
         const dept = deptMap[opening.department_id || ''];
+        const pos = positionMap[opening.position_id || ''];
         return {
           id: opening.id,
           title: opening.title,
@@ -121,35 +130,42 @@ const HrmRecruitmentPage: React.FC = () => {
       setPositions(transformedPositions);
 
       // 转换候选人数据
-      const transformedCandidates: Candidate[] = (candidatesRes.data?.items || []).map(candidate => ({
-        id: candidate.id,
-        name: candidate.name,
-        gender: '',
-        age: 0,
-        phone: candidate.phone || '',
-        email: candidate.email || '',
-        position: '',
-        education: '',
-        experience: '',
-        status: mapCandidateStatus(candidate.status),
-        source: candidate.source || '',
-        resume_url: candidate.resume_path,
-        salary_expectation: undefined,
-        applied_at: candidate.created_at
-      }));
+      const transformedCandidates: Candidate[] = (candidatesRes.data?.items || []).map(candidate => {
+        const pos = positionMap[candidate.position_id || ''];
+        const opening = transformedPositions.find(o => o.id === candidate.job_opening_id);
+        return {
+          id: candidate.id,
+          name: candidate.name,
+          gender: '',
+          age: 0,
+          phone: candidate.phone || '',
+          email: candidate.email || '',
+          position: pos?.name || opening?.title || '',
+          education: '',
+          experience: '',
+          status: mapCandidateStatus(candidate.status),
+          source: candidate.source || '',
+          resume_url: candidate.resume_path,
+          salary_expectation: undefined,
+          applied_at: candidate.created_at
+        };
+      });
       setCandidates(transformedCandidates);
 
       // 转换面试数据
-      const transformedInterviews: InterviewRecord[] = (interviewsRes.data?.items || []).map(interview => ({
-        id: interview.id,
-        candidate_name: '',
-        position: '',
-        interviewer: '',
-        interview_time: interview.scheduled_at || '',
-        interview_type: mapInterviewType(interview.round),
-        result: mapInterviewResult(interview.result || interview.status),
-        feedback: interview.notes
-      }));
+      const transformedInterviews: InterviewRecord[] = (interviewsRes.data?.items || []).map(interview => {
+        const candidate = transformedCandidates.find(c => c.id === interview.candidate_id);
+        return {
+          id: interview.id,
+          candidate_name: candidate?.name || '',
+          position: candidate?.position || '',
+          interviewer: '',
+          interview_time: interview.scheduled_at || '',
+          interview_type: mapInterviewType(interview.round),
+          result: mapInterviewResult(interview.result || interview.status),
+          feedback: interview.notes
+        };
+      });
       setInterviews(transformedInterviews);
 
     } catch (err) {

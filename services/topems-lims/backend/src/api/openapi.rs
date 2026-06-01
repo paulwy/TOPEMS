@@ -1,4 +1,5 @@
 use utoipa::OpenApi;
+use utoipa::axum_extras::RouteExt;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -20,12 +21,17 @@ use utoipa::OpenApi;
             crate::models::Sample,
             crate::models::CreateSampleRequest,
             crate::models::UpdateSampleRequest,
+            crate::api::sample::ApiResponse<crate::models::Sample>,
+            crate::api::sample::ApiResponse<String>,
+            crate::api::sample::ApiResponse<serde_json::Value>,
             crate::api::sample::BatchCreateRequest,
             crate::api::sample::BatchDeleteRequest,
             crate::api::sample::BatchOperationResult,
             crate::models::AuditLog,
             crate::models::AuditLogQuery,
             crate::api::audit::ListAuditLogsQuery,
+            crate::api::audit::ApiResponse<crate::models::AuditLog>,
+            crate::api::audit::ApiResponse<serde_json::Value>,
         )
     ),
     tags(

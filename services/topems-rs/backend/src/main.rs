@@ -18,10 +18,11 @@ use topems_shared::{
     Config,
     Result,
 };
-
+use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(Clone)]
 struct AppState {
+    pool: sqlx::PgPool,
     auth_state: AuthState,
     config: Config,
 }
@@ -53,6 +54,7 @@ async fn main() -> Result<()> {
     }
 
     let app_state = AppState {
+        pool: pool.clone(),
         auth_state: AuthState::from_env(),
         config,
     };

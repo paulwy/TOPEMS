@@ -15,7 +15,37 @@ use utoipa::{ToSchema, IntoParams};
 
 use crate::models::{CreateSampleRequest, Sample, UpdateSampleRequest};
 use topems_shared::Result;
-use topems_shared::response::ApiResponse;
+
+#[derive(Debug, Serialize)]
+pub struct ApiResponse<T> {
+    pub code: u16,
+    pub success: bool,
+    pub data: Option<T>,
+    pub message: String,
+    pub timestamp: String,
+}
+
+impl<T> ApiResponse<T> {
+    pub fn success(data: T, message: &str) -> Self {
+        Self {
+            code: 200,
+            success: true,
+            data: Some(data),
+            message: message.to_string(),
+            timestamp: Utc::now().to_rfc3339(),
+        }
+    }
+
+    pub fn error(code: u16, message: &str) -> Self {
+        Self {
+            code,
+            success: false,
+            data: None,
+            message: message.to_string(),
+            timestamp: Utc::now().to_rfc3339(),
+        }
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -105,7 +135,7 @@ async fn list_samples(
     let result = sqlx::query_as::<_, Sample>(
         r#"
         SELECT id, name, description, status, project_id, received_date, created_at, updated_at
-        FROM lims.samples
+        FROM samples
         WHERE ($1::text IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -123,7 +153,7 @@ async fn list_samples(
         Ok(samples) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM lims.samples
+                SELECT COUNT(*) FROM samples
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR description ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -175,7 +205,7 @@ async fn create_sample(
 
     let result = sqlx::query_as::<_, Sample>(
         r#"
-        INSERT INTO lims.samples (id, name, description, status, project_id, received_date, created_at, updated_at)
+        INSERT INTO samples (id, name, description, status, project_id, received_date, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, name, description, status, project_id, received_date, created_at, updated_at
         "#,
@@ -255,7 +285,7 @@ async fn get_sample(
     let result = sqlx::query_as::<_, Sample>(
         r#"
         SELECT id, name, description, status, project_id, received_date, created_at, updated_at
-        FROM lims.samples WHERE id = $1
+        FROM samples WHERE id = $1
         "#,
     )
     .bind(id)
@@ -296,7 +326,7 @@ async fn update_sample(
     Json(req): Json<UpdateSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
     let existing = sqlx::query_as::<_, Sample>(
-        "SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM lims.samples WHERE id = $1",
+        "SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM samples WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -316,7 +346,7 @@ async fn update_sample(
 
     let result = sqlx::query_as::<_, Sample>(
         r#"
-        UPDATE lims.samples SET
+        UPDATE samples SET
             name = $2, description = $3, status = $4, project_id = $5, updated_at = $6
         WHERE id = $1
         RETURNING id, name, description, status, project_id, received_date, created_at, updated_at
@@ -393,7 +423,7 @@ async fn delete_sample(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM lims.samples WHERE id = $1")
+    let result = sqlx::query("DELETE FROM samples WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -470,7 +500,7 @@ async fn batch_create_samples(
 
         let result = sqlx::query_as::<_, Sample>(
             r#"
-            INSERT INTO lims.samples (id, name, description, status, project_id, received_date, created_at, updated_at)
+            INSERT INTO samples (id, name, description, status, project_id, received_date, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id, name, description, status, project_id, received_date, created_at, updated_at
             "#,
@@ -555,7 +585,7 @@ async fn batch_delete_samples(
     }
 
     let result = sqlx::query(
-        r#"DELETE FROM lims.samples WHERE id = ANY($1)"#,
+        r#"DELETE FROM samples WHERE id = ANY($1)"#,
     )
     .bind(&req.ids)
     .execute(&state.db)
@@ -638,7 +668,7 @@ async fn export_samples(
     let result = sqlx::query_as::<_, Sample>(
         r#"
         SELECT id, name, description, status, project_id, received_date, created_at, updated_at
-        FROM lims.samples
+        FROM samples
         ORDER BY created_at DESC
         "#,
     )
@@ -668,11 +698,9 @@ async fn export_samples(
                 ).await;
                 return (
                     [(header::CONTENT_TYPE, "application/json")],
-                    Json(ApiResponse::<()>::error(500, "导出失败")),
+                    Json(ApiResponse::error(500, "导出失败")),
                 ).into_response();
             }
-            
-            let sample_count = samples.len();
             
             // Write rows
             for sample in samples {
@@ -704,9 +732,9 @@ async fn export_samples(
                         &headers,
                     ).await;
                     return (
-                    [(header::CONTENT_TYPE, "application/json")],
-                    Json(ApiResponse::<()>::error(500, "导出失败")),
-                ).into_response();
+                        [(header::CONTENT_TYPE, "application/json")],
+                        Json(ApiResponse::error(500, "导出失败")),
+                    ).into_response();
                 }
             }
             
@@ -723,7 +751,7 @@ async fn export_samples(
                         None,
                         None,
                         None,
-                        Some(serde_json::json!({ "count": sample_count, "filename": filename })),
+                        Some(serde_json::json!({ "count": samples.len(), "filename": filename })),
                         "success".to_string(),
                         None,
                         &headers,
@@ -755,7 +783,7 @@ async fn export_samples(
                     ).await;
                     (
                         [(header::CONTENT_TYPE, "application/json")],
-                        Json(ApiResponse::<()>::error(500, "导出失败")),
+                        Json(ApiResponse::error(500, "导出失败")),
                     ).into_response()
                 }
             }
@@ -778,7 +806,7 @@ async fn export_samples(
             ).await;
             (
                 [(header::CONTENT_TYPE, "application/json")],
-                Json(ApiResponse::<()>::error(500, "导出失败")),
+                Json(ApiResponse::error(500, "导出失败")),
             ).into_response()
         }
     }
@@ -865,7 +893,7 @@ async fn import_samples(
                 
                 let insert_result = sqlx::query_as::<_, Sample>(
                     r#"
-                    INSERT INTO lims.samples (id, name, description, status, project_id, received_date, created_at, updated_at)
+                    INSERT INTO samples (id, name, description, status, project_id, received_date, created_at, updated_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     RETURNING id, name, description, status, project_id, received_date, created_at, updated_at
                     "#,

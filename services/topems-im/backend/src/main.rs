@@ -370,7 +370,8 @@ async fn main() -> Result<()> {
         .with_state(app_state)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8016".to_string());
+    let port = env::var("SERVER_PORT")
+        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8016".to_string()));
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-IM 即时通讯系统启动中...");

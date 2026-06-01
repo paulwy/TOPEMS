@@ -3,3 +3,4 @@ pub mod production_process;
 pub mod work_station;
 pub mod production_record;
 pub mod audit;
+pub mod equipment;

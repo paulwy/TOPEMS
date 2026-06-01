@@ -258,26 +258,9 @@ async fn main() {
         }
     };
 
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-    
-    let refresh_secret = std::env::var("REFRESH_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("REFRESH_SECRET not set, using default (not recommended for production)");
-            "topems-default-refresh-secret-change-me-in-production".to_string()
-        });
-    
-    let token_expiry_hours = std::env::var("TOKEN_EXPIRY_HOURS")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(24);
-
     let app_state = AppState {
         pool: pool.clone(),
-        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
+        auth_state: AuthState::from_env(),
     };
 
     let cors = create_cors_layer();
@@ -312,10 +295,10 @@ async fn main() {
         .layer(cors)
         .with_state(app_state);
 
-    let port = std::env::var("PORT")
-        .unwrap_or_else(|_| "8010".to_string())
+    let port = std::env::var("SERVER_PORT")
+        .unwrap_or_else(|_| std::env::var("PORT").unwrap_or_else(|_| "8015".to_string()))
         .parse()
-        .unwrap_or(8010);
+        .unwrap_or(8015);
     let addr = format!("0.0.0.0:{}", port);
     tracing::info!("✅ TOPEMS-PDM service is running at http://{}", addr);
     tracing::info!("🔒 Authentication protection enabled");

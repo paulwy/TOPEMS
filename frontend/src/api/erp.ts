@@ -59,6 +59,15 @@ export interface Asset {
   status: string;
   created_at: string;
   updated_at: string;
+  // 设备专用字段
+  serial_number?: string;
+  manufacturer?: string;
+  rated_power?: number;
+  rated_voltage?: number;
+  rated_current?: number;
+  specifications?: any;
+  image_url?: string;
+  department?: string;
 }
 
 export interface Expense {

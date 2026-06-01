@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
         .merge(api::create_purchase_order_routes(pool.clone()).await?)
         .layer(cors);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8015".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8018".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("📦 端口: {}", port);

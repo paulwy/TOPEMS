@@ -53,7 +53,8 @@ async fn main() -> Result<()> {
         .merge(api::create_drill_routes(pool.clone()).await?)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8008".to_string());
+    let port = env::var("SERVER_PORT")
+        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8013".to_string()));
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
     tracing::info!("📦 端口: {}", port);
     tracing::info!("✅ TOPEMS-EHS 已就绪");

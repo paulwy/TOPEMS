@@ -67,29 +67,12 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-    
-    let refresh_secret = env::var("REFRESH_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("REFRESH_SECRET not set, using default (not recommended for production)");
-            "topems-default-refresh-secret-change-me-in-production".to_string()
-        });
-
-    let token_expiry_hours: i64 = env::var("JWT_EXPIRY_HOURS")
-        .unwrap_or_else(|_| "24".to_string())
-        .parse()
-        .unwrap_or(24);
-
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
     let app_state = AppState {
         pool: pool.clone(),
-        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
+        auth_state: AuthState::from_env(),
         metrics: metrics.clone(),
         start_time,
     };
@@ -97,6 +80,8 @@ async fn main() -> Result<()> {
     let cors = create_cors_layer();
 
     let audit_router = api::audit::create_routes(pool.clone()).await?;
+    let dict_router = api::dict::create_routes(pool.clone()).await?;
+    let db_structure_router = api::db_structure::create_routes(pool.clone()).await?;
 
     let health_router = Router::new()
         .route("/health", get(health_check))
@@ -112,6 +97,8 @@ async fn main() -> Result<()> {
         .merge(api::asset::create_routes(pool.clone()).await?)
         .merge(api::finance::create_routes(pool.clone()).await?)
         .merge(audit_router)
+        .merge(dict_router)
+        .merge(db_structure_router)
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8009".to_string());
@@ -366,10 +353,99 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             responsible_id UUID,
             status VARCHAR(50) NOT NULL DEFAULT 'in_use',
             created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            serial_number VARCHAR(100),
+            manufacturer VARCHAR(200),
+            rated_power NUMERIC(10,2),
+            rated_voltage NUMERIC(10,2),
+            rated_current NUMERIC(10,2),
+            specifications JSONB,
+            image_url VARCHAR(500),
+            department VARCHAR(100)
         )
         "#,
     )
+    .execute(pool)
+    .await?;
+    
+    // 为现有表添加新字段（在CREATE TABLE IF NOT EXISTS之后执行）
+    sqlx::query(r#"
+        DO $$ BEGIN
+            ALTER TABLE erp.assets ADD COLUMN IF NOT EXISTS serial_number VARCHAR(100);
+        EXCEPTION
+            WHEN duplicate_column THEN NULL;
+        END $$;
+    "#)
+    .execute(pool)
+    .await?;
+    
+    sqlx::query(r#"
+        DO $$ BEGIN
+            ALTER TABLE erp.assets ADD COLUMN IF NOT EXISTS manufacturer VARCHAR(200);
+        EXCEPTION
+            WHEN duplicate_column THEN NULL;
+        END $$;
+    "#)
+    .execute(pool)
+    .await?;
+    
+    sqlx::query(r#"
+        DO $$ BEGIN
+            ALTER TABLE erp.assets ADD COLUMN IF NOT EXISTS rated_power NUMERIC(10,2);
+        EXCEPTION
+            WHEN duplicate_column THEN NULL;
+        END $$;
+    "#)
+    .execute(pool)
+    .await?;
+    
+    sqlx::query(r#"
+        DO $$ BEGIN
+            ALTER TABLE erp.assets ADD COLUMN IF NOT EXISTS rated_voltage NUMERIC(10,2);
+        EXCEPTION
+            WHEN duplicate_column THEN NULL;
+        END $$;
+    "#)
+    .execute(pool)
+    .await?;
+    
+    sqlx::query(r#"
+        DO $$ BEGIN
+            ALTER TABLE erp.assets ADD COLUMN IF NOT EXISTS rated_current NUMERIC(10,2);
+        EXCEPTION
+            WHEN duplicate_column THEN NULL;
+        END $$;
+    "#)
+    .execute(pool)
+    .await?;
+    
+    sqlx::query(r#"
+        DO $$ BEGIN
+            ALTER TABLE erp.assets ADD COLUMN IF NOT EXISTS specifications JSONB;
+        EXCEPTION
+            WHEN duplicate_column THEN NULL;
+        END $$;
+    "#)
+    .execute(pool)
+    .await?;
+    
+    sqlx::query(r#"
+        DO $$ BEGIN
+            ALTER TABLE erp.assets ADD COLUMN IF NOT EXISTS image_url VARCHAR(500);
+        EXCEPTION
+            WHEN duplicate_column THEN NULL;
+        END $$;
+    "#)
+    .execute(pool)
+    .await?;
+    
+    sqlx::query(r#"
+        DO $$ BEGIN
+            ALTER TABLE erp.assets ADD COLUMN IF NOT EXISTS department VARCHAR(100);
+        EXCEPTION
+            WHEN duplicate_column THEN NULL;
+        END $$;
+    "#)
     .execute(pool)
     .await?;
 
@@ -499,6 +575,82 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     )
     .execute(pool)
     .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS sys_dict_types (
+            id UUID PRIMARY KEY,
+            code VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(200) NOT NULL,
+            category VARCHAR(50) NOT NULL,
+            description TEXT,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS sys_dict_items (
+            id UUID PRIMARY KEY,
+            dict_type_id UUID NOT NULL REFERENCES sys_dict_types(id) ON DELETE CASCADE,
+            code VARCHAR(100) NOT NULL,
+            name VARCHAR(200) NOT NULL,
+            value TEXT,
+            sort_order INT DEFAULT 0,
+            parent_id UUID REFERENCES sys_dict_items(id),
+            extra_data JSONB,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            UNIQUE(dict_type_id, code)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS sys_db_changes (
+            id UUID PRIMARY KEY,
+            change_type VARCHAR(50) NOT NULL,
+            table_name VARCHAR(200) NOT NULL,
+            column_name VARCHAR(200),
+            old_definition JSONB,
+            new_definition JSONB,
+            sql_statement TEXT NOT NULL,
+            executed_by VARCHAR(255),
+            executed_at TIMESTAMPTZ DEFAULT NOW(),
+            backup_data JSONB
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_dict_types_category ON sys_dict_types(category)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_dict_types_status ON sys_dict_types(status)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_dict_items_type ON sys_dict_items(dict_type_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_dict_items_parent ON sys_dict_items(parent_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_db_changes_table ON sys_db_changes(table_name)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_db_changes_time ON sys_db_changes(executed_at DESC)"#)
+        .execute(pool)
+        .await?;
 
     sqlx::query(r#"GRANT ALL PRIVILEGES ON SCHEMA erp TO topems"#)
         .execute(pool)

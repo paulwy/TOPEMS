@@ -6,7 +6,9 @@ import {
   LogOut, User, Activity, Clock,
   Database, X, Key,
   Building, Folder, BarChart3, Box,
-  MapPin, Smartphone, MessageSquare, Receipt, TrendingUp
+  MapPin, Smartphone, MessageSquare, Receipt, TrendingUp,
+  Briefcase, Calendar, DollarSign, BookOpen, HelpCircle, FileText as FileTemplate,
+  Settings
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
@@ -233,7 +235,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     {
       title: '资产管理',
       icon: Box,
-      description: '企业资产、设备台账',
+      description: '企业资产、设备台账、点巡检、维护维修',
       path: '/assets',
       color: 'bg-purple-500',
       status: 'online' as const,
@@ -264,6 +266,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       adminOnly: true
     },
     {
+      title: '行政综合管理',
+      icon: Briefcase,
+      description: '公司、部门、员工、资产、会议室、车辆统一管理',
+      path: '/administration',
+      color: 'bg-sky-500',
+      status: 'online' as const,
+      permission: 'erp:admin',
+      module: 'erp',
+      adminOnly: true
+    },
+    {
       title: '安全审计',
       icon: AlertCircle,
       description: '访问日志、操作审计',
@@ -275,14 +288,54 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       adminOnly: true
     },
     {
+      title: '系统管理',
+      icon: Settings,
+      description: '字典管理、数据库结构管理',
+      path: '/system',
+      color: 'bg-slate-500',
+      status: 'online' as const,
+      permission: 'iam:admin',
+      module: 'iam',
+      adminOnly: true
+    },
+    {
       title: '报表中心',
       icon: BarChart3,
-      description: '用户统计、权限分析',
+      description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
       path: '/reports',
       color: 'bg-emerald-500',
       status: 'online' as const,
       permission: 'iam:admin',
       module: 'iam',
+      adminOnly: true
+    },
+    {
+      title: '文档中心',
+      icon: BookOpen,
+      description: '企业文档管理、知识共享',
+      path: '/document-center',
+      color: 'bg-blue-500',
+      status: 'online' as const,
+      permission: 'doc:read',
+      module: 'doc'
+    },
+    {
+      title: '帮助中心',
+      icon: HelpCircle,
+      description: '使用指南、视频教程、常见问题',
+      path: '/help',
+      color: 'bg-amber-500',
+      status: 'online' as const
+    },
+    {
+      title: '模板管理',
+      icon: FileTemplate,
+      description: '文档模板、流程模板管理',
+      path: '/templates',
+      color: 'bg-violet-500',
+      status: 'online' as const,
+      permission: 'doc:admin',
+      module: 'doc',
       adminOnly: true
     },
     {
@@ -346,16 +399,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       module: 'pdm'
     },
     {
-      title: '设备管理',
-      icon: Activity,
-      description: '设备台账、维护管理',
-      path: '/equipment',
-      color: 'bg-teal-500',
-      status: 'plan' as const,
-      permission: null,
-      module: 'equipment'
-    },
-    {
       title: '厂区空间',
       icon: MapPin,
       description: '设备点位、管线、仓储管理',
@@ -369,10 +412,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       title: '移动工作台',
       icon: Smartphone,
       description: '巡检打卡、扫码入库、移动任务',
-      path: '/mobile',
+      path: '/mobile-workstation',
       color: 'bg-indigo-500',
       status: 'new' as const,
-      permission: 'mobile:read',
+      permission: null,
       module: 'mobile'
     },
     {
@@ -384,6 +427,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       status: 'new' as const,
       permission: 'im:read',
       module: 'im'
+    },
+    {
+      title: '人力资源',
+      icon: Briefcase,
+      description: '员工管理、考勤、薪资、绩效、招聘',
+      path: '/hrm/positions',
+      color: 'bg-indigo-500',
+      status: 'online' as const,
+      permission: 'hrm:read',
+      module: 'hrm'
     },
   ].filter(module => !module.permission || canAccessModule(module.module) || canAdminModule(module.module));
 
@@ -438,8 +491,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   { id: 'srm', label: '供应商关系', icon: Users },
                   { id: 'pdm', label: '生产数据管理', icon: Package },
                   { id: 'gis', label: '厂区空间', icon: MapPin },
-                  { id: 'mobile', label: '移动工作台', icon: Smartphone },
+                  { id: 'mobile-workstation', label: '移动工作台', icon: Smartphone },
                   { id: 'im', label: '即时通讯', icon: MessageSquare },
+                  { id: 'hrm/positions', label: '人力资源', icon: Briefcase },
                 ].map(item => {
                   const Icon = item.icon;
                   return (

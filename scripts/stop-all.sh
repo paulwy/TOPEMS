@@ -36,7 +36,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 log_info "停止后端服务..."
 
 # 检查并停止所有服务端口
-for port in 8001 8002 8003 8004 8005 8006 8009 8010 8011 8012 8015 8016 8017 8018; do
+for port in 8001 8002 8003 8004 8005 8006 8009 8010 8011 8012 8015 8016 8017 8018 8019 8023; do
     if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
         log_warn "发现端口 $port 被占用，正在停止..."
         lsof -ti :$port | xargs -r kill -9 2>/dev/null || true

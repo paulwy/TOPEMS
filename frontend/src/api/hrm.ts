@@ -233,9 +233,9 @@ interface CrudOperations<T> {
 
 function createCrudApi<T>(endpoint: string): CrudOperations<T> {
   return {
-    list: (params?: ListParams) => {
+    list: async (params?: ListParams) => {
       const queryString = buildQueryString(params);
-      return apiClient.hrm.get(`${endpoint}${queryString}`);
+      return await apiClient.hrm.get(`${endpoint}${queryString}`);
     },
     
     get: (id: string) => {
@@ -392,6 +392,49 @@ export const employeePerformanceApi = {
   },
 };
 
+export interface SalaryAdjustment {
+  id: string;
+  employee_id: string;
+  employee_name?: string;
+  department?: string;
+  adjustment_type: 'promotion' | 'demotion' | 'bonus' | 'deduction';
+  old_salary: number;
+  new_salary: number;
+  adjustment_amount: number;
+  reason: string;
+  effective_date: string;
+  status: 'pending' | 'approved' | 'rejected';
+  applicant: string;
+  applied_at: string;
+  approved_by?: string;
+  approved_at?: string;
+}
+
+export const salaryAdjustmentApi = {
+  list: async (params?: ListParams): Promise<ApiResponse<PaginatedResult<SalaryAdjustment>>> => {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/salary-adjustments${queryString}`);
+  },
+  get: async (id: string): Promise<ApiResponse<SalaryAdjustment>> => {
+    return apiClient.hrm.get(`/api/v1/salary-adjustments/${id}`);
+  },
+  create: async (data: Partial<SalaryAdjustment>): Promise<ApiResponse<SalaryAdjustment>> => {
+    return apiClient.hrm.post('/api/v1/salary-adjustments', data);
+  },
+  update: async (id: string, data: Partial<SalaryAdjustment>): Promise<ApiResponse<SalaryAdjustment>> => {
+    return apiClient.hrm.put(`/api/v1/salary-adjustments/${id}`, data);
+  },
+  delete: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.hrm.delete(`/api/v1/salary-adjustments/${id}`);
+  },
+  approve: async (id: string, approverId: string): Promise<ApiResponse<SalaryAdjustment>> => {
+    return apiClient.hrm.put(`/api/v1/salary-adjustments/${id}/approve`, { approver_id: approverId });
+  },
+  reject: async (id: string, approverId: string, reason: string): Promise<ApiResponse<SalaryAdjustment>> => {
+    return apiClient.hrm.put(`/api/v1/salary-adjustments/${id}/reject`, { approver_id: approverId, reason });
+  },
+};
+
 export const hrmApi = {
   departments: departmentApi,
   employees: employeeApi,
@@ -402,9 +445,10 @@ export const hrmApi = {
   candidates: candidateApi,
   interviews: interviewApi,
   payroll: payrollApi,
+  salaryAdjustments: salaryAdjustmentApi,
   performanceReviews: performanceReviewApi,
   performanceGoals: performanceGoalApi,
-  
+
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.hrm.get('/health');
   },
