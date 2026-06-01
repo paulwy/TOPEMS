@@ -1,7 +1,6 @@
 use crate::models::*;
 use chrono::{DateTime, Duration, Utc};
 use serde_json::Value;
-use sqlx::FromRow;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -74,8 +73,25 @@ impl WorkflowRepository {
         is_active: Option<bool>,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<Workflow>, sqlx::Error> {
-        let query = if let Some(active) = is_active {
+    ) -> Result<PaginatedResult<Workflow>, sqlx::Error> {
+        let total_query = if let Some(_active) = is_active {
+            r#"SELECT COUNT(*) FROM flow.workflows WHERE is_active = $1"#
+        } else {
+            r#"SELECT COUNT(*) FROM flow.workflows"#
+        };
+        
+        let total: i64 = if let Some(active) = is_active {
+            sqlx::query_scalar(total_query)
+                .bind(active)
+                .fetch_one(&self.pool)
+                .await?
+        } else {
+            sqlx::query_scalar(total_query)
+                .fetch_one(&self.pool)
+                .await?
+        };
+
+        let query = if let Some(_active) = is_active {
             r#"
             SELECT id, name, description, definition, is_active, created_by, created_at, updated_at
             FROM flow.workflows
@@ -98,7 +114,16 @@ impl WorkflowRepository {
         } else {
             q = q.bind(limit).bind(offset);
         }
-        q.fetch_all(&self.pool).await
+        let items = q.fetch_all(&self.pool).await?;
+        
+        let page = offset / limit + 1;
+        
+        Ok(PaginatedResult {
+            items,
+            total,
+            page,
+            page_size: limit,
+        })
     }
 
     pub async fn update_workflow(

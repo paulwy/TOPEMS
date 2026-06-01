@@ -53,7 +53,7 @@ impl WorkflowEngine {
         self.repo.create_workflow(req).await
     }
     
-    async fn list_workflows(&self, is_active: Option<bool>, limit: i64, offset: i64) -> Result<Vec<Workflow>, sqlx::Error> {
+    async fn list_workflows(&self, is_active: Option<bool>, limit: i64, offset: i64) -> Result<PaginatedResult<Workflow>, sqlx::Error> {
         self.repo.list_workflows(is_active, limit, offset).await
     }
     

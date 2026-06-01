@@ -8,3 +8,4 @@ pub mod leave;
 pub mod recruitment;
 pub mod payroll;
 pub mod performance;
+pub mod training;
