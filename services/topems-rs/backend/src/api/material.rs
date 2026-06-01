@@ -1,4 +1,3 @@
-
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -65,13 +64,24 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/v1/material-tests", get(list_material_tests).post(create_material_test))
+        .route(
+            "/api/v1/material-tests",
+            get(list_material_tests).post(create_material_test),
+        )
         .route(
             "/api/v1/material-tests/{id}",
-            get(get_material_test).put(update_material_test).delete(delete_material_test),
+            get(get_material_test)
+                .put(update_material_test)
+                .delete(delete_material_test),
         )
-        .route("/api/v1/material-tests/project/{project_id}", get(list_by_project))
-        .route("/api/v1/material-tests/experiment/{experiment_id}", get(list_by_experiment))
+        .route(
+            "/api/v1/material-tests/project/{project_id}",
+            get(list_by_project),
+        )
+        .route(
+            "/api/v1/material-tests/experiment/{experiment_id}",
+            get(list_by_experiment),
+        )
         .with_state(state);
 
     Ok(app)
@@ -272,7 +282,12 @@ async fn update_material_test(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => return Json(ApiResponse::error(404, "原料试验记录不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询原料试验记录失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("查询原料试验记录失败: {}", e),
+            ))
+        }
     };
 
     let material_name = req.material_name.unwrap_or(existing.material_name);
@@ -319,7 +334,9 @@ async fn delete_material_test(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "原料试验记录删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "原料试验记录删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "原料试验记录不存在")),
         Err(e) => {
             tracing::error!("删除原料试验记录失败: {}", e);

@@ -677,6 +677,7 @@ async fn export_samples(
 
     match result {
         Ok(samples) => {
+            let sample_count = samples.len();
             let mut wtr = csv::Writer::from_writer(vec![]);
             
             // Write header
@@ -698,7 +699,7 @@ async fn export_samples(
                 ).await;
                 return (
                     [(header::CONTENT_TYPE, "application/json")],
-                    Json(ApiResponse::error(500, "导出失败")),
+                    Json(ApiResponse::<()>::error(500, "导出失败")),
                 ).into_response();
             }
             
@@ -733,7 +734,7 @@ async fn export_samples(
                     ).await;
                     return (
                         [(header::CONTENT_TYPE, "application/json")],
-                        Json(ApiResponse::error(500, "导出失败")),
+                        Json(ApiResponse::<()>::error(500, "导出失败")),
                     ).into_response();
                 }
             }
@@ -751,7 +752,7 @@ async fn export_samples(
                         None,
                         None,
                         None,
-                        Some(serde_json::json!({ "count": samples.len(), "filename": filename })),
+                        Some(serde_json::json!({ "count": sample_count, "filename": filename })),
                         "success".to_string(),
                         None,
                         &headers,
@@ -783,7 +784,7 @@ async fn export_samples(
                     ).await;
                     (
                         [(header::CONTENT_TYPE, "application/json")],
-                        Json(ApiResponse::error(500, "导出失败")),
+                        Json(ApiResponse::<()>::error(500, "导出失败")),
                     ).into_response()
                 }
             }
@@ -806,7 +807,7 @@ async fn export_samples(
             ).await;
             (
                 [(header::CONTENT_TYPE, "application/json")],
-                Json(ApiResponse::error(500, "导出失败")),
+                Json(ApiResponse::<()>::error(500, "导出失败")),
             ).into_response()
         }
     }

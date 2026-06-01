@@ -1,22 +1,11 @@
 mod api;
 mod models;
+mod services;
 
-use axum::{
-    extract::FromRef,
-    routing::get,
-    Json,
-    Router,
-};
+use axum::{extract::FromRef, routing::get, Json, Router};
 use topems_shared::{
-    ApiResponse,
-    AuthState,
-    auth_middleware,
-    init_logging,
-    create_database_pool,
-    test_database_connection,
-    create_cors_layer,
-    Config,
-    Result,
+    auth_middleware, create_cors_layer, create_database_pool, init_logging,
+    test_database_connection, ApiResponse, AuthState, Config, Result,
 };
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -42,15 +31,34 @@ async fn main() -> Result<()> {
 
     // 2. 加载配置
     let config = Config::load().await?;
+    let db_config = config.get_database().await;
     tracing::info!("Configuration loaded, environment: {}", config.env());
+    tracing::info!("Database URL: {}", db_config.url);
+    tracing::info!("Database Name: {}", db_config.name);
 
     // 3. 创建数据库连接池
-    let pool = create_database_pool(&config.get_database().await).await?;
+    let pool = create_database_pool(&db_config).await?;
     test_database_connection(&pool).await?;
+
+    // 测试查询
+    let test_result = sqlx::query("SELECT current_database(), current_user").fetch_one(&pool).await;
+    tracing::info!("Test query result: {:?}", test_result);
+    
+    let search_path = sqlx::query("SHOW search_path").fetch_one(&pool).await;
+    tracing::info!("Search path: {:?}", search_path);
+    
+    let schemas = sqlx::query("SELECT schema_name FROM information_schema.schemata").fetch_all(&pool).await;
+    tracing::info!("Schemas: {:?}", schemas);
+    
+    let tables = sqlx::query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'rs'").fetch_all(&pool).await;
+    tracing::info!("RS tables: {:?}", tables);
+    
+    let test_projects = sqlx::query("SET search_path TO rs, public; SELECT * FROM projects LIMIT 1").fetch_one(&pool).await;
+    tracing::info!("Test projects query: {:?}", test_projects);
 
     // 4. 初始化数据库表
     if let Err(e) = init_db(&pool).await {
-        tracing::warn!("数据库初始化警告: {}", e);
+        tracing::warn!("Database initialization warning: {}", e);
     }
 
     let app_state = AppState {
@@ -70,6 +78,10 @@ async fn main() -> Result<()> {
         .merge(api::doc_integration::create_routes(pool.clone()).await?)
         .merge(api::ai_integration::create_routes(pool.clone()).await?)
         .merge(api::audit::create_routes(pool.clone()).await?)
+        .merge(api::project_phase::create_routes(pool.clone()).await?)
+        .merge(api::project_milestone::create_routes(pool.clone()).await?)
+        .merge(api::project_member::create_routes(pool.clone()).await?)
+        .merge(api::project_report::create_routes(pool.clone()).await?)
         // .merge(SwaggerUi::new("/swagger-ui"))
         // .route("/api-docs/openapi.json", get(serve_openapi_json))
         .layer(axum::middleware::from_fn_with_state(
@@ -82,8 +94,8 @@ async fn main() -> Result<()> {
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-RS 科研研发管理系统启动中...");
-    tracing::info!("📦 端口: {}", port);
-    tracing::info!("🔒 认证保护已启用");
+    tracing::info!("📦 Port: {}", port);
+    tracing::info!("🔒 Authentication enabled");
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
@@ -92,7 +104,7 @@ async fn main() -> Result<()> {
 }
 
 async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("TOPEMS-RS is running", "健康检查"))
+    Json(ApiResponse::success("TOPEMS-RS is running", "Health check"))
 }
 
 // async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
@@ -104,7 +116,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS rs")
         .execute(pool)
         .await?;
-        
+
     // 创建项目表
     sqlx::query(
         r#"
@@ -208,6 +220,73 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
+    // 创建项目阶段表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS rs.project_phases (
+            id UUID PRIMARY KEY,
+            project_id UUID NOT NULL REFERENCES rs.projects(id) ON DELETE CASCADE,
+            phase_number INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            start_date TIMESTAMPTZ,
+            end_date TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'not_started',
+            progress INTEGER NOT NULL DEFAULT 0,
+            predecessor_id UUID REFERENCES rs.project_phases(id) ON DELETE SET NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 创建项目里程碑表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS rs.project_milestones (
+            id UUID PRIMARY KEY,
+            project_id UUID NOT NULL REFERENCES rs.projects(id) ON DELETE CASCADE,
+            phase_id UUID REFERENCES rs.project_phases(id) ON DELETE SET NULL,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            target_date TIMESTAMPTZ,
+            actual_date TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 创建项目成员表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS rs.project_members (
+            id UUID PRIMARY KEY,
+            project_id UUID NOT NULL REFERENCES rs.projects(id) ON DELETE CASCADE,
+            employee_id VARCHAR(255) NOT NULL,
+            role VARCHAR(100) NOT NULL,
+            responsibility TEXT,
+            allocation NUMERIC(5, 2) NOT NULL DEFAULT 1.0,
+            join_date TIMESTAMPTZ,
+            leave_date TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            hourly_rate NUMERIC(10, 2),
+            cost_rate NUMERIC(10, 2),
+            budgeted_hours NUMERIC(10, 2),
+            actual_hours NUMERIC(10, 2),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     // 创建审计日志表
     sqlx::query(
         r#"
@@ -251,9 +330,11 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_code ON rs.experiments(code)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_project_id ON rs.experiments(project_id)"#)
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        r#"CREATE INDEX IF NOT EXISTS idx_experiments_project_id ON rs.experiments(project_id)"#,
+    )
+    .execute(pool)
+    .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_status ON rs.experiments(status)"#)
         .execute(pool)
         .await?;
@@ -269,15 +350,19 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON rs.audit_logs(action)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON rs.audit_logs(entity_type)"#)
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON rs.audit_logs(entity_type)"#,
+    )
+    .execute(pool)
+    .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON rs.audit_logs(user_id)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON rs.audit_logs(created_at)"#)
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON rs.audit_logs(created_at)"#,
+    )
+    .execute(pool)
+    .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON rs.audit_logs(status)"#)
         .execute(pool)
         .await?;

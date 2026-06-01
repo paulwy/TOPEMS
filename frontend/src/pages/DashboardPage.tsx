@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   FileText, GitBranch, Bot, Brain,
@@ -8,7 +8,7 @@ import {
   Building, Folder, BarChart3, Box,
   MapPin, Smartphone, MessageSquare, Receipt, TrendingUp,
   Briefcase, Calendar, DollarSign, BookOpen, HelpCircle, FileText as FileTemplate,
-  Settings
+  Settings, CheckCircle, XCircle, ChevronRight, Bell
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
@@ -25,6 +25,9 @@ import { useRole } from '../hooks/useRole';
 import { useAuth } from '../hooks/useAuth';
 import { NotificationBell } from '../components/notifications';
 import { ModeToggle } from '../components/ModeToggle';
+import { StatsChart } from '../components/StatsChart';
+import { MetricCard } from '../components/MetricCard';
+import { useAppStore } from '../store';
 
 interface DashboardPageProps {
   onLogout?: () => void;
@@ -34,12 +37,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout: authLogout, isAuthenticated } = useAuth();
+  const { shortcuts } = useAppStore((state) => ({ shortcuts: state.shortcuts }));
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [stats, setStats] = useState({
     fileCount: 0,
     workflowCount: 0,
-    docCount: 0
+    docCount: 0,
+    notificationCount: 0
+  });
+  const [moduleStats, setModuleStats] = useState({
+    qms: { total: 25, active: 23 },
+    ehs: { total: 20, active: 18 },
+    srm: { total: 15, active: 14 },
+    lims: { total: 20, active: 19 },
+    rs: { total: 12, active: 10 }
+  });
+  const [chartData, setChartData] = useState({
+    moduleDistribution: [] as { name: string; value: number; color: string }[],
+    monthlyTrend: [] as { name: string; value: number }[]
   });
   const [serviceStatuses, setServiceStatuses] = useState<Record<string, boolean>>({
     iam: false,
@@ -52,8 +68,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     notification: false
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [recentActivities, setRecentActivities] = useState<Array<{
+    id: string;
+    title: string;
+    type: string;
+    time: string;
+    icon: React.ReactNode;
+  }>>([]);
   
-  const { canAccessModule, canAdminModule, getModulePermissions } = usePermission();
+  const { canAccessModule, canAdminModule } = usePermission();
   const { getRoleName } = useRole();
 
   useEffect(() => {
@@ -64,23 +87,26 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
     const init = async () => {
       try {
-        // 检查服务状态和加载统计
-    const serviceChecks = [
-      checkServiceStatus('iam', authApi).catch(() => {}),
-      checkServiceStatus('doc', docApi).catch(() => {}),
-      checkServiceStatus('ai', aiApi).catch(() => {}),
-      checkServiceStatus('flow', flowApi).catch(() => {}),
-      checkServiceStatus('erp', erpApi).catch(() => {}),
-      checkServiceStatus('hrm', hrmApi).catch(() => {}),
-      checkServiceStatus('mobile', mobileApi).catch(() => {}),
-      checkServiceStatus('notification', notificationServiceApi).catch(() => {})
-    ];
+        const serviceChecks = [
+          checkServiceStatus('iam', authApi).catch(() => {}),
+          checkServiceStatus('doc', docApi).catch(() => {}),
+          checkServiceStatus('ai', aiApi).catch(() => {}),
+          checkServiceStatus('flow', flowApi).catch(() => {}),
+          checkServiceStatus('erp', erpApi).catch(() => {}),
+          checkServiceStatus('hrm', hrmApi).catch(() => {}),
+          checkServiceStatus('mobile', mobileApi).catch(() => {}),
+          checkServiceStatus('notification', notificationServiceApi).catch(() => {})
+        ];
         
         const statsPromise = loadStats().catch((err) => {
           console.warn('加载统计数据失败:', err);
         });
         
-        await Promise.all([...serviceChecks, statsPromise]);
+        const activitiesPromise = loadRecentActivities().catch((err) => {
+          console.warn('加载最近活动失败:', err);
+        });
+        
+        await Promise.all([...serviceChecks, statsPromise, activitiesPromise]);
       } catch (err) {
         console.error('初始化失败:', err);
       } finally {
@@ -91,16 +117,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     init();
   }, [navigate, isAuthenticated]);
 
-  const checkServiceStatus = async (key: string, api: any) => {
+  const checkServiceStatus = useCallback(async (key: string, api: any) => {
     try {
       await api.health();
       setServiceStatuses(prev => ({ ...prev, [key]: true }));
     } catch {
       setServiceStatuses(prev => ({ ...prev, [key]: false }));
     }
-  };
+  }, []);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const [docRes] = await Promise.allSettled([
         docApi.list()
@@ -109,14 +135,26 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       const newStats = {
         fileCount: docRes.status === 'fulfilled' && docRes.value.success && docRes.value.data?.files?.length || 0,
         workflowCount: 0,
-        docCount: 0
+        docCount: 0,
+        notificationCount: 5
       };
 
       setStats(newStats);
     } catch (err) {
       console.error('加载统计失败:', err);
     }
-  };
+  }, []);
+
+  const loadRecentActivities = useCallback(async () => {
+    const activities = [
+      { id: '1', title: '成功登录系统', type: '系统', time: '刚刚', icon: <User className="w-4 h-4" /> },
+      { id: '2', title: '上传文档 "项目报告.pdf"', type: '文档', time: '5分钟前', icon: <FileText className="w-4 h-4" /> },
+      { id: '3', title: '审批通过采购申请', type: '工作流', time: '15分钟前', icon: <GitBranch className="w-4 h-4" /> },
+      { id: '4', title: '创建新文件夹 "研发资料"', type: '文档', time: '1小时前', icon: <Folder className="w-4 h-4" /> },
+      { id: '5', title: '完成安全培训课程', type: '培训', time: '2小时前', icon: <BookOpen className="w-4 h-4" /> },
+    ];
+    setRecentActivities(activities);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -125,10 +163,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     authLogout();
     navigate('/login');
-  };
+  }, [authLogout, navigate]);
+
+  const handleQuickAccess = useCallback((path: string) => {
+    navigate(path);
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -446,12 +488,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     },
   ].filter(module => !module.permission || canAccessModule(module.module) || canAdminModule(module.module));
 
-  const quickActions = [
-    { label: '上传文件', icon: FileText, action: () => navigate('/documents') },
-    { label: 'AI 问答', icon: Brain, action: () => navigate('/ai') },
-    { label: '发起流程', icon: GitBranch, action: () => navigate('/workflows') },
-    { label: '我的待办', icon: Clock, action: () => navigate('/workflows') },
-  ];
+  const quickActions = useMemo(() => [
+    { label: '上传文件', icon: FileText, path: '/documents', color: 'text-blue-500' },
+    { label: 'AI 问答', icon: Brain, path: '/ai', color: 'text-purple-500' },
+    { label: '发起流程', icon: GitBranch, path: '/workflows', color: 'text-green-500' },
+    { label: '我的待办', icon: Clock, path: '/workflows', color: 'text-orange-500' },
+    { label: '通知中心', icon: Bell, path: '/notifications', color: 'text-yellow-500' },
+    { label: '个人中心', icon: User, path: '/profile', color: 'text-indigo-500' },
+  ], []);
 
   const onlineServices = Object.values(serviceStatuses).filter(Boolean).length;
   const currentPage = location.pathname.replace('/', '') || 'dashboard';
@@ -549,7 +593,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               </div>
               <ModeToggle />
               <NotificationBell />
-              <div className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 rounded-lg">
+              <div className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors" onClick={() => navigate('/profile')}>
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
                     {(user?.full_name || user?.username)?.charAt(0).toUpperCase()}
@@ -632,16 +676,19 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
           <h3 className="text-lg font-semibold text-slate-900 mb-3">快速操作</h3>
           <div className="grid grid-cols-4 gap-2 mb-6">
-            {quickActions.map((action) => (
-              <button
-                key={action.label}
-                onClick={action.action}
-                className="flex flex-col items-center p-2 bg-white rounded-lg"
-              >
-                <action.icon className="w-5 h-5 text-slate-600 mb-1" />
-                <span className="text-xs text-slate-700">{action.label}</span>
-              </button>
-            ))}
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.label}
+                  onClick={() => handleQuickAccess(action.path)}
+                  className="flex flex-col items-center p-2 bg-white rounded-lg"
+                >
+                  <Icon className="w-5 h-5 text-slate-600 mb-1" />
+                  <span className="text-xs text-slate-700">{action.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <h3 className="text-lg font-semibold text-slate-900 mb-3">服务状态</h3>
@@ -674,50 +721,166 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         </div>
 
         {/* Quick Actions */}
-        <div className="mb-8 bg-white rounded-xl shadow-sm p-4">
+        <div className="mb-8 bg-white rounded-xl shadow-sm p-6">
           <h3 className="text-lg font-semibold text-slate-900 mb-4">⚡ 快速操作</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {quickActions.map((action) => (
-              <button
-                key={action.label}
-                onClick={action.action}
-                className="flex items-center space-x-3 p-3 bg-slate-50 hover:bg-blue-50 rounded-lg transition-colors group"
-              >
-                <action.icon className="w-5 h-5 text-slate-500 group-hover:text-blue-600" />
-                <span className="text-sm font-medium text-slate-700 group-hover:text-blue-700">
-                  {action.label}
-                </span>
-              </button>
-            ))}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.label}
+                  onClick={() => handleQuickAccess(action.path)}
+                  className="flex flex-col items-center space-y-2 p-4 bg-gradient-to-br from-slate-50 to-slate-100 hover:from-blue-50 hover:to-blue-100 rounded-xl transition-all group hover:shadow-md"
+                >
+                  <div className={`w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center ${action.color} group-hover:scale-110 transition-transform`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700 group-hover:text-blue-700">
+                    {action.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <StatCard
+          <MetricCard
             title="用户角色"
             value={getRoleName()}
-            icon={User}
+            icon={<User className="w-6 h-6" />}
             color="blue"
           />
-          <StatCard
+          <MetricCard
             title="在线服务"
             value={String(onlineServices)}
-            icon={Activity}
+            icon={<Activity className="w-6 h-6" />}
             color="green"
+            change={onlineServices > 5 ? 10 : -5}
           />
-          <StatCard
+          <MetricCard
             title="文件数量"
             value={String(stats.fileCount)}
-            icon={FileText}
+            icon={<FileText className="w-6 h-6" />}
             color="purple"
+            change={8}
           />
-          <StatCard
+          <MetricCard
             title="工作流"
             value={String(stats.workflowCount)}
-            icon={GitBranch}
+            icon={<GitBranch className="w-6 h-6" />}
             color="orange"
+            change={-3}
           />
+        </div>
+
+        {/* Module Statistics Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <StatsChart
+            type="pie"
+            title="业务模块分布"
+            data={chartData.moduleDistribution.length > 0 ? chartData.moduleDistribution : [
+              { name: '质量管理', value: 25, color: '#6366f1' },
+              { name: '安全管理', value: 20, color: '#8b5cf6' },
+              { name: '供应商管理', value: 15, color: '#a855f7' },
+              { name: '实验室管理', value: 20, color: '#d946ef' },
+              { name: '研发管理', value: 20, color: '#ec4899' }
+            ]}
+            yKey="value"
+          />
+          <StatsChart
+            type="line"
+            title="月度趋势"
+            data={chartData.monthlyTrend.length > 0 ? chartData.monthlyTrend : [
+              { name: '1月', value: 65 },
+              { name: '2月', value: 78 },
+              { name: '3月', value: 85 },
+              { name: '4月', value: 72 },
+              { name: '5月', value: 90 },
+              { name: '6月', value: 88 }
+            ]}
+            yKey="value"
+          />
+        </div>
+
+        {/* Module Status Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <Shield className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">质量管理</p>
+                <p className="text-xl font-bold text-slate-900">{moduleStats.qms.total}</p>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center text-xs">
+              <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-green-600">{moduleStats.qms.active} 活跃</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">安全管理</p>
+                <p className="text-xl font-bold text-slate-900">{moduleStats.ehs.total}</p>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center text-xs">
+              <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-green-600">{moduleStats.ehs.active} 活跃</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">供应商</p>
+                <p className="text-xl font-bold text-slate-900">{moduleStats.srm.total}</p>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center text-xs">
+              <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-green-600">{moduleStats.srm.active} 活跃</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
+                <ClipboardList className="w-5 h-5 text-cyan-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">实验室</p>
+                <p className="text-xl font-bold text-slate-900">{moduleStats.lims.total}</p>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center text-xs">
+              <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-green-600">{moduleStats.lims.active} 活跃</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <FlaskConical className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">研发</p>
+                <p className="text-xl font-bold text-slate-900">{moduleStats.rs.total}</p>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center text-xs">
+              <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-green-600">{moduleStats.rs.active} 活跃</span>
+            </div>
+          </div>
         </div>
 
         {/* Core Modules */}
@@ -806,6 +969,41 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 status={serviceStatuses[service.key]}
                 icon={service.icon}
               />
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Activities */}
+        <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center justify-between">
+            <span className="flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-blue-500" />
+              最近活动
+            </span>
+            <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center">
+              查看全部 <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </h3>
+          <div className="space-y-4">
+            {recentActivities.map((activity) => (
+              <div
+                key={activity.id}
+                className="flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                  {activity.icon}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-900">{activity.title}</p>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">
+                      {activity.type}
+                    </span>
+                    <span className="text-xs text-slate-400">{activity.time}</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </div>
             ))}
           </div>
         </div>

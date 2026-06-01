@@ -1,8 +1,8 @@
 use axum::{
+    body::Bytes,
     extract::{Path, Query, State},
     http::{header, HeaderMap},
     response::{IntoResponse, Response},
-    body::Bytes,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -10,8 +10,8 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
-use utoipa::{ToSchema, IntoParams};
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use topems_shared::response::ApiResponse;
@@ -54,20 +54,22 @@ pub struct BatchOperationResult {
     pub errors: Vec<String>,
 }
 
-
-
 pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
         .route("/api/v1/projects", get(list_projects).post(create_project))
-        .route("/api/v1/projects/batch", post(batch_create_projects).delete(batch_delete_projects))
+        .route(
+            "/api/v1/projects/batch",
+            post(batch_create_projects).delete(batch_delete_projects),
+        )
         .route("/api/v1/projects/export", get(export_projects))
         .route("/api/v1/projects/import", post(import_projects))
         .route(
             "/api/v1/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
         )
+        // .route("/api/v1/projects/{id}/panorama", get(get_project_panorama))
         .with_state(state);
 
     Ok(app)
@@ -206,14 +208,14 @@ async fn create_project(
         Ok(project) => (
             Json(ApiResponse::success(project.clone(), "项目创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建项目失败: {}", e);
             (
                 Json(ApiResponse::error(500, "项目创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -238,7 +240,8 @@ async fn create_project(
         status_str.to_string(),
         error_msg,
         &headers,
-    ).await;
+    )
+    .await;
 
     response
 }
@@ -323,7 +326,11 @@ async fn update_project(
 
     let name = req.name.clone().unwrap_or(existing.name);
     let description = req.description.clone().or(existing.description);
-    let status = req.status.clone().unwrap_or(existing.status);
+    let status = req
+        .status
+        .clone()
+        .map(|s| s.to_string())
+        .unwrap_or(existing.status);
     let leader = req.leader.clone().unwrap_or(existing.leader);
     let team_members = req.team_members.clone().unwrap_or(existing.team_members);
     let end_date = req.end_date.or(existing.end_date);
@@ -359,14 +366,14 @@ async fn update_project(
         Ok(project) => (
             Json(ApiResponse::success(project.clone(), "项目更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新项目失败: {}", e);
             (
                 Json(ApiResponse::error(500, "项目更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -391,7 +398,8 @@ async fn update_project(
         status_str.to_string(),
         error_msg,
         &headers,
-    ).await;
+    )
+    .await;
 
     response
 }
@@ -426,19 +434,19 @@ async fn delete_project(
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success("".to_string(), "项目删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(ApiResponse::error(404, "项目不存在")),
             "error",
-            Some("项目不存在".to_string())
+            Some("项目不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除项目失败: {}", e);
             (
                 Json(ApiResponse::error(500, "项目删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -462,7 +470,8 @@ async fn delete_project(
         status_str.to_string(),
         error_msg,
         &headers,
-    ).await;
+    )
+    .await;
 
     response
 }
@@ -511,7 +520,9 @@ async fn batch_create_projects(
         .bind(&project_req.project_type)
         .bind("draft")
         .bind(&project_req.leader)
-        .bind(serde_json::to_value(project_req.team_members.clone()).unwrap_or(serde_json::json!([])))
+        .bind(
+            serde_json::to_value(project_req.team_members.clone()).unwrap_or(serde_json::json!([])),
+        )
         .bind(project_req.start_date)
         .bind(project_req.end_date)
         .bind(project_req.budget)
@@ -539,7 +550,11 @@ async fn batch_create_projects(
         errors,
     };
 
-    let status = if success == total { "success" } else { "partial" };
+    let status = if success == total {
+        "success"
+    } else {
+        "partial"
+    };
     let response_data = serde_json::to_value(&result).ok();
 
     crate::api::audit::log_audit_event(
@@ -559,7 +574,8 @@ async fn batch_create_projects(
             None
         },
         &headers,
-    ).await;
+    )
+    .await;
 
     if success == total {
         Json(ApiResponse::success(result, "批量创建项目成功"))
@@ -590,12 +606,10 @@ async fn batch_delete_projects(
         return Json(ApiResponse::error(400, "未提供要删除的项目 ID"));
     }
 
-    let result = sqlx::query(
-        r#"DELETE FROM rs.projects WHERE id = ANY($1)"#,
-    )
-    .bind(&req.ids)
-    .execute(&state.db)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM rs.projects WHERE id = ANY($1)"#)
+        .bind(&req.ids)
+        .execute(&state.db)
+        .await;
 
     match result {
         Ok(r) => {
@@ -605,10 +619,18 @@ async fn batch_delete_projects(
                 total,
                 success: affected,
                 failed: total - affected,
-                errors: if affected == total { vec![] } else { vec!["部分项目可能不存在".to_string()] },
+                errors: if affected == total {
+                    vec![]
+                } else {
+                    vec!["部分项目可能不存在".to_string()]
+                },
             };
 
-            let status = if affected == total { "success" } else { "partial" };
+            let status = if affected == total {
+                "success"
+            } else {
+                "partial"
+            };
             let response_data = serde_json::to_value(&result).ok();
 
             crate::api::audit::log_audit_event(
@@ -628,7 +650,8 @@ async fn batch_delete_projects(
                     None
                 },
                 &headers,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::success(result, "批量删除操作完成"))
         }
@@ -648,7 +671,8 @@ async fn batch_delete_projects(
                 "error".to_string(),
                 Some(e.to_string()),
                 &headers,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::error(500, "批量删除失败"))
         }
@@ -667,10 +691,7 @@ async fn batch_delete_projects(
         ("bearer_auth" = [])
     )
 )]
-async fn export_projects(
-    State(state): State<Arc<AppState>>,
-    headers: HeaderMap,
-) -> Response {
+async fn export_projects(State(state): State<Arc<AppState>>, headers: HeaderMap) -> Response {
     let result = sqlx::query_as::<_, Project>(
         r#"
         SELECT id, name, code, description, project_type, status, leader,
@@ -687,11 +708,27 @@ async fn export_projects(
         Ok(projects) => {
             let project_count = projects.len();
             let mut wtr = csv::Writer::from_writer(vec![]);
-            
+
             // Write header
-            if let Err(e) = wtr.write_record(&["id", "name", "code", "description", "project_type", "status", "leader", "team_members", "start_date", "end_date", "budget", "progress", "created_by", "created_at", "updated_at"]) {
+            if let Err(e) = wtr.write_record(&[
+                "id",
+                "name",
+                "code",
+                "description",
+                "project_type",
+                "status",
+                "leader",
+                "team_members",
+                "start_date",
+                "end_date",
+                "budget",
+                "progress",
+                "created_by",
+                "created_at",
+                "updated_at",
+            ]) {
                 tracing::error!("导出项目 CSV 头部失败: {}", e);
-                
+
                 crate::api::audit::log_audit_event(
                     &state.db,
                     "export".to_string(),
@@ -705,14 +742,16 @@ async fn export_projects(
                     "error".to_string(),
                     Some(e.to_string()),
                     &headers,
-                ).await;
-                
+                )
+                .await;
+
                 return (
                     [(header::CONTENT_TYPE, "application/json")],
                     Json(ApiResponse::<&str>::error(500, "导出失败")),
-                ).into_response();
+                )
+                    .into_response();
             }
-            
+
             // Write rows
             for project in projects {
                 let row = vec![
@@ -732,10 +771,10 @@ async fn export_projects(
                     project.created_at.to_rfc3339(),
                     project.updated_at.to_rfc3339(),
                 ];
-                
+
                 if let Err(e) = wtr.write_record(&row) {
                     tracing::error!("导出项目 CSV 行失败: {}", e);
-                    
+
                     crate::api::audit::log_audit_event(
                         &state.db,
                         "export".to_string(),
@@ -749,19 +788,21 @@ async fn export_projects(
                         "error".to_string(),
                         Some(e.to_string()),
                         &headers,
-                    ).await;
-                    
+                    )
+                    .await;
+
                     return (
                         [(header::CONTENT_TYPE, "application/json")],
                         Json(ApiResponse::<&str>::error(500, "导出失败")),
-                    ).into_response();
+                    )
+                        .into_response();
                 }
             }
-            
+
             match wtr.into_inner() {
                 Ok(data) => {
                     let filename = format!("projects_{}.csv", Utc::now().format("%Y%m%d_%H%M%S"));
-                    
+
                     crate::api::audit::log_audit_event(
                         &state.db,
                         "export".to_string(),
@@ -775,19 +816,24 @@ async fn export_projects(
                         "success".to_string(),
                         None,
                         &headers,
-                    ).await;
-                    
+                    )
+                    .await;
+
                     (
                         [
                             (header::CONTENT_TYPE, "text/csv"),
-                            (header::CONTENT_DISPOSITION, &format!("attachment; filename=\"{}\"", filename)),
+                            (
+                                header::CONTENT_DISPOSITION,
+                                &format!("attachment; filename=\"{}\"", filename),
+                            ),
                         ],
                         data,
-                    ).into_response()
+                    )
+                        .into_response()
                 }
                 Err(e) => {
                     tracing::error!("导出项目 CSV 完成失败: {}", e);
-                    
+
                     crate::api::audit::log_audit_event(
                         &state.db,
                         "export".to_string(),
@@ -801,18 +847,20 @@ async fn export_projects(
                         "error".to_string(),
                         Some(e.to_string()),
                         &headers,
-                    ).await;
-                    
+                    )
+                    .await;
+
                     (
                         [(header::CONTENT_TYPE, "application/json")],
                         Json(ApiResponse::<&str>::error(500, "导出失败")),
-                    ).into_response()
+                    )
+                        .into_response()
                 }
             }
         }
         Err(e) => {
             tracing::error!("导出项目失败: {}", e);
-            
+
             crate::api::audit::log_audit_event(
                 &state.db,
                 "export".to_string(),
@@ -826,12 +874,14 @@ async fn export_projects(
                 "error".to_string(),
                 Some(e.to_string()),
                 &headers,
-            ).await;
-            
+            )
+            .await;
+
             (
                 [(header::CONTENT_TYPE, "application/json")],
                 Json(ApiResponse::<&str>::error(500, "导出失败")),
-            ).into_response()
+            )
+                .into_response()
         }
     }
 }
@@ -859,7 +909,7 @@ async fn import_projects(
         Ok(h) => h.clone(),
         Err(e) => {
             tracing::error!("解析 CSV 头部失败: {}", e);
-            
+
             crate::api::audit::log_audit_event(
                 &state.db,
                 "import".to_string(),
@@ -873,16 +923,17 @@ async fn import_projects(
                 "error".to_string(),
                 Some(e.to_string()),
                 &headers,
-            ).await;
-            
+            )
+            .await;
+
             return Json(ApiResponse::error(400, "CSV 格式错误"));
         }
     };
-    
+
     let mut success = 0;
     let mut errors = Vec::new();
     let mut row_num = 0;
-    
+
     for result in rdr.records() {
         row_num += 1;
         match result {
@@ -892,21 +943,44 @@ async fn import_projects(
                     errors.push(format!("第 {} 行: 项目名称不能为空", row_num));
                     continue;
                 }
-                
+
                 let code = record.get(2).unwrap_or_default().to_string();
-                let description = record.get(3).and_then(|s| if s.is_empty() { None } else { Some(s.to_string()) });
+                let description = record.get(3).and_then(|s| {
+                    if s.is_empty() {
+                        None
+                    } else {
+                        Some(s.to_string())
+                    }
+                });
                 let project_type = record.get(4).unwrap_or("research").to_string();
                 let leader = record.get(6).unwrap_or_default().to_string();
                 let team_members_str = record.get(7).unwrap_or_default();
-                let team_members: Vec<String> = serde_json::from_str(team_members_str).unwrap_or(vec![]);
-                
-                let start_date = record.get(8).and_then(|s| if s.is_empty() { None } else { chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc)) });
-                let end_date = record.get(9).and_then(|s| if s.is_empty() { None } else { chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc)) });
+                let team_members: Vec<String> =
+                    serde_json::from_str(team_members_str).unwrap_or(vec![]);
+
+                let start_date = record.get(8).and_then(|s| {
+                    if s.is_empty() {
+                        None
+                    } else {
+                        chrono::DateTime::parse_from_rfc3339(s)
+                            .ok()
+                            .map(|d| d.with_timezone(&Utc))
+                    }
+                });
+                let end_date = record.get(9).and_then(|s| {
+                    if s.is_empty() {
+                        None
+                    } else {
+                        chrono::DateTime::parse_from_rfc3339(s)
+                            .ok()
+                            .map(|d| d.with_timezone(&Utc))
+                    }
+                });
                 let budget = record.get(10).and_then(|s| s.parse::<f64>().ok());
-                
+
                 let id = Uuid::new_v4();
                 let now = Utc::now();
-                
+
                 let insert_result = sqlx::query_as::<_, Project>(
                     r#"
                     INSERT INTO rs.projects (
@@ -936,7 +1010,7 @@ async fn import_projects(
                 .bind(now)
                 .fetch_one(&state.db)
                 .await;
-                
+
                 match insert_result {
                     Ok(_) => success += 1,
                     Err(e) => {
@@ -951,7 +1025,7 @@ async fn import_projects(
             }
         }
     }
-    
+
     let total = row_num;
     let result = BatchOperationResult {
         total,
@@ -959,10 +1033,14 @@ async fn import_projects(
         failed: total - success,
         errors,
     };
-    
-    let status = if success == total { "success" } else { "partial" };
+
+    let status = if success == total {
+        "success"
+    } else {
+        "partial"
+    };
     let response_data = serde_json::to_value(&result).ok();
-    
+
     crate::api::audit::log_audit_event(
         &state.db,
         "import".to_string(),
@@ -980,8 +1058,9 @@ async fn import_projects(
             None
         },
         &headers,
-    ).await;
-    
+    )
+    .await;
+
     if success == total {
         Json(ApiResponse::success(result, "导入完成"))
     } else {

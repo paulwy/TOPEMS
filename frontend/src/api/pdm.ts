@@ -29,6 +29,8 @@ export interface ProductionStep {
   duration_hours?: number;
   equipment_required?: string;
   sort_order: number;
+  status?: string;
+  duration?: number;
   created_at: string;
 }
 
@@ -191,5 +193,14 @@ export const pdmApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.pdm.get<string>('/health');
+  },
+
+  importData: async (type: string, file: File): Promise<ApiResponse<any>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    return apiClient.pdm.post<any>('/api/v1/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   },
 };

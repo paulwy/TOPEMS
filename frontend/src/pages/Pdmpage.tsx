@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Package, Plus, Search, ChevronRight, 
-  Factory, ClipboardList, TrendingUp, Activity, Loader2, X, Edit, Trash2, Check
+  Factory, ClipboardList, TrendingUp, Activity, Loader2, X, Edit, Trash2, Check, Download, Upload, AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -15,6 +15,8 @@ import {
   CreateProductionFormulaRequest,
   CreateProductionBatchRequest
 } from '../api/pdm';
+import { DataTable } from '../components/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'processes' | 'steps' | 'formulas' | 'batches' | 'stats';
 
@@ -34,6 +36,9 @@ const Pdmpage: React.FC = () => {
   const [formData, setFormData] = useState<{[key: string]: string}>({});
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<string[][] | null>(null);
 
   useEffect(() => {
     loadData();
@@ -41,13 +46,13 @@ const Pdmpage: React.FC = () => {
 
   const mapStatusToChinese = (status: string) => {
     const statusMap: Record<string, string> = {
-      'active': 'active',
-      'inactive': 'inactive',
-      'planning': 'planning',
-      'in_progress': 'in_progress',
-      'paused': 'paused',
-      'completed': 'completed',
-      'cancelled': 'cancelled'
+      'active': '启用',
+      'inactive': '禁用',
+      'planning': '规划中',
+      'in_progress': '进行中',
+      'paused': '已暂停',
+      'completed': '已完成',
+      'cancelled': '已取消'
     };
     return statusMap[status] || status;
   };
@@ -55,7 +60,8 @@ const Pdmpage: React.FC = () => {
   const adaptProcess = (item: any): any => {
     return {
       ...item,
-      version: item.version || '1.0'
+      version: item.version || '1.0',
+      status: mapStatusToChinese(item.status)
     };
   };
 
@@ -63,7 +69,8 @@ const Pdmpage: React.FC = () => {
     return {
       ...item,
       sort_order: item.sort_order || item.order || 0,
-      duration: item.duration || 0
+      duration: item.duration || 0,
+      status: mapStatusToChinese(item.status)
     };
   };
 
@@ -71,7 +78,8 @@ const Pdmpage: React.FC = () => {
     return {
       ...item,
       product_name: item.name || '',
-      version: item.version || '1.0'
+      version: item.version || '1.0',
+      status: mapStatusToChinese(item.status)
     };
   };
 
@@ -319,26 +327,11 @@ const Pdmpage: React.FC = () => {
     { id: 'stats', label: '生产统计', icon: TrendingUp }
   ];
 
-  const getCurrentData = () => {
-    switch (activeTab) {
-      case 'processes': return safeProcesses;
-      case 'steps': return safeSteps;
-      case 'formulas': return safeFormulas;
-      case 'batches': return safeBatches;
-      default: return [];
-    }
-  };
-
-  const filteredData = getCurrentData().filter((item: any) => {
-    const searchFields = Object.values(item).filter(v => typeof v === 'string').join(' ').toLowerCase();
-    return searchFields.includes(searchTerm.toLowerCase());
-  });
-
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800';
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('completed') || s.includes('完成')) return 'bg-green-100 text-green-800';
-    if (s.includes('inactive') || s.includes('cancelled') || s.includes('取消')) return 'bg-red-100 text-red-800';
+    if (s.includes('active') || s.includes('completed') || s.includes('完成') || s.includes('启用')) return 'bg-green-100 text-green-800';
+    if (s.includes('inactive') || s.includes('cancelled') || s.includes('取消') || s.includes('禁用')) return 'bg-red-100 text-red-800';
     if (s.includes('planning') || s.includes('in_progress') || s.includes('进行中')) return 'bg-blue-100 text-blue-800';
     if (s.includes('paused') || s.includes('暂停')) return 'bg-yellow-100 text-yellow-800';
     return 'bg-gray-100 text-gray-800';
@@ -384,7 +377,7 @@ const Pdmpage: React.FC = () => {
           <div>
             <p className="text-sm text-gray-500">已完成批次</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">
-              {safeBatches.filter(b => b.status === 'completed').length}
+              {safeBatches.filter(b => b.status === '已完成').length}
             </p>
           </div>
           <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
@@ -394,6 +387,244 @@ const Pdmpage: React.FC = () => {
       </div>
     </div>
   );
+
+  const processColumns: ColumnDef<ProductionProcess>[] = [
+    { accessorKey: 'process_no', header: '编号' },
+    { accessorKey: 'name', header: '名称' },
+    { accessorKey: 'description', header: '描述' },
+    { accessorKey: 'version', header: '版本' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const stepColumns: ColumnDef<ProductionStep>[] = [
+    { accessorKey: 'step_no', header: '编号' },
+    { accessorKey: 'process_id', header: '工艺ID' },
+    { accessorKey: 'name', header: '名称' },
+    { accessorKey: 'sort_order', header: '顺序' },
+    { accessorKey: 'duration', header: '时长(分钟)' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const formulaColumns: ColumnDef<ProductionFormula>[] = [
+    { accessorKey: 'formula_no', header: '编号' },
+    { accessorKey: 'name', header: '名称' },
+    { accessorKey: 'product_name', header: '产品' },
+    { accessorKey: 'version', header: '版本' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const batchColumns: ColumnDef<ProductionBatch>[] = [
+    { accessorKey: 'batch_no', header: '批次号' },
+    { accessorKey: 'formula_id', header: '配方ID' },
+    { accessorKey: 'product_name', header: '产品名称' },
+    { accessorKey: 'quantity', header: '数量' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const downloadTemplate = () => {
+    let headers: string[];
+    let sampleRow: string[];
+    
+    switch (activeTab) {
+      case 'processes':
+        headers = ['process_no', 'name', 'description', 'version', 'status'];
+        sampleRow = ['P001', '生产工艺1', '工艺描述', '1.0', 'active'];
+        break;
+      case 'steps':
+        headers = ['step_no', 'process_id', 'name', 'sort_order', 'duration'];
+        sampleRow = ['S001', 'process_id_here', '工序1', '1', '30'];
+        break;
+      case 'formulas':
+        headers = ['formula_no', 'name', 'product_name', 'version', 'status'];
+        sampleRow = ['F001', '配方1', '产品A', '1.0', 'active'];
+        break;
+      case 'batches':
+        headers = ['batch_no', 'formula_id', 'product_name', 'quantity', 'unit', 'status'];
+        sampleRow = ['B001', 'formula_id_here', '产品A', '100', 'kg', 'planning'];
+        break;
+      default:
+        headers = ['name'];
+        sampleRow = ['示例数据'];
+    }
+    
+    const content = [headers, sampleRow].map(row => row.join(',')).join('\n');
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeTab}_template.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImportFile(file);
+      
+      try {
+        const content = await file.text();
+        const lines = content.split('\n').slice(0, 6);
+        const preview = lines.map(line => line.split(','));
+        setImportPreview(preview);
+      } catch {
+        setImportPreview(null);
+      }
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      showNotification('error', '请选择要导入的文件');
+      return;
+    }
+
+    try {
+      const response = await pdmApi.importData(activeTab, importFile);
+      if (response.success) {
+        showNotification('success', '导入成功');
+        setShowImportModal(false);
+        setImportFile(null);
+        setImportPreview(null);
+        loadData();
+      } else {
+        showNotification('error', response.message || '导入失败');
+      }
+    } catch (err) {
+      showNotification('error', '导入失败');
+      console.error('导入失败:', err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-teal-50">
@@ -412,13 +643,22 @@ const Pdmpage: React.FC = () => {
             </div>
           </div>
           {activeTab !== 'stats' && (
-            <button 
-              onClick={openCreateModal}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              新建
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                <span>导入</span>
+              </button>
+              <button 
+                onClick={openCreateModal}
+                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                新建
+              </button>
+            </div>
           )}
         </div>
 
@@ -446,146 +686,64 @@ const Pdmpage: React.FC = () => {
           renderStats()
         ) : (
           <>
-            <div className="flex gap-4 mb-6">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="搜索..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="flex justify-center items-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      {activeTab === 'processes' && (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">编号</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">描述</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                        </>
-                      )}
-                      {activeTab === 'steps' && (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">编号</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">工艺ID</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">顺序</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                        </>
-                      )}
-                      {activeTab === 'formulas' && (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">编号</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">产品</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">版本</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                        </>
-                      )}
-                      {activeTab === 'batches' && (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">编号</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">配方ID</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">开始日期</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredData.map((item: any) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        {activeTab === 'processes' && (
-                          <>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.process_no}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.name}</td>
-                            <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{item.description}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
-                            </td>
-                          </>
-                        )}
-                        {activeTab === 'steps' && (
-                          <>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.step_no}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.process_id}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.name}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.sort_order}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
-                            </td>
-                          </>
-                        )}
-                        {activeTab === 'formulas' && (
-                          <>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.formula_no}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.name}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.product_name}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.version}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
-                            </td>
-                          </>
-                        )}
-                        {activeTab === 'batches' && (
-                          <>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.batch_no}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.formula_id}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity} {item.unit}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.start_date).toLocaleDateString()}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
-                            </td>
-                          </>
-                        )}
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end gap-2">
-                            <button 
-                              onClick={() => openEditModal(item)}
-                              className="text-teal-600 hover:text-teal-900"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => {
-                                if (confirm('确定要删除此项吗？')) {
-                                  handleDelete(item.id);
-                                }
-                              }}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {filteredData.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">暂无数据</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-4 border-b border-gray-200 bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="搜索..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
                   </div>
+                </div>
+              </div>
+              <div className="p-6">
+                {activeTab === 'processes' && (
+                  <DataTable
+                    columns={processColumns}
+                    data={safeProcesses}
+                    searchKey="name"
+                    searchPlaceholder="搜索工艺名称..."
+                    loading={loading}
+                    exportFileName="pdm-processes"
+                  />
+                )}
+                {activeTab === 'steps' && (
+                  <DataTable
+                    columns={stepColumns}
+                    data={safeSteps}
+                    searchKey="name"
+                    searchPlaceholder="搜索工序名称..."
+                    loading={loading}
+                    exportFileName="pdm-steps"
+                  />
+                )}
+                {activeTab === 'formulas' && (
+                  <DataTable
+                    columns={formulaColumns}
+                    data={safeFormulas}
+                    searchKey="name"
+                    searchPlaceholder="搜索配方名称..."
+                    loading={loading}
+                    exportFileName="pdm-formulas"
+                  />
+                )}
+                {activeTab === 'batches' && (
+                  <DataTable
+                    columns={batchColumns}
+                    data={safeBatches}
+                    searchKey="batch_no"
+                    searchPlaceholder="搜索批次号..."
+                    loading={loading}
+                    exportFileName="pdm-batches"
+                  />
                 )}
               </div>
-            )}
+            </div>
           </>
         )}
 
@@ -637,8 +795,8 @@ const Pdmpage: React.FC = () => {
                         onChange={(e) => setFormData({...formData, status: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       >
-                        <option value="active">active</option>
-                        <option value="inactive">inactive</option>
+                        <option value="active">启用</option>
+                        <option value="inactive">禁用</option>
                       </select>
                     </div>
                   </>
@@ -699,8 +857,8 @@ const Pdmpage: React.FC = () => {
                         onChange={(e) => setFormData({...formData, status: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       >
-                        <option value="active">active</option>
-                        <option value="inactive">inactive</option>
+                        <option value="active">启用</option>
+                        <option value="inactive">禁用</option>
                       </select>
                     </div>
                   </>
@@ -772,8 +930,8 @@ const Pdmpage: React.FC = () => {
                         onChange={(e) => setFormData({...formData, status: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       >
-                        <option value="active">active</option>
-                        <option value="inactive">inactive</option>
+                        <option value="active">启用</option>
+                        <option value="inactive">禁用</option>
                       </select>
                     </div>
                   </>
@@ -826,11 +984,11 @@ const Pdmpage: React.FC = () => {
                         onChange={(e) => setFormData({...formData, status: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       >
-                        <option value="planning">planning</option>
-                        <option value="in_progress">in_progress</option>
-                        <option value="paused">paused</option>
-                        <option value="completed">completed</option>
-                        <option value="cancelled">cancelled</option>
+                        <option value="planning">规划中</option>
+                        <option value="in_progress">进行中</option>
+                        <option value="paused">已暂停</option>
+                        <option value="completed">已完成</option>
+                        <option value="cancelled">已取消</option>
                       </select>
                     </div>
                   </>
@@ -849,6 +1007,83 @@ const Pdmpage: React.FC = () => {
                 >
                   <Check className="w-4 h-4" />
                   {modalType === 'create' ? '创建' : '保存'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showImportModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">导入数据</h3>
+                <button onClick={() => { setShowImportModal(false); setImportFile(null); setImportPreview(null); }} className="text-gray-400 hover:text-gray-500">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg p-8">
+                  <div className="text-center">
+                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-2">拖拽文件到此处上传</p>
+                    <label className="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 cursor-pointer">
+                      <span>选择文件</span>
+                      <input type="file" accept=".csv" onChange={handleImportFileChange} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+                
+                {importPreview && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">文件预览（前5行）：</p>
+                    <div className="border border-gray-300 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-50">
+                            {importPreview[0]?.map((cell, index) => (
+                              <th key={index} className="px-3 py-2 text-left font-medium text-gray-500">{cell}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {importPreview.slice(1).map((row, rowIndex) => (
+                            <tr key={rowIndex} className="border-t border-gray-200">
+                              {row.map((cell, cellIndex) => (
+                                <td key={cellIndex} className="px-3 py-2 text-gray-700">{cell}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={downloadTemplate}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>下载模板</span>
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end">
+                <button 
+                  onClick={() => { setShowImportModal(false); setImportFile(null); setImportPreview(null); }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={handleImport}
+                  disabled={!importFile}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Upload className="w-4 h-4" />
+                  导入
                 </button>
               </div>
             </div>

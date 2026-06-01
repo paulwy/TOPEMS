@@ -1,14 +1,13 @@
-
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 use topems_shared::response::ApiResponse;
 
@@ -58,10 +57,22 @@ struct ListQueryParams {
 pub async fn create_routes(pool: PgPool) -> topems_shared::Result<axum::Router> {
     let router = axum::Router::new()
         .route("/api/v1/documents", axum::routing::get(list_documents))
-        .route("/api/v1/documents", axum::routing::post(create_document_relation))
-        .route("/api/v1/documents/{id}", axum::routing::get(get_document_relation))
-        .route("/api/v1/documents/{id}", axum::routing::delete(delete_document_relation))
-        .route("/api/v1/entities/{entity_type}/{entity_id}/documents", axum::routing::get(get_entity_documents))
+        .route(
+            "/api/v1/documents",
+            axum::routing::post(create_document_relation),
+        )
+        .route(
+            "/api/v1/documents/{id}",
+            axum::routing::get(get_document_relation),
+        )
+        .route(
+            "/api/v1/documents/{id}",
+            axum::routing::delete(delete_document_relation),
+        )
+        .route(
+            "/api/v1/entities/{entity_type}/{entity_id}/documents",
+            axum::routing::get(get_entity_documents),
+        )
         .with_state(pool);
     Ok(router)
 }
@@ -85,9 +96,10 @@ async fn list_documents(
     .fetch_all(&pool)
     .await;
 
-    let total: Result<i64, sqlx::Error> = sqlx::query_scalar("SELECT COUNT(*) FROM rs.document_relations")
-        .fetch_one(&pool)
-        .await;
+    let total: Result<i64, sqlx::Error> =
+        sqlx::query_scalar("SELECT COUNT(*) FROM rs.document_relations")
+            .fetch_one(&pool)
+            .await;
 
     match (result, total) {
         (Ok(items), Ok(total_count)) => {
@@ -103,7 +115,10 @@ async fn list_documents(
             (StatusCode::OK, Json(response))
         }
         (_, Err(e)) | (Err(e), _) => {
-            let response = ApiResponse::<PaginatedResponse<DocumentRelation>>::error(500, &format!("获取文档关联列表失败: {}", e));
+            let response = ApiResponse::<PaginatedResponse<DocumentRelation>>::error(
+                500,
+                &format!("获取文档关联列表失败: {}", e),
+            );
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -144,7 +159,8 @@ async fn create_document_relation(
             (StatusCode::CREATED, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<DocumentRelation>::error(500, &format!("创建文档关联失败: {}", e));
+            let response =
+                ApiResponse::<DocumentRelation>::error(500, &format!("创建文档关联失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -172,7 +188,8 @@ async fn get_document_relation(
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<DocumentRelation>::error(500, &format!("获取文档关联失败: {}", e));
+            let response =
+                ApiResponse::<DocumentRelation>::error(500, &format!("获取文档关联失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -182,12 +199,11 @@ async fn delete_document_relation(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let result: Result<sqlx::postgres::PgQueryResult, sqlx::Error> = sqlx::query(
-        "DELETE FROM rs.document_relations WHERE id = $1"
-    )
-    .bind(id)
-    .execute(&pool)
-    .await;
+    let result: Result<sqlx::postgres::PgQueryResult, sqlx::Error> =
+        sqlx::query("DELETE FROM rs.document_relations WHERE id = $1")
+            .bind(id)
+            .execute(&pool)
+            .await;
 
     match result {
         Ok(res) if res.rows_affected() > 0 => {
@@ -226,7 +242,10 @@ async fn get_entity_documents(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<Vec<DocumentRelation>>::error(500, &format!("获取实体文档列表失败: {}", e));
+            let response = ApiResponse::<Vec<DocumentRelation>>::error(
+                500,
+                &format!("获取实体文档列表失败: {}", e),
+            );
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }

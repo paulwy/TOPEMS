@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: topems-postgres
+    environment:
+      POSTGRES_USER: topems
+      POSTGRES_PASSWORD: topems123
+      POSTGRES_DB: topems_iam
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U topems"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: topems-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  iam-service:
+    build:
+      context: ./services/topems-iam/backend
+      dockerfile: Dockerfile
+    container_name: topems-iam
+    environment:
+      DATABASE_URL: postgres://topems:topems123@postgres:5432/topems_iam
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: super-secret-key-change-in-production
+      PORT: 8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: topems-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - iam-service
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:

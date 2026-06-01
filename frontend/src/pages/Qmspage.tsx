@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   Shield, Plus, Search, ChevronRight, 
   FileText, CheckCircle, AlertTriangle, TrendingUp, 
-  Loader2, X, Edit, Trash2, Check
+  Loader2, X, Edit, Trash2, Check, Download, Upload
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -16,9 +16,10 @@ import {
   CreateQualityIssueRequest,
   CreateQualityImprovementRequest
 } from '../api/qms';
+import { DataTable } from '../components/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'standards' | 'checks' | 'issues' | 'improvements';
-
 type ModalType = 'create' | 'edit' | null;
 
 const Qmspage: React.FC = () => {
@@ -54,51 +55,43 @@ const Qmspage: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  const adaptStandard = (item: any): QualityStandard => {
-    return {
-      ...item,
-      status: mapStatusToChinese(item.status)
-    };
-  };
+  const adaptStandard = (item: any): QualityStandard => ({
+    ...item,
+    status: mapStatusToChinese(item.status)
+  });
 
-  const adaptCheck = (item: any): QualityCheck => {
-    return {
-      id: item.id,
-      check_no: item.title || '',
-      check_type: item.inspection_type || '',
-      inspector: item.inspector || '',
-      check_date: item.inspected_at || '',
-      location: '',
-      result: item.result || '',
-      conclusion: item.findings || '',
-      status: mapStatusToChinese(item.status),
-      created_at: item.created_at || '',
-      updated_at: item.updated_at || ''
-    };
-  };
+  const adaptCheck = (item: any): QualityCheck => ({
+    id: item.id,
+    check_no: item.title || '',
+    check_type: item.inspection_type || '',
+    inspector: item.inspector || '',
+    check_date: item.inspected_at || '',
+    location: '',
+    result: item.result || '',
+    conclusion: item.findings || '',
+    status: mapStatusToChinese(item.status),
+    created_at: item.created_at || '',
+    updated_at: item.updated_at || ''
+  });
 
-  const adaptIssue = (item: any): QualityIssue => {
-    return {
-      ...item,
-      status: mapStatusToChinese(item.status)
-    };
-  };
+  const adaptIssue = (item: any): QualityIssue => ({
+    ...item,
+    status: mapStatusToChinese(item.status)
+  });
 
-  const adaptImprovement = (item: any): QualityImprovement => {
-    return {
-      id: item.id,
-      improvement_no: item.title || '',
-      title: item.title || '',
-      description: item.description || '',
-      category: '',
-      status: mapStatusToChinese(item.status),
-      proposer: item.verified_by || '',
-      assignee: item.assigned_to || '',
-      improvement_effect: item.verification_result || '',
-      created_at: item.created_at || '',
-      updated_at: item.updated_at || ''
-    };
-  };
+  const adaptImprovement = (item: any): QualityImprovement => ({
+    id: item.id,
+    improvement_no: item.title || '',
+    title: item.title || '',
+    description: item.description || '',
+    category: '',
+    status: mapStatusToChinese(item.status),
+    proposer: item.verified_by || '',
+    assignee: item.assigned_to || '',
+    improvement_effect: item.verification_result || '',
+    created_at: item.created_at || '',
+    updated_at: item.updated_at || ''
+  });
 
   const loadData = async () => {
     try {
@@ -107,14 +100,8 @@ const Qmspage: React.FC = () => {
         const response = await qmsApi.listStandards();
         if (response.success && response.data) {
           let data: any = response.data;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.standards && Array.isArray(data.standards)) {
-            rawItems = data.standards;
-          }
-          const adapted = rawItems.map(item => adaptStandard(item));
-          setStandards(adapted);
+          let rawItems: any[] = Array.isArray(data) ? data : (data.standards || []);
+          setStandards(rawItems.map(item => adaptStandard(item)));
         } else {
           setStandards([]);
         }
@@ -122,14 +109,8 @@ const Qmspage: React.FC = () => {
         const response = await qmsApi.listChecks();
         if (response.success && response.data) {
           let data: any = response.data;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.inspections && Array.isArray(data.inspections)) {
-            rawItems = data.inspections;
-          }
-          const adapted = rawItems.map(item => adaptCheck(item));
-          setChecks(adapted);
+          let rawItems: any[] = Array.isArray(data) ? data : (data.inspections || []);
+          setChecks(rawItems.map(item => adaptCheck(item)));
         } else {
           setChecks([]);
         }
@@ -137,14 +118,8 @@ const Qmspage: React.FC = () => {
         const response = await qmsApi.listIssues();
         if (response.success && response.data) {
           let data: any = response.data;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.issues && Array.isArray(data.issues)) {
-            rawItems = data.issues;
-          }
-          const adapted = rawItems.map(item => adaptIssue(item));
-          setIssues(adapted);
+          let rawItems: any[] = Array.isArray(data) ? data : (data.issues || []);
+          setIssues(rawItems.map(item => adaptIssue(item)));
         } else {
           setIssues([]);
         }
@@ -152,14 +127,8 @@ const Qmspage: React.FC = () => {
         const response = await qmsApi.listImprovements();
         if (response.success && response.data) {
           let data: any = response.data;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.actions && Array.isArray(data.actions)) {
-            rawItems = data.actions;
-          }
-          const adapted = rawItems.map(item => adaptImprovement(item));
-          setImprovements(adapted);
+          let rawItems: any[] = Array.isArray(data) ? data : (data.actions || []);
+          setImprovements(rawItems.map(item => adaptImprovement(item)));
         } else {
           setImprovements([]);
         }
@@ -359,25 +328,191 @@ const Qmspage: React.FC = () => {
     }
   };
 
-  const safeStandards = Array.isArray(standards) ? standards : [];
-  const safeChecks = Array.isArray(checks) ? checks : [];
-  const safeIssues = Array.isArray(issues) ? issues : [];
-  const safeImprovements = Array.isArray(improvements) ? improvements : [];
-
-  const filteredData = () => {
-    const data = activeTab === 'standards' ? safeStandards :
-                 activeTab === 'checks' ? safeChecks :
-                 activeTab === 'issues' ? safeIssues : safeImprovements;
-    return data.filter((item: any) => {
-      const search = searchTerm.toLowerCase();
-      return (item.name?.toLowerCase().includes(search) || 
-              item.title?.toLowerCase().includes(search) || 
-              item.code?.toLowerCase().includes(search) ||
-              item.check_no?.toLowerCase().includes(search) ||
-              item.issue_no?.toLowerCase().includes(search) ||
-              item.improvement_no?.toLowerCase().includes(search));
-    });
+  const exportToCSV = (data: any[], filename: string) => {
+    if (data.length === 0) {
+      showNotification('error', '没有数据可导出');
+      return;
+    }
+    
+    const headers = Object.keys(data[0]);
+    const csv = [
+      headers.join(','),
+      ...data.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${filename}-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotification('success', '导出成功');
   };
+
+  const handleExport = () => {
+    const data = activeTab === 'standards' ? standards :
+                 activeTab === 'checks' ? checks :
+                 activeTab === 'issues' ? issues : improvements;
+    exportToCSV(data, `qms-${activeTab}`);
+  };
+
+  const handleImport = () => {
+    showNotification('success', '导入功能即将上线');
+  };
+
+  const standardColumns: ColumnDef<QualityStandard>[] = [
+    { accessorKey: 'code', header: '标准编号' },
+    { accessorKey: 'name', header: '标准名称' },
+    { accessorKey: 'category', header: '类别' },
+    { accessorKey: 'version', header: '版本' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id, row.original.name)}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const checkColumns: ColumnDef<QualityCheck>[] = [
+    { accessorKey: 'check_no', header: '检测单号' },
+    { accessorKey: 'check_type', header: '检测类型' },
+    { accessorKey: 'inspector', header: '检验员' },
+    { accessorKey: 'location', header: '检测地点' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id, row.original.check_no)}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const issueColumns: ColumnDef<QualityIssue>[] = [
+    { accessorKey: 'issue_no', header: '异常编号' },
+    { accessorKey: 'title', header: '标题' },
+    { 
+      accessorKey: 'severity', 
+      header: '严重程度',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(row.original.severity)}`}>
+          {row.original.severity}
+        </span>
+      )
+    },
+    { accessorKey: 'category', header: '类别' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id, row.original.title)}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const improvementColumns: ColumnDef<QualityImprovement>[] = [
+    { accessorKey: 'improvement_no', header: '改进编号' },
+    { accessorKey: 'title', header: '标题' },
+    { accessorKey: 'category', header: '类别' },
+    { accessorKey: 'proposer', header: '提议人' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id, row.original.title)}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
 
   const renderFormFields = () => {
     if (activeTab === 'standards') {
@@ -689,20 +824,8 @@ const Qmspage: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
-          <p className="text-slate-600">加载中...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -723,18 +846,33 @@ const Qmspage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <button
-              onClick={openCreateModal}
-              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>新建</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleImport}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                <span>导入</span>
+              </button>
+              <button
+                onClick={handleExport}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span>导出</span>
+              </button>
+              <button
+                onClick={openCreateModal}
+                className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>新建</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Notification */}
       {notification && (
         <div className={`fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
           notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
@@ -746,9 +884,7 @@ const Qmspage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
         <div className="mb-6 bg-white rounded-lg shadow-sm p-1 flex space-x-1">
           {[
             { key: 'standards' as TabType, label: '质量标准', icon: FileText },
@@ -773,222 +909,73 @@ const Qmspage: React.FC = () => {
           ))}
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="搜索..."
-              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg"
-            />
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+          <div className="p-4 border-b border-slate-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {activeTab === 'standards' && '质量标准列表'}
+                {activeTab === 'checks' && '质量检测记录'}
+                {activeTab === 'issues' && '质量异常记录'}
+                {activeTab === 'improvements' && '质量改进记录'}
+              </h2>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="搜索..."
+                  className="w-64 pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4">
+            {activeTab === 'standards' && (
+              <DataTable
+                columns={standardColumns}
+                data={standards}
+                searchKey="name"
+                searchPlaceholder="搜索标准名称..."
+                loading={loading}
+                exportFileName="qms-standards"
+              />
+            )}
+            {activeTab === 'checks' && (
+              <DataTable
+                columns={checkColumns}
+                data={checks}
+                searchKey="check_no"
+                searchPlaceholder="搜索检测单号..."
+                loading={loading}
+                exportFileName="qms-checks"
+              />
+            )}
+            {activeTab === 'issues' && (
+              <DataTable
+                columns={issueColumns}
+                data={issues}
+                searchKey="title"
+                searchPlaceholder="搜索异常标题..."
+                loading={loading}
+                exportFileName="qms-issues"
+              />
+            )}
+            {activeTab === 'improvements' && (
+              <DataTable
+                columns={improvementColumns}
+                data={improvements}
+                searchKey="title"
+                searchPlaceholder="搜索改进标题..."
+                loading={loading}
+                exportFileName="qms-improvements"
+              />
+            )}
           </div>
         </div>
-
-        {/* Content based on active tab */}
-        {activeTab === 'standards' && (
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">质量标准列表</h2>
-            </div>
-            <div className="divide-y divide-slate-200">
-              {filteredData().length === 0 ? (
-                <div className="p-12 text-center">
-                  <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500">暂无质量标准</p>
-                </div>
-              ) : (
-                filteredData().map((standard: QualityStandard) => (
-                  <div key={standard.id} className="p-6 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-slate-900">{standard.name}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(standard.status)}`}>
-                            {standard.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-500 mb-2">编号：{standard.code} | 版本：{standard.version}</p>
-                        <p className="text-slate-600 mb-2">{standard.description}</p>
-                        <p className="text-sm text-slate-500">类别：{standard.category}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={() => openEditModal(standard)}
-                          className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(standard.id, standard.name)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'checks' && (
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">质量检测记录</h2>
-            </div>
-            <div className="divide-y divide-slate-200">
-              {filteredData().length === 0 ? (
-                <div className="p-12 text-center">
-                  <CheckCircle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500">暂无检测记录</p>
-                </div>
-              ) : (
-                filteredData().map((check: QualityCheck) => (
-                  <div key={check.id} className="p-6 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-slate-900">{check.check_no}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(check.status)}`}>
-                            {check.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-500 mb-2">类型：{check.check_type} | 检验员：{check.inspector}</p>
-                        <p className="text-slate-600 mb-2">地点：{check.location}</p>
-                        <p className="text-slate-600 mb-2">结果：{check.result}</p>
-                        <p className="text-sm text-slate-500">结论：{check.conclusion}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={() => openEditModal(check)}
-                          className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(check.id, check.check_no)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'issues' && (
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">质量异常记录</h2>
-            </div>
-            <div className="divide-y divide-slate-200">
-              {filteredData().length === 0 ? (
-                <div className="p-12 text-center">
-                  <AlertTriangle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500">暂无异常记录</p>
-                </div>
-              ) : (
-                filteredData().map((issue: QualityIssue) => (
-                  <div key={issue.id} className="p-6 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-slate-900">{issue.title}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
-                            {issue.severity}
-                          </span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(issue.status)}`}>
-                            {issue.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-500 mb-2">编号：{issue.issue_no} | 类别：{issue.category}</p>
-                        <p className="text-slate-600 mb-2">{issue.description}</p>
-                        <p className="text-sm text-slate-500">负责人：{issue.assignee}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={() => openEditModal(issue)}
-                          className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(issue.id, issue.title)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'improvements' && (
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">质量改进记录</h2>
-            </div>
-            <div className="divide-y divide-slate-200">
-              {filteredData().length === 0 ? (
-                <div className="p-12 text-center">
-                  <TrendingUp className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500">暂无改进记录</p>
-                </div>
-              ) : (
-                filteredData().map((improvement: QualityImprovement) => (
-                  <div key={improvement.id} className="p-6 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-slate-900">{improvement.title}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(improvement.status)}`}>
-                            {improvement.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-500 mb-2">编号：{improvement.improvement_no} | 类别：{improvement.category}</p>
-                        <p className="text-slate-600 mb-2">{improvement.description}</p>
-                        <p className="text-sm text-slate-500">提议人：{improvement.proposer} | 负责人：{improvement.assignee}</p>
-                        {improvement.improvement_effect && (
-                          <p className="text-sm text-green-600 mt-2">改进效果：{improvement.improvement_effect}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={() => openEditModal(improvement)}
-                          className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(improvement.id, improvement.title)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
       </main>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">

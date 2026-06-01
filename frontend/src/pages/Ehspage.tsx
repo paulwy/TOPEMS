@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   ShieldAlert, Plus, Search, ChevronRight, 
   AlertCircle, ClipboardCheck, FileText, Activity,
-  Loader2, X, Edit, Trash2, Check
+  Loader2, X, Edit, Trash2, Check, Download, Upload
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -16,9 +16,10 @@ import {
   CreateEmergencyPlanRequest,
   CreateDrillRecordRequest
 } from '../api/ehs';
+import { DataTable } from '../components/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'hazards' | 'checks' | 'plans' | 'drills';
-
 type ModalType = 'create' | 'edit' | null;
 
 const Ehspage: React.FC = () => {
@@ -34,7 +35,6 @@ const Ehspage: React.FC = () => {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<{[key: string]: string}>({});
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadData();
@@ -54,12 +54,10 @@ const Ehspage: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  const adaptItem = (item: any) => {
-    if (item.status) {
-      return { ...item, status: mapStatusToChinese(item.status) };
-    }
-    return item;
-  };
+  const adaptItem = (item: any) => ({
+    ...item,
+    status: mapStatusToChinese(item.status)
+  });
 
   const loadData = async () => {
     try {
@@ -68,14 +66,7 @@ const Ehspage: React.FC = () => {
         const response = await ehsApi.listHazards();
         if (response.success && response.data) {
           let data = response.data as any;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.hazards && Array.isArray(data.hazards)) {
-            rawItems = data.hazards;
-          } else {
-            rawItems = [];
-          }
+          let rawItems: any[] = Array.isArray(data) ? data : (data.hazards || []);
           setHazards(rawItems.map(item => adaptItem(item)));
         } else {
           setHazards([]);
@@ -84,14 +75,7 @@ const Ehspage: React.FC = () => {
         const response = await ehsApi.listChecks();
         if (response.success && response.data) {
           let data = response.data as any;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.checks && Array.isArray(data.checks)) {
-            rawItems = data.checks;
-          } else {
-            rawItems = [];
-          }
+          let rawItems: any[] = Array.isArray(data) ? data : (data.checks || []);
           setChecks(rawItems.map(item => adaptItem(item)));
         } else {
           setChecks([]);
@@ -100,14 +84,7 @@ const Ehspage: React.FC = () => {
         const response = await ehsApi.listPlans();
         if (response.success && response.data) {
           let data = response.data as any;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.plans && Array.isArray(data.plans)) {
-            rawItems = data.plans;
-          } else {
-            rawItems = [];
-          }
+          let rawItems: any[] = Array.isArray(data) ? data : (data.plans || []);
           setPlans(rawItems.map(item => adaptItem(item)));
         } else {
           setPlans([]);
@@ -116,14 +93,7 @@ const Ehspage: React.FC = () => {
         const response = await ehsApi.listDrills();
         if (response.success && response.data) {
           let data = response.data as any;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.drills && Array.isArray(data.drills)) {
-            rawItems = data.drills;
-          } else {
-            rawItems = [];
-          }
+          let rawItems: any[] = Array.isArray(data) ? data : (data.drills || []);
           setDrills(rawItems.map(item => adaptItem(item)));
         } else {
           setDrills([]);
@@ -272,7 +242,9 @@ const Ehspage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`确定要删除 "${name}" 吗？`)) return;
+    
     try {
       if (activeTab === 'hazards') {
         await ehsApi.deleteHazard(id);
@@ -310,32 +282,39 @@ const Ehspage: React.FC = () => {
     setShowModal(true);
   };
 
-  const tabs = [
-    { id: 'hazards', label: '危险源', icon: AlertCircle },
-    { id: 'checks', label: '安全检查', icon: ClipboardCheck },
-    { id: 'plans', label: '应急预案', icon: FileText },
-    { id: 'drills', label: '演练记录', icon: Activity }
-  ];
-
-  const safeHazards = Array.isArray(hazards) ? hazards : [];
-  const safeChecks = Array.isArray(checks) ? checks : [];
-  const safePlans = Array.isArray(plans) ? plans : [];
-  const safeDrills = Array.isArray(drills) ? drills : [];
-
-  const getCurrentData = () => {
-    switch (activeTab) {
-      case 'hazards': return safeHazards;
-      case 'checks': return safeChecks;
-      case 'plans': return safePlans;
-      case 'drills': return safeDrills;
-      default: return [];
+  const exportToCSV = (data: any[], filename: string) => {
+    if (data.length === 0) {
+      showNotification('error', '没有数据可导出');
+      return;
     }
+    
+    const headers = Object.keys(data[0]);
+    const csv = [
+      headers.join(','),
+      ...data.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${filename}-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotification('success', '导出成功');
   };
 
-  const filteredData = getCurrentData().filter((item: any) => {
-    const searchFields = Object.values(item).filter(v => typeof v === 'string').join(' ').toLowerCase();
-    return searchFields.includes(searchTerm.toLowerCase());
-  });
+  const handleExport = () => {
+    const data = activeTab === 'hazards' ? hazards :
+                 activeTab === 'checks' ? checks :
+                 activeTab === 'plans' ? plans : drills;
+    exportToCSV(data, `ehs-${activeTab}`);
+  };
+
+  const handleImport = () => {
+    showNotification('success', '导入功能即将上线');
+  };
 
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800';
@@ -353,212 +332,334 @@ const Ehspage: React.FC = () => {
     return 'bg-green-100 text-green-800';
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => navigate('/dashboard')} 
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <ChevronRight className="w-6 h-6 rotate-180" />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">环境健康安全</h1>
-              <p className="text-gray-500">管理安全风险、检查和应急预案</p>
-            </div>
-          </div>
+  const hazardColumns: ColumnDef<SafetyHazard>[] = [
+    { accessorKey: 'hazard_no', header: '编号' },
+    { accessorKey: 'name', header: '名称' },
+    { accessorKey: 'category', header: '类别' },
+    { 
+      accessorKey: 'level', 
+      header: '等级',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(row.original.level)}`}>
+          {row.original.level}
+        </span>
+      )
+    },
+    { accessorKey: 'location', header: '位置' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
           <button 
-            onClick={openCreateModal}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
           >
-            <Plus className="w-5 h-5" />
-            新建
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id, row.original.name)}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
+      )
+    }
+  ];
 
-        <div className="flex gap-2 mb-6 border-b border-gray-200">
+  const checkColumns: ColumnDef<SafetyCheck>[] = [
+    { accessorKey: 'check_no', header: '编号' },
+    { accessorKey: 'check_type', header: '类型' },
+    { accessorKey: 'inspector', header: '检查人' },
+    { accessorKey: 'location', header: '位置' },
+    { accessorKey: 'result', header: '结果' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id, row.original.check_no)}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const planColumns: ColumnDef<EmergencyPlan>[] = [
+    { accessorKey: 'plan_no', header: '编号' },
+    { accessorKey: 'name', header: '名称' },
+    { accessorKey: 'plan_type', header: '类型' },
+    { accessorKey: 'scope', header: '范围' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id, row.original.name)}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const drillColumns: ColumnDef<DrillRecord>[] = [
+    { accessorKey: 'drill_no', header: '编号' },
+    { accessorKey: 'drill_name', header: '名称' },
+    { accessorKey: 'location', header: '位置' },
+    { accessorKey: 'duration_hours', header: '时长(h)' },
+    { 
+      accessorKey: 'participants', 
+      header: '参与人员',
+      cell: ({ row }) => (
+        <span className="truncate max-w-[150px]" title={row.original.participants?.join(', ')}>
+          {row.original.participants?.join(', ')}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id, row.original.drill_name)}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const tabs = [
+    { id: 'hazards', label: '危险源', icon: AlertCircle },
+    { id: 'checks', label: '安全检查', icon: ClipboardCheck },
+    { id: 'plans', label: '应急预案', icon: FileText },
+    { id: 'drills', label: '演练记录', icon: Activity }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+              >
+                <ChevronRight className="w-5 h-5 rotate-180" />
+              </button>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                  <ShieldAlert className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">环境健康安全</h1>
+                  <p className="text-xs text-slate-500">EHS Management</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleImport}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                <span>导入</span>
+              </button>
+              <button
+                onClick={handleExport}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span>导出</span>
+              </button>
+              <button
+                onClick={openCreateModal}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>新建</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {notification && (
+        <div className={`fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } text-white`}>
+          <div className="flex items-center space-x-2">
+            {notification.type === 'success' && <Check className="w-5 h-5" />}
+            <span>{notification.message}</span>
+          </div>
+        </div>
+      )}
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6 bg-white rounded-lg shadow-sm p-1 flex space-x-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
-                className={`flex items-center gap-2 px-6 py-3 border-b-2 transition-colors ${
-                  activeTab === tab.id 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-blue-600 text-white'
+                    : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                {tab.label}
+                <div className="flex items-center justify-center space-x-2">
+                  <Icon className="w-5 h-5" />
+                  <span>{tab.label}</span>
+                </div>
               </button>
             );
           })}
         </div>
 
-        <div className="flex gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="搜索..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  {activeTab === 'hazards' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">编号</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类别</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">等级</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">位置</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </>
-                  )}
-                  {activeTab === 'checks' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">编号</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">检查人</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">位置</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">结果</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </>
-                  )}
-                  {activeTab === 'plans' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">编号</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">范围</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </>
-                  )}
-                  {activeTab === 'drills' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">编号</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">位置</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时长(h)</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">参与人员</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredData.map((item: any) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    {activeTab === 'hazards' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.hazard_no}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.category}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getLevelColor(item.level)}`}>{item.level}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.location}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
-                        </td>
-                      </>
-                    )}
-                    {activeTab === 'checks' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.check_no}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.check_type}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.inspector}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.location}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.result}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
-                        </td>
-                      </>
-                    )}
-                    {activeTab === 'plans' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.plan_no}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.plan_type}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{item.scope}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
-                        </td>
-                      </>
-                    )}
-                    {activeTab === 'drills' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.drill_no}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.drill_name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.location}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.duration_hours}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{item.participants?.join(', ')}</td>
-                      </>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
-                        <button 
-                          onClick={() => openEditModal(item)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (confirm('确定要删除此项吗？')) {
-                              handleDelete(item.id);
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredData.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500">暂无数据</p>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+          <div className="p-4 border-b border-slate-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {activeTab === 'hazards' && '危险源列表'}
+                {activeTab === 'checks' && '安全检查记录'}
+                {activeTab === 'plans' && '应急预案列表'}
+                {activeTab === 'drills' && '演练记录'}
+              </h2>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="搜索..."
+                  className="w-64 pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg"
+                />
               </div>
+            </div>
+          </div>
+
+          <div className="p-4">
+            {activeTab === 'hazards' && (
+              <DataTable
+                columns={hazardColumns}
+                data={hazards}
+                searchKey="name"
+                searchPlaceholder="搜索危险源名称..."
+                loading={loading}
+                exportFileName="ehs-hazards"
+              />
+            )}
+            {activeTab === 'checks' && (
+              <DataTable
+                columns={checkColumns}
+                data={checks}
+                searchKey="check_no"
+                searchPlaceholder="搜索检查编号..."
+                loading={loading}
+                exportFileName="ehs-checks"
+              />
+            )}
+            {activeTab === 'plans' && (
+              <DataTable
+                columns={planColumns}
+                data={plans}
+                searchKey="name"
+                searchPlaceholder="搜索预案名称..."
+                loading={loading}
+                exportFileName="ehs-plans"
+              />
+            )}
+            {activeTab === 'drills' && (
+              <DataTable
+                columns={drillColumns}
+                data={drills}
+                searchKey="drill_name"
+                searchPlaceholder="搜索演练名称..."
+                loading={loading}
+                exportFileName="ehs-drills"
+              />
             )}
           </div>
-        )}
+        </div>
+      </main>
 
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {modalType === 'create' ? '新建' : '编辑'}
-                </h3>
-                <button onClick={resetModal} className="text-gray-400 hover:text-gray-500">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="p-6 space-y-4">
-                {activeTab === 'hazards' && (
-                  <>
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {modalType === 'create' ? '新建' : '编辑'}
+                {activeTab === 'hazards' && '危险源'}
+                {activeTab === 'checks' && '安全检查'}
+                {activeTab === 'plans' && '应急预案'}
+                {activeTab === 'drills' && '演练记录'}
+              </h3>
+              <button onClick={resetModal} className="text-gray-400 hover:text-gray-500">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {activeTab === 'hazards' && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">编号</label>
                       <input 
@@ -577,73 +678,73 @@ const Ehspage: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">类别</label>
-                        <input 
-                          type="text" 
-                          value={formData.category || ''}
-                          onChange={(e) => setFormData({...formData, category: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">等级</label>
-                        <select 
-                          value={formData.level || ''}
-                          onChange={(e) => setFormData({...formData, level: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        >
-                          <option value="低">低</option>
-                          <option value="中">中</option>
-                          <option value="高">高</option>
-                        </select>
-                      </div>
-                    </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">位置</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">类别</label>
                       <input 
                         type="text" 
-                        value={formData.location || ''}
-                        onChange={(e) => setFormData({...formData, location: e.target.value})}
+                        value={formData.category || ''}
+                        onChange={(e) => setFormData({...formData, category: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">控制措施 (逗号分隔)</label>
-                      <textarea 
-                        value={formData.control_measures || ''}
-                        onChange={(e) => setFormData({...formData, control_measures: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">描述</label>
-                      <textarea 
-                        value={formData.description || ''}
-                        onChange={(e) => setFormData({...formData, description: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">等级</label>
                       <select 
-                        value={formData.status || ''}
-                        onChange={(e) => setFormData({...formData, status: e.target.value})}
+                        value={formData.level || ''}
+                        onChange={(e) => setFormData({...formData, level: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       >
-                        <option value="已识别">已识别</option>
-                        <option value="已管控">已管控</option>
-                        <option value="已关闭">已关闭</option>
+                        <option value="低">低</option>
+                        <option value="中">中</option>
+                        <option value="高">高</option>
                       </select>
                     </div>
-                  </>
-                )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">位置</label>
+                    <input 
+                      type="text" 
+                      value={formData.location || ''}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">控制措施 (逗号分隔)</label>
+                    <textarea 
+                      value={formData.control_measures || ''}
+                      onChange={(e) => setFormData({...formData, control_measures: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                    <textarea 
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                    <select 
+                      value={formData.status || ''}
+                      onChange={(e) => setFormData({...formData, status: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    >
+                      <option value="已识别">已识别</option>
+                      <option value="已管控">已管控</option>
+                      <option value="已关闭">已关闭</option>
+                    </select>
+                  </div>
+                </>
+              )}
 
-                {activeTab === 'checks' && (
-                  <>
+              {activeTab === 'checks' && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">编号</label>
                       <input 
@@ -653,25 +754,23 @@ const Ehspage: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">类型</label>
-                        <input 
-                          type="text" 
-                          value={formData.check_type || ''}
-                          onChange={(e) => setFormData({...formData, check_type: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">检查人</label>
-                        <input 
-                          type="text" 
-                          value={formData.inspector || ''}
-                          onChange={(e) => setFormData({...formData, inspector: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">类型</label>
+                      <input 
+                        type="text" 
+                        value={formData.check_type || ''}
+                        onChange={(e) => setFormData({...formData, check_type: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">检查人</label>
+                      <input 
+                        type="text" 
+                        value={formData.inspector || ''}
+                        onChange={(e) => setFormData({...formData, inspector: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">位置</label>
@@ -682,40 +781,42 @@ const Ehspage: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">结果</label>
-                      <input 
-                        type="text" 
-                        value={formData.result || ''}
-                        onChange={(e) => setFormData({...formData, result: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">发现问题 (逗号分隔)</label>
-                      <textarea 
-                        value={formData.issues || ''}
-                        onChange={(e) => setFormData({...formData, issues: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
-                      <select 
-                        value={formData.status || ''}
-                        onChange={(e) => setFormData({...formData, status: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="进行中">进行中</option>
-                        <option value="已完成">已完成</option>
-                      </select>
-                    </div>
-                  </>
-                )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">结果</label>
+                    <input 
+                      type="text" 
+                      value={formData.result || ''}
+                      onChange={(e) => setFormData({...formData, result: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">发现问题 (逗号分隔)</label>
+                    <textarea 
+                      value={formData.issues || ''}
+                      onChange={(e) => setFormData({...formData, issues: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                    <select 
+                      value={formData.status || ''}
+                      onChange={(e) => setFormData({...formData, status: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    >
+                      <option value="进行中">进行中</option>
+                      <option value="已完成">已完成</option>
+                    </select>
+                  </div>
+                </>
+              )}
 
-                {activeTab === 'plans' && (
-                  <>
+              {activeTab === 'plans' && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">编号</label>
                       <input 
@@ -725,87 +826,87 @@ const Ehspage: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">名称</label>
-                        <input 
-                          type="text" 
-                          value={formData.name || ''}
-                          onChange={(e) => setFormData({...formData, name: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">类型</label>
-                        <input 
-                          type="text" 
-                          value={formData.plan_type || ''}
-                          onChange={(e) => setFormData({...formData, plan_type: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        />
-                      </div>
-                    </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">范围</label>
-                      <textarea 
-                        value={formData.scope || ''}
-                        onChange={(e) => setFormData({...formData, scope: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        rows={2}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">触发条件</label>
-                      <textarea 
-                        value={formData.trigger_conditions || ''}
-                        onChange={(e) => setFormData({...formData, trigger_conditions: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        rows={2}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">响应程序</label>
-                      <textarea 
-                        value={formData.response_procedures || ''}
-                        onChange={(e) => setFormData({...formData, response_procedures: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">负责人 (逗号分隔)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">名称</label>
                       <input 
                         type="text" 
-                        value={formData.responsible_persons || ''}
-                        onChange={(e) => setFormData({...formData, responsible_persons: e.target.value})}
+                        value={formData.name || ''}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">联系方式</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">类型</label>
                       <input 
                         type="text" 
-                        value={formData.contact_info || ''}
-                        onChange={(e) => setFormData({...formData, contact_info: e.target.value})}
+                        value={formData.plan_type || ''}
+                        onChange={(e) => setFormData({...formData, plan_type: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
-                      <select 
-                        value={formData.status || ''}
-                        onChange={(e) => setFormData({...formData, status: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="启用">启用</option>
-                        <option value="禁用">禁用</option>
-                      </select>
-                    </div>
-                  </>
-                )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">范围</label>
+                    <textarea 
+                      value={formData.scope || ''}
+                      onChange={(e) => setFormData({...formData, scope: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">触发条件</label>
+                    <textarea 
+                      value={formData.trigger_conditions || ''}
+                      onChange={(e) => setFormData({...formData, trigger_conditions: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">响应程序</label>
+                    <textarea 
+                      value={formData.response_procedures || ''}
+                      onChange={(e) => setFormData({...formData, response_procedures: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">负责人 (逗号分隔)</label>
+                    <input 
+                      type="text" 
+                      value={formData.responsible_persons || ''}
+                      onChange={(e) => setFormData({...formData, responsible_persons: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">联系方式</label>
+                    <input 
+                      type="text" 
+                      value={formData.contact_info || ''}
+                      onChange={(e) => setFormData({...formData, contact_info: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                    <select 
+                      value={formData.status || ''}
+                      onChange={(e) => setFormData({...formData, status: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    >
+                      <option value="启用">启用</option>
+                      <option value="禁用">禁用</option>
+                    </select>
+                  </div>
+                </>
+              )}
 
-                {activeTab === 'drills' && (
-                  <>
+              {activeTab === 'drills' && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">编号</label>
                       <input 
@@ -824,92 +925,82 @@ const Ehspage: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">位置</label>
-                        <input 
-                          type="text" 
-                          value={formData.location || ''}
-                          onChange={(e) => setFormData({...formData, location: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">时长 (小时)</label>
-                        <input 
-                          type="number" 
-                          value={formData.duration_hours || ''}
-                          onChange={(e) => setFormData({...formData, duration_hours: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        />
-                      </div>
-                    </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">参与人员 (逗号分隔)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">位置</label>
                       <input 
                         type="text" 
-                        value={formData.participants || ''}
-                        onChange={(e) => setFormData({...formData, participants: e.target.value})}
+                        value={formData.location || ''}
+                        onChange={(e) => setFormData({...formData, location: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">总结</label>
-                      <textarea 
-                        value={formData.summary || ''}
-                        onChange={(e) => setFormData({...formData, summary: e.target.value})}
+                      <label className="block text-sm font-medium text-gray-700 mb-1">时长 (小时)</label>
+                      <input 
+                        type="number" 
+                        value={formData.duration_hours || ''}
+                        onChange={(e) => setFormData({...formData, duration_hours: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        rows={3}
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">发现问题</label>
-                      <textarea 
-                        value={formData.issues_found || ''}
-                        onChange={(e) => setFormData({...formData, issues_found: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        rows={2}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">改进措施</label>
-                      <textarea 
-                        value={formData.improvements || ''}
-                        onChange={(e) => setFormData({...formData, improvements: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        rows={2}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end">
-                <button 
-                  onClick={resetModal}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  取消
-                </button>
-                <button 
-                  onClick={modalType === 'create' ? handleCreate : handleEdit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                >
-                  <Check className="w-4 h-4" />
-                  {modalType === 'create' ? '创建' : '保存'}
-                </button>
-              </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">参与人员 (逗号分隔)</label>
+                    <input 
+                      type="text" 
+                      value={formData.participants || ''}
+                      onChange={(e) => setFormData({...formData, participants: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">总结</label>
+                    <textarea 
+                      value={formData.summary || ''}
+                      onChange={(e) => setFormData({...formData, summary: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">发现问题</label>
+                    <textarea 
+                      value={formData.issues_found || ''}
+                      onChange={(e) => setFormData({...formData, issues_found: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">改进措施</label>
+                    <textarea 
+                      value={formData.improvements || ''}
+                      onChange={(e) => setFormData({...formData, improvements: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      rows={2}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end">
+              <button 
+                onClick={resetModal}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button 
+                onClick={modalType === 'create' ? handleCreate : handleEdit}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                {modalType === 'create' ? '创建' : '保存'}
+              </button>
             </div>
           </div>
-        )}
-
-        {notification && (
-          <div className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg ${
-            notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-          }`}>
-            {notification.message}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

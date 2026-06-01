@@ -193,7 +193,7 @@ async fn get_analysis(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let result: Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
+    let result: std::result::Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
          FROM ai_analyses WHERE id = $1"
     )
@@ -240,7 +240,7 @@ async fn get_entity_analyses(
     State(pool): State<PgPool>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
-    let result: Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(
+    let result: std::result::Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
          FROM ai_analyses
          WHERE entity_type = $1 AND entity_id = $2
@@ -263,7 +263,7 @@ async fn get_entity_analyses(
     }
 }
 
-async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Result<String, String> {
+async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> std::result::Result<String, String> {
     let url = ai_service_url.as_deref().unwrap_or("http://localhost:8004");
     let client = Client::new();
 

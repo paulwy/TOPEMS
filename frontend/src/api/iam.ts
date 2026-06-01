@@ -12,6 +12,7 @@ export interface User {
   created_at: string;
   is_active: boolean;
   is_superuser?: boolean;
+  avatar_url?: string;
 }
 
 export interface AuthTokens {
@@ -35,6 +36,27 @@ export interface Permission {
   resource: string;
   action: string;
   description?: string;
+}
+
+export interface UserPreferences {
+  notification_settings: NotificationSettings;
+  shortcuts: ShortcutItem[];
+  language: string;
+  timezone: string;
+}
+
+export interface NotificationSettings {
+  email_enabled: boolean;
+  system_enabled: boolean;
+  workflow_enabled: boolean;
+  document_enabled: boolean;
+  security_enabled: boolean;
+}
+
+export interface ShortcutItem {
+  id: string;
+  title: string;
+  path: string;
 }
 
 export interface UserWithPermissions {
@@ -243,6 +265,31 @@ export const authApi = {
 
   updateUser: async (userId: string, data: { full_name?: string; email?: string }): Promise<ApiResponse<User>> => {
     return apiClient.iam.put<User>(`/api/v1/users/${userId}`, data);
+  },
+
+  updateCurrentUser: async (data: { full_name?: string; email?: string }): Promise<ApiResponse<User>> => {
+    return apiClient.iam.put<User>('/api/v1/users/me', data);
+  },
+
+  changePassword: async (data: { current_password: string; new_password: string }): Promise<ApiResponse<string>> => {
+    return apiClient.iam.post<string>('/api/v1/users/me/password', data);
+  },
+
+  updateAvatar: async (data: { avatar_url: string }): Promise<ApiResponse<User>> => {
+    return apiClient.iam.post<User>('/api/v1/users/me/avatar', data);
+  },
+
+  getPreferences: async (): Promise<ApiResponse<UserPreferences>> => {
+    return apiClient.iam.get<UserPreferences>('/api/v1/users/me/preferences');
+  },
+
+  updatePreferences: async (data: {
+    notification_settings?: NotificationSettings;
+    shortcuts?: ShortcutItem[];
+    language?: string;
+    timezone?: string;
+  }): Promise<ApiResponse<UserPreferences>> => {
+    return apiClient.iam.put<UserPreferences>('/api/v1/users/me/preferences', data);
   },
 
   deleteUser: async (userId: string): Promise<ApiResponse<string>> => {

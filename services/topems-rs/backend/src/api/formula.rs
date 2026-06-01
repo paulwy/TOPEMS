@@ -1,4 +1,3 @@
-
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -10,7 +9,10 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{CreateFormulaRequest, CreateFormulaVersionRequest, Formula, FormulaVersion, UpdateFormulaRequest};
+use crate::models::{
+    CreateFormulaRequest, CreateFormulaVersionRequest, Formula, FormulaVersion,
+    UpdateFormulaRequest,
+};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -35,7 +37,10 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
             "/api/v1/formulas/{id}",
             get(get_formula).put(update_formula).delete(delete_formula),
         )
-        .route("/api/v1/formulas/{id}/versions", get(get_formula_versions).post(create_formula_version))
+        .route(
+            "/api/v1/formulas/{id}/versions",
+            get(get_formula_versions).post(create_formula_version),
+        )
         .route("/api/v1/formulas/{id}/approve", post(approve_formula))
         .with_state(state);
 
@@ -213,9 +218,9 @@ async fn update_formula(
     let category = req.category.or(existing.category);
     let description = req.description.or(existing.description);
     let status = req.status.unwrap_or(existing.status);
-    let ingredients = req.ingredients.unwrap_or_else(|| {
-        serde_json::from_value(existing.ingredients.clone()).unwrap_or(vec![])
-    });
+    let ingredients = req
+        .ingredients
+        .unwrap_or_else(|| serde_json::from_value(existing.ingredients.clone()).unwrap_or(vec![]));
     let process_steps = req.process_steps.or(existing.process_steps);
     let properties = req.properties.unwrap_or(existing.properties);
     let now = Utc::now();
@@ -266,7 +271,9 @@ async fn delete_formula(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "配方删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "配方删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "配方不存在")),
         Err(e) => {
             tracing::error!("删除配方失败: {}", e);

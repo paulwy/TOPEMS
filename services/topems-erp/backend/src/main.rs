@@ -669,6 +669,101 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .execute(pool)
         .await?;
 
+    // 项目合同表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS project_contracts (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            project_id UUID NOT NULL,
+            contract_no VARCHAR(100) NOT NULL,
+            contract_type VARCHAR(50) NOT NULL DEFAULT 'OTHER',
+            party_a VARCHAR(200) NOT NULL,
+            party_b VARCHAR(200) NOT NULL,
+            subject VARCHAR(500) NOT NULL,
+            amount NUMERIC(18,2) NOT NULL,
+            tax_amount NUMERIC(18,2),
+            total_amount NUMERIC(18,2) NOT NULL,
+            currency VARCHAR(10) DEFAULT 'CNY',
+            signing_date TIMESTAMPTZ NOT NULL,
+            effective_date TIMESTAMPTZ NOT NULL,
+            expiration_date TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+            payment_terms JSONB,
+            attachment_ids JSONB,
+            created_by VARCHAR(100) NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 项目预算表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS project_budgets (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            project_id UUID NOT NULL,
+            budget_type VARCHAR(50) NOT NULL DEFAULT 'PROJECT',
+            fiscal_year VARCHAR(20) NOT NULL,
+            total_budget NUMERIC(18,2) NOT NULL,
+            allocated_amount NUMERIC(18,2) NOT NULL DEFAULT 0,
+            used_amount NUMERIC(18,2) NOT NULL DEFAULT 0,
+            status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+            approved_by VARCHAR(100),
+            approved_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 项目预算明细表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS project_budget_items (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            budget_id UUID NOT NULL,
+            category VARCHAR(100) NOT NULL,
+            subcategory VARCHAR(100),
+            budget_amount NUMERIC(18,2) NOT NULL,
+            used_amount NUMERIC(18,2) NOT NULL DEFAULT 0,
+            remarks TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 付款计划表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS payment_schedules (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            receivable_id UUID,
+            payable_id UUID,
+            project_id UUID NOT NULL,
+            contract_id UUID,
+            schedule_type VARCHAR(50) NOT NULL DEFAULT 'RECEIVABLE',
+            due_date TIMESTAMPTZ NOT NULL,
+            amount NUMERIC(18,2) NOT NULL,
+            status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+            actual_payment_date TIMESTAMPTZ,
+            actual_amount NUMERIC(18,2),
+            remarks TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     tracing::info!("✅ ERP数据库表初始化完成");
 
     Ok(())

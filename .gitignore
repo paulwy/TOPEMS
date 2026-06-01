@@ -1,94 +1,57 @@
-# TOPEMS .gitignore 文件
-# ================================
-
-# ================================
-# 基础配置
-# ================================
-
-# 依赖
-node_modules/
-pnpm-lock.yaml
-yarn.lock
-
-# Rust
-target/
-Cargo.lock
-
-# 构建输出
-dist/
-build/
-
-# 日志
-logs/
-*.log
-
-# 操作系统文件
+# OS
 .DS_Store
 Thumbs.db
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# ================================
-# 环境变量文件（安全配置）
-# ================================
-# ⚠️ 重要：这些文件包含敏感信息，切勿提交到版本控制
-
-# 主项目
+# Environment
 .env
 .env.local
-.env.*.local
-!.env.example        # ✅ 保留环境变量模板
-!.env.development   # ✅ 保留开发环境模板
-!.env.test          # ✅ 保留测试环境模板
-!.env.production    # ✅ 保留生产环境模板（已脱敏）
+.env.development.local
+.env.test.local
+.env.production.local
 
-# 前端项目
-frontend/.env
-frontend/.env.local
-frontend/.env.*.local
-!frontend/.env.example      # ✅ 保留前端环境变量模板
-!frontend/.env.development # ✅ 保留前端开发环境模板
-!frontend/.env.test         # ✅ 保留前端测试环境模板
-!frontend/.env.production   # ✅ 保留前端生产环境模板
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
 
-# ================================
-# 敏感文件
-# ================================
+# Backend Rust
+**/target/
+**/Cargo.lock
 
-# SSL 证书和密钥
-*.pem
-*.key
-*.crt
-ssl/
-certs/
+# Docker
+docker-compose.override.yml
+*.log
 
-# 配置文件
-config/secrets.yml
-secret.json
-credentials.json
-# ================================
-# 临时文件
-# ================================
-tmp/
-temp/
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# Build
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
 .cache/
-test/
-test-rust/
-packages/
-images/
-docs/my/
-
-# 大文件和归档
-*.tar
-*.tar.gz
-*.zip
-
-# ================================
-# 使用说明
-# ================================
-# 1. 从 .env.example 复制环境变量配置
-# 2. 根据实际环境修改敏感信息
-# 3. 绝对不要提交包含真实密码/密钥的文件
-# 4. 生产环境使用 Kubernetes Secrets 或 Vault 管理敏感信息
+*.tmp
+*.temp

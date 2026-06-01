@@ -8,6 +8,7 @@ volumes:
 services:
   postgres:
     image: postgres:latest
+    platform: linux/amd64
     pull_policy: never
     container_name: topems-postgres
     environment:
@@ -30,6 +31,7 @@ services:
 
   redis:
     image: redis:latest
+    platform: linux/amd64
     pull_policy: never
     container_name: topems-redis
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru

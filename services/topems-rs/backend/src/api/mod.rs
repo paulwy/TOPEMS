@@ -1,8 +1,11 @@
-pub mod project;
-pub mod formula;
 pub mod experiment;
-// pub mod patent;
-pub mod material;
-pub mod doc_integration;
+pub mod formula;
+pub mod project;
 pub mod ai_integration;
 pub mod audit;
+pub mod doc_integration;
+pub mod material;
+pub mod project_member;
+pub mod project_milestone;
+pub mod project_phase;
+pub mod project_report;
