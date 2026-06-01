@@ -89,8 +89,7 @@ async fn main() -> Result<()> {
         .route("/api/v1/metrics", get(get_metrics))
         .with_state(app_state.clone());
 
-    let app = Router::new()
-        .merge(health_router)
+    let protected_routes = Router::new()
         .merge(api::company::create_routes(pool.clone()).await?)
         .merge(api::department::create_routes(pool.clone()).await?)
         .merge(api::employee::create_routes(pool.clone()).await?)
@@ -99,6 +98,14 @@ async fn main() -> Result<()> {
         .merge(audit_router)
         .merge(dict_router)
         .merge(db_structure_router)
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ));
+
+    let app = Router::new()
+        .merge(health_router)
+        .merge(protected_routes)
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8009".to_string());

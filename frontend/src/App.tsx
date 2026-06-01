@@ -34,6 +34,7 @@ import HelpCenterPage from './pages/HelpCenterPage';
 import TemplateManagementPage from './pages/TemplateManagementPage';
 import HrmPositionPage from './pages/HrmPositionPage';
 import HrmLeavePage from './pages/HrmLeavePage';
+import HrmContractPage from './pages/HrmContractPage';
 import HrmRecruitmentPage from './pages/HrmRecruitmentPage';
 import HrmPayrollPage from './pages/HrmPayrollPage';
 import HrmPerformancePage from './pages/HrmPerformancePage';
@@ -413,6 +414,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['hrm:read']}>
                 <ModuleGate module="hrm" action="admin">
                   <HrmLeavePage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/hrm/contracts"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="admin">
+                  <HrmContractPage />
                 </ModuleGate>
               </ProtectedRoute>
             }

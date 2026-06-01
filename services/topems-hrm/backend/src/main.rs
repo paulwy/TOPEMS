@@ -92,8 +92,7 @@ async fn main() -> Result<()> {
         .route("/api/v1/metrics", get(get_metrics))
         .with_state(app_state.clone());
 
-    let app = Router::new()
-        .merge(health_router)
+    let protected_routes = Router::new()
         .merge(api::employee::create_routes(pool.clone()).await?)
         .merge(api::department::create_routes(pool.clone()).await?)
         .merge(api::contract::create_routes(pool.clone()).await?)
@@ -103,11 +102,16 @@ async fn main() -> Result<()> {
         .merge(api::recruitment::create_routes(pool.clone()).await?)
         .merge(api::payroll::create_routes(pool.clone()).await?)
         .merge(api::performance::create_routes(pool.clone()).await?)
+        .merge(api::training::create_routes(pool.clone()).await?)
         .merge(audit_router)
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
+        ));
+
+    let app = Router::new()
+        .merge(health_router)
+        .merge(protected_routes)
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8010".to_string());
@@ -328,12 +332,43 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         CREATE TABLE IF NOT EXISTS contracts (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             employee_id UUID REFERENCES employees(id),
+            contract_no VARCHAR(100) UNIQUE,
             contract_type VARCHAR(50) NOT NULL,
+            party_a_name VARCHAR(255),
+            party_a_contact VARCHAR(255),
+            party_b_name VARCHAR(255),
+            party_b_contact VARCHAR(255),
             start_date TIMESTAMPTZ NOT NULL,
             end_date TIMESTAMPTZ,
             salary NUMERIC(15,2),
+            probation_period_days INTEGER DEFAULT 0,
+            contract_file_path VARCHAR(500),
+            reminder_days INTEGER DEFAULT 30,
             status VARCHAR(50) NOT NULL DEFAULT 'active',
             notes TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS contract_renewals (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            contract_id UUID REFERENCES contracts(id),
+            previous_contract_id UUID REFERENCES contracts(id),
+            renewal_type VARCHAR(50) NOT NULL,
+            renewal_reason TEXT,
+            new_start_date TIMESTAMPTZ NOT NULL,
+            new_end_date TIMESTAMPTZ,
+            new_salary NUMERIC(15,2),
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            approver_id UUID REFERENCES employees(id),
+            approved_at TIMESTAMPTZ,
+            rejection_reason TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
         )
@@ -558,6 +593,70 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             achieved NUMERIC(5,2),
             status VARCHAR(50) NOT NULL DEFAULT 'pending',
             due_date TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS training_plans (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            name VARCHAR(255) NOT NULL,
+            code VARCHAR(100) UNIQUE,
+            description TEXT,
+            start_date TIMESTAMPTZ NOT NULL,
+            end_date TIMESTAMPTZ NOT NULL,
+            budget NUMERIC(15,2),
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS training_courses (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            plan_id UUID REFERENCES training_plans(id),
+            name VARCHAR(255) NOT NULL,
+            code VARCHAR(100) UNIQUE,
+            category VARCHAR(100) NOT NULL,
+            level VARCHAR(50) NOT NULL,
+            description TEXT,
+            duration_hours NUMERIC(5,2),
+            instructor_id UUID,
+            instructor_name VARCHAR(255),
+            location VARCHAR(255),
+            max_participants INTEGER,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS training_records (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            course_id UUID REFERENCES training_courses(id),
+            employee_id UUID NOT NULL,
+            enrollment_date TIMESTAMPTZ NOT NULL,
+            attendance_status VARCHAR(50) NOT NULL,
+            completion_status VARCHAR(50) NOT NULL,
+            score NUMERIC(5,2),
+            certificate_no VARCHAR(100),
+            completed_at TIMESTAMPTZ,
+            feedback TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
         )

@@ -12,17 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { flowApi } from '../api/flow'
-
-type Workflow = {
-  id: string
-  name: string
-  description: string
-  status: 'draft' | 'active' | 'inactive'
-  created_at: string
-  created_by: string
-  version: string
-}
+import { flowApi, type Workflow } from '../api/flow'
 
 export function WorkflowTableExample() {
   const [loading, setLoading] = useState(true)
@@ -37,7 +27,7 @@ export function WorkflowTableExample() {
     try {
       setLoading(true)
       setError(null)
-      const response = await flowApi.list()
+      const response = await flowApi.workflows.list()
       if (response.success && response.data) {
         setData(response.data.items || [])
       } else {
@@ -86,16 +76,13 @@ export function WorkflowTableExample() {
         ),
       },
       {
-        accessorKey: 'status',
+        accessorKey: 'is_active',
         header: () => <div className="text-left">状态</div>,
         cell: ({ row }) => {
-          const status = row.getValue('status') as string
-          const statusConfig: Record<string, { label: string; color: string }> = {
-            draft: { label: '草稿', color: 'bg-yellow-100 text-yellow-800' },
-            active: { label: '启用', color: 'bg-green-100 text-green-800' },
-            inactive: { label: '禁用', color: 'bg-gray-100 text-gray-800' },
-          }
-          const config = statusConfig[status] || { label: status, color: 'bg-gray-100 text-gray-800' }
+          const isActive = row.getValue('is_active') as boolean
+          const config = isActive 
+            ? { label: '启用', color: 'bg-green-100 text-green-800' }
+            : { label: '禁用', color: 'bg-gray-100 text-gray-800' }
           
           return (
             <div className="text-left">
@@ -110,7 +97,7 @@ export function WorkflowTableExample() {
         accessorKey: 'created_by',
         header: () => <div className="text-left">创建者</div>,
         cell: ({ row }) => (
-          <div className="text-left">{row.getValue('created_by')}</div>
+          <div className="text-left">{row.getValue('created_by') || '-'}</div>
         ),
       },
       {
@@ -121,10 +108,10 @@ export function WorkflowTableExample() {
         ),
       },
       {
-        accessorKey: 'version',
-        header: () => <div className="text-left">版本</div>,
+        accessorKey: 'updated_at',
+        header: () => <div className="text-left">更新时间</div>,
         cell: ({ row }) => (
-          <div className="text-left">{row.getValue('version')}</div>
+          <div className="text-left">{row.getValue('updated_at')}</div>
         ),
       },
       {

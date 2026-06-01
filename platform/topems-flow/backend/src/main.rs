@@ -1,6 +1,7 @@
 use axum::{
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Router,
+    extract::State,
     http::header,
     Json,
 };
@@ -9,6 +10,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use dotenv::dotenv;
 use sqlx::PgPool;
 use std::net::SocketAddr;
+use chrono::Utc;
+use serde::Serialize;
 
 mod api;
 mod db;
@@ -21,8 +24,32 @@ use api::handlers::*;
 use state::AppState;
 use topems_shared::ApiResponse;
 
-async fn health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success("OK".to_string(), "Health check"))
+#[derive(Serialize)]
+pub struct HealthInfo {
+    pub service: String,
+    pub version: String,
+    pub status: String,
+    pub database: String,
+    pub timestamp: String,
+}
+
+async fn health(State(state): State<AppState>) -> Json<ApiResponse<HealthInfo>> {
+    let db_status = match sqlx::query("SELECT 1")
+        .fetch_one(state.repo.get_pool())
+        .await {
+            Ok(_) => "connected".to_string(),
+            Err(e) => format!("error: {}", e),
+        };
+    
+    let health_info = HealthInfo {
+        service: "topems-flow".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        status: "running".to_string(),
+        database: db_status,
+        timestamp: Utc::now().to_rfc3339(),
+    };
+    
+    Json(ApiResponse::success(health_info, "Health check"))
 }
 
 async fn home() -> &'static str {
@@ -152,7 +179,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(middleware::performance_middleware))
         .with_state(app_state);
 
-    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let _host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = std::env::var("SERVER_PORT")
         .unwrap_or_else(|_| "8004".to_string())
         .parse()

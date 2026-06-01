@@ -186,6 +186,90 @@ export interface PerformanceGoal {
   updated_at: string;
 }
 
+export interface Contract {
+  id: string;
+  employee_id: string;
+  contract_no?: string;
+  contract_type: string;
+  party_a_name?: string;
+  party_a_contact?: string;
+  party_b_name?: string;
+  party_b_contact?: string;
+  start_date: string;
+  end_date?: string;
+  salary?: number;
+  probation_period_days?: number;
+  contract_file_path?: string;
+  reminder_days?: number;
+  status: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContractRenewal {
+  id: string;
+  contract_id: string;
+  previous_contract_id?: string;
+  renewal_type: string;
+  renewal_reason?: string;
+  new_start_date: string;
+  new_end_date?: string;
+  new_salary?: number;
+  status: string;
+  approver_id?: string;
+  approved_at?: string;
+  rejection_reason?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TrainingPlan {
+  id: string;
+  name: string;
+  code?: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  budget?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TrainingCourse {
+  id: string;
+  plan_id: string;
+  name: string;
+  code?: string;
+  category: string;
+  level: string;
+  description?: string;
+  duration_hours?: number;
+  instructor_id?: string;
+  instructor_name?: string;
+  location?: string;
+  max_participants?: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TrainingRecord {
+  id: string;
+  course_id: string;
+  employee_id: string;
+  enrollment_date: string;
+  attendance_status: string;
+  completion_status: string;
+  score?: number;
+  certificate_no?: string;
+  completed_at?: string;
+  feedback?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PaginationParams {
   page?: number;
   page_size?: number;
@@ -435,6 +519,69 @@ export const salaryAdjustmentApi = {
   },
 };
 
+export const contractApi = {
+  list: async (params?: ListParams): Promise<ApiResponse<PaginatedResult<Contract>>> => {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/contracts${queryString}`);
+  },
+  
+  get: async (id: string): Promise<ApiResponse<{ contract: Contract; renewals: ContractRenewal[] }>> => {
+    return apiClient.hrm.get(`/api/v1/contracts/${id}`);
+  },
+  
+  create: async (data: Partial<Contract>): Promise<ApiResponse<Contract>> => {
+    return apiClient.hrm.post('/api/v1/contracts', data);
+  },
+  
+  update: async (id: string, data: Partial<Contract>): Promise<ApiResponse<Contract>> => {
+    return apiClient.hrm.put(`/api/v1/contracts/${id}`, data);
+  },
+  
+  delete: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.hrm.delete(`/api/v1/contracts/${id}`);
+  },
+  
+  getExpiring: async (params?: { days?: number; page?: number; page_size?: number }): Promise<ApiResponse<PaginatedResult<Contract>>> => {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/contracts/expiring${queryString}`);
+  },
+  
+  renew: async (contract_id: string, data: Partial<ContractRenewal>): Promise<ApiResponse<ContractRenewal>> => {
+    return apiClient.hrm.post(`/api/v1/contracts/${contract_id}/renew`, data);
+  },
+};
+
+export const contractRenewalApi = {
+  list: async (params?: ListParams): Promise<ApiResponse<PaginatedResult<ContractRenewal>>> => {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/contract-renewals${queryString}`);
+  },
+  
+  get: async (id: string): Promise<ApiResponse<ContractRenewal>> => {
+    return apiClient.hrm.get(`/api/v1/contract-renewals/${id}`);
+  },
+  
+  update: async (id: string, data: Partial<ContractRenewal>): Promise<ApiResponse<ContractRenewal>> => {
+    return apiClient.hrm.put(`/api/v1/contract-renewals/${id}`, data);
+  },
+  
+  delete: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.hrm.delete(`/api/v1/contract-renewals/${id}`);
+  },
+  
+  approve: async (id: string): Promise<ApiResponse<ContractRenewal>> => {
+    return apiClient.hrm.put(`/api/v1/contract-renewals/${id}/approve`);
+  },
+  
+  reject: async (id: string, reason: string): Promise<ApiResponse<ContractRenewal>> => {
+    return apiClient.hrm.put(`/api/v1/contract-renewals/${id}/reject`, { reason });
+  },
+  
+  execute: async (id: string): Promise<ApiResponse<any>> => {
+    return apiClient.hrm.put(`/api/v1/contract-renewals/${id}/execute`);
+  },
+};
+
 export const hrmApi = {
   departments: departmentApi,
   employees: employeeApi,
@@ -448,6 +595,8 @@ export const hrmApi = {
   salaryAdjustments: salaryAdjustmentApi,
   performanceReviews: performanceReviewApi,
   performanceGoals: performanceGoalApi,
+  contracts: contractApi,
+  contractRenewals: contractRenewalApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.hrm.get('/health');

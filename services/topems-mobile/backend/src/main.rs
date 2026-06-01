@@ -11,7 +11,7 @@ use serde_json::json;
 use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use dotenv::dotenv;
-use sqlx::PgPool;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 
 use topems_shared::{ApiResponse, AuthState, create_cors_layer};
 
@@ -196,9 +196,12 @@ async fn update_task_status(State(state): State<AppState>, Path(id): Path<uuid::
 }
 
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(include_str!("../init.sql"))
-        .execute(pool)
-        .await?;
+    let sql_statements = include_str!("../init.sql");
+    for stmt in sql_statements.split(';').filter(|s| !s.trim().is_empty()) {
+        sqlx::query(stmt.trim())
+            .execute(pool)
+            .await?;
+    }
     Ok(())
 }
 
@@ -215,11 +218,17 @@ async fn main() -> anyhow::Result<()> {
 
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
     
-    let pool = match PgPool::connect(&database_url).await {
+    let pool = match PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+    {
         Ok(p) => {
-            tracing::info!("数据库连接成功");
+            tracing::info!("🔗 数据库连接成功");
             if let Err(e) = init_database(&p).await {
                 tracing::warn!("数据库初始化警告: {}", e);
+            } else {
+                tracing::info!("✅ 数据库表初始化完成");
             }
             p
         }
@@ -244,7 +253,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/audio-recordings", axum::routing::get(list_audio_recordings).post(create_audio_recording))
         .route("/api/v1/video-recordings", axum::routing::get(list_video_recordings).post(create_video_recording))
         .route("/api/v1/mobile-tasks", axum::routing::get(list_mobile_tasks).post(create_mobile_task))
-        .route("/api/v1/mobile-tasks/:id/status", axum::routing::put(update_task_status))
+        .route("/api/v1/mobile-tasks/{id}/status", axum::routing::put(update_task_status))
         .with_state(app_state)
         .layer(cors);
 

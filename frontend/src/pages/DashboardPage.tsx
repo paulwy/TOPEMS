@@ -16,6 +16,8 @@ import { aiApi } from '../api/ai';
 import { flowApi } from '../api/flow';
 import { erpApi } from '../api/erp';
 import { hrmApi } from '../api/hrm';
+import { mobileApi } from '../api/mobile';
+import { notificationServiceApi } from '../api/notificationService';
 import MobileNav from '../components/MobileNav';
 import MobileHeader from '../components/MobileHeader';
 import { usePermission } from '../hooks/usePermission';
@@ -45,7 +47,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     ai: false,
     flow: false,
     erp: false,
-    hrm: false
+    hrm: false,
+    mobile: false,
+    notification: false
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -67,7 +71,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       checkServiceStatus('ai', aiApi).catch(() => {}),
       checkServiceStatus('flow', flowApi).catch(() => {}),
       checkServiceStatus('erp', erpApi).catch(() => {}),
-      checkServiceStatus('hrm', hrmApi).catch(() => {})
+      checkServiceStatus('hrm', hrmApi).catch(() => {}),
+      checkServiceStatus('mobile', mobileApi).catch(() => {}),
+      checkServiceStatus('notification', notificationServiceApi).catch(() => {})
     ];
         
         const statsPromise = loadStats().catch((err) => {
@@ -647,6 +653,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               { name: '流程引擎', status: serviceStatuses.flow },
               { name: '企业资源', status: serviceStatuses.erp },
               { name: '人力资源', status: serviceStatuses.hrm },
+              { name: '移动服务', status: serviceStatuses.mobile },
+              { name: '通知服务', status: serviceStatuses.notification },
             ].map((service) => (
               <div key={service.name} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                 <span className="text-sm text-slate-700">{service.name}</span>
@@ -779,14 +787,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             <Activity className="w-5 h-5 mr-2 text-green-500" />
             服务状态监控
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
             {[
               { name: '身份认证', service: 'IAM', port: 8002, key: 'iam', icon: Shield },
               { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
               { name: 'AI 服务', service: 'AI', port: 8003, key: 'ai', icon: Bot },
               { name: '流程引擎', service: 'FLOW', port: 8004, key: 'flow', icon: GitBranch },
-              { name: '企业资源', service: 'ERP', port: 8005, key: 'erp', icon: Building },
+              { name: '企业资源', service: 'ERP', port: 8009, key: 'erp', icon: Building },
               { name: '人力资源', service: 'HRM', port: 8010, key: 'hrm', icon: Users },
+              { name: '移动服务', service: 'MOBILE', port: 8019, key: 'mobile', icon: Smartphone },
+              { name: '通知服务', service: 'NOTIFICATION', port: 8023, key: 'notification', icon: MessageSquare },
             ].map((service) => (
               <ServiceStatusCard
                 key={service.key}
