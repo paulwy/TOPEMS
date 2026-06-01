@@ -21,7 +21,7 @@ dotenv = "0.15"
 thiserror = "2"
 reqwest = { version = "0.12", features = ["json"] }
 topems-shared = { path = "../../../shared/lib" }
-utoipa = { version = "3", features = ["axum_extras"] }
+utoipa = { version = "4", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "6", features = ["axum"] }
 csv = "1"
 

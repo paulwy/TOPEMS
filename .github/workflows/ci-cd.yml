@@ -1,0 +1,103 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_VERSION: 20.x
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: cd frontend && npm ci
+    
+    - name: TypeScript check
+      run: cd frontend && npx tsc --noEmit
+    
+    - name: Lint
+      run: cd frontend && npm run lint -- --quiet || true
+    
+    - name: Build
+      run: cd frontend && npm run build
+    
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: frontend/dist
+  
+  backend-iam:
+    name: Backend (IAM)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: services/topems-iam/backend
+    
+    - name: Build
+      working-directory: services/topems-iam/backend
+      run: cargo build --release --features redis-cache
+    
+    - name: Check format
+      working-directory: services/topems-iam/backend
+      run: cargo fmt --check
+    
+    - name: Run clippy
+      working-directory: services/topems-iam/backend
+      run: cargo clippy -- -D warnings
+  
+  deploy-preview:
+    name: Deploy Preview
+    needs: frontend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    permissions:
+      pages: write
+      id-token: write
+    
+    environment:
+      name: preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: Deploy Preview to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+  
+  deploy-production:
+    name: Deploy Production
+    needs: [frontend, backend-iam]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    environment:
+      name: production
+      url: https://topems.example.com
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production..."

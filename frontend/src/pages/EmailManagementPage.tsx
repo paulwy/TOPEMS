@@ -612,7 +612,7 @@ const EmailManagementPage: React.FC = () => {
                 </Select>
               </div>
               <div>
-                <Label>内容（支持变量 {{变量名}}）</Label>
+                <Label>内容（支持变量 {'{{变量名}}'}）</Label>
                 <Textarea
                   value={templateForm.body}
                   onChange={e => setTemplateForm(prev => ({ ...prev, body: e.target.value }))}

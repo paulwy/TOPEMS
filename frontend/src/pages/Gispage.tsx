@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   MapPin, Plus, Search, ChevronRight, 
-  ArrowRight, Warehouse, Camera, Loader2, X, Edit, Trash2, Check, Box, Smartphone, MessageSquare, User
+  ArrowRight, Warehouse, Camera, Loader2, X, Edit, Trash2, Check, Box, Smartphone, MessageSquare, User, Download, Upload, AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -15,6 +15,8 @@ import {
   CreateStorageLocationRequest,
   CreateEvidenceRecordRequest
 } from '../api/gis';
+import { DataTable } from '../components/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'devicePoints' | 'pipelines' | 'storageLocations' | 'evidenceRecords';
 
@@ -34,6 +36,9 @@ const Gispage: React.FC = () => {
   const [formData, setFormData] = useState<{[key: string]: string}>({});
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<string[][] | null>(null);
 
   useEffect(() => {
     loadData();
@@ -282,21 +287,6 @@ const Gispage: React.FC = () => {
     { id: 'evidenceRecords', label: '现场取证', icon: Camera }
   ];
 
-  const getCurrentData = () => {
-    switch (activeTab) {
-      case 'devicePoints': return safeDevicePoints;
-      case 'pipelines': return safePipelines;
-      case 'storageLocations': return safeStorageLocations;
-      case 'evidenceRecords': return safeEvidenceRecords;
-      default: return [];
-    }
-  };
-
-  const filteredData = getCurrentData().filter((item: any) => {
-    const searchFields = Object.values(item).filter(v => typeof v === 'string').join(' ').toLowerCase();
-    return searchFields.includes(searchTerm.toLowerCase());
-  });
-
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800';
     const s = status.toLowerCase();
@@ -304,6 +294,255 @@ const Gispage: React.FC = () => {
     if (s.includes('pending') || s.includes('待处理')) return 'bg-yellow-100 text-yellow-800';
     if (s.includes('inactive') || s.includes('禁用')) return 'bg-red-100 text-red-800';
     return 'bg-gray-100 text-gray-800';
+  };
+
+  const devicePointColumns: ColumnDef<DevicePoint>[] = [
+    { accessorKey: 'name', header: '设备名称' },
+    { accessorKey: 'code', header: '编号' },
+    { accessorKey: 'device_type', header: '类型' },
+    { accessorKey: 'latitude', header: '纬度' },
+    { accessorKey: 'longitude', header: '经度' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const pipelineColumns: ColumnDef<Pipeline>[] = [
+    { accessorKey: 'name', header: '管线名称' },
+    { accessorKey: 'pipeline_type', header: '类型' },
+    { 
+      accessorKey: 'start_point', 
+      header: '起点',
+      cell: ({ row }) => {
+        const point = row.original.start_point;
+        return Array.isArray(point) ? `${point[0].toFixed(4)}, ${point[1].toFixed(4)}` : '';
+      }
+    },
+    { 
+      accessorKey: 'end_point', 
+      header: '终点',
+      cell: ({ row }) => {
+        const point = row.original.end_point;
+        return Array.isArray(point) ? `${point[0].toFixed(4)}, ${point[1].toFixed(4)}` : '';
+      }
+    },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const storageLocationColumns: ColumnDef<StorageLocation>[] = [
+    { accessorKey: 'name', header: '库位名称' },
+    { accessorKey: 'code', header: '编号' },
+    { accessorKey: 'location_type', header: '类型' },
+    { accessorKey: 'capacity', header: '容量' },
+    { accessorKey: 'current_usage', header: '当前用量' },
+    { 
+      accessorKey: 'latitude', 
+      header: '坐标',
+      cell: ({ row }) => {
+        return `${row.original.latitude?.toFixed(4)}, ${row.original.longitude?.toFixed(4)}`;
+      }
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const evidenceRecordColumns: ColumnDef<EvidenceRecord>[] = [
+    { accessorKey: 'record_no', header: '记录编号' },
+    { accessorKey: 'title', header: '标题' },
+    { accessorKey: 'evidence_type', header: '类型' },
+    { accessorKey: 'recorded_by', header: '记录人' },
+    { 
+      accessorKey: 'recorded_at', 
+      header: '记录时间',
+      cell: ({ row }) => (
+        <span>{row.original.recorded_at ? new Date(row.original.recorded_at).toLocaleString() : ''}</span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const downloadTemplate = () => {
+    let headers: string[];
+    let sampleRow: string[];
+    
+    switch (activeTab) {
+      case 'devicePoints':
+        headers = ['name', 'code', 'device_type', 'latitude', 'longitude', 'status', 'description'];
+        sampleRow = ['设备A', 'D001', '传感器', '31.2304', '121.4737', 'active', '设备描述'];
+        break;
+      case 'pipelines':
+        headers = ['name', 'pipeline_type', 'start_lat', 'start_lng', 'end_lat', 'end_lng', 'status'];
+        sampleRow = ['管线A', '水管', '31.2304', '121.4737', '31.2305', '121.4738', 'active'];
+        break;
+      case 'storageLocations':
+        headers = ['name', 'code', 'location_type', 'latitude', 'longitude', 'capacity', 'current_usage'];
+        sampleRow = ['仓库A', 'S001', '原材料仓', '31.2304', '121.4737', '1000', '500'];
+        break;
+      case 'evidenceRecords':
+        headers = ['title', 'evidence_type', 'latitude', 'longitude', 'recorded_by', 'file_url', 'description'];
+        sampleRow = ['现场照片1', '照片', '31.2304', '121.4737', '张三', '', '证据描述'];
+        break;
+      default:
+        headers = ['name'];
+        sampleRow = ['示例数据'];
+    }
+    
+    const content = [headers, sampleRow].map(row => row.join(',')).join('\n');
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeTab}_template.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImportFile(file);
+      
+      try {
+        const content = await file.text();
+        const lines = content.split('\n').slice(0, 6);
+        const preview = lines.map(line => line.split(','));
+        setImportPreview(preview);
+      } catch {
+        setImportPreview(null);
+      }
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      showNotification('error', '请选择要导入的文件');
+      return;
+    }
+
+    try {
+      const response = await gisApi.importData(activeTab, importFile);
+      if (response.success) {
+        showNotification('success', '导入成功');
+        setShowImportModal(false);
+        setImportFile(null);
+        setImportPreview(null);
+        loadData();
+      } else {
+        showNotification('error', response.message || '导入失败');
+      }
+    } catch (err) {
+      showNotification('error', '导入失败');
+      console.error('导入失败:', err);
+    }
   };
 
   return (
@@ -322,13 +561,22 @@ const Gispage: React.FC = () => {
               <p className="text-gray-500">管理设备点位、管线、仓储位置和现场取证</p>
             </div>
           </div>
-          <button 
-            onClick={openCreateModal}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            新建
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              <span>导入</span>
+            </button>
+            <button 
+              onClick={openCreateModal}
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              新建
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-2 mb-6 border-b border-gray-200">
@@ -351,150 +599,64 @@ const Gispage: React.FC = () => {
           })}
         </div>
 
-        <div className="flex gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="搜索..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-            />
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  {activeTab === 'devicePoints' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">设备类型</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">纬度</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">经度</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </>
-                  )}
-                  {activeTab === 'pipelines' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">管线类型</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">起点坐标</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">终点坐标</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </>
-                  )}
-                  {activeTab === 'storageLocations' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">位置类型</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">容量</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前用量</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">坐标</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </>
-                  )}
-                  {activeTab === 'evidenceRecords' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标题</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">证据类型</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">记录人</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredData.map((item: any) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    {activeTab === 'devicePoints' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.device_type}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.latitude}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.longitude}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
-                        </td>
-                      </>
-                    )}
-                    {activeTab === 'pipelines' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.pipeline_type}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {Array.isArray(item.start_point) ? `${item.start_point[0].toFixed(4)}, ${item.start_point[1].toFixed(4)}` : ''}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {Array.isArray(item.end_point) ? `${item.end_point[0].toFixed(4)}, ${item.end_point[1].toFixed(4)}` : ''}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
-                        </td>
-                      </>
-                    )}
-                    {activeTab === 'storageLocations' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.location_type}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.capacity}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.current_usage}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
-                        </td>
-                      </>
-                    )}
-                    {activeTab === 'evidenceRecords' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.title}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.evidence_type}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.recorded_by}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.recorded_at ? new Date(item.recorded_at).toLocaleString() : ''}
-                        </td>
-                      </>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
-                        <button 
-                          onClick={() => openEditModal(item)}
-                          className="text-cyan-600 hover:text-cyan-900"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (confirm('确定要删除此项吗？')) {
-                              handleDelete(item.id);
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredData.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500">暂无数据</p>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="搜索..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                />
               </div>
+            </div>
+          </div>
+          <div className="p-6">
+            {activeTab === 'devicePoints' && (
+              <DataTable
+                columns={devicePointColumns}
+                data={safeDevicePoints}
+                searchKey="name"
+                searchPlaceholder="搜索设备名称..."
+                loading={loading}
+                exportFileName="gis-device-points"
+              />
+            )}
+            {activeTab === 'pipelines' && (
+              <DataTable
+                columns={pipelineColumns}
+                data={safePipelines}
+                searchKey="name"
+                searchPlaceholder="搜索管线名称..."
+                loading={loading}
+                exportFileName="gis-pipelines"
+              />
+            )}
+            {activeTab === 'storageLocations' && (
+              <DataTable
+                columns={storageLocationColumns}
+                data={safeStorageLocations}
+                searchKey="name"
+                searchPlaceholder="搜索库位名称..."
+                loading={loading}
+                exportFileName="gis-storage-locations"
+              />
+            )}
+            {activeTab === 'evidenceRecords' && (
+              <DataTable
+                columns={evidenceRecordColumns}
+                data={safeEvidenceRecords}
+                searchKey="title"
+                searchPlaceholder="搜索记录标题..."
+                loading={loading}
+                exportFileName="gis-evidence-records"
+              />
             )}
           </div>
-        )}
+        </div>
 
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -566,8 +728,8 @@ const Gispage: React.FC = () => {
                         onChange={(e) => setFormData({...formData, status: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       >
-                        <option value="active">active</option>
-                        <option value="inactive">inactive</option>
+                        <option value="active">启用</option>
+                        <option value="inactive">禁用</option>
                       </select>
                     </div>
                   </>
@@ -653,8 +815,8 @@ const Gispage: React.FC = () => {
                         onChange={(e) => setFormData({...formData, status: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       >
-                        <option value="active">active</option>
-                        <option value="inactive">inactive</option>
+                        <option value="active">启用</option>
+                        <option value="inactive">禁用</option>
                       </select>
                     </div>
                   </>
@@ -819,6 +981,83 @@ const Gispage: React.FC = () => {
                 >
                   <Check className="w-4 h-4" />
                   {modalType === 'create' ? '创建' : '保存'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showImportModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">导入数据</h3>
+                <button onClick={() => { setShowImportModal(false); setImportFile(null); setImportPreview(null); }} className="text-gray-400 hover:text-gray-500">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg p-8">
+                  <div className="text-center">
+                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-2">拖拽文件到此处上传</p>
+                    <label className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 cursor-pointer">
+                      <span>选择文件</span>
+                      <input type="file" accept=".csv" onChange={handleImportFileChange} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+                
+                {importPreview && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">文件预览（前5行）：</p>
+                    <div className="border border-gray-300 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-50">
+                            {importPreview[0]?.map((cell, index) => (
+                              <th key={index} className="px-3 py-2 text-left font-medium text-gray-500">{cell}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {importPreview.slice(1).map((row, rowIndex) => (
+                            <tr key={rowIndex} className="border-t border-gray-200">
+                              {row.map((cell, cellIndex) => (
+                                <td key={cellIndex} className="px-3 py-2 text-gray-700">{cell}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={downloadTemplate}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>下载模板</span>
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end">
+                <button 
+                  onClick={() => { setShowImportModal(false); setImportFile(null); setImportPreview(null); }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={handleImport}
+                  disabled={!importFile}
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Upload className="w-4 h-4" />
+                  导入
                 </button>
               </div>
             </div>

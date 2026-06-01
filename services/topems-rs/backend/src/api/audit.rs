@@ -8,8 +8,8 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 use crate::models::{AuditLog, AuditLogQuery};
 use topems_shared::response::ApiResponse;
@@ -17,8 +17,6 @@ use topems_shared::response::ApiResponse;
 pub struct AppState {
     pub db: PgPool,
 }
-
-
 
 pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
     let state = Arc::new(AppState { db });

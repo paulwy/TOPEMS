@@ -1,4 +1,3 @@
-
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -31,19 +30,33 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/v1/experiments", get(list_experiments).post(create_experiment))
+        .route(
+            "/api/v1/experiments",
+            get(list_experiments).post(create_experiment),
+        )
         .route(
             "/api/v1/experiments/{id}",
-            get(get_experiment).put(update_experiment).delete(delete_experiment),
+            get(get_experiment)
+                .put(update_experiment)
+                .delete(delete_experiment),
         )
         .route(
             "/api/v1/experiments/{id}/records",
             get(get_experiment_records).post(create_experiment_record),
         )
         .route("/api/v1/experiments/phase/lab", get(list_lab_experiments))
-        .route("/api/v1/experiments/phase/pilot", get(list_pilot_experiments))
-        .route("/api/v1/experiments/phase/scaleup", get(list_scaleup_experiments))
-        .route("/api/v1/experiments/{id}/advance-phase", post(advance_phase))
+        .route(
+            "/api/v1/experiments/phase/pilot",
+            get(list_pilot_experiments),
+        )
+        .route(
+            "/api/v1/experiments/phase/scaleup",
+            get(list_scaleup_experiments),
+        )
+        .route(
+            "/api/v1/experiments/{id}/advance-phase",
+            post(advance_phase),
+        )
         .route("/api/v1/batch-trace/{batch_number}", get(trace_batch))
         .with_state(state);
 
@@ -272,7 +285,9 @@ async fn delete_experiment(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "试验删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "试验删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "试验不存在")),
         Err(e) => {
             tracing::error!("删除试验失败: {}", e);
@@ -310,7 +325,10 @@ async fn get_experiment_records(
     match result {
         Ok((records,)) => {
             let records = records.unwrap_or(serde_json::json!([]));
-            Json(ApiResponse::success(records.as_array().unwrap_or(&vec![]).clone(), "获取试验记录成功"))
+            Json(ApiResponse::success(
+                records.as_array().unwrap_or(&vec![]).clone(),
+                "获取试验记录成功",
+            ))
         }
         Err(e) => {
             tracing::error!("获取试验记录失败: {}", e);
@@ -632,7 +650,10 @@ async fn trace_batch(
     match result {
         Ok((trace_items,)) => {
             let trace_items = trace_items.unwrap_or(serde_json::json!([]));
-            Json(ApiResponse::success(trace_items.as_array().unwrap_or(&vec![]).clone(), "批次追溯成功"))
+            Json(ApiResponse::success(
+                trace_items.as_array().unwrap_or(&vec![]).clone(),
+                "批次追溯成功",
+            ))
         }
         Err(e) => {
             tracing::error!("批次追溯失败: {}", e);

@@ -19,7 +19,6 @@ use topems_shared::{
     Result,
 };
 use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(Clone)]
 struct AppState {
@@ -62,8 +61,11 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/health", get(health_check))
+        .route("/api-docs/openapi.json", get(serve_openapi_json));
+
+    let protected_routes = Router::new()
         .merge(api::sample::create_routes(pool.clone()).await?)
         .merge(api::inspection_process::create_routes(pool.clone()).await?)
         .merge(api::inspection_task::create_routes(pool.clone()).await?)
@@ -73,12 +75,14 @@ async fn main() -> Result<()> {
         .merge(api::reagent::create_routes(pool.clone()).await?)
         .merge(api::doc_integration::create_routes(pool.clone()).await?)
         .merge(api::ai_integration::create_routes(pool.clone()).await?)
-        .nest("/swagger-ui", SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api::openapi::ApiDoc::openapi()))
-        .route("/api-docs/openapi.json", get(serve_openapi_json))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors);
 
     let port = app_state.config.get_server().await.port;

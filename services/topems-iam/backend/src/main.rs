@@ -3,6 +3,7 @@ mod errors;
 mod services;
 mod db;
 mod middleware;
+mod cache;
 
 use axum::{
     body::Body,
@@ -304,6 +305,60 @@ struct ForgotPasswordRequest {
 struct ResetPasswordRequest {
     token: String,
     new_password: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct UpdateAvatarRequest {
+    avatar_url: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UserPreferences {
+    notification_settings: NotificationSettings,
+    shortcuts: Vec<ShortcutItem>,
+    language: String,
+    timezone: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct NotificationSettings {
+    email_enabled: bool,
+    system_enabled: bool,
+    workflow_enabled: bool,
+    document_enabled: bool,
+    security_enabled: bool,
+}
+
+impl Default for NotificationSettings {
+    fn default() -> Self {
+        Self {
+            email_enabled: true,
+            system_enabled: true,
+            workflow_enabled: true,
+            document_enabled: true,
+            security_enabled: true,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ShortcutItem {
+    id: String,
+    title: String,
+    path: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct UpdatePreferencesRequest {
+    notification_settings: Option<NotificationSettings>,
+    shortcuts: Option<Vec<ShortcutItem>>,
+    language: Option<String>,
+    timezone: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+struct PreferencesResponse {
+    preferences: UserPreferences,
 }
 
 // Custom extractor for claims
@@ -1244,6 +1299,187 @@ async fn change_password(
         Ok(None) => Json(ApiResponse::error(404, "用户不存在")),
         Err(e) => {
             tracing::error!("数据库查询错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn update_avatar(
+    State(state): State<AppState>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+    Json(req): Json<UpdateAvatarRequest>,
+) -> Json<ApiResponse<UserInfo>> {
+    let user_uuid = uuid::Uuid::parse_str(&claims.sub).unwrap_or_else(|_| uuid::Uuid::nil());
+    
+    let result = sqlx::query(
+        "UPDATE iam.users SET avatar_url = $1, updated_at = NOW() WHERE id = $2 RETURNING id, username, email, full_name, is_active, is_superuser, created_at"
+    )
+    .bind(&req.avatar_url)
+    .bind(user_uuid)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let (roles, permissions) = get_user_roles_and_permissions(&state.db, &claims.sub).await;
+            let primary_role = roles.first().cloned().unwrap_or_else(|| "user".to_string());
+            
+            let user_info = UserInfo {
+                id: claims.sub.clone(),
+                username: row.get("username"),
+                email: row.get("email"),
+                full_name: row.get("full_name"),
+                role: primary_role,
+                roles,
+                permissions,
+                created_at: row.get::<chrono::DateTime<Utc>, _>("created_at").to_rfc3339(),
+                is_active: row.get("is_active"),
+                is_superuser: row.get("is_superuser"),
+            };
+            
+            let _ = state.security_service.log_access(
+                Some(user_uuid),
+                &claims.username,
+                "update_avatar",
+                "user",
+                None,
+                None,
+                None,
+                true,
+                None
+            ).await;
+            
+            tracing::info!("📷 用户头像更新成功: {}", claims.username);
+            Json(ApiResponse::success(user_info, "头像更新成功"))
+        }
+        Ok(None) => Json(ApiResponse::error(404, "用户不存在")),
+        Err(e) => {
+            tracing::error!("数据库更新错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn get_preferences(
+    State(state): State<AppState>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+) -> Json<ApiResponse<PreferencesResponse>> {
+    let user_uuid = uuid::Uuid::parse_str(&claims.sub).unwrap_or_else(|_| uuid::Uuid::nil());
+    
+    let result = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT preferences FROM iam.user_preferences WHERE user_id = $1"
+    )
+    .bind(user_uuid)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(Some(prefs_json))) => {
+            match serde_json::from_str::<UserPreferences>(&prefs_json) {
+                Ok(prefs) => {
+                    Json(ApiResponse::success(PreferencesResponse { preferences: prefs }, "Success"))
+                }
+                Err(e) => {
+                    tracing::error!("解析偏好设置失败: {}", e);
+                    let default_prefs = UserPreferences {
+                        notification_settings: NotificationSettings::default(),
+                        shortcuts: vec![],
+                        language: "zh-CN".to_string(),
+                        timezone: "Asia/Shanghai".to_string(),
+                    };
+                    Json(ApiResponse::success(PreferencesResponse { preferences: default_prefs }, "Success"))
+                }
+            }
+        }
+        _ => {
+            let default_prefs = UserPreferences {
+                notification_settings: NotificationSettings::default(),
+                shortcuts: vec![],
+                language: "zh-CN".to_string(),
+                timezone: "Asia/Shanghai".to_string(),
+            };
+            Json(ApiResponse::success(PreferencesResponse { preferences: default_prefs }, "Success"))
+        }
+    }
+}
+
+async fn update_preferences(
+    State(state): State<AppState>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+    Json(req): Json<UpdatePreferencesRequest>,
+) -> Json<ApiResponse<PreferencesResponse>> {
+    let user_uuid = uuid::Uuid::parse_str(&claims.sub).unwrap_or_else(|_| uuid::Uuid::nil());
+    
+    let current_prefs = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT preferences FROM iam.user_preferences WHERE user_id = $1"
+    )
+    .bind(user_uuid)
+    .fetch_optional(&state.db)
+    .await;
+
+    let mut preferences = match current_prefs {
+        Ok(Some(Some(prefs_json))) => {
+            serde_json::from_str::<UserPreferences>(&prefs_json).unwrap_or_else(|_| UserPreferences {
+                notification_settings: NotificationSettings::default(),
+                shortcuts: vec![],
+                language: "zh-CN".to_string(),
+                timezone: "Asia/Shanghai".to_string(),
+            })
+        }
+        _ => UserPreferences {
+            notification_settings: NotificationSettings::default(),
+            shortcuts: vec![],
+            language: "zh-CN".to_string(),
+            timezone: "Asia/Shanghai".to_string(),
+        }
+    };
+
+    if let Some(notification_settings) = req.notification_settings {
+        preferences.notification_settings = notification_settings;
+    }
+    if let Some(shortcuts) = req.shortcuts {
+        preferences.shortcuts = shortcuts;
+    }
+    if let Some(language) = req.language {
+        preferences.language = language;
+    }
+    if let Some(timezone) = req.timezone {
+        preferences.timezone = timezone;
+    }
+
+    let prefs_json = serde_json::to_string(&preferences).unwrap();
+    
+    let result = sqlx::query(
+        r#"
+        INSERT INTO iam.user_preferences (user_id, preferences, updated_at)
+        VALUES ($1, $2, NOW())
+        ON CONFLICT (user_id) DO UPDATE SET preferences = $2, updated_at = NOW()
+        "#
+    )
+    .bind(user_uuid)
+    .bind(&prefs_json)
+    .execute(&state.db)
+    .await;
+
+    match result {
+        Ok(_) => {
+            let _ = state.security_service.log_access(
+                Some(user_uuid),
+                &claims.username,
+                "update_preferences",
+                "user",
+                None,
+                None,
+                None,
+                true,
+                None
+            ).await;
+            
+            tracing::info!("⚙️ 用户偏好设置更新成功: {}", claims.username);
+            Json(ApiResponse::success(PreferencesResponse { preferences }, "偏好设置更新成功"))
+        }
+        Err(e) => {
+            tracing::error!("数据库更新错误: {}", e);
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -2662,6 +2898,9 @@ async fn main() {
         .route("/me", get(get_current_user))
         .route("/me", put(update_current_user))
         .route("/me/password", post(change_password))
+        .route("/me/avatar", post(update_avatar))
+        .route("/me/preferences", get(get_preferences))
+        .route("/me/preferences", put(update_preferences))
         .route("/me/permissions", get(get_my_permissions))
         .route("/me/permissions/check", post(check_permission))
         .route("/", get(list_users))

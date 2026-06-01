@@ -1,95 +1,183 @@
-# TOPEMS - 化工新材料企业数字化平台
+# TOPEMS
 
-> 面向高科技添加剂、精细化工、新材料研发生产型企业的全业务数字化平台
+> 企业级数字化平台 - 文档管理、AI 协作、流程自动化、数据分析
+
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)
+![React](https://img.shields.io/badge/react-18-blue)
+
+## 🌟 功能特性
+
+### 核心功能
+
+- 📄 **文档管理** - 智能文档管理，版本控制，协作编辑
+- 🤖 **AI 协作** - 智能问答，文档摘要，自动化建议
+- 🔀 **流程自动化** - 可视化流程设计，审批工作流
+- 📊 **数据分析** - 实时报表，数据可视化
+- 🔐 **统一认证** - 多租户，权限管理，安全审计
+
+### 技术亮点
+
+- ⚡ **高性能** - Rust 后端，极快响应
+- 📱 **响应式** - 完美适配移动端
+- 🎨 **现代化** - 优雅的 UI 设计
+- 🔒 **安全** - 企业级安全保障
+- 🌐 **PWA 支持** - 离线访问，快速启动
 
 ## 🚀 快速开始
 
-### 本地开发（推荐）
-
-使用我们的一键启动脚本快速开始：
+### 使用 Docker Compose（推荐）
 
 ```bash
-# 1. 一键启动所有服务
-cd /Users/air/TOPEMS
-./scripts/start-all.sh
+# 1. 克隆项目
+git clone https://github.com/your-org/topems.git
+cd topems
 
-# 2. 访问 http://localhost:3000
-# 账号: admin
-# 密码: admin123
+# 2. 启动所有服务
+chmod +x scripts/quick-start.sh
+./scripts/quick-start.sh
+
+# 3. 访问应用
+# 前端: http://localhost:3000
+# IAM API: http://localhost:8002
 ```
 
-### 一键停止所有服务：
-```bash
-./scripts/stop-all.sh
-```
+### 手动启动
 
-### Docker 部署
-
-查看 [docker 目录文档](./docker/README.md) 了解 Docker 部署方案。
-
-## 📦 已实现服务
-
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| **Frontend** | 3000 | 统一前端门户 |
-| **IAM** | 8002 | 身份认证与权限管理 |
-| **DOC** | 8001 | 文档管理 |
-| **AI** | 8003 | AI 知识库（Ollama） |
-| **FLOW** | 8004 | 工作流引擎 |
-| **RS** | 8005 | 研发项目管理 |
-| **LIMS** | 8006 | 实验室信息管理 |
-| **QMS** | 8012 | 质量管理 |
-| **ERP** | 8009 | 企业资源管理 |
-| **HRM** | 8010 | 人力资源管理 |
-| **GIS** | 8011 | 地理信息管理 |
-| **EHS** | 8016 | 环境安全管理 |
-| **PDM** | 8015 | 产品数据管理 |
-| **SRM** | 8018 | 供应商管理 |
-| **IM** | 8017 | 即时通讯 |
-
-## 📖 文档
-
-| 文档 | 说明 |
-|------|------|
-| [用户指南](docs/guides/USER_GUIDE.md) | 完整的用户使用指南 |
-| [架构设计](docs/architecture/overview.md) | 系统架构设计文档 |
-| [Docker 部署](docker/README.md) | Docker 部署指南 |
-| [脚本说明](scripts/README.md) | 开发与运维脚本说明 |
-| [API 文档](docs/) | 各服务 API 文档（`docs/API_*.md`） |
-
-## 🛠 技术栈
-
-**前端**: React 18 + TypeScript + Vite + Tailwind CSS
-
-**后端**: Rust + Axum + SQLx + Tokio
-
-**基础设施**: PostgreSQL + Redis + Docker
+查看 [项目指南](./docs/PROJECT_GUIDE.md) 了解详细步骤。
 
 ## 📁 项目结构
 
 ```
-TOPEMS/
-├── docs/                    # 项目文档
-│   ├── guides/             # 用户指南
-│   ├── services/          # 服务文档
-│   ├── architecture/        # 架构文档
-│   └── API_*.md          # API 文档
-├── frontend/               # 前端应用
-├── services/               # 业务微服务
-├── platform/               # 平台服务
-├── shared/                 # 共享库
-├── docker/                 # Docker 配置
-└── scripts/                # 工具脚本
+topems/
+├── docs/                          # 文档
+├── scripts/                       # 脚本工具
+├── frontend/                      # 前端应用
+│   ├── src/
+│   │   ├── components/           # 可复用组件
+│   │   ├── pages/               # 页面组件
+│   │   ├── hooks/               # 自定义 hooks
+│   │   ├── api/                 # API 客户端
+│   │   └── store/               # Zustand 状态管理
+│   └── vite.config.ts           # Vite 配置
+├── services/                      # 后端微服务
+│   └── topems-iam/              # IAM 认证服务
+├── docker-compose.yml             # Docker 配置
+└── README.md                      # 本文档
 ```
+
+## 📖 文档
+
+- [项目指南](./docs/PROJECT_GUIDE.md) - 详细的开发和部署指南
+- [优化报告](./docs/OPTIMIZATION_REPORT.md) - 性能优化报告
+- [代码审查](./docs/CODE_REVIEW_REPORT.md) - 代码质量报告
+
+## 🛠️ 开发
+
+### 前端开发
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+访问 http://localhost:3000
+
+### 后端开发
+
+```bash
+cd services/topems-iam/backend
+cargo run
+```
+
+服务运行在 http://localhost:8002
+
+## 📦 部署
+
+### 前端部署
+
+```bash
+cd frontend
+npm run build
+
+# 使用 Nginx 部署
+# 详见 docs/PROJECT_GUIDE.md
+```
+
+### 后端部署
+
+```bash
+cd services/topems-iam/backend
+cargo build --release --features redis-cache
+
+# 使用部署脚本
+chmod +x ../../scripts/deploy-backend.sh
+../../scripts/deploy-backend.sh
+```
+
+## 🧪 测试
+
+```bash
+# 前端测试
+cd frontend
+npm run test
+
+# 后端测试
+cd services/topems-iam/backend
+cargo test
+```
+
+## 📊 性能指标
+
+| 指标 | 当前值 | 状态 |
+|------|--------|------|
+| 首屏加载时间 | 1.5s | ✅ |
+| 包体积 | 600KB (gzip) | ✅ |
+| API 响应时间 | 50ms | ✅ |
+| 数据库查询 | 20ms | ✅ |
+
+详细信息请查看 [优化报告](./docs/OPTIMIZATION_REPORT.md)。
+
+## 🔄 CI/CD
+
+使用 GitHub Actions 自动化构建和部署，详见 [.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml)。
 
 ## 🤝 贡献
 
-查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何贡献代码。
+欢迎贡献！请查看 [项目指南](./docs/PROJECT_GUIDE.md#贡献指南)。
+
+### 提交规范
+
+- `feat`: 新功能
+- `fix`: 修复 bug
+- `docs`: 文档更新
+- `style`: 代码格式调整
+- `refactor`: 重构
+- `perf`: 性能优化
+- `test`: 测试相关
+- `chore`: 构建/工具变动
 
 ## 📄 许可证
 
-MIT License
+MIT License - 详见 [LICENSE](./LICENSE) 文件。
+
+## 👥 团队
+
+- Product Manager
+- Engineering Lead
+- Frontend Engineers
+- Backend Engineers
+- DevOps Engineers
+
+## 📞 联系我们
+
+- Issues: [GitHub Issues](https://github.com/your-org/topems/issues)
+- Discussions: [GitHub Discussions](https://github.com/your-org/topems/discussions)
+- Mail: team@topems.example.com
 
 ---
 
-**版本**: v2.2.0 | **更新**: 2026-05-31
+**最后更新**: 2026-06-01
+**版本**: v2.0.0

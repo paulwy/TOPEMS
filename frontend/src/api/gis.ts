@@ -33,6 +33,7 @@ export interface Pipeline {
   status: string;
   created_at: string;
   updated_at: string;
+  code?: string;
 }
 
 export interface CreatePipelineRequest {
@@ -130,5 +131,14 @@ export const gisApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.gis.get<string>('/health');
+  },
+
+  importData: async (type: string, file: File): Promise<ApiResponse<any>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    return apiClient.gis.post<any>('/api/v1/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   },
 };

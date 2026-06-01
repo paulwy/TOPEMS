@@ -100,7 +100,7 @@ async fn list_documents(
     let page_size = params.page_size.unwrap_or(20);
     let offset = ((page - 1) * page_size) as i64;
 
-    let result: Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
+    let result: std::result::Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
          FROM document_relations
          ORDER BY created_at DESC
@@ -111,7 +111,7 @@ async fn list_documents(
     .fetch_all(&pool)
     .await;
 
-    let total: Result<i64, sqlx::Error> = sqlx::query_scalar("SELECT COUNT(*) FROM document_relations")
+    let total: std::result::Result<i64, sqlx::Error> = sqlx::query_scalar("SELECT COUNT(*) FROM document_relations")
         .fetch_one(&pool)
         .await;
 
@@ -142,7 +142,7 @@ async fn create_document_relation(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result: Result<DocumentRelation, sqlx::Error> = sqlx::query_as(
+    let result: std::result::Result<DocumentRelation, sqlx::Error> = sqlx::query_as(
         "INSERT INTO document_relations (
             id, entity_type, entity_id, doc_service_file_id, doc_service_url, 
             file_name, file_size, file_type, description, created_by, created_at, updated_at
@@ -180,7 +180,7 @@ async fn get_document_relation(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let result: Result<Option<DocumentRelation>, sqlx::Error> = sqlx::query_as(
+    let result: std::result::Result<Option<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
          FROM document_relations WHERE id = $1"
     )
@@ -208,7 +208,7 @@ async fn delete_document_relation(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let result: Result<sqlx::postgres::PgQueryResult, sqlx::Error> = sqlx::query(
+    let result: std::result::Result<sqlx::postgres::PgQueryResult, sqlx::Error> = sqlx::query(
         "DELETE FROM document_relations WHERE id = $1"
     )
     .bind(id)
@@ -235,7 +235,7 @@ async fn get_entity_documents(
     State(pool): State<PgPool>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
-    let result: Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
+    let result: std::result::Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
          FROM document_relations
          WHERE entity_type = $1 AND entity_id = $2

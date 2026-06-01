@@ -11,6 +11,8 @@ import { FieldError, ValidationHint } from '../components/ValidationError';
 import { patterns } from '../utils/validation';
 import { ModuleGate } from '../components/PermissionGate';
 import { MODULES } from '../config/permissions';
+import { DataTable } from '../components/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 const Rspage: React.FC = () => {
   const navigate = useNavigate();
@@ -943,6 +945,172 @@ const Rspage: React.FC = () => {
     }
   };
 
+  const exportToCSV = (data: any[], filename: string) => {
+    if (data.length === 0) {
+      showNotification('error', '没有数据可导出');
+      return;
+    }
+    
+    const headers = Object.keys(data[0]);
+    const csv = [
+      headers.join(','),
+      ...data.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${filename}-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotification('success', '导出成功');
+  };
+
+  const handleExportCurrentTab = () => {
+    const data = activeTab === 'projects' ? safeProjects :
+                 activeTab === 'experiments' ? safeExperiments : safeFormulas;
+    exportToCSV(data, `rs-${activeTab}`);
+  };
+
+  const projectColumns: ColumnDef<Project>[] = [
+    { accessorKey: 'name', header: '项目名称' },
+    { accessorKey: 'status', header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    { accessorKey: 'description', header: '描述' },
+    { 
+      accessorKey: 'start_date', 
+      header: '开始时间',
+      cell: ({ row }) => (
+        <span>{new Date(row.original.start_date).toLocaleDateString('zh-CN')}</span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openDetailModal(row.original)}
+            className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+          >
+            详情
+          </button>
+          <button 
+            onClick={() => openEditModal(row.original)}
+            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const experimentColumns: ColumnDef<ExperimentRecord>[] = [
+    { accessorKey: 'title', header: '试验标题' },
+    { accessorKey: 'experiment_type', header: '类型',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getExperimentTypeColor(row.original.experiment_type)}`}>
+          {row.original.experiment_type}
+        </span>
+      )
+    },
+    { accessorKey: 'status', header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    { accessorKey: 'experimenter', header: '试验员' },
+    { 
+      accessorKey: 'experiment_date', 
+      header: '日期',
+      cell: ({ row }) => (
+        <span>{new Date(row.original.experiment_date).toLocaleDateString('zh-CN')}</span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openExperimentDetailModal(row.original)}
+            className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+          >
+            详情
+          </button>
+          <button 
+            onClick={() => openEditExperimentModal(row.original)}
+            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDeleteExperiment(row.original.id)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const formulaColumns: ColumnDef<Formula>[] = [
+    { accessorKey: 'name', header: '配方名称' },
+    { accessorKey: 'code', header: '编号' },
+    { accessorKey: 'version', header: '版本' },
+    { accessorKey: 'status', header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getFormulaStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    { accessorKey: 'category', header: '分类' },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openFormulaDetailModal(row.original)}
+            className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+          >
+            详情
+          </button>
+          <button 
+            onClick={() => openFormulaModal(row.original)}
+            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDeleteFormula(row.original.id)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
@@ -1000,9 +1168,9 @@ const Rspage: React.FC = () => {
                   </ModuleGate>
                   <ModuleGate module={MODULES.RS} action="read" showDisabled={true}>
                     <button
-                      onClick={handleExport}
+                      onClick={handleExportCurrentTab}
                       disabled={creating}
-                      className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
                       <Download className="w-4 h-4" />
                       <span>导出</span>

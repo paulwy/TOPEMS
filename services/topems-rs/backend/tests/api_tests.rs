@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -19,10 +18,7 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -50,10 +46,7 @@ mod tests {
 
         assert_eq!(create_response.status(), 200);
 
-        let created_data = create_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let created_data = create_response.json::<serde_json::Value>().await.unwrap();
 
         let project_id = created_data["data"]["id"].as_str().unwrap();
         println!("   Created project with ID: {}", project_id);
@@ -122,10 +115,7 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -191,7 +181,10 @@ mod tests {
             .unwrap()
             .iter()
             .filter(|p| {
-                p["name"].as_str().unwrap_or("").starts_with("Batch Test Project")
+                p["name"]
+                    .as_str()
+                    .unwrap_or("")
+                    .starts_with("Batch Test Project")
             })
             .map(|p| p["id"].as_str().unwrap().to_string())
             .collect();
@@ -236,10 +229,7 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -295,13 +285,19 @@ mod tests {
             .await
             .expect("List projects before delete failed");
 
-        let projects_before_delete = list_before_delete.json::<serde_json::Value>().await.unwrap();
+        let projects_before_delete = list_before_delete
+            .json::<serde_json::Value>()
+            .await
+            .unwrap();
         let project_ids_to_delete: Vec<String> = projects_before_delete["data"]
             .as_array()
             .unwrap()
             .iter()
             .filter(|p| {
-                p["name"].as_str().unwrap_or("").starts_with("Export Test Project")
+                p["name"]
+                    .as_str()
+                    .unwrap_or("")
+                    .starts_with("Export Test Project")
             })
             .map(|p| p["id"].as_str().unwrap().to_string())
             .collect();
@@ -334,10 +330,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
 
         assert_eq!(import_response.status(), 200);
 
-        let import_data = import_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let import_data = import_response.json::<serde_json::Value>().await.unwrap();
 
         let imported_count = import_data["data"]["success"].as_i64().unwrap();
         println!("   Imported {} projects", imported_count);
@@ -357,7 +350,10 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
             .unwrap()
             .iter()
             .filter(|p| {
-                p["name"].as_str().unwrap_or("").starts_with("Import Test Project")
+                p["name"]
+                    .as_str()
+                    .unwrap_or("")
+                    .starts_with("Import Test Project")
             })
             .map(|p| p["id"].as_str().unwrap().to_string())
             .collect();
@@ -389,10 +385,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -401,7 +394,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
 
         // 先执行一些操作，生成审计日志
         println!("\n1. Performing some operations to generate audit logs...");
-        
+
         // 创建一个项目
         let create_response = client
             .post(&format!("{}/api/v1/projects", base_url))
@@ -421,15 +414,15 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
             .await
             .expect("Create audit test project failed");
 
-        let created_data = create_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let created_data = create_response.json::<serde_json::Value>().await.unwrap();
         let audit_project_id = created_data["data"]["id"].as_str().unwrap();
 
         // 删除这个项目
         client
-            .delete(&format!("{}/api/v1/projects/{}", base_url, audit_project_id))
+            .delete(&format!(
+                "{}/api/v1/projects/{}",
+                base_url, audit_project_id
+            ))
             .bearer_auth(token)
             .send()
             .await
@@ -453,7 +446,10 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
 
         // 检查返回的数据结构
         assert!(logs_data["data"]["audit_logs"].is_array());
-        println!("   Got {} audit logs", logs_data["data"]["audit_logs"].as_array().unwrap().len());
+        println!(
+            "   Got {} audit logs",
+            logs_data["data"]["audit_logs"].as_array().unwrap().len()
+        );
 
         // 如果有日志，获取第一个日志的详情
         if let Some(logs_array) = logs_data["data"]["audit_logs"].as_array() {

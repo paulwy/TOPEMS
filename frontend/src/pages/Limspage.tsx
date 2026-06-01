@@ -9,10 +9,12 @@ import { useNavigate } from 'react-router-dom';
 import { limsApi, Sample, CreateSampleRequest, InspectionProcess, InspectionTask, InspectionRecord, CreateInspectionTaskRequest, CreateInspectionRecordRequest, BatchCreateSamplesRequest, BatchDeleteSamplesRequest, BatchOperationResult, Instrument, CreateInstrumentRequest, MaintenanceRecord, CreateMaintenanceRecordRequest } from '../api/lims';
 import { ModuleGate } from '../components/PermissionGate';
 import { MODULES } from '../config/permissions';
+import { DataTable } from '../components/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 const Limspage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'samples' | 'processes' | 'tasks' | 'instruments'>('samples');
+  const [activeTab, setActiveTab] = useState<'samples' | 'processes' | 'tasks' | 'records' | 'instruments'>('samples');
   const [samples, setSamples] = useState<Sample[]>([]);
   const [processes, setProcesses] = useState<InspectionProcess[]>([]);
   const [tasks, setTasks] = useState<InspectionTask[]>([]);
@@ -852,6 +854,194 @@ const Limspage: React.FC = () => {
     }
   };
 
+  const exportToCSV = (data: any[], filename: string) => {
+    if (data.length === 0) {
+      showNotification('error', '没有数据可导出');
+      return;
+    }
+    
+    const headers = Object.keys(data[0]);
+    const csv = [
+      headers.join(','),
+      ...data.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${filename}-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotification('success', '导出成功');
+  };
+
+  const handleExportCurrentTab = () => {
+    const data = activeTab === 'samples' ? safeSamples :
+                 activeTab === 'processes' ? safeProcesses :
+                 activeTab === 'tasks' ? safeTasks :
+                 activeTab === 'records' ? safeRecords : safeInstruments;
+    exportToCSV(data, `lims-${activeTab}`);
+  };
+
+  const sampleColumns: ColumnDef<Sample>[] = [
+    { accessorKey: 'sample_no', header: '样品编号' },
+    { accessorKey: 'name', header: '样品名称' },
+    { accessorKey: 'category', header: '分类' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => handleDelete(row.original.id)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const processColumns: ColumnDef<InspectionProcess>[] = [
+    { accessorKey: 'name', header: '流程名称' },
+    { accessorKey: 'description', header: '描述' },
+    { accessorKey: 'version', header: '版本' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => handleDelete(row.original.id)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const taskColumns: ColumnDef<InspectionTask>[] = [
+    { accessorKey: 'task_no', header: '任务编号' },
+    { accessorKey: 'sample_name', header: '样品名称' },
+    { accessorKey: 'inspector', header: '检验员' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openTaskDetailModal(row.original)}
+            className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+          >
+            详情
+          </button>
+          <button 
+            onClick={() => handleDelete(row.original.id)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const recordColumns: ColumnDef<InspectionRecord>[] = [
+    { accessorKey: 'record_no', header: '记录编号' },
+    { accessorKey: 'task_id', header: '任务ID' },
+    { accessorKey: 'inspector', header: '检验员' },
+    { accessorKey: 'result', header: '结果' },
+    { 
+      accessorKey: 'created_at', 
+      header: '创建时间',
+      cell: ({ row }) => (
+        <span>{new Date(row.original.created_at).toLocaleDateString('zh-CN')}</span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => handleDelete(row.original.id)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const instrumentColumns: ColumnDef<Instrument>[] = [
+    { accessorKey: 'name', header: '仪器名称' },
+    { accessorKey: 'code', header: '编号' },
+    { accessorKey: 'category', header: '分类' },
+    { accessorKey: 'model', header: '型号' },
+    { 
+      accessorKey: 'status', 
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openInstrumentModal(row.original)}
+            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => handleDeleteInstrument(row.original.id)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
@@ -909,9 +1099,9 @@ const Limspage: React.FC = () => {
                   </ModuleGate>
                   <ModuleGate module={MODULES.LIMS} action="read" showDisabled={true}>
                     <button
-                      onClick={handleExport}
+                      onClick={handleExportCurrentTab}
                       disabled={creating}
-                      className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
                       <Download className="w-4 h-4" />
                       <span>导出</span>
@@ -920,7 +1110,7 @@ const Limspage: React.FC = () => {
                   <ModuleGate module={MODULES.LIMS} action="write" showDisabled={true}>
                     <button
                       onClick={() => setShowImportModal(true)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                     >
                       <Upload className="w-4 h-4" />
                       <span>导入</span>

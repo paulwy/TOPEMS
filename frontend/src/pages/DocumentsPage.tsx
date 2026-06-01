@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   FileText, Folder, Upload, Search, Plus, 
   ChevronLeft, Star, MoreVertical, Trash2, 
   Download, Eye, History, Share2, X, CheckCircle,
-  FolderOpen
+  FolderOpen, Filter, SortAsc, SortDesc, Grid3X3, List,
+  Clock, Tag, Type
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { docApi, type Folder as FolderType } from '../api/doc';
@@ -134,7 +135,14 @@ const DocumentsPage: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<'name' | 'size' | 'date'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [fileTypeFilter, setFileTypeFilter] = useState<string>('all');
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadFolders();
@@ -303,39 +311,164 @@ const DocumentsPage: React.FC = () => {
     });
   };
 
-  const toggleStar = (id: string) => {
+  const toggleStar = useCallback((id: string) => {
     setFiles(prev => prev.map(f => 
       f.id === id ? { ...f, starred: !f.starred } : f
     ));
-  };
+  }, []);
 
-  const handleFolderSelect = (folderId: string | null) => {
+  const handleFolderSelect = useCallback((folderId: string | null) => {
     setSelectedFolderId(folderId);
-  };
+    setSelectedFiles([]);
+  }, []);
 
-  const handleCreateFolderSuccess = () => {
+  const handleCreateFolderSuccess = useCallback(() => {
     loadFolders();
     loadFiles();
-  };
+  }, []);
 
-  const allItems = [
+  const toggleFileSelect = useCallback((fileId: string) => {
+    setSelectedFiles(prev => 
+      prev.includes(fileId) 
+        ? prev.filter(id => id !== fileId)
+        : [...prev, fileId]
+    );
+  }, []);
+
+  const selectAllFiles = useCallback(() => {
+    const allFileIds = files.map(f => f.id);
+    setSelectedFiles(allFileIds);
+  }, [files]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedFiles([]);
+  }, []);
+
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedFiles.length === 0) return;
+    
+    if (!confirm(`确定要删除选中的 ${selectedFiles.length} 个文件吗？`)) return;
+
+    try {
+      const deletePromises = selectedFiles.map(id => docApi.delete(id));
+      await Promise.all(deletePromises);
+      
+      await loadFiles();
+      setSelectedFiles([]);
+      addNotification({ title: '成功', message: `已删除 ${selectedFiles.length} 个文件`, type: 'success' });
+    } catch (err) {
+      console.error('批量删除失败:', err);
+      addNotification({ title: '失败', message: '批量删除失败', type: 'error' });
+    }
+  }, [selectedFiles, addNotification]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    let uploadedCount = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const response = await docApi.upload(file, selectedFolderId || undefined);
+        if (response.success && response.data) {
+          uploadedCount++;
+        }
+      } catch (err) {
+        console.error(`上传文件 ${file.name} 失败:`, err);
+      }
+      setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+    }
+
+    await loadFiles();
+    setUploading(false);
+    setUploadProgress(0);
+    
+    if (uploadedCount > 0) {
+      addNotification({ title: '成功', message: `成功上传 ${uploadedCount} 个文件`, type: 'success' });
+    }
+  }, [selectedFolderId, addNotification]);
+
+  const toggleSort = useCallback((field: 'name' | 'size' | 'date') => {
+    if (sortBy === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+  }, [sortBy]);
+
+  const allItems = useMemo(() => [
     ...folders.map(f => ({
       id: f.id,
       name: f.name,
       type: 'folder' as const,
       updatedAt: new Date(f.updated_at).toLocaleString('zh-CN'),
+      updatedAtRaw: new Date(f.updated_at).getTime(),
       starred: false,
-      tags: []
+      tags: [],
+      sizeBytes: 0
     })),
-    ...files
-  ];
+    ...files.map(f => ({
+      ...f,
+      updatedAtRaw: new Date(f.updatedAt).getTime()
+    }))
+  ], [folders, files]);
 
-  const filteredItems = allItems.filter(f => 
-    f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    f.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredItems = useMemo(() => {
+    let result = [...allItems];
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(item => 
+        item.name.toLowerCase().includes(query) ||
+        item.tags.some(t => t.toLowerCase().includes(query))
+      );
+    }
+    
+    if (fileTypeFilter !== 'all') {
+      result = result.filter(item => {
+        if (item.type === 'folder') return false;
+        const ext = item.name.split('.').pop()?.toLowerCase();
+        return ext === fileTypeFilter;
+      });
+    }
+    
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name, 'zh-CN');
+          break;
+        case 'size':
+          comparison = (a.sizeBytes || 0) - (b.sizeBytes || 0);
+          break;
+        case 'date':
+          comparison = a.updatedAtRaw - b.updatedAtRaw;
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    return result;
+  }, [allItems, searchQuery, fileTypeFilter, sortBy, sortOrder]);
 
-  const starredCount = files.filter(f => f.starred).length;
+  const starredCount = useMemo(() => files.filter(f => f.starred).length, [files]);
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
 
   return (
@@ -351,6 +484,11 @@ const DocumentsPage: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 文件管理
               </h1>
+              {selectedFolder && (
+                <span className="text-gray-500 dark:text-gray-400">
+                  / {selectedFolder.name}
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-3">
               <ModeToggle />
@@ -364,16 +502,26 @@ const DocumentsPage: React.FC = () => {
                   className="pl-10"
                 />
               </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant={showFilters ? 'default' : 'ghost'} 
+                      size="sm"
+                      onClick={() => setShowFilters(!showFilters)}
+                    >
+                      <Filter className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>筛选</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 <Button variant="ghost" size="sm" onClick={() => setViewMode('grid')} className={viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow' : ''}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
+                  <Grid3X3 className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setViewMode('list')} className={viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow' : ''}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
+                  <List className="w-4 h-4" />
                 </Button>
               </div>
               <TooltipProvider>
@@ -399,6 +547,57 @@ const DocumentsPage: React.FC = () => {
               />
             </div>
           </div>
+          
+          {/* Filters Bar */}
+          {showFilters && (
+            <div className="flex items-center space-x-4 py-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-2">
+                <Type className="w-4 h-4 text-gray-400" />
+                <select
+                  value={fileTypeFilter}
+                  onChange={(e) => setFileTypeFilter(e.target.value)}
+                  className="bg-gray-100 dark:bg-gray-700 border-none rounded-lg px-3 py-1.5 text-sm"
+                >
+                  <option value="all">全部类型</option>
+                  <option value="pdf">PDF</option>
+                  <option value="doc">Word</option>
+                  <option value="xls">Excel</option>
+                  <option value="ppt">PowerPoint</option>
+                  <option value="txt">文本</option>
+                  <option value="jpg">图片</option>
+                  <option value="zip">压缩包</option>
+                </select>
+              </div>
+              <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+              <div className="flex items-center space-x-2">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => toggleSort('date')}
+                  className={sortBy === 'date' ? 'text-blue-600 dark:text-blue-400' : ''}
+                >
+                  时间 {sortBy === 'date' && (sortOrder === 'asc' ? <SortAsc className="w-3 h-3 ml-1" /> : <SortDesc className="w-3 h-3 ml-1" />)}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => toggleSort('name')}
+                  className={sortBy === 'name' ? 'text-blue-600 dark:text-blue-400' : ''}
+                >
+                  名称 {sortBy === 'name' && (sortOrder === 'asc' ? <SortAsc className="w-3 h-3 ml-1" /> : <SortDesc className="w-3 h-3 ml-1" />)}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => toggleSort('size')}
+                  className={sortBy === 'size' ? 'text-blue-600 dark:text-blue-400' : ''}
+                >
+                  大小 {sortBy === 'size' && (sortOrder === 'asc' ? <SortAsc className="w-3 h-3 ml-1" /> : <SortDesc className="w-3 h-3 ml-1" />)}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -484,11 +683,54 @@ const DocumentsPage: React.FC = () => {
           {/* Content Area */}
           <div className="flex-1">
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
               <StatCard icon={Folder} title="文件夹" value={String(folders.length)} color="blue" />
               <StatCard icon={FileText} title="文件" value={String(files.length)} color="purple" />
               <StatCard icon={Star} title="星标" value={String(starredCount)} color="yellow" />
               <StatCard icon={History} title="最近更新" value={String(files.length)} color="green" />
+            </div>
+
+            {/* Batch Actions Bar */}
+            {selectedFiles.length > 0 && (
+              <Card className="mb-6 border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
+                <CardContent className="p-3 flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      已选择 {selectedFiles.length} 个文件
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={clearSelection}>
+                      取消选择
+                    </Button>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="default" size="sm" className="bg-red-600 hover:bg-red-700">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      批量删除
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Drag and Drop Zone */}
+            <div
+              ref={dropZoneRef}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`mb-6 border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+                isDragging 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+              }`}
+            >
+              <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
+              <p className={`text-lg font-medium mb-2 ${isDragging ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                {isDragging ? '释放以上传文件' : '拖拽文件到这里上传'}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                支持 PDF、Word、Excel、图片等格式
+              </p>
             </div>
 
             {/* Files Grid/List */}
@@ -543,7 +785,9 @@ const DocumentsPage: React.FC = () => {
                         file={item} 
                         onStarToggle={(id) => toggleStar(id)} 
                         onDownload={handleDownload} 
-                        onPreview={handlePreview} 
+                        onPreview={handlePreview}
+                        isSelected={selectedFiles.includes(item.id)}
+                        onSelect={toggleFileSelect}
                       />
                     )
                   ))}
@@ -690,11 +934,27 @@ interface FileCardProps {
   onStarToggle: (id: string) => void;
   onDownload: (file: File) => void;
   onPreview: (file: File) => void;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
-const FileCard: React.FC<FileCardProps> = ({ file, onStarToggle, onDownload, onPreview }) => {
+const FileCard: React.FC<FileCardProps> = ({ file, onStarToggle, onDownload, onPreview, isSelected = false, onSelect }) => {
   return (
-    <Card className="hover:shadow-lg transition-all cursor-pointer group">
+    <Card className={`hover:shadow-lg transition-all cursor-pointer group relative ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
+      {onSelect && (
+        <div className="absolute top-3 left-3 z-10">
+          <button
+            onClick={(e) => { e.stopPropagation(); onSelect(file.id); }}
+            className="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+            style={{
+              borderColor: isSelected ? '#3b82f6' : '#d1d5db',
+              backgroundColor: isSelected ? '#3b82f6' : 'white',
+            }}
+          >
+            {isSelected && <CheckCircle className="w-3 h-3 text-white" />}
+          </button>
+        </div>
+      )}
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="w-14 h-14 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">

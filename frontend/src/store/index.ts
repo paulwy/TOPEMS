@@ -24,6 +24,23 @@ export interface Notification {
   timestamp: number
 }
 
+// 通知设置类型
+export interface NotificationSettings {
+  email_enabled: boolean
+  system_enabled: boolean
+  workflow_enabled: boolean
+  document_enabled: boolean
+  security_enabled: boolean
+}
+
+// 快捷方式类型
+export interface Shortcut {
+  id: string
+  title: string
+  icon: string
+  path: string
+}
+
 // 主题类型
 export type Theme = 'light' | 'dark' | 'system'
 
@@ -45,6 +62,17 @@ interface AppState {
   removeNotification: (id: string) => void
   clearNotifications: () => void
   
+  // 通知设置状态
+  notificationSettings: NotificationSettings
+  setNotificationSettings: (settings: NotificationSettings) => void
+  updateNotificationSetting: (key: keyof NotificationSettings, value: boolean) => void
+  
+  // 快捷方式状态
+  shortcuts: Shortcut[]
+  setShortcuts: (shortcuts: Shortcut[]) => void
+  addShortcut: (shortcut: Shortcut) => void
+  removeShortcut: (id: string) => void
+  
   // 工作流状态
   selectedWorkflowId: string | null
   setSelectedWorkflowId: (id: string | null) => void
@@ -54,6 +82,19 @@ interface AppState {
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
 }
+
+const defaultNotificationSettings: NotificationSettings = {
+  email_enabled: true,
+  system_enabled: true,
+  workflow_enabled: true,
+  document_enabled: true,
+  security_enabled: true,
+}
+
+const defaultShortcuts: Shortcut[] = [
+  { id: '1', title: '仪表盘', icon: 'Activity', path: '/dashboard' },
+  { id: '2', title: '文档中心', icon: 'FileText', path: '/documents' },
+]
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -94,6 +135,29 @@ export const useAppStore = create<AppState>()(
       clearNotifications: () =>
         set({ notifications: [] }),
       
+      // 通知设置状态
+      notificationSettings: defaultNotificationSettings,
+      setNotificationSettings: (settings) => set({ notificationSettings: settings }),
+      updateNotificationSetting: (key, value) =>
+        set((state) => ({
+          notificationSettings: {
+            ...state.notificationSettings,
+            [key]: value
+          }
+        })),
+      
+      // 快捷方式状态
+      shortcuts: defaultShortcuts,
+      setShortcuts: (shortcuts) => set({ shortcuts }),
+      addShortcut: (shortcut) =>
+        set((state) => ({
+          shortcuts: [...state.shortcuts, shortcut]
+        })),
+      removeShortcut: (id) =>
+        set((state) => ({
+          shortcuts: state.shortcuts.filter(s => s.id !== id)
+        })),
+      
       // 工作流状态
       selectedWorkflowId: null,
       setSelectedWorkflowId: (id) =>
@@ -112,7 +176,9 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         theme: state.theme,
         user: state.user,
-        sidebarOpen: state.sidebarOpen
+        sidebarOpen: state.sidebarOpen,
+        notificationSettings: state.notificationSettings,
+        shortcuts: state.shortcuts
       })
     }
   )
