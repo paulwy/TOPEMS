@@ -95,6 +95,7 @@ async fn main() -> Result<()> {
         .merge(api::employee::create_routes(pool.clone()).await?)
         .merge(api::asset::create_routes(pool.clone()).await?)
         .merge(api::finance::create_routes(pool.clone()).await?)
+        .merge(api::addressbook::create_routes(pool.clone()).await?)
         .merge(audit_router)
         .merge(dict_router)
         .merge(db_structure_router)
@@ -763,6 +764,82 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     )
     .execute(pool)
     .await?;
+
+    // 创建通讯录联合视图
+    sqlx::query(
+        r#"
+        CREATE OR REPLACE VIEW erp.v_addressbook AS
+        SELECT
+            'EMPLOYEE' as contact_type,
+            e.id,
+            e.name,
+            e.employee_number as code,
+            e.position,
+            e.email,
+            e.phone,
+            e.department_id,
+            d.name as department_name,
+            d.code as department_code,
+            e.status,
+            e.created_at,
+            e.updated_at
+        FROM erp.employees e
+        LEFT JOIN erp.departments d ON e.department_id = d.id
+
+        UNION ALL
+
+        SELECT
+            'DEPARTMENT' as contact_type,
+            d.id,
+            d.name,
+            d.code,
+            NULL::varchar as position,
+            NULL::varchar as email,
+            NULL::varchar as phone,
+            d.parent_id as department_id,
+            p.name as department_name,
+            p.code as department_code,
+            d.status,
+            d.created_at,
+            d.updated_at
+        FROM erp.departments d
+        LEFT JOIN erp.departments p ON d.parent_id = p.id
+
+        UNION ALL
+
+        SELECT
+            'COMPANY' as contact_type,
+            c.id,
+            c.name,
+            c.registration_number as code,
+            NULL::varchar as position,
+            c.email,
+            c.contact_phone as phone,
+            NULL::uuid as department_id,
+            NULL::varchar as department_name,
+            NULL::varchar as department_code,
+            c.status,
+            c.created_at,
+            c.updated_at
+        FROM erp.companies c
+        "#
+    )
+    .execute(pool)
+    .await?;
+
+    // 为通讯录视图查询创建索引
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_addressbook_contact_type ON erp.employees(id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_addressbook_name ON erp.employees(name)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_addressbook_department_id ON erp.employees(department_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_addressbook_status ON erp.employees(status)"#)
+        .execute(pool)
+        .await?;
 
     tracing::info!("✅ ERP数据库表初始化完成");
 

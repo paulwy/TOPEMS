@@ -18,7 +18,7 @@ dotenv = "0.15"
 anyhow = "1"
 thiserror = "2"
 reqwest = { version = "0.12", features = ["json"] }
-lettre = { version = "0.11", features = ["smtp-transport", "tokio1", "native-tls"] }
+lettre = { version = "0.11", features = ["smtp-transport", "tokio1-native-tls"] }
 topems-shared = { path = "../../../shared/lib" }
 
 [[bin]]

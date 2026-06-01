@@ -9,6 +9,7 @@ pub mod dict;
 pub mod project_contract;
 pub mod project_budget;
 pub mod payment_schedule;
+pub mod addressbook;
 
 pub use company::{Company, CreateCompanyRequest, UpdateCompanyRequest};
 pub use department::{Department, CreateDepartmentRequest, UpdateDepartmentRequest};
@@ -40,4 +41,8 @@ pub use project_budget::{
 pub use payment_schedule::{
     PaymentSchedule, CreatePaymentScheduleRequest, UpdatePaymentScheduleRequest,
     ScheduleType, ScheduleStatus, PaymentScheduleQuery,
+};
+pub use addressbook::{
+    AddressbookEntry, AddressbookDetail, DepartmentNode,
+    AddressbookQueryParams, AddressbookSearchParams, ExportParams, ContactDetailParams,
 };

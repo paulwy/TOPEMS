@@ -200,10 +200,35 @@ const playNotificationSound = () => {
   }
 
   try {
+    // 尝试使用 Web Audio API 生成简单提示音（避免依赖外部文件）
+    const playBeep = () => {
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+      } catch (beepErr) {
+        console.log('Web Audio API not available:', beepErr);
+      }
+    };
+    
+    // 先尝试播放文件，如果失败则用 Beep
     const audio = new Audio('/notification-sound.mp3');
     audio.volume = 0.5;
     audio.play().catch((err) => {
-      console.log('Audio play failed:', err);
+      console.log('Audio file not found, using fallback beep:', err);
+      playBeep();
     });
   } catch (err) {
     console.log('Audio initialization failed:', err);

@@ -1,7 +1,7 @@
 pub struct DatabaseSchema;
 
 impl DatabaseSchema {
-    pub fn init_tables() -> &'static str {
+    pub fn create_table() -> &'static str {
         r#"
         CREATE TABLE IF NOT EXISTS notifications (
             id UUID PRIMARY KEY,
@@ -14,11 +14,19 @@ impl DatabaseSchema {
             priority SMALLINT NOT NULL DEFAULT 2,
             created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
             read_at TIMESTAMPTZ
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
-        CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
-        CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+        )
         "#
+    }
+
+    pub fn create_index_user_id() -> &'static str {
+        "CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)"
+    }
+
+    pub fn create_index_is_read() -> &'static str {
+        "CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read)"
+    }
+
+    pub fn create_index_created_at() -> &'static str {
+        "CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC)"
     }
 }

@@ -88,9 +88,22 @@ struct AppState {
 }
 
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(DatabaseSchema::init_tables())
+    sqlx::query(DatabaseSchema::create_table())
         .execute(pool)
         .await?;
+    
+    sqlx::query(DatabaseSchema::create_index_user_id())
+        .execute(pool)
+        .await?;
+    
+    sqlx::query(DatabaseSchema::create_index_is_read())
+        .execute(pool)
+        .await?;
+    
+    sqlx::query(DatabaseSchema::create_index_created_at())
+        .execute(pool)
+        .await?;
+    
     Ok(())
 }
 
@@ -128,10 +141,31 @@ async fn main() {
     let (tx, _) = broadcast::channel(1000);
     let state = AppState { tx, pool };
 
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+    let cors = {
+        use axum::http::HeaderValue;
+        use tower_http::cors::AllowOrigin;
+        
+        let allowed_origins = std::env::var("CORS_ALLOWED_ORIGINS")
+            .unwrap_or_else(|_| "http://localhost:3000,http://localhost:5173".to_string());
+        
+        let origins: Vec<HeaderValue> = allowed_origins
+            .split(',')
+            .filter_map(|origin| origin.trim().parse().ok())
+            .collect();
+        
+        let allow_origin = if origins.is_empty() {
+            tracing::warn!("No CORS origins configured, allowing any origin (not recommended for production)");
+            AllowOrigin::any()
+        } else {
+            tracing::info!("CORS allowed origins: {:?}", origins);
+            AllowOrigin::list(origins)
+        };
+        
+        CorsLayer::new()
+            .allow_origin(allow_origin)
+            .allow_methods(Any)
+            .allow_headers(Any)
+    };
 
     let app = Router::new()
         .route("/", get(home))

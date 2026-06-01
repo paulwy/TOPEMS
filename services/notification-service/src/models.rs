@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::NaiveDateTime;
-use sqlx::Row;
+use chrono::{DateTime, Utc};
+use sqlx::FromRow;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -38,6 +38,21 @@ impl NotificationType {
     }
 }
 
+// A helper struct for SQLx that uses the raw string for notification_type
+#[derive(Debug, Clone, FromRow)]
+struct NotificationRow {
+    pub id: Uuid,
+    pub user_id: String,
+    pub notification_type: String,
+    pub title: String,
+    pub content: String,
+    pub data: Option<serde_json::Value>,
+    pub is_read: bool,
+    pub priority: i16,
+    pub created_at: DateTime<Utc>,
+    pub read_at: Option<DateTime<Utc>>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Notification {
@@ -49,25 +64,25 @@ pub struct Notification {
     pub data: Option<serde_json::Value>,
     pub is_read: bool,
     pub priority: i16,
-    pub created_at: NaiveDateTime,
-    pub read_at: Option<NaiveDateTime>,
+    pub created_at: DateTime<Utc>,
+    pub read_at: Option<DateTime<Utc>>,
 }
 
 impl Notification {
     pub fn from_row(row: &sqlx::postgres::PgRow) -> sqlx::Result<Self> {
-        let type_str: String = row.try_get("notification_type")?;
+        let row: NotificationRow = NotificationRow::from_row(row)?;
         Ok(Self {
-            id: row.try_get("id")?,
-            user_id: row.try_get("user_id")?,
-            notification_type: NotificationType::from_str(&type_str)
+            id: row.id,
+            user_id: row.user_id,
+            notification_type: NotificationType::from_str(&row.notification_type)
                 .unwrap_or(NotificationType::System),
-            title: row.try_get("title")?,
-            content: row.try_get("content")?,
-            data: row.try_get("data")?,
-            is_read: row.try_get("is_read")?,
-            priority: row.try_get("priority")?,
-            created_at: row.try_get("created_at")?,
-            read_at: row.try_get("read_at")?,
+            title: row.title,
+            content: row.content,
+            data: row.data,
+            is_read: row.is_read,
+            priority: row.priority,
+            created_at: row.created_at,
+            read_at: row.read_at,
         })
     }
 }

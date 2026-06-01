@@ -58,14 +58,13 @@ interface PasswordFormData {
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const initialized = useRef(false);
   const addNotification = useAppStore((state) => state.addNotification);
-  const { setUser, shortcuts, setShortcuts, notificationSettings, setNotificationSettings } = useAppStore((state) => ({
-    setUser: state.setUser,
-    shortcuts: state.shortcuts,
-    setShortcuts: state.setShortcuts,
-    notificationSettings: state.notificationSettings,
-    setNotificationSettings: state.setNotificationSettings,
-  }));
+  const setUser = useAppStore((state) => state.setUser);
+  const shortcuts = useAppStore((state) => state.shortcuts);
+  const setShortcuts = useAppStore((state) => state.setShortcuts);
+  const notificationSettings = useAppStore((state) => state.notificationSettings);
+  const setNotificationSettings = useAppStore((state) => state.setNotificationSettings);
 
   const [user, setUserState] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,11 +91,6 @@ const ProfilePage: React.FC = () => {
       confirm_password: '',
     }
   });
-
-  useEffect(() => {
-    loadUserProfile();
-    loadActivities();
-  }, []);
 
   const loadUserProfile = useCallback(async () => {
     setLoading(true);
@@ -135,9 +129,12 @@ const ProfilePage: React.FC = () => {
   }, [setUser, addNotification, profileForm]);
 
   const loadActivities = useCallback(async () => {
+    if (!user?.id) {
+      return;
+    }
     setLoadingActivities(true);
     try {
-      const res = await authApi.getUserAccessLogs(user?.id || '', 10, 0);
+      const res = await authApi.getUserAccessLogs(user.id, 10, 0);
       if (res.success && res.data) {
         setActivities(res.data);
       }
@@ -147,6 +144,15 @@ const ProfilePage: React.FC = () => {
       setLoadingActivities(false);
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    if (initialized.current) {
+      return;
+    }
+    initialized.current = true;
+    loadUserProfile();
+    loadActivities();
+  }, [loadUserProfile, loadActivities]);
 
   const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
