@@ -203,16 +203,16 @@ async fn main() {
         .route("/api/v1/integration/events", post(create_event))
         .route("/api/v1/integration/lims-qms", get(list_lims_qms_sync))
         .route("/api/v1/integration/lims-qms", post(create_lims_qms_sync))
-        .route("/api/v1/integration/lims-qms/:id", get(get_lims_qms_sync))
-        .route("/api/v1/integration/lims-qms/:id/sync", post(sync_lims_qms))
+        .route("/api/v1/integration/lims-qms/{id}", get(get_lims_qms_sync))
+        .route("/api/v1/integration/lims-qms/{id}/sync", post(sync_lims_qms))
         .route("/api/v1/integration/mes-erp", get(list_mes_erp_sync))
         .route("/api/v1/integration/mes-erp", post(create_mes_erp_sync))
-        .route("/api/v1/integration/mes-erp/:id", get(get_mes_erp_sync))
-        .route("/api/v1/integration/mes-erp/:id/sync", post(sync_mes_erp))
+        .route("/api/v1/integration/mes-erp/{id}", get(get_mes_erp_sync))
+        .route("/api/v1/integration/mes-erp/{id}/sync", post(sync_mes_erp))
         .route("/api/v1/integration/wms-scm", get(list_wms_scm_sync))
         .route("/api/v1/integration/wms-scm", post(create_wms_scm_sync))
-        .route("/api/v1/integration/wms-scm/:id", get(get_wms_scm_sync))
-        .route("/api/v1/integration/wms-scm/:id/sync", post(sync_wms_scm))
+        .route("/api/v1/integration/wms-scm/{id}", get(get_wms_scm_sync))
+        .route("/api/v1/integration/wms-scm/{id}/sync", post(sync_wms_scm))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

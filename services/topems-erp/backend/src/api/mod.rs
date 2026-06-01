@@ -9,3 +9,4 @@ pub mod db_structure;
 pub mod contract;
 pub mod budget;
 pub mod payment_schedule;
+pub mod addressbook;

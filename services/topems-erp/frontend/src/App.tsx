@@ -3,6 +3,7 @@ import CompanyList from './pages/CompanyList';
 import DepartmentList from './pages/DepartmentList';
 import EmployeeList from './pages/EmployeeList';
 import AssetList from './pages/AssetList';
+import AddressbookPage from './pages/AddressbookPage';
 import './index.css';
 
 function App() {
@@ -18,6 +19,8 @@ function App() {
         return <EmployeeList />;
       case 'assets':
         return <AssetList />;
+      case 'addressbook':
+        return <AddressbookPage />;
       default:
         return <CompanyList />;
     }
@@ -75,13 +78,23 @@ function App() {
                 >
                   资产管理
                 </button>
+                <button
+                  onClick={() => setActiveTab('addressbook')}
+                  className={`${
+                    activeTab === 'addressbook'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  📇 通讯录
+                </button>
               </div>
             </div>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className={activeTab === 'addressbook' ? '' : 'max-w-7xl mx-auto py-6 sm:px-6 lg:px-8'}>
         {renderContent()}
       </main>
     </div>

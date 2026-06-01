@@ -8,6 +8,7 @@ use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
+use lettre::Transport;
 use crate::models::*;
 
 pub async fn create_routes(pool: PgPool) -> anyhow::Result<Router> {
@@ -37,8 +38,10 @@ pub async fn list_notifications(
         .await
     {
         Ok(row) => {
-            let data: serde_json::Value = row.get("data");
-            json!({ "items": data, "total": match data.as_array() { Some(arr) => arr.len(), None => 0 } })
+            let data: Option<serde_json::Value> = row.get("data");
+            let items = data.unwrap_or(json!([]));
+            let total = items.as_array().map(|arr| arr.len()).unwrap_or(0);
+            json!({ "items": items, "total": total })
         }
         Err(e) => {
             tracing::error!("获取通知列表失败: {}", e);
@@ -625,7 +628,7 @@ pub async fn send_email(
                 .bind(id)
                 .execute(&pool)
                 .await;
-            return Json(ApiResponse::error(500, format!("发送邮件失败: {}", e)));
+            return Json(ApiResponse::error(500, "发送邮件失败"));
         }
     };
 
@@ -716,7 +719,7 @@ pub async fn send_email_with_template(
                 .bind(id)
                 .execute(&pool)
                 .await;
-            return Json(ApiResponse::error(500, format!("发送邮件失败: {}", e)));
+            return Json(ApiResponse::error(500, "发送邮件失败"));
         }
     };
 

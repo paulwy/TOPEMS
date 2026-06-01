@@ -153,12 +153,12 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/lims/, ''),
       },
       '/qms': {
-        target: 'http://localhost:8007',
+        target: 'http://localhost:8012',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/qms/, ''),
       },
       '/ehs': {
-        target: 'http://localhost:8008',
+        target: 'http://localhost:8013',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/ehs/, ''),
       },
@@ -167,23 +167,28 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/erp/, ''),
       },
-      '/srm': {
+      '/hrm': {
         target: 'http://localhost:8010',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/hrm/, ''),
+      },
+      '/srm': {
+        target: 'http://localhost:8018',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/srm/, ''),
       },
       '/bi': {
-        target: 'http://localhost:8011',
+        target: 'http://localhost:8022',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/bi/, ''),
       },
       '/gis': {
-        target: 'http://localhost:8017',
+        target: 'http://localhost:8011',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/gis/, ''),
       },
       '/im': {
-        target: 'http://localhost:8018',
+        target: 'http://localhost:8016',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/im/, ''),
         configure: (proxy) => {
@@ -201,18 +206,13 @@ export default defineConfig({
           });
         },
       },
-      '/hrm': {
-        target: 'http://localhost:8019',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/hrm/, ''),
-      },
       '/wms': {
         target: 'http://localhost:8020',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/wms/, ''),
       },
       '/mobile': {
-        target: 'http://localhost:8021',
+        target: 'http://localhost:8019',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/mobile/, ''),
       },
@@ -221,10 +221,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/integration/, ''),
       },
-      '/portal': {
+      '/notification': {
         target: 'http://localhost:8023',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/portal/, ''),
+        rewrite: (path) => path.replace(/^\/notification/, ''),
       },
       '/report': {
         target: 'http://localhost:8024',
@@ -232,7 +232,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/report/, ''),
       },
       '/mes': {
-        target: 'http://localhost:8025',
+        target: 'http://localhost:8014',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/mes/, ''),
       },
@@ -250,11 +250,6 @@ export default defineConfig({
         target: 'http://localhost:8016',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/scm/, ''),
-      },
-      '/notification': {
-        target: 'http://localhost:8026',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/notification/, ''),
       },
     },
   },

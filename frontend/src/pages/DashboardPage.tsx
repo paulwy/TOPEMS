@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   FileText, GitBranch, Bot, Brain,
@@ -36,8 +36,8 @@ interface DashboardPageProps {
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout: authLogout, isAuthenticated } = useAuth();
-  const { shortcuts } = useAppStore((state) => ({ shortcuts: state.shortcuts }));
+  const { user, logout: authLogout, isAuthenticated, hasPermission, permissions } = useAuth();
+  const shortcuts = useAppStore((state) => state.shortcuts);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [stats, setStats] = useState({
@@ -76,8 +76,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     icon: React.ReactNode;
   }>>([]);
   
-  const { canAccessModule, canAdminModule } = usePermission();
   const { getRoleName } = useRole();
+  const initialized = useRef(false);
+
+  // 稳定的函数引用
+  const stableCanAccessModule = useCallback((module: string): boolean => {
+    return hasPermission(`${module}:read`);
+  }, [hasPermission]);
+
+  const stableCanAdminModule = useCallback((module: string): boolean => {
+    return hasPermission(`${module}:admin`);
+  }, [hasPermission]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -85,28 +94,42 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       return;
     }
 
+    if (initialized.current) {
+      return;
+    }
+    initialized.current = true;
+
     const init = async () => {
       try {
-        const serviceChecks = [
-          checkServiceStatus('iam', authApi).catch(() => {}),
-          checkServiceStatus('doc', docApi).catch(() => {}),
-          checkServiceStatus('ai', aiApi).catch(() => {}),
-          checkServiceStatus('flow', flowApi).catch(() => {}),
-          checkServiceStatus('erp', erpApi).catch(() => {}),
-          checkServiceStatus('hrm', hrmApi).catch(() => {}),
-          checkServiceStatus('mobile', mobileApi).catch(() => {}),
-          checkServiceStatus('notification', notificationServiceApi).catch(() => {})
-        ];
+        const serviceResults = await Promise.all([
+          authApi.health().then(() => true).catch(() => false),
+          docApi.health().then(() => true).catch(() => false),
+          aiApi.health().then(() => true).catch(() => false),
+          flowApi.health().then(() => true).catch(() => false),
+          erpApi.health().then(() => true).catch(() => false),
+          hrmApi.health().then(() => true).catch(() => false),
+          mobileApi.health().then(() => true).catch(() => false),
+          notificationServiceApi.health().then(() => true).catch(() => false)
+        ]);
+
+        setServiceStatuses({
+          iam: serviceResults[0],
+          doc: serviceResults[1],
+          ai: serviceResults[2],
+          flow: serviceResults[3],
+          erp: serviceResults[4],
+          hrm: serviceResults[5],
+          mobile: serviceResults[6],
+          notification: serviceResults[7]
+        });
         
-        const statsPromise = loadStats().catch((err) => {
+        await loadStats().catch((err) => {
           console.warn('加载统计数据失败:', err);
         });
         
-        const activitiesPromise = loadRecentActivities().catch((err) => {
+        await loadRecentActivities().catch((err) => {
           console.warn('加载最近活动失败:', err);
         });
-        
-        await Promise.all([...serviceChecks, statsPromise, activitiesPromise]);
       } catch (err) {
         console.error('初始化失败:', err);
       } finally {
@@ -116,15 +139,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
     init();
   }, [navigate, isAuthenticated]);
-
-  const checkServiceStatus = useCallback(async (key: string, api: any) => {
-    try {
-      await api.health();
-      setServiceStatuses(prev => ({ ...prev, [key]: true }));
-    } catch {
-      setServiceStatuses(prev => ({ ...prev, [key]: false }));
-    }
-  }, []);
 
   const loadStats = useCallback(async () => {
     try {
@@ -172,15 +186,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     navigate(path);
   }, [navigate]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-slate-600">加载中...</div>
-      </div>
-    );
-  }
-
-  const coreModules = [
+  // 暂时禁用模块过滤来调试
+  const coreModules = useMemo(() => [
     {
       title: '文档管理',
       icon: FileText,
@@ -211,9 +218,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       permission: 'workflow:read',
       module: 'workflow'
     },
-  ].filter(module => canAccessModule(module.module));
+  ].filter(module => stableCanAccessModule(module.module)), [stableCanAccessModule]);
 
-  const businessModules = [
+  const businessModules = useMemo(() => [
     {
       title: '用户管理',
       icon: Users,
@@ -486,7 +493,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       permission: 'hrm:read',
       module: 'hrm'
     },
-  ].filter(module => !module.permission || canAccessModule(module.module) || canAdminModule(module.module));
+  ].filter(module => !module.permission || stableCanAccessModule(module.module) || stableCanAdminModule(module.module)), [stableCanAccessModule, stableCanAdminModule]);
 
   const quickActions = useMemo(() => [
     { label: '上传文件', icon: FileText, path: '/documents', color: 'text-blue-500' },
@@ -496,6 +503,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     { label: '通知中心', icon: Bell, path: '/notifications', color: 'text-yellow-500' },
     { label: '个人中心', icon: User, path: '/profile', color: 'text-indigo-500' },
   ], []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-slate-600">加载中...</div>
+      </div>
+    );
+  }
 
   const onlineServices = Object.values(serviceStatuses).filter(Boolean).length;
   const currentPage = location.pathname.replace('/', '') || 'dashboard';

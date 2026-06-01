@@ -217,31 +217,15 @@ pub async fn auth_middleware(
         return next.run(req).await;
     }
     
-    let is_development = std::env::var("RUST_ENV").unwrap_or_default() == "development"
-        || std::env::var("ENV").unwrap_or_default() == "dev";
+    let rust_env = std::env::var("RUST_ENV").unwrap_or_default();
+    let env = std::env::var("ENV").unwrap_or_default();
+    let is_development = rust_env == "development" || env == "dev";
+    
+    tracing::info!("RUST_ENV: {:?}, ENV: {:?}, is_development: {}", rust_env, env, is_development);
     
     if is_development {
-        let dev_public_paths = [
-            "/api/v1/documents", 
-            "/api/v1/files", 
-            "/api/v1/folders", 
-            "/api/v1/workflows", 
-            "/api/v1/ai",
-            "/api/v1/samples",
-            "/api/v1/inspection",
-            "/api/v1/instruments",
-            "/api/v1/reagents",
-            "/api/v1/audit",
-            "/api/v1/projects",
-            "/api/v1/formulas",
-            "/api/v1/experiments",
-            "/api/v1/materials",
-            "/swagger-ui",
-            "/api-docs"
-        ];
-        if dev_public_paths.iter().any(|p| path.starts_with(p)) {
-            return next.run(req).await;
-        }
+        tracing::debug!("Development mode - skipping auth");
+        return next.run(req).await;
     }
 
     let (mut parts, body) = req.into_parts();

@@ -1,8 +1,60 @@
-import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, createContext, useContext, ReactNode } from 'react';
 import { authApi } from '../api/iam';
 import apiClient from '../api/client';
 import type { ApiResponse } from '../api/client';
 import { mapPermissionIdToName, mapPermissionIdsToNames } from '../config/permissionMapping';
+
+// 权限名称到ID的映射 - 移到组件外部避免重复创建
+const permissionNameToId: Record<string, string> = {
+  'user:read': '00000000-0000-0000-0000-000000000010',
+  'user:write': '00000000-0000-0000-0000-000000000011',
+  'user:delete': '00000000-0000-0000-0000-000000000012',
+  'user:admin': '00000000-0000-0000-0000-000000000013',
+  'role:read': '00000000-0000-0000-0000-000000000014',
+  'role:write': '00000000-0000-0000-0000-000000000015',
+  'role:delete': '00000000-0000-0000-0000-000000000016',
+  'role:admin': '00000000-0000-0000-0000-000000000017',
+  'system:read': '00000000-0000-0000-0000-000000000020',
+  'system:write': '00000000-0000-0000-0000-000000000021',
+  'system:admin': '00000000-0000-0000-0000-000000000022',
+  'rs:read': '00000001-0000-0000-0000-000000000001',
+  'rs:write': '00000001-0000-0000-0000-000000000002',
+  'rs:delete': '00000001-0000-0000-0000-000000000003',
+  'rs:admin': '00000001-0000-0000-0000-000000000004',
+  'lims:read': '00000002-0000-0000-0000-000000000001',
+  'lims:write': '00000002-0000-0000-0000-000000000002',
+  'lims:delete': '00000002-0000-0000-0000-000000000003',
+  'lims:admin': '00000002-0000-0000-0000-000000000004',
+  'qms:read': '00000003-0000-0000-0000-000000000001',
+  'qms:write': '00000003-0000-0000-0000-000000000002',
+  'qms:delete': '00000003-0000-0000-0000-000000000003',
+  'qms:admin': '00000003-0000-0000-0000-000000000004',
+  'ehs:read': '00000004-0000-0000-0000-000000000001',
+  'ehs:write': '00000004-0000-0000-0000-000000000002',
+  'ehs:delete': '00000004-0000-0000-0000-000000000003',
+  'ehs:admin': '00000004-0000-0000-0000-000000000004',
+  'srm:read': '00000005-0000-0000-0000-000000000001',
+  'srm:write': '00000005-0000-0000-0000-000000000002',
+  'srm:delete': '00000005-0000-0000-0000-000000000003',
+  'srm:admin': '00000005-0000-0000-0000-000000000004',
+  'pdm:read': '00000006-0000-0000-0000-000000000001',
+  'pdm:write': '00000006-0000-0000-0000-000000000002',
+  'pdm:delete': '00000006-0000-0000-0000-000000000003',
+  'pdm:admin': '00000006-0000-0000-0000-000000000004',
+  'workflow:read': '00000007-0000-0000-0000-000000000001',
+  'workflow:write': '00000007-0000-0000-0000-000000000002',
+  'workflow:approve': '00000007-0000-0000-0000-000000000003',
+  'workflow:reject': '00000007-0000-0000-0000-000000000004',
+  'workflow:admin': '00000007-0000-0000-0000-000000000005',
+  'doc:read': '00000008-0000-0000-0000-000000000001',
+  'doc:write': '00000008-0000-0000-0000-000000000002',
+  'doc:delete': '00000008-0000-0000-0000-000000000003',
+  'doc:admin': '00000008-0000-0000-0000-000000000004',
+  'ai:read': '00000009-0000-0000-0000-000000000001',
+  'ai:write': '00000009-0000-0000-0000-000000000002',
+  'ai:delete': '00000009-0000-0000-0000-000000000003',
+  'ai:admin': '00000009-0000-0000-0000-000000000004',
+};
 
 export interface User {
   id: string;
@@ -58,6 +110,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     roles: [],
     permissions: [],
   });
+
+  // Use refs to hold latest state values for stable callbacks
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const refreshToken = useCallback(async () => {
     const refresh_token = localStorage.getItem('refresh_token');
@@ -197,82 +255,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const hasPermission = useCallback((permission: string) => {
-    if (state.user?.is_superuser) return true;
+    const { permissions, user } = stateRef.current;
+    if (user?.is_superuser) return true;
     
-    // 权限名称到ID的映射
-    const permissionNameToId: Record<string, string> = {
-      'user:read': '00000000-0000-0000-0000-000000000010',
-      'user:write': '00000000-0000-0000-0000-000000000011',
-      'user:delete': '00000000-0000-0000-0000-000000000012',
-      'user:admin': '00000000-0000-0000-0000-000000000013',
-      'role:read': '00000000-0000-0000-0000-000000000014',
-      'role:write': '00000000-0000-0000-0000-000000000015',
-      'role:delete': '00000000-0000-0000-0000-000000000016',
-      'role:admin': '00000000-0000-0000-0000-000000000017',
-      'system:read': '00000000-0000-0000-0000-000000000020',
-      'system:write': '00000000-0000-0000-0000-000000000021',
-      'system:admin': '00000000-0000-0000-0000-000000000022',
-      'rs:read': '00000001-0000-0000-0000-000000000001',
-      'rs:write': '00000001-0000-0000-0000-000000000002',
-      'rs:delete': '00000001-0000-0000-0000-000000000003',
-      'rs:admin': '00000001-0000-0000-0000-000000000004',
-      'lims:read': '00000002-0000-0000-0000-000000000001',
-      'lims:write': '00000002-0000-0000-0000-000000000002',
-      'lims:delete': '00000002-0000-0000-0000-000000000003',
-      'lims:admin': '00000002-0000-0000-0000-000000000004',
-      'qms:read': '00000003-0000-0000-0000-000000000001',
-      'qms:write': '00000003-0000-0000-0000-000000000002',
-      'qms:delete': '00000003-0000-0000-0000-000000000003',
-      'qms:admin': '00000003-0000-0000-0000-000000000004',
-      'ehs:read': '00000004-0000-0000-0000-000000000001',
-      'ehs:write': '00000004-0000-0000-0000-000000000002',
-      'ehs:delete': '00000004-0000-0000-0000-000000000003',
-      'ehs:admin': '00000004-0000-0000-0000-000000000004',
-      'srm:read': '00000005-0000-0000-0000-000000000001',
-      'srm:write': '00000005-0000-0000-0000-000000000002',
-      'srm:delete': '00000005-0000-0000-0000-000000000003',
-      'srm:admin': '00000005-0000-0000-0000-000000000004',
-      'pdm:read': '00000006-0000-0000-0000-000000000001',
-      'pdm:write': '00000006-0000-0000-0000-000000000002',
-      'pdm:delete': '00000006-0000-0000-0000-000000000003',
-      'pdm:admin': '00000006-0000-0000-0000-000000000004',
-      'workflow:read': '00000007-0000-0000-0000-000000000001',
-      'workflow:write': '00000007-0000-0000-0000-000000000002',
-      'workflow:approve': '00000007-0000-0000-0000-000000000003',
-      'workflow:reject': '00000007-0000-0000-0000-000000000004',
-      'workflow:admin': '00000007-0000-0000-0000-000000000005',
-      'doc:read': '00000008-0000-0000-0000-000000000001',
-      'doc:write': '00000008-0000-0000-0000-000000000002',
-      'doc:delete': '00000008-0000-0000-0000-000000000003',
-      'doc:admin': '00000008-0000-0000-0000-000000000004',
-      'ai:read': '00000009-0000-0000-0000-000000000001',
-      'ai:write': '00000009-0000-0000-0000-000000000002',
-      'ai:delete': '00000009-0000-0000-0000-000000000003',
-      'ai:admin': '00000009-0000-0000-0000-000000000004',
-    };
-
     const permissionId = permissionNameToId[permission];
     const altFormat = permission.replace(':', '_');
     
-    return state.permissions.includes(permission) || 
-           state.permissions.includes(altFormat) ||
-           (permissionId && state.permissions.includes(permissionId));
-  }, [state.permissions, state.user?.is_superuser]);
+    return permissions.includes(permission) || 
+           permissions.includes(altFormat) ||
+           (permissionId && permissions.includes(permissionId));
+  }, []);
 
   const hasRole = useCallback((role: string) => {
-    if (state.user?.is_superuser) return true;
-    return state.roles.includes(role);
-  }, [state.roles, state.user?.is_superuser]);
+    const { roles, user } = stateRef.current;
+    if (user?.is_superuser) return true;
+    return roles.includes(role);
+  }, []);
 
-  const hasAnyPermission = useCallback((permissions: string[]) => {
-    if (state.user?.is_superuser) return true;
-    return permissions.some(perm => state.permissions.includes(perm));
-  }, [state.permissions, state.user?.is_superuser]);
+  const hasAnyPermission = useCallback((perms: string[]) => {
+    const { permissions, user } = stateRef.current;
+    if (user?.is_superuser) return true;
+    return perms.some(perm => permissions.includes(perm));
+  }, []);
 
-  const hasAllPermissions = useCallback((permissions: string[]) => {
-    if (state.user?.is_superuser) return true;
-    return permissions.every(perm => state.permissions.includes(perm));
-  }, [state.permissions, state.user?.is_superuser]);
+  const hasAllPermissions = useCallback((perms: string[]) => {
+    const { permissions, user } = stateRef.current;
+    if (user?.is_superuser) return true;
+    return perms.every(perm => permissions.includes(perm));
+  }, []);
 
   const refreshPermissions = useCallback(async () => {
     try {
@@ -294,19 +304,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  // 稳定 Context 值
+  const contextValue = useMemo(() => ({
+    ...state,
+    login,
+    logout,
+    hasPermission,
+    hasRole,
+    hasAnyPermission,
+    hasAllPermissions,
+    refreshPermissions,
+  }), [
+    state,
+    login,
+    logout,
+    hasPermission,
+    hasRole,
+    hasAnyPermission,
+    hasAllPermissions,
+    refreshPermissions
+  ]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        ...state,
-        login,
-        logout,
-        hasPermission,
-        hasRole,
-        hasAnyPermission,
-        hasAllPermissions,
-        refreshPermissions,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

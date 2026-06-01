@@ -86,7 +86,7 @@ impl Repository {
         req: CreateNotificationRequest,
     ) -> sqlx::Result<Notification> {
         let id = Uuid::new_v4();
-        let now = Utc::now().naive_utc();
+        let now = Utc::now();
         let notification = Notification {
             id,
             user_id: req.user_id.clone(),
@@ -123,7 +123,7 @@ impl Repository {
         pool: &PgPool,
         notification_id: &Uuid,
     ) -> sqlx::Result<Option<Notification>> {
-        let now = Utc::now().naive_utc();
+        let now = Utc::now();
         let result = sqlx::query(
             "UPDATE notifications SET is_read = TRUE, read_at = $1 WHERE id = $2 RETURNING *"
         )
