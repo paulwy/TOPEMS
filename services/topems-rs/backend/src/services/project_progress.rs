@@ -86,8 +86,8 @@ pub async fn on_milestone_achieved(db: &PgPool, project_id: Uuid, milestone_id: 
     Ok(())
 }
 
-#[instrument(level = "info", skip(db, project_id, phase_id))]
-pub async fn check_phase_completion(db: &PgPool, project_id: Uuid, phase_id: Uuid) -> Result<bool, sqlx::Error> {
+#[instrument(level = "info", skip(db, _project_id, phase_id))]
+pub async fn check_phase_completion(db: &PgPool, _project_id: Uuid, phase_id: Uuid) -> Result<bool, sqlx::Error> {
     let milestone_stats = sqlx::query(
         r#"
         SELECT 

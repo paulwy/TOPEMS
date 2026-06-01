@@ -4,14 +4,13 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{AuditLog, AuditLogQuery};
+use crate::models::AuditLog;
 use topems_shared::response::ApiResponse;
 
 pub struct AppState {

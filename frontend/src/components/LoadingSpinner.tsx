@@ -14,7 +14,9 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', cla
   };
 
   return (
-    <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} />
+    <div role="status" aria-label="Loading">
+      <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} />
+    </div>
   );
 };
 

@@ -27,8 +27,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
       const response = await getNotifications(1, 50);
       if (response.success && response.data) {
         setNotifications(response.data.notifications);
-        setTotalUnread(response.data.unreadCount);
-        onUnreadCountChange(response.data.unreadCount);
+        setTotalUnread(response.data.unread_count);
+        onUnreadCountChange(response.data.unread_count);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -74,7 +74,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
   };
 
   const displayedNotifications = activeTab === 'unread' 
-    ? notifications.filter(n => !n.isRead)
+    ? notifications.filter(n => !n.is_read)
     : notifications;
 
   return (

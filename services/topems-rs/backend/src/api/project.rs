@@ -3,11 +3,12 @@ use axum::{
     extract::{Path, Query, State},
     http::{header, HeaderMap},
     response::{IntoResponse, Response},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
@@ -15,14 +16,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use topems_shared::response::ApiResponse;
-
-#[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
+use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListProjectsQuery {
@@ -95,7 +89,7 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
 )]
 async fn list_projects(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ListProjectsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -243,6 +237,8 @@ async fn create_project(
     )
     .await;
 
+    invalidate_project_cache(&id.to_string()).await;
+
     response
 }
 
@@ -266,6 +262,12 @@ async fn get_project(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Project>> {
+    let cache_key = format!("project:{}", id);
+
+    if let Some(cached) = cache_get(&cache_key).await {
+        return Json(ApiResponse::success(cached, "获取项目成功"));
+    }
+
     let result = sqlx::query_as::<_, Project>(
         r#"
         SELECT id, name, code, description, project_type, status, leader,
@@ -279,7 +281,10 @@ async fn get_project(
     .await;
 
     match result {
-        Ok(Some(project)) => Json(ApiResponse::success(project, "获取项目成功")),
+        Ok(Some(project)) => {
+            cache_set(&cache_key, project.clone(), Duration::from_secs(300)).await;
+            Json(ApiResponse::success(project, "获取项目成功"))
+        }
         Ok(None) => Json(ApiResponse::error(404, "项目不存在")),
         Err(e) => {
             tracing::error!("获取项目失败: {}", e);
@@ -401,6 +406,8 @@ async fn update_project(
     )
     .await;
 
+    invalidate_project_cache(&id.to_string()).await;
+
     response
 }
 
@@ -472,6 +479,8 @@ async fn delete_project(
         &headers,
     )
     .await;
+
+    invalidate_project_cache(&id.to_string()).await;
 
     response
 }

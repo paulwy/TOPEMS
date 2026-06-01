@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { EmptyState } from '../components/EmptyState';
+import { LoadingSpinner } from '../LoadingSpinner';
+import { EmptyState } from '../EmptyState';
 
 describe('LoadingSpinner', () => {
   it('renders with default size', () => {
@@ -54,16 +54,19 @@ describe('EmptyState', () => {
   });
 
   it('renders with different icons', () => {
-    render(<EmptyState title="Test" icon="file" />);
-    expect(screen.getByText('Test')).toBeInTheDocument();
+    const { unmount } = render(<EmptyState title="File Test" icon="file" />);
+    expect(screen.getByText('File Test')).toBeInTheDocument();
+    unmount();
     
-    render(<EmptyState title="Test" icon="folder" />);
-    expect(screen.getByText('Test')).toBeInTheDocument();
+    render(<EmptyState title="Folder Test" icon="folder" />);
+    expect(screen.getByText('Folder Test')).toBeInTheDocument();
+    unmount();
     
-    render(<EmptyState title="Test" icon="search" />);
-    expect(screen.getByText('Test')).toBeInTheDocument();
+    render(<EmptyState title="Search Test" icon="search" />);
+    expect(screen.getByText('Search Test')).toBeInTheDocument();
+    unmount();
     
-    render(<EmptyState title="Test" icon="inbox" />);
-    expect(screen.getByText('Test')).toBeInTheDocument();
+    render(<EmptyState title="Inbox Test" icon="inbox" />);
+    expect(screen.getByText('Inbox Test')).toBeInTheDocument();
   });
 });

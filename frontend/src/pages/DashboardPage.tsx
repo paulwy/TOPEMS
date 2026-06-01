@@ -8,7 +8,7 @@ import {
   Building, Folder, BarChart3, Box,
   MapPin, Smartphone, MessageSquare, Receipt, TrendingUp,
   Briefcase, Calendar, DollarSign, BookOpen, HelpCircle, FileText as FileTemplate,
-  Settings, CheckCircle, XCircle, ChevronRight, Bell
+  Settings, CheckCircle, XCircle, ChevronRight, Bell, Book
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
@@ -218,7 +218,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       permission: 'workflow:read',
       module: 'workflow'
     },
-  ].filter(module => stableCanAccessModule(module.module)), [stableCanAccessModule]);
+    {
+      title: '通讯录',
+      icon: Book,
+      description: '企业通讯录、组织架构',
+      path: '/addressbook',
+      color: 'bg-emerald-500',
+      status: 'online' as const,
+      permission: null,
+      module: null
+    },
+  ].filter(module => !module.permission || stableCanAccessModule(module.module)), [stableCanAccessModule]);
 
   const businessModules = useMemo(() => [
     {
@@ -535,6 +545,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               <div className="space-y-2">
                 {[
                   { id: 'dashboard', label: '首页', icon: Activity },
+                  { id: 'addressbook', label: '通讯录', icon: Book },
                   { id: 'documents', label: '文档管理', icon: FileText },
                   { id: 'ai', label: 'AI 知识库', icon: Bot },
                   { id: 'workflows', label: '工作流', icon: GitBranch },

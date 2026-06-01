@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Notification {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -14,6 +14,29 @@ pub struct Notification {
     pub metadata: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotificationResponse {
+    pub id: String,
+    pub user_id: String,
+    pub notification_type: String,
+    pub title: String,
+    pub content: String,
+    pub data: Option<serde_json::Value>,
+    pub is_read: bool,
+    pub priority: i32,
+    pub created_at: String,
+    pub read_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotificationListResponse {
+    pub notifications: Vec<NotificationResponse>,
+    pub total: i32,
+    pub page: i32,
+    pub page_size: i32,
+    pub unread_count: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

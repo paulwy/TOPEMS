@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import type { NotificationType } from '../api/notification';
+import type { Notification } from '../api/notification';
+import useNotificationSettings from './useNotificationSettings';
 import config from '../config/runtime';
 import createLogger from '../utils/logger';
 
@@ -12,10 +13,11 @@ interface WsMessage {
 
 interface UseNotificationWebSocketOptions {
   userId: string;
-  onNotification?: (notification: NotificationType) => void;
+  onNotification?: (notification: Notification) => void;
   onUnreadCountChange?: (count: number) => void;
   reconnectInterval?: number;
   maxReconnectAttempts?: number;
+  autoConnect?: boolean;
 }
 
 export const useNotificationWebSocket = ({
@@ -24,13 +26,89 @@ export const useNotificationWebSocket = ({
   onUnreadCountChange,
   reconnectInterval = config.ws.reconnectInterval,
   maxReconnectAttempts = config.ws.maxReconnectAttempts,
+  autoConnect = false,
 }: UseNotificationWebSocketOptions) => {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const onNotificationRef = useRef(onNotification);
+  const onUnreadCountChangeRef = useRef(onUnreadCountChange);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const { shouldShowNotification, shouldPlaySound, shouldShowDesktopNotification } = useNotificationSettings();
+
+  // 更新 refs 中的回调，避免 connect 函数依赖变化
+  useEffect(() => {
+    onNotificationRef.current = onNotification;
+    onUnreadCountChangeRef.current = onUnreadCountChange;
+  }, [onNotification, onUnreadCountChange]);
+
+  const showDesktopNotification = useCallback((notification: Notification) => {
+    if (!shouldShowDesktopNotification()) return;
+    
+    if (!('Notification' in window)) {
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.content,
+        icon: '/favicon.ico',
+        tag: notification.id,
+      });
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          new Notification(notification.title, {
+            body: notification.content,
+            icon: '/favicon.ico',
+            tag: notification.id,
+          });
+        }
+      });
+    }
+  }, [shouldShowDesktopNotification]);
+
+  const playNotificationSound = useCallback(() => {
+    if (!shouldPlaySound()) return;
+
+    try {
+      // 尝试使用 Web Audio API 生成简单提示音（避免依赖外部文件）
+      const playBeep = () => {
+        try {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.value = 800;
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+          
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (beepErr) {
+          console.log('Web Audio API not available:', beepErr);
+        }
+      };
+      
+      // 先尝试播放文件，如果失败则用 Beep
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5;
+      audio.play().catch((err) => {
+        console.log('Audio file not found, using fallback beep:', err);
+        playBeep();
+      });
+    } catch (err) {
+      console.log('Audio initialization failed:', err);
+    }
+  }, [shouldPlaySound]);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -69,15 +147,18 @@ export const useNotificationWebSocket = ({
           
           switch (message.type) {
             case 'notification':
-              if (onNotification && message.payload) {
-                onNotification(message.payload);
-                showDesktopNotification(message.payload);
-                playNotificationSound();
+              if (onNotificationRef.current && message.payload) {
+                const notification = message.payload;
+                if (shouldShowNotification(notification.notification_type)) {
+                  onNotificationRef.current(notification);
+                  showDesktopNotification(notification);
+                  playNotificationSound();
+                }
               }
               break;
             case 'unread_count':
-              if (onUnreadCountChange && message.payload !== undefined) {
-                onUnreadCountChange(message.payload);
+              if (onUnreadCountChangeRef.current && message.payload !== undefined) {
+                onUnreadCountChangeRef.current(message.payload);
               }
               break;
             case 'pong':
@@ -118,7 +199,7 @@ export const useNotificationWebSocket = ({
       logger.error('Failed to create WebSocket:', err);
       setError('Failed to create WebSocket connection');
     }
-  }, [userId, onNotification, onUnreadCountChange, reconnectInterval, maxReconnectAttempts]);
+  }, [userId, reconnectInterval, maxReconnectAttempts, shouldShowNotification, showDesktopNotification, playNotificationSound]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -141,14 +222,16 @@ export const useNotificationWebSocket = ({
     }
   }, []);
 
-  // Don't auto-connect by default
+  // Control auto-connect with option
   useEffect(() => {
-    // connect(); // Disabled by default
+    if (autoConnect) {
+      connect();
+    }
 
     return () => {
       disconnect();
     };
-  }, [connect, disconnect]);
+  }, [connect, disconnect, autoConnect]);
 
   return {
     isConnected,
@@ -159,78 +242,4 @@ export const useNotificationWebSocket = ({
   };
 };
 
-const showDesktopNotification = (notification: NotificationType) => {
-  const soundEnabled = localStorage.getItem('notificationSound');
-  if (soundEnabled === 'false') {
-    return;
-  }
-
-  const desktopEnabled = localStorage.getItem('notificationDesktop');
-  if (desktopEnabled === 'false') {
-    return;
-  }
-
-  if (!('Notification' in window)) {
-    return;
-  }
-
-  if (Notification.permission === 'granted') {
-    new Notification(notification.title, {
-      body: notification.content,
-      icon: '/favicon.ico',
-      tag: notification.id,
-    });
-  } else if (Notification.permission !== 'denied') {
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        new Notification(notification.title, {
-          body: notification.content,
-          icon: '/favicon.ico',
-          tag: notification.id,
-        });
-      }
-    });
-  }
-};
-
-const playNotificationSound = () => {
-  const soundEnabled = localStorage.getItem('notificationSound');
-  if (soundEnabled === 'false') {
-    return;
-  }
-
-  try {
-    // 尝试使用 Web Audio API 生成简单提示音（避免依赖外部文件）
-    const playBeep = () => {
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.2);
-      } catch (beepErr) {
-        console.log('Web Audio API not available:', beepErr);
-      }
-    };
-    
-    // 先尝试播放文件，如果失败则用 Beep
-    const audio = new Audio('/notification-sound.mp3');
-    audio.volume = 0.5;
-    audio.play().catch((err) => {
-      console.log('Audio file not found, using fallback beep:', err);
-      playBeep();
-    });
-  } catch (err) {
-    console.log('Audio initialization failed:', err);
-  }
-};
+export default useNotificationWebSocket;

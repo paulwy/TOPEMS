@@ -6,12 +6,14 @@ use axum::{
 use chrono::Utc;
 use sqlx::{postgres::PgPool, Error as SqlxError};
 use std::sync::Arc;
+use std::time::Duration;
 use uuid::Uuid;
 
 use crate::models::project_milestone::{
-    CreateMilestoneRequest, MilestoneStatus, ProjectMilestone, UpdateMilestoneRequest,
+    CreateMilestoneRequest, ProjectMilestone, UpdateMilestoneRequest,
 };
 use crate::services::project_progress;
+use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use topems_shared::response::ApiResponse;
 
 pub struct AppState {
@@ -81,6 +83,9 @@ pub async fn create_milestone(
 
     match result {
         Ok(milestone) => {
+            // 创建成功，失效相关缓存
+            invalidate_project_cache(&milestone.project_id.to_string()).await;
+            
             tracing::info!(
                 request_id = %request_id,
                 milestone_id = %milestone.id,
@@ -120,6 +125,7 @@ pub async fn get_project_milestones(
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
+    let cache_key = format!("milestones:{}", project_id);
 
     tracing::info!(
         request_id = %request_id,
@@ -127,6 +133,17 @@ pub async fn get_project_milestones(
         "获取项目里程碑列表请求开始"
     );
 
+    // 尝试从缓存获取
+    if let Some(cached) = cache_get(&cache_key).await {
+        tracing::info!(
+            request_id = %request_id,
+            project_id = %project_id,
+            "从缓存获取项目里程碑列表成功"
+        );
+        return Json(ApiResponse::success(cached, "获取项目里程碑列表成功"));
+    }
+
+    // 缓存未命中，从数据库获取
     let result = sqlx::query_as::<_, ProjectMilestone>(
         r#"
         SELECT id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at
@@ -150,6 +167,10 @@ pub async fn get_project_milestones(
                 duration_ms = duration.num_milliseconds(),
                 "获取项目里程碑列表成功"
             );
+            
+            // 写入缓存，有效期5分钟
+            cache_set(&cache_key, milestones.clone(), Duration::from_secs(300)).await;
+            
             Json(ApiResponse::success(milestones, "获取项目里程碑列表成功"))
         }
         Err(e) => {
@@ -217,6 +238,9 @@ pub async fn update_milestone(
 
     match result {
         Ok(milestone) => {
+            // 更新成功，失效相关缓存
+            invalidate_project_cache(&milestone.project_id.to_string()).await;
+            
             if milestone.status == "achieved" {
                 let _ = project_progress::on_milestone_achieved(&state.db, milestone.project_id, milestone.id).await;
                 let _ = project_progress::update_project_progress(&state.db, milestone.project_id).await;
@@ -274,6 +298,14 @@ pub async fn delete_milestone(
         milestone_id = %id,
         "删除项目里程碑请求开始"
     );
+    
+    // 先查询项目ID
+    let project_id_result = sqlx::query_scalar::<_, Uuid>(
+        "SELECT project_id FROM rs.project_milestones WHERE id = $1"
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
 
     let result = sqlx::query(
         r#"
@@ -289,6 +321,11 @@ pub async fn delete_milestone(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            // 失效项目相关缓存
+            if let Ok(Some(project_id)) = project_id_result {
+                invalidate_project_cache(&project_id.to_string()).await;
+            }
+            
             tracing::info!(
                 request_id = %request_id,
                 milestone_id = %id,

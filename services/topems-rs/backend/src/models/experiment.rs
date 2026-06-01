@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Experiment {
     pub id: Uuid,
     pub name: String,
@@ -28,7 +29,7 @@ pub struct Experiment {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateExperimentRequest {
     pub name: String,
     pub code: String,
@@ -44,7 +45,7 @@ pub struct CreateExperimentRequest {
     pub scale_unit: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateExperimentRequest {
     pub name: Option<String>,
     pub status: Option<String>,
@@ -56,7 +57,7 @@ pub struct UpdateExperimentRequest {
     pub scale_unit: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ExperimentRecord {
     pub id: Uuid,
     pub experiment_id: Uuid,
@@ -67,7 +68,7 @@ pub struct ExperimentRecord {
     pub recorded_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct BatchTraceItem {
     pub id: Uuid,
     pub batch_number: String,

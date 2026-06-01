@@ -1,150 +1,144 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
 
-export interface NotificationType {
+export type NotificationTypeEnum = 'system' | 'workflow' | 'reminder' | 'alert' | 'message';
+
+export interface Notification {
   id: string;
   user_id: string;
-  notification_type: 'system' | 'workflow' | 'reminder' | 'alert' | 'message';
+  notification_type: NotificationTypeEnum;
   title: string;
   content: string;
-  metadata?: any;
-  status: 'unread' | 'read';
-  action_url?: string;
+  data?: any;
+  is_read: boolean;
+  priority: number;
   created_at: string;
-  updated_at: string;
+  read_at?: string;
 }
 
-export type Notification = NotificationType;
-
-export interface NotificationListData {
-  items: NotificationType[];
-  total: number;
+export interface NotificationListQuery {
+  page?: number;
+  page_size?: number;
+  notification_type?: NotificationTypeEnum;
 }
 
 export interface NotificationListResponse {
-  notifications: NotificationType[];
+  notifications: Notification[];
   total: number;
   page: number;
-  pageSize: number;
-  unreadCount: number;
+  page_size: number;
+  unread_count: number;
+}
+
+export interface CreateNotificationRequest {
+  user_id: string;
+  notification_type: NotificationTypeEnum;
+  title: string;
+  content: string;
+  data?: any;
+  priority?: number;
 }
 
 export const getNotifications = async (
   page = 1,
   pageSize = 20,
-  notificationType?: string
+  notificationType?: NotificationTypeEnum
 ): Promise<ApiResponse<NotificationListResponse>> => {
-  const response = await apiClient.notification.get<NotificationListData>(
-    '/api/v1/notifications'
+  const params: Record<string, any> = {
+    page,
+    page_size: pageSize
+  };
+  
+  if (notificationType) {
+    params.notification_type = notificationType;
+  }
+  
+  const response = await apiClient.notification.get<NotificationListResponse>(
+    '/api/v1/notifications',
+    { params }
   );
   
-  // 转换后端返回的数据格式为前端期望的格式
-  const items = response.data?.items || [];
-  const total = response.data?.total || 0;
-  const unreadCount = items.filter((n: NotificationType) => n.status === 'unread').length;
-  
-  return {
-    ...response,
-    data: {
-      notifications: items,
-      total,
-      page,
-      pageSize,
-      unreadCount
-    }
-  };
+  return response;
 };
 
-export const getUnreadNotifications = async (): Promise<ApiResponse<NotificationType[]>> => {
-  const response = await apiClient.notification.get<NotificationListData>(
-    '/api/v1/notifications'
+export const getUnreadNotifications = async (): Promise<ApiResponse<Notification[]>> => {
+  const response = await apiClient.notification.get<Notification[]>(
+    '/api/v1/notifications/unread'
   );
   
-  const items = response.data?.items || [];
-  const unreadItems = items.filter((n: NotificationType) => n.status === 'unread');
-  
-  return {
-    ...response,
-    data: unreadItems
-  };
+  return response;
 };
 
 export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
-  const response = await apiClient.notification.get<NotificationListData>(
-    '/api/v1/notifications'
+  const response = await apiClient.notification.get<number>(
+    '/api/v1/notifications/unread-count'
   );
   
-  const items = response.data?.items || [];
-  const unreadCount = items.filter((n: NotificationType) => n.status === 'unread').length;
-  
-  return {
-    ...response,
-    data: unreadCount
-  };
+  return response;
 };
 
-export const markAsRead = async (id: string): Promise<ApiResponse<NotificationType>> => {
-  const response = await apiClient.notification.put<any>(
+export const markAsRead = async (id: string): Promise<ApiResponse<Notification>> => {
+  return await apiClient.notification.put<Notification>(
     `/api/v1/notifications/${id}/read`
   );
-  
-  // 转换后端返回的数据格式
-  return {
-    ...response,
-    data: response.data
-  };
 };
 
 export const markAllAsRead = async (): Promise<ApiResponse<number>> => {
-  // 后端没有批量标记已读的端点，我们先获取所有未读通知，然后逐个标记
-  const unreadResponse = await getUnreadNotifications();
-  const unreadItems = unreadResponse.data || [];
-  
-  let markedCount = 0;
-  for (const item of unreadItems) {
+  return await apiClient.notification.put<number>(
+    '/api/v1/notifications/read-all'
+  );
+};
+
+export const deleteNotification = async (id: string): Promise<ApiResponse<boolean>> => {
+  return await apiClient.notification.delete<boolean>(
+    `/api/v1/notifications/${id}`
+  );
+};
+
+export const createNotification = async (
+  notification: CreateNotificationRequest
+): Promise<ApiResponse<Notification>> => {
+  return await apiClient.notification.post<Notification>(
+    '/api/v1/notifications',
+    notification
+  );
+};
+
+// 批量操作辅助函数
+export const bulkMarkAsRead = async (ids: string[]): Promise<ApiResponse<number>> => {
+  let count = 0;
+  for (const id of ids) {
     try {
-      await markAsRead(item.id);
-      markedCount++;
+      await markAsRead(id);
+      count++;
     } catch (e) {
-      console.error('Failed to mark notification as read:', e);
+      console.error(`Failed to mark notification ${id} as read:`, e);
     }
   }
-  
   return {
     code: 200,
     success: true,
-    data: markedCount,
-    message: '批量标记已读成功',
+    data: count,
+    message: `成功标记 ${count} 条通知为已读`,
     timestamp: new Date().toISOString()
   };
 };
 
-export const deleteNotification = async (id: string): Promise<ApiResponse<boolean>> => {
-  const response = await apiClient.notification.delete<string>(
-    `/api/v1/notifications/${id}`
-  );
-  
+export const bulkDeleteNotifications = async (ids: string[]): Promise<ApiResponse<number>> => {
+  let count = 0;
+  for (const id of ids) {
+    try {
+      await deleteNotification(id);
+      count++;
+    } catch (e) {
+      console.error(`Failed to delete notification ${id}:`, e);
+    }
+  }
   return {
-    ...response,
-    data: true
+    code: 200,
+    success: true,
+    data: count,
+    message: `成功删除 ${count} 条通知`,
+    timestamp: new Date().toISOString()
   };
-};
-
-export const createNotification = async (
-  notification: Omit<NotificationType, 'id' | 'created_at' | 'updated_at' | 'status'>
-): Promise<ApiResponse<NotificationType>> => {
-  // 转换前端数据格式为后端期望的格式
-  const payload = {
-    user_id: notification.user_id,
-    title: notification.title,
-    content: notification.content,
-    notification_type: notification.notification_type,
-    action_url: notification.action_url,
-    metadata: notification.metadata
-  };
-  
-  return apiClient.notification.post<NotificationType>(
-    '/api/v1/notifications',
-    payload
-  );
 };
