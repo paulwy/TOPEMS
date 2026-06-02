@@ -28,7 +28,7 @@ mod tests {
         println!("1. Testing create project...");
         let create_response = client
             .post(&format!("{}/api/v1/projects", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "name": "Integration Test Project",
                 "code": "INT-001",
@@ -54,7 +54,7 @@ mod tests {
         println!("\n2. Testing list projects...");
         let list_response = client
             .get(&format!("{}/api/v1/projects", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List projects failed");
@@ -64,7 +64,7 @@ mod tests {
         println!("\n3. Testing get project...");
         let get_response = client
             .get(&format!("{}/api/v1/projects/{}", base_url, project_id))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("Get project failed");
@@ -74,7 +74,7 @@ mod tests {
         println!("\n4. Testing update project...");
         let update_response = client
             .put(&format!("{}/api/v1/projects/{}", base_url, project_id))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "name": "Updated Integration Test Project",
                 "status": "active",
@@ -89,7 +89,7 @@ mod tests {
         println!("\n5. Testing delete project...");
         let delete_response = client
             .delete(&format!("{}/api/v1/projects/{}", base_url, project_id))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("Delete project failed");
@@ -125,7 +125,7 @@ mod tests {
         println!("\n1. Testing batch create projects...");
         let batch_create_response = client
             .post(&format!("{}/api/v1/projects/batch", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "projects": [
                     {
@@ -170,7 +170,7 @@ mod tests {
         println!("\n2. Fetching created projects to get IDs...");
         let list_after_create = client
             .get(&format!("{}/api/v1/projects", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List projects after batch create failed");
@@ -192,7 +192,7 @@ mod tests {
         println!("\n3. Testing batch delete projects...");
         let batch_delete_response = client
             .delete(&format!("{}/api/v1/projects/batch", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "ids": project_ids
             }))
@@ -241,7 +241,7 @@ mod tests {
         for i in 1..=2 {
             client
                 .post(&format!("{}/api/v1/projects", base_url))
-                .bearer_auth(token)
+                .bearer_auth(&token)
                 .json(&json!({
                     "name": format!("Export Test Project {}", i),
                     "code": format!("EXPORT-00{}", i),
@@ -262,7 +262,7 @@ mod tests {
         println!("\n2. Testing export projects...");
         let export_response = client
             .get(&format!("{}/api/v1/projects/export", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("Export projects failed");
@@ -280,7 +280,7 @@ mod tests {
         println!("\n3. Deleting test projects to prepare for import...");
         let list_before_delete = client
             .get(&format!("{}/api/v1/projects", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List projects before delete failed");
@@ -304,7 +304,7 @@ mod tests {
 
         client
             .delete(&format!("{}/api/v1/projects/batch", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({ "ids": project_ids_to_delete }))
             .send()
             .await
@@ -321,7 +321,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
 
         let import_response = client
             .post(&format!("{}/api/v1/projects/import", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .header("Content-Type", "text/csv")
             .body(import_csv_content)
             .send()
@@ -339,7 +339,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
         println!("\n5. Cleaning up imported projects...");
         let list_after_import = client
             .get(&format!("{}/api/v1/projects", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List projects after import failed");
@@ -360,7 +360,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
 
         client
             .delete(&format!("{}/api/v1/projects/batch", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({ "ids": imported_project_ids }))
             .send()
             .await
@@ -398,7 +398,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
         // 创建一个项目
         let create_response = client
             .post(&format!("{}/api/v1/projects", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "name": "Audit Test Project",
                 "code": "AUDIT-001",
@@ -423,7 +423,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
                 "{}/api/v1/projects/{}",
                 base_url, audit_project_id
             ))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("Delete audit test project failed");
@@ -432,7 +432,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
         println!("\n2. Testing list audit logs...");
         let list_logs_response = client
             .get(&format!("{}/api/v1/audit-logs", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List audit logs failed");
@@ -458,7 +458,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
                     println!("\n3. Testing get single audit log...");
                     let get_log_response = client
                         .get(&format!("{}/api/v1/audit-logs/{}", base_url, log_id))
-                        .bearer_auth(token)
+                        .bearer_auth(&token)
                         .send()
                         .await
                         .expect("Get audit log failed");

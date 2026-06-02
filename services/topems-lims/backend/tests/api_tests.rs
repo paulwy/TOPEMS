@@ -32,7 +32,7 @@ mod tests {
         println!("1. Testing create sample...");
         let create_response = client
             .post(&format!("{}/api/v1/samples", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "name": "Integration Test Sample",
                 "description": "Created by integration test",
@@ -55,7 +55,7 @@ mod tests {
         println!("\n2. Testing list samples...");
         let list_response = client
             .get(&format!("{}/api/v1/samples", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List samples failed");
@@ -65,7 +65,7 @@ mod tests {
         println!("\n3. Testing get sample...");
         let get_response = client
             .get(&format!("{}/api/v1/samples/{}", base_url, sample_id))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("Get sample failed");
@@ -75,7 +75,7 @@ mod tests {
         println!("\n4. Testing update sample...");
         let update_response = client
             .put(&format!("{}/api/v1/samples/{}", base_url, sample_id))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "name": "Updated Integration Test Sample",
                 "status": "testing"
@@ -89,7 +89,7 @@ mod tests {
         println!("\n5. Testing delete sample...");
         let delete_response = client
             .delete(&format!("{}/api/v1/samples/{}", base_url, sample_id))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("Delete sample failed");
@@ -128,7 +128,7 @@ mod tests {
         println!("\n1. Testing batch create samples...");
         let batch_create_response = client
             .post(&format!("{}/api/v1/samples/batch", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "samples": [
                     {
@@ -166,7 +166,7 @@ mod tests {
         println!("\n2. Fetching created samples to get IDs...");
         let list_after_create = client
             .get(&format!("{}/api/v1/samples", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List samples after batch create failed");
@@ -185,7 +185,7 @@ mod tests {
         println!("\n3. Testing batch delete samples...");
         let batch_delete_response = client
             .delete(&format!("{}/api/v1/samples/batch", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "ids": sample_ids
             }))
@@ -237,7 +237,7 @@ mod tests {
         for i in 1..=2 {
             client
                 .post(&format!("{}/api/v1/samples", base_url))
-                .bearer_auth(token)
+                .bearer_auth(&token)
                 .json(&json!({
                     "name": format!("Export Test Sample {}", i),
                     "description": format!("Sample {} for export testing", i),
@@ -252,7 +252,7 @@ mod tests {
         println!("\n2. Testing export samples...");
         let export_response = client
             .get(&format!("{}/api/v1/samples/export", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("Export samples failed");
@@ -270,7 +270,7 @@ mod tests {
         println!("\n3. Deleting test samples to prepare for import...");
         let list_before_delete = client
             .get(&format!("{}/api/v1/samples", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List samples before delete failed");
@@ -288,7 +288,7 @@ mod tests {
 
         client
             .delete(&format!("{}/api/v1/samples/batch", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({ "ids": sample_ids_to_delete }))
             .send()
             .await
@@ -305,7 +305,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
 
         let import_response = client
             .post(&format!("{}/api/v1/samples/import", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .header("Content-Type", "text/csv")
             .body(import_csv_content)
             .send()
@@ -326,7 +326,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
         println!("\n5. Cleaning up imported samples...");
         let list_after_import = client
             .get(&format!("{}/api/v1/samples", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List samples after import failed");
@@ -344,7 +344,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
 
         client
             .delete(&format!("{}/api/v1/samples/batch", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({ "ids": imported_sample_ids }))
             .send()
             .await
@@ -385,7 +385,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
         // 创建一个样品
         let create_response = client
             .post(&format!("{}/api/v1/samples", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .json(&json!({
                 "name": "Audit Test Sample",
                 "description": "Sample for audit log testing",
@@ -404,7 +404,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
         // 删除这个样品
         client
             .delete(&format!("{}/api/v1/samples/{}", base_url, audit_sample_id))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("Delete audit test sample failed");
@@ -413,7 +413,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
         println!("\n2. Testing list audit logs...");
         let list_logs_response = client
             .get(&format!("{}/api/v1/audit-logs", base_url))
-            .bearer_auth(token)
+            .bearer_auth(&token)
             .send()
             .await
             .expect("List audit logs failed");
@@ -436,7 +436,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
                     println!("\n3. Testing get single audit log...");
                     let get_log_response = client
                         .get(&format!("{}/api/v1/audit-logs/{}", base_url, log_id))
-                        .bearer_auth(token)
+                        .bearer_auth(&token)
                         .send()
                         .await
                         .expect("Get audit log failed");

@@ -59,7 +59,7 @@ mod tests {
         let budgeted_cost: f64 = 10000.0;
         let actual_cost: f64 = 11000.0;
         
-        let variance = ((actual_cost - budgeted_cost) / budgeted_cost * 100.0);
+        let variance = (actual_cost - budgeted_cost) / budgeted_cost * 100.0;
         
         assert_eq!(variance, 10.0);
     }
@@ -69,7 +69,7 @@ mod tests {
         let total_budget: f64 = 50000.0;
         let approved_amount: f64 = 25000.0;
         
-        let usage_rate = (approved_amount / total_budget * 100.0);
+        let usage_rate = approved_amount / total_budget * 100.0;
         
         assert_eq!(usage_rate, 50.0);
     }
@@ -80,7 +80,7 @@ mod tests {
         let total_duration: f64 = 60.0;
         let current_progress: f64 = 40.0;
         
-        let expected_progress = (elapsed_duration / total_duration * 100.0);
+        let expected_progress = elapsed_duration / total_duration * 100.0;
         let variance = expected_progress - current_progress;
         
         assert_eq!(variance, 10.0);
@@ -229,7 +229,7 @@ mod tests {
         
         let percentage = (role_count as f32 / total_members as f32) * 100.0;
         
-        assert_eq!(percentage, 30.0);
+        assert!((percentage - 30.0).abs() < 0.001);
     }
 
     #[test]
