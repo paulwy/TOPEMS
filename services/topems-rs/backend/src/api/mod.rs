@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod experiment;
 pub mod formula;
 pub mod project;

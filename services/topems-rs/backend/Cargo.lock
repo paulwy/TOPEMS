@@ -2989,6 +2989,7 @@ dependencies = [
  "dashmap",
  "dotenv",
  "futures",
+ "jsonwebtoken",
  "once_cell",
  "prometheus",
  "reqwest 0.12.28",

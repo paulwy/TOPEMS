@@ -51,10 +51,8 @@ pub async fn create_routes(pool: PgPool) -> Result<Router> {
 }
 
 async fn get_statistics(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> Json<ApiResponse<EquipmentStatistics>> {
-    // 因为设备资产在ERP中管理，这里调用ERP的API或者直接查询共享的DB
-    // 为了演示，这里返回模拟数据
     Json(ApiResponse::success(
         EquipmentStatistics {
             total: 0,
@@ -81,9 +79,7 @@ async fn list_inspections(
 
     let result = match query.equipment_id {
         Some(eq_id) => {
-            sqlx::query_as!(
-                InspectionRecord,
-                r#"
+            let sql = r#"
                 SELECT id, equipment_id, equipment_code, equipment_name, inspector, 
                        inspection_date, location, temperature, vibration, noise_level, 
                        status, items, abnormalities, remarks, created_at
@@ -91,27 +87,28 @@ async fn list_inspections(
                 WHERE equipment_id = $1
                 ORDER BY inspection_date DESC
                 LIMIT $2 OFFSET $3
-                "#,
-                eq_id, page_size, offset
-            )
-            .fetch_all(&state.pool)
-            .await
+                "#;
+            sqlx::query_as::<_, InspectionRecord>(sql)
+                .bind(eq_id)
+                .bind(page_size)
+                .bind(offset)
+                .fetch_all(&state.pool)
+                .await
         },
         None => {
-            sqlx::query_as!(
-                InspectionRecord,
-                r#"
+            let sql = r#"
                 SELECT id, equipment_id, equipment_code, equipment_name, inspector, 
                        inspection_date, location, temperature, vibration, noise_level, 
                        status, items, abnormalities, remarks, created_at
                 FROM mes.inspection_records
                 ORDER BY inspection_date DESC
                 LIMIT $1 OFFSET $2
-                "#,
-                page_size, offset
-            )
-            .fetch_all(&state.pool)
-            .await
+                "#;
+            sqlx::query_as::<_, InspectionRecord>(sql)
+                .bind(page_size)
+                .bind(offset)
+                .fetch_all(&state.pool)
+                .await
         }
     };
 
@@ -119,15 +116,15 @@ async fn list_inspections(
         Ok(records) => {
             let count_result = match query.equipment_id {
                 Some(eq_id) => {
-                    sqlx::query_scalar!(
-                        r#"SELECT COUNT(*) FROM mes.inspection_records WHERE equipment_id = $1"#,
-                        eq_id
-                    )
-                    .fetch_one(&state.pool)
-                    .await
+                    let sql = r#"SELECT COUNT(*) FROM mes.inspection_records WHERE equipment_id = $1"#;
+                    sqlx::query_scalar::<_, i64>(sql)
+                        .bind(eq_id)
+                        .fetch_one(&state.pool)
+                        .await
                 },
                 None => {
-                    sqlx::query_scalar!(r#"SELECT COUNT(*) FROM mes.inspection_records"#)
+                    let sql = r#"SELECT COUNT(*) FROM mes.inspection_records"#;
+                    sqlx::query_scalar::<_, i64>(sql)
                         .fetch_one(&state.pool)
                         .await
                 }
@@ -158,26 +155,38 @@ async fn create_inspection(
         Err(_) => chrono::Utc::now().date_naive(),
     };
 
-    // 这里应该从ERP获取设备信息，为了演示我们直接使用默认值
     let equipment_code = "EQ-001".to_string();
     let equipment_name = "默认设备".to_string();
+    
+    let request_data = serde_json::to_value(&req).ok();
 
-    let result = sqlx::query_as!(
-        InspectionRecord,
-        r#"
+    let sql = r#"
         INSERT INTO mes.inspection_records (
             id, equipment_id, equipment_code, equipment_name, inspector, inspection_date,
             location, temperature, vibration, noise_level, status, items, abnormalities, remarks, created_at
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING *
-        "#,
-        id, req.equipment_id, equipment_code, equipment_name, req.inspector,
-        inspection_date, req.location, req.temperature, req.vibration, req.noise_level,
-        req.status, req.items, req.abnormalities, req.remarks, now
-    )
-    .fetch_one(&state.pool)
-    .await;
+        "#;
+
+    let result = sqlx::query_as::<_, InspectionRecord>(sql)
+        .bind(id)
+        .bind(req.equipment_id)
+        .bind(equipment_code)
+        .bind(equipment_name)
+        .bind(&req.inspector)
+        .bind(inspection_date)
+        .bind(req.location.as_ref())
+        .bind(req.temperature)
+        .bind(req.vibration)
+        .bind(req.noise_level)
+        .bind(&req.status)
+        .bind(req.items.clone())
+        .bind(req.abnormalities.as_ref())
+        .bind(req.remarks.as_ref())
+        .bind(now)
+        .fetch_one(&state.pool)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(record) => (
@@ -195,7 +204,7 @@ async fn create_inspection(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
+    let request_data = request_data;
     let response_data = if let Ok(record) = &result {
         serde_json::to_value(record).ok()
     } else {
@@ -230,9 +239,7 @@ async fn list_maintenances(
 
     let result = match query.equipment_id {
         Some(eq_id) => {
-            sqlx::query_as!(
-                MaintenanceRecord,
-                r#"
+            let sql = r#"
                 SELECT id, equipment_id, equipment_code, equipment_name, maintenance_type,
                        description, maintainer, start_time, end_time, cost, parts_replaced,
                        result, status, remarks, created_at
@@ -240,27 +247,28 @@ async fn list_maintenances(
                 WHERE equipment_id = $1
                 ORDER BY start_time DESC
                 LIMIT $2 OFFSET $3
-                "#,
-                eq_id, page_size, offset
-            )
-            .fetch_all(&state.pool)
-            .await
+                "#;
+            sqlx::query_as::<_, MaintenanceRecord>(sql)
+                .bind(eq_id)
+                .bind(page_size)
+                .bind(offset)
+                .fetch_all(&state.pool)
+                .await
         },
         None => {
-            sqlx::query_as!(
-                MaintenanceRecord,
-                r#"
+            let sql = r#"
                 SELECT id, equipment_id, equipment_code, equipment_name, maintenance_type,
                        description, maintainer, start_time, end_time, cost, parts_replaced,
                        result, status, remarks, created_at
                 FROM mes.maintenance_records
                 ORDER BY start_time DESC
                 LIMIT $1 OFFSET $2
-                "#,
-                page_size, offset
-            )
-            .fetch_all(&state.pool)
-            .await
+                "#;
+            sqlx::query_as::<_, MaintenanceRecord>(sql)
+                .bind(page_size)
+                .bind(offset)
+                .fetch_all(&state.pool)
+                .await
         }
     };
 
@@ -268,15 +276,15 @@ async fn list_maintenances(
         Ok(records) => {
             let count_result = match query.equipment_id {
                 Some(eq_id) => {
-                    sqlx::query_scalar!(
-                        r#"SELECT COUNT(*) FROM mes.maintenance_records WHERE equipment_id = $1"#,
-                        eq_id
-                    )
-                    .fetch_one(&state.pool)
-                    .await
+                    let sql = r#"SELECT COUNT(*) FROM mes.maintenance_records WHERE equipment_id = $1"#;
+                    sqlx::query_scalar::<_, i64>(sql)
+                        .bind(eq_id)
+                        .fetch_one(&state.pool)
+                        .await
                 },
                 None => {
-                    sqlx::query_scalar!(r#"SELECT COUNT(*) FROM mes.maintenance_records"#)
+                    let sql = r#"SELECT COUNT(*) FROM mes.maintenance_records"#;
+                    sqlx::query_scalar::<_, i64>(sql)
                         .fetch_one(&state.pool)
                         .await
                 }
@@ -306,32 +314,44 @@ async fn create_maintenance(
         Ok(dt) => dt.with_timezone(&Utc),
         Err(_) => now,
     };
-    let end_time = req.end_time.and_then(|et| {
-        chrono::DateTime::parse_from_rfc3339(&et)
+    let end_time = req.end_time.as_ref().and_then(|et| {
+        chrono::DateTime::parse_from_rfc3339(et)
             .map(|dt| dt.with_timezone(&Utc))
             .ok()
     });
 
-    // 这里应该从ERP获取设备信息，为了演示我们直接使用默认值
     let equipment_code = "EQ-001".to_string();
     let equipment_name = "默认设备".to_string();
+    
+    let request_data = serde_json::to_value(&req).ok();
 
-    let result = sqlx::query_as!(
-        MaintenanceRecord,
-        r#"
+    let sql = r#"
         INSERT INTO mes.maintenance_records (
             id, equipment_id, equipment_code, equipment_name, maintenance_type, description,
             maintainer, start_time, end_time, cost, parts_replaced, result, status, remarks, created_at
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING *
-        "#,
-        id, req.equipment_id, equipment_code, equipment_name, req.maintenance_type,
-        req.description, req.maintainer, start_time, end_time, req.cost, req.parts_replaced,
-        req.result, req.status.unwrap_or("pending".to_string()), req.remarks, now
-    )
-    .fetch_one(&state.pool)
-    .await;
+        "#;
+
+    let result = sqlx::query_as::<_, MaintenanceRecord>(sql)
+        .bind(id)
+        .bind(req.equipment_id)
+        .bind(equipment_code)
+        .bind(equipment_name)
+        .bind(&req.maintenance_type)
+        .bind(&req.description)
+        .bind(&req.maintainer)
+        .bind(start_time)
+        .bind(end_time)
+        .bind(req.cost)
+        .bind(req.parts_replaced.clone())
+        .bind(req.result.as_ref())
+        .bind(req.status.as_deref().unwrap_or("pending"))
+        .bind(req.remarks.as_ref())
+        .bind(now)
+        .fetch_one(&state.pool)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(record) => (
@@ -349,7 +369,6 @@ async fn create_maintenance(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(record) = &result {
         serde_json::to_value(record).ok()
     } else {
@@ -380,24 +399,22 @@ async fn update_maintenance_status(
     headers: HeaderMap,
     Json(req): Json<UpdateMaintenanceStatus>,
 ) -> Json<ApiResponse<MaintenanceRecord>> {
-    let end_time = if req.status == "completed" {
-        Some(Utc::now())
-    } else {
-        None
-    };
-
-    let result = sqlx::query_as!(
-        MaintenanceRecord,
-        r#"
-        UPDATE mes.maintenance_records
-        SET status = $1, result = COALESCE($2, result), end_time = COALESCE($3, end_time)
+    let request_data = serde_json::to_value(&req).ok();
+    
+    let sql = r#"
+        UPDATE mes.maintenance_records 
+        SET status = $1, result = $2, end_time = $3 
         WHERE id = $4
         RETURNING *
-        "#,
-        req.status, req.result, end_time, id
-    )
-    .fetch_one(&state.pool)
-    .await;
+        "#;
+
+    let result = sqlx::query_as::<_, MaintenanceRecord>(sql)
+        .bind(&req.status)
+        .bind(req.result.as_ref())
+        .bind(Utc::now())
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(record) => (
@@ -415,7 +432,6 @@ async fn update_maintenance_status(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(record) = &result {
         serde_json::to_value(record).ok()
     } else {

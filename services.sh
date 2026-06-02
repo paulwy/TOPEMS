@@ -58,6 +58,7 @@ show_status() {
         "notification:8023:通知服务"
         "report:8024:报表服务"
         "mobile:8018:移动端服务"
+        "mail:8027:邮件服务"
     )
 
     for service_entry in "${services[@]}"; do

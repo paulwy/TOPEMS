@@ -75,6 +75,7 @@ integration:services/topems-integration/backend:8019:集成服务
 notification:services/notification-service:8023:通知服务
 report:services/report-service:8024:报表服务
 mobile:services/topems-mobile/backend:8018:移动端服务
+mail:services/topems-mail/backend:8027:邮件服务
 "
 
 # 辅助函数:获取服务信息

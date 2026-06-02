@@ -8,10 +8,3 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>,
 )
-
-import { toast, ToastMessage } from './components';
-
-window.addEventListener('toast', (event) => {
-  const detail = (event as CustomEvent<ToastMessage>).detail;
-  toast[detail.type](detail.message, detail.duration);
-});

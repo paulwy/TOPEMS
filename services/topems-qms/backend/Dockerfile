@@ -1,5 +1,5 @@
 # TOPEMS topems-qms Service Dockerfile
-FROM rust:1.75-slim
+FROM sha256:70c2a016184099262fd7cee46f3d35fec3568c45c62f87e37f7f665f766b1f74
 
 WORKDIR /app
 

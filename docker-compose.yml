@@ -50,6 +50,31 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  mail-service:
+    build:
+      context: ./services/topems-mail/backend
+      dockerfile: Dockerfile
+    container_name: topems-mail
+    environment:
+      DATABASE_URL: postgres://topems:topems123@postgres:5432/topems_iam
+      IAM_SERVICE_URL: http://iam-service:8002
+      PORT: 8027
+      RUST_LOG: info
+      # SMTP 配置 (可选，需要根据实际情况配置)
+      # SMTP_HOST: smtp.example.com
+      # SMTP_PORT: 587
+      # SMTP_USERNAME: your_email@example.com
+      # SMTP_PASSWORD: your_password
+      # SMTP_FROM_ADDRESS: noreply@example.com
+    ports:
+      - "8027:8027"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
@@ -59,6 +84,7 @@ services:
       - "3000:80"
     depends_on:
       - iam-service
+      - mail-service
     restart: unless-stopped
 
 volumes:

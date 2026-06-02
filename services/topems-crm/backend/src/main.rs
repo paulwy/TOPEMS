@@ -252,6 +252,88 @@ impl FromRef<AppState> for sqlx::PgPool {
     }
 }
 
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS customers (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            name VARCHAR(255) NOT NULL,
+            code VARCHAR(100) UNIQUE,
+            industry VARCHAR(100),
+            website VARCHAR(255),
+            email VARCHAR(255),
+            phone VARCHAR(50),
+            address TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            notes TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS contacts (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            customer_id UUID REFERENCES customers(id),
+            name VARCHAR(255) NOT NULL,
+            position VARCHAR(100),
+            email VARCHAR(255),
+            phone VARCHAR(50),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS opportunities (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            customer_id UUID REFERENCES customers(id),
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            value NUMERIC(15,2),
+            probability INT DEFAULT 0,
+            stage VARCHAR(50) DEFAULT 'lead',
+            expected_close_date DATE,
+            status VARCHAR(50) DEFAULT 'open',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS interactions (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            customer_id UUID REFERENCES customers(id),
+            type VARCHAR(50) NOT NULL,
+            description TEXT,
+            outcome VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    tracing::info!("✅ CRM 数据库表初始化完成");
+    Ok(())
+}
+
 // 处理函数定义
 async fn health_check() -> Json<ApiResponse<&'static str>> {
     Json(ApiResponse::success("TOPEMS-CRM is running", "健康检查"))
@@ -1222,3 +1304,23 @@ async fn main() -> Result<()> {
         .route("/api/v1/contacts/{id}", get(get_contact))
         .route("/api/v1/opportunities", get(list_opportunities))
         .route("/api/v1/opportunities/{id}", get(get_opportunity))
+        .route("/api/v1/interactions", get(list_interactions))
+        .route("/api/v1/interactions/{id}", get(get_interaction))
+        .with_state(app_state.pool.clone());
+
+    let app = Router::new()
+        .merge(public_routes)
+        .layer(cors);
+
+    let port = env::var("PORT").unwrap_or_else(|_| "8013".to_string());
+    let addr = format!("0.0.0.0:{}", port);
+
+    tracing::info!("🚀 TOPEMS-CRM 客户关系管理系统启动中...");
+    tracing::info!("📦 端口: {}", port);
+    tracing::info!("🔒 认证保护已启用");
+
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}

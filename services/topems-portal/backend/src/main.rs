@@ -61,7 +61,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/services", get(list_services))
         .route("/api/v1/todos", get(get_todos))
         .route("/api/v1/todos", post(add_todo))
-        .route("/api/v1/todos/:id", post(complete_todo))
+        .route("/api/v1/todos/{id}", post(complete_todo))
         .route("/api/v1/user", get(get_user_info))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -71,7 +71,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(cors)
         .layer(CookieManagerLayer::new());
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8020".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8021".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-PORTAL 统一门户系统启动中...");
