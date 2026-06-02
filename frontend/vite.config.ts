@@ -215,19 +215,10 @@ export default defineConfig({
       },
       '/report': createServiceProxyConfig('report', 'http://localhost:8024'),
       '/mes': createServiceProxyConfig('mes', 'http://localhost:8014'),
-      '/crm': createServiceProxyConfig('crm', 'http://localhost:8014'),
-      '/pdm': {
-        target: 'http://localhost:8015',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/pdm/, ''),
-      },
-      '/scm': {
-        target: 'http://localhost:8016',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/scm/, ''),
-      },
+      '/crm': createServiceProxyConfig('crm', 'http://localhost:8013'),
+      '/portal': createServiceProxyConfig('portal', 'http://localhost:9021'),
       '/mail': {
-        target: 'http://localhost:8027',
+        target: 'http://localhost:8026',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/mail/, ''),
       },

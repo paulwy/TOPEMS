@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Mail, Send, Search, Plus, Edit, Trash2,
   CheckCircle, XCircle, Clock, AlertCircle,
-  ChevronLeft, ChevronRight, FolderOpen, Template,
+  ChevronLeft, ChevronRight, FolderOpen, FileText,
   Eye, SendIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -414,7 +414,7 @@ const MailPage: React.FC = () => {
               邮件记录
             </TabsTrigger>
             <TabsTrigger value="templates" className="flex items-center gap-2">
-              <Template className="w-4 h-4" />
+              <FileText className="w-4 h-4" />
               邮件模板
             </TabsTrigger>
           </TabsList>
@@ -434,29 +434,29 @@ const MailPage: React.FC = () => {
                   className="pl-10"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={(v) => {
-                setStatusFilter(v);
+              <Select value={statusFilter || "all"} onValueChange={(v) => {
+                setStatusFilter(v === "all" ? "" : v);
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="状态" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
+                  <SelectItem value="all">全部</SelectItem>
                   {STATUS_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={priorityFilter} onValueChange={(v) => {
-                setPriorityFilter(v);
+              <Select value={priorityFilter || "all"} onValueChange={(v) => {
+                setPriorityFilter(v === "all" ? "" : v);
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="优先级" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
+                  <SelectItem value="all">全部</SelectItem>
                   {PRIORITY_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
@@ -585,15 +585,15 @@ const MailPage: React.FC = () => {
                   className="pl-10"
                 />
               </div>
-              <Select value={categoryFilter} onValueChange={(v) => {
-                setCategoryFilter(v);
+              <Select value={categoryFilter || "all"} onValueChange={(v) => {
+                setCategoryFilter(v === "all" ? "" : v);
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="分类" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
+                  <SelectItem value="all">全部</SelectItem>
                   {TEMPLATE_CATEGORIES.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                   ))}
@@ -610,7 +610,7 @@ const MailPage: React.FC = () => {
                   </div>
                 ) : templates.length === 0 ? (
                   <div className="p-8 text-center">
-                    <Template className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-500 dark:text-gray-400">暂无邮件模板</p>
                   </div>
                 ) : (
@@ -1009,7 +1009,7 @@ const MailPage: React.FC = () => {
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <div className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">变量使用说明</div>
                 <div className="text-sm text-blue-600 dark:text-blue-400">
-                  在模板中使用 <code className="bg-white dark:bg-gray-800 px-1 py-0.5 rounded">{{变量名}}</code> 格式的变量，发送邮件时传入数据即可替换。
+                  在模板中使用 <code className="bg-white dark:bg-gray-800 px-1 py-0.5 rounded">{'{{变量名}}'}</code> 格式的变量，发送邮件时传入数据即可替换。
                 </div>
               </div>
             </div>

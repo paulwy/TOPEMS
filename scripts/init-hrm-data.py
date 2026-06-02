@@ -6,7 +6,7 @@ import json
 def post(url, data):
     login_resp = urllib.request.urlopen(
         urllib.request.Request(
-            "http://localhost:3003/iam/api/v1/auth/login",
+            "http://localhost:3000/iam/api/v1/auth/login",
             data=json.dumps({"username": "admin", "password": "admin123"}).encode('utf-8'),
             headers={"Content-Type": "application/json"},
             method='POST'
@@ -34,7 +34,7 @@ def post(url, data):
 def get(url):
     login_resp = urllib.request.urlopen(
         urllib.request.Request(
-            "http://localhost:3003/iam/api/v1/auth/login",
+            "http://localhost:3000/iam/api/v1/auth/login",
             data=json.dumps({"username": "admin", "password": "admin123"}).encode('utf-8'),
             headers={"Content-Type": "application/json"},
             method='POST'
@@ -69,7 +69,7 @@ departments = [
 ]
 
 for dept in departments:
-    resp = post("http://localhost:3003/hrm/api/v1/departments", dept)
+    resp = post("http://localhost:3000/hrm/api/v1/departments", dept)
     if resp and resp.get("code") == 200:
         print(f"  创建部门: {dept['name']} - 成功")
     else:
@@ -77,7 +77,7 @@ for dept in departments:
 
 # 获取部门信息
 print("\n2. 获取部门信息...")
-dept_result = get("http://localhost:3003/hrm/api/v1/departments?page_size=100")
+dept_result = get("http://localhost:3000/hrm/api/v1/departments?page_size=100")
 dept_ids = {}
 if dept_result and dept_result.get("code") == 200:
     for dept in dept_result.get("data", {}).get("departments", []):
@@ -97,7 +97,7 @@ positions = [
 
 for pos in positions:
     if pos["department_id"]:
-        resp = post("http://localhost:3003/hrm/api/v1/positions", pos)
+        resp = post("http://localhost:3000/hrm/api/v1/positions", pos)
         if resp and resp.get("code") == 200:
             print(f"  创建职位: {pos['name']} - 成功")
         else:
@@ -118,7 +118,7 @@ employees = [
 
 for emp in employees:
     if emp["department_id"]:
-        resp = post("http://localhost:3003/hrm/api/v1/employees", emp)
+        resp = post("http://localhost:3000/hrm/api/v1/employees", emp)
         if resp and resp.get("code") == 200:
             print(f"  创建员工: {emp['name']} - 成功")
         else:
