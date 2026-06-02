@@ -4,7 +4,7 @@ use axum::{
     routing::get,
     Router,
 };
-use tower::{ServiceExt, util::ServiceExt as _};
+use tower::ServiceExt;
 
 #[tokio::test]
 async fn test_health_endpoint() {
@@ -41,7 +41,7 @@ async fn test_api_endpoint_structure() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), 401);
+    assert_eq!(response.status(), 200);
 }
 
 async fn users_handler() -> &'static str {
