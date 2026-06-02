@@ -5,6 +5,7 @@ pub mod project;
 pub mod project_member;
 pub mod project_milestone;
 pub mod project_phase;
+pub mod user;
 
 pub use audit_log::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
 pub use experiment::*;
@@ -17,3 +18,4 @@ pub use project_milestone::{
     CreateMilestoneRequest, MilestoneStatus, ProjectMilestone, UpdateMilestoneRequest,
 };
 pub use project_phase::{CreatePhaseRequest, PhaseStatus, ProjectPhase, UpdatePhaseRequest};
+pub use user::*;

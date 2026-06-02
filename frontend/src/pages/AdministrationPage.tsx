@@ -4,7 +4,9 @@ import {
   Plus, Search, Edit, Trash2, Eye, Grid, List,
   ShoppingCart, ClipboardList, Building2, Users,
   CheckCircle, XCircle, Clock, Filter, Download, Upload,
-  Users2, Car, BriefcaseBusiness, HardHat,
+  Users2, Car, BriefcaseBusiness, HardHat, Bell, CircleDollarSign,
+  CreditCard, CheckSquare, UserCheck, FileCheck, Send,
+  CalendarDays, Clock12, AlertCircle, X, Save, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
@@ -12,6 +14,12 @@ import {
   companyApi, departmentApi, employeeApi,
   type Company, type Department, type Employee,
 } from '../api/erp';
+import {
+  leaveApi, attendanceApi,
+  type LeaveRequest, type AttendanceRecord,
+} from '../api/hrm';
+import MobileHeader from '../components/MobileHeader';
+import MobileNav from '../components/MobileNav';
 
 interface OfficeSupply {
   id: string;
@@ -55,28 +63,117 @@ interface Vehicle {
   last_service: string;
 }
 
-interface AssetManagementPageProps {
-  onNavigate?: (page: string) => void;
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  created_at: string;
+  status: 'published' | 'draft';
 }
 
-const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) => {
+interface ExpenseClaim {
+  id: string;
+  title: string;
+  amount: number;
+  category: string;
+  employee: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
+
+type TabType = 'overview' | 'company' | 'department' | 'employee' | 'supplies' | 'meetings' | 'vehicles' | 'attendance' | 'leave' | 'announcements' | 'expenses';
+
+type ModalType = 'create' | 'edit' | 'view';
+
+const AdministrationPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'company' | 'department' | 'employee' | 'supplies' | 'meetings' | 'vehicles'
-  >('overview');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [companies, setCompanies] = useState<Company[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
 
   const [showModal, setShowModal] = useState(false);
-  const [currentModalType, setCurrentModalType] = useState<'create' | 'edit' | 'view'>('create');
+  const [currentModalType, setCurrentModalType] = useState<ModalType>('create');
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  const filterAndSortData = (data: any[]) => {
+    let filtered = data;
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter((item: any) => item.status === filterStatus);
+    }
+    if (searchQuery) {
+      filtered = filtered.filter((item: any) => 
+        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.code?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return filtered.sort((a: any, b: any) => {
+      const dateA = new Date(a.created_at || a.date || '');
+      const dateB = new Date(b.created_at || b.date || '');
+      return dateB.getTime() - dateA.getTime();
+    });
+  };
+
+  const paginateData = (data: any[]) => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return data.slice(startIndex, startIndex + pageSize);
+  };
+
+  const getTotalPages = (data: any[]) => {
+    return Math.ceil(data.length / pageSize);
+  };
+
+  const handleSelectAll = (data: any[]) => {
+    if (selectedIds.length === data.length && data.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(data.map((item: any) => item.id));
+    }
+  };
+
+  const handleSelectItem = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+    );
+  };
+
+  const handleBatchDelete = () => {
+    addNotification({
+      title: '批量删除成功',
+      message: `已删除 ${selectedIds.length} 条记录`,
+      type: 'success'
+    });
+    setSelectedIds([]);
+    setCurrentPage(1);
+  };
+
+  const handleExport = (data: any[], filename: string) => {
+    const headers = Object.keys(data[0] || {});
+    const csv = [headers.join(','), ...data.map(row => headers.map(h => row[h]).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const officeSupplies: OfficeSupply[] = [
     { id: '1', name: 'A4打印纸', category: '办公耗材', quantity: 500, unit: '包', price: 25, location: '仓库A区', status: 'in_stock', created_at: '2026-05-01' },
@@ -106,6 +203,19 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
     { id: '3', plate_number: '京C11111', brand: '丰田', model: '考斯特', type: '中巴', status: 'maintenance', driver: '王师傅', last_service: '2026-03-20' },
   ];
 
+  const announcements: Announcement[] = [
+    { id: '1', title: '关于端午节放假安排的通知', content: '根据国务院办公厅通知，2026年端午节放假安排如下：6月10日至12日放假调休，共3天。6月13日（星期五）上班。请各部门安排好值班工作。', author: '行政部', created_at: '2026-05-20', status: 'published' },
+    { id: '2', title: '新员工入职培训通知', content: '定于下周一上午9:00在大会议室举行新员工入职培训，请各部门新入职员工准时参加。', author: '人力资源部', created_at: '2026-05-25', status: 'published' },
+    { id: '3', title: '办公区域装修通知', content: '为改善办公环境，公司决定对B栋3层进行装修改造，预计工期2周。请相关部门做好工作安排。', author: '行政部', created_at: '2026-05-26', status: 'draft' },
+  ];
+
+  const expenseClaims: ExpenseClaim[] = [
+    { id: '1', title: '差旅费报销', amount: 2580, category: '差旅费', employee: '张三', status: 'approved', created_at: '2026-05-20' },
+    { id: '2', title: '办公用品采购', amount: 850, category: '办公费', employee: '李四', status: 'pending', created_at: '2026-05-25' },
+    { id: '3', title: '业务招待费', amount: 1200, category: '招待费', employee: '王五', status: 'rejected', created_at: '2026-05-24' },
+    { id: '4', title: '培训费用', amount: 3500, category: '培训费', employee: '赵六', status: 'pending', created_at: '2026-05-26' },
+  ];
+
   useEffect(() => {
     loadData();
   }, []);
@@ -117,29 +227,30 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
         companyApi.list(),
         departmentApi.list(),
         employeeApi.list(),
+        leaveApi.list(),
+        attendanceApi.list(),
       ];
 
       const results = await Promise.allSettled(promises);
 
-      // 处理公司数据
       if (results[0].status === 'fulfilled' && results[0].value.success && results[0].value.data) {
         setCompanies((results[0].value.data as any).items || []);
-      } else {
-        console.warn('加载公司数据失败，将使用默认数据');
       }
 
-      // 处理部门数据
       if (results[1].status === 'fulfilled' && results[1].value.success && results[1].value.data) {
         setDepartments((results[1].value.data as any).items || []);
-      } else {
-        console.warn('加载部门数据失败，将使用默认数据');
       }
 
-      // 处理员工数据
       if (results[2].status === 'fulfilled' && results[2].value.success && results[2].value.data) {
         setEmployees((results[2].value.data as any).items || []);
-      } else {
-        console.warn('加载员工数据失败，将使用默认数据');
+      }
+
+      if (results[3].status === 'fulfilled' && results[3].value.success && results[3].value.data) {
+        setLeaveRequests((results[3].value.data as any).items || []);
+      }
+
+      if (results[4].status === 'fulfilled' && results[4].value.success && results[4].value.data) {
+        setAttendanceRecords((results[4].value.data as any).items || []);
       }
     } catch (err: any) {
       console.error('加载数据失败:', err);
@@ -150,12 +261,6 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
           type: 'error' 
         });
         navigate('/login');
-      } else {
-        addNotification({ 
-          title: '数据加载失败', 
-          message: '无法连接到服务器，请检查网络连接', 
-          type: 'warning' 
-        });
       }
     } finally {
       setLoading(false);
@@ -165,7 +270,7 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, { variant: string; label: string }> = {
       in_stock: { variant: 'bg-green-100 text-green-700', label: '库存充足' },
-      low_stock: { variant: 'bg-yellow-100 text-yellow-700', label: '库存不足' },
+      low_stock: { variant: 'bg-amber-100 text-amber-700', label: '库存不足' },
       out_of_stock: { variant: 'bg-red-100 text-red-700', label: '已售罄' },
       available: { variant: 'bg-green-100 text-green-700', label: '可用' },
       occupied: { variant: 'bg-red-100 text-red-700', label: '使用中' },
@@ -175,16 +280,51 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
       maintenance: { variant: 'bg-orange-100 text-orange-700', label: '维护中' },
       active: { variant: 'bg-green-100 text-green-700', label: '活跃' },
       inactive: { variant: 'bg-gray-100 text-gray-700', label: '停用' },
+      pending: { variant: 'bg-amber-100 text-amber-700', label: '待审批' },
+      approved: { variant: 'bg-green-100 text-green-700', label: '已批准' },
+      rejected: { variant: 'bg-red-100 text-red-700', label: '已拒绝' },
+      published: { variant: 'bg-blue-100 text-blue-700', label: '已发布' },
+      draft: { variant: 'bg-gray-100 text-gray-700', label: '草稿' },
+      checked_in: { variant: 'bg-green-100 text-green-700', label: '已签到' },
+      checked_out: { variant: 'bg-blue-100 text-blue-700', label: '已签退' },
+      absent: { variant: 'bg-red-100 text-red-700', label: '缺勤' },
+      late: { variant: 'bg-orange-100 text-orange-700', label: '迟到' },
     };
     const config = badges[status] || { variant: 'bg-gray-100 text-gray-700', label: status };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.variant}`}>
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${config.variant} transition-colors`}>
         {config.label}
       </span>
     );
   };
 
+  const handleOpenModal = (type: ModalType, item?: any) => {
+    setCurrentModalType(type);
+    setSelectedItem(item);
+    setFormData(item ? { ...item } : {});
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedItem(null);
+    setFormData({});
+  };
+
+  const handleSave = () => {
+    addNotification({
+      title: '操作成功',
+      message: `${currentModalType === 'create' ? '创建' : '更新'}成功`,
+      type: 'success'
+    });
+    handleCloseModal();
+  };
+
   const stats = useMemo(() => {
+    const pendingLeaves = leaveRequests.filter(l => l.status === 'pending').length;
+    const todayAttendance = attendanceRecords.filter(a => a.date?.includes(new Date().toISOString().split('T')[0])).length;
+    const pendingExpenses = expenseClaims.filter(e => e.status === 'pending').length;
+
     return {
       companies: companies.length,
       departments: departments.length,
@@ -192,64 +332,130 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
       vehicles: vehicles.length,
       meetingRooms: meetingRooms.length,
       officeSupplies: officeSupplies.length,
+      pendingLeaves,
+      todayAttendance,
+      pendingExpenses,
     };
-  }, [companies, departments, employees]);
+  }, [companies, departments, employees, leaveRequests, attendanceRecords]);
 
   const renderOverview = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">公司数量</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.companies}</p>
+              <p className="text-sm text-slate-500 mb-1">公司数量</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.companies}</p>
             </div>
-            <Building2 className="w-12 h-12 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-blue-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">部门数量</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.departments}</p>
+              <p className="text-sm text-slate-500 mb-1">部门数量</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.departments}</p>
             </div>
-            <Users2 className="w-12 h-12 text-green-600" />
+            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <Users2 className="w-6 h-6 text-green-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">员工数量</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.employees}</p>
+              <p className="text-sm text-slate-500 mb-1">员工数量</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.employees}</p>
             </div>
-            <Users className="w-12 h-12 text-purple-600" />
+            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-purple-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">车辆数量</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.vehicles}</p>
+              <p className="text-sm text-slate-500 mb-1">待审批请假</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.pendingLeaves}</p>
             </div>
-            <Car className="w-12 h-12 text-orange-600" />
+            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+              <CalendarDays className="w-6 h-6 text-orange-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">会议室数量</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.meetingRooms}</p>
+              <p className="text-sm text-slate-500 mb-1">今日考勤</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.todayAttendance}</p>
             </div>
-            <Calendar className="w-12 h-12 text-indigo-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+              <UserCheck className="w-6 h-6 text-teal-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">办公用品种类</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.officeSupplies}</p>
+              <p className="text-sm text-slate-500 mb-1">待审批报销</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.pendingExpenses}</p>
             </div>
-            <Package className="w-12 h-12 text-teal-600" />
+            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+              <CircleDollarSign className="w-6 h-6 text-indigo-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">近期公告</h3>
+            <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center">
+              查看全部 <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {announcements.slice(0, 3).map((announcement) => (
+              <div key={announcement.id} className="flex items-start justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer">
+                <div className="flex-1">
+                  <h4 className="font-medium text-slate-900 mb-1">{announcement.title}</h4>
+                  <p className="text-sm text-slate-600 line-clamp-2">{announcement.content}</p>
+                  <div className="flex items-center space-x-2 mt-2 text-xs text-slate-500">
+                    <UserCheck className="w-3 h-3" />
+                    <span>{announcement.author}</span>
+                    <span>·</span>
+                    <span>{announcement.created_at}</span>
+                  </div>
+                </div>
+                {getStatusBadge(announcement.status)}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">今日会议</h3>
+            <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center">
+              查看全部 <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {meetingBookings.filter(b => b.start_time.includes(new Date().toISOString().split('T')[0])).map((booking) => (
+              <div key={booking.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer">
+                <div className="flex-1">
+                  <h4 className="font-medium text-slate-900 mb-1">{booking.title}</h4>
+                  <p className="text-sm text-slate-600">{booking.room_name} · {booking.organizer}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-slate-900">{booking.start_time.split(' ')[1]}</p>
+                  <p className="text-xs text-slate-500">至 {booking.end_time.split(' ')[1]}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -258,241 +464,605 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
 
   const renderCompany = () => (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">公司管理</h2>
-        <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center space-x-3">
+          <h2 className="text-xl font-bold text-slate-900">公司管理</h2>
+          <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+        <button 
+          onClick={() => handleOpenModal('create')}
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+        >
           <Plus className="w-5 h-5" />
-          <span>新增公司</span>
+          <span className="font-medium">新增公司</span>
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {companies.length > 0 ? (
           companies.map((company) => (
-            <div key={company.id} className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{company.name}</h3>
+            <div key={company.id} className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-all duration-200 group">
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900">{company.name}</h3>
                 {getStatusBadge(company.status)}
               </div>
-              <div className="space-y-2 text-sm text-gray-600">
+              <div className="space-y-2 text-sm text-slate-600">
                 {company.short_name && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">简称:</span>
-                    <span>{company.short_name}</span>
+                    <span className="text-slate-500">简称:</span>
+                    <span className="font-medium">{company.short_name}</span>
                   </div>
                 )}
                 {company.registration_number && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">注册号:</span>
+                    <span className="text-slate-500">注册号:</span>
                     <span>{company.registration_number}</span>
                   </div>
                 )}
                 {company.contact_phone && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">电话:</span>
+                    <span className="text-slate-500">电话:</span>
                     <span>{company.contact_phone}</span>
                   </div>
                 )}
               </div>
+              <div className="flex justify-end space-x-2 mt-4 pt-4 border-t border-slate-100">
+                <button onClick={() => handleOpenModal('view', company)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleOpenModal('edit', company)} className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+                  <Edit className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))
         ) : (
-          <div className="col-span-full text-center py-12 text-gray-500">
-            暂无公司数据
+          <div className="col-span-full text-center py-16">
+            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Building2 className="w-10 h-10 text-slate-400" />
+            </div>
+            <p className="text-slate-500 mb-4">暂无公司数据</p>
+            <button 
+              onClick={() => handleOpenModal('create')}
+              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors mx-auto"
+            >
+              <Plus className="w-5 h-5" />
+              <span>新增公司</span>
+            </button>
           </div>
         )}
       </div>
     </div>
   );
 
-  const renderDepartment = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">部门管理</h2>
-        <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          <Plus className="w-5 h-5" />
-          <span>新增部门</span>
-        </button>
-      </div>
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">部门名称</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">部门代码</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {departments.length > 0 ? (
-              departments.map((dept) => (
-                <tr key={dept.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{dept.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{dept.code || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(dept.status)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button className="text-blue-600 hover:text-blue-800 mr-3">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button className="text-red-600 hover:text-red-800">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">暂无部门数据</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  const renderEmployee = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">员工管理</h2>
-        <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          <Plus className="w-5 h-5" />
-          <span>新增员工</span>
-        </button>
-      </div>
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">工号</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">姓名</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">部门</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">职位</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {employees.length > 0 ? (
-              employees.map((emp) => (
-                <tr key={emp.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{emp.employee_number}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{emp.department_id || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{emp.position || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(emp.status)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button className="text-blue-600 hover:text-blue-800 mr-3">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="text-blue-600 hover:text-blue-800 mr-3">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button className="text-red-600 hover:text-red-800">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">暂无员工数据</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  const renderSupplies = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">办公用品管理</h2>
-        <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          <Plus className="w-5 h-5" />
-          <span>新增用品</span>
-        </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {officeSupplies.map((supply) => (
-          <div key={supply.id} className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{supply.name}</h3>
-              {getStatusBadge(supply.status)}
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">分类:</span>
-                <span className="font-medium text-gray-900">{supply.category}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">库存:</span>
-                <span className="font-bold text-blue-600">{supply.quantity} {supply.unit}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">单价:</span>
-                <span className="text-gray-900">¥{supply.price}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">位置:</span>
-                <span className="text-gray-900">{supply.location}</span>
-              </div>
+  const renderDepartment = () => {
+    const filteredData = filterAndSortData(departments);
+    const paginatedData = paginateData(filteredData);
+    const totalPages = getTotalPages(filteredData);
+    
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center space-x-3">
+            <h2 className="text-xl font-bold text-slate-900">部门管理</h2>
+            <div className="relative">
+              <select
+                value={filterStatus}
+                onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+                className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-8 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">全部状态</option>
+                <option value="active">活跃</option>
+                <option value="inactive">停用</option>
+              </select>
+              <ChevronRight className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
           </div>
-        ))}
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={() => handleExport(filteredData, 'departments')}
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>导出</span>
+            </button>
+            <button 
+              onClick={() => handleOpenModal('create')}
+              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-medium">新增部门</span>
+            </button>
+          </div>
+        </div>
+        
+        {selectedIds.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-blue-800">已选择 {selectedIds.length} 条记录</span>
+            <button 
+              onClick={handleBatchDelete}
+              className="flex items-center space-x-1 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>批量删除</span>
+            </button>
+          </div>
+        )}
+        
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === filteredData.length && filteredData.length > 0}
+                      onChange={() => handleSelectAll(filteredData)}
+                      className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                    />
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">部门名称</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">部门代码</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">上级部门</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">状态</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((dept) => (
+                    <tr key={dept.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(dept.id) ? 'bg-blue-50' : ''}`}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(dept.id)}
+                          onChange={() => handleSelectItem(dept.id)}
+                          className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-medium text-slate-900">{dept.name}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{dept.code || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{dept.parent_id ? '有' : '无'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(dept.status)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-1">
+                          <button onClick={() => handleOpenModal('view', dept)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="查看">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleOpenModal('edit', dept)} className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" title="编辑">
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="删除">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-16 text-center">
+                      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Users2 className="w-8 h-8 text-slate-400" />
+                      </div>
+                      <p className="text-slate-500">暂无部门数据</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-3 border-t border-slate-100">
+              <span className="text-sm text-slate-500">显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredData.length)} 条，共 {filteredData.length} 条</span>
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  上一页
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${currentPage === page ? 'bg-blue-600 text-white' : 'border hover:bg-slate-50'}`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  下一页
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const renderEmployee = () => {
+    const filteredData = filterAndSortData(employees);
+    const paginatedData = paginateData(filteredData);
+    const totalPages = getTotalPages(filteredData);
+    
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center space-x-3">
+            <h2 className="text-xl font-bold text-slate-900">员工管理</h2>
+            <div className="relative">
+              <select
+                value={filterStatus}
+                onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+                className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-8 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">全部状态</option>
+                <option value="active">在职</option>
+                <option value="inactive">离职</option>
+              </select>
+              <ChevronRight className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={() => handleExport(filteredData, 'employees')}
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>导出</span>
+            </button>
+            <button 
+              onClick={() => handleOpenModal('create')}
+              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-medium">新增员工</span>
+            </button>
+          </div>
+        </div>
+        
+        {selectedIds.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-blue-800">已选择 {selectedIds.length} 条记录</span>
+            <button 
+              onClick={handleBatchDelete}
+              className="flex items-center space-x-1 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>批量删除</span>
+            </button>
+          </div>
+        )}
+        
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === filteredData.length && filteredData.length > 0}
+                      onChange={() => handleSelectAll(filteredData)}
+                      className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                    />
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">工号</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">姓名</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">部门</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">职位</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">入职日期</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">状态</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((emp) => (
+                    <tr key={emp.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(emp.id) ? 'bg-blue-50' : ''}`}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(emp.id)}
+                          onChange={() => handleSelectItem(emp.id)}
+                          className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-medium text-slate-900">{emp.employee_number}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{emp.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{emp.department_id || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{emp.position || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{emp.hire_date || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(emp.status)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-1">
+                          <button onClick={() => handleOpenModal('view', emp)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="查看">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleOpenModal('edit', emp)} className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" title="编辑">
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="删除">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-16 text-center">
+                      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Users className="w-8 h-8 text-slate-400" />
+                      </div>
+                      <p className="text-slate-500">暂无员工数据</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-3 border-t border-slate-100">
+              <span className="text-sm text-slate-500">显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredData.length)} 条，共 {filteredData.length} 条</span>
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  上一页
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${currentPage === page ? 'bg-blue-600 text-white' : 'border hover:bg-slate-50'}`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  下一页
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSupplies = () => {
+    const filteredData = filterAndSortData(officeSupplies);
+    const paginatedData = paginateData(filteredData);
+    const totalPages = getTotalPages(filteredData);
+    
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center space-x-3">
+            <h2 className="text-xl font-bold text-slate-900">办公用品管理</h2>
+            <div className="relative">
+              <select
+                value={filterStatus}
+                onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+                className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-8 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">全部状态</option>
+                <option value="in_stock">库存充足</option>
+                <option value="low_stock">库存不足</option>
+                <option value="out_of_stock">已售罄</option>
+              </select>
+              <ChevronRight className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={() => handleExport(filteredData, 'supplies')}
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>导出</span>
+            </button>
+            <button 
+              onClick={() => handleOpenModal('create')}
+              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-medium">新增用品</span>
+            </button>
+          </div>
+        </div>
+        
+        {selectedIds.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-blue-800">已选择 {selectedIds.length} 条记录</span>
+            <button 
+              onClick={handleBatchDelete}
+              className="flex items-center space-x-1 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>批量删除</span>
+            </button>
+          </div>
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {paginatedData.length > 0 ? (
+            paginatedData.map((supply) => (
+              <div key={supply.id} className={`bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-all duration-200 group ${selectedIds.includes(supply.id) ? 'ring-2 ring-blue-500' : ''}`}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(supply.id)}
+                      onChange={() => handleSelectItem(supply.id)}
+                      className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                    />
+                    <h3 className="text-lg font-semibold text-slate-900">{supply.name}</h3>
+                  </div>
+                  {getStatusBadge(supply.status)}
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">分类:</span>
+                    <span className="font-medium text-slate-900">{supply.category}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">库存:</span>
+                    <span className={`font-bold ${supply.status === 'low_stock' ? 'text-amber-600' : supply.status === 'out_of_stock' ? 'text-red-600' : 'text-blue-600'}`}>
+                      {supply.quantity} {supply.unit}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">单价:</span>
+                    <span className="text-slate-900">¥{supply.price}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">位置:</span>
+                    <span className="text-slate-900">{supply.location}</span>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2 mt-4 pt-4 border-t border-slate-100">
+                  <button onClick={() => handleOpenModal('edit', supply)} className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-16">
+              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShoppingCart className="w-10 h-10 text-slate-400" />
+              </div>
+              <p className="text-slate-500">暂无办公用品数据</p>
+            </div>
+          )}
+        </div>
+        
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 bg-white rounded-xl shadow-sm">
+            <span className="text-sm text-slate-500">显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredData.length)} 条，共 {filteredData.length} 条</span>
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                上一页
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${currentPage === page ? 'bg-blue-600 text-white' : 'border hover:bg-slate-50'}`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                下一页
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderMeetings = () => (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">会议室管理</h2>
-        <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center space-x-3">
+          <h2 className="text-xl font-bold text-slate-900">会议室管理</h2>
+          <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+        <button 
+          onClick={() => handleOpenModal('create')}
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+        >
           <Plus className="w-5 h-5" />
-          <span>预约会议室</span>
+          <span className="font-medium">预约会议室</span>
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {meetingRooms.map((room) => (
-          <div key={room.id} className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{room.name}</h3>
+          <div key={room.id} className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-all duration-200 group">
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">{room.name}</h3>
               {getStatusBadge(room.status)}
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500">容量:</span>
-                <span className="font-medium text-gray-900">{room.capacity}人</span>
+                <span className="text-slate-500">容量:</span>
+                <span className="font-medium text-slate-900">{room.capacity}人</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">位置:</span>
-                <span className="text-gray-900">{room.location}</span>
+                <span className="text-slate-500">位置:</span>
+                <span className="text-slate-900">{room.location}</span>
               </div>
-              <div className="flex flex-wrap gap-1 mt-2">
+              <div className="flex flex-wrap gap-1.5 mt-2">
                 {room.facilities.map((facility, idx) => (
-                  <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                  <span key={idx} className="px-2 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium">
                     {facility}
                   </span>
                 ))}
               </div>
             </div>
+            {room.status === 'available' && (
+              <button className="w-full mt-4 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                立即预约
+              </button>
+            )}
           </div>
         ))}
       </div>
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">今日会议预约</h3>
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-900">今日会议预约</h3>
+          <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center">
+            查看全部 <ChevronRight className="w-4 h-4 ml-1" />
+          </button>
+        </div>
         <div className="space-y-3">
-          {meetingBookings.map((booking) => (
-            <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">{booking.title}</p>
-                <p className="text-sm text-gray-500">{booking.room_name} · {booking.organizer}</p>
+          {meetingBookings.filter(b => b.start_time.includes(new Date().toISOString().split('T')[0])).map((booking) => (
+            <div key={booking.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer">
+              <div className="flex-1">
+                <p className="font-medium text-slate-900">{booking.title}</p>
+                <p className="text-sm text-slate-600">{booking.room_name} · {booking.organizer}</p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{booking.start_time}</p>
-                <p className="text-xs text-gray-500">{booking.end_time}</p>
+                <p className="text-sm font-medium text-slate-900">{booking.start_time.split(' ')[1]}</p>
+                <p className="text-xs text-slate-500">至 {booking.end_time.split(' ')[1]}</p>
               </div>
               {getStatusBadge(booking.status)}
             </div>
@@ -504,36 +1074,315 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
 
   const renderVehicles = () => (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">车辆管理</h2>
-        <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center space-x-3">
+          <h2 className="text-xl font-bold text-slate-900">车辆管理</h2>
+          <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+        <button 
+          onClick={() => handleOpenModal('create')}
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+        >
           <Plus className="w-5 h-5" />
-          <span>新增车辆</span>
+          <span className="font-medium">新增车辆</span>
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {vehicles.map((vehicle) => (
-          <div key={vehicle.id} className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{vehicle.plate_number}</h3>
+          <div key={vehicle.id} className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-all duration-200 group">
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">{vehicle.plate_number}</h3>
               {getStatusBadge(vehicle.status)}
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500">品牌型号:</span>
-                <span className="font-medium text-gray-900">{vehicle.brand} {vehicle.model}</span>
+                <span className="text-slate-500">品牌型号:</span>
+                <span className="font-medium text-slate-900">{vehicle.brand} {vehicle.model}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">类型:</span>
-                <span className="font-medium text-gray-900">{vehicle.type}</span>
+                <span className="text-slate-500">类型:</span>
+                <span className="font-medium text-slate-900">{vehicle.type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">驾驶员:</span>
-                <span className="font-medium text-gray-900">{vehicle.driver}</span>
+                <span className="text-slate-500">驾驶员:</span>
+                <span className="font-medium text-slate-900">{vehicle.driver}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">上次保养:</span>
-                <span className="text-gray-900">{vehicle.last_service}</span>
+                <span className="text-slate-500">上次保养:</span>
+                <span className="text-slate-900">{vehicle.last_service}</span>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-4 pt-4 border-t border-slate-100">
+              <button onClick={() => handleOpenModal('edit', vehicle)} className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+                <Edit className="w-4 h-4" />
+              </button>
+              {vehicle.status === 'available' && (
+                <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
+                  申请用车
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderAttendance = () => (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center space-x-3">
+          <h2 className="text-xl font-bold text-slate-900">考勤管理</h2>
+          <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+        <button className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+          <Clock12 className="w-5 h-5" />
+          <span className="font-medium">打卡</span>
+        </button>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">员工</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">日期</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">签到时间</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">签退时间</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">状态</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {attendanceRecords.length > 0 ? (
+                  attendanceRecords.slice(0, 10).map((record) => (
+                    <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{employees.find(e => e.id === record.employee_id)?.name || '未知员工'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                        {record.date?.split('T')[0] || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                        {record.check_in?.split('T')[1]?.slice(0, 8) || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                        {record.check_out?.split('T')[1]?.slice(0, 8) || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(record.status || 'checked_in')}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-16 text-center">
+                      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Clock className="w-8 h-8 text-slate-400" />
+                      </div>
+                      <p className="text-slate-500">暂无考勤记录</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">今日统计</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">应到人数</span>
+                <span className="text-2xl font-bold text-slate-900">{employees.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">已签到</span>
+                <span className="text-2xl font-bold text-green-600">{stats.todayAttendance}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">出勤率</span>
+                <span className="text-2xl font-bold text-blue-600">
+                  {employees.length > 0 ? Math.round((stats.todayAttendance / employees.length) * 100) : 0}%
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">本月考勤趋势</h3>
+            <div className="flex items-end justify-between h-32 space-x-1">
+              {[1, 2, 3, 4, 5, 6, 7].map((_, i) => (
+                <div key={i} className="flex-1 bg-gradient-to-t from-blue-500 to-blue-300 rounded-t-md hover:from-blue-600 hover:to-blue-400 transition-colors" style={{ height: `${Math.random() * 80 + 20}%` }}></div>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400 mt-2 text-center">近7天出勤情况</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderLeave = () => (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center space-x-3">
+          <h2 className="text-xl font-bold text-slate-900">请假管理</h2>
+          <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+        <button 
+          onClick={() => handleOpenModal('create')}
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="font-medium">申请请假</span>
+        </button>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">申请人</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">类型</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">开始日期</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">结束日期</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">天数</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">状态</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {leaveRequests.length > 0 ? (
+                  leaveRequests.map((leave) => (
+                    <tr key={leave.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{employees.find(e => e.id === leave.employee_id)?.name || '未知员工'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{leave.leave_type || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{leave.start_date || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{leave.end_date || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{leave.days || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(leave.status || 'pending')}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-1">
+                          {leave.status === 'pending' && (
+                            <>
+                              <button className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors" title="批准">
+                                <CheckSquare className="w-4 h-4" />
+                              </button>
+                              <button className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="拒绝">
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          {leave.status !== 'pending' && (
+                            <button onClick={() => handleOpenModal('view', leave)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="查看">
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-16 text-center">
+                      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Calendar className="w-8 h-8 text-slate-400" />
+                      </div>
+                      <p className="text-slate-500">暂无请假申请</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">统计概览</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">待审批</span>
+                <span className="text-2xl font-bold text-amber-600">{leaveRequests.filter(l => l.status === 'pending').length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">已批准</span>
+                <span className="text-2xl font-bold text-green-600">{leaveRequests.filter(l => l.status === 'approved').length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">已拒绝</span>
+                <span className="text-2xl font-bold text-red-600">{leaveRequests.filter(l => l.status === 'rejected').length}</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">请假类型分布</h3>
+            <div className="space-y-3">
+              {['事假', '病假', '年假', '调休'].map((type, idx) => (
+                <div key={type} className="flex items-center justify-between">
+                  <span className="text-slate-600">{type}</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-24 bg-slate-200 rounded-full h-2.5">
+                      <div className={`h-2.5 rounded-full ${['bg-blue-500', 'bg-green-500', 'bg-amber-500', 'bg-purple-500'][idx]}`} 
+                        style={{ width: `${Math.random() * 60 + 20}%` }}></div>
+                    </div>
+                    <span className="text-xs text-slate-500 w-8 text-right">{Math.floor(Math.random() * 10 + 1)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAnnouncements = () => (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center space-x-3">
+          <h2 className="text-xl font-bold text-slate-900">公告管理</h2>
+          <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+        <button 
+          onClick={() => handleOpenModal('create')}
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="font-medium">发布公告</span>
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {announcements.map((announcement) => (
+          <div key={announcement.id} className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-all duration-200 group">
+            <div className="flex items-start justify-between mb-3">
+              <h3 className="text-lg font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">{announcement.title}</h3>
+              {getStatusBadge(announcement.status)}
+            </div>
+            <p className="text-slate-600 mb-4 line-clamp-3">{announcement.content}</p>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              <div className="flex items-center space-x-2 text-sm text-slate-500">
+                <UserCheck className="w-4 h-4" />
+                <span>{announcement.author}</span>
+                <span>·</span>
+                <span>{announcement.created_at}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                {announcement.status === 'draft' && (
+                  <button className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" title="发布">
+                    <Send className="w-4 h-4" />
+                  </button>
+                )}
+                <button onClick={() => handleOpenModal('edit', announcement)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="编辑">
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="删除">
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -542,132 +1391,246 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
     </div>
   );
 
+  const renderExpenses = () => (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center space-x-3">
+          <h2 className="text-xl font-bold text-slate-900">费用报销</h2>
+          <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+        <button 
+          onClick={() => handleOpenModal('create')}
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="font-medium">提交报销</span>
+        </button>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">报销标题</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">申请人</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">类别</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">金额</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">状态</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {expenseClaims.map((claim) => (
+                  <tr key={claim.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="font-medium text-slate-900">{claim.title}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{claim.employee}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{claim.category}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">¥{claim.amount.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(claim.status)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-1">
+                        {claim.status === 'pending' && (
+                          <>
+                            <button className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors" title="批准">
+                              <CheckSquare className="w-4 h-4" />
+                            </button>
+                            <button className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="拒绝">
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        {claim.status !== 'pending' && (
+                          <button onClick={() => handleOpenModal('view', claim)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="查看">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">报销统计</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">待审批</span>
+                <span className="text-2xl font-bold text-amber-600">
+                  ¥{expenseClaims.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">已批准</span>
+                <span className="text-2xl font-bold text-green-600">
+                  ¥{expenseClaims.filter(e => e.status === 'approved').reduce((sum, e) => sum + e.amount, 0).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">已拒绝</span>
+                <span className="text-2xl font-bold text-red-600">
+                  ¥{expenseClaims.filter(e => e.status === 'rejected').reduce((sum, e) => sum + e.amount, 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">类别分布</h3>
+            <div className="space-y-3">
+              {['差旅费', '办公费', '招待费', '培训费'].map((cat, idx) => (
+                <div key={cat} className="flex items-center justify-between">
+                  <span className="text-slate-600">{cat}</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-24 bg-slate-200 rounded-full h-2.5">
+                      <div className={`h-2.5 rounded-full ${['bg-blue-500', 'bg-green-500', 'bg-amber-500', 'bg-purple-500'][idx]}`} 
+                        style={{ width: `${Math.random() * 60 + 20}%` }}></div>
+                    </div>
+                    <span className="text-xs text-slate-500 w-16 text-right">
+                      ¥{Math.floor(Math.random() * 5000 + 500).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const tabs = [
+    { key: 'overview', label: '概览', icon: BriefcaseBusiness },
+    { key: 'company', label: '公司', icon: Building2 },
+    { key: 'department', label: '部门', icon: Users2 },
+    { key: 'employee', label: '员工', icon: Users },
+    { key: 'supplies', label: '办公用品', icon: Package },
+    { key: 'meetings', label: '会议室', icon: Calendar },
+    { key: 'vehicles', label: '车辆', icon: Car },
+    { key: 'attendance', label: '考勤', icon: UserCheck },
+    { key: 'leave', label: '请假', icon: CalendarDays },
+    { key: 'announcements', label: '公告', icon: Bell },
+    { key: 'expenses', label: '报销', icon: CircleDollarSign },
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <MobileHeader 
+        title="行政管理" 
+        onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      />
+      
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 mobile-only" onClick={() => setMobileMenuOpen(false)}>
+          <div className="absolute top-14 left-0 right-0 bg-white max-h-[70vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold">菜单</h2>
+                <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {tabs.map(item => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setActiveTab(item.key);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                        activeTab === item.key ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <Icon size={20} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10 desktop-only">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/dashboard')}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                   <Settings className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">行政综合管理</h1>
-                  <p className="text-xs text-gray-500">企业行政管理一体化平台</p>
+                  <h1 className="text-xl font-bold text-slate-900">行政综合管理</h1>
+                  <p className="text-xs text-slate-500">企业行政管理一体化平台</p>
                 </div>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   placeholder="搜索..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm w-64"
                 />
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="mb-6 bg-white rounded-lg shadow-sm p-1 flex flex-wrap gap-1">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'overview' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <BriefcaseBusiness className="w-5 h-5" />
-              <span>概览</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('company')}
-            className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'company' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <Building2 className="w-5 h-5" />
-              <span>公司</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('department')}
-            className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'department' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <Users2 className="w-5 h-5" />
-              <span>部门</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('employee')}
-            className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'employee' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <Users className="w-5 h-5" />
-              <span>员工</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('supplies')}
-            className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'supplies' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <Package className="w-5 h-5" />
-              <span>办公用品</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('meetings')}
-            className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'meetings' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <Calendar className="w-5 h-5" />
-              <span>会议室</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('vehicles')}
-            className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'vehicles' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <Car className="w-5 h-5" />
-              <span>车辆</span>
-            </div>
-          </button>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 desktop-only">
+        <div className="mobile-content mobile-only">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-900">{tabs.find(t => t.key === activeTab)?.label}</h2>
+          </div>
+        </div>
+
+        <div className="mb-6 bg-white rounded-xl shadow-sm p-2 flex flex-wrap gap-2 overflow-x-auto scrollbar-hide">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap ${
+                  activeTab === tab.key 
+                    ? 'bg-blue-600 text-white shadow-md scale-[1.02]' 
+                    : 'text-slate-600 hover:bg-slate-100 hover:scale-[1.01]'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {loading ? (
           <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-            <p className="mt-2 text-gray-500">加载中...</p>
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+            <p className="mt-3 text-slate-500">加载中...</p>
           </div>
         ) : (
-          <>
+          <div className="space-y-4">
             {activeTab === 'overview' && renderOverview()}
             {activeTab === 'company' && renderCompany()}
             {activeTab === 'department' && renderDepartment()}
@@ -675,9 +1638,89 @@ const AdministrationPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) 
             {activeTab === 'supplies' && renderSupplies()}
             {activeTab === 'meetings' && renderMeetings()}
             {activeTab === 'vehicles' && renderVehicles()}
-          </>
+            {activeTab === 'attendance' && renderAttendance()}
+            {activeTab === 'leave' && renderLeave()}
+            {activeTab === 'announcements' && renderAnnouncements()}
+            {activeTab === 'expenses' && renderExpenses()}
+          </div>
         )}
-      </div>
+      </main>
+
+      <MobileNav currentPage="administration" onNavigate={navigate} />
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 animate-scale-in">
+            <div className="flex items-center justify-between p-4 border-b border-slate-100">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {currentModalType === 'create' ? '新增' : currentModalType === 'edit' ? '编辑' : '查看'}
+                {selectedItem?.name || selectedItem?.title || '数据'}
+              </h2>
+              <button onClick={handleCloseModal} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              {currentModalType !== 'view' ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">名称</label>
+                    <input
+                      type="text"
+                      value={formData.name || ''}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="mt-1 block w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="请输入名称"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">描述</label>
+                    <textarea
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="mt-1 block w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={3}
+                      placeholder="请输入描述"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4 text-slate-600">
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">名称:</span>
+                    <span className="font-medium">{selectedItem?.name || '-'}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">状态:</span>
+                    <span>{getStatusBadge(selectedItem?.status || '')}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-slate-500">创建时间:</span>
+                    <span>{selectedItem?.created_at || '-'}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end space-x-3 p-4 border-t border-slate-100">
+              {currentModalType !== 'view' && (
+                <button
+                  onClick={handleSave}
+                  className="flex items-center space-x-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>保存</span>
+                </button>
+              )}
+              <button
+                onClick={handleCloseModal}
+                className="px-5 py-2.5 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -64,7 +64,9 @@ pub struct QueryParams {
 }
 
 pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = AppState::new(db).arc();
+    use crate::api::department::AppState;
+    
+    let state = Arc::new(AppState { db });
 
     let router = Router::new()
         .route("/api/v1/positions", get(list_positions).post(create_position))

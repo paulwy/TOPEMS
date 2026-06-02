@@ -1,14 +1,29 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProjectList from './pages/ProjectList';
 import FormulaList from './pages/FormulaList';
 import ExperimentList from './pages/ExperimentList';
 import PatentList from './pages/PatentList';
 import MaterialTestList from './pages/MaterialTestList';
+import LoginPage from './pages/LoginPage';
 import { ToastContainer } from './components';
+import { authApi } from './api';
 import './index.css';
 
-function App() {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  if (!authApi.isAuthenticated()) {
+    return <Navigate to="/login" />;
+  }
+  return <>{children}</>;
+};
+
+function Dashboard() {
   const [activeTab, setActiveTab] = React.useState('projects');
+
+  const handleLogout = () => {
+    authApi.removeToken();
+    window.location.href = '/login';
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -91,6 +106,14 @@ function App() {
                 </button>
               </div>
             </div>
+            <div className="flex items-center">
+              <button
+                onClick={handleLogout}
+                className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium"
+              >
+                退出登录
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -100,6 +123,40 @@ function App() {
       </main>
       <ToastContainer />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 

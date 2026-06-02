@@ -174,12 +174,12 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/lims/, ''),
       },
       '/qms': {
-        target: 'http://localhost:8012',
+        target: 'http://localhost:8007',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/qms/, ''),
       },
       '/ehs': {
-        target: 'http://localhost:8013',
+        target: 'http://localhost:8008',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/ehs/, ''),
       },
@@ -225,6 +225,11 @@ export default defineConfig({
         target: 'http://localhost:8016',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/scm/, ''),
+      },
+      '/mail': {
+        target: 'http://localhost:8027',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/mail/, ''),
       },
     },
   },

@@ -2,6 +2,7 @@ export { default as FileAttachments } from './FileAttachments';
 export { default as AIAssistant } from './AIAssistant';
 export { default as ToastContainer } from './ToastContainer';
 export { toast } from './ToastContainer';
+export type { ToastMessage } from './ToastContainer';
 export { Skeleton, SkeletonText, SkeletonAvatar, SkeletonCard, SkeletonTable, PageSkeleton } from './Skeleton';
 export { default as AdvancedSearch } from './AdvancedSearch';
 export { default as BatchActions } from './BatchActions';

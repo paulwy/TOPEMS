@@ -599,8 +599,8 @@ async fn get_current_user(
     State(state): State<AppState>,
     AuthenticatedUser(claims): AuthenticatedUser,
 ) -> Json<ApiResponse<UserInfo>> {
-    let result = sqlx::query_as::<_, (String, String, String, Option<String>, bool, chrono::DateTime<Utc>)>(
-        "SELECT id::text, username, email, full_name, is_active, created_at FROM iam.users WHERE id = $1"
+    let result = sqlx::query_as::<_, (String, String, String, Option<String>, bool, bool, chrono::DateTime<Utc>)>(
+        "SELECT id::text, username, email, full_name, is_active, is_superuser, created_at FROM iam.users WHERE id = $1::uuid"
     )
     .bind(&claims.sub)
     .fetch_optional(&state.db)
@@ -611,7 +611,7 @@ async fn get_current_user(
             let (roles, permissions) = get_user_roles_and_permissions(&state.db, &user.0).await;
             let role = roles.first().cloned().unwrap_or_default();
             
-            let is_superuser = role == "admin";
+            let is_superuser = user.5 || role == "admin";
             let user_info = UserInfo {
                 id: user.0.clone(),
                 username: user.1.clone(),
@@ -620,7 +620,7 @@ async fn get_current_user(
                 role,
                 roles,
                 permissions,
-                created_at: user.5.to_rfc3339(),
+                created_at: user.6.to_rfc3339(),
                 is_active: user.4,
                 is_superuser,
             };

@@ -212,6 +212,10 @@ class ApiClient {
     return this.clients.mes;
   }
 
+  get mail() {
+    return this.clients.mail;
+  }
+
   setAuthToken(token: string) {
     Object.values(this.clients).forEach(client => {
       client.defaults.headers.common['Authorization'] = `Bearer ${token}`;

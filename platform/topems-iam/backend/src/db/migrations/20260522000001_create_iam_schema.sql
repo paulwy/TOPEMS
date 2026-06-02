@@ -122,7 +122,11 @@ VALUES
     ('ai_read', 'ai', 'read', 'AI模块读取权限'),
     ('ai_write', 'ai', 'write', 'AI模块写入权限'),
     ('ai_delete', 'ai', 'delete', 'AI模块删除权限'),
-    ('ai_admin', 'ai', 'admin', 'AI模块管理权限')
+    ('ai_admin', 'ai', 'admin', 'AI模块管理权限'),
+    ('mail_read', 'mail', 'read', '邮件模块读取权限'),
+    ('mail_write', 'mail', 'write', '邮件模块写入权限'),
+    ('mail_delete', 'mail', 'delete', '邮件模块删除权限'),
+    ('mail_admin', 'mail', 'admin', '邮件模块管理权限')
 ON CONFLICT (name) DO NOTHING;
 
 -- 为管理员角色分配所有权限

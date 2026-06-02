@@ -11,6 +11,19 @@ const ToastContainer: React.FC = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   useEffect(() => {
+    const handleToast = (event: Event) => {
+      const detail = (event as CustomEvent<ToastMessage>).detail;
+      setToasts((prev) => [...prev, detail]);
+    };
+
+    window.addEventListener('toast', handleToast);
+
+    return () => {
+      window.removeEventListener('toast', handleToast);
+    };
+  }, []);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setToasts((prev) => prev.filter((toast) => {
         const elapsed = Date.now() - parseInt(toast.id, 10);

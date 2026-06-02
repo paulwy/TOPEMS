@@ -101,7 +101,8 @@ async fn main() -> Result<()> {
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .merge(api::auth::create_routes(pool.clone(), app_state.auth_state.clone()).await?);
 
     let protected_routes = Router::new()
         .merge(api::project::create_routes(pool.clone()).await?)
@@ -391,6 +392,42 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             actual_hours NUMERIC(10, 2),
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 创建用户表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS rs.users (
+            id UUID PRIMARY KEY,
+            username VARCHAR(100) NOT NULL UNIQUE,
+            email VARCHAR(255) UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            is_superuser BOOLEAN NOT NULL DEFAULT false,
+            roles JSONB NOT NULL DEFAULT '[]',
+            permissions JSONB NOT NULL DEFAULT '[]',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 创建刷新令牌表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS rs.refresh_tokens (
+            id UUID PRIMARY KEY,
+            user_id UUID NOT NULL REFERENCES rs.users(id) ON DELETE CASCADE,
+            token VARCHAR(255) NOT NULL UNIQUE,
+            expires_at TIMESTAMPTZ NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            UNIQUE(user_id)
         )
         "#,
     )

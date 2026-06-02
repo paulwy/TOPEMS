@@ -52,6 +52,7 @@ const HrmPayrollPage = lazy(() => import('./pages/HrmPayrollPage'));
 const HrmPerformancePage = lazy(() => import('./pages/HrmPerformancePage'));
 const HrmAttendancePage = lazy(() => import('./pages/HrmAttendancePage'));
 const HrmEmployeeDetailPage = lazy(() => import('./pages/HrmEmployeeDetailPage'));
+const HrmTrainingPage = lazy(() => import('./pages/HrmTrainingPage'));
 const PerformanceMonitorPage = lazy(() => import('./pages/PerformanceMonitorPage'));
 const FlowInstanceListPage = lazy(() => import('./pages/FlowInstanceListPage'));
 const FlowInstanceDetailPage = lazy(() => import('./pages/FlowInstanceDetailPage'));
@@ -64,6 +65,7 @@ const MobileWorkstationPage = lazy(() => import('./pages/MobileWorkstationPage')
 const SystemManagementPage = lazy(() => import('./pages/SystemManagementPage'));
 const DictionaryManagementPage = lazy(() => import('./pages/DictionaryManagementPage'));
 const DatabaseStructurePage = lazy(() => import('./pages/DatabaseStructurePage'));
+const MailPage = lazy(() => import('./pages/MailPage'));
 
 const PageLoader: React.FC = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -480,6 +482,16 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
+            path="/hrm/training"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="read">
+                  <HrmTrainingPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/flow/instances"
             element={
               <ProtectedRoute requiredPermissions={['workflow:read']}>
@@ -599,6 +611,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['iam:admin']}>
                 <ModuleGate module="iam" action="admin">
                   <ConfigDebugPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mail"
+            element={
+              <ProtectedRoute requiredPermissions={['mail:read']}>
+                <ModuleGate module="mail" action="read">
+                  <MailPage />
                 </ModuleGate>
               </ProtectedRoute>
             }

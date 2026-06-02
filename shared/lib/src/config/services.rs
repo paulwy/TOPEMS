@@ -217,6 +217,14 @@ impl ServiceRegistry {
                 health_endpoint: "/health".to_string(),
                 api_prefix: "/api/v1".to_string(),
             },
+            ServiceConfig {
+                name: "topems-mail".to_string(),
+                display_name: "邮件服务".to_string(),
+                description: "邮件发送与模板管理".to_string(),
+                port: 8027,
+                health_endpoint: "/health".to_string(),
+                api_prefix: "/api/v1".to_string(),
+            },
         ]
     }
 
@@ -274,6 +282,7 @@ pub fn get_default_port(service_name: &str) -> u16 {
         "topems-report" => 8024,
         "topems-mes" => 8025,
         "notification-service" => 8026,
+        "topems-mail" => 8027,
         _ => 8080,
     }
 }

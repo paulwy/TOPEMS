@@ -582,6 +582,91 @@ export const contractRenewalApi = {
   },
 };
 
+export const trainingPlanApi = {
+  list: async (params?: ListParams): Promise<ApiResponse<PaginatedResult<TrainingPlan>>> => {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/training-plans${queryString}`);
+  },
+  
+  get: async (id: string): Promise<ApiResponse<TrainingPlan>> => {
+    return apiClient.hrm.get(`/api/v1/training-plans/${id}`);
+  },
+  
+  create: async (data: Partial<TrainingPlan>): Promise<ApiResponse<TrainingPlan>> => {
+    return apiClient.hrm.post('/api/v1/training-plans', data);
+  },
+  
+  update: async (id: string, data: Partial<TrainingPlan>): Promise<ApiResponse<TrainingPlan>> => {
+    return apiClient.hrm.put(`/api/v1/training-plans/${id}`, data);
+  },
+  
+  delete: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.hrm.delete(`/api/v1/training-plans/${id}`);
+  },
+  
+  activate: async (id: string): Promise<ApiResponse<TrainingPlan>> => {
+    return apiClient.hrm.put(`/api/v1/training-plans/${id}/activate`);
+  },
+  
+  deactivate: async (id: string): Promise<ApiResponse<TrainingPlan>> => {
+    return apiClient.hrm.put(`/api/v1/training-plans/${id}/deactivate`);
+  },
+};
+
+export const trainingCourseApi = {
+  list: async (params?: ListParams): Promise<ApiResponse<PaginatedResult<TrainingCourse>>> => {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/training-courses${queryString}`);
+  },
+  
+  get: async (id: string): Promise<ApiResponse<TrainingCourse>> => {
+    return apiClient.hrm.get(`/api/v1/training-courses/${id}`);
+  },
+  
+  create: async (data: Partial<TrainingCourse>): Promise<ApiResponse<TrainingCourse>> => {
+    return apiClient.hrm.post('/api/v1/training-courses', data);
+  },
+  
+  update: async (id: string, data: Partial<TrainingCourse>): Promise<ApiResponse<TrainingCourse>> => {
+    return apiClient.hrm.put(`/api/v1/training-courses/${id}`, data);
+  },
+  
+  delete: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.hrm.delete(`/api/v1/training-courses/${id}`);
+  },
+};
+
+export const trainingRecordApi = {
+  list: async (params?: ListParams): Promise<ApiResponse<PaginatedResult<TrainingRecord>>> => {
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/training-records${queryString}`);
+  },
+  
+  get: async (id: string): Promise<ApiResponse<TrainingRecord>> => {
+    return apiClient.hrm.get(`/api/v1/training-records/${id}`);
+  },
+  
+  create: async (data: Partial<TrainingRecord>): Promise<ApiResponse<TrainingRecord>> => {
+    return apiClient.hrm.post('/api/v1/training-records', data);
+  },
+  
+  update: async (id: string, data: Partial<TrainingRecord>): Promise<ApiResponse<TrainingRecord>> => {
+    return apiClient.hrm.put(`/api/v1/training-records/${id}`, data);
+  },
+  
+  delete: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.hrm.delete(`/api/v1/training-records/${id}`);
+  },
+  
+  enroll: async (course_id: string, employee_id: string): Promise<ApiResponse<TrainingRecord>> => {
+    return apiClient.hrm.post('/api/v1/training-records/enroll', { course_id, employee_id });
+  },
+  
+  complete: async (id: string, data: Partial<TrainingRecord>): Promise<ApiResponse<TrainingRecord>> => {
+    return apiClient.hrm.put(`/api/v1/training-records/${id}/complete`, data);
+  },
+};
+
 export const hrmApi = {
   departments: departmentApi,
   employees: employeeApi,
@@ -597,6 +682,9 @@ export const hrmApi = {
   performanceGoals: performanceGoalApi,
   contracts: contractApi,
   contractRenewals: contractRenewalApi,
+  trainingPlans: trainingPlanApi,
+  trainingCourses: trainingCourseApi,
+  trainingRecords: trainingRecordApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.hrm.get('/health');

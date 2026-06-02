@@ -8,7 +8,7 @@ import {
   Building, Folder, BarChart3, Box,
   MapPin, Smartphone, MessageSquare, Receipt, TrendingUp,
   Briefcase, Calendar, DollarSign, BookOpen, HelpCircle, FileText as FileTemplate,
-  Settings, CheckCircle, XCircle, ChevronRight, Bell, Book
+  Settings, CheckCircle, XCircle, ChevronRight, Bell, Book, Mail
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
@@ -65,7 +65,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     erp: false,
     hrm: false,
     mobile: false,
-    notification: false
+    notification: false,
+    mail: false
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<Array<{
@@ -494,6 +495,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       module: 'im'
     },
     {
+      title: '邮件管理',
+      icon: Mail,
+      description: '邮件发送、模板管理、邮件记录',
+      path: '/mail',
+      color: 'bg-cyan-500',
+      status: 'new' as const,
+      permission: 'mail:read',
+      module: 'mail'
+    },
+    {
       title: '人力资源',
       icon: Briefcase,
       description: '员工管理、考勤、薪资、绩效、招聘',
@@ -569,6 +580,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   { id: 'gis', label: '厂区空间', icon: MapPin },
                   { id: 'mobile-workstation', label: '移动工作台', icon: Smartphone },
                   { id: 'im', label: '即时通讯', icon: MessageSquare },
+                  { id: 'mail', label: '邮件管理', icon: Mail },
                   { id: 'hrm/positions', label: '人力资源', icon: Briefcase },
                 ].map(item => {
                   const Icon = item.icon;

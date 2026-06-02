@@ -72,6 +72,7 @@ const config: RuntimeConfig = {
     flow: getEnv('VITE_FLOW_SERVICE_URL', '/flow'),
     notification: getEnv('VITE_NOTIFICATION_SERVICE_URL', '/notification'),
     report: getEnv('VITE_REPORT_SERVICE_URL', '/report'),
+    mail: getEnv('VITE_MAIL_SERVICE_URL', '/mail'),
   },
   features: {
     debugMode: getEnvBool('VITE_ENABLE_DEBUG_MODE', false),
