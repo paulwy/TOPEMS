@@ -5,6 +5,7 @@ mod services;
 
 use anyhow::Result;
 use axum::{
+    extract::FromRef,
     routing::get,
     Json,
     Router,
@@ -13,7 +14,25 @@ use sqlx::postgres::PgPoolOptions;
 use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use topems_shared::{ApiResponse, create_cors_layer};
+use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+
+#[derive(Clone)]
+struct AppState {
+    pool: sqlx::PgPool,
+    auth_state: AuthState,
+}
+
+impl FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
+    }
+}
+
+impl FromRef<AppState> for sqlx::PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -43,20 +62,35 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    let app_state = AppState {
+        pool: pool.clone(),
+        auth_state: AuthState::from_env(),
+    };
+
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let health_router = Router::new()
         .route("/health", get(health_check))
-        .merge(api::create_hazard_routes(pool.clone()).await?)
-        .merge(api::create_check_routes(pool.clone()).await?)
-        .merge(api::create_plan_routes(pool.clone()).await?)
-        .merge(api::create_drill_routes(pool.clone()).await?)
+        .with_state(app_state.clone());
+
+    let protected_routes = Router::new()
+        .merge(api::create_routes(pool.clone(), app_state.auth_state.clone()).await?)
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ));
+
+    let app = Router::new()
+        .merge(health_router)
+        .merge(protected_routes)
         .layer(cors);
 
     let port = env::var("SERVER_PORT")
         .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8013".to_string()));
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
-    tracing::info!("📦 端口: {}", port);
+    tracing::info!("� TOPEMS-EHS 环境健康安全系统启动中...");
+    tracing::info!("�📦 端口: {}", port);
+    tracing::info!("🔒 认证保护已启用");
     tracing::info!("✅ TOPEMS-EHS 已就绪");
 
     axum::serve(listener, app).await?;

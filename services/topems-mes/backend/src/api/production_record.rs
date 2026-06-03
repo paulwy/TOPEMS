@@ -7,34 +7,27 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateProductionRecordRequest, ProductionRecord, UpdateProductionRecordRequest};
 use topems_shared::{ApiResponse, PaginationParams, api_error};
 use crate::api::audit::log_audit_event;
 
-pub struct AppState {
-    pub db: PgPool,
-}
+use super::ApiState;
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/records", get(list_records).post(create_record))
         .route(
             "/api/v1/records/{id}",
             get(get_record).put(update_record),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_records(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -90,7 +83,7 @@ async fn list_records(
 }
 
 async fn create_record(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateProductionRecordRequest>,
 ) -> Json<ApiResponse<ProductionRecord>> {
@@ -159,7 +152,7 @@ async fn create_record(
 }
 
 async fn get_record(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionRecord>> {
     let result = sqlx::query_as::<_, ProductionRecord>(
@@ -183,7 +176,7 @@ async fn get_record(
 }
 
 async fn update_record(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateProductionRecordRequest>,

@@ -12,7 +12,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PayrollRun {
@@ -69,24 +70,19 @@ pub struct QueryParams {
     pub payroll_item_id: Option<Uuid>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let router = Router::new()
-        .route("/api/v1/payroll-runs", get(list_payroll_runs).post(create_payroll_run))
-        .route("/api/v1/payroll-runs/{id}", get(get_payroll_run).delete(delete_payroll_run))
-        .route("/api/v1/payroll-runs/{id}/calculate", put(calculate_payroll_run))
-        .route("/api/v1/payroll-runs/{id}/pay", put(pay_payroll_run))
-        .route("/api/v1/payroll-items", get(list_payroll_items))
-        .route("/api/v1/payroll-items/{id}", get(get_payroll_item))
-        .route("/api/v1/payroll-details", get(list_payroll_details).post(create_payroll_detail))
-        .with_state(state);
-
-    Ok(router)
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+    .route("/api/v1/payroll-runs", get(list_payroll_runs).post(create_payroll_run))
+    .route("/api/v1/payroll-runs/{id}", get(get_payroll_run).delete(delete_payroll_run))
+    .route("/api/v1/payroll-runs/{id}/calculate", put(calculate_payroll_run))
+    .route("/api/v1/payroll-runs/{id}/pay", put(pay_payroll_run))
+    .route("/api/v1/payroll-items", get(list_payroll_items))
+    .route("/api/v1/payroll-items/{id}", get(get_payroll_item))
+    .route("/api/v1/payroll-details", get(list_payroll_details).post(create_payroll_detail))
 }
 
 async fn list_payroll_runs(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -147,7 +143,7 @@ async fn list_payroll_runs(
 }
 
 async fn create_payroll_run(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreatePayrollRunRequest>,
 ) -> Json<ApiResponse<PayrollRun>> {
     let id = Uuid::new_v4();
@@ -177,7 +173,7 @@ async fn create_payroll_run(
 }
 
 async fn get_payroll_run(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PayrollRun>(
@@ -214,7 +210,7 @@ async fn get_payroll_run(
 }
 
 async fn delete_payroll_run(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
@@ -235,7 +231,7 @@ async fn delete_payroll_run(
 }
 
 async fn calculate_payroll_run(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PayrollRun>> {
     let now = Utc::now();
@@ -307,7 +303,7 @@ async fn create_payroll_items(db: &PgPool, payroll_run_id: Uuid, emp_count: i32)
 }
 
 async fn pay_payroll_run(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PayrollRun>> {
     let now = Utc::now();
@@ -348,7 +344,7 @@ async fn pay_payroll_run(
 }
 
 async fn list_payroll_items(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -414,7 +410,7 @@ async fn list_payroll_items(
 }
 
 async fn get_payroll_item(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PayrollItem>(
@@ -451,7 +447,7 @@ async fn get_payroll_item(
 }
 
 async fn list_payroll_details(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -504,7 +500,7 @@ async fn list_payroll_details(
 }
 
 async fn create_payroll_detail(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<PayrollDetail>,
 ) -> Json<ApiResponse<PayrollDetail>> {
     let id = Uuid::new_v4();

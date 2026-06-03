@@ -1,40 +1,33 @@
-use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{FromRef, Path, Query, State},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateWarehouseRequest, Warehouse, UpdateWarehouseRequest};
 use crate::api::audit::log_audit_event;
+use crate::api::ApiState;
 use topems_shared::{ApiResponse, PaginationParams, api_error};
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes<S>() -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+    ApiState: FromRef<S>,
+{
+    Router::new()
         .route("/api/v1/warehouses", get(list_warehouses).post(create_warehouse))
         .route(
             "/api/v1/warehouses/{id}",
             get(get_warehouse).put(update_warehouse).delete(delete_warehouse),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_warehouses(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -95,7 +88,7 @@ async fn list_warehouses(
 }
 
 async fn create_warehouse(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
@@ -162,7 +155,7 @@ async fn create_warehouse(
 }
 
 async fn get_warehouse(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Warehouse>> {
     let result = sqlx::query_as::<_, Warehouse>(
@@ -186,7 +179,7 @@ async fn get_warehouse(
 }
 
 async fn update_warehouse(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateWarehouseRequest>,
@@ -275,7 +268,7 @@ async fn update_warehouse(
 }
 
 async fn delete_warehouse(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

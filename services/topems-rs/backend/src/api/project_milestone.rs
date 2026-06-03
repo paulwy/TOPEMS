@@ -4,7 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::{postgres::PgPool, Error as SqlxError};
+use sqlx::{Error as SqlxError};
 use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
@@ -16,13 +16,7 @@ use crate::services::project_progress;
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use topems_shared::response::ApiResponse;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> topems_shared::Result<Router> {
     let router = Router::new()
         .route("/api/v1/milestones", post(create_milestone))
         .route(
@@ -30,14 +24,13 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
             get(get_project_milestones),
         )
         .route("/api/v1/milestones/{id}", put(update_milestone))
-        .route("/api/v1/milestones/{id}", delete(delete_milestone))
-        .with_state(state);
+        .route("/api/v1/milestones/{id}", delete(delete_milestone));
 
     Ok(router)
 }
 
 pub async fn create_milestone(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Json(payload): Json<CreateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
     let request_id = Uuid::new_v4();
@@ -83,7 +76,6 @@ pub async fn create_milestone(
 
     match result {
         Ok(milestone) => {
-            // 创建成功，失效相关缓存
             invalidate_project_cache(&milestone.project_id.to_string()).await;
             
             tracing::info!(
@@ -120,7 +112,7 @@ pub async fn create_milestone(
 }
 
 pub async fn get_project_milestones(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
     let request_id = Uuid::new_v4();
@@ -133,7 +125,6 @@ pub async fn get_project_milestones(
         "获取项目里程碑列表请求开始"
     );
 
-    // 尝试从缓存获取
     if let Some(cached) = cache_get(&cache_key).await {
         tracing::info!(
             request_id = %request_id,
@@ -143,7 +134,6 @@ pub async fn get_project_milestones(
         return Json(ApiResponse::success(cached, "获取项目里程碑列表成功"));
     }
 
-    // 缓存未命中，从数据库获取
     let result = sqlx::query_as::<_, ProjectMilestone>(
         r#"
         SELECT id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at
@@ -168,7 +158,6 @@ pub async fn get_project_milestones(
                 "获取项目里程碑列表成功"
             );
             
-            // 写入缓存，有效期5分钟
             cache_set(&cache_key, milestones.clone(), Duration::from_secs(300)).await;
             
             Json(ApiResponse::success(milestones, "获取项目里程碑列表成功"))
@@ -187,7 +176,7 @@ pub async fn get_project_milestones(
 }
 
 pub async fn update_milestone(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
@@ -238,7 +227,6 @@ pub async fn update_milestone(
 
     match result {
         Ok(milestone) => {
-            // 更新成功，失效相关缓存
             invalidate_project_cache(&milestone.project_id.to_string()).await;
             
             if milestone.status == "achieved" {
@@ -287,7 +275,7 @@ pub async fn update_milestone(
 }
 
 pub async fn delete_milestone(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let request_id = Uuid::new_v4();
@@ -299,7 +287,6 @@ pub async fn delete_milestone(
         "删除项目里程碑请求开始"
     );
     
-    // 先查询项目ID
     let project_id_result = sqlx::query_scalar::<_, Uuid>(
         "SELECT project_id FROM rs.project_milestones WHERE id = $1"
     )
@@ -321,7 +308,6 @@ pub async fn delete_milestone(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
-            // 失效项目相关缓存
             if let Ok(Some(project_id)) = project_id_result {
                 invalidate_project_cache(&project_id.to_string()).await;
             }

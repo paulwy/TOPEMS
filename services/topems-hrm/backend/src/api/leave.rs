@@ -7,11 +7,10 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct LeaveRequest {
@@ -68,24 +67,16 @@ pub struct QueryParams {
     pub status: Option<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let router = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/leaves", get(list_leaves).post(create_leave))
-        .route(
-            "/api/v1/leaves/{id}",
-            get(get_leave).put(update_leave).delete(delete_leave),
-        )
+        .route("/api/v1/leaves/{id}", get(get_leave).put(update_leave).delete(delete_leave))
         .route("/api/v1/leaves/{id}/approve", put(approve_leave))
         .route("/api/v1/leaves/{id}/reject", put(reject_leave))
-        .with_state(state);
-
-    Ok(router)
 }
 
 async fn list_leaves(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -146,7 +137,7 @@ async fn list_leaves(
 }
 
 async fn create_leave(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateLeaveRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let id = Uuid::new_v4();
@@ -181,7 +172,7 @@ async fn create_leave(
 }
 
 async fn get_leave(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let result = sqlx::query_as::<_, LeaveRequest>(
@@ -202,7 +193,7 @@ async fn get_leave(
 }
 
 async fn update_leave(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateLeaveRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
@@ -243,7 +234,7 @@ async fn update_leave(
 }
 
 async fn delete_leave(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
@@ -264,7 +255,7 @@ async fn delete_leave(
 }
 
 async fn approve_leave(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<ApproveLeaveRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
@@ -299,7 +290,7 @@ async fn approve_leave(
 }
 
 async fn reject_leave(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<RejectLeaveRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {

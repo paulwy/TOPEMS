@@ -6,8 +6,6 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
@@ -15,37 +13,23 @@ use crate::models::{
     CreateRenewalRequest, UpdateContractRequest,
 };
 use topems_shared::ApiResponse;
+use super::ApiState;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/contracts", get(list_contracts).post(create_contract))
-        .route(
-            "/api/v1/contracts/{id}",
-            get(get_contract).put(update_contract).delete(delete_contract),
-        )
+        .route("/api/v1/contracts/{id}", get(get_contract).put(update_contract).delete(delete_contract))
         .route("/api/v1/contracts/expiring", get(list_expiring_contracts))
         .route("/api/v1/contracts/{id}/renew", post(create_renewal))
         .route("/api/v1/contract-renewals", get(list_renewals))
-        .route(
-            "/api/v1/contract-renewals/{id}",
-            get(get_renewal).put(update_renewal).delete(delete_renewal),
-        )
+        .route("/api/v1/contract-renewals/{id}", get(get_renewal).put(update_renewal).delete(delete_renewal))
         .route("/api/v1/contract-renewals/{id}/approve", put(approve_renewal))
         .route("/api/v1/contract-renewals/{id}/reject", put(reject_renewal))
         .route("/api/v1/contract-renewals/{id}/execute", put(execute_renewal))
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_contracts(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ContractPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -113,7 +97,7 @@ async fn list_contracts(
 }
 
 async fn list_expiring_contracts(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ExpiringParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let days = params.days.unwrap_or(30);
@@ -184,7 +168,7 @@ pub struct ExpiringParams {
 }
 
 async fn create_contract(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
     let id = Uuid::new_v4();
@@ -233,7 +217,7 @@ async fn create_contract(
 }
 
 async fn get_contract(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, Contract>(
@@ -282,7 +266,7 @@ async fn get_contract(
 }
 
 async fn update_contract(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
@@ -359,7 +343,7 @@ async fn update_contract(
 }
 
 async fn delete_contract(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM contracts WHERE id = $1")
@@ -378,7 +362,7 @@ async fn delete_contract(
 }
 
 async fn create_renewal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateRenewalRequest>,
 ) -> Json<ApiResponse<ContractRenewal>> {
@@ -418,7 +402,7 @@ async fn create_renewal(
 }
 
 async fn list_renewals(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<RenewalParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -489,7 +473,7 @@ pub struct RenewalParams {
 }
 
 async fn get_renewal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ContractRenewal>> {
     let result = sqlx::query_as::<_, ContractRenewal>(
@@ -515,7 +499,7 @@ async fn get_renewal(
 }
 
 async fn update_renewal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateRenewalRequest>,
 ) -> Json<ApiResponse<ContractRenewal>> {
@@ -557,7 +541,7 @@ async fn update_renewal(
 }
 
 async fn delete_renewal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM contract_renewals WHERE id = $1 AND status = 'pending'")
@@ -576,7 +560,7 @@ async fn delete_renewal(
 }
 
 async fn approve_renewal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ContractRenewal>> {
     let now = Utc::now();
@@ -609,7 +593,7 @@ async fn approve_renewal(
 }
 
 async fn reject_renewal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<RejectRequest>,
 ) -> Json<ApiResponse<ContractRenewal>> {
@@ -649,7 +633,7 @@ pub struct RejectRequest {
 }
 
 async fn execute_renewal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let renewal = sqlx::query_as::<_, ContractRenewal>(

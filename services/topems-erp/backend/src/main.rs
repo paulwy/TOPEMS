@@ -4,10 +4,8 @@ mod services;
 
 use anyhow::Result;
 use axum::{
-    extract::FromRef,
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
@@ -21,26 +19,7 @@ use topems_shared::{
     ServiceHealth, HealthStatus, DependencyHealth,
     SystemMetrics, check_http_health,
 };
-
-#[derive(Clone)]
-struct AppState {
-    pool: sqlx::PgPool,
-    auth_state: AuthState,
-    metrics: Arc<SystemMetrics>,
-    start_time: Instant,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
-impl FromRef<AppState> for sqlx::PgPool {
-    fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
-    }
-}
+use api::ApiState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -70,8 +49,8 @@ async fn main() -> Result<()> {
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
-    let app_state = AppState {
-        pool: pool.clone(),
+    let api_state = ApiState {
+        db: pool.clone(),
         auth_state: AuthState::from_env(),
         metrics: metrics.clone(),
         start_time,
@@ -79,30 +58,18 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let audit_router = api::audit::create_routes(pool.clone()).await?;
-    let dict_router = api::dict::create_routes(pool.clone()).await?;
-    let db_structure_router = api::db_structure::create_routes(pool.clone()).await?;
-
     let health_router = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
-        .with_state(app_state.clone());
+        .with_state(api_state.clone());
 
-    let protected_routes = Router::new()
-        .merge(api::company::create_routes(pool.clone()).await?)
-        .merge(api::department::create_routes(pool.clone()).await?)
-        .merge(api::employee::create_routes(pool.clone()).await?)
-        .merge(api::asset::create_routes(pool.clone()).await?)
-        .merge(api::finance::create_routes(pool.clone()).await?)
-        .merge(api::addressbook::create_routes(pool.clone()).await?)
-        .merge(audit_router)
-        .merge(dict_router)
-        .merge(db_structure_router)
+    let protected_routes = api::create_routes()
         .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
+            api_state.auth_state.clone(),
             auth_middleware,
-        ));
+        ))
+        .with_state(api_state.clone());
 
     let app = Router::new()
         .merge(health_router)
@@ -123,9 +90,9 @@ async fn main() -> Result<()> {
 }
 
 async fn health_check(
-    axum::extract::State(state): axum::extract::State<AppState>,
+    axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<String>> {
-    let database_health = check_database_health(&state.pool).await;
+    let database_health = check_database_health(&state.db).await;
     let iam_health = check_iam_health().await;
 
     let overall_status = if database_health.status == HealthStatus::Healthy
@@ -158,10 +125,10 @@ struct ErpHealthSummary {
 }
 
 async fn health_check_detailed(
-    axum::extract::State(state): axum::extract::State<AppState>,
+    axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
-        check_database_health(&state.pool).await,
+        check_database_health(&state.db).await,
         check_iam_health().await,
     ];
 
@@ -194,7 +161,7 @@ async fn health_check_detailed(
 }
 
 async fn get_metrics(
-    axum::extract::State(state): axum::extract::State<AppState>,
+    axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<ErpServiceMetrics>> {
     let metrics = ErpServiceMetrics {
         service_name: "topems-erp".to_string(),
@@ -203,8 +170,8 @@ async fn get_metrics(
         request_count: state.metrics.get_request_count(),
         error_count: state.metrics.get_error_count(),
         active_connections: state.metrics.get_active_connections(),
-        database_pool_size: state.pool.size() as u32,
-        database_pool_idle: state.pool.num_idle(),
+        database_pool_size: state.db.size() as u32,
+        database_pool_idle: state.db.num_idle(),
     };
 
     Json(ApiResponse::success(metrics, "服务指标"))
@@ -657,6 +624,104 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .execute(pool)
         .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_db_changes_time ON sys_db_changes(executed_at DESC)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS erp.accounting_subjects (
+            id UUID PRIMARY KEY,
+            code VARCHAR(50) NOT NULL UNIQUE,
+            name VARCHAR(200) NOT NULL,
+            category VARCHAR(100),
+            level INT NOT NULL DEFAULT 1,
+            parent_code VARCHAR(50),
+            description TEXT,
+            is_cash_flow BOOLEAN NOT NULL DEFAULT FALSE,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS erp.financial_vouchers (
+            id UUID PRIMARY KEY,
+            voucher_number VARCHAR(100) NOT NULL,
+            voucher_date TIMESTAMPTZ NOT NULL,
+            period VARCHAR(20) NOT NULL,
+            attachment_count INT DEFAULT 0,
+            summary TEXT,
+            maker_id UUID,
+            maker_name VARCHAR(200),
+            checker_id UUID,
+            checker_name VARCHAR(200),
+            bookkeeper_id UUID,
+            bookkeeper_name VARCHAR(200),
+            status VARCHAR(20) NOT NULL DEFAULT 'draft',
+            total_debit NUMERIC(18,4) NOT NULL DEFAULT 0,
+            total_credit NUMERIC(18,4) NOT NULL DEFAULT 0,
+            source_system VARCHAR(50),
+            source_id VARCHAR(100),
+            project_id UUID,
+            contract_id UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            UNIQUE(voucher_number, period)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS erp.voucher_items (
+            id UUID PRIMARY KEY,
+            voucher_id UUID NOT NULL REFERENCES erp.financial_vouchers(id) ON DELETE CASCADE,
+            line_number INT NOT NULL,
+            subject_code VARCHAR(50) NOT NULL,
+            subject_name VARCHAR(200),
+            summary TEXT,
+            debit_amount NUMERIC(18,4) NOT NULL DEFAULT 0,
+            credit_amount NUMERIC(18,4) NOT NULL DEFAULT 0,
+            quantity NUMERIC(15,4),
+            unit VARCHAR(50),
+            price NUMERIC(15,4),
+            department_id UUID,
+            project_id UUID,
+            contract_id UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_accounting_subjects_code ON erp.accounting_subjects(code)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_accounting_subjects_category ON erp.accounting_subjects(category)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_financial_vouchers_number ON erp.financial_vouchers(voucher_number)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_financial_vouchers_period ON erp.financial_vouchers(period)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_financial_vouchers_status ON erp.financial_vouchers(status)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_voucher_items_voucher ON erp.voucher_items(voucher_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_voucher_items_subject ON erp.voucher_items(subject_code)"#)
         .execute(pool)
         .await?;
 

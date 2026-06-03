@@ -128,13 +128,7 @@ pub async fn optional_auth_middleware(
     mut req: Request,
     next: Next,
 ) -> Response {
-    let is_development = std::env::var("RUST_ENV").unwrap_or_default() == "development"
-        || std::env::var("ENV").unwrap_or_default() == "dev"
-        || std::env::var("NODE_ENV").unwrap_or_default() == "development";
-    
-    let claims = if is_development {
-        None
-    } else if let Some(auth_header) = req.headers()
+    let claims = if let Some(auth_header) = req.headers()
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
     {
@@ -158,9 +152,9 @@ pub async fn optional_auth_middleware(
     };
     
     let final_claims = claims.unwrap_or_else(|| Claims {
-        sub: if is_development { "admin".to_string() } else { "guest".to_string() },
-        username: if is_development { "admin".to_string() } else { "guest".to_string() },
-        role: if is_development { "admin".to_string() } else { "guest".to_string() },
+        sub: "guest".to_string(),
+        username: "guest".to_string(),
+        role: "guest".to_string(),
         roles: vec![],
         exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
         iat: Utc::now().timestamp() as usize,

@@ -140,6 +140,12 @@ impl FromRef<AppState> for AuthState {
     }
 }
 
+impl FromRef<AppState> for PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
+
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
@@ -195,9 +201,12 @@ async fn main() {
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .with_state(app_state.clone());
+
+    let protected_routes = Router::new()
         .route("/api/v1/integration/stats", get(get_sync_stats))
         .route("/api/v1/integration/events", get(list_events))
         .route("/api/v1/integration/events", post(create_event))
@@ -217,7 +226,11 @@ async fn main() {
             app_state.auth_state.clone(),
             auth_middleware,
         ))
-        .with_state(app_state)
+        .with_state(app_state);
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors);
 
     let port = std::env::var("SERVER_PORT")

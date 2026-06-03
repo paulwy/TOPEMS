@@ -223,6 +223,12 @@ impl FromRef<AppState> for AuthState {
     }
 }
 
+impl FromRef<AppState> for PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
+
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
@@ -265,9 +271,12 @@ async fn main() {
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .with_state(app_state.clone());
+
+    let protected_routes = Router::new()
         .route("/api/v1/production-processes", get(list_processes))
         .route("/api/v1/production-processes", post(create_process))
         .route("/api/v1/production-processes/{id}", get(get_process))
@@ -292,8 +301,16 @@ async fn main() {
         .route("/api/v1/production-batches/{id}", delete(delete_batch))
         .route("/api/v1/production-statistics", get(list_statistics))
         .route("/api/v1/production-statistics", post(create_statistics))
-        .layer(cors)
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
         .with_state(app_state);
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
+        .layer(cors);
 
     let port = std::env::var("SERVER_PORT")
         .unwrap_or_else(|_| std::env::var("PORT").unwrap_or_else(|_| "8015".to_string()))

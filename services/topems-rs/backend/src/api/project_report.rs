@@ -5,15 +5,11 @@ use axum::{
 };
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgPool, FromRow, Row};
+use sqlx::{FromRow, Row};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::response::ApiResponse;
-
-pub struct AppState {
-    pub db: PgPool,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectSummary {
@@ -60,22 +56,19 @@ pub struct ReportQuery {
     pub project_type: Option<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> topems_shared::Result<Router> {
     let router = Router::new()
         .route("/api/v1/reports/projects/summary", get(get_project_summary))
         .route("/api/v1/reports/projects/trends", get(get_project_trends))
         .route("/api/v1/reports/projects/types", get(get_project_type_stats))
         .route("/api/v1/reports/projects/performance", get(get_performance_metrics))
-        .route("/api/v1/reports/projects/{id}/details", get(get_project_detail_report))
-        .with_state(state);
+        .route("/api/v1/reports/projects/{id}/details", get(get_project_detail_report));
 
     Ok(router)
 }
 
 pub async fn get_project_summary(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Query(query): Query<ReportQuery>,
 ) -> Json<ApiResponse<ProjectSummary>> {
     let start_date = query.start_date.clone().unwrap_or_else(|| {
@@ -139,7 +132,7 @@ pub async fn get_project_summary(
 }
 
 pub async fn get_project_trends(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Query(query): Query<ReportQuery>,
 ) -> Json<ApiResponse<Vec<TrendData>>> {
     let start_date = query.start_date.clone().unwrap_or_else(|| {
@@ -191,7 +184,7 @@ pub async fn get_project_trends(
 }
 
 pub async fn get_project_type_stats(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
 ) -> Json<ApiResponse<Vec<ProjectTypeStats>>> {
     let result = sqlx::query(
         r#"
@@ -230,7 +223,7 @@ pub async fn get_project_type_stats(
 }
 
 pub async fn get_performance_metrics(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
 ) -> Json<ApiResponse<PerformanceMetrics>> {
     let on_time_result = sqlx::query(
         r#"
@@ -332,7 +325,7 @@ pub struct ProjectDetailReport {
 }
 
 pub async fn get_project_detail_report(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDetailReport>> {
     let project = sqlx::query_as::<_, ProjectDetailReport>(

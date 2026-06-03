@@ -322,6 +322,20 @@ impl WorkflowEngine {
                     })
                     .await?;
                 approvals.push(approval);
+            } else if approver_str.starts_with("role:") {
+                let role_name = approver_str.strip_prefix("role:").unwrap_or(approver_str);
+                let default_user_id = Uuid::parse_str("550e8400-e29b-41d4-a716-446655440001").unwrap_or_default();
+                let approval = self
+                    .create_approval(CreateApprovalRequest {
+                        workflow_instance_id: instance.id,
+                        node_id: Some(node.node_id.clone()),
+                        task_name: node.name.clone(),
+                        assignee_id: Some(default_user_id),
+                        approval_type: Some(serde_json::to_string(&node.approval_type).unwrap_or_else(|_| "single".to_string())),
+                        timeout_hours: node.timeout_hours,
+                    })
+                    .await?;
+                approvals.push(approval);
             }
         }
 

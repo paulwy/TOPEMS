@@ -7,13 +7,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreatePurchaseItemRequest, PurchaseItem, UpdatePurchaseItemRequest};
-use topems_shared::{ApiResponse, PaginationParams, api_error};
+use topems_shared::{ApiResponse, api_error};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct PurchaseItemQueryParams {
@@ -23,26 +22,17 @@ pub struct PurchaseItemQueryParams {
     pub order_id: Option<Uuid>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/purchase-items", get(list_items).post(create_item))
         .route(
             "/api/v1/purchase-items/{id}",
             get(get_item).put(update_item),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_items(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PurchaseItemQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -102,7 +92,7 @@ async fn list_items(
 }
 
 async fn create_item(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreatePurchaseItemRequest>,
 ) -> Json<ApiResponse<PurchaseItem>> {
@@ -172,7 +162,7 @@ async fn create_item(
 }
 
 async fn get_item(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PurchaseItem>> {
     let result = sqlx::query_as::<_, PurchaseItem>(
@@ -196,12 +186,11 @@ async fn get_item(
 }
 
 async fn update_item(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdatePurchaseItemRequest>,
 ) -> Json<ApiResponse<PurchaseItem>> {
-    // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
     
     let existing = sqlx::query_as::<_, PurchaseItem>(

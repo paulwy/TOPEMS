@@ -47,6 +47,6 @@ export const addressbookApi = {
       params,
       responseType: 'blob',
     });
-    return response;
+    return response as unknown as Blob;
   },
 };

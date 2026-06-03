@@ -7,11 +7,10 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PerformanceReview {
@@ -92,25 +91,20 @@ pub struct QueryParams {
     pub status: Option<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let router = Router::new()
-        .route("/api/v1/performance-reviews", get(list_reviews).post(create_review))
-        .route("/api/v1/performance-reviews/{id}", get(get_review).put(update_review).delete(delete_review))
-        .route("/api/v1/performance-reviews/{id}/submit", put(submit_review))
-        .route("/api/v1/performance-reviews/{id}/approve", put(approve_review))
-        .route("/api/v1/performance-goals", get(list_goals).post(create_goal))
-        .route("/api/v1/performance-goals/{id}", get(get_goal).put(update_goal).delete(delete_goal))
-        .route("/api/v1/employees/{id}/performance-reviews", get(get_employee_reviews))
-        .route("/api/v1/employees/{id}/performance-goals", get(get_employee_goals))
-        .with_state(state);
-
-    Ok(router)
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+    .route("/api/v1/performance-reviews", get(list_reviews).post(create_review))
+    .route("/api/v1/performance-reviews/{id}", get(get_review).put(update_review).delete(delete_review))
+    .route("/api/v1/performance-reviews/{id}/submit", put(submit_review))
+    .route("/api/v1/performance-reviews/{id}/approve", put(approve_review))
+    .route("/api/v1/performance-goals", get(list_goals).post(create_goal))
+    .route("/api/v1/performance-goals/{id}", get(get_goal).put(update_goal).delete(delete_goal))
+    .route("/api/v1/employees/{id}/performance-reviews", get(get_employee_reviews))
+    .route("/api/v1/employees/{id}/performance-goals", get(get_employee_goals))
 }
 
 async fn list_reviews(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -176,7 +170,7 @@ async fn list_reviews(
 }
 
 async fn create_review(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreatePerformanceReviewRequest>,
 ) -> Json<ApiResponse<PerformanceReview>> {
     let id = Uuid::new_v4();
@@ -208,7 +202,7 @@ async fn create_review(
 }
 
 async fn get_review(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PerformanceReview>> {
     let result = sqlx::query_as::<_, PerformanceReview>(
@@ -229,7 +223,7 @@ async fn get_review(
 }
 
 async fn update_review(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePerformanceReviewRequest>,
 ) -> Json<ApiResponse<PerformanceReview>> {
@@ -274,7 +268,7 @@ async fn update_review(
 }
 
 async fn delete_review(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
@@ -295,7 +289,7 @@ async fn delete_review(
 }
 
 async fn submit_review(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PerformanceReview>> {
     let now = Utc::now();
@@ -324,7 +318,7 @@ async fn submit_review(
 }
 
 async fn approve_review(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PerformanceReview>> {
     let now = Utc::now();
@@ -353,7 +347,7 @@ async fn approve_review(
 }
 
 async fn list_goals(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -414,7 +408,7 @@ async fn list_goals(
 }
 
 async fn create_goal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreatePerformanceGoalRequest>,
 ) -> Json<ApiResponse<PerformanceGoal>> {
     let id = Uuid::new_v4();
@@ -449,7 +443,7 @@ async fn create_goal(
 }
 
 async fn get_goal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PerformanceGoal>> {
     let result = sqlx::query_as::<_, PerformanceGoal>(
@@ -470,7 +464,7 @@ async fn get_goal(
 }
 
 async fn update_goal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePerformanceGoalRequest>,
 ) -> Json<ApiResponse<PerformanceGoal>> {
@@ -515,7 +509,7 @@ async fn update_goal(
 }
 
 async fn delete_goal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM performance_goals WHERE id = $1")
@@ -533,7 +527,7 @@ async fn delete_goal(
 }
 
 async fn get_employee_reviews(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PerformanceReview>(
@@ -559,7 +553,7 @@ async fn get_employee_reviews(
 }
 
 async fn get_employee_goals(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PerformanceGoal>(

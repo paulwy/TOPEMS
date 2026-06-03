@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{FromRef, Path, Query, State},
     http::HeaderMap,
     routing::get,
     Json, Router,
@@ -7,10 +7,10 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+use crate::api::ApiState;
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
@@ -43,19 +43,14 @@ impl<T> ApiResponse<T> {
     }
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> anyhow::Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes<S>() -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+    ApiState: FromRef<S>,
+{
+    Router::new()
         .route("/api/v1/audit-logs", get(list_audit_logs))
         .route("/api/v1/audit-logs/{id}", get(get_audit_log))
-        .with_state(state);
-
-    Ok(app)
 }
 
 #[derive(Debug, Deserialize)]
@@ -71,7 +66,7 @@ pub struct ListAuditLogsQuery {
 }
 
 async fn list_audit_logs(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -147,7 +142,7 @@ async fn list_audit_logs(
 }
 
 async fn get_audit_log(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
     let result = sqlx::query_as::<_, AuditLog>(

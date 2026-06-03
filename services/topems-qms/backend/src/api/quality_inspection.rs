@@ -6,12 +6,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateQualityInspectionRequest, QualityInspection, UpdateQualityInspectionRequest};
-use topems_shared::{ApiResponse, PaginationParams};
+use topems_shared::ApiResponse;
+
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct QualityInspectionQueryParams {
@@ -21,26 +21,19 @@ pub struct QualityInspectionQueryParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/checks", get(list_inspections).post(create_inspection))
         .route(
             "/api/v1/checks/{id}",
             get(get_inspection).put(update_inspection),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_inspections(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QualityInspectionQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -101,7 +94,7 @@ async fn list_inspections(
 }
 
 async fn create_inspection(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateQualityInspectionRequest>,
 ) -> Json<ApiResponse<QualityInspection>> {
     let id = Uuid::new_v4();
@@ -135,7 +128,7 @@ async fn create_inspection(
 }
 
 async fn get_inspection(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityInspection>> {
     let result = sqlx::query_as::<_, QualityInspection>(
@@ -159,7 +152,7 @@ async fn get_inspection(
 }
 
 async fn update_inspection(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateQualityInspectionRequest>,
 ) -> Json<ApiResponse<QualityInspection>> {

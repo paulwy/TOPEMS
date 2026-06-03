@@ -7,11 +7,10 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct JobOpening {
@@ -147,26 +146,21 @@ pub struct JobOpeningQueryParams {
     pub status: Option<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let router = Router::new()
-        .route("/api/v1/job-openings", get(list_job_openings).post(create_job_opening))
-        .route("/api/v1/job-openings/{id}", get(get_job_opening).put(update_job_opening).delete(delete_job_opening))
-        .route("/api/v1/job-openings/{id}/publish", put(publish_job_opening))
-        .route("/api/v1/job-openings/{id}/close", put(close_job_opening))
-        .route("/api/v1/candidates", get(list_candidates).post(create_candidate))
-        .route("/api/v1/candidates/{id}", get(get_candidate).put(update_candidate).delete(delete_candidate))
-        .route("/api/v1/interviews", get(list_interviews).post(create_interview))
-        .route("/api/v1/interviews/{id}", get(get_interview).put(update_interview).delete(delete_interview))
-        .route("/api/v1/interviews/{id}/complete", put(complete_interview))
-        .with_state(state);
-
-    Ok(router)
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+    .route("/api/v1/job-openings", get(list_job_openings).post(create_job_opening))
+    .route("/api/v1/job-openings/{id}", get(get_job_opening).put(update_job_opening).delete(delete_job_opening))
+    .route("/api/v1/job-openings/{id}/publish", put(publish_job_opening))
+    .route("/api/v1/job-openings/{id}/close", put(close_job_opening))
+    .route("/api/v1/candidates", get(list_candidates).post(create_candidate))
+    .route("/api/v1/candidates/{id}", get(get_candidate).put(update_candidate).delete(delete_candidate))
+    .route("/api/v1/interviews", get(list_interviews).post(create_interview))
+    .route("/api/v1/interviews/{id}", get(get_interview).put(update_interview).delete(delete_interview))
+    .route("/api/v1/interviews/{id}/complete", put(complete_interview))
 }
 
 async fn list_job_openings(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -232,7 +226,7 @@ async fn list_job_openings(
 }
 
 async fn create_job_opening(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateJobOpeningRequest>,
 ) -> Json<ApiResponse<JobOpening>> {
     let id = Uuid::new_v4();
@@ -271,7 +265,7 @@ async fn create_job_opening(
 }
 
 async fn get_job_opening(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<JobOpening>> {
     let result = sqlx::query_as::<_, JobOpening>(
@@ -292,7 +286,7 @@ async fn get_job_opening(
 }
 
 async fn update_job_opening(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateJobOpeningRequest>,
 ) -> Json<ApiResponse<JobOpening>> {
@@ -343,7 +337,7 @@ async fn update_job_opening(
 }
 
 async fn delete_job_opening(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
@@ -364,7 +358,7 @@ async fn delete_job_opening(
 }
 
 async fn publish_job_opening(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<JobOpening>> {
     let now = Utc::now();
@@ -393,7 +387,7 @@ async fn publish_job_opening(
 }
 
 async fn close_job_opening(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<JobOpening>> {
     let now = Utc::now();
@@ -422,7 +416,7 @@ async fn close_job_opening(
 }
 
 async fn list_candidates(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -488,7 +482,7 @@ async fn list_candidates(
 }
 
 async fn create_candidate(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateCandidateRequest>,
 ) -> Json<ApiResponse<Candidate>> {
     let id = Uuid::new_v4();
@@ -524,7 +518,7 @@ async fn create_candidate(
 }
 
 async fn get_candidate(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Candidate>> {
     let result = sqlx::query_as::<_, Candidate>(
@@ -545,7 +539,7 @@ async fn get_candidate(
 }
 
 async fn update_candidate(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateCandidateRequest>,
 ) -> Json<ApiResponse<Candidate>> {
@@ -592,7 +586,7 @@ async fn update_candidate(
 }
 
 async fn delete_candidate(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM candidates WHERE id = $1")
@@ -610,7 +604,7 @@ async fn delete_candidate(
 }
 
 async fn list_interviews(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -671,7 +665,7 @@ async fn list_interviews(
 }
 
 async fn create_interview(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateInterviewRequest>,
 ) -> Json<ApiResponse<Interview>> {
     let id = Uuid::new_v4();
@@ -707,7 +701,7 @@ async fn create_interview(
 }
 
 async fn get_interview(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Interview>> {
     let result = sqlx::query_as::<_, Interview>(
@@ -728,7 +722,7 @@ async fn get_interview(
 }
 
 async fn update_interview(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInterviewRequest>,
 ) -> Json<ApiResponse<Interview>> {
@@ -777,7 +771,7 @@ async fn update_interview(
 }
 
 async fn delete_interview(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM interviews WHERE id = $1")
@@ -795,7 +789,7 @@ async fn delete_interview(
 }
 
 async fn complete_interview(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInterviewRequest>,
 ) -> Json<ApiResponse<Interview>> {

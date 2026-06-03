@@ -371,14 +371,25 @@ async fn main() {
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .with_state(app_state.clone());
+
+    let protected_routes = Router::new()
         .route("/api/v1/ai/chat", post(chat))
         .route("/api/v1/documents", get(list_documents))
         .route("/api/v1/documents/reload", post(reload_documents))
         .route("/api/v1/documents/upload", post(upload_document))
-        .with_state(app_state)
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
 

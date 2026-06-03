@@ -3,9 +3,8 @@ use serde_json;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
-use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
-use topems_shared::Result;
-use anyhow;
+use crate::models::{CreateProjectRequest, Project, ProjectStatus, UpdateProjectRequest};
+use topems_shared::{Result, TopemsError};
 
 pub struct ProjectRepository {
     db: PgPool,
@@ -91,8 +90,8 @@ impl ProjectRepository {
             LIMIT $3 OFFSET $4
             "#,
         )
-        .bind(search)
-        .bind(status)
+        .bind(&search)
+        .bind(&status)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&self.db)
@@ -105,8 +104,8 @@ impl ProjectRepository {
               AND ($2::text IS NULL OR status = $2)
             "#,
         )
-        .bind(search)
-        .bind(status)
+        .bind(&search)
+        .bind(&status)
         .fetch_one(&self.db)
         .await?;
 
@@ -119,7 +118,7 @@ impl ProjectRepository {
         let description = req.description.clone().or(existing.description.clone());
         let leader = req.leader.clone().unwrap_or(existing.leader.clone());
         let team_members = req.team_members.clone().unwrap_or(existing.team_members.clone());
-        let status = req.status.clone().unwrap_or(existing.status.clone());
+        let status = req.status.clone().map(|s| s.to_string()).unwrap_or(existing.status.clone());
         let progress = req.progress.unwrap_or(existing.progress);
 
         let project = sqlx::query_as::<_, Project>(
@@ -144,7 +143,7 @@ impl ProjectRepository {
         .fetch_optional(&self.db)
         .await?;
 
-        project.ok_or_else(|| anyhow::anyhow!("项目不存在"))
+        project.ok_or_else(|| TopemsError::NotFound("项目不存在".to_string()))
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<bool> {
@@ -216,7 +215,7 @@ impl ProjectRepository {
         .execute(&self.db)
         .await?;
 
-        Ok(result.rows_affected())
+        Ok(result.rows_affected() as i64)
     }
 }
 

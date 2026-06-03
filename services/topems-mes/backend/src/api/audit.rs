@@ -6,8 +6,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
@@ -43,18 +41,12 @@ impl<T> ApiResponse<T> {
     }
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
+use super::ApiState;
 
-pub async fn create_routes(db: PgPool) -> anyhow::Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> anyhow::Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/audit-logs", get(list_audit_logs))
-        .route("/api/v1/audit-logs/{id}", get(get_audit_log))
-        .with_state(state)
-        .without_v07_checks();
+        .route("/api/v1/audit-logs/{id}", get(get_audit_log));
 
     Ok(app)
 }
@@ -72,7 +64,7 @@ pub struct ListAuditLogsQuery {
 }
 
 async fn list_audit_logs(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -148,7 +140,7 @@ async fn list_audit_logs(
 }
 
 async fn get_audit_log(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
     let result = sqlx::query_as::<_, AuditLog>(
@@ -174,7 +166,7 @@ async fn get_audit_log(
 }
 
 pub async fn log_audit_event(
-    db: &PgPool,
+    db: &sqlx::PgPool,
     action: String,
     entity_type: String,
     entity_id: Option<Uuid>,
@@ -184,7 +176,7 @@ pub async fn log_audit_event(
     request_details: Option<serde_json::Value>,
     response_details: Option<serde_json::Value>,
     status: String,
-    error_message: Option<String>,
+    error_msg: Option<String>,
     headers: &HeaderMap,
 ) {
     let ip_address = headers
@@ -216,7 +208,7 @@ pub async fn log_audit_event(
     .bind(request_details)
     .bind(response_details)
     .bind(status)
-    .bind(error_message)
+    .bind(error_msg)
     .bind(ip_address)
     .bind(user_agent)
     .execute(db)

@@ -24,13 +24,7 @@ pub struct PaginationParams {
     pub project_id: Option<Uuid>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> topems_shared::Result<Router> {
     let app = Router::new()
         .route("/api/v1/formulas", get(list_formulas).post(create_formula))
         .route(
@@ -41,14 +35,13 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
             "/api/v1/formulas/{id}/versions",
             get(get_formula_versions).post(create_formula_version),
         )
-        .route("/api/v1/formulas/{id}/approve", post(approve_formula))
-        .with_state(state);
+        .route("/api/v1/formulas/{id}/approve", post(approve_formula));
 
     Ok(app)
 }
 
 async fn list_formulas(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -113,7 +106,7 @@ async fn list_formulas(
 }
 
 async fn create_formula(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Json(req): Json<CreateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
     let id = Uuid::new_v4();
@@ -164,7 +157,7 @@ async fn create_formula(
 }
 
 async fn get_formula(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Formula>> {
     let result = sqlx::query_as::<_, Formula>(
@@ -191,7 +184,7 @@ async fn get_formula(
 }
 
 async fn update_formula(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
@@ -262,7 +255,7 @@ async fn update_formula(
 }
 
 async fn delete_formula(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM rs.formulas WHERE id = $1")
@@ -283,7 +276,7 @@ async fn delete_formula(
 }
 
 async fn get_formula_versions(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<FormulaVersion>>> {
     let result = sqlx::query_as::<_, FormulaVersion>(
@@ -310,7 +303,7 @@ async fn get_formula_versions(
 }
 
 async fn create_formula_version(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateFormulaVersionRequest>,
 ) -> Json<ApiResponse<FormulaVersion>> {
@@ -393,7 +386,7 @@ async fn create_formula_version(
 }
 
 async fn approve_formula(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
     Json(_req): Json<crate::models::ApproveFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {

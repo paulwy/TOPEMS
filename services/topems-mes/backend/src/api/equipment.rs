@@ -7,8 +7,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
@@ -18,6 +16,8 @@ use crate::models::{
 };
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct InspectionQuery {
@@ -33,25 +33,18 @@ pub struct MaintenanceQuery {
     pub page_size: Option<i64>,
 }
 
-pub struct AppState {
-    pub pool: PgPool,
-}
-
-pub async fn create_routes(pool: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { pool });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/equipment/statistics", get(get_statistics))
         .route("/inspections", get(list_inspections).post(create_inspection))
         .route("/maintenances", get(list_maintenances).post(create_maintenance))
-        .route("/maintenances/:id/status", put(update_maintenance_status))
-        .with_state(state);
+        .route("/maintenances/{id}/status", put(update_maintenance_status));
 
     Ok(app)
 }
 
 async fn get_statistics(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<ApiState>,
 ) -> Json<ApiResponse<EquipmentStatistics>> {
     Json(ApiResponse::success(
         EquipmentStatistics {
@@ -70,7 +63,7 @@ async fn get_statistics(
 }
 
 async fn list_inspections(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(query): Query<InspectionQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<InspectionRecord>>> {
     let page = query.page.unwrap_or(1).max(1);
@@ -92,7 +85,7 @@ async fn list_inspections(
                 .bind(eq_id)
                 .bind(page_size)
                 .bind(offset)
-                .fetch_all(&state.pool)
+                .fetch_all(&state.db)
                 .await
         },
         None => {
@@ -107,7 +100,7 @@ async fn list_inspections(
             sqlx::query_as::<_, InspectionRecord>(sql)
                 .bind(page_size)
                 .bind(offset)
-                .fetch_all(&state.pool)
+                .fetch_all(&state.db)
                 .await
         }
     };
@@ -119,13 +112,13 @@ async fn list_inspections(
                     let sql = r#"SELECT COUNT(*) FROM mes.inspection_records WHERE equipment_id = $1"#;
                     sqlx::query_scalar::<_, i64>(sql)
                         .bind(eq_id)
-                        .fetch_one(&state.pool)
+                        .fetch_one(&state.db)
                         .await
                 },
                 None => {
                     let sql = r#"SELECT COUNT(*) FROM mes.inspection_records"#;
                     sqlx::query_scalar::<_, i64>(sql)
-                        .fetch_one(&state.pool)
+                        .fetch_one(&state.db)
                         .await
                 }
             };
@@ -144,7 +137,7 @@ async fn list_inspections(
 }
 
 async fn create_inspection(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateInspectionRecord>,
 ) -> Json<ApiResponse<InspectionRecord>> {
@@ -152,7 +145,7 @@ async fn create_inspection(
     let now = Utc::now();
     let inspection_date = match chrono::NaiveDate::parse_from_str(&req.inspection_date, "%Y-%m-%d") {
         Ok(d) => d,
-        Err(_) => chrono::Utc::now().date_naive(),
+        Err(_) => Utc::now().date_naive(),
     };
 
     let equipment_code = "EQ-001".to_string();
@@ -185,7 +178,7 @@ async fn create_inspection(
         .bind(req.abnormalities.as_ref())
         .bind(req.remarks.as_ref())
         .bind(now)
-        .fetch_one(&state.pool)
+        .fetch_one(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -204,7 +197,6 @@ async fn create_inspection(
         }
     };
 
-    let request_data = request_data;
     let response_data = if let Ok(record) = &result {
         serde_json::to_value(record).ok()
     } else {
@@ -212,7 +204,7 @@ async fn create_inspection(
     };
 
     log_audit_event(
-        &state.pool,
+        &state.db,
         "create".to_string(),
         "inspection".to_string(),
         Some(id),
@@ -230,7 +222,7 @@ async fn create_inspection(
 }
 
 async fn list_maintenances(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(query): Query<MaintenanceQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<MaintenanceRecord>>> {
     let page = query.page.unwrap_or(1).max(1);
@@ -252,7 +244,7 @@ async fn list_maintenances(
                 .bind(eq_id)
                 .bind(page_size)
                 .bind(offset)
-                .fetch_all(&state.pool)
+                .fetch_all(&state.db)
                 .await
         },
         None => {
@@ -267,7 +259,7 @@ async fn list_maintenances(
             sqlx::query_as::<_, MaintenanceRecord>(sql)
                 .bind(page_size)
                 .bind(offset)
-                .fetch_all(&state.pool)
+                .fetch_all(&state.db)
                 .await
         }
     };
@@ -279,13 +271,13 @@ async fn list_maintenances(
                     let sql = r#"SELECT COUNT(*) FROM mes.maintenance_records WHERE equipment_id = $1"#;
                     sqlx::query_scalar::<_, i64>(sql)
                         .bind(eq_id)
-                        .fetch_one(&state.pool)
+                        .fetch_one(&state.db)
                         .await
                 },
                 None => {
                     let sql = r#"SELECT COUNT(*) FROM mes.maintenance_records"#;
                     sqlx::query_scalar::<_, i64>(sql)
-                        .fetch_one(&state.pool)
+                        .fetch_one(&state.db)
                         .await
                 }
             };
@@ -304,7 +296,7 @@ async fn list_maintenances(
 }
 
 async fn create_maintenance(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateMaintenanceRecord>,
 ) -> Json<ApiResponse<MaintenanceRecord>> {
@@ -350,7 +342,7 @@ async fn create_maintenance(
         .bind(req.status.as_deref().unwrap_or("pending"))
         .bind(req.remarks.as_ref())
         .bind(now)
-        .fetch_one(&state.pool)
+        .fetch_one(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -376,7 +368,7 @@ async fn create_maintenance(
     };
 
     log_audit_event(
-        &state.pool,
+        &state.db,
         "create".to_string(),
         "maintenance".to_string(),
         Some(id),
@@ -394,7 +386,7 @@ async fn create_maintenance(
 }
 
 async fn update_maintenance_status(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateMaintenanceStatus>,
@@ -413,7 +405,7 @@ async fn update_maintenance_status(
         .bind(req.result.as_ref())
         .bind(Utc::now())
         .bind(id)
-        .fetch_one(&state.pool)
+        .fetch_one(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -439,7 +431,7 @@ async fn update_maintenance_status(
     };
 
     log_audit_event(
-        &state.pool,
+        &state.db,
         "update".to_string(),
         "maintenance".to_string(),
         Some(id),

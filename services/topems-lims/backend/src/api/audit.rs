@@ -4,28 +4,19 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
+use serde::Deserialize;
 use uuid::Uuid;
 use utoipa::ToSchema;
 
-use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+use crate::models::AuditLog;
+use crate::api::ApiState;
 use topems_shared::Result;
 use topems_shared::response::ApiResponse;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/audit-logs", get(list_audit_logs))
-        .route("/api/v1/audit-logs/{id}", get(get_audit_log))
-        .with_state(state);
+        .route("/api/v1/audit-logs/{id}", get(get_audit_log));
 
     Ok(app)
 }
@@ -62,7 +53,7 @@ pub struct ListAuditLogsQuery {
     )
 )]
 async fn list_audit_logs(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -151,7 +142,7 @@ async fn list_audit_logs(
     )
 )]
 async fn get_audit_log(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
     let result = sqlx::query_as::<_, AuditLog>(
@@ -177,7 +168,7 @@ async fn get_audit_log(
 }
 
 pub async fn log_audit_event(
-    db: &PgPool,
+    db: &sqlx::PgPool,
     action: String,
     entity_type: String,
     entity_id: Option<Uuid>,

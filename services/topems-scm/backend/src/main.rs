@@ -12,25 +12,7 @@ use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
-use api::audit::log_audit_event;
-
-#[derive(Clone)]
-struct AppState {
-    pool: sqlx::PgPool,
-    auth_state: AuthState,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
-impl FromRef<AppState> for sqlx::PgPool {
-    fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
-    }
-}
+use api::ApiState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -57,43 +39,26 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-
-    let refresh_secret = env::var("REFRESH_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("REFRESH_SECRET not set, using default (not recommended for production)");
-            "topems-default-refresh-secret-change-me-in-production".to_string()
-        });
-
-    let token_expiry_hours: i64 = env::var("JWT_EXPIRY_HOURS")
-        .unwrap_or_else(|_| "24".to_string())
-        .parse()
-        .unwrap_or(24);
-
-    let app_state = AppState {
-        pool: pool.clone(),
-        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
+    let api_state = ApiState {
+        db: pool.clone(),
+        auth_state: AuthState::from_env(),
     };
 
     let cors = create_cors_layer();
 
-    let audit_router = api::audit::create_routes(pool.clone()).await?;
+    let public_routes = Router::new()
+        .route("/health", get(health_check));
 
-    let app = Router::new()
-        .route("/health", get(health_check))
-        .merge(api::supplier::create_routes(pool.clone()).await?)
-        .merge(api::purchase_order::create_routes(pool.clone()).await?)
-        .merge(api::purchase_item::create_routes(pool.clone()).await?)
-        .merge(api::supplier_evaluation::create_routes(pool.clone()).await?)
-        .merge(audit_router)
+    let protected_routes = api::create_routes()
         .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
+            api_state.auth_state.clone(),
             auth_middleware,
         ))
+        .with_state(api_state.clone());
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8007".to_string());

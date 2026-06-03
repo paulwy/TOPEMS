@@ -4,7 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::{postgres::PgPool, Error as SqlxError};
+use sqlx::{Error as SqlxError};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -13,13 +13,7 @@ use crate::models::project_member::{
 };
 use topems_shared::response::ApiResponse;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> topems_shared::Result<Router> {
     let router = Router::new()
         .route("/api/v1/members", post(create_member))
         .route(
@@ -27,13 +21,12 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
             get(get_project_members),
         )
         .route("/api/v1/members/{id}", put(update_member))
-        .route("/api/v1/members/{id}", delete(delete_member))
-        .with_state(state);
+        .route("/api/v1/members/{id}", delete(delete_member));
     Ok(router)
 }
 
 pub async fn create_member(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Json(payload): Json<CreateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
     let request_id = Uuid::new_v4();
@@ -119,7 +112,7 @@ pub async fn create_member(
 }
 
 pub async fn get_project_members(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
     let request_id = Uuid::new_v4();
@@ -166,7 +159,7 @@ pub async fn get_project_members(
 }
 
 pub async fn update_member(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
@@ -258,7 +251,7 @@ pub async fn update_member(
 }
 
 pub async fn delete_member(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let request_id = Uuid::new_v4();

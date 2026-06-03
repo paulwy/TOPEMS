@@ -4,23 +4,17 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::{postgres::PgPool, Error as SqlxError};
+use sqlx::{Error as SqlxError};
 use std::sync::Arc;
+use std::time::Duration;
 use uuid::Uuid;
 
 use crate::models::project_phase::{CreatePhaseRequest, ProjectPhase, UpdatePhaseRequest};
 use crate::services::project_progress;
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use topems_shared::response::ApiResponse;
-use std::time::Duration;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> topems_shared::Result<Router> {
     let app = Router::new()
         .route("/api/v1/phases", post(create_phase))
         .route(
@@ -28,14 +22,13 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
             get(get_project_phases),
         )
         .route("/api/v1/phases/{id}", put(update_phase))
-        .route("/api/v1/phases/{id}", delete(delete_phase))
-        .with_state(state);
+        .route("/api/v1/phases/{id}", delete(delete_phase));
 
     Ok(app)
 }
 
 pub async fn create_phase(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Json(payload): Json<CreatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
     let request_id = Uuid::new_v4();
@@ -125,7 +118,7 @@ pub async fn create_phase(
 }
 
 pub async fn get_project_phases(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
     let request_id = Uuid::new_v4();
@@ -183,7 +176,7 @@ pub async fn get_project_phases(
 }
 
 pub async fn update_phase(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
@@ -285,7 +278,7 @@ pub async fn update_phase(
 }
 
 pub async fn delete_phase(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let request_id = Uuid::new_v4();

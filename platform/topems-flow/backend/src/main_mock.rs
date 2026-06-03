@@ -1,8 +1,8 @@
 use axum::{
-    routing::get,
+    routing::{get, post, put, delete},
     Router,
-    extract::{State, Query},
-    Json,
+    extract::{State, Query, Path, Json},
+    http::StatusCode,
 };
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use serde::{Deserialize, Serialize};
@@ -60,6 +60,35 @@ struct ListQuery {
     is_active: Option<bool>,
     limit: Option<i64>,
     offset: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateWorkflowRequest {
+    name: String,
+    description: Option<String>,
+    definition: Option<Value>,
+    is_active: Option<bool>,
+    created_by: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct UpdateWorkflowRequest {
+    name: Option<String>,
+    description: Option<String>,
+    definition: Option<Value>,
+    is_active: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateInstanceRequest {
+    workflow_id: String,
+    created_by: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ProcessApprovalRequest {
+    status: String,
+    comment: Option<String>,
 }
 
 fn init_mock_data(state: &AppState) {
@@ -340,6 +369,145 @@ async fn list_workflows(
     }))
 }
 
+async fn get_workflow(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> (StatusCode, Json<Value>) {
+    match state.workflows.lock().unwrap().get(&id).cloned() {
+        Some(workflow) => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "success": true,
+                "data": workflow,
+                "message": "Success"
+            }))
+        ),
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "success": false,
+                "data": (),
+                "message": "Workflow not found"
+            }))
+        ),
+    }
+}
+
+async fn create_workflow(
+    State(state): State<AppState>,
+    Json(req): Json<CreateWorkflowRequest>,
+) -> (StatusCode, Json<Value>) {
+    if req.name.trim().is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "success": false,
+                "data": (),
+                "message": "Workflow name cannot be empty"
+            }))
+        );
+    }
+    
+    let now = Utc::now();
+    let definition = req.definition.unwrap_or(serde_json::json!({
+        "version": "1.0",
+        "nodes": [],
+        "start_node": "",
+        "end_nodes": []
+    }));
+    
+    let workflow = MockWorkflow {
+        id: Uuid::new_v4(),
+        name: req.name,
+        description: req.description.unwrap_or_default(),
+        definition,
+        is_active: req.is_active.unwrap_or(true),
+        created_by: req.created_by,
+        created_at: now,
+        updated_at: now,
+    };
+    
+    state.workflows.lock().unwrap().insert(workflow.id, workflow.clone());
+    
+    (
+        StatusCode::CREATED,
+        Json(serde_json::json!({
+            "success": true,
+            "data": workflow,
+            "message": "Workflow created successfully"
+        }))
+    )
+}
+
+async fn update_workflow(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateWorkflowRequest>,
+) -> (StatusCode, Json<Value>) {
+    let mut workflows = state.workflows.lock().unwrap();
+    
+    match workflows.get_mut(&id) {
+        Some(workflow) => {
+            if let Some(name) = req.name {
+                workflow.name = name;
+            }
+            if let Some(description) = req.description {
+                workflow.description = description;
+            }
+            if let Some(is_active) = req.is_active {
+                workflow.is_active = is_active;
+            }
+            if let Some(definition) = req.definition {
+                workflow.definition = definition;
+            }
+            workflow.updated_at = Utc::now();
+            
+            let updated = workflow.clone();
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "success": true,
+                    "data": updated,
+                    "message": "Workflow updated successfully"
+                }))
+            )
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "success": false,
+                "data": (),
+                "message": "Workflow not found"
+            }))
+        ),
+    }
+}
+
+async fn delete_workflow(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> (StatusCode, Json<Value>) {
+    if state.workflows.lock().unwrap().remove(&id).is_some() {
+        (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "success": true,
+                "data": (),
+                "message": "Workflow deleted successfully"
+            }))
+        )
+    } else {
+        (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "success": false,
+                "data": (),
+                "message": "Workflow not found"
+            }))
+        )
+    }
+}
+
 async fn list_instances(
     State(state): State<AppState>,
 ) -> Json<Value> {
@@ -358,6 +526,93 @@ async fn list_instances(
         },
         "message": "Success"
     }))
+}
+
+async fn get_instance(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> (StatusCode, Json<Value>) {
+    match state.instances.lock().unwrap().get(&id).cloned() {
+        Some(instance) => {
+            let workflow = state.workflows.lock().unwrap().get(&instance.workflow_id).cloned();
+            let approvals: Vec<MockApproval> = state.approvals.lock().unwrap()
+                .values()
+                .filter(|a| a.instance_id == id)
+                .cloned()
+                .collect();
+            
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "success": true,
+                    "data": {
+                        "instance": instance,
+                        "workflow": workflow,
+                        "approvals": approvals,
+                    },
+                    "message": "Success"
+                }))
+            )
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "success": false,
+                "data": (),
+                "message": "Instance not found"
+            }))
+        ),
+    }
+}
+
+async fn create_instance(
+    State(state): State<AppState>,
+    Json(req): Json<CreateInstanceRequest>,
+) -> (StatusCode, Json<Value>) {
+    match Uuid::parse_str(&req.workflow_id) {
+        Ok(workflow_id) => {
+            if !state.workflows.lock().unwrap().contains_key(&workflow_id) {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "data": (),
+                        "message": "Workflow not found"
+                    }))
+                );
+            }
+            
+            let now = Utc::now();
+            let instance = MockInstance {
+                id: Uuid::new_v4(),
+                workflow_id,
+                status: "running".to_string(),
+                current_node: "start".to_string(),
+                created_by: req.created_by,
+                created_at: now,
+                updated_at: now,
+            };
+            
+            state.instances.lock().unwrap().insert(instance.id, instance.clone());
+            
+            (
+                StatusCode::CREATED,
+                Json(serde_json::json!({
+                    "success": true,
+                    "data": instance,
+                    "message": "Instance created successfully"
+                }))
+            )
+        },
+        Err(_) => (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "success": false,
+                "data": (),
+                "message": "Invalid workflow ID format"
+            }))
+        ),
+    }
 }
 
 async fn list_approvals(
@@ -380,6 +635,87 @@ async fn list_approvals(
     }))
 }
 
+async fn get_approval(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> (StatusCode, Json<Value>) {
+    match state.approvals.lock().unwrap().get(&id).cloned() {
+        Some(approval) => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "success": true,
+                "data": approval,
+                "message": "Success"
+            }))
+        ),
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "success": false,
+                "data": (),
+                "message": "Approval not found"
+            }))
+        ),
+    }
+}
+
+async fn process_approval(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ProcessApprovalRequest>,
+) -> (StatusCode, Json<Value>) {
+    let mut approvals = state.approvals.lock().unwrap();
+    
+    match approvals.get_mut(&id) {
+        Some(approval) => {
+            if !["approved", "rejected"].contains(&req.status.as_str()) {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "data": (),
+                        "message": "Invalid status. Must be 'approved' or 'rejected'"
+                    }))
+                );
+            }
+            
+            approval.status = req.status;
+            approval.comment = req.comment;
+            approval.updated_at = Utc::now();
+            
+            let mut instances = state.instances.lock().unwrap();
+            if let Some(instance) = instances.get_mut(&approval.instance_id) {
+                if approval.status == "rejected" {
+                    instance.status = "rejected".to_string();
+                    instance.current_node = "rejected".to_string();
+                } else {
+                    instance.current_node = "end".to_string();
+                    instance.status = "completed".to_string();
+                }
+                instance.updated_at = Utc::now();
+            }
+            
+            let processed = approval.clone();
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "success": true,
+                    "data": processed,
+                    "message": "Approval processed successfully"
+                }))
+            )
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "success": false,
+                "data": (),
+                "message": "Approval not found"
+            }))
+        ),
+    }
+}
+
 async fn health() -> Json<Value> {
     Json(serde_json::json!({
         "success": true,
@@ -389,14 +725,19 @@ async fn health() -> Json<Value> {
             "status": "running",
             "database": "memory",
             "timestamp": Utc::now().to_rfc3339(),
-            "mock_data": true
+            "mock_data": true,
+            "endpoints": {
+                "workflows": ["GET /api/v1/workflows", "POST /api/v1/workflows", "GET /api/v1/workflows/{id}", "PUT /api/v1/workflows/{id}", "DELETE /api/v1/workflows/{id}"],
+                "instances": ["GET /api/v1/instances", "POST /api/v1/instances", "GET /api/v1/instances/{id}"],
+                "approvals": ["GET /api/v1/approvals", "GET /api/v1/approvals/{id}", "POST /api/v1/approvals/{id}/process"]
+            }
         },
         "message": "Health check"
     }))
 }
 
 async fn home() -> &'static str {
-    "TOPEMS-FLOW Workflow Engine API (Mock Mode)\n\nHealth Check: GET /health\n\nAPI Endpoints:\n- Workflows: GET /api/v1/workflows\n- Instances: GET /api/v1/instances\n- Approvals: GET /api/v1/approvals"
+    "TOPEMS-FLOW Workflow Engine API (Mock Mode)\n\nHealth Check: GET /health\n\nAPI Endpoints:\n- Workflows: GET/POST /api/v1/workflows, GET/PUT/DELETE /api/v1/workflows/{id}\n- Instances: GET/POST /api/v1/instances, GET /api/v1/instances/{id}\n- Approvals: GET /api/v1/approvals, GET /api/v1/approvals/{id}, POST /api/v1/approvals/{id}/process"
 }
 
 #[tokio::main]
@@ -422,9 +763,13 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/v1/workflows", get(list_workflows))
-        .route("/api/v1/instances", get(list_instances))
+        .route("/api/v1/workflows", get(list_workflows).post(create_workflow))
+        .route("/api/v1/workflows/{id}", get(get_workflow).put(update_workflow).delete(delete_workflow))
+        .route("/api/v1/instances", get(list_instances).post(create_instance))
+        .route("/api/v1/instances/{id}", get(get_instance))
         .route("/api/v1/approvals", get(list_approvals))
+        .route("/api/v1/approvals/{id}", get(get_approval))
+        .route("/api/v1/approvals/{id}/process", post(process_approval))
         .layer(cors)
         .with_state(state);
 

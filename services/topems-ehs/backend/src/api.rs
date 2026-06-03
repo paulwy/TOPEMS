@@ -1,13 +1,12 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{FromRef, Path, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
@@ -17,7 +16,7 @@ use crate::models::{
     CreateEmergencyPlanRequest, UpdateEmergencyPlanRequest,
     CreateDrillRecordRequest, UpdateDrillRecordRequest,
 };
-use topems_shared::{ApiResponse};
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Deserialize)]
 pub struct ListQueryParams {
@@ -27,56 +26,43 @@ pub struct ListQueryParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
+#[derive(Clone)]
+pub struct ApiState {
     pub db: PgPool,
+    pub auth_state: AuthState,
 }
 
-pub async fn create_hazard_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
+impl FromRef<ApiState> for AuthState {
+    fn from_ref(state: &ApiState) -> Self {
+        state.auth_state.clone()
+    }
+}
 
+impl FromRef<ApiState> for PgPool {
+    fn from_ref(state: &ApiState) -> Self {
+        state.db.clone()
+    }
+}
+
+pub async fn create_routes(db: PgPool, auth_state: AuthState) -> Result<Router> {
+    let state = ApiState { db, auth_state };
+    
     let app = Router::new()
         .route("/api/v1/hazards", get(list_hazards).post(create_hazard))
         .route(
             "/api/v1/hazards/{id}",
             get(get_hazard).put(update_hazard).delete(delete_hazard),
         )
-        .with_state(state);
-
-    Ok(app)
-}
-
-pub async fn create_check_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
         .route("/api/v1/checks", get(list_checks).post(create_check))
         .route(
             "/api/v1/checks/{id}",
             get(get_check).put(update_check).delete(delete_check),
         )
-        .with_state(state);
-
-    Ok(app)
-}
-
-pub async fn create_plan_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
         .route("/api/v1/plans", get(list_plans).post(create_plan))
         .route(
             "/api/v1/plans/{id}",
             get(get_plan).put(update_plan).delete(delete_plan),
         )
-        .with_state(state);
-
-    Ok(app)
-}
-
-pub async fn create_drill_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
         .route("/api/v1/drills", get(list_drills).post(create_drill))
         .route(
             "/api/v1/drills/{id}",
@@ -90,7 +76,7 @@ pub async fn create_drill_routes(db: PgPool) -> Result<Router> {
 // ==================== Safety Hazard Handlers ====================
 
 async fn list_hazards(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -151,7 +137,7 @@ async fn list_hazards(
 }
 
 async fn create_hazard(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateSafetyHazardRequest>,
 ) -> Json<ApiResponse<SafetyHazard>> {
     let id = Uuid::new_v4();
@@ -190,7 +176,7 @@ async fn create_hazard(
 }
 
 async fn get_hazard(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SafetyHazard>> {
     let result = sqlx::query_as::<_, SafetyHazard>(
@@ -214,7 +200,7 @@ async fn get_hazard(
 }
 
 async fn update_hazard(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSafetyHazardRequest>,
 ) -> Json<ApiResponse<SafetyHazard>> {
@@ -276,7 +262,7 @@ async fn update_hazard(
 }
 
 async fn delete_hazard(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM ehs.safety_hazards WHERE id = $1")
@@ -297,7 +283,7 @@ async fn delete_hazard(
 // ==================== Safety Check Handlers ====================
 
 async fn list_checks(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -358,7 +344,7 @@ async fn list_checks(
 }
 
 async fn create_check(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateSafetyCheckRequest>,
 ) -> Json<ApiResponse<SafetyCheck>> {
     let id = Uuid::new_v4();
@@ -398,7 +384,7 @@ async fn create_check(
 }
 
 async fn get_check(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SafetyCheck>> {
     let result = sqlx::query_as::<_, SafetyCheck>(
@@ -422,7 +408,7 @@ async fn get_check(
 }
 
 async fn update_check(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSafetyCheckRequest>,
 ) -> Json<ApiResponse<SafetyCheck>> {
@@ -486,7 +472,7 @@ async fn update_check(
 }
 
 async fn delete_check(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM ehs.safety_checks WHERE id = $1")
@@ -507,7 +493,7 @@ async fn delete_check(
 // ==================== Emergency Plan Handlers ====================
 
 async fn list_plans(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -568,7 +554,7 @@ async fn list_plans(
 }
 
 async fn create_plan(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateEmergencyPlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
     let id = Uuid::new_v4();
@@ -606,7 +592,7 @@ async fn create_plan(
 }
 
 async fn get_plan(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
     let result = sqlx::query_as::<_, EmergencyPlan>(
@@ -630,7 +616,7 @@ async fn get_plan(
 }
 
 async fn update_plan(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEmergencyPlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
@@ -690,7 +676,7 @@ async fn update_plan(
 }
 
 async fn delete_plan(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM ehs.emergency_plans WHERE id = $1")
@@ -711,7 +697,7 @@ async fn delete_plan(
 // ==================== Drill Record Handlers ====================
 
 async fn list_drills(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -767,7 +753,7 @@ async fn list_drills(
 }
 
 async fn create_drill(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
     let id = Uuid::new_v4();
@@ -808,7 +794,7 @@ async fn create_drill(
 }
 
 async fn get_drill(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DrillRecord>> {
     let result = sqlx::query_as::<_, DrillRecord>(
@@ -832,7 +818,7 @@ async fn get_drill(
 }
 
 async fn update_drill(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
@@ -898,7 +884,7 @@ async fn update_drill(
 }
 
 async fn delete_drill(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM ehs.drill_records WHERE id = $1")

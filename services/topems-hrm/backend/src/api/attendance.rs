@@ -6,29 +6,16 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateAttendanceRequest, AttendanceRecord, UpdateAttendanceRequest};
 use topems_shared::ApiResponse;
+use super::ApiState;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/attendance", get(list_attendance).post(create_attendance))
-        .route(
-            "/api/v1/attendance/{id}",
-            get(get_attendance).put(update_attendance).delete(delete_attendance),
-        )
-        .with_state(state);
-
-    Ok(app)
+        .route("/api/v1/attendance/{id}", get(get_attendance).put(update_attendance).delete(delete_attendance))
 }
 
 #[derive(Debug, Deserialize)]
@@ -39,7 +26,7 @@ pub struct AttendancePaginationParams {
 }
 
 async fn list_attendance(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<AttendancePaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -96,7 +83,7 @@ async fn list_attendance(
 }
 
 async fn create_attendance(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateAttendanceRequest>,
 ) -> Json<ApiResponse<AttendanceRecord>> {
     let id = Uuid::new_v4();
@@ -135,7 +122,7 @@ async fn create_attendance(
 }
 
 async fn get_attendance(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AttendanceRecord>> {
     let result = sqlx::query_as::<_, AttendanceRecord>(
@@ -160,7 +147,7 @@ async fn get_attendance(
 }
 
 async fn update_attendance(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAttendanceRequest>,
 ) -> Json<ApiResponse<AttendanceRecord>> {
@@ -217,7 +204,7 @@ async fn update_attendance(
 }
 
 async fn delete_attendance(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM attendance_records WHERE id = $1")

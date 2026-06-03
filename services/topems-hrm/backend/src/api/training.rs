@@ -6,8 +6,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
@@ -16,40 +14,23 @@ use crate::models::{
     UpdateTrainingCourseRequest, UpdateTrainingPlanRequest, UpdateTrainingRecordRequest,
 };
 use topems_shared::ApiResponse;
+use super::ApiState;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/training-plans", get(list_plans).post(create_plan))
-        .route(
-            "/api/v1/training-plans/{id}",
-            get(get_plan).put(update_plan).delete(delete_plan),
-        )
+        .route("/api/v1/training-plans/{id}", get(get_plan).put(update_plan).delete(delete_plan))
         .route("/api/v1/training-courses", get(list_courses).post(create_course))
-        .route(
-            "/api/v1/training-courses/{id}",
-            get(get_course).put(update_course).delete(delete_course),
-        )
+        .route("/api/v1/training-courses/{id}", get(get_course).put(update_course).delete(delete_course))
         .route("/api/v1/training-records", get(list_records).post(create_record))
-        .route(
-            "/api/v1/training-records/{id}",
-            get(get_record).put(update_record).delete(delete_record),
-        )
+        .route("/api/v1/training-records/{id}", get(get_record).put(update_record).delete(delete_record))
         .route("/api/v1/training-courses/{id}/enroll", post(enroll_course))
         .route("/api/v1/training-courses/{id}/records", get(get_course_records))
         .route("/api/v1/employees/{id}/training-records", get(get_employee_records))
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_plans(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -105,7 +86,7 @@ async fn list_plans(
 }
 
 async fn create_plan(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateTrainingPlanRequest>,
 ) -> Json<ApiResponse<TrainingPlan>> {
     let id = Uuid::new_v4();
@@ -141,7 +122,7 @@ async fn create_plan(
 }
 
 async fn get_plan(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, TrainingPlan>(
@@ -187,7 +168,7 @@ async fn get_plan(
 }
 
 async fn update_plan(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTrainingPlanRequest>,
 ) -> Json<ApiResponse<TrainingPlan>> {
@@ -231,7 +212,7 @@ async fn update_plan(
 }
 
 async fn delete_plan(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM training_plans WHERE id = $1")
@@ -250,7 +231,7 @@ async fn delete_plan(
 }
 
 async fn list_courses(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -313,7 +294,7 @@ async fn list_courses(
 }
 
 async fn create_course(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateTrainingCourseRequest>,
 ) -> Json<ApiResponse<TrainingCourse>> {
     let id = Uuid::new_v4();
@@ -358,7 +339,7 @@ async fn create_course(
 }
 
 async fn get_course(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TrainingCourse>> {
     let result = sqlx::query_as::<_, TrainingCourse>(
@@ -384,7 +365,7 @@ async fn get_course(
 }
 
 async fn update_course(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTrainingCourseRequest>,
 ) -> Json<ApiResponse<TrainingCourse>> {
@@ -438,7 +419,7 @@ async fn update_course(
 }
 
 async fn delete_course(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM training_courses WHERE id = $1")
@@ -457,7 +438,7 @@ async fn delete_course(
 }
 
 async fn list_records(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -520,7 +501,7 @@ async fn list_records(
 }
 
 async fn create_record(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateTrainingRecordRequest>,
 ) -> Json<ApiResponse<TrainingRecord>> {
     let id = Uuid::new_v4();
@@ -556,7 +537,7 @@ async fn create_record(
 }
 
 async fn enroll_course(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<EnrollRequest>,
 ) -> Json<ApiResponse<TrainingRecord>> {
@@ -598,7 +579,7 @@ pub struct EnrollRequest {
 }
 
 async fn get_record(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TrainingRecord>> {
     let result = sqlx::query_as::<_, TrainingRecord>(
@@ -624,7 +605,7 @@ async fn get_record(
 }
 
 async fn update_record(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTrainingRecordRequest>,
 ) -> Json<ApiResponse<TrainingRecord>> {
@@ -668,7 +649,7 @@ async fn update_record(
 }
 
 async fn delete_record(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM training_records WHERE id = $1")
@@ -687,7 +668,7 @@ async fn delete_record(
 }
 
 async fn get_course_records(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Query(params): Query<RecordPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -740,7 +721,7 @@ async fn get_course_records(
 }
 
 async fn get_employee_records(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Query(params): Query<RecordPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {

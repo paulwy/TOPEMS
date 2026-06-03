@@ -177,8 +177,10 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
-        .route("/health", get(health_check))
+    let public_routes = Router::new()
+        .route("/health", get(health_check));
+
+    let protected_routes = Router::new()
         .route("/api/v1/dashboards", get(list_dashboards).post(create_dashboard))
         .route("/api/v1/reports", get(list_reports).post(create_report))
         .route("/api/v1/analytics/summary", get(get_analytics_summary))
@@ -186,7 +188,11 @@ async fn main() -> Result<()> {
             app_state.auth_state.clone(),
             auth_middleware,
         ))
-        .with_state(app_state)
+        .with_state(app_state.clone());
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8022".to_string());

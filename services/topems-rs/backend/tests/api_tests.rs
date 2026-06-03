@@ -3,7 +3,7 @@ mod tests {
     use serde_json::json;
 
     async fn test_project_crud() {
-        let base_url = "http://localhost:8005";
+        let base_url = "http://localhost:8000";
         let client = reqwest::Client::new();
 
         println!("Testing RS Project CRUD...");
@@ -33,7 +33,7 @@ mod tests {
                 "name": "Integration Test Project",
                 "code": "INT-001",
                 "description": "Created by integration test",
-                "project_type": "research",
+                "project_type": "R_D",
                 "leader": "admin",
                 "team_members": ["user1", "user2"],
                 "start_date": "2024-01-01T00:00:00Z",
@@ -77,7 +77,7 @@ mod tests {
             .bearer_auth(&token)
             .json(&json!({
                 "name": "Updated Integration Test Project",
-                "status": "active",
+                "status": "ACTIVE",
                 "progress": 25
             }))
             .send()
@@ -100,7 +100,7 @@ mod tests {
     }
 
     async fn test_project_batch_operations() {
-        let base_url = "http://localhost:8005";
+        let base_url = "http://localhost:8000";
         let client = reqwest::Client::new();
 
         println!("\nTesting RS Project Batch Operations...");
@@ -132,7 +132,7 @@ mod tests {
                         "name": "Batch Test Project 1",
                         "code": "BATCH-001",
                         "description": "First batch project",
-                        "project_type": "research",
+                        "project_type": "R_D",
                         "leader": "admin",
                         "team_members": ["user1"],
                         "start_date": "2024-01-01T00:00:00Z",
@@ -143,7 +143,7 @@ mod tests {
                         "name": "Batch Test Project 2",
                         "code": "BATCH-002",
                         "description": "Second batch project",
-                        "project_type": "research",
+                        "project_type": "R_D",
                         "leader": "admin",
                         "team_members": ["user2"],
                         "start_date": "2024-01-01T00:00:00Z",
@@ -176,7 +176,7 @@ mod tests {
             .expect("List projects after batch create failed");
 
         let projects = list_after_create.json::<serde_json::Value>().await.unwrap();
-        let project_ids: Vec<String> = projects["data"]
+        let project_ids: Vec<String> = projects["data"]["projects"]
             .as_array()
             .unwrap()
             .iter()
@@ -214,7 +214,7 @@ mod tests {
     }
 
     async fn test_project_export_import() {
-        let base_url = "http://localhost:8005";
+        let base_url = "http://localhost:8000";
         let client = reqwest::Client::new();
 
         println!("\nTesting RS Project Export/Import...");
@@ -246,7 +246,7 @@ mod tests {
                     "name": format!("Export Test Project {}", i),
                     "code": format!("EXPORT-00{}", i),
                     "description": format!("Project {} for export testing", i),
-                    "project_type": "research",
+                    "project_type": "R_D",
                     "leader": "admin",
                     "team_members": ["user1"],
                     "start_date": "2024-01-01T00:00:00Z",
@@ -289,7 +289,7 @@ mod tests {
             .json::<serde_json::Value>()
             .await
             .unwrap();
-        let project_ids_to_delete: Vec<String> = projects_before_delete["data"]
+        let project_ids_to_delete: Vec<String> = projects_before_delete["data"]["projects"]
             .as_array()
             .unwrap()
             .iter()
@@ -345,7 +345,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
             .expect("List projects after import failed");
 
         let projects_after_import = list_after_import.json::<serde_json::Value>().await.unwrap();
-        let imported_project_ids: Vec<String> = projects_after_import["data"]
+        let imported_project_ids: Vec<String> = projects_after_import["data"]["projects"]
             .as_array()
             .unwrap()
             .iter()
@@ -370,7 +370,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
     }
 
     async fn test_audit_logs() {
-        let base_url = "http://localhost:8005";
+        let base_url = "http://localhost:8000";
         let client = reqwest::Client::new();
 
         println!("\nTesting RS Audit Logs...");
@@ -403,7 +403,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
                 "name": "Audit Test Project",
                 "code": "AUDIT-001",
                 "description": "Project for audit log testing",
-                "project_type": "research",
+                "project_type": "R_D",
                 "leader": "admin",
                 "team_members": ["user1"],
                 "start_date": "2024-01-01T00:00:00Z",
@@ -473,7 +473,6 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
     }
 
     #[tokio::test]
-    #[ignore = "Requires running services"]
     async fn test_rs_integration() {
         test_project_crud().await;
         test_project_batch_operations().await;

@@ -7,56 +7,11 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
-
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> anyhow::Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
-        .route("/api/v1/audit-logs", get(list_audit_logs))
-        .route("/api/v1/audit-logs/:id", get(get_audit_log))
-        .with_state(state);
-
-    Ok(app)
-}
+use crate::models::AuditLog;
+use topems_shared::{ApiResponse, api_error};
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct ListAuditLogsQuery {
@@ -70,8 +25,14 @@ pub struct ListAuditLogsQuery {
     pub page_size: Option<i64>,
 }
 
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+        .route("/api/v1/audit-logs", get(list_audit_logs))
+        .route("/api/v1/audit-logs/{id}", get(get_audit_log))
+}
+
 async fn list_audit_logs(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -141,13 +102,13 @@ async fn list_audit_logs(
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::error(500, "获取审计日志失败"))
+            Json(api_error(500, "获取审计日志失败"))
         }
     }
 }
 
 async fn get_audit_log(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
     let result = sqlx::query_as::<_, AuditLog>(
@@ -164,10 +125,10 @@ async fn get_audit_log(
 
     match result {
         Ok(Some(log)) => Json(ApiResponse::success(log, "获取审计日志成功")),
-        Ok(None) => Json(ApiResponse::error(404, "审计日志不存在")),
+        Ok(None) => Json(api_error(404, "审计日志不存在")),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::error(500, "获取审计日志失败"))
+            Json(api_error(500, "获取审计日志失败"))
         }
     }
 }

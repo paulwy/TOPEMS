@@ -8,7 +8,19 @@ use tracing::info;
 pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
     let options = PgPoolOptions::new()
         .max_connections(config.pool_max_size)
-        .min_connections(config.pool_min_size);
+        .min_connections(config.pool_min_size)
+        .after_connect(|conn, _meta| Box::pin(async move {
+            tracing::info!("after_connect called for new connection");
+            let result = sqlx::query("SET search_path TO rs, erp, public")
+                .execute(conn)
+                .await;
+            tracing::info!("after_connect SET search_path result: {:?}", result);
+            result.map_err(|e| {
+                tracing::error!("Failed to set search path: {}", e);
+                e
+            })?;
+            Ok(())
+        }));
 
     let pool = options
         .connect(&config.url)

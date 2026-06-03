@@ -83,6 +83,12 @@ impl FromRef<AppState> for AuthState {
     }
 }
 
+impl FromRef<AppState> for PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
+
 async fn health_check() -> Json<ApiResponse<serde_json::Value>> {
     Json(ApiResponse::success(
         serde_json::json!({

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Send, FileText, Trash2, Eye, RefreshCw, Plus, Edit2, Check, X } from 'lucide-react';
+import { Mail, Send, FileText, Trash2, Eye, RefreshCw, Plus, Edit2, Check, X, RotateCcw, Search, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,6 +19,8 @@ import {
   createEmailTemplate,
   updateEmailTemplate,
   deleteEmailTemplate,
+  resendEmail,
+  getEmailStats,
   type EmailLog,
   type EmailTemplate,
   type SendEmailRequest,
@@ -37,6 +39,20 @@ const EmailManagementPage: React.FC = () => {
   const [viewingLog, setViewingLog] = useState<EmailLog | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [stats, setStats] = useState<{ total: number; sentCount: number; failedCount: number; pendingCount: number; todayCount: number } | null>(null);
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 1,
+  });
+
+  const [filters, setFilters] = useState({
+    status: '',
+    search: '',
+  });
 
   const [composeForm, setComposeForm] = useState({
     toEmail: '',
@@ -64,16 +80,68 @@ const EmailManagementPage: React.FC = () => {
     }
   }, [activeTab]);
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (page = pagination.page, pageSize = pagination.pageSize) => {
     setLoading(true);
     try {
-      const response = await getEmailLogs();
+      const response = await getEmailLogs(page, pageSize, filters.status || undefined, filters.search || undefined);
       if (response.success && response.data) {
         setEmailLogs(response.data.items);
+        setPagination(prev => ({
+          ...prev,
+          page: response.data.page,
+          pageSize: response.data.pageSize,
+          total: response.data.total,
+          totalPages: response.data.totalPages,
+        }));
       }
     } catch (error) {
       console.error('Failed to fetch email logs:', error);
       addNotification({ title: '错误', message: '获取邮件日志失败', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setPagination(prev => ({ ...prev, page }));
+    fetchLogs(page, pagination.pageSize);
+  };
+
+  const handleFilterChange = (key: 'status' | 'search', value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    if (key === 'status' || key === 'search') {
+      setPagination(prev => ({ ...prev, page: 1 }));
+      fetchLogs(1, pagination.pageSize);
+    }
+  };
+
+  const handleResendEmail = async (id: string) => {
+    setLoading(true);
+    try {
+      const response = await resendEmail(id);
+      if (response.success) {
+        addNotification({ title: '成功', message: '邮件重发成功', type: 'success' });
+        fetchLogs();
+      }
+    } catch (error: any) {
+      console.error('Failed to resend email:', error);
+      addNotification({ title: '错误', message: error.response?.data?.message || '重发邮件失败', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGetStats = async () => {
+    setLoading(true);
+    try {
+      const response = await getEmailStats();
+      if (response.success && response.data) {
+        setStats(response.data);
+        setShowStats(true);
+      }
+    } catch (error) {
+      console.error('Failed to get email stats:', error);
+      addNotification({ title: '错误', message: '获取邮件统计失败', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -279,12 +347,41 @@ const EmailManagementPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-500">
-                    共 {emailLogs.length} 条记录
+                    共 {pagination.total} 条记录（第 {pagination.page} / {pagination.totalPages} 页）
                   </div>
-                  <Button onClick={fetchLogs} className="gap-2">
-                    <RefreshCw className="w-4 h-4" />
-                    刷新
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={handleGetStats} variant="outline" className="gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      统计
+                    </Button>
+                    <Button onClick={fetchLogs} className="gap-2">
+                      <RefreshCw className="w-4 h-4" />
+                      刷新
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1 max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="搜索收件人邮箱..."
+                      value={filters.search}
+                      onChange={e => handleFilterChange('search', e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={filters.status} onValueChange={value => handleFilterChange('status', value)}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="全部状态" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">全部状态</SelectItem>
+                      <SelectItem value="sent">已发送</SelectItem>
+                      <SelectItem value="pending">待发送</SelectItem>
+                      <SelectItem value="failed">发送失败</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {loading ? (
@@ -297,57 +394,91 @@ const EmailManagementPage: React.FC = () => {
                     <p>暂无邮件日志</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>收件人</TableHead>
-                          <TableHead>主题</TableHead>
-                          <TableHead>状态</TableHead>
-                          <TableHead>发送时间</TableHead>
-                          <TableHead>操作</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {emailLogs.map(log => (
-                          <TableRow key={log.id}>
-                            <TableCell className="max-w-xs truncate" title={log.toEmail}>
-                              {log.toEmail}
-                            </TableCell>
-                            <TableCell className="max-w-xs truncate" title={log.subject}>
-                              {log.subject}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(log.status)}</TableCell>
-                            <TableCell>{log.sentAt ? formatDate(log.sentAt) : '-'}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="sm" onClick={() => setViewingLog(log)}>
-                                        <Eye className="w-4 h-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>查看详情</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => handleDeleteLog(log.id)}>
-                                        <Trash2 className="w-4 h-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>删除</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                            </TableCell>
+                  <>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>收件人</TableHead>
+                            <TableHead>主题</TableHead>
+                            <TableHead>状态</TableHead>
+                            <TableHead>发送时间</TableHead>
+                            <TableHead>操作</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {emailLogs.map(log => (
+                            <TableRow key={log.id}>
+                              <TableCell className="max-w-xs truncate" title={log.toEmail}>
+                                {log.toEmail}
+                              </TableCell>
+                              <TableCell className="max-w-xs truncate" title={log.subject}>
+                                {log.subject}
+                              </TableCell>
+                              <TableCell>{getStatusBadge(log.status)}</TableCell>
+                              <TableCell>{log.sentAt ? formatDate(log.sentAt) : '-'}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => setViewingLog(log)}>
+                                          <Eye className="w-4 h-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>查看详情</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  {log.status === 'failed' && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600" onClick={() => handleResendEmail(log.id)}>
+                                            <RotateCcw className="w-4 h-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>重新发送</TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => handleDeleteLog(log.id)}>
+                                          <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>删除</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => handlePageChange(pagination.page - 1)}
+                        disabled={pagination.page === 1}
+                      >
+                        上一页
+                      </Button>
+                      <span className="text-sm text-gray-600">
+                        {pagination.page} / {pagination.totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={() => handlePageChange(pagination.page + 1)}
+                        disabled={pagination.page === pagination.totalPages}
+                      >
+                        下一页
+                      </Button>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -629,6 +760,43 @@ const EmailManagementPage: React.FC = () => {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showStats} onOpenChange={() => setShowStats(false)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>邮件统计</DialogTitle>
+            </DialogHeader>
+            {stats && (
+              <div className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-600">总邮件数</p>
+                    <p className="text-2xl font-bold text-blue-700 mt-1">{stats.total}</p>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <p className="text-sm text-green-600">已发送</p>
+                    <p className="text-2xl font-bold text-green-700 mt-1">{stats.sentCount}</p>
+                  </div>
+                  <div className="p-4 bg-red-50 rounded-lg">
+                    <p className="text-sm text-red-600">发送失败</p>
+                    <p className="text-2xl font-bold text-red-700 mt-1">{stats.failedCount}</p>
+                  </div>
+                  <div className="p-4 bg-yellow-50 rounded-lg">
+                    <p className="text-sm text-yellow-600">待发送</p>
+                    <p className="text-2xl font-bold text-yellow-700 mt-1">{stats.pendingCount}</p>
+                  </div>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-purple-600">今日发送</p>
+                  <p className="text-2xl font-bold text-purple-700 mt-1">{stats.todayCount}</p>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={() => setShowStats(false)}>关闭</Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

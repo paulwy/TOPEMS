@@ -5,7 +5,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -18,10 +17,6 @@ pub struct PaginationParams {
     pub search: Option<String>,
     pub project_id: Option<Uuid>,
     pub experiment_id: Option<Uuid>,
-}
-
-pub struct AppState {
-    pub db: PgPool,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -60,9 +55,7 @@ pub struct UpdateMaterialTestRequest {
     pub conclusion: Option<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> topems_shared::Result<Router> {
     let app = Router::new()
         .route(
             "/api/v1/material-tests",
@@ -81,14 +74,13 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
         .route(
             "/api/v1/material-tests/experiment/{experiment_id}",
             get(list_by_experiment),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_material_tests(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -151,7 +143,7 @@ async fn list_material_tests(
 }
 
 async fn list_by_project(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<MaterialTest>>> {
     let result = sqlx::query_as::<_, MaterialTest>(
@@ -177,7 +169,7 @@ async fn list_by_project(
 }
 
 async fn list_by_experiment(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(experiment_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<MaterialTest>>> {
     let result = sqlx::query_as::<_, MaterialTest>(
@@ -203,7 +195,7 @@ async fn list_by_experiment(
 }
 
 async fn create_material_test(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Json(req): Json<CreateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
     let id = Uuid::new_v4();
@@ -243,7 +235,7 @@ async fn create_material_test(
 }
 
 async fn get_material_test(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MaterialTest>> {
     let result = sqlx::query_as::<_, MaterialTest>(
@@ -268,7 +260,7 @@ async fn get_material_test(
 }
 
 async fn update_material_test(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
@@ -325,7 +317,7 @@ async fn update_material_test(
 }
 
 async fn delete_material_test(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM rs.material_tests WHERE id = $1")

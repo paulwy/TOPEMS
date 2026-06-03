@@ -26,10 +26,6 @@ pub struct ListProjectsQuery {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct BatchDeleteRequest {
     pub ids: Vec<Uuid>,
@@ -48,9 +44,7 @@ pub struct BatchOperationResult {
     pub errors: Vec<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> topems_shared::Result<Router> {
     let app = Router::new()
         .route("/api/v1/projects", get(list_projects).post(create_project))
         .route(
@@ -62,9 +56,7 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
         .route(
             "/api/v1/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
-        )
-        // .route("/api/v1/projects/{id}/panorama", get(get_project_panorama))
-        .with_state(state);
+        );
 
     Ok(app)
 }
@@ -88,7 +80,7 @@ pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
     )
 )]
 async fn list_projects(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Query(params): Query<ListProjectsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -161,7 +153,7 @@ async fn list_projects(
     )
 )]
 async fn create_project(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     headers: HeaderMap,
     Json(req): Json<CreateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
@@ -198,11 +190,12 @@ async fn create_project(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
+    let (response, status_str, error_msg, project_id) = match &result {
         Ok(project) => (
             Json(ApiResponse::success(project.clone(), "项目创建成功")),
             "success",
             None,
+            Some(project.id),
         ),
         Err(e) => {
             tracing::error!("创建项目失败: {}", e);
@@ -210,6 +203,7 @@ async fn create_project(
                 Json(ApiResponse::error(500, "项目创建失败")),
                 "error",
                 Some(e.to_string()),
+                None,
             )
         }
     };
@@ -221,23 +215,25 @@ async fn create_project(
         None
     };
 
-    crate::api::audit::log_audit_event(
-        &state.db,
-        "create".to_string(),
-        "project".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str.to_string(),
-        error_msg,
-        &headers,
-    )
-    .await;
+    if let Some(id) = project_id {
+        crate::api::audit::log_audit_event(
+            &state.db,
+            "create".to_string(),
+            "project".to_string(),
+            Some(id),
+            None,
+            None,
+            None,
+            request_data,
+            response_data,
+            status_str.to_string(),
+            error_msg,
+            &headers,
+        )
+        .await;
 
-    invalidate_project_cache(&id.to_string()).await;
+        invalidate_project_cache(&id.to_string()).await;
+    }
 
     response
 }
@@ -259,7 +255,7 @@ async fn create_project(
     )
 )]
 async fn get_project(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Project>> {
     let cache_key = format!("project:{}", id);
@@ -311,7 +307,7 @@ async fn get_project(
     )
 )]
 async fn update_project(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateProjectRequest>,
@@ -428,7 +424,7 @@ async fn update_project(
     )
 )]
 async fn delete_project(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
@@ -499,7 +495,7 @@ async fn delete_project(
     )
 )]
 async fn batch_create_projects(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     headers: HeaderMap,
     Json(req): Json<BatchCreateRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
@@ -607,7 +603,7 @@ async fn batch_create_projects(
     )
 )]
 async fn batch_delete_projects(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     headers: HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
@@ -700,7 +696,7 @@ async fn batch_delete_projects(
         ("bearer_auth" = [])
     )
 )]
-async fn export_projects(State(state): State<Arc<AppState>>, headers: HeaderMap) -> Response {
+async fn export_projects(State(state): State<Arc<super::ApiState>>, headers: HeaderMap) -> Response {
     let result = sqlx::query_as::<_, Project>(
         r#"
         SELECT id, name, code, description, project_type, status, leader,
@@ -909,7 +905,7 @@ async fn export_projects(State(state): State<Arc<AppState>>, headers: HeaderMap)
     )
 )]
 async fn import_projects(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     headers: HeaderMap,
     bytes: Bytes,
 ) -> Json<ApiResponse<BatchOperationResult>> {

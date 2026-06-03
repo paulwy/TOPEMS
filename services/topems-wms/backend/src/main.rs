@@ -3,7 +3,7 @@ mod models;
 
 use anyhow::Result;
 use axum::{
-    extract::FromRef,
+    extract::State,
     routing::get,
     Json,
     Router,
@@ -12,26 +12,9 @@ use sqlx::postgres::PgPoolOptions;
 use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use api::ApiState;
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 use api::audit::log_audit_event;
-
-#[derive(Clone)]
-struct AppState {
-    pool: sqlx::PgPool,
-    auth_state: AuthState,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
-impl FromRef<AppState> for sqlx::PgPool {
-    fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
-    }
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -58,26 +41,25 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let app_state = AppState {
-        pool: pool.clone(),
+    let api_state = ApiState {
+        db: pool.clone(),
         auth_state: AuthState::from_env(),
     };
 
     let cors = create_cors_layer();
 
-    let audit_router = api::audit::create_routes(pool.clone()).await?;
-    
+    // 构建所有路由
     let app = Router::new()
         .route("/health", get(health_check))
-        .merge(api::warehouse::create_routes(pool.clone()).await?)
-        .merge(api::inventory::create_routes(pool.clone()).await?)
-        .merge(api::inbound_order::create_routes(pool.clone()).await?)
-        .merge(api::outbound_order::create_routes(pool.clone()).await?)
-        .merge(audit_router)
-        .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
-            auth_middleware,
-        ))
+        .merge({
+            Router::new()
+                .merge(api::create_routes())
+                .layer(axum::middleware::from_fn_with_state(
+                    api_state.auth_state.clone(),
+                    auth_middleware,
+                ))
+        })
+        .with_state(api_state)
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8025".to_string());

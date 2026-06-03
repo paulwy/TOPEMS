@@ -6,12 +6,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateQualityStandardRequest, QualityStandard, UpdateQualityStandardRequest};
-use topems_shared::{ApiResponse, PaginationParams};
+use topems_shared::ApiResponse;
+
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct QualityStandardQueryParams {
@@ -21,26 +21,19 @@ pub struct QualityStandardQueryParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/standards", get(list_standards).post(create_standard))
         .route(
             "/api/v1/standards/{id}",
             get(get_standard).put(update_standard).delete(delete_standard),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_standards(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QualityStandardQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -101,7 +94,7 @@ async fn list_standards(
 }
 
 async fn create_standard(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateQualityStandardRequest>,
 ) -> Json<ApiResponse<QualityStandard>> {
     let id = Uuid::new_v4();
@@ -135,7 +128,7 @@ async fn create_standard(
 }
 
 async fn get_standard(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityStandard>> {
     let result = sqlx::query_as::<_, QualityStandard>(
@@ -159,7 +152,7 @@ async fn get_standard(
 }
 
 async fn update_standard(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateQualityStandardRequest>,
 ) -> Json<ApiResponse<QualityStandard>> {
@@ -211,7 +204,7 @@ async fn update_standard(
 }
 
 async fn delete_standard(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM qms.quality_standards WHERE id = $1")

@@ -5,12 +5,11 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{CreateInspectionProcessRequest, InspectionProcess, UpdateInspectionProcessRequest};
+use crate::api::ApiState;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -21,26 +20,19 @@ pub struct PaginationParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/processes", get(list_processes).post(create_process))
         .route(
             "/api/v1/processes/{id}",
             get(get_process).put(update_process).delete(delete_process),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_processes(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -102,7 +94,7 @@ async fn list_processes(
 }
 
 async fn create_process(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateInspectionProcessRequest>,
 ) -> Json<ApiResponse<InspectionProcess>> {
     let id = Uuid::new_v4();
@@ -135,7 +127,7 @@ async fn create_process(
 }
 
 async fn get_process(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InspectionProcess>> {
     let result = sqlx::query_as::<_, InspectionProcess>(
@@ -159,7 +151,7 @@ async fn get_process(
 }
 
 async fn update_process(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInspectionProcessRequest>,
 ) -> Json<ApiResponse<InspectionProcess>> {
@@ -212,7 +204,7 @@ async fn update_process(
 }
 
 async fn delete_process(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM lims.inspection_processes WHERE id = $1")

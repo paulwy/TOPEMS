@@ -6,10 +6,10 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
+use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::api::ApiState;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -20,11 +20,7 @@ pub struct PaginationParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct Instrument {
     pub id: Uuid,
     pub name: String,
@@ -45,7 +41,7 @@ pub struct Instrument {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct MaintenanceRecord {
     pub id: Uuid,
     pub instrument_id: Uuid,
@@ -110,23 +106,20 @@ pub struct CalibrationRecordRequest {
     pub notes: Option<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/instruments", get(list_instruments).post(create_instrument))
         .route(
             "/api/v1/instruments/{id}",
             get(get_instrument).put(update_instrument).delete(delete_instrument),
         )
-        .route("/api/v1/instruments/{id}/calibrations", get(get_calibrations).post(add_calibration))
-        .with_state(state);
+        .route("/api/v1/instruments/{id}/calibrations", get(get_calibrations).post(add_calibration));
 
     Ok(app)
 }
 
 async fn list_instruments(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -187,7 +180,7 @@ async fn list_instruments(
 }
 
 async fn create_instrument(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateInstrumentRequest>,
 ) -> Json<ApiResponse<Instrument>> {
     let id = Uuid::new_v4();
@@ -237,7 +230,7 @@ async fn create_instrument(
 }
 
 async fn get_instrument(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Instrument>> {
     let result = sqlx::query_as::<_, Instrument>(
@@ -264,7 +257,7 @@ async fn get_instrument(
 }
 
 async fn update_instrument(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInstrumentRequest>,
 ) -> Json<ApiResponse<Instrument>> {
@@ -326,7 +319,7 @@ async fn update_instrument(
 }
 
 async fn delete_instrument(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM lims.instruments WHERE id = $1")
@@ -345,7 +338,7 @@ async fn delete_instrument(
 }
 
 async fn get_calibrations(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
@@ -383,7 +376,7 @@ async fn get_calibrations(
 }
 
 async fn add_calibration(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<CalibrationRecordRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -437,91 +430,6 @@ async fn add_calibration(
         Err(e) => {
             tracing::error!("添加校准记录失败: {}", e);
             Json(ApiResponse::error(500, "添加校准记录失败"))
-        }
-    }
-}
-
-async fn get_maintenance(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<MaintenanceRecord>>> {
-    let result = sqlx::query_as::<_, MaintenanceRecord>(
-        r#"
-        SELECT id, instrument_id, maintenance_type, description, performed_by,
-               performed_at, next_maintenance_date, cost, notes, created_at
-        FROM lims.instrument_maintenance
-        WHERE instrument_id = $1
-        ORDER BY performed_at DESC
-        "#,
-    )
-    .bind(id)
-    .fetch_all(&state.db)
-    .await;
-
-    match result {
-        Ok(records) => Json(ApiResponse::success(records, "获取维护记录成功")),
-        Err(e) => {
-            tracing::error!("获取维护记录失败: {}", e);
-            Json(ApiResponse::error(500, "获取维护记录失败"))
-        }
-    }
-}
-
-async fn add_maintenance(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-    Json(req): Json<CreateMaintenanceRequest>,
-) -> Json<ApiResponse<MaintenanceRecord>> {
-    let record_id = Uuid::new_v4();
-    let now = Utc::now();
-
-    let result = sqlx::query_as::<_, MaintenanceRecord>(
-        r#"
-        INSERT INTO lims.instrument_maintenance (
-            id, instrument_id, maintenance_type, description, performed_by,
-            performed_at, next_maintenance_date, cost, notes, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, instrument_id, maintenance_type, description, performed_by,
-                  performed_at, next_maintenance_date, cost, notes, created_at
-        "#,
-    )
-    .bind(record_id)
-    .bind(id)
-    .bind(&req.maintenance_type)
-    .bind(&req.description)
-    .bind(&req.performed_by)
-    .bind(&req.performed_at)
-    .bind(req.next_maintenance_date)
-    .bind(req.cost)
-    .bind(&req.notes)
-    .bind(now)
-    .fetch_one(&state.db)
-    .await;
-
-    match result {
-        Ok(record) => Json(ApiResponse::success(record, "维护记录添加成功")),
-        Err(e) => {
-            tracing::error!("添加维护记录失败: {}", e);
-            Json(ApiResponse::error(500, "添加维护记录失败"))
-        }
-    }
-}
-
-async fn delete_maintenance(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM lims.instrument_maintenance WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
-
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "维护记录删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "维护记录不存在")),
-        Err(e) => {
-            tracing::error!("删除维护记录失败: {}", e);
-            Json(ApiResponse::error(500, "删除维护记录失败"))
         }
     }
 }

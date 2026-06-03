@@ -27,6 +27,18 @@ struct AppState {
     metrics: Arc<SystemMetrics>,
 }
 
+impl axum::extract::FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
+    }
+}
+
+impl axum::extract::FromRef<AppState> for sqlx::PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
@@ -82,7 +94,7 @@ async fn main() -> Result<()> {
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
-        .merge(api::notification::create_routes(pool.clone()).await?)
+        .merge(api::create_routes(pool.clone(), app_state.auth_state.clone()).await?)
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

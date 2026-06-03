@@ -6,6 +6,176 @@ use utoipa::ToSchema;
 
 use super::uuid_helpers::option_uuid;
 
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct AccountingSubject {
+    pub id: Uuid,
+    pub code: String,
+    pub name: String,
+    pub category: String,
+    pub level: i32,
+    pub parent_code: Option<String>,
+    pub description: Option<String>,
+    pub is_cash_flow: bool,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct CreateAccountingSubjectRequest {
+    pub code: String,
+    pub name: String,
+    pub category: String,
+    pub level: i32,
+    pub parent_code: Option<String>,
+    pub description: Option<String>,
+    pub is_cash_flow: Option<bool>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct UpdateAccountingSubjectRequest {
+    pub name: Option<String>,
+    pub category: Option<String>,
+    pub parent_code: Option<String>,
+    pub description: Option<String>,
+    pub is_cash_flow: Option<bool>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct FinancialVoucher {
+    pub id: Uuid,
+    pub voucher_number: String,
+    pub voucher_date: DateTime<Utc>,
+    pub period: String,
+    pub attachment_count: Option<i32>,
+    pub summary: Option<String>,
+    pub maker_id: Option<Uuid>,
+    pub maker_name: Option<String>,
+    pub checker_id: Option<Uuid>,
+    pub checker_name: Option<String>,
+    pub bookkeeper_id: Option<Uuid>,
+    pub bookkeeper_name: Option<String>,
+    pub status: String,
+    pub total_debit: f64,
+    pub total_credit: f64,
+    pub source_system: Option<String>,
+    pub source_id: Option<String>,
+    pub project_id: Option<Uuid>,
+    pub contract_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct CreateFinancialVoucherRequest {
+    pub voucher_number: String,
+    pub voucher_date: DateTime<Utc>,
+    pub period: String,
+    pub attachment_count: Option<i32>,
+    pub summary: Option<String>,
+    #[serde(default, with = "option_uuid")]
+    pub maker_id: Option<Uuid>,
+    pub maker_name: Option<String>,
+    #[serde(default, with = "option_uuid")]
+    pub project_id: Option<Uuid>,
+    #[serde(default, with = "option_uuid")]
+    pub contract_id: Option<Uuid>,
+    pub items: Vec<VoucherItemRequest>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct UpdateFinancialVoucherRequest {
+    pub voucher_date: Option<DateTime<Utc>>,
+    pub period: Option<String>,
+    pub attachment_count: Option<i32>,
+    pub summary: Option<String>,
+    #[serde(default, with = "option_uuid")]
+    pub checker_id: Option<Uuid>,
+    pub checker_name: Option<String>,
+    #[serde(default, with = "option_uuid")]
+    pub bookkeeper_id: Option<Uuid>,
+    pub bookkeeper_name: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct VoucherItem {
+    pub id: Uuid,
+    pub voucher_id: Uuid,
+    pub line_number: i32,
+    pub subject_code: String,
+    pub subject_name: String,
+    pub summary: Option<String>,
+    pub debit_amount: f64,
+    pub credit_amount: f64,
+    pub quantity: Option<f64>,
+    pub unit: Option<String>,
+    pub price: Option<f64>,
+    pub department_id: Option<Uuid>,
+    pub project_id: Option<Uuid>,
+    pub contract_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct VoucherItemRequest {
+    pub line_number: i32,
+    pub subject_code: String,
+    pub subject_name: Option<String>,
+    pub summary: Option<String>,
+    pub debit_amount: f64,
+    pub credit_amount: f64,
+    pub quantity: Option<f64>,
+    pub unit: Option<String>,
+    pub price: Option<f64>,
+    #[serde(default, with = "option_uuid")]
+    pub department_id: Option<Uuid>,
+    #[serde(default, with = "option_uuid")]
+    pub project_id: Option<Uuid>,
+    #[serde(default, with = "option_uuid")]
+    pub contract_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct U8VoucherImportRequest {
+    pub file_name: String,
+    pub file_content: String,
+    pub import_mode: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct U8VoucherData {
+    pub voucher_number: String,
+    pub voucher_date: String,
+    pub period: String,
+    pub summary: String,
+    pub maker: String,
+    pub items: Vec<U8VoucherItem>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct U8VoucherItem {
+    pub line_number: i32,
+    pub subject_code: String,
+    pub subject_name: String,
+    pub summary: String,
+    pub debit_amount: f64,
+    pub credit_amount: f64,
+    pub quantity: Option<f64>,
+    pub unit: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct VoucherImportResult {
+    pub success_count: i32,
+    pub failed_count: i32,
+    pub errors: Vec<String>,
+    pub imported_vouchers: Vec<FinancialVoucher>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ExpenseStatus {

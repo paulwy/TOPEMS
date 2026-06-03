@@ -7,13 +7,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest};
-use topems_shared::{ApiResponse, PaginationParams, api_error};
+use topems_shared::{ApiResponse, api_error};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct SupplierEvaluationQueryParams {
@@ -22,26 +21,17 @@ pub struct SupplierEvaluationQueryParams {
     pub supplier_id: Option<Uuid>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/evaluations", get(list_evaluations).post(create_evaluation))
         .route(
             "/api/v1/evaluations/{id}",
             get(get_evaluation).put(update_evaluation),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_evaluations(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<SupplierEvaluationQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -95,7 +85,7 @@ async fn list_evaluations(
 }
 
 async fn create_evaluation(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
@@ -166,7 +156,7 @@ async fn create_evaluation(
 }
 
 async fn get_evaluation(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     let result = sqlx::query_as::<_, SupplierEvaluation>(
@@ -190,12 +180,11 @@ async fn get_evaluation(
 }
 
 async fn update_evaluation(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
-    // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
     
     let existing = sqlx::query_as::<_, SupplierEvaluation>(

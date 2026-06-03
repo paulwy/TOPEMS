@@ -27,6 +27,7 @@ async-trait = "0.1"
 utoipa = { version = "4.2", features = ["axum_extras", "chrono", "uuid"] }
 md5 = "0.7"
 tempfile = "3.8"
+topems-shared = { path = "../../../shared/lib" }
 
 
 [dev-dependencies]

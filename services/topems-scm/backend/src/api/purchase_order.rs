@@ -6,35 +6,24 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest};
 use topems_shared::{ApiResponse, PaginationParams, api_error};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/purchase-orders", get(list_orders).post(create_order))
         .route(
             "/api/v1/purchase-orders/{id}",
             get(get_order).put(update_order),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_orders(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -95,7 +84,7 @@ async fn list_orders(
 }
 
 async fn create_order(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
@@ -163,7 +152,7 @@ async fn create_order(
 }
 
 async fn get_order(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
     let result = sqlx::query_as::<_, PurchaseOrder>(
@@ -187,12 +176,11 @@ async fn get_order(
 }
 
 async fn update_order(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
-    // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
     
     let existing = sqlx::query_as::<_, PurchaseOrder>(

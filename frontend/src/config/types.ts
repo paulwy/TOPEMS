@@ -34,6 +34,7 @@ export interface ServicesConfig {
   mes: string;
   scm: string;
   portal: string;
+  mail: string;
 }
 
 export interface FeaturesConfig {

@@ -1,31 +1,34 @@
 use axum::{
-    extract::{Path, Query},
-    http::StatusCode,
-    Json,
+    extract::{Path, Query, State},
+    Json, Router,
+    routing::{get, post, put, delete},
 };
-use chrono::{DateTime, Utc};
-use serde_json::json;
-use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
 use crate::models::{
-    project_contract::{
-        ContractPaginationParams, CreateContractRequest,
-        ProjectContract, UpdateContractRequest,
-    },
+    project_contract::{ContractPaginationParams, CreateContractRequest, ProjectContract, UpdateContractRequest},
 };
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use super::ApiState;
 
-pub async fn create_contract(
-    pool: axum::extract::Extension<PgPool>,
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+        .route("/api/v1/contracts", get(list_contracts).post(create_contract))
+        .route("/api/v1/contracts/:id", get(get_contract).put(update_contract).delete(delete_contract))
+        .route("/api/v1/contracts/project/:project_id", get(get_project_contracts))
+}
+
+async fn create_contract(
+    State(state): State<ApiState>,
     Json(payload): Json<CreateContractRequest>,
-) -> Result<Json<ProjectContract>, (StatusCode, String)> {
+) -> Json<ApiResponse<ProjectContract>> {
     let contract_type = payload.contract_type.to_string();
     let currency = payload.currency.unwrap_or_else(|| "CNY".to_string());
     let tax_amount = payload.tax_amount.unwrap_or(0.0);
     let total_amount = payload.amount + tax_amount;
     let status = "DRAFT".to_string();
 
-    let contract = sqlx::query_as::<_, ProjectContract>(
+    let result = sqlx::query_as::<_, ProjectContract>(
         r#"
         INSERT INTO project_contracts (
             project_id, contract_no, contract_type, party_a, party_b, subject,
@@ -53,51 +56,64 @@ pub async fn create_contract(
     .bind(&payload.payment_terms)
     .bind(&payload.attachment_ids)
     .bind("admin")
-    .fetch_one(&*pool)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .fetch_one(&state.db)
+    .await;
 
-    Ok(Json(contract))
+    match result {
+        Ok(contract) => Json(ApiResponse::success(contract, "合同创建成功")),
+        Err(e) => {
+            tracing::error!("创建合同失败: {}", e);
+            Json(api_error(500, "创建合同失败"))
+        }
+    }
 }
 
-pub async fn get_contract(
-    pool: axum::extract::Extension<PgPool>,
+async fn get_contract(
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ProjectContract>, (StatusCode, String)> {
-    let contract = sqlx::query_as::<_, ProjectContract>(
+) -> Json<ApiResponse<ProjectContract>> {
+    let result = sqlx::query_as::<_, ProjectContract>(
         r#"SELECT * FROM project_contracts WHERE id = $1"#,
     )
     .bind(id)
-    .fetch_one(&*pool)
-    .await
-    .map_err(|e| match e {
-        sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Contract not found".to_string()),
-        _ => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    })?;
+    .fetch_optional(&state.db)
+    .await;
 
-    Ok(Json(contract))
+    match result {
+        Ok(Some(contract)) => Json(ApiResponse::success(contract, "获取合同成功")),
+        Ok(None) => Json(api_error(404, "合同不存在")),
+        Err(e) => {
+            tracing::error!("获取合同失败: {}", e);
+            Json(api_error(500, "获取合同失败"))
+        }
+    }
 }
 
-pub async fn get_project_contracts(
-    pool: axum::extract::Extension<PgPool>,
+async fn get_project_contracts(
+    State(state): State<ApiState>,
     Path(project_id): Path<Uuid>,
-) -> Result<Json<Vec<ProjectContract>>, (StatusCode, String)> {
-    let contracts = sqlx::query_as::<_, ProjectContract>(
+) -> Json<ApiResponse<Vec<ProjectContract>>> {
+    let result = sqlx::query_as::<_, ProjectContract>(
         r#"SELECT * FROM project_contracts WHERE project_id = $1 ORDER BY created_at DESC"#,
     )
     .bind(project_id)
-    .fetch_all(&*pool)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .fetch_all(&state.db)
+    .await;
 
-    Ok(Json(contracts))
+    match result {
+        Ok(contracts) => Json(ApiResponse::success(contracts, "获取项目合同成功")),
+        Err(e) => {
+            tracing::error!("获取项目合同失败: {}", e);
+            Json(api_error(500, "获取项目合同失败"))
+        }
+    }
 }
 
-pub async fn update_contract(
-    pool: axum::extract::Extension<PgPool>,
+async fn update_contract(
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateContractRequest>,
-) -> Result<Json<ProjectContract>, (StatusCode, String)> {
+) -> Json<ApiResponse<ProjectContract>> {
     let result = sqlx::query_as::<_, ProjectContract>(
         r#"
         UPDATE project_contracts SET
@@ -115,7 +131,7 @@ pub async fn update_contract(
             updated_at = NOW()
         WHERE id = $12
         RETURNING *
-        "#
+        "#,
     )
     .bind(&payload.contract_no)
     .bind(&payload.contract_type)
@@ -129,147 +145,165 @@ pub async fn update_contract(
     .bind(&payload.payment_terms)
     .bind(&payload.attachment_ids)
     .bind(id)
-    .fetch_one(&*pool)
-    .await
-    .map_err(|e| match e {
-        sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Contract not found".to_string()),
-        _ => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    })?;
+    .fetch_optional(&state.db)
+    .await;
 
-    Ok(Json(result))
+    match result {
+        Ok(Some(contract)) => Json(ApiResponse::success(contract, "更新合同成功")),
+        Ok(None) => Json(api_error(404, "合同不存在")),
+        Err(e) => {
+            tracing::error!("更新合同失败: {}", e);
+            Json(api_error(500, "更新合同失败"))
+        }
+    }
 }
 
-pub async fn delete_contract(
-    pool: axum::extract::Extension<PgPool>,
+async fn delete_contract(
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<StatusCode, (StatusCode, String)> {
+) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
         r#"DELETE FROM project_contracts WHERE id = $1"#,
     )
     .bind(id)
-    .execute(&*pool)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .execute(&state.db)
+    .await;
 
-    if result.rows_affected() == 0 {
-        return Err((StatusCode::NOT_FOUND, "Contract not found".to_string()));
+    match result {
+        Ok(res) if res.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "删除合同成功"))
+        }
+        Ok(_) => Json(api_error(404, "合同不存在")),
+        Err(e) => {
+            tracing::error!("删除合同失败: {}", e);
+            Json(api_error(500, "删除合同失败"))
+        }
     }
-
-    Ok(StatusCode::NO_CONTENT)
 }
 
-pub async fn list_contracts(
-    pool: axum::extract::Extension<PgPool>,
+async fn list_contracts(
+    State(state): State<ApiState>,
     Query(params): Query<ContractPaginationParams>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
-    let page = params.page.unwrap_or(1);
-    let page_size = params.page_size.unwrap_or(10);
+) -> Json<ApiResponse<PaginatedResponse<ProjectContract>>> {
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
 
     let (contracts, total): (Vec<ProjectContract>, i64) = if params.project_id.is_some() {
-        let contracts: Vec<ProjectContract> = sqlx::query_as(
+        let contracts_result = sqlx::query_as(
             r#"
             SELECT * FROM project_contracts 
             WHERE project_id = $1 
             ORDER BY created_at DESC 
             LIMIT $2 OFFSET $3
-            "#
+            "#,
         )
         .bind(&params.project_id)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&*pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .fetch_all(&state.db)
+        .await;
 
-        let total: i64 = sqlx::query_scalar(
+        let count_result = sqlx::query_scalar(
             "SELECT COUNT(*) FROM project_contracts WHERE project_id = $1"
         )
         .bind(&params.project_id)
-        .fetch_one(&*pool)
-        .await
-        .unwrap_or(0);
+        .fetch_one(&state.db)
+        .await;
 
-        (contracts, total)
+        match (contracts_result, count_result) {
+            (Ok(c), Ok(t)) => (c, t),
+            (Err(e), _) | (_, Err(e)) => {
+                tracing::error!("获取合同列表失败: {}", e);
+                return Json(api_error(500, "获取合同列表失败"));
+            }
+        }
     } else if params.contract_type.is_some() {
-        let contracts: Vec<ProjectContract> = sqlx::query_as(
+        let contracts_result = sqlx::query_as(
             r#"
             SELECT * FROM project_contracts 
             WHERE contract_type = $1 
             ORDER BY created_at DESC 
             LIMIT $2 OFFSET $3
-            "#
+            "#,
         )
         .bind(&params.contract_type)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&*pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .fetch_all(&state.db)
+        .await;
 
-        let total: i64 = sqlx::query_scalar(
+        let count_result = sqlx::query_scalar(
             "SELECT COUNT(*) FROM project_contracts WHERE contract_type = $1"
         )
         .bind(&params.contract_type)
-        .fetch_one(&*pool)
-        .await
-        .unwrap_or(0);
+        .fetch_one(&state.db)
+        .await;
 
-        (contracts, total)
+        match (contracts_result, count_result) {
+            (Ok(c), Ok(t)) => (c, t),
+            (Err(e), _) | (_, Err(e)) => {
+                tracing::error!("获取合同列表失败: {}", e);
+                return Json(api_error(500, "获取合同列表失败"));
+            }
+        }
     } else if params.status.is_some() {
-        let contracts: Vec<ProjectContract> = sqlx::query_as(
+        let contracts_result = sqlx::query_as(
             r#"
             SELECT * FROM project_contracts 
-            WHERE status = $1::text
+            WHERE status = $1::text 
             ORDER BY created_at DESC 
             LIMIT $2 OFFSET $3
-            "#
+            "#,
         )
         .bind(&params.status)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&*pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .fetch_all(&state.db)
+        .await;
 
-        let total: i64 = sqlx::query_scalar(
+        let count_result = sqlx::query_scalar(
             "SELECT COUNT(*) FROM project_contracts WHERE status = $1::text"
         )
         .bind(&params.status)
-        .fetch_one(&*pool)
-        .await
-        .unwrap_or(0);
+        .fetch_one(&state.db)
+        .await;
 
-        (contracts, total)
+        match (contracts_result, count_result) {
+            (Ok(c), Ok(t)) => (c, t),
+            (Err(e), _) | (_, Err(e)) => {
+                tracing::error!("获取合同列表失败: {}", e);
+                return Json(api_error(500, "获取合同列表失败"));
+            }
+        }
     } else {
-        let contracts: Vec<ProjectContract> = sqlx::query_as(
+        let contracts_result = sqlx::query_as(
             r#"
             SELECT * FROM project_contracts 
             ORDER BY created_at DESC 
             LIMIT $1 OFFSET $2
-            "#
+            "#,
         )
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&*pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .fetch_all(&state.db)
+        .await;
 
-        let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM project_contracts")
-            .fetch_one(&*pool)
-            .await
-            .unwrap_or(0);
+        let count_result = sqlx::query_scalar("SELECT COUNT(*) FROM project_contracts")
+            .fetch_one(&state.db)
+            .await;
 
-        (contracts, total)
+        match (contracts_result, count_result) {
+            (Ok(c), Ok(t)) => (c, t),
+            (Err(e), _) | (_, Err(e)) => {
+                tracing::error!("获取合同列表失败: {}", e);
+                return Json(api_error(500, "获取合同列表失败"));
+            }
+        }
     };
 
-    let result = json!({
-        "data": contracts,
-        "total": total,
-        "page": page,
-        "page_size": page_size,
-        "total_pages": (total + page_size - 1) / page_size
-    });
-
-    Ok(Json(result))
+    Json(ApiResponse::success(
+        PaginatedResponse::new(contracts, total, page, page_size),
+        "获取合同列表成功",
+    ))
 }
