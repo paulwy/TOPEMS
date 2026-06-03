@@ -79,9 +79,6 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let email_router = api::email::create_routes(pool.clone()).await;
-    let template_router = api::template::create_routes(pool.clone()).await;
-
     let health_router = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
@@ -89,8 +86,7 @@ async fn main() -> Result<()> {
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
-        .merge(email_router)
-        .merge(template_router)
+        .merge(api::create_routes(pool.clone(), app_state.auth_state.clone(), metrics.clone(), start_time).await?)
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

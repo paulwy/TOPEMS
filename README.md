@@ -1,6 +1,6 @@
 # TOPEMS
 
-> 企业级数字化平台 - 文档管理、AI 协作、流程自动化、数据分析
+> 企业级数字化平台 - 文档管理、AI 协作、流程自动化、数据分析、质量管理、供应链管理
 
 ![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -24,6 +24,9 @@
 - 👥 **人力资源** - HRM人力资源管理
 - 🔬 **实验室** - LIMS实验室管理
 - 🔬 **研发管理** - RS科研研发
+- 🌍 **地理信息** - GIS服务
+- 📋 **产品数据** - PDM产品数据管理
+- 💬 **即时通讯** - IM即时通讯
 
 ### 技术亮点
 
@@ -32,7 +35,8 @@
 - 🎨 **现代化** - 优雅的 UI 设计
 - 🔒 **安全** - 企业级安全保障
 - 🌐 **PWA 支持** - 离线访问，快速启动
-- 🎯 **微服务架构** - 17个独立服务，灵活扩展
+- 🎯 **微服务架构** - 20+个独立服务，灵活扩展
+- 🔄 **统一架构** - 统一的认证保护和架构规范化
 
 ## 🚀 快速开始
 
@@ -77,19 +81,31 @@ topems/
 │   ├── topems-flow/             # FLOW 工作流服务 (8004)
 │   ├── topems-rs/               # RS 研发管理服务 (8005)
 │   ├── topems-lims/             # LIMS 实验室管理 (8006)
-│   ├── topems-hrm/              # HRM 人力资源 (8010)
 │   ├── topems-qms/              # QMS 质量管理 (8007)
 │   ├── topems-ehs/              # EHS 安全环保 (8008)
-│   ├── topems-bi/               # BI 商业智能 (8022)
-│   ├── topems-portal/           # PORTAL 统一门户 (9021)
 │   ├── topems-erp/              # ERP 企业资源 (8009)
+│   ├── topems-hrm/              # HRM 人力资源 (8010)
+│   ├── topems-crm/              # CRM 客户关系 (8013)
+│   ├── topems-mes/              # MES 制造执行 (8014)
 │   ├── topems-scm/              # SCM 供应链 (8016)
 │   ├── topems-srm/              # SRM 供应商 (8018)
-│   ├── topems-mail/             # MAIL 邮件服务 (8026)
+│   ├── topems-wms/              # WMS 仓库管理 (8020)
+│   ├── topems-bi/               # BI 商业智能 (8022)
 │   ├── topems-notification/     # NOTIFICATION 通知服务 (8023)
-│   ├── topems-mes/              # MES 制造执行 (8014)
-│   ├── topems-crm/              # CRM 客户关系 (8013)
-│   └── topems-wms/              # WMS 仓库管理 (8020)
+│   ├── topems-im/               # IM 即时通讯 (8024)
+│   ├── topems-gis/              # GIS 地理信息 (8025)
+│   ├── topems-mail/             # MAIL 邮件服务 (8026)
+│   ├── topems-pdm/              # PDM 产品数据 (8027)
+│   ├── topems-integration/      # INTEGRATION 系统集成 (8028)
+│   ├── topems-mobile/           # MOBILE 移动服务 (8029)
+│   └── topems-portal/           # PORTAL 统一门户 (9021)
+├── platform/                     # 平台服务
+│   ├── topems-iam/              # IAM 身份认证
+│   ├── topems-flow/             # FLOW 工作流
+│   └── topems-doc/              # DOC 文档管理
+├── shared/                       # 共享库
+│   ├── lib/                     # topems-shared 库
+│   └── proto/                   # Protocol Buffers
 ├── docker-compose.yml             # Docker 配置
 └── README.md                      # 本文档
 ```
@@ -100,6 +116,7 @@ topems/
 - [服务状态报告](./docs/SERVICE_STATUS_REPORT.md) - 最新服务状态
 - [优化报告](./docs/OPTIMIZATION_REPORT.md) - 性能优化报告
 - [代码审查](./docs/CODE_REVIEW_REPORT.md) - 代码质量报告
+- [实施总结](./IMPLEMENTATION_SUMMARY.md) - 完整的实施总结
 
 ## 🛠️ 开发
 
@@ -111,7 +128,7 @@ npm install
 npm run dev
 ```
 
-访问 http://localhost:3001
+访问 http://localhost:3000
 
 ### 后端开发
 
@@ -127,7 +144,7 @@ cargo run
 
 ```bash
 # 使用启动脚本
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 chmod +x scripts/start-all-services.sh
 ./scripts/start-all-services.sh
 
@@ -170,6 +187,9 @@ npm run test
 # 后端测试
 cd services/topems-iam/backend
 cargo test
+
+# 运行所有测试
+./scripts/run-all-tests.sh
 ```
 
 ## 📊 性能指标
@@ -180,7 +200,7 @@ cargo test
 | 包体积 | 600KB (gzip) | ✅ |
 | API 响应时间 | 50ms | ✅ |
 | 数据库查询 | 20ms | ✅ |
-| 服务数量 | 17个 | ✅ |
+| 服务数量 | 20+个 | ✅ |
 
 详细信息请查看 [优化报告](./docs/OPTIMIZATION_REPORT.md)。
 
@@ -223,5 +243,5 @@ MIT License - 详见 [LICENSE](./LICENSE) 文件。
 
 ---
 
-**最后更新**: 2026-06-02
+**最后更新**: 2026-06-03
 **版本**: v2.0.0

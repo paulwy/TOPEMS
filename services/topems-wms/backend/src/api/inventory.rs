@@ -1,18 +1,16 @@
-use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{FromRef, Path, Query, State},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
 use crate::api::audit::log_audit_event;
+use crate::api::ApiState;
 use topems_shared::{ApiResponse, api_error};
 
 #[derive(Debug, Deserialize)]
@@ -24,26 +22,21 @@ pub struct InventoryPaginationParams {
     pub warehouse_id: Option<Uuid>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes<S>() -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+    ApiState: FromRef<S>,
+{
+    Router::new()
         .route("/api/v1/inventory", get(list_inventory).post(create_inventory))
         .route(
             "/api/v1/inventory/{id}",
             get(get_inventory).put(update_inventory).delete(delete_inventory),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_inventory(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<InventoryPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -110,7 +103,7 @@ async fn list_inventory(
 }
 
 async fn create_inventory(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateInventoryItemRequest>,
 ) -> Json<ApiResponse<InventoryItem>> {
@@ -183,7 +176,7 @@ async fn create_inventory(
 }
 
 async fn get_inventory(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InventoryItem>> {
     let result = sqlx::query_as::<_, InventoryItem>(
@@ -208,7 +201,7 @@ async fn get_inventory(
 }
 
 async fn update_inventory(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateInventoryItemRequest>,
@@ -311,7 +304,7 @@ async fn update_inventory(
 }
 
 async fn delete_inventory(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

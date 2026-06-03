@@ -6,29 +6,19 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
 use topems_shared::{ApiResponse, api_error};
+use super::ApiState;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/departments", get(list_departments).post(create_department))
         .route(
             "/api/v1/departments/{id}",
             get(get_department).put(update_department).delete(delete_department),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,7 +30,7 @@ pub struct DepartmentPaginationParams {
 }
 
 async fn list_departments(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<DepartmentPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -101,7 +91,7 @@ async fn list_departments(
 }
 
 async fn create_department(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let id = Uuid::new_v4();
@@ -136,7 +126,7 @@ async fn create_department(
 }
 
 async fn get_department(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Department>> {
     let result = sqlx::query_as::<_, Department>(
@@ -160,7 +150,7 @@ async fn get_department(
 }
 
 async fn update_department(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
@@ -215,7 +205,7 @@ async fn update_department(
 }
 
 async fn delete_department(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM departments WHERE id = $1")

@@ -78,7 +78,11 @@ class ApiClient {
           return config;
         },
         (error) => {
-          logger.error('Request error:', error);
+          // 不输出健康检查的请求错误
+          const isHealthCheck = error.config?.url?.includes('/health');
+          if (!isHealthCheck) {
+            logger.error('Request error:', error);
+          }
           return Promise.reject(error);
         }
       );
@@ -107,8 +111,14 @@ class ApiClient {
           }
         }
         
-        // 减少 404 错误在开发环境的日志输出
-        if (error.response?.status !== 404 || isProduction()) {
+        // 减少健康检查错误和 404 错误在开发环境的日志输出
+        const isHealthCheck = error.config?.url?.includes('/health');
+        const isNotFound = error.response?.status === 404;
+        const isServiceUnavailable = error.response?.status === 503;
+        const isServerError = error.response?.status === 500;
+        
+        // 只在生产环境或者不是健康检查/404/503的情况下才记录错误
+        if (isProduction() || !(isHealthCheck || isNotFound || isServiceUnavailable || isServerError)) {
           logger.error('Response error:', error);
         }
         

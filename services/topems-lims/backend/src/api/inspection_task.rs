@@ -1,16 +1,15 @@
 use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post, put},
     Json, Router,
 };
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{CompleteStepRequest, CreateInspectionTaskRequest, InspectionProcess, InspectionRecord, InspectionTask, UpdateInspectionTaskRequest};
+use crate::api::ApiState;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -21,13 +20,7 @@ pub struct PaginationParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/tasks", get(list_tasks).post(create_task))
         .route(
@@ -37,14 +30,13 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
         .route(
             "/api/v1/tasks/{id}/complete_step",
             post(complete_step),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_tasks(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -106,7 +98,7 @@ async fn list_tasks(
 }
 
 async fn create_task(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateInspectionTaskRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
     let id = Uuid::new_v4();
@@ -139,7 +131,7 @@ async fn create_task(
 }
 
 async fn get_task(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InspectionTask>> {
     let result = sqlx::query_as::<_, InspectionTask>(
@@ -163,7 +155,7 @@ async fn get_task(
 }
 
 async fn update_task(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInspectionTaskRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
@@ -213,7 +205,7 @@ async fn update_task(
 }
 
 async fn complete_step(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(task_id): Path<Uuid>,
     Json(req): Json<CompleteStepRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {

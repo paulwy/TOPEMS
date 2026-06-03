@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -7,16 +6,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{
-    DbChange, DbColumnDefinition, AddColumnRequest, ModifyColumnRequest, DropColumnRequest,
-    TableInfo, ColumnInfo,
-};
+use crate::models::{DbChange, TableInfo, ColumnInfo};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct TableQueryParams {
@@ -29,10 +24,6 @@ pub struct DbChangeQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
     pub table_name: Option<String>,
-}
-
-pub struct AppState {
-    pub db: PgPool,
 }
 
 #[derive(Debug, Serialize)]
@@ -49,23 +40,18 @@ pub struct TableDetail {
     pub row_count: Option<i64>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/db/tables", get(list_tables))
-        .route("/api/v1/db/tables/{name}", get(get_table_detail))
+        .route("/api/v1/db/tables/:name", get(get_table_detail))
         .route("/api/v1/db/columns/preview", post(preview_add_column))
         .route("/api/v1/db/columns", post(execute_add_column))
-        .route("/api/v1/db/columns/{table}/{column}", put(execute_modify_column).delete(execute_drop_column))
+        .route("/api/v1/db/columns/:table/:column", put(execute_modify_column).delete(execute_drop_column))
         .route("/api/v1/db/changes", get(list_db_changes))
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_tables(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<TableQueryParams>,
 ) -> Json<ApiResponse<Vec<TableInfo>>> {
     let schema = params.schema.unwrap_or_else(|| "public".to_string());
@@ -95,7 +81,7 @@ async fn list_tables(
 }
 
 async fn get_table_detail(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(table_name): Path<String>,
 ) -> Json<ApiResponse<TableDetail>> {
     let columns_result = sqlx::query_as::<_, ColumnInfo>(
@@ -130,10 +116,9 @@ async fn get_table_detail(
         return Json(api_error(404, "表不存在"));
     }
 
-    let row_count: Option<i64> = match sqlx::query_scalar(&format!("SELECT COUNT(*) FROM \"{}\"", table_name))
+    let row_count = match sqlx::query_scalar(&format!("SELECT COUNT(*) FROM \"{}\"", table_name))
         .fetch_one(&state.db)
-        .await
-    {
+        .await {
         Ok(count) => Some(count),
         Err(_) => None,
     };
@@ -149,8 +134,8 @@ async fn get_table_detail(
 }
 
 async fn preview_add_column(
-    State(state): State<Arc<AppState>>,
-    Json(req): Json<AddColumnRequest>,
+    State(_state): State<ApiState>,
+    Json(req): Json<crate::models::AddColumnRequest>,
 ) -> Json<ApiResponse<SqlPreview>> {
     let column = &req.column;
     
@@ -164,7 +149,7 @@ async fn preview_add_column(
     };
 
     let sql = format!(
-        "ALTER TABLE \"{}\" ADD COLUMN \"{}\" {} {} {};",
+        "ALTER TABLE \"{}\" ADD COLUMN \"{}\" {} {} {}",
         req.table_name,
         column.column_name,
         data_type,
@@ -207,9 +192,9 @@ fn build_data_type(base_type: &str, max_length: Option<i32>, precision: Option<i
 }
 
 async fn execute_add_column(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
-    Json(req): Json<AddColumnRequest>,
+    Json(req): Json<crate::models::AddColumnRequest>,
 ) -> Json<ApiResponse<String>> {
     let column = &req.column;
     
@@ -292,10 +277,10 @@ async fn execute_add_column(
 }
 
 async fn execute_modify_column(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path((table_name, column_name)): Path<(String, String)>,
     headers: HeaderMap,
-    Json(req): Json<ModifyColumnRequest>,
+    Json(req): Json<crate::models::ModifyColumnRequest>,
 ) -> Json<ApiResponse<String>> {
     let column = &req.column;
     
@@ -314,7 +299,7 @@ async fn execute_modify_column(
         column_name,
         data_type,
         column_name,
-        if default_clause.is_empty() { "DEFAULT NULL".to_string() } else { default_clause.clone() },
+        if default_clause.is_empty() { "DEFAULT NULL".to_string() } else { default_clause },
         column_name,
         null_clause
     );
@@ -380,7 +365,7 @@ async fn execute_modify_column(
 }
 
 async fn execute_drop_column(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path((table_name, column_name)): Path<(String, String)>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
@@ -397,7 +382,7 @@ async fn execute_drop_column(
         .execute(&state.db)
         .await;
 
-    let (response, status, error_msg) = match &result {
+    let (response, status_str, error_msg) = match &result {
         Ok(_) => (
             Json(ApiResponse::success(sql.clone(), "字段删除成功")),
             "success".to_string(),
@@ -438,7 +423,7 @@ async fn execute_drop_column(
         None,
         None,
         Some(serde_json::json!({ "sql": sql })),
-        status,
+        status_str,
         error_msg,
         &headers,
     )
@@ -448,7 +433,7 @@ async fn execute_drop_column(
 }
 
 async fn list_db_changes(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<DbChangeQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<DbChange>>> {
     let page = params.page.unwrap_or(1).max(1);

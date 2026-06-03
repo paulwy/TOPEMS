@@ -1,40 +1,33 @@
-use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{FromRef, Path, Query, State},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateInboundOrderRequest, InboundOrder, UpdateInboundOrderRequest};
 use crate::api::audit::log_audit_event;
+use crate::api::ApiState;
 use topems_shared::{ApiResponse, PaginationParams, api_error};
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes<S>() -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+    ApiState: FromRef<S>,
+{
+    Router::new()
         .route("/api/v1/inbound-orders", get(list_inbound_orders).post(create_inbound_order))
         .route(
             "/api/v1/inbound-orders/{id}",
             get(get_inbound_order).put(update_inbound_order).delete(delete_inbound_order),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_inbound_orders(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -96,7 +89,7 @@ async fn list_inbound_orders(
 }
 
 async fn create_inbound_order(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateInboundOrderRequest>,
 ) -> Json<ApiResponse<InboundOrder>> {
@@ -167,7 +160,7 @@ async fn create_inbound_order(
 }
 
 async fn get_inbound_order(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InboundOrder>> {
     let result = sqlx::query_as::<_, InboundOrder>(
@@ -192,7 +185,7 @@ async fn get_inbound_order(
 }
 
 async fn update_inbound_order(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateInboundOrderRequest>,
@@ -289,7 +282,7 @@ async fn update_inbound_order(
 }
 
 async fn delete_inbound_order(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

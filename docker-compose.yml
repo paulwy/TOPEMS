@@ -1,25 +1,25 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:latest
     container_name: topems-postgres
     environment:
-      POSTGRES_USER: topems
-      POSTGRES_PASSWORD: topems123
-      POSTGRES_DB: topems_iam
+      POSTGRES_USER: ${DB_USER:-topems}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-topems_secret}
+      POSTGRES_DB: ${DB_NAME:-topems}
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U topems"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-topems}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: redis:latest
     container_name: topems-redis
     ports:
       - "6379:6379"
@@ -30,63 +30,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  iam-service:
-    build:
-      context: ./services/topems-iam/backend
-      dockerfile: Dockerfile
-    container_name: topems-iam
-    environment:
-      DATABASE_URL: postgres://topems:topems123@postgres:5432/topems_iam
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: super-secret-key-change-in-production
-      PORT: 8002
-    ports:
-      - "8002:8002"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  mail-service:
-    build:
-      context: ./services/topems-mail/backend
-      dockerfile: Dockerfile
-    container_name: topems-mail
-    environment:
-      DATABASE_URL: postgres://topems:topems123@postgres:5432/topems_iam
-      IAM_SERVICE_URL: http://iam-service:8002
-      PORT: 8027
-      RUST_LOG: info
-      # SMTP 配置 (可选，需要根据实际情况配置)
-      # SMTP_HOST: smtp.example.com
-      # SMTP_PORT: 587
-      # SMTP_USERNAME: your_email@example.com
-      # SMTP_PASSWORD: your_password
-      # SMTP_FROM_ADDRESS: noreply@example.com
-    ports:
-      - "8027:8027"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      iam-service:
-        condition: service_started
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: topems-frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - iam-service
-      - mail-service
     restart: unless-stopped
 
 volumes:
   postgres-data:
+    driver: local
   redis-data:
+    driver: local

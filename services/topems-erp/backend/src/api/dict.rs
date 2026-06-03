@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -7,8 +6,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
@@ -17,6 +14,7 @@ use crate::models::{
 };
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct DictTypeQueryParams {
@@ -34,32 +32,23 @@ pub struct DictItemQueryParams {
     pub search: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/dict-types", get(list_dict_types).post(create_dict_type))
         .route(
-            "/api/v1/dict-types/{id}",
+            "/api/v1/dict-types/:id",
             get(get_dict_type).put(update_dict_type).delete(delete_dict_type),
         )
-        .route("/api/v1/dict-types/{id}/items", get(list_dict_items))
+        .route("/api/v1/dict-types/:id/items", get(list_dict_items))
         .route("/api/v1/dict-items", post(create_dict_item))
         .route(
-            "/api/v1/dict-items/{id}",
+            "/api/v1/dict-items/:id",
             get(get_dict_item).put(update_dict_item).delete(delete_dict_item),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_dict_types(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<DictTypeQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<DictType>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -120,7 +109,7 @@ async fn list_dict_types(
 }
 
 async fn create_dict_type(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
@@ -187,7 +176,7 @@ async fn create_dict_type(
 }
 
 async fn get_dict_type(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictType>> {
     let result = sqlx::query_as::<_, DictType>(
@@ -211,7 +200,7 @@ async fn get_dict_type(
 }
 
 async fn update_dict_type(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateDictTypeRequest>,
@@ -296,18 +285,14 @@ async fn update_dict_type(
 }
 
 async fn delete_dict_type(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let delete_items_result = sqlx::query("DELETE FROM sys_dict_items WHERE dict_type_id = $1")
+    let _ = sqlx::query("DELETE FROM sys_dict_items WHERE dict_type_id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
-
-    if let Err(e) = delete_items_result {
-        tracing::error!("删除字典项失败: {}", e);
-    }
 
     let result = sqlx::query("DELETE FROM sys_dict_types WHERE id = $1")
         .bind(id)
@@ -361,7 +346,7 @@ async fn delete_dict_type(
 }
 
 async fn list_dict_items(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
     Query(params): Query<DictItemQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<DictItem>>> {
@@ -417,7 +402,7 @@ async fn list_dict_items(
 }
 
 async fn create_dict_item(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
@@ -488,7 +473,7 @@ async fn create_dict_item(
 }
 
 async fn get_dict_item(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictItem>> {
     let result = sqlx::query_as::<_, DictItem>(
@@ -512,7 +497,7 @@ async fn get_dict_item(
 }
 
 async fn update_dict_item(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateDictItemRequest>,
@@ -603,7 +588,7 @@ async fn update_dict_item(
 }
 
 async fn delete_dict_item(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

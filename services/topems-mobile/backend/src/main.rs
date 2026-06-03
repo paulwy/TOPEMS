@@ -13,7 +13,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
-use topems_shared::{ApiResponse, AuthState, create_cors_layer};
+use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 
 use models::*;
 use db::repository::*;
@@ -27,6 +27,12 @@ struct AppState {
 impl FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
         state.auth_state.clone()
+    }
+}
+
+impl FromRef<AppState> for PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
     }
 }
 
@@ -244,8 +250,10 @@ async fn main() -> anyhow::Result<()> {
     };
     let cors = create_cors_layer();
 
-    let app = Router::new()
-        .route("/health", axum::routing::get(health_check))
+    let public_routes = Router::new()
+        .route("/health", axum::routing::get(health_check));
+
+    let protected_routes = Router::new()
         .route("/api/v1/dashboard/stats", axum::routing::get(get_dashboard_stats))
         .route("/api/v1/patrol-records", axum::routing::get(list_patrol_records).post(create_patrol_record))
         .route("/api/v1/scan-records", axum::routing::get(list_scan_records).post(create_scan_record))
@@ -254,6 +262,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/video-recordings", axum::routing::get(list_video_recordings).post(create_video_recording))
         .route("/api/v1/mobile-tasks", axum::routing::get(list_mobile_tasks).post(create_mobile_task))
         .route("/api/v1/mobile-tasks/{id}/status", axum::routing::put(update_task_status))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .with_state(app_state)
         .layer(cors);
 

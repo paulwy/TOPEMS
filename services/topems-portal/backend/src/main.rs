@@ -32,32 +32,17 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-
-    let refresh_secret = env::var("REFRESH_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("REFRESH_SECRET not set, using default");
-            "topems-default-refresh-secret-change-me".to_string()
-        });
-
-    let token_expiry_hours: i64 = env::var("TOKEN_EXPIRY_HOURS")
-        .unwrap_or_else(|_| "24".to_string())
-        .parse()
-        .unwrap_or(24);
-
     let app_state = AppState {
-        auth_state: AuthState::new(jwt_secret, refresh_secret, token_expiry_hours),
+        auth_state: AuthState::from_env(),
     };
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/health", get(health_check))
-        .route("/", get(home))
+        .route("/", get(home));
+
+    let protected_routes = Router::new()
         .route("/api/v1/services", get(list_services))
         .route("/api/v1/todos", get(get_todos))
         .route("/api/v1/todos", post(add_todo))
@@ -67,7 +52,11 @@ async fn main() -> anyhow::Result<()> {
             app_state.auth_state.clone(),
             auth_middleware,
         ))
-        .with_state(app_state)
+        .with_state(app_state.clone());
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors)
         .layer(CookieManagerLayer::new());
 

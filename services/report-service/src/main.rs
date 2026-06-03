@@ -1,9 +1,8 @@
 use axum::{
-    extract::State,
+    extract::{State, FromRef},
     routing::{delete, get, post},
     Json, Router,
 };
-use tower_http::cors::{Any, CorsLayer};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -11,6 +10,7 @@ use chrono::{Utc, DateTime};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 use std::collections::HashMap;
+use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReportConfig {
@@ -134,51 +134,19 @@ pub struct ExportReportRequest {
     pub custom_filename: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponse<T> {
-    pub code: i32,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
 
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: String) -> Self {
-        ApiResponse {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message,
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(message: String) -> Self {
-        ApiResponse {
-            code: 500,
-            success: false,
-            data: None,
-            message,
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn not_found(message: String) -> Self {
-        ApiResponse {
-            code: 404,
-            success: false,
-            data: None,
-            message,
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
 
 #[derive(Clone)]
 struct AppState {
+    auth_state: AuthState,
     reports: Arc<Mutex<Vec<ReportData>>>,
     templates: Arc<Mutex<Vec<ReportTemplate>>>,
+}
+
+impl FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
+    }
 }
 
 fn generate_sample_data(report_type: &ReportType) -> Vec<HashMap<String, serde_json::Value>> {
@@ -379,19 +347,20 @@ async fn main() {
         },
     ];
 
+    let auth_state = AuthState::from_env();
     let state = AppState {
+        auth_state,
         reports: Arc::new(Mutex::new(Vec::new())),
         templates: Arc::new(Mutex::new(initial_templates)),
     };
 
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+    let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/", get(home))
-        .route("/health", get(health))
+        .route("/health", get(health));
+
+    let protected_routes = Router::new()
         .route("/api/v1/reports", post(create_report))
         .route("/api/v1/reports", get(list_reports))
         .route("/api/v1/reports/:id", get(get_report))
@@ -402,6 +371,14 @@ async fn main() {
         .route("/api/v1/report-types", get(list_report_types))
         .route("/api/v1/reports-center/stats", get(get_reports_center_stats))
         .route("/api/v1/reports-center/export/:report_type", post(export_stats_report))
+        .layer(axum::middleware::from_fn_with_state(
+            state.auth_state.clone(),
+            auth_middleware,
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors)
         .with_state(state);
 
@@ -427,7 +404,7 @@ async fn home() -> &'static str {
 async fn health() -> Json<ApiResponse<String>> {
     Json(ApiResponse::success(
         "TOPEMS Report Service is running!".to_string(),
-        "OK".to_string(),
+        "OK",
     ))
 }
 
@@ -495,7 +472,7 @@ async fn list_report_types() -> Json<ApiResponse<Vec<HashMap<String, String>>>> 
         ]),
     ];
     
-    Json(ApiResponse::success(report_types, "Report types retrieved successfully".to_string()))
+    Json(ApiResponse::success(report_types, "Report types retrieved successfully"))
 }
 
 async fn create_report(
@@ -524,12 +501,12 @@ async fn create_report(
     let mut reports = state.reports.lock().unwrap();
     reports.push(report.clone());
 
-    Json(ApiResponse::success(report, "Report created successfully".to_string()))
+    Json(ApiResponse::success(report, "Report created successfully"))
 }
 
 async fn list_reports(State(state): State<AppState>) -> Json<ApiResponse<Vec<ReportData>>> {
     let reports = state.reports.lock().unwrap().clone();
-    Json(ApiResponse::success(reports, "Reports retrieved successfully".to_string()))
+    Json(ApiResponse::success(reports, "Reports retrieved successfully"))
 }
 
 async fn get_report(
@@ -538,8 +515,8 @@ async fn get_report(
 ) -> Json<ApiResponse<ReportData>> {
     let reports = state.reports.lock().unwrap();
     match reports.iter().find(|r| r.id == id) {
-        Some(report) => Json(ApiResponse::success(report.clone(), "Report found".to_string())),
-        None => Json(ApiResponse::not_found("Report not found".to_string())),
+        Some(report) => Json(ApiResponse::success(report.clone(), "Report found")),
+        None => Json(ApiResponse::error(404, "Report not found")),
     }
 }
 
@@ -551,9 +528,9 @@ async fn delete_report(
     let original_len = reports.len();
     reports.retain(|r| r.id != id);
     if reports.len() < original_len {
-        Json(ApiResponse::success(true, "Report deleted successfully".to_string()))
+        Json(ApiResponse::success(true, "Report deleted successfully"))
     } else {
-        Json(ApiResponse::not_found("Report not found".to_string()))
+        Json(ApiResponse::error(404, "Report not found"))
     }
 }
 
@@ -565,7 +542,7 @@ async fn export_report(
     let reports = state.reports.lock().unwrap();
     let report = match reports.iter().find(|r| r.id == id) {
         Some(r) => r,
-        None => return Json(ApiResponse::not_found("Report not found".to_string())),
+        None => return Json(ApiResponse::error(404, "Report not found")),
     };
 
     let filename = if let Some(ref custom) = req.custom_filename {
@@ -584,12 +561,12 @@ async fn export_report(
     result.insert("report_type".to_string(), serde_json::json!(report.config.report_type.to_string()));
     result.insert("download_url".to_string(), serde_json::json!(format!("/api/v1/reports/{}/download/{}", id, filename)));
 
-    Json(ApiResponse::success(result, "Export ready".to_string()))
+    Json(ApiResponse::success(result, "Export ready"))
 }
 
 async fn list_templates(State(state): State<AppState>) -> Json<ApiResponse<Vec<ReportTemplate>>> {
     let templates = state.templates.lock().unwrap().clone();
-    Json(ApiResponse::success(templates, "Templates retrieved successfully".to_string()))
+    Json(ApiResponse::success(templates, "Templates retrieved successfully"))
 }
 
 async fn create_template(
@@ -608,7 +585,7 @@ async fn create_template(
     let mut templates = state.templates.lock().unwrap();
     templates.push(template.clone());
 
-    Json(ApiResponse::success(template, "Template created successfully".to_string()))
+    Json(ApiResponse::success(template, "Template created successfully"))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -707,7 +684,7 @@ async fn get_reports_center_stats() -> Json<ApiResponse<ReportsCenterStats>> {
         activity_types,
     };
 
-    Json(ApiResponse::success(stats, "Reports center stats retrieved successfully".to_string()))
+    Json(ApiResponse::success(stats, "Reports center stats retrieved successfully"))
 }
 
 async fn export_stats_report(
@@ -723,5 +700,5 @@ async fn export_stats_report(
     result.insert("report_type".to_string(), serde_json::json!(report_type));
     result.insert("download_url".to_string(), serde_json::json!(format!("/api/v1/reports-center/download/{}", filename)));
 
-    Json(ApiResponse::success(result, "Export ready".to_string()))
+    Json(ApiResponse::success(result, "Export ready"))
 }

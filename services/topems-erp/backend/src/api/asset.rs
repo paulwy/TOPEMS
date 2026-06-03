@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -7,13 +6,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -23,26 +21,17 @@ pub struct PaginationParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/assets", get(list_assets).post(create_asset))
         .route(
-            "/api/v1/assets/{id}",
+            "/api/v1/assets/:id",
             get(get_asset).put(update_asset).delete(delete_asset),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_assets(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Asset>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -98,7 +87,7 @@ async fn list_assets(
 }
 
 async fn create_asset(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
@@ -170,7 +159,7 @@ async fn create_asset(
 }
 
 async fn get_asset(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Asset>> {
     let result = sqlx::query_as::<_, Asset>(
@@ -194,7 +183,7 @@ async fn get_asset(
 }
 
 async fn update_asset(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateAssetRequest>,
@@ -212,7 +201,6 @@ async fn update_asset(
         Err(e) => return Json(api_error(500, &format!("查询资产失败: {}", e))),
     };
 
-    // 先获取 request_data，避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
 
     let name = req.name.unwrap_or(existing.name);
@@ -290,7 +278,7 @@ async fn update_asset(
 }
 
 async fn delete_asset(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

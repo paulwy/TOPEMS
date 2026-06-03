@@ -3,12 +3,14 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
+    Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
+
+use crate::api::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DocumentRelation {
@@ -41,6 +43,7 @@ pub struct CreateDocumentRelationRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiResponse<T> {
+    pub code: u16,
     pub success: bool,
     pub data: Option<T>,
     pub message: String,
@@ -50,6 +53,7 @@ pub struct ApiResponse<T> {
 impl<T> ApiResponse<T> {
     fn success(data: T, message: &str) -> Self {
         ApiResponse {
+            code: 200,
             success: true,
             data: Some(data),
             message: message.to_string(),
@@ -57,8 +61,9 @@ impl<T> ApiResponse<T> {
         }
     }
 
-    fn error(message: &str) -> Self {
+    fn error(code: u16, message: &str) -> Self {
         ApiResponse {
+            code,
             success: false,
             data: None,
             message: message.to_string(),
@@ -81,19 +86,19 @@ struct ListQueryParams {
     page_size: Option<i32>,
 }
 
-pub async fn create_routes(pool: PgPool) -> Result<axum::Router> {
-    let router = axum::Router::new()
+pub async fn create_routes() -> Result<Router<ApiState>> {
+    let router = Router::new()
         .route("/api/v1/documents", axum::routing::get(list_documents))
         .route("/api/v1/documents", axum::routing::post(create_document_relation))
         .route("/api/v1/documents/{id}", axum::routing::get(get_document_relation))
         .route("/api/v1/documents/{id}", axum::routing::delete(delete_document_relation))
-        .route("/api/v1/entities/{entity_type}/{entity_id}/documents", axum::routing::get(get_entity_documents))
-        .with_state(pool);
+        .route("/api/v1/entities/{entity_type}/{entity_id}/documents", axum::routing::get(get_entity_documents));
+
     Ok(router)
 }
 
 async fn list_documents(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     axum::extract::Query(params): axum::extract::Query<ListQueryParams>,
 ) -> impl IntoResponse {
     let page = params.page.unwrap_or(1);
@@ -108,11 +113,11 @@ async fn list_documents(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     let total: std::result::Result<i64, sqlx::Error> = sqlx::query_scalar("SELECT COUNT(*) FROM document_relations")
-        .fetch_one(&pool)
+        .fetch_one(&state.db)
         .await;
 
     match (result, total) {
@@ -129,14 +134,14 @@ async fn list_documents(
             (StatusCode::OK, Json(response))
         }
         (_, Err(e)) | (Err(e), _) => {
-            let response: ApiResponse<PaginatedResponse<DocumentRelation>> = ApiResponse::error(&format!("获取文档关联列表失败: {}", e));
+            let response: ApiResponse<PaginatedResponse<DocumentRelation>> = ApiResponse::error(500, &format!("获取文档关联列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
 async fn create_document_relation(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Json(request): Json<CreateDocumentRelationRequest>,
 ) -> impl IntoResponse {
     let id = Uuid::new_v4();
@@ -161,7 +166,7 @@ async fn create_document_relation(
     .bind(&request.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     match result {
@@ -170,14 +175,14 @@ async fn create_document_relation(
             (StatusCode::CREATED, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<DocumentRelation> = ApiResponse::error(&format!("创建文档关联失败: {}", e));
+            let response: ApiResponse<DocumentRelation> = ApiResponse::error(500, &format!("创建文档关联失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
 async fn get_document_relation(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     let result: std::result::Result<Option<DocumentRelation>, sqlx::Error> = sqlx::query_as(
@@ -185,7 +190,7 @@ async fn get_document_relation(
          FROM document_relations WHERE id = $1"
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     match result {
@@ -194,25 +199,25 @@ async fn get_document_relation(
             (StatusCode::OK, Json(response))
         }
         Ok(None) => {
-            let response: ApiResponse<DocumentRelation> = ApiResponse::error("文档关联不存在");
+            let response: ApiResponse<DocumentRelation> = ApiResponse::error(404, "文档关联不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<DocumentRelation> = ApiResponse::error(&format!("获取文档关联失败: {}", e));
+            let response: ApiResponse<DocumentRelation> = ApiResponse::error(500, &format!("获取文档关联失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
 async fn delete_document_relation(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     let result: std::result::Result<sqlx::postgres::PgQueryResult, sqlx::Error> = sqlx::query(
         "DELETE FROM document_relations WHERE id = $1"
     )
     .bind(id)
-    .execute(&pool)
+    .execute(&state.db)
     .await;
 
     match result {
@@ -221,18 +226,18 @@ async fn delete_document_relation(
             (StatusCode::OK, Json(response))
         }
         Ok(_) => {
-            let response: ApiResponse<()> = ApiResponse::error("文档关联不存在");
+            let response: ApiResponse<()> = ApiResponse::error(404, "文档关联不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<()> = ApiResponse::error(&format!("删除文档关联失败: {}", e));
+            let response: ApiResponse<()> = ApiResponse::error(500, &format!("删除文档关联失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
 async fn get_entity_documents(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
     let result: std::result::Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
@@ -243,7 +248,7 @@ async fn get_entity_documents(
     )
     .bind(entity_type)
     .bind(entity_id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     match result {
@@ -252,7 +257,7 @@ async fn get_entity_documents(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<Vec<DocumentRelation>> = ApiResponse::error(&format!("获取实体文档列表失败: {}", e));
+            let response: ApiResponse<Vec<DocumentRelation>> = ApiResponse::error(500, &format!("获取实体文档列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }

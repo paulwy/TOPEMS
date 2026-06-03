@@ -3,14 +3,16 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
+    Json, Router,
 };
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use std::env;
+
+use crate::api::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AiAnalysis {
@@ -46,6 +48,7 @@ pub struct AiChatResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiResponse<T> {
+    pub code: u16,
     pub success: bool,
     pub data: Option<T>,
     pub message: String,
@@ -55,6 +58,7 @@ pub struct ApiResponse<T> {
 impl<T> ApiResponse<T> {
     fn success(data: T, message: &str) -> Self {
         ApiResponse {
+            code: 200,
             success: true,
             data: Some(data),
             message: message.to_string(),
@@ -62,8 +66,9 @@ impl<T> ApiResponse<T> {
         }
     }
 
-    fn error(message: &str) -> Self {
+    fn error(code: u16, message: &str) -> Self {
         ApiResponse {
+            code,
             success: false,
             data: None,
             message: message.to_string(),
@@ -86,24 +91,24 @@ struct ListQueryParams {
     page_size: Option<i32>,
 }
 
-pub async fn create_routes(pool: PgPool) -> Result<axum::Router> {
-    let router = axum::Router::new()
+pub async fn create_routes() -> Result<Router<ApiState>> {
+    let router = Router::new()
         .route("/api/v1/ai/analyses", axum::routing::get(list_analyses))
         .route("/api/v1/ai/analyses", axum::routing::post(create_analysis))
         .route("/api/v1/ai/analyses/{id}", axum::routing::get(get_analysis))
         .route("/api/v1/ai/chat", axum::routing::post(ai_chat))
-        .route("/api/v1/entities/{entity_type}/{entity_id}/analyses", axum::routing::get(get_entity_analyses))
-        .with_state(pool);
+        .route("/api/v1/entities/{entity_type}/{entity_id}/analyses", axum::routing::get(get_entity_analyses));
+
     Ok(router)
 }
 
 async fn list_analyses(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     axum::extract::Query(params): axum::extract::Query<ListQueryParams>,
 ) -> impl IntoResponse {
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
-    let offset = ((page - 1) * page_size) as i64;
+    let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
@@ -112,12 +117,12 @@ async fn list_analyses(
          LIMIT $1 OFFSET $2"
     )
     .bind(page_size)
-    .bind(offset)
-    .fetch_all(&pool)
+    .bind(offset as i64)
+    .fetch_all(&state.db)
     .await;
 
     let total = sqlx::query_scalar("SELECT COUNT(*) FROM ai_analyses")
-        .fetch_one(&pool)
+        .fetch_one(&state.db)
         .await;
 
     match (result, total) {
@@ -134,14 +139,14 @@ async fn list_analyses(
             (StatusCode::OK, Json(response))
         }
         (_, Err(e)) | (Err(e), _) => {
-            let response: ApiResponse<PaginatedResponse<AiAnalysis>> = ApiResponse::error(&format!("获取AI分析列表失败: {}", e));
+            let response: ApiResponse<PaginatedResponse<AiAnalysis>> = ApiResponse::error(500, &format!("获取AI分析列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
 async fn create_analysis(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Json(request): Json<CreateAnalysisRequest>,
 ) -> impl IntoResponse {
     let ai_service_url = env::var("AI_SERVICE_URL")
@@ -151,7 +156,7 @@ async fn create_analysis(
     let ai_response = match call_ai_service(&request.prompt, &ai_service_url).await {
         Ok(resp) => resp,
         Err(e) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error(&format!("AI服务调用失败: {}", e));
+            let response: ApiResponse<AiAnalysis> = ApiResponse::error(500, &format!("AI服务调用失败: {}", e));
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(response));
         }
     };
@@ -174,7 +179,7 @@ async fn create_analysis(
     .bind(&ai_service_url)
     .bind(&request.created_by)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     match result {
@@ -183,14 +188,14 @@ async fn create_analysis(
             (StatusCode::CREATED, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error(&format!("创建AI分析失败: {}", e));
+            let response: ApiResponse<AiAnalysis> = ApiResponse::error(500, &format!("创建AI分析失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
 async fn get_analysis(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     let result: std::result::Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
@@ -198,7 +203,7 @@ async fn get_analysis(
          FROM ai_analyses WHERE id = $1"
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     match result {
@@ -207,11 +212,11 @@ async fn get_analysis(
             (StatusCode::OK, Json(response))
         }
         Ok(None) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error("AI分析不存在");
+            let response: ApiResponse<AiAnalysis> = ApiResponse::error(404, "AI分析不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error(&format!("获取AI分析失败: {}", e));
+            let response: ApiResponse<AiAnalysis> = ApiResponse::error(500, &format!("获取AI分析失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -230,14 +235,14 @@ async fn ai_chat(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<AiChatResponse> = ApiResponse::error(&format!("AI聊天失败: {}", e));
+            let response: ApiResponse<AiChatResponse> = ApiResponse::error(500, &format!("AI聊天失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
 async fn get_entity_analyses(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
     let result: std::result::Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(
@@ -248,7 +253,7 @@ async fn get_entity_analyses(
     )
     .bind(entity_type)
     .bind(entity_id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     match result {
@@ -257,7 +262,7 @@ async fn get_entity_analyses(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<Vec<AiAnalysis>> = ApiResponse::error(&format!("获取实体AI分析列表失败: {}", e));
+            let response: ApiResponse<Vec<AiAnalysis>> = ApiResponse::error(500, &format!("获取实体AI分析列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }

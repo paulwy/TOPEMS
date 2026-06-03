@@ -9,6 +9,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use std::env;
+use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::response::ApiResponse;
@@ -59,7 +60,7 @@ struct ListQueryParams {
     page_size: Option<i32>,
 }
 
-pub async fn create_routes(pool: PgPool) -> topems_shared::Result<axum::Router> {
+pub async fn create_routes() -> topems_shared::Result<axum::Router> {
     let router = axum::Router::new()
         .route("/api/v1/ai/analyses", axum::routing::get(list_analyses))
         .route("/api/v1/ai/analyses", axum::routing::post(create_analysis))
@@ -68,13 +69,12 @@ pub async fn create_routes(pool: PgPool) -> topems_shared::Result<axum::Router> 
         .route(
             "/api/v1/entities/{entity_type}/{entity_id}/analyses",
             axum::routing::get(get_entity_analyses),
-        )
-        .with_state(pool);
+        );
     Ok(router)
 }
 
 async fn list_analyses(
-    State(pool): State<PgPool>,
+    State(state): State<Arc<super::ApiState>>,
     axum::extract::Query(params): axum::extract::Query<ListQueryParams>,
 ) -> impl IntoResponse {
     let page = params.page.unwrap_or(1);
@@ -89,11 +89,11 @@ async fn list_analyses(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     let total: Result<i64, sqlx::Error> = sqlx::query_scalar("SELECT COUNT(*) FROM rs.ai_analyses")
-        .fetch_one(&pool)
+        .fetch_one(&state.db)
         .await;
 
     match (result, total) {
@@ -120,7 +120,7 @@ async fn list_analyses(
 }
 
 async fn create_analysis(
-    State(pool): State<PgPool>,
+    State(state): State<Arc<super::ApiState>>,
     Json(request): Json<CreateAnalysisRequest>,
 ) -> impl IntoResponse {
     let ai_service_url = env::var("AI_SERVICE_URL")
@@ -153,7 +153,7 @@ async fn create_analysis(
     .bind(&ai_service_url)
     .bind(&request.created_by)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     match result {
@@ -168,13 +168,13 @@ async fn create_analysis(
     }
 }
 
-async fn get_analysis(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> impl IntoResponse {
+async fn get_analysis(State(state): State<Arc<super::ApiState>>, Path(id): Path<Uuid>) -> impl IntoResponse {
     let result: Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
          FROM rs.ai_analyses WHERE id = $1"
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     match result {
@@ -211,7 +211,7 @@ async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
 }
 
 async fn get_entity_analyses(
-    State(pool): State<PgPool>,
+    State(state): State<Arc<super::ApiState>>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
     let result: Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(
@@ -222,7 +222,7 @@ async fn get_entity_analyses(
     )
     .bind(entity_type)
     .bind(entity_id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     match result {

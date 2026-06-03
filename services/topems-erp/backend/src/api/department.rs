@@ -7,13 +7,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -23,26 +22,17 @@ pub struct PaginationParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/departments", get(list_departments).post(create_department))
         .route(
             "/api/v1/departments/{id}",
             get(get_department).put(update_department).delete(delete_department),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_departments(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Department>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -98,7 +88,7 @@ async fn list_departments(
 }
 
 async fn create_department(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
@@ -166,7 +156,7 @@ async fn create_department(
 }
 
 async fn get_department(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Department>> {
     let result = sqlx::query_as::<_, Department>(
@@ -190,7 +180,7 @@ async fn get_department(
 }
 
 async fn update_department(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateDepartmentRequest>,
@@ -280,7 +270,7 @@ async fn update_department(
 }
 
 async fn delete_department(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

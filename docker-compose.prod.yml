@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: topems-postgres-prod
+    environment:
+      POSTGRES_USER: ${DB_USER:-topems}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-topems_secret}
+      POSTGRES_DB: ${DB_NAME:-topems}
+    volumes:
+      - postgres-data-prod:/var/lib/postgresql/data
+    networks:
+      - topems-network
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-topems}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: topems-redis-prod
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data-prod:/data
+    networks:
+      - topems-network
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  iam-service:
+    image: topems-iam-service:latest
+    container_name: topems-iam-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      PORT: 8002
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  rs-service:
+    image: topems-rs-service:latest
+    container_name: topems-rs-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      PORT: 8000
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  mail-service:
+    image: topems-mail-service:latest
+    container_name: topems-mail-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      IAM_SERVICE_URL: http://iam-service:8002
+      PORT: 8027
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8027"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: topems-nginx-prod
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/certs:/etc/nginx/certs
+    networks:
+      - topems-network
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - iam-service
+      - rs-service
+      - mail-service
+    restart: unless-stopped
+
+networks:
+  topems-network:
+    driver: bridge
+    internal: false
+
+volumes:
+  postgres-data-prod:
+    driver: local
+  redis-data-prod:
+    driver: local

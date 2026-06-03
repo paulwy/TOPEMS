@@ -1,8 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Eye, Edit, Trash2, FileText, Calendar, AlertCircle, Check, X, RefreshCw, Clock } from 'lucide-react';
+import { 
+  Plus, Search, Eye, Edit2, Trash2, FileText, Calendar, AlertCircle, 
+  Check, X, RefreshCw, Clock, FileTextIcon
+} from 'lucide-react';
 import type { Contract, ContractRenewal, Employee } from '../api/hrm';
 import { contractApi, contractRenewalApi, employeeApi } from '../api/hrm';
 import type { PaginatedResult } from '../api/hrm';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 const contractTypes = [
   { value: 'labor', label: '劳动合同' },
@@ -389,28 +405,24 @@ export default function HrmContractPage() {
       )}
 
       {confirmDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-medium mb-4">{confirmDialog.title}</h3>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setConfirmDialog(null)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
+        <Dialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{confirmDialog.title}</DialogTitle>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setConfirmDialog(null)}>
                 取消
-              </button>
-              <button
-                onClick={() => {
-                  confirmDialog.onConfirm();
-                  setConfirmDialog(null);
-                }}
-                className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-lg"
-              >
+              </Button>
+              <Button variant="destructive" onClick={() => {
+                confirmDialog.onConfirm();
+                setConfirmDialog(null);
+              }}>
                 确定
-              </button>
-            </div>
-          </div>
-        </div>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       <div className="bg-white shadow-sm border-b">
@@ -420,445 +432,439 @@ export default function HrmContractPage() {
               <h1 className="text-xl font-semibold text-gray-900">合同管理</h1>
               <p className="text-sm text-gray-500 mt-1">管理员工合同信息，包括合同创建、到期提醒和续签流程</p>
             </div>
-            <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
-            >
+            <Button onClick={handleCreate} className="flex items-center gap-2">
               <Plus size={18} />
               新建合同
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="px-4 py-3 border-b flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input
-                  type="text"
-                  placeholder="搜索合同编号或员工姓名"
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-10 w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <Input
+                    type="text"
+                    placeholder="搜索合同编号或员工姓名"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    className="pl-10 w-64"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="全部状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">全部状态</SelectItem>
+                    <SelectItem value="active">生效中</SelectItem>
+                    <SelectItem value="expired">已到期</SelectItem>
+                    <SelectItem value="terminated">已终止</SelectItem>
+                  </SelectContent>
+                </Select>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={showExpiringOnly}
+                    onCheckedChange={(e) => {
+                      setShowExpiringOnly(e);
+                      setCurrentPage(1);
+                    }}
+                  />
+                  <span className="text-sm text-gray-600">仅显示即将到期(30天内)</span>
+                </label>
               </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                style={{ width: 160 }}
-              >
-                <option value="">全部状态</option>
-                <option value="active">生效中</option>
-                <option value="expired">已到期</option>
-                <option value="terminated">已终止</option>
-              </select>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showExpiringOnly}
-                  onChange={(e) => {
-                    setShowExpiringOnly(e.target.checked);
-                    setCurrentPage(1);
-                  }}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-600">仅显示即将到期(30天内)</span>
-              </label>
+              <Button variant="outline" onClick={loadData} className="flex items-center gap-2">
+                <RefreshCw size={16} />
+                刷新
+              </Button>
             </div>
-            <button
-              onClick={loadData}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              <RefreshCw size={16} />
-              刷新
-            </button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">合同编号</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">员工</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">合同类型</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">薪资</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">有效期</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    </td>
-                  </tr>
-                ) : data.items.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">暂无数据</td>
-                  </tr>
-                ) : (
-                  data.items.map((item) => {
-                    const days = getDaysUntilExpiry(item.end_date);
-                    const isExpiringSoon = hasExpiringSoon(item.end_date);
-                    
-                    return (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <FileText size={16} className="text-blue-500" />
-                            <span className="font-medium text-gray-900">{item.contract_no || '-'}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">{getEmployeeName(item.employee_id)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {contractTypes.find(t => t.value === item.contract_type)?.label || item.contract_type}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {item.salary ? `${item.salary.toLocaleString()}` : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <Calendar size={14} className="text-gray-400" />
-                            <span className={`text-sm ${isExpiringSoon ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
-                              {new Date(item.start_date).toLocaleDateString('zh-CN')} ~ {item.end_date ? new Date(item.end_date).toLocaleDateString('zh-CN') : '无固定期限'}
-                            </span>
-                          </div>
-                          {isExpiringSoon && days !== null && (
-                            <div className="mt-1 flex items-center gap-1 text-xs text-orange-600">
-                              <AlertCircle size={12} />
-                              <span>剩余{days}天到期</span>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ScrollArea className="max-h-[600px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-32">合同编号</TableHead>
+                    <TableHead>员工</TableHead>
+                    <TableHead>合同类型</TableHead>
+                    <TableHead className="w-24">薪资</TableHead>
+                    <TableHead className="w-48">有效期</TableHead>
+                    <TableHead className="w-20">状态</TableHead>
+                    <TableHead className="w-40">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      </TableCell>
+                    </TableRow>
+                  ) : data.items.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-12 text-gray-500">暂无数据</TableCell>
+                    </TableRow>
+                  ) : (
+                    data.items.map((item) => {
+                      const days = getDaysUntilExpiry(item.end_date);
+                      const isExpiringSoon = hasExpiringSoon(item.end_date);
+                      
+                      return (
+                        <TableRow key={item.id} className="hover:bg-gray-50">
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <FileTextIcon className="w-4 h-4 text-blue-500" />
+                              <span className="font-medium text-gray-900">{item.contract_no || '-'}</span>
                             </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusMap[item.status]?.color || 'bg-gray-100 text-gray-600'}`}>
-                            {statusMap[item.status]?.text || item.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleView(item)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                              title="查看"
-                            >
-                              <Eye size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleEdit(item)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                              title="编辑"
-                            >
-                              <Edit size={18} />
-                            </button>
-                            {item.status === 'active' && (
-                              <button
-                                onClick={() => handleRenew(item)}
-                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                                title="续签"
-                              >
-                                <RefreshCw size={18} />
-                              </button>
+                          </TableCell>
+                          <TableCell>{getEmployeeName(item.employee_id)}</TableCell>
+                          <TableCell>
+                            {contractTypes.find(t => t.value === item.contract_type)?.label || item.contract_type}
+                          </TableCell>
+                          <TableCell>
+                            {item.salary ? `${item.salary.toLocaleString()}` : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                              <span className={`text-sm ${isExpiringSoon ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
+                                {new Date(item.start_date).toLocaleDateString('zh-CN')} ~ {item.end_date ? new Date(item.end_date).toLocaleDateString('zh-CN') : '无固定期限'}
+                              </span>
+                            </div>
+                            {isExpiringSoon && days !== null && (
+                              <div className="mt-1 flex items-center gap-1 text-xs text-orange-600">
+                                <AlertCircle className="w-3 h-3" />
+                                <span>剩余{days}天到期</span>
+                              </div>
                             )}
-                            <button
-                              onClick={() => showConfirm('确定删除该合同吗?', () => handleDelete(item.id))}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                              title="删除"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={statusMap[item.status]?.color || 'bg-gray-100 text-gray-600'}>
+                              {statusMap[item.status]?.text || item.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => handleView(item)} title="查看">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleEdit(item)} title="编辑">
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              {item.status === 'active' && (
+                                <Button variant="ghost" size="icon" onClick={() => handleRenew(item)} title="续签" className="text-green-600 hover:text-green-700 hover:bg-green-50">
+                                  <RefreshCw className="w-4 h-4" />
+                                </Button>
+                              )}
+                              <Button variant="ghost" size="icon" onClick={() => showConfirm('确定删除该合同吗?', () => handleDelete(item.id))} title="删除" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
 
-          <div className="px-4 py-3 border-t flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              共 {data.total} 条记录
-            </span>
-            <div className="flex gap-2">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => p - 1)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                上一页
-              </button>
-              <span className="text-sm text-gray-600 px-2">第 {currentPage} 页</span>
-              <button
-                disabled={currentPage * data.page_size >= data.total}
-                onClick={() => setCurrentPage(p => p + 1)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                下一页
-              </button>
+            <div className="flex items-center justify-between pt-4 border-t">
+              <span className="text-sm text-gray-500">
+                共 {data.total} 条记录
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  className="px-4 py-2"
+                >
+                  上一页
+                </Button>
+                <span className="text-sm text-gray-600 px-2">第 {currentPage} 页</span>
+                <Button
+                  variant="outline"
+                  disabled={currentPage * data.page_size >= data.total}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="px-4 py-2"
+                >
+                  下一页
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {modalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <h2 className="text-lg font-medium">
-                {modalType === 'create' ? '新建合同' : modalType === 'edit' ? '编辑合同' : '合同详情'}
-              </h2>
-              <button
-                onClick={() => {
-                  setModalVisible(false);
-                  setShowRenewals(false);
-                }}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-6">
-              {modalType !== 'view' ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">员工 *</label>
-                    <select
-                      value={formState.employee_id}
-                      onChange={(e) => setFormState(s => ({ ...s, employee_id: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">请选择员工</option>
+      <Dialog open={modalVisible} onOpenChange={setModalVisible}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {modalType === 'create' ? '新建合同' : modalType === 'edit' ? '编辑合同' : '合同详情'}
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="flex-1 py-4">
+            {modalType !== 'view' ? (
+              <div className="space-y-4 px-4">
+                <div>
+                  <Label htmlFor="employee_id">员工 *</Label>
+                  <Select id="employee_id" value={formState.employee_id} onValueChange={(value) => setFormState(s => ({ ...s, employee_id: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="请选择员工" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">请选择员工</SelectItem>
                       {employees.map(e => (
-                        <option key={e.id} value={e.id}>{e.name}</option>
+                        <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
                       ))}
-                    </select>
-                  </div>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">合同编号</label>
-                    <input
-                      type="text"
-                      value={formState.contract_no}
-                      onChange={(e) => setFormState(s => ({ ...s, contract_no: e.target.value }))}
-                      disabled={modalType === 'create'}
-                      placeholder={modalType === 'create' ? '自动生成' : ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="contract_no">合同编号</Label>
+                  <Input
+                    id="contract_no"
+                    type="text"
+                    value={formState.contract_no}
+                    onChange={(e) => setFormState(s => ({ ...s, contract_no: e.target.value }))}
+                    disabled={modalType === 'create'}
+                    placeholder={modalType === 'create' ? '自动生成' : ''}
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">合同类型 *</label>
-                    <select
-                      value={formState.contract_type}
-                      onChange={(e) => setFormState(s => ({ ...s, contract_type: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">请选择合同类型</option>
+                <div>
+                  <Label htmlFor="contract_type">合同类型 *</Label>
+                  <Select id="contract_type" value={formState.contract_type} onValueChange={(value) => setFormState(s => ({ ...s, contract_type: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="请选择合同类型" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">请选择合同类型</SelectItem>
                       {contractTypes.map(t => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                       ))}
-                    </select>
-                  </div>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">甲方名称</label>
-                      <input
-                        type="text"
-                        value={formState.party_a_name}
-                        onChange={(e) => setFormState(s => ({ ...s, party_a_name: e.target.value }))}
-                        placeholder="公司名称"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">甲方联系人</label>
-                      <input
-                        type="text"
-                        value={formState.party_a_contact}
-                        onChange={(e) => setFormState(s => ({ ...s, party_a_contact: e.target.value }))}
-                        placeholder="联系人姓名"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">乙方名称</label>
-                      <input
-                        type="text"
-                        value={formState.party_b_name}
-                        onChange={(e) => setFormState(s => ({ ...s, party_b_name: e.target.value }))}
-                        placeholder="员工姓名"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">乙方联系人</label>
-                      <input
-                        type="text"
-                        value={formState.party_b_contact}
-                        onChange={(e) => setFormState(s => ({ ...s, party_b_contact: e.target.value }))}
-                        placeholder="员工联系方式"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">开始日期 *</label>
-                      <input
-                        type="date"
-                        value={formState.start_date}
-                        onChange={(e) => setFormState(s => ({ ...s, start_date: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">结束日期</label>
-                      <input
-                        type="date"
-                        value={formState.end_date}
-                        onChange={(e) => setFormState(s => ({ ...s, end_date: e.target.value }))}
-                        placeholder="无固定期限"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">薪资</label>
-                      <input
-                        type="number"
-                        value={formState.salary}
-                        onChange={(e) => setFormState(s => ({ ...s, salary: e.target.value }))}
-                        placeholder="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">试用期(天)</label>
-                      <input
-                        type="number"
-                        value={formState.probation_period_days}
-                        onChange={(e) => setFormState(s => ({ ...s, probation_period_days: e.target.value }))}
-                        placeholder="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">提前提醒天数</label>
-                      <input
-                        type="number"
-                        value={formState.reminder_days}
-                        onChange={(e) => setFormState(s => ({ ...s, reminder_days: e.target.value }))}
-                        placeholder="30"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">合同文件路径</label>
-                    <input
+                    <Label htmlFor="party_a_name">甲方名称</Label>
+                    <Input
+                      id="party_a_name"
                       type="text"
-                      value={formState.contract_file_path}
-                      onChange={(e) => setFormState(s => ({ ...s, contract_file_path: e.target.value }))}
-                      placeholder="上传文件路径"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={formState.party_a_name}
+                      onChange={(e) => setFormState(s => ({ ...s, party_a_name: e.target.value }))}
+                      placeholder="公司名称"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
-                    <textarea
-                      value={formState.notes}
-                      onChange={(e) => setFormState(s => ({ ...s, notes: e.target.value }))}
-                      rows={3}
-                      placeholder="备注信息"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    <Label htmlFor="party_a_contact">甲方联系人</Label>
+                    <Input
+                      id="party_a_contact"
+                      type="text"
+                      value={formState.party_a_contact}
+                      onChange={(e) => setFormState(s => ({ ...s, party_a_contact: e.target.value }))}
+                      placeholder="联系人姓名"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="party_b_name">乙方名称</Label>
+                    <Input
+                      id="party_b_name"
+                      type="text"
+                      value={formState.party_b_name}
+                      onChange={(e) => setFormState(s => ({ ...s, party_b_name: e.target.value }))}
+                      placeholder="员工姓名"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="party_b_contact">乙方联系人</Label>
+                    <Input
+                      id="party_b_contact"
+                      type="text"
+                      value={formState.party_b_contact}
+                      onChange={(e) => setFormState(s => ({ ...s, party_b_contact: e.target.value }))}
+                      placeholder="员工联系方式"
                     />
                   </div>
                 </div>
-              ) : (
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="start_date">开始日期 *</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      value={formState.start_date}
+                      onChange={(e) => setFormState(s => ({ ...s, start_date: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="end_date">结束日期</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      value={formState.end_date}
+                      onChange={(e) => setFormState(s => ({ ...s, end_date: e.target.value }))}
+                      placeholder="无固定期限"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="salary">薪资</Label>
+                    <Input
+                      id="salary"
+                      type="number"
+                      value={formState.salary}
+                      onChange={(e) => setFormState(s => ({ ...s, salary: e.target.value }))}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="probation_period_days">试用期(天)</Label>
+                    <Input
+                      id="probation_period_days"
+                      type="number"
+                      value={formState.probation_period_days}
+                      onChange={(e) => setFormState(s => ({ ...s, probation_period_days: e.target.value }))}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="reminder_days">提前提醒天数</Label>
+                    <Input
+                      id="reminder_days"
+                      type="number"
+                      value={formState.reminder_days}
+                      onChange={(e) => setFormState(s => ({ ...s, reminder_days: e.target.value }))}
+                      placeholder="30"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  {currentContract && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-gray-50 rounded p-3">
-                          <span className="text-sm text-gray-500">合同编号</span>
+                  <Label htmlFor="contract_file_path">合同文件路径</Label>
+                  <Input
+                    id="contract_file_path"
+                    type="text"
+                    value={formState.contract_file_path}
+                    onChange={(e) => setFormState(s => ({ ...s, contract_file_path: e.target.value }))}
+                    placeholder="上传文件路径"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="notes">备注</Label>
+                  <textarea
+                    id="notes"
+                    value={formState.notes}
+                    onChange={(e) => setFormState(s => ({ ...s, notes: e.target.value }))}
+                    rows={3}
+                    placeholder="备注信息"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="px-4">
+                {currentContract && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <Card className="bg-gray-50 border-none">
+                        <CardContent className="p-3">
+                          <p className="text-sm text-gray-500">合同编号</p>
                           <p className="font-medium">{currentContract.contract_no || '-'}</p>
-                        </div>
-                        <div className="bg-gray-50 rounded p-3">
-                          <span className="text-sm text-gray-500">员工</span>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gray-50 border-none">
+                        <CardContent className="p-3">
+                          <p className="text-sm text-gray-500">员工</p>
                           <p className="font-medium">{getEmployeeName(currentContract.employee_id)}</p>
-                        </div>
-                        <div className="bg-gray-50 rounded p-3">
-                          <span className="text-sm text-gray-500">合同类型</span>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gray-50 border-none">
+                        <CardContent className="p-3">
+                          <p className="text-sm text-gray-500">合同类型</p>
                           <p className="font-medium">
                             {contractTypes.find(t => t.value === currentContract.contract_type)?.label || currentContract.contract_type}
                           </p>
-                        </div>
-                        <div className="bg-gray-50 rounded p-3">
-                          <span className="text-sm text-gray-500">状态</span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusMap[currentContract.status]?.color || 'bg-gray-100 text-gray-600'}`}>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gray-50 border-none">
+                        <CardContent className="p-3">
+                          <p className="text-sm text-gray-500">状态</p>
+                          <Badge className={statusMap[currentContract.status]?.color || 'bg-gray-100 text-gray-600'}>
                             {statusMap[currentContract.status]?.text || currentContract.status}
-                          </span>
-                        </div>
-                        <div className="bg-gray-50 rounded p-3">
-                          <span className="text-sm text-gray-500">薪资</span>
+                          </Badge>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gray-50 border-none">
+                        <CardContent className="p-3">
+                          <p className="text-sm text-gray-500">薪资</p>
                           <p className="font-medium">{currentContract.salary?.toLocaleString() || '-'}</p>
-                        </div>
-                        <div className="bg-gray-50 rounded p-3">
-                          <span className="text-sm text-gray-500">试用期</span>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gray-50 border-none">
+                        <CardContent className="p-3">
+                          <p className="text-sm text-gray-500">试用期</p>
                           <p className="font-medium">{currentContract.probation_period_days || 0} 天</p>
-                        </div>
-                      </div>
-                      <div className="bg-gray-50 rounded p-3">
-                        <span className="text-sm text-gray-500">有效期</span>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    <Card className="bg-gray-50 border-none">
+                      <CardContent className="p-3">
+                        <p className="text-sm text-gray-500">有效期</p>
                         <p className="font-medium">
                           {new Date(currentContract.start_date).toLocaleDateString('zh-CN')} 
                           ~ {currentContract.end_date ? new Date(currentContract.end_date).toLocaleDateString('zh-CN') : '无固定期限'}
                         </p>
-                      </div>
-                      <div className="bg-gray-50 rounded p-3">
-                        <span className="text-sm text-gray-500">甲方信息</span>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gray-50 border-none">
+                      <CardContent className="p-3">
+                        <p className="text-sm text-gray-500">甲方信息</p>
                         <p className="font-medium">{currentContract.party_a_name || '-'}</p>
                         <p className="text-sm">{currentContract.party_a_contact || '-'}</p>
-                      </div>
-                      <div className="bg-gray-50 rounded p-3">
-                        <span className="text-sm text-gray-500">乙方信息</span>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gray-50 border-none">
+                      <CardContent className="p-3">
+                        <p className="text-sm text-gray-500">乙方信息</p>
                         <p className="font-medium">{currentContract.party_b_name || '-'}</p>
                         <p className="text-sm">{currentContract.party_b_contact || '-'}</p>
-                      </div>
-                      {currentContract.notes && (
-                        <div className="bg-gray-50 rounded p-3">
-                          <span className="text-sm text-gray-500">备注</span>
+                      </CardContent>
+                    </Card>
+                    {currentContract.notes && (
+                      <Card className="bg-gray-50 border-none">
+                        <CardContent className="p-3">
+                          <p className="text-sm text-gray-500">备注</p>
                           <p className="font-medium">{currentContract.notes}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
 
-                  {showRenewals && (
-                    <div className="mt-4 pt-4 border-t">
-                      <h3 className="font-medium mb-3">续签记录</h3>
-                      {renewals.length === 0 ? (
-                        <p className="text-gray-500 text-center py-4">暂无续签记录</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {renewals.map(renewal => (
-                            <div key={renewal.id} className="border rounded p-3">
+                {showRenewals && (
+                  <div className="mt-4 pt-4 border-t">
+                    <h3 className="font-medium mb-3">续签记录</h3>
+                    {renewals.length === 0 ? (
+                      <p className="text-gray-500 text-center py-4">暂无续签记录</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {renewals.map(renewal => (
+                          <Card key={renewal.id} className="border">
+                            <CardContent className="p-3">
                               <div className="flex justify-between items-start mb-2">
                                 <div>
                                   <span className="font-medium">{renewalTypes.find(t => t.value === renewal.renewal_type)?.label || renewal.renewal_type}</span>
@@ -866,9 +872,9 @@ export default function HrmContractPage() {
                                     {new Date(renewal.created_at).toLocaleString('zh-CN')}
                                   </span>
                                 </div>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${renewalStatusMap[renewal.status]?.color || 'bg-gray-100 text-gray-600'}`}>
+                                <Badge className={renewalStatusMap[renewal.status]?.color || 'bg-gray-100 text-gray-600'}>
                                   {renewalStatusMap[renewal.status]?.text || renewal.status}
-                                </span>
+                                </Badge>
                               </div>
                               <div className="text-sm text-gray-600 mb-2">
                                 新合同期限: {new Date(renewal.new_start_date).toLocaleDateString('zh-CN')} ~ {renewal.new_end_date ? new Date(renewal.new_end_date).toLocaleDateString('zh-CN') : '无固定期限'}
@@ -891,169 +897,133 @@ export default function HrmContractPage() {
                               <div className="flex gap-2 mt-3">
                                 {renewal.status === 'pending' && (
                                   <>
-                                    <button
-                                      onClick={() => handleApproveRenewal(renewal.id)}
-                                      className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white text-sm rounded hover:bg-green-600"
-                                    >
-                                      <Check size={14} />
+                                    <Button size="sm" onClick={() => handleApproveRenewal(renewal.id)} className="flex items-center gap-1">
+                                      <Check className="w-3 h-3" />
                                       批准
-                                    </button>
-                                    <button
-                                      onClick={() => handleRejectRenewal(renewal.id)}
-                                      className="flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-                                    >
-                                      <X size={14} />
+                                    </Button>
+                                    <Button size="sm" variant="destructive" onClick={() => handleRejectRenewal(renewal.id)} className="flex items-center gap-1">
+                                      <X className="w-3 h-3" />
                                       拒绝
-                                    </button>
+                                    </Button>
                                   </>
                                 )}
                                 {renewal.status === 'approved' && (
-                                  <button
-                                    onClick={() => handleExecuteRenewal(renewal.id)}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-                                  >
-                                    <RefreshCw size={14} />
+                                  <Button size="sm" variant="outline" onClick={() => handleExecuteRenewal(renewal.id)} className="flex items-center gap-1">
+                                    <RefreshCw className="w-3 h-3" />
                                     执行续签
-                                  </button>
+                                  </Button>
                                 )}
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+          <DialogFooter>
+            {modalType !== 'view' ? (
+              <>
+                <Button variant="secondary" onClick={() => setModalVisible(false)}>
+                  取消
+                </Button>
+                <Button onClick={handleSave}>
+                  {modalType === 'create' ? '创建' : '保存'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="secondary" onClick={() => setShowRenewals(!showRenewals)}>
+                  {showRenewals ? '隐藏续签记录' : '查看续签记录'}
+                </Button>
+                <Button onClick={() => setModalVisible(false)}>
+                  关闭
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            <div className="flex justify-end gap-2 px-6 py-4 border-t">
-              {modalType !== 'view' ? (
-                <>
-                  <button
-                    onClick={() => setModalVisible(false)}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
-                  >
-                    {modalType === 'create' ? '创建' : '保存'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setShowRenewals(!showRenewals)}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                  >
-                    {showRenewals ? '隐藏续签记录' : '查看续签记录'}
-                  </button>
-                  <button
-                    onClick={() => setModalVisible(false)}
-                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
-                  >
-                    关闭
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {renewModalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <h2 className="text-lg font-medium">合同续签申请</h2>
-              <button
-                onClick={() => setRenewModalVisible(false)}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">续签类型 *</label>
-                <select
-                  value={renewFormState.renewal_type}
-                  onChange={(e) => setRenewFormState(s => ({ ...s, renewal_type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">请选择续签类型</option>
+      <Dialog open={renewModalVisible} onOpenChange={setRenewModalVisible}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>合同续签申请</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="renewal_type">续签类型 *</Label>
+              <Select id="renewal_type" value={renewFormState.renewal_type} onValueChange={(value) => setRenewFormState(s => ({ ...s, renewal_type: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="请选择续签类型" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">请选择续签类型</SelectItem>
                   {renewalTypes.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                   ))}
-                </select>
-              </div>
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">新合同开始日期 *</label>
-                  <input
-                    type="date"
-                    value={renewFormState.new_start_date}
-                    onChange={(e) => setRenewFormState(s => ({ ...s, new_start_date: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">新合同结束日期</label>
-                  <input
-                    type="date"
-                    value={renewFormState.new_end_date}
-                    onChange={(e) => setRenewFormState(s => ({ ...s, new_end_date: e.target.value }))}
-                    placeholder="无固定期限"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">新薪资</label>
-                <input
-                  type="number"
-                  value={renewFormState.new_salary}
-                  onChange={(e) => setRenewFormState(s => ({ ...s, new_salary: e.target.value }))}
-                  placeholder="不修改请留空"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                <Label htmlFor="new_start_date">新合同开始日期 *</Label>
+                <Input
+                  id="new_start_date"
+                  type="date"
+                  value={renewFormState.new_start_date}
+                  onChange={(e) => setRenewFormState(s => ({ ...s, new_start_date: e.target.value }))}
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">续签原因</label>
-                <textarea
-                  value={renewFormState.renewal_reason}
-                  onChange={(e) => setRenewFormState(s => ({ ...s, renewal_reason: e.target.value }))}
-                  rows={3}
-                  placeholder="请说明续签原因"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                <Label htmlFor="new_end_date">新合同结束日期</Label>
+                <Input
+                  id="new_end_date"
+                  type="date"
+                  value={renewFormState.new_end_date}
+                  onChange={(e) => setRenewFormState(s => ({ ...s, new_end_date: e.target.value }))}
+                  placeholder="无固定期限"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 px-6 py-4 border-t">
-              <button
-                onClick={() => setRenewModalVisible(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleSubmitRenew}
-                className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
-              >
-                提交申请
-              </button>
+            <div>
+              <Label htmlFor="new_salary">新薪资</Label>
+              <Input
+                id="new_salary"
+                type="number"
+                value={renewFormState.new_salary}
+                onChange={(e) => setRenewFormState(s => ({ ...s, new_salary: e.target.value }))}
+                placeholder="不修改请留空"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="renewal_reason">续签原因</Label>
+              <textarea
+                id="renewal_reason"
+                value={renewFormState.renewal_reason}
+                onChange={(e) => setRenewFormState(s => ({ ...s, renewal_reason: e.target.value }))}
+                rows={3}
+                placeholder="请说明续签原因"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setRenewModalVisible(false)}>
+              取消
+            </Button>
+            <Button onClick={handleSubmitRenew}>
+              提交申请
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

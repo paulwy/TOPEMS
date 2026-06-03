@@ -6,12 +6,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateQualityIssueRequest, QualityIssue, UpdateQualityIssueRequest};
-use topems_shared::{ApiResponse, PaginationParams};
+use topems_shared::ApiResponse;
+
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct QualityIssueQueryParams {
@@ -21,26 +21,19 @@ pub struct QualityIssueQueryParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/issues", get(list_issues).post(create_issue))
         .route(
             "/api/v1/issues/{id}",
             get(get_issue).put(update_issue),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_issues(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QualityIssueQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -101,7 +94,7 @@ async fn list_issues(
 }
 
 async fn create_issue(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateQualityIssueRequest>,
 ) -> Json<ApiResponse<QualityIssue>> {
     let id = Uuid::new_v4();
@@ -138,7 +131,7 @@ async fn create_issue(
 }
 
 async fn get_issue(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityIssue>> {
     let result = sqlx::query_as::<_, QualityIssue>(
@@ -162,7 +155,7 @@ async fn get_issue(
 }
 
 async fn update_issue(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateQualityIssueRequest>,
 ) -> Json<ApiResponse<QualityIssue>> {

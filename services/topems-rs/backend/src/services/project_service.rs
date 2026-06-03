@@ -3,8 +3,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use crate::repositories::project_repository::ProjectRepository;
-use topems_shared::Result;
-use anyhow;
+use topems_shared::{Result, TopemsError};
 
 pub struct ProjectService {
     repository: ProjectRepository,
@@ -37,7 +36,7 @@ impl ProjectService {
 
     pub async fn update_project(&self, id: Uuid, req: &UpdateProjectRequest) -> Result<Project> {
         let existing = self.repository.get_by_id(id).await?;
-        let existing = existing.ok_or_else(|| anyhow::anyhow!("项目不存在"))?;
+        let existing = existing.ok_or_else(|| TopemsError::NotFound("项目不存在".to_string()))?;
         self.repository.update(id, req, &existing).await
     }
 

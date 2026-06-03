@@ -7,6 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
+use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::response::ApiResponse;
@@ -54,7 +55,7 @@ struct ListQueryParams {
     page_size: Option<i32>,
 }
 
-pub async fn create_routes(pool: PgPool) -> topems_shared::Result<axum::Router> {
+pub async fn create_routes() -> topems_shared::Result<axum::Router> {
     let router = axum::Router::new()
         .route("/api/v1/documents", axum::routing::get(list_documents))
         .route(
@@ -72,13 +73,12 @@ pub async fn create_routes(pool: PgPool) -> topems_shared::Result<axum::Router> 
         .route(
             "/api/v1/entities/{entity_type}/{entity_id}/documents",
             axum::routing::get(get_entity_documents),
-        )
-        .with_state(pool);
+        );
     Ok(router)
 }
 
 async fn list_documents(
-    State(pool): State<PgPool>,
+    State(state): State<Arc<super::ApiState>>,
     axum::extract::Query(params): axum::extract::Query<ListQueryParams>,
 ) -> impl IntoResponse {
     let page = params.page.unwrap_or(1);
@@ -93,12 +93,12 @@ async fn list_documents(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     let total: Result<i64, sqlx::Error> =
         sqlx::query_scalar("SELECT COUNT(*) FROM rs.document_relations")
-            .fetch_one(&pool)
+            .fetch_one(&state.db)
             .await;
 
     match (result, total) {
@@ -125,7 +125,7 @@ async fn list_documents(
 }
 
 async fn create_document_relation(
-    State(pool): State<PgPool>,
+    State(state): State<Arc<super::ApiState>>,
     Json(request): Json<CreateDocumentRelationRequest>,
 ) -> impl IntoResponse {
     let id = Uuid::new_v4();
@@ -150,7 +150,7 @@ async fn create_document_relation(
     .bind(&request.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     match result {
@@ -167,7 +167,7 @@ async fn create_document_relation(
 }
 
 async fn get_document_relation(
-    State(pool): State<PgPool>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     let result: Result<Option<DocumentRelation>, sqlx::Error> = sqlx::query_as(
@@ -175,7 +175,7 @@ async fn get_document_relation(
          FROM rs.document_relations WHERE id = $1"
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     match result {
@@ -196,13 +196,13 @@ async fn get_document_relation(
 }
 
 async fn delete_document_relation(
-    State(pool): State<PgPool>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     let result: Result<sqlx::postgres::PgQueryResult, sqlx::Error> =
         sqlx::query("DELETE FROM rs.document_relations WHERE id = $1")
             .bind(id)
-            .execute(&pool)
+            .execute(&state.db)
             .await;
 
     match result {
@@ -222,7 +222,7 @@ async fn delete_document_relation(
 }
 
 async fn get_entity_documents(
-    State(pool): State<PgPool>,
+    State(state): State<Arc<super::ApiState>>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
     let result: Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
@@ -233,7 +233,7 @@ async fn get_entity_documents(
     )
     .bind(entity_type)
     .bind(entity_id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     match result {

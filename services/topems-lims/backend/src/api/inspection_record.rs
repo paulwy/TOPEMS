@@ -5,12 +5,11 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{CreateInspectionRecordRequest, InspectionRecord};
+use crate::api::ApiState;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -21,26 +20,19 @@ pub struct PaginationParams {
     pub conclusion: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/records", get(list_records).post(create_record))
         .route(
             "/api/v1/records/task/{task_id}",
             get(list_records_by_task),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_records(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -102,7 +94,7 @@ async fn list_records(
 }
 
 async fn create_record(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateInspectionRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
     let id = Uuid::new_v4();
@@ -137,7 +129,7 @@ async fn create_record(
 }
 
 async fn list_records_by_task(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(task_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<InspectionRecord>>> {
     let result = sqlx::query_as::<_, InspectionRecord>(

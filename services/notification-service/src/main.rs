@@ -1,21 +1,20 @@
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
-        Path, Query, State,
+        Path, Query, State, FromRef,
     },
     routing::{delete, get, post, put},
     Json, Router,
 };
-use chrono::Utc;
 use futures_util::{sink::SinkExt, stream::StreamExt};
 use std::net::SocketAddr;
 use tokio::sync::broadcast;
-use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 use sqlx::PgPool;
-use dotenv::dotenv;
+use dotenv;
 use serde::{Deserialize, Serialize};
+use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 
 mod models;
 mod db;
@@ -39,52 +38,19 @@ pub enum WsMessage {
     Unsubscribe { user_id: String },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ApiResponse<T> {
-    pub code: i32,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
 
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: String) -> Self {
-        ApiResponse {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message,
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(message: String) -> Self {
-        ApiResponse {
-            code: 500,
-            success: false,
-            data: None,
-            message,
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn not_found(message: String) -> Self {
-        ApiResponse {
-            code: 404,
-            success: false,
-            data: None,
-            message,
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
 
 #[derive(Clone)]
 struct AppState {
+    auth_state: AuthState,
     tx: broadcast::Sender<WsMessage>,
     pool: PgPool,
+}
+
+impl FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
+    }
 }
 
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
@@ -109,7 +75,7 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
+    _ = dotenv::dotenv();
     
     tracing_subscriber::registry()
         .with(
@@ -139,37 +105,16 @@ async fn main() {
     };
 
     let (tx, _) = broadcast::channel(1000);
-    let state = AppState { tx, pool };
+    let auth_state = AuthState::from_env();
+    let state = AppState { auth_state, tx, pool };
 
-    let cors = {
-        use axum::http::HeaderValue;
-        use tower_http::cors::AllowOrigin;
-        
-        let allowed_origins = std::env::var("CORS_ALLOWED_ORIGINS")
-            .unwrap_or_else(|_| "http://localhost:3000,http://localhost:5173".to_string());
-        
-        let origins: Vec<HeaderValue> = allowed_origins
-            .split(',')
-            .filter_map(|origin| origin.trim().parse().ok())
-            .collect();
-        
-        let allow_origin = if origins.is_empty() {
-            tracing::warn!("No CORS origins configured, allowing any origin (not recommended for production)");
-            AllowOrigin::any()
-        } else {
-            tracing::info!("CORS allowed origins: {:?}", origins);
-            AllowOrigin::list(origins)
-        };
-        
-        CorsLayer::new()
-            .allow_origin(allow_origin)
-            .allow_methods(Any)
-            .allow_headers(Any)
-    };
+    let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/", get(home))
-        .route("/health", get(health))
+        .route("/health", get(health));
+
+    let protected_routes = Router::new()
         .route("/api/v1/notifications", get(list_notifications))
         .route("/api/v1/notifications", post(create_notification))
         .route("/api/v1/notifications/unread", get(get_unread_notifications))
@@ -178,6 +123,14 @@ async fn main() {
         .route("/api/v1/notifications/read-all", put(mark_all_as_read))
         .route("/api/v1/notifications/:id", delete(delete_notification))
         .route("/ws/notifications", get(ws_handler))
+        .layer(axum::middleware::from_fn_with_state(
+            state.auth_state.clone(),
+            auth_middleware,
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors)
         .with_state(state);
 
@@ -203,7 +156,7 @@ async fn home() -> &'static str {
 async fn health() -> Json<ApiResponse<String>> {
     Json(ApiResponse::success(
         "Notification Service is running!".to_string(),
-        "OK".to_string(),
+        "OK",
     ))
 }
 
@@ -247,7 +200,7 @@ async fn list_notifications(
             page_size,
             unread_count,
         },
-        "Notifications retrieved successfully".to_string(),
+        "Notifications retrieved successfully",
     ))
 }
 
@@ -262,11 +215,11 @@ async fn create_notification(
             let unread_count = Repository::get_unread_count(&state.pool, &notification.user_id).await.unwrap_or(0);
             let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
             
-            Json(ApiResponse::success(notification, "Notification created successfully".to_string()))
+            Json(ApiResponse::success(notification, "Notification created successfully"))
         }
         Err(e) => {
             tracing::error!("Failed to create notification: {}", e);
-            Json(ApiResponse::error(format!("Failed to create notification: {}", e)))
+            Json(ApiResponse::error(500, &format!("Failed to create notification: {}", e)))
         }
     }
 }
@@ -279,7 +232,7 @@ async fn get_unread_notifications(
     
     let notifications = Repository::get_unread_notifications(&state.pool, &user_id).await.unwrap_or_default();
 
-    Json(ApiResponse::success(notifications, "Unread notifications retrieved successfully".to_string()))
+    Json(ApiResponse::success(notifications, "Unread notifications retrieved successfully"))
 }
 
 async fn get_unread_count(
@@ -290,7 +243,7 @@ async fn get_unread_count(
     
     let count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
 
-    Json(ApiResponse::success(count, "Unread count retrieved successfully".to_string()))
+    Json(ApiResponse::success(count, "Unread count retrieved successfully"))
 }
 
 async fn mark_as_read(
@@ -306,16 +259,16 @@ async fn mark_as_read(
                     let unread_count = Repository::get_unread_count(&state.pool, &notification.user_id).await.unwrap_or(0);
                     let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
                     
-                    Json(ApiResponse::success(notification, "Notification marked as read".to_string()))
+                    Json(ApiResponse::success(notification, "Notification marked as read"))
                 }
-                Ok(None) => Json(ApiResponse::not_found("Notification not found".to_string())),
+                Ok(None) => Json(ApiResponse::error(404, "Notification not found")),
                 Err(e) => {
                     tracing::error!("Failed to mark as read: {}", e);
-                    Json(ApiResponse::error(format!("Failed to mark as read: {}", e)))
+                    Json(ApiResponse::error(500, &format!("Failed to mark as read: {}", e)))
                 }
             }
         }
-        Err(_) => Json(ApiResponse::error("Invalid notification ID".to_string())),
+        Err(_) => Json(ApiResponse::error(400, "Invalid notification ID")),
     }
 }
 
@@ -328,11 +281,11 @@ async fn mark_all_as_read(
     match Repository::mark_all_as_read(&state.pool, &user_id).await {
         Ok(count) => {
             let _ = state.tx.send(WsMessage::UnreadCount(0));
-            Json(ApiResponse::success(count, format!("Marked {} notifications as read", count)))
+            Json(ApiResponse::success(count, &format!("Marked {} notifications as read", count)))
         }
         Err(e) => {
             tracing::error!("Failed to mark all as read: {}", e);
-            Json(ApiResponse::error(format!("Failed to mark all as read: {}", e)))
+            Json(ApiResponse::error(500, &format!("Failed to mark all as read: {}", e)))
         }
     }
 }
@@ -354,16 +307,16 @@ async fn delete_notification(
                         let unread_count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
                         let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
                     }
-                    Json(ApiResponse::success(true, "Notification deleted successfully".to_string()))
+                    Json(ApiResponse::success(true, "Notification deleted successfully"))
                 }
-                Ok(false) => Json(ApiResponse::not_found("Notification not found".to_string())),
+                Ok(false) => Json(ApiResponse::error(404, "Notification not found")),
                 Err(e) => {
                     tracing::error!("Failed to delete notification: {}", e);
-                    Json(ApiResponse::error(format!("Failed to delete notification: {}", e)))
+                    Json(ApiResponse::error(500, &format!("Failed to delete notification: {}", e)))
                 }
             }
         }
-        Err(_) => Json(ApiResponse::error("Invalid notification ID".to_string())),
+        Err(_) => Json(ApiResponse::error(400, "Invalid notification ID")),
     }
 }
 
@@ -379,7 +332,7 @@ async fn websocket_handler(socket: WebSocket, state: AppState) {
     let mut rx = state.tx.subscribe();
     let mut user_id: Option<String> = None;
 
-    let _ = sender.send(Message::Text(serde_json::to_string(&WsMessage::Ping).unwrap())).await;
+    let _ = sender.send(Message::Text(serde_json::to_string(&WsMessage::Ping).unwrap().into())).await;
 
     loop {
         tokio::select! {
@@ -395,7 +348,7 @@ async fn websocket_handler(socket: WebSocket, state: AppState) {
                                     if let Some(uid) = &user_id {
                                         if let Ok(count) = Repository::get_unread_count(&state.pool, uid).await {
                                             let _ = sender.send(Message::Text(
-                                                serde_json::to_string(&WsMessage::UnreadCount(count)).unwrap()
+                                                serde_json::to_string(&WsMessage::UnreadCount(count)).unwrap().into()
                                             )).await;
                                         }
                                     }
@@ -408,7 +361,7 @@ async fn websocket_handler(socket: WebSocket, state: AppState) {
                                 }
                                 WsMessage::Ping => {
                                     let _ = sender.send(Message::Text(
-                                        serde_json::to_string(&WsMessage::Pong).unwrap()
+                                        serde_json::to_string(&WsMessage::Pong).unwrap().into()
                                     )).await;
                                 }
                                 _ => {}
@@ -428,13 +381,13 @@ async fn websocket_handler(socket: WebSocket, state: AppState) {
                         if let Some(ref uid) = user_id {
                             if notification.user_id == *uid {
                                 let _ = sender.send(Message::Text(
-                                    serde_json::to_string(&msg).unwrap()
+                                    serde_json::to_string(&msg).unwrap().into()
                                 )).await;
                             }
                         }
                     } else {
                         let _ = sender.send(Message::Text(
-                            serde_json::to_string(&msg).unwrap()
+                            serde_json::to_string(&msg).unwrap().into()
                         )).await;
                     }
                 }

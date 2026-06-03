@@ -130,6 +130,280 @@ export interface Payable {
   updated_at: string;
 }
 
+export interface AccountingSubject {
+  id: string;
+  code: string;
+  name: string;
+  category?: string;
+  level: number;
+  parent_code?: string;
+  description?: string;
+  is_cash_flow: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FinancialVoucher {
+  id: string;
+  voucher_number: string;
+  voucher_date: string;
+  period: string;
+  attachment_count?: number;
+  summary?: string;
+  maker_id?: string;
+  maker_name?: string;
+  checker_id?: string;
+  checker_name?: string;
+  bookkeeper_id?: string;
+  bookkeeper_name?: string;
+  status: string;
+  total_debit: number;
+  total_credit: number;
+  source_system?: string;
+  source_id?: string;
+  project_id?: string;
+  contract_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VoucherItem {
+  id: string;
+  voucher_id: string;
+  line_number: number;
+  subject_code: string;
+  subject_name: string;
+  summary?: string;
+  debit_amount: number;
+  credit_amount: number;
+  quantity?: number;
+  unit?: string;
+  price?: number;
+  department_id?: string;
+  project_id?: string;
+  contract_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VoucherItemRequest {
+  line_number: number;
+  subject_code: string;
+  subject_name?: string;
+  summary?: string;
+  debit_amount: number;
+  credit_amount: number;
+  quantity?: number;
+  unit?: string;
+  price?: number;
+  department_id?: string;
+  project_id?: string;
+  contract_id?: string;
+}
+
+export interface CreateFinancialVoucherRequest {
+  voucher_number: string;
+  voucher_date: string;
+  period: string;
+  attachment_count?: number;
+  summary?: string;
+  maker_id?: string;
+  maker_name?: string;
+  project_id?: string;
+  contract_id?: string;
+  items: VoucherItemRequest[];
+}
+
+export interface VoucherImportResult {
+  success_count: number;
+  failed_count: number;
+  errors: string[];
+  imported_vouchers: FinancialVoucher[];
+}
+
+export interface BalanceItem {
+  code: string;
+  name: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface BalanceSheet {
+  assets: BalanceItem[];
+  liabilities: BalanceItem[];
+  equity: BalanceItem[];
+  total_assets: number;
+  total_liabilities: number;
+  total_equity: number;
+  period: string;
+}
+
+export interface IncomeItem {
+  code: string;
+  name: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface IncomeStatement {
+  revenues: IncomeItem[];
+  expenses: IncomeItem[];
+  gross_profit: number;
+  operating_profit: number;
+  net_profit: number;
+  period: string;
+}
+
+export interface CashFlowItem {
+  code: string;
+  name: string;
+  amount: number;
+}
+
+export interface CashFlowStatement {
+  operating_activities: CashFlowItem[];
+  investing_activities: CashFlowItem[];
+  financing_activities: CashFlowItem[];
+  net_cash_flow: number;
+  period: string;
+}
+
+export interface ProjectFinancialSummary {
+  project_id: string;
+  project_name: string;
+  contract_amount: number;
+  received_amount: number;
+  payable_amount: number;
+  paid_amount: number;
+  profit: number;
+  margin: number;
+  status: string;
+}
+
+export interface KeyRatios {
+  current_ratio: number;
+  debt_ratio: number;
+  return_on_equity: number;
+  profit_margin: number;
+  return_on_assets: number;
+  earnings_per_share: number;
+}
+
+export interface BusinessOverview {
+  total_assets: number;
+  total_liabilities: number;
+  total_equity: number;
+  total_revenue: number;
+  total_expenses: number;
+  net_profit: number;
+  cash_flow: number;
+  period: string;
+  key_ratios: KeyRatios;
+  receivable_turnover: number;
+  inventory_turnover: number;
+  asset_turnover: number;
+}
+
+export interface MonthlyTrend {
+  month: string;
+  revenue: number;
+  expenses: number;
+  profit: number;
+  cash_flow: number;
+  profit_margin: number;
+}
+
+export interface DepartmentFinancialSummary {
+  department_id?: string;
+  department_name: string;
+  total_expenses: number;
+  budget_amount: number;
+  budget_usage: number;
+  expense_count: number;
+}
+
+export interface AgingAnalysis {
+  category: string;
+  days_0_30: number;
+  days_31_60: number;
+  days_61_90: number;
+  days_91_180: number;
+  days_181: number;
+  total: number;
+}
+
+export interface CashFlowAnalysis {
+  period: string;
+  operating_cash_flow: number;
+  investing_cash_flow: number;
+  financing_cash_flow: number;
+  net_cash_flow: number;
+  cash_flow_ratio: number;
+  operating_cash_flow_to_revenue: number;
+}
+
+export interface ExpenseAnalysis {
+  period: string;
+  total_expenses: number;
+  department_expenses: DepartmentExpense[];
+  category_expenses: CategoryExpense[];
+  monthly_trend: MonthlyExpense[];
+}
+
+export interface DepartmentExpense {
+  department_id?: string;
+  department_name: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface CategoryExpense {
+  category: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface MonthlyExpense {
+  month: string;
+  amount: number;
+  growth_rate: number;
+}
+
+export interface ProfitAnalysis {
+  period: string;
+  gross_profit: number;
+  operating_profit: number;
+  net_profit: number;
+  gross_margin: number;
+  operating_margin: number;
+  net_margin: number;
+  profit_trend: MonthlyProfit[];
+}
+
+export interface MonthlyProfit {
+  month: string;
+  gross_profit: number;
+  operating_profit: number;
+  net_profit: number;
+}
+
+export interface FinancialOverview {
+  total_assets: number;
+  total_liabilities: number;
+  total_equity: number;
+  total_revenue: number;
+  total_expenses: number;
+  net_profit: number;
+  operating_cash_flow: number;
+  key_ratios: KeyRatios;
+  profit_margin: number;
+  return_on_assets: number;
+  return_on_equity: number;
+  debt_ratio: number;
+  current_ratio: number;
+}
+
 export interface PaginationParams {
   page?: number;
   page_size?: number;
@@ -388,5 +662,159 @@ export const payableApi = {
   
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.erp.delete(`/api/v1/payables/${id}`);
+  },
+};
+
+export const accountingSubjectApi = {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<AccountingSubject>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/accounting-subjects${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async get(id: string): Promise<ApiResponse<AccountingSubject>> {
+    return apiClient.erp.get(`/api/v1/accounting-subjects/${id}`);
+  },
+  
+  async create(data: Partial<AccountingSubject>): Promise<ApiResponse<AccountingSubject>> {
+    return apiClient.erp.post('/api/v1/accounting-subjects', data);
+  },
+  
+  async update(id: string, data: Partial<AccountingSubject>): Promise<ApiResponse<AccountingSubject>> {
+    return apiClient.erp.put(`/api/v1/accounting-subjects/${id}`, data);
+  },
+  
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/accounting-subjects/${id}`);
+  },
+};
+
+export const voucherApi = {
+  async list(params?: PaginationParams & { period?: string }): Promise<ApiResponse<PaginatedResult<FinancialVoucher>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.period) searchParams.set('period', params.period);
+    
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/vouchers${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async get(id: string): Promise<ApiResponse<FinancialVoucher>> {
+    return apiClient.erp.get(`/api/v1/vouchers/${id}`);
+  },
+  
+  async getItems(id: string): Promise<ApiResponse<VoucherItem[]>> {
+    return apiClient.erp.get(`/api/v1/vouchers/${id}/items`);
+  },
+  
+  async create(data: CreateFinancialVoucherRequest): Promise<ApiResponse<FinancialVoucher>> {
+    return apiClient.erp.post('/api/v1/vouchers', data);
+  },
+  
+  async update(id: string, data: Partial<FinancialVoucher>): Promise<ApiResponse<FinancialVoucher>> {
+    return apiClient.erp.put(`/api/v1/vouchers/${id}`, data);
+  },
+  
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/vouchers/${id}`);
+  },
+  
+  async importU8(data: { file_name: string; file_content: string; import_mode: string }): Promise<ApiResponse<VoucherImportResult>> {
+    return apiClient.erp.post('/api/v1/vouchers/import/u8', data);
+  },
+};
+
+export const financeReportApi = {
+  async balanceSheet(params?: { period?: string }): Promise<ApiResponse<BalanceSheet>> {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set('period', params.period);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/balance-sheet${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async incomeStatement(params?: { period?: string }): Promise<ApiResponse<IncomeStatement>> {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set('period', params.period);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/income-statement${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async cashFlowStatement(params?: { period?: string }): Promise<ApiResponse<CashFlowStatement>> {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set('period', params.period);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/cash-flow${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async businessOverview(params?: { period?: string }): Promise<ApiResponse<BusinessOverview>> {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set('period', params.period);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/business-overview${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async projectSummary(params?: { project_id?: string }): Promise<ApiResponse<ProjectFinancialSummary[]>> {
+    const searchParams = new URLSearchParams();
+    if (params?.project_id) searchParams.set('project_id', params.project_id);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/project-summary${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async monthlyTrend(): Promise<ApiResponse<MonthlyTrend[]>> {
+    return apiClient.erp.get('/api/v1/reports/monthly-trend');
+  },
+  
+  async departmentSummary(params?: { department_id?: string }): Promise<ApiResponse<DepartmentFinancialSummary[]>> {
+    const searchParams = new URLSearchParams();
+    if (params?.department_id) searchParams.set('department_id', params.department_id);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/department-summary${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async agingAnalysis(): Promise<ApiResponse<AgingAnalysis[]>> {
+    return apiClient.erp.get('/api/v1/reports/aging-analysis');
+  },
+  
+  async voucherStatistics(params?: { period?: string }): Promise<ApiResponse<Record<string, any>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set('period', params.period);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/voucher-statistics${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async cashFlowAnalysis(params?: { period?: string }): Promise<ApiResponse<CashFlowAnalysis>> {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set('period', params.period);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/cash-flow-analysis${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async expenseAnalysis(params?: { period?: string }): Promise<ApiResponse<ExpenseAnalysis>> {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set('period', params.period);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/expense-analysis${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async profitAnalysis(params?: { period?: string }): Promise<ApiResponse<ProfitAnalysis>> {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set('period', params.period);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/profit-analysis${queryString ? '?' + queryString : ''}`);
+  },
+  
+  async financialOverview(params?: { period?: string }): Promise<ApiResponse<FinancialOverview>> {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set('period', params.period);
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(`/api/v1/reports/financial-overview${queryString ? '?' + queryString : ''}`);
   },
 };

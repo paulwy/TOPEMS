@@ -2,16 +2,16 @@ use axum::{
     routing::{get, post},
     Router,
     extract::State,
-    http::header,
     Json,
 };
-use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use dotenv::dotenv;
 use sqlx::PgPool;
 use std::net::SocketAddr;
 use chrono::Utc;
 use serde::Serialize;
+use topems_shared::auth::{auth_middleware, AuthState};
+use topems_shared::cors::create_cors_layer;
 
 mod api;
 mod db;
@@ -105,48 +105,31 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     tracing::info!("Starting TOPEMS-FLOW Workflow Engine...");
-    dotenv().ok();
+    dotenv::dotenv().ok();
 
     let pool = connect_db().await;
+    let auth_state = AuthState::from_env();
 
-    let cors_origins = std::env::var("CORS_ORIGINS")
-        .unwrap_or_else(|_| "http://localhost:3000,http://localhost:5173".to_string());
-    
-    let allowed_origins: Vec<axum::http::HeaderValue> = cors_origins
-        .split(',')
-        .filter_map(|origin| {
-            origin.trim().parse().ok()
-        })
-        .collect();
-    
-    let cors = CorsLayer::new()
-        .allow_origin(if allowed_origins.is_empty() {
-            AllowOrigin::any()
-        } else {
-            AllowOrigin::list(allowed_origins)
-        })
-        .allow_methods(tower_http::cors::Any)
-        .allow_headers([
-            header::AUTHORIZATION,
-            header::CONTENT_TYPE,
-            header::ACCEPT,
-            header::ORIGIN,
-            header::ACCESS_CONTROL_REQUEST_HEADERS,
-            header::ACCESS_CONTROL_REQUEST_METHOD,
-        ]);
+    let cors = create_cors_layer();
 
     let repo = db::WorkflowRepository::new(pool.clone());
     let engine = services::WorkflowEngine::new(repo.clone());
     let app_state = AppState { 
         repo: repo.clone(), 
         engine,
+        pool: pool.clone(),
+        auth_state: auth_state.clone(),
     };
 
     let engine_clone = app_state.engine.clone();
 
-    let app = Router::new()
+    // 公共路由（不需要认证）
+    let public_routes = Router::new()
         .route("/", get(home))
-        .route("/health", get(health))
+        .route("/health", get(health));
+
+    // 受保护的 API 路由（需要认证）
+    let protected_routes = Router::new()
         .route("/api/v1/workflows", get(list_workflows).post(create_workflow))
         .route(
             "/api/v1/workflows/{id}",
@@ -175,6 +158,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/performance", get(get_performance))
         .route("/api/v1/performance/reset", post(reset_performance))
         .route("/api/v1/performance/threshold", post(set_threshold))
+        .layer(axum::middleware::from_fn_with_state(
+            auth_state,
+            auth_middleware,
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors)
         .layer(axum::middleware::from_fn(middleware::performance_middleware))
         .with_state(app_state);

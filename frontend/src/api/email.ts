@@ -31,6 +31,38 @@ export interface EmailTemplate {
 export interface EmailLogListResponse {
   items: EmailLog[];
   total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface EmailStatsResponse {
+  total: number;
+  sentCount: number;
+  failedCount: number;
+  pendingCount: number;
+  todayCount: number;
+}
+
+export interface BatchSendEmailRequest {
+  toEmails: string[];
+  ccEmail?: string;
+  bccEmail?: string;
+  subject: string;
+  body: string;
+  templateId?: string;
+  metadata?: any;
+}
+
+export interface BatchSendEmailResponse {
+  total: number;
+  successCount: number;
+  failCount: number;
+  results: {
+    email: string;
+    status: 'sent' | 'failed';
+    message: string;
+  }[];
 }
 
 export interface SendEmailRequest {
@@ -52,9 +84,45 @@ export interface SendEmailWithTemplateRequest {
   metadata?: any;
 }
 
-export const getEmailLogs = async (): Promise<ApiResponse<EmailLogListResponse>> => {
+export const getEmailLogs = async (page = 1, pageSize = 20, status?: string, toEmail?: string): Promise<ApiResponse<EmailLogListResponse>> => {
+  const params = new URLSearchParams();
+  params.append('page', page.toString());
+  params.append('page_size', pageSize.toString());
+  if (status) {
+    params.append('status', status);
+  }
+  if (toEmail) {
+    params.append('to_email', toEmail);
+  }
   return apiClient.notification.get<EmailLogListResponse>(
-    '/api/v1/email-logs'
+    `/api/v1/email-logs?${params.toString()}`
+  );
+};
+
+export const resendEmail = async (id: string): Promise<ApiResponse<{ id: string; status: string }>> => {
+  return apiClient.notification.post<{ id: string; status: string }>(
+    `/api/v1/email-logs/${id}/resend`
+  );
+};
+
+export const batchSendEmail = async (request: BatchSendEmailRequest): Promise<ApiResponse<BatchSendEmailResponse>> => {
+  return apiClient.notification.post<BatchSendEmailResponse>(
+    '/api/v1/email/batch-send',
+    {
+      to_emails: request.toEmails,
+      cc_email: request.ccEmail,
+      bcc_email: request.bccEmail,
+      subject: request.subject,
+      body: request.body,
+      template_id: request.templateId,
+      metadata: request.metadata,
+    }
+  );
+};
+
+export const getEmailStats = async (): Promise<ApiResponse<EmailStatsResponse>> => {
+  return apiClient.notification.get<EmailStatsResponse>(
+    '/api/v1/email/stats'
   );
 };
 

@@ -42,6 +42,10 @@ interface DataTableProps<TData, TValue> {
   loading?: boolean
   onRowClick?: (row: TData) => void
   exportFileName?: string
+  enablePagination?: boolean
+  pageCount?: number
+  onPageChange?: (page: number) => void
+  currentPage?: number
 }
 
 export function DataTable<TData, TValue>({
@@ -52,13 +56,17 @@ export function DataTable<TData, TValue>({
   loading,
   onRowClick,
   exportFileName = 'export',
+  enablePagination = false,
+  pageCount = 1,
+  onPageChange,
+  currentPage = 0,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
   const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
+    pageIndex: currentPage,
     pageSize: 10,
   })
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -252,19 +260,31 @@ export function DataTable<TData, TValue>({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
+            onClick={() => {
+              if (enablePagination && onPageChange) {
+                onPageChange(pagination.pageIndex - 1)
+              } else {
+                table.previousPage()
+              }
+            }}
             disabled={!table.getCanPreviousPage()}
           >
             上一页
           </Button>
           <span className="text-sm text-gray-500">
-            第 {table.getState().pagination.pageIndex + 1} 页，共{' '}
-            {table.getPageCount()} 页
+            第 {pagination.pageIndex + 1} 页，共{' '}
+            {enablePagination && pageCount ? pageCount : table.getPageCount()} 页
           </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
+            onClick={() => {
+              if (enablePagination && onPageChange) {
+                onPageChange(pagination.pageIndex + 1)
+              } else {
+                table.nextPage()
+              }
+            }}
             disabled={!table.getCanNextPage()}
           >
             下一页

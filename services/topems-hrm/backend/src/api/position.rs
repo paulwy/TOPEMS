@@ -7,11 +7,10 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AppState, PaginationQuery, PaginatedResult};
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Position {
@@ -63,24 +62,14 @@ pub struct QueryParams {
     pub status: Option<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    use crate::api::department::AppState;
-    
-    let state = Arc::new(AppState { db });
-
-    let router = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/positions", get(list_positions).post(create_position))
-        .route(
-            "/api/v1/positions/{id}",
-            get(get_position).put(update_position).delete(delete_position),
-        )
-        .with_state(state);
-
-    Ok(router)
+        .route("/api/v1/positions/{id}", get(get_position).put(update_position).delete(delete_position))
 }
 
 async fn list_positions(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
 ) -> Json<ApiResponse<PaginatedResult<Position>>> {
     let pagination = params.pagination;
@@ -141,7 +130,7 @@ async fn list_positions(
 }
 
 async fn create_position(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreatePositionRequest>,
 ) -> Json<ApiResponse<Position>> {
     let id = Uuid::new_v4();
@@ -178,7 +167,7 @@ async fn create_position(
 }
 
 async fn get_position(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Position>> {
     let result = sqlx::query_as::<_, Position>(
@@ -199,7 +188,7 @@ async fn get_position(
 }
 
 async fn update_position(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePositionRequest>,
 ) -> Json<ApiResponse<Position>> {
@@ -248,7 +237,7 @@ async fn update_position(
 }
 
 async fn delete_position(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(

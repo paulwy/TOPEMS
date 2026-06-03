@@ -164,12 +164,22 @@ async fn main() {
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let public_routes = Router::new()
         .route("/", get(home))
-        .route("/health", get(health))
+        .route("/health", get(health));
+
+    let protected_routes = Router::new()
         .route("/api/v1/production-plans", get(get_production_plans).post(create_production_plan))
         .route("/api/v1/supply-chain-orders", get(get_supply_chain_orders).post(create_supply_chain_order))
         .route("/api/v1/financial-records", get(get_financial_records).post(create_financial_record))
+        .layer(axum::middleware::from_fn_with_state(
+            state.auth_state.clone(),
+            auth_middleware,
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors)
         .with_state(state);
 

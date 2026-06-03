@@ -1,44 +1,27 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     routing::get,
     Json, Router,
 };
 use serde::Serialize;
-use sqlx::postgres::PgPool;
 use std::collections::HashMap;
-use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{
-    AddressbookDetail, AddressbookEntry, AddressbookQueryParams, AddressbookSearchParams,
-    ContactDetailParams, DepartmentNode, ExportParams,
-};
+use crate::models::{AddressbookDetail, AddressbookEntry, AddressbookQueryParams, AddressbookSearchParams, ContactDetailParams, DepartmentNode, ExportParams};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use super::ApiState;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/addressbook", get(list_addressbook))
         .route("/api/v1/addressbook/search", get(search_addressbook))
         .route("/api/v1/addressbook/export", get(export_addressbook))
-        .route(
-            "/api/v1/addressbook/departments/tree",
-            get(get_department_tree),
-        )
-        .route("/api/v1/addressbook/{id}", get(get_contact_detail))
-        .with_state(state);
-
-    Ok(app)
+        .route("/api/v1/addressbook/departments/tree", get(get_department_tree))
+        .route("/api/v1/addressbook/:id", get(get_contact_detail))
 }
 
 async fn list_addressbook(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<AddressbookQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AddressbookEntry>>> {
     let page = params.page.max(1);
@@ -106,7 +89,7 @@ async fn list_addressbook(
 }
 
 async fn search_addressbook(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<AddressbookSearchParams>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let limit = params.limit.min(100).max(1);
@@ -166,7 +149,7 @@ struct ExportRecord {
 }
 
 async fn export_addressbook(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<ExportParams>,
 ) -> Json<ApiResponse<String>> {
     let type_filter = params.contact_type.clone();
@@ -229,7 +212,7 @@ fn generate_csv(records: &[ExportRecord]) -> String {
 }
 
 async fn get_department_tree(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<DepartmentNode>>> {
     let result = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<Uuid>)>(
         r#"
@@ -257,8 +240,6 @@ async fn get_department_tree(
 fn build_department_tree(
     departments: Vec<(Uuid, String, Option<String>, Option<Uuid>)>,
 ) -> Vec<DepartmentNode> {
-    use std::collections::HashMap;
-
     let mut node_map: HashMap<Uuid, DepartmentNode> = HashMap::new();
     let mut children_map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
     let mut root_ids: Vec<Uuid> = Vec::new();
@@ -309,7 +290,7 @@ fn build_children_recursive(
 }
 
 async fn get_contact_detail(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Query(params): Query<ContactDetailParams>,
 ) -> Json<ApiResponse<AddressbookDetail>> {

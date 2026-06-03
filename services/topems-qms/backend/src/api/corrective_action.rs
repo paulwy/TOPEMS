@@ -6,12 +6,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CorrectiveAction, CreateCorrectiveActionRequest, UpdateCorrectiveActionRequest};
-use topems_shared::{ApiResponse, PaginationParams};
+use topems_shared::ApiResponse;
+
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct CorrectiveActionQueryParams {
@@ -21,26 +21,19 @@ pub struct CorrectiveActionQueryParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/improvements", get(list_actions).post(create_action))
         .route(
             "/api/v1/improvements/{id}",
             get(get_action).put(update_action),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_actions(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<CorrectiveActionQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -101,7 +94,7 @@ async fn list_actions(
 }
 
 async fn create_action(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateCorrectiveActionRequest>,
 ) -> Json<ApiResponse<CorrectiveAction>> {
     let id = Uuid::new_v4();
@@ -134,7 +127,7 @@ async fn create_action(
 }
 
 async fn get_action(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<CorrectiveAction>> {
     let result = sqlx::query_as::<_, CorrectiveAction>(
@@ -158,7 +151,7 @@ async fn get_action(
 }
 
 async fn update_action(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateCorrectiveActionRequest>,
 ) -> Json<ApiResponse<CorrectiveAction>> {

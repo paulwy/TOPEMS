@@ -7,13 +7,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{Company, CreateCompanyRequest, UpdateCompanyRequest};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct CompanyQueryParams {
@@ -23,26 +22,17 @@ pub struct CompanyQueryParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/companies", get(list_companies).post(create_company))
         .route(
             "/api/v1/companies/{id}",
             get(get_company).put(update_company).delete(delete_company),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_companies(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<CompanyQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Company>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -98,7 +88,7 @@ async fn list_companies(
 }
 
 async fn create_company(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
@@ -169,7 +159,7 @@ async fn create_company(
 }
 
 async fn get_company(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Company>> {
     let result = sqlx::query_as::<_, Company>(
@@ -193,7 +183,7 @@ async fn get_company(
 }
 
 async fn update_company(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateCompanyRequest>,
@@ -289,7 +279,7 @@ async fn update_company(
 }
 
 async fn delete_company(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

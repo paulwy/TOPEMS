@@ -1,16 +1,18 @@
+use anyhow::Result;
 use axum::{
     extract::{Path, State, Query},
     Json, Router,
 };
 use chrono::Utc;
 use serde_json::json;
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use uuid::Uuid;
-use std::collections::HashMap;
 
 use topems_shared::ApiResponse;
 use lettre::Transport;
 use crate::models::*;
+
+use super::ApiState;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct ListQuery {
@@ -19,7 +21,7 @@ pub struct ListQuery {
     notification_type: Option<String>,
 }
 
-pub async fn create_routes(pool: PgPool) -> anyhow::Result<Router> {
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let router = Router::new()
         .route("/api/v1/notifications", axum::routing::get(list_notifications).post(create_notification))
         .route("/api/v1/notifications/unread", axum::routing::get(get_unread_notifications))
@@ -34,9 +36,11 @@ pub async fn create_routes(pool: PgPool) -> anyhow::Result<Router> {
         .route("/api/v1/sms-templates/{id}", axum::routing::get(get_sms_template).put(update_sms_template).delete(delete_sms_template))
         .route("/api/v1/email-logs", axum::routing::get(list_email_logs))
         .route("/api/v1/email-logs/{id}", axum::routing::get(get_email_log).delete(delete_email_log))
+        .route("/api/v1/email-logs/{id}/resend", axum::routing::post(resend_email))
         .route("/api/v1/email/send", axum::routing::post(send_email))
         .route("/api/v1/email/send-with-template", axum::routing::post(send_email_with_template))
-        .with_state(pool);
+        .route("/api/v1/email/batch-send", axum::routing::post(batch_send_email))
+        .route("/api/v1/email/stats", axum::routing::get(get_email_stats));
 
     Ok(router)
 }
@@ -57,7 +61,7 @@ fn convert_notification_to_response(n: &Notification) -> NotificationResponse {
 }
 
 pub async fn list_notifications(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Query(query): Query<ListQuery>,
 ) -> Json<ApiResponse<NotificationListResponse>> {
     let page = query.page.unwrap_or(1);
@@ -79,7 +83,7 @@ pub async fn list_notifications(
     let notifications = match sqlx::query_as::<_, Notification>(&sql)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&pool)
+        .fetch_all(&state.db)
         .await
     {
         Ok(notifs) => notifs,
@@ -90,7 +94,7 @@ pub async fn list_notifications(
     };
     
     let total: i64 = match sqlx::query_scalar(&count_sql)
-        .fetch_one(&pool)
+        .fetch_one(&state.db)
         .await
     {
         Ok(count) => count,
@@ -101,7 +105,7 @@ pub async fn list_notifications(
     };
     
     let unread_count: i64 = match sqlx::query_scalar(&unread_count_sql)
-        .fetch_one(&pool)
+        .fetch_one(&state.db)
         .await
     {
         Ok(count) => count,
@@ -128,12 +132,12 @@ pub async fn list_notifications(
 }
 
 pub async fn get_unread_notifications(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<NotificationResponse>>> {
     let notifications = match sqlx::query_as::<_, Notification>(
         "SELECT * FROM notifications WHERE status = 'unread' ORDER BY created_at DESC"
     )
-        .fetch_all(&pool)
+        .fetch_all(&state.db)
         .await
     {
         Ok(notifs) => notifs,
@@ -152,10 +156,10 @@ pub async fn get_unread_notifications(
 }
 
 pub async fn get_unread_count(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
 ) -> Json<ApiResponse<i32>> {
     let count: i64 = match sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE status = 'unread'")
-        .fetch_one(&pool)
+        .fetch_one(&state.db)
         .await
     {
         Ok(c) => c,
@@ -169,11 +173,11 @@ pub async fn get_unread_count(
 }
 
 pub async fn mark_all_as_read(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
 ) -> Json<ApiResponse<i32>> {
     let result = match sqlx::query("UPDATE notifications SET status = 'read', updated_at = $1 WHERE status = 'unread'")
         .bind(Utc::now())
-        .execute(&pool)
+        .execute(&state.db)
         .await
     {
         Ok(r) => r.rows_affected() as i32,
@@ -187,14 +191,14 @@ pub async fn mark_all_as_read(
 }
 
 pub async fn get_notification(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<NotificationResponse>> {
     let notification = match sqlx::query_as::<_, Notification>(
         "SELECT * FROM notifications WHERE id = $1"
     )
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(n)) => n,
@@ -210,7 +214,7 @@ pub async fn get_notification(
 }
 
 pub async fn create_notification(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Json(payload): Json<CreateNotificationRequest>,
 ) -> Json<ApiResponse<NotificationResponse>> {
     let id = Uuid::new_v4();
@@ -231,7 +235,7 @@ pub async fn create_notification(
         .bind(payload.metadata)
         .bind(now)
         .bind(now)
-        .execute(&pool)
+        .execute(&state.db)
         .await
     {
         Ok(_) => (),
@@ -245,7 +249,7 @@ pub async fn create_notification(
         "SELECT * FROM notifications WHERE id = $1"
     )
         .bind(id)
-        .fetch_one(&pool)
+        .fetch_one(&state.db)
         .await
     {
         Ok(n) => n,
@@ -260,12 +264,12 @@ pub async fn create_notification(
 }
 
 pub async fn delete_notification(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = match sqlx::query(r#"DELETE FROM notifications WHERE id = $1"#)
         .bind(id)
-        .execute(&pool)
+        .execute(&state.db)
         .await
     {
         Ok(r) => r,
@@ -283,7 +287,7 @@ pub async fn delete_notification(
 }
 
 pub async fn mark_as_read(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<NotificationResponse>> {
     let _ = match sqlx::query(
@@ -291,7 +295,7 @@ pub async fn mark_as_read(
     )
         .bind(Utc::now())
         .bind(id)
-        .execute(&pool)
+        .execute(&state.db)
         .await
     {
         Ok(_) => (),
@@ -305,7 +309,7 @@ pub async fn mark_as_read(
         "SELECT * FROM notifications WHERE id = $1"
     )
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(n)) => n,
@@ -321,7 +325,7 @@ pub async fn mark_as_read(
 }
 
 pub async fn batch_mark_as_read(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Json(payload): Json<BatchReadRequest>,
 ) -> Json<ApiResponse<String>> {
     if payload.ids.is_empty() {
@@ -340,7 +344,7 @@ pub async fn batch_mark_as_read(
     }
     sql_query = sql_query.bind(Utc::now());
 
-    match sql_query.execute(&pool).await {
+    match sql_query.execute(&state.db).await {
         Ok(_) => Json(ApiResponse::success("批量标记已读成功".to_string(), "批量标记已读成功")),
         Err(e) => {
             tracing::error!("批量标记已读失败: {}", e);
@@ -355,10 +359,10 @@ struct BatchReadRequest {
 }
 
 pub async fn list_email_templates(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = match sqlx::query(r#"SELECT json_agg(t) as data FROM (SELECT * FROM notification.email_templates ORDER BY created_at DESC) t"#)
-        .fetch_one(&pool)
+        .fetch_one(&state.db)
         .await
     {
         Ok(row) => {
@@ -375,12 +379,12 @@ pub async fn list_email_templates(
 }
 
 pub async fn get_email_template(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = match sqlx::query(r#"SELECT row_to_json(t) as data FROM (SELECT * FROM notification.email_templates WHERE id = $1) t"#)
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -401,7 +405,7 @@ pub async fn get_email_template(
 }
 
 pub async fn create_email_template(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Json(payload): Json<EmailTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = Uuid::new_v4();
@@ -419,7 +423,7 @@ pub async fn create_email_template(
         .bind(payload.status.unwrap_or_else(|| "active".to_string()))
         .bind(now)
         .bind(now)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -437,7 +441,7 @@ pub async fn create_email_template(
 }
 
 pub async fn update_email_template(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<EmailTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -453,7 +457,7 @@ pub async fn update_email_template(
         .bind(payload.status.unwrap_or_else(|| "active".to_string()))
         .bind(Utc::now())
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -474,12 +478,12 @@ pub async fn update_email_template(
 }
 
 pub async fn delete_email_template(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = match sqlx::query(r#"DELETE FROM notification.email_templates WHERE id = $1"#)
         .bind(id)
-        .execute(&pool)
+        .execute(&state.db)
         .await
     {
         Ok(r) => r,
@@ -505,10 +509,10 @@ struct EmailTemplateRequest {
 }
 
 pub async fn list_sms_templates(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = match sqlx::query(r#"SELECT json_agg(t) as data FROM (SELECT * FROM notification.sms_templates ORDER BY created_at DESC) t"#)
-        .fetch_one(&pool)
+        .fetch_one(&state.db)
         .await
     {
         Ok(row) => {
@@ -525,12 +529,12 @@ pub async fn list_sms_templates(
 }
 
 pub async fn get_sms_template(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = match sqlx::query(r#"SELECT row_to_json(t) as data FROM (SELECT * FROM notification.sms_templates WHERE id = $1) t"#)
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -551,7 +555,7 @@ pub async fn get_sms_template(
 }
 
 pub async fn create_sms_template(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Json(payload): Json<SmsTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = Uuid::new_v4();
@@ -568,7 +572,7 @@ pub async fn create_sms_template(
         .bind(payload.status.unwrap_or_else(|| "active".to_string()))
         .bind(now)
         .bind(now)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -586,7 +590,7 @@ pub async fn create_sms_template(
 }
 
 pub async fn update_sms_template(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<SmsTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -601,7 +605,7 @@ pub async fn update_sms_template(
         .bind(payload.status.unwrap_or_else(|| "active".to_string()))
         .bind(Utc::now())
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -622,12 +626,12 @@ pub async fn update_sms_template(
 }
 
 pub async fn delete_sms_template(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = match sqlx::query(r#"DELETE FROM notification.sms_templates WHERE id = $1"#)
         .bind(id)
-        .execute(&pool)
+        .execute(&state.db)
         .await
     {
         Ok(r) => r,
@@ -651,16 +655,109 @@ struct SmsTemplateRequest {
     status: Option<String>,
 }
 
+#[derive(Debug, serde::Deserialize)]
+pub struct EmailLogQuery {
+    page: Option<i32>,
+    page_size: Option<i32>,
+    status: Option<String>,
+    to_email: Option<String>,
+}
+
 pub async fn list_email_logs(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Query(query): Query<EmailLogQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = match sqlx::query(r#"SELECT json_agg(t) as data FROM (SELECT * FROM notification.email_logs ORDER BY created_at DESC) t"#)
-        .fetch_one(&pool)
+    let page = query.page.unwrap_or(1);
+    let page_size = query.page_size.unwrap_or(20);
+    let offset = (page - 1) * page_size;
+
+    let mut where_clause = String::new();
+    let mut params: Vec<Box<dyn sqlx::Encode<'_, sqlx::Postgres> + Send + Sync>> = Vec::new();
+    let mut param_idx = 1;
+
+    if let Some(status) = query.status {
+        where_clause.push_str(&format!(" WHERE status = ${}", param_idx));
+        params.push(Box::new(status));
+        param_idx += 1;
+    }
+
+    if let Some(to_email) = query.to_email {
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE ");
+        } else {
+            where_clause.push_str(" AND ");
+        }
+        where_clause.push_str(&format!("to_email LIKE ${}", param_idx));
+        params.push(Box::new(format!("%{}%", to_email)));
+        param_idx += 1;
+    }
+
+    let count_query = format!("SELECT COUNT(*) FROM notification.email_logs{}", where_clause);
+    let count: i64 = match sqlx::query_scalar(&count_query)
+        .fetch_one(&state.db)
         .await
     {
-        Ok(row) => {
-            let data: serde_json::Value = row.get("data");
-            json!({ "items": data, "total": match data.as_array() { Some(arr) => arr.len(), None => 0 } })
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("获取邮件日志总数失败: {}", e);
+            return Json(ApiResponse::error(500, "获取邮件日志列表失败"));
+        }
+    };
+
+    let query_str = format!(
+        "SELECT * FROM notification.email_logs{} ORDER BY created_at DESC LIMIT ${} OFFSET ${}",
+        where_clause, param_idx, param_idx + 1
+    );
+
+    let result = match sqlx::query(&query_str)
+        .fetch_all(&state.db)
+        .await
+    {
+        Ok(rows) => {
+            let items: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|row| {
+                    let id: Uuid = row.get("id");
+                    let from_email: String = row.get("from_email");
+                    let to_email: String = row.get("to_email");
+                    let cc_email: Option<String> = row.get("cc_email");
+                    let bcc_email: Option<String> = row.get("bcc_email");
+                    let subject: String = row.get("subject");
+                    let body: String = row.get("body");
+                    let status: String = row.get("status");
+                    let error_message: Option<String> = row.get("error_message");
+                    let sent_at: Option<chrono::DateTime<chrono::Utc>> = row.get("sent_at");
+                    let template_id: Option<Uuid> = row.get("template_id");
+                    let metadata: Option<serde_json::Value> = row.get("metadata");
+                    let created_at: chrono::DateTime<chrono::Utc> = row.get("created_at");
+                    let updated_at: chrono::DateTime<chrono::Utc> = row.get("updated_at");
+
+                    json!({
+                        "id": id.to_string(),
+                        "from_email": from_email,
+                        "to_email": to_email,
+                        "cc_email": cc_email,
+                        "bcc_email": bcc_email,
+                        "subject": subject,
+                        "body": body,
+                        "status": status,
+                        "error_message": error_message,
+                        "sent_at": sent_at.map(|dt| dt.to_rfc3339()),
+                        "template_id": template_id.map(|id| id.to_string()),
+                        "metadata": metadata,
+                        "created_at": created_at.to_rfc3339(),
+                        "updated_at": updated_at.to_rfc3339(),
+                    })
+                })
+                .collect();
+
+            json!({
+                "items": items,
+                "total": count,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": (count + page_size as i64 - 1) / page_size as i64,
+            })
         }
         Err(e) => {
             tracing::error!("获取邮件日志列表失败: {}", e);
@@ -672,12 +769,12 @@ pub async fn list_email_logs(
 }
 
 pub async fn get_email_log(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = match sqlx::query(r#"SELECT row_to_json(t) as data FROM (SELECT * FROM notification.email_logs WHERE id = $1) t"#)
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -698,12 +795,12 @@ pub async fn get_email_log(
 }
 
 pub async fn delete_email_log(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = match sqlx::query(r#"DELETE FROM notification.email_logs WHERE id = $1"#)
         .bind(id)
-        .execute(&pool)
+        .execute(&state.db)
         .await
     {
         Ok(r) => r,
@@ -721,7 +818,7 @@ pub async fn delete_email_log(
 }
 
 pub async fn send_email(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Json(payload): Json<SendEmailRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = Uuid::new_v4();
@@ -745,7 +842,7 @@ pub async fn send_email(
         .bind(now)
         .bind(&payload.template_id)
         .bind(&payload.metadata)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -765,7 +862,7 @@ pub async fn send_email(
                 .bind(Utc::now())
                 .bind(Utc::now())
                 .bind(id)
-                .execute(&pool)
+                .execute(&state.db)
                 .await;
             "sent"
         }
@@ -775,7 +872,7 @@ pub async fn send_email(
                 .bind(e.to_string())
                 .bind(Utc::now())
                 .bind(id)
-                .execute(&pool)
+                .execute(&state.db)
                 .await;
             return Json(ApiResponse::error(500, "发送邮件失败"));
         }
@@ -788,12 +885,12 @@ pub async fn send_email(
 }
 
 pub async fn send_email_with_template(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
     Json(payload): Json<SendEmailWithTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let template_result = match sqlx::query(r#"SELECT subject, body FROM notification.email_templates WHERE id = $1 AND status = 'active'"#)
         .bind(payload.template_id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -836,7 +933,7 @@ pub async fn send_email_with_template(
         .bind(now)
         .bind(&payload.template_id)
         .bind(&payload.metadata)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(Some(row)) => {
@@ -856,7 +953,7 @@ pub async fn send_email_with_template(
                 .bind(Utc::now())
                 .bind(Utc::now())
                 .bind(id)
-                .execute(&pool)
+                .execute(&state.db)
                 .await;
             "sent"
         }
@@ -866,7 +963,7 @@ pub async fn send_email_with_template(
                 .bind(e.to_string())
                 .bind(Utc::now())
                 .bind(id)
-                .execute(&pool)
+                .execute(&state.db)
                 .await;
             return Json(ApiResponse::error(500, "发送邮件失败"));
         }
@@ -949,4 +1046,179 @@ fn replace_variables(text: &str, variables: &serde_json::Value) -> String {
     }
     
     result
+}
+
+pub async fn resend_email(
+    State(state): State<ApiState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let log_result = match sqlx::query!(
+        r#"SELECT from_email, to_email, cc_email, bcc_email, subject, body FROM notification.email_logs WHERE id = $1"#,
+        id
+    )
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(row)) => row,
+        Ok(None) => return Json(ApiResponse::error(404, "邮件日志不存在")),
+        Err(e) => {
+            tracing::error!("获取邮件日志失败: {}", e);
+            return Json(ApiResponse::error(500, "获取邮件日志失败"));
+        }
+    };
+
+    let send_result = match send_email_via_smtp(
+        &log_result.from_email,
+        &log_result.to_email,
+        &log_result.cc_email,
+        &log_result.bcc_email,
+        &log_result.subject,
+        &log_result.body,
+    ).await {
+        Ok(_) => {
+            let _ = sqlx::query(r#"UPDATE notification.email_logs SET status = 'sent', sent_at = $1, error_message = NULL, updated_at = $2 WHERE id = $3"#)
+                .bind(Utc::now())
+                .bind(Utc::now())
+                .bind(id)
+                .execute(&state.db)
+                .await;
+            "sent"
+        }
+        Err(e) => {
+            tracing::error!("重发邮件失败: {}", e);
+            let _ = sqlx::query(r#"UPDATE notification.email_logs SET status = 'failed', error_message = $1, updated_at = $2 WHERE id = $3"#)
+                .bind(e.to_string())
+                .bind(Utc::now())
+                .bind(id)
+                .execute(&state.db)
+                .await;
+            return Json(ApiResponse::error(500, format!("重发邮件失败: {}", e)));
+        }
+    };
+
+    Json(ApiResponse::success(json!({ "id": id.to_string(), "status": send_result }), "重发邮件成功"))
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct BatchSendEmailRequest {
+    pub to_emails: Vec<String>,
+    pub cc_email: Option<String>,
+    pub bcc_email: Option<String>,
+    pub subject: String,
+    pub body: String,
+    pub template_id: Option<Uuid>,
+    pub metadata: Option<serde_json::Value>,
+}
+
+pub async fn batch_send_email(
+    State(state): State<ApiState>,
+    Json(payload): Json<BatchSendEmailRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if payload.to_emails.is_empty() {
+        return Json(ApiResponse::error(400, "收件人列表不能为空"));
+    }
+
+    let from_email = std::env::var("SMTP_FROM_EMAIL").unwrap_or_else(|_| "noreply@topems.com".to_string());
+    let mut success_count = 0;
+    let mut fail_count = 0;
+    let mut results = Vec::new();
+
+    for to_email in payload.to_emails {
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+
+        let _ = sqlx::query(r#"
+            INSERT INTO notification.email_logs (id, from_email, to_email, cc_email, bcc_email, subject, body, status, created_at, updated_at, template_id, metadata)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            "#)
+            .bind(id)
+            .bind(&from_email)
+            .bind(&to_email)
+            .bind(&payload.cc_email)
+            .bind(&payload.bcc_email)
+            .bind(&payload.subject)
+            .bind(&payload.body)
+            .bind("pending")
+            .bind(now)
+            .bind(now)
+            .bind(&payload.template_id)
+            .bind(&payload.metadata)
+            .execute(&state.db)
+            .await;
+
+        match send_email_via_smtp(&from_email, &to_email, &payload.cc_email, &payload.bcc_email, &payload.subject, &payload.body).await {
+            Ok(_) => {
+                let _ = sqlx::query(r#"UPDATE notification.email_logs SET status = 'sent', sent_at = $1, updated_at = $2 WHERE id = $3"#)
+                    .bind(Utc::now())
+                    .bind(Utc::now())
+                    .bind(id)
+                    .execute(&state.db)
+                    .await;
+                success_count += 1;
+                results.push(json!({ "email": to_email, "status": "sent", "message": "发送成功" }));
+            }
+            Err(e) => {
+                let _ = sqlx::query(r#"UPDATE notification.email_logs SET status = 'failed', error_message = $1, updated_at = $2 WHERE id = $3"#)
+                    .bind(e.to_string())
+                    .bind(Utc::now())
+                    .bind(id)
+                    .execute(&state.db)
+                    .await;
+                fail_count += 1;
+                results.push(json!({ "email": to_email, "status": "failed", "message": e.to_string() }));
+            }
+        }
+    }
+
+    Json(ApiResponse::success(
+        json!({
+            "total": payload.to_emails.len(),
+            "success_count": success_count,
+            "fail_count": fail_count,
+            "results": results,
+        }),
+        format!("批量发送完成，成功 {} 封，失败 {} 封", success_count, fail_count)
+    ))
+}
+
+pub async fn get_email_stats(
+    State(state): State<ApiState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let today = chrono::Local::now().date_naive();
+    let start_of_today = chrono::NaiveDateTime::new(today, chrono::NaiveTime::MIN);
+    let end_of_today = chrono::NaiveDateTime::new(today, chrono::NaiveTime::MAX);
+
+    let stats = match sqlx::query!(
+        r#"
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent_count,
+            SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_count,
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+            SUM(CASE WHEN created_at >= $1 AND created_at <= $2 THEN 1 ELSE 0 END) as today_count
+        FROM notification.email_logs
+        "#,
+        start_of_today,
+        end_of_today
+    )
+    .fetch_one(&state.db)
+    .await
+    {
+        Ok(row) => row,
+        Err(e) => {
+            tracing::error!("获取邮件统计失败: {}", e);
+            return Json(ApiResponse::error(500, "获取邮件统计失败"));
+        }
+    };
+
+    Json(ApiResponse::success(
+        json!({
+            "total": stats.total,
+            "sent_count": stats.sent_count,
+            "failed_count": stats.failed_count,
+            "pending_count": stats.pending_count,
+            "today_count": stats.today_count,
+        }),
+        "获取邮件统计成功"
+    ))
 }

@@ -5,7 +5,6 @@ use axum::{
     Json, Router,
 };
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -13,17 +12,10 @@ use uuid::Uuid;
 use crate::models::AuditLog;
 use topems_shared::response::ApiResponse;
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> topems_shared::Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> topems_shared::Result<Router> {
     let app = Router::new()
         .route("/api/v1/audit-logs", get(list_audit_logs))
-        .route("/api/v1/audit-logs/{id}", get(get_audit_log))
-        .with_state(state);
+        .route("/api/v1/audit-logs/{id}", get(get_audit_log));
 
     Ok(app)
 }
@@ -60,7 +52,7 @@ pub struct ListAuditLogsQuery {
     )
 )]
 async fn list_audit_logs(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -98,7 +90,7 @@ async fn list_audit_logs(
         Ok(logs) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM audit_logs
+                SELECT COUNT(*) FROM rs.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
                   AND ($3::text IS NULL OR user_id = $3)
@@ -149,7 +141,7 @@ async fn list_audit_logs(
     )
 )]
 async fn get_audit_log(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
     let result = sqlx::query_as::<_, AuditLog>(
@@ -175,7 +167,7 @@ async fn get_audit_log(
 }
 
 pub async fn log_audit_event(
-    db: &PgPool,
+    db: &sqlx::postgres::PgPool,
     action: String,
     entity_type: String,
     entity_id: Option<Uuid>,

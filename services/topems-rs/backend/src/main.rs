@@ -1,10 +1,10 @@
 mod api;
 mod cache;
 mod models;
+mod repositories;
 mod services;
 
 use axum::{
-    extract::FromRef,
     routing::get,
     Json,
     Router,
@@ -23,18 +23,6 @@ use topems_shared::{
 use utoipa::OpenApi;
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
-
-#[derive(Clone)]
-struct AppState {
-    auth_state: AuthState,
-    config: Config,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -91,10 +79,7 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let app_state = AppState {
-        auth_state: AuthState::from_env(),
-        config,
-    };
+    let auth_state = AuthState::from_env();
 
     let cors = create_cors_layer();
 
@@ -102,22 +87,11 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route("/metrics", get(move || async move { metric_handle.render() }))
-        .merge(api::auth::create_routes(pool.clone(), app_state.auth_state.clone()).await?);
+        .merge(api::auth::create_routes(pool.clone(), auth_state.clone()).await?);
 
-    let protected_routes = Router::new()
-        .merge(api::project::create_routes(pool.clone()).await?)
-        .merge(api::formula::create_routes(pool.clone()).await?)
-        .merge(api::experiment::create_routes(pool.clone()).await?)
-        .merge(api::material::create_routes(pool.clone()).await?)
-        .merge(api::doc_integration::create_routes(pool.clone()).await?)
-        .merge(api::ai_integration::create_routes(pool.clone()).await?)
-        .merge(api::audit::create_routes(pool.clone()).await?)
-        .merge(api::project_phase::create_routes(pool.clone()).await?)
-        .merge(api::project_milestone::create_routes(pool.clone()).await?)
-        .merge(api::project_member::create_routes(pool.clone()).await?)
-        .merge(api::project_report::create_routes(pool.clone()).await?)
+    let protected_routes = api::create_routes(pool.clone(), auth_state.clone(), config.clone()).await?
         .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
+            auth_state.clone(),
             auth_middleware,
         ));
 
@@ -127,7 +101,7 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = app_state.config.get_server().await.port;
+    let port = config.get_server().await.port;
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-RS 科研研发管理系统启动中...");
@@ -500,16 +474,16 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(
         r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON rs.audit_logs(entity_type)"#,
     )
-    .execute(pool)
-    .await?;
+        .execute(pool)
+        .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON rs.audit_logs(user_id)"#)
         .execute(pool)
         .await?;
     sqlx::query(
         r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON rs.audit_logs(created_at)"#,
     )
-    .execute(pool)
-    .await?;
+        .execute(pool)
+        .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON rs.audit_logs(status)"#)
         .execute(pool)
         .await?;

@@ -36,6 +36,8 @@ const EmployeeManagementPage = lazy(() => import('./pages/EmployeeManagementPage
 const AssetManagementPage = lazy(() => import('./pages/AssetManagementPage'));
 const EquipmentManagementPage = lazy(() => import('./pages/EquipmentManagementPage'));
 const FinanceExpensePage = lazy(() => import('./pages/FinanceExpensePage'));
+const FinanceVoucherPage = lazy(() => import('./pages/FinanceVoucherPage'));
+const FinanceReportsPage = lazy(() => import('./pages/FinanceReportsPage'));
 const AdministrationPage = lazy(() => import('./pages/AdministrationPage'));
 const BudgetManagementPage = lazy(() => import('./pages/BudgetManagementPage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
@@ -53,6 +55,7 @@ const HrmPerformancePage = lazy(() => import('./pages/HrmPerformancePage'));
 const HrmAttendancePage = lazy(() => import('./pages/HrmAttendancePage'));
 const HrmEmployeeDetailPage = lazy(() => import('./pages/HrmEmployeeDetailPage'));
 const HrmTrainingPage = lazy(() => import('./pages/HrmTrainingPage'));
+const HrmReportsPage = lazy(() => import('./pages/HrmReportsPage'));
 const PerformanceMonitorPage = lazy(() => import('./pages/PerformanceMonitorPage'));
 const FlowInstanceListPage = lazy(() => import('./pages/FlowInstanceListPage'));
 const FlowInstanceDetailPage = lazy(() => import('./pages/FlowInstanceDetailPage'));
@@ -150,20 +153,16 @@ const AppContent: React.FC = () => {
           <Route
             path="/rs"
             element={
-              <ProtectedRoute requiredPermissions={['rs:read']}>
-                <ModuleGate module="rs" action="read">
-                  <Rspage />
-                </ModuleGate>
+              <ProtectedRoute>
+                <Rspage />
               </ProtectedRoute>
             }
           />
           <Route
             path="/lims"
             element={
-              <ProtectedRoute requiredPermissions={['lims:read']}>
-                <ModuleGate module="lims" action="read">
-                  <Limspage />
-                </ModuleGate>
+              <ProtectedRoute>
+                <Limspage />
               </ProtectedRoute>
             }
           />
@@ -334,6 +333,26 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
+            path="/finance/vouchers"
+            element={
+              <ProtectedRoute requiredPermissions={['erp:admin']}>
+                <ModuleGate module="erp" action="admin">
+                  <FinanceVoucherPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/reports"
+            element={
+              <ProtectedRoute requiredPermissions={['erp:admin']}>
+                <ModuleGate module="erp" action="admin">
+                  <FinanceReportsPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/administration"
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
@@ -487,6 +506,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['hrm:read']}>
                 <ModuleGate module="hrm" action="read">
                   <HrmTrainingPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hrm/reports"
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module="hrm" action="read">
+                  <HrmReportsPage />
                 </ModuleGate>
               </ProtectedRoute>
             }

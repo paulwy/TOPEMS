@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -7,8 +6,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
@@ -19,6 +16,7 @@ use crate::models::{
 };
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -28,35 +26,20 @@ pub struct PaginationParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
-        // 费用报销路由
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/expenses", get(list_expenses).post(create_expense))
-        .route("/api/v1/expenses/{id}", get(get_expense).put(update_expense).delete(delete_expense))
-        // 预算管理路由
+        .route("/api/v1/expenses/:id", get(get_expense).put(update_expense).delete(delete_expense))
         .route("/api/v1/budgets", get(list_budgets).post(create_budget))
-        .route("/api/v1/budgets/{id}", get(get_budget).put(update_budget).delete(delete_budget))
-        // 应收账款路由
+        .route("/api/v1/budgets/:id", get(get_budget).put(update_budget).delete(delete_budget))
         .route("/api/v1/receivables", get(list_receivables).post(create_receivable))
-        .route("/api/v1/receivables/{id}", get(get_receivable).put(update_receivable).delete(delete_receivable))
-        // 应付账款路由
+        .route("/api/v1/receivables/:id", get(get_receivable).put(update_receivable).delete(delete_receivable))
         .route("/api/v1/payables", get(list_payables).post(create_payable))
-        .route("/api/v1/payables/{id}", get(get_payable).put(update_payable).delete(delete_payable))
-        .with_state(state);
-
-    Ok(app)
+        .route("/api/v1/payables/:id", get(get_payable).put(update_payable).delete(delete_payable))
 }
-
-// ==================== 费用报销 API ====================
 
 async fn list_expenses(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Expense>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -112,7 +95,7 @@ async fn list_expenses(
 }
 
 async fn create_expense(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateExpenseRequest>,
 ) -> Json<ApiResponse<Expense>> {
@@ -183,7 +166,7 @@ async fn create_expense(
 }
 
 async fn get_expense(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Expense>> {
     let result = sqlx::query_as::<_, Expense>(
@@ -207,7 +190,7 @@ async fn get_expense(
 }
 
 async fn update_expense(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateExpenseRequest>,
@@ -306,7 +289,7 @@ async fn update_expense(
 }
 
 async fn delete_expense(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
@@ -361,10 +344,8 @@ async fn delete_expense(
     response
 }
 
-// ==================== 预算管理 API ====================
-
 async fn list_budgets(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Budget>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -420,7 +401,7 @@ async fn list_budgets(
 }
 
 async fn create_budget(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
@@ -493,7 +474,7 @@ async fn create_budget(
 }
 
 async fn get_budget(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Budget>> {
     let result = sqlx::query_as::<_, Budget>(
@@ -517,7 +498,7 @@ async fn get_budget(
 }
 
 async fn update_budget(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateBudgetRequest>,
@@ -610,7 +591,7 @@ async fn update_budget(
 }
 
 async fn delete_budget(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
@@ -665,10 +646,8 @@ async fn delete_budget(
     response
 }
 
-// ==================== 应收账款 API ====================
-
 async fn list_receivables(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Receivable>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -724,7 +703,7 @@ async fn list_receivables(
 }
 
 async fn create_receivable(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateReceivableRequest>,
 ) -> Json<ApiResponse<Receivable>> {
@@ -793,7 +772,7 @@ async fn create_receivable(
 }
 
 async fn get_receivable(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Receivable>> {
     let result = sqlx::query_as::<_, Receivable>(
@@ -817,7 +796,7 @@ async fn get_receivable(
 }
 
 async fn update_receivable(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateReceivableRequest>,
@@ -908,7 +887,7 @@ async fn update_receivable(
 }
 
 async fn delete_receivable(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
@@ -963,10 +942,8 @@ async fn delete_receivable(
     response
 }
 
-// ==================== 应付账款 API ====================
-
 async fn list_payables(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Payable>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -1022,7 +999,7 @@ async fn list_payables(
 }
 
 async fn create_payable(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreatePayableRequest>,
 ) -> Json<ApiResponse<Payable>> {
@@ -1091,7 +1068,7 @@ async fn create_payable(
 }
 
 async fn get_payable(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Payable>> {
     let result = sqlx::query_as::<_, Payable>(
@@ -1115,7 +1092,7 @@ async fn get_payable(
 }
 
 async fn update_payable(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdatePayableRequest>,
@@ -1206,7 +1183,7 @@ async fn update_payable(
 }
 
 async fn delete_payable(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

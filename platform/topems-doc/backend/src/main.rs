@@ -371,6 +371,11 @@ async fn list_files(
 ) -> Json<ApiResponse<ListFilesResponse>> {
     tracing::debug!("获取文件列表: {:?}, 用户: {}", query, claims.0.username);
 
+    // 检查是否是 guest 用户
+    if claims.0.role == "guest" {
+        return Json(ApiResponse::error(401, "未授权：需要有效的认证令牌"));
+    }
+
     tracing::debug!("用户 {} 已通过身份验证，允许读取文件列表", claims.0.username);
 
     let page = query.page.unwrap_or(1);
@@ -519,6 +524,11 @@ async fn get_file(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FileMetadata>> {
     tracing::debug!("获取文件: {}, 用户: {}", id, claims.0.username);
+
+    // 检查是否是 guest 用户
+    if claims.0.role == "guest" {
+        return Json(ApiResponse::error(401, "未授权：需要有效的认证令牌"));
+    }
 
     if let Some(user_id) = claims.0.get_user_id() {
         if !claims.0.is_admin() {
@@ -2061,8 +2071,10 @@ async fn main() {
         })
         .collect();
 
+    // 生产环境禁用通配符，使用明确的允许源列表
     let cors = CorsLayer::new()
         .allow_origin(if allowed_origins.is_empty() {
+            // 只有在没有配置允许源时才使用通配符（仅用于开发）
             AllowOrigin::any()
         } else {
             AllowOrigin::list(allowed_origins)

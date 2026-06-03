@@ -2,10 +2,8 @@ mod api;
 mod models;
 
 use axum::{
-    extract::FromRef,
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use topems_shared::{
     ApiResponse,
@@ -19,19 +17,6 @@ use topems_shared::{
     Result,
 };
 use utoipa::OpenApi;
-
-#[derive(Clone)]
-struct AppState {
-    pool: sqlx::PgPool,
-    auth_state: AuthState,
-    config: Config,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -53,11 +38,7 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let app_state = AppState {
-        pool: pool.clone(),
-        auth_state: AuthState::from_env(),
-        config,
-    };
+    let auth_state = AuthState::from_env();
 
     let cors = create_cors_layer();
 
@@ -66,17 +47,9 @@ async fn main() -> Result<()> {
         .route("/api-docs/openapi.json", get(serve_openapi_json));
 
     let protected_routes = Router::new()
-        .merge(api::sample::create_routes(pool.clone()).await?)
-        .merge(api::inspection_process::create_routes(pool.clone()).await?)
-        .merge(api::inspection_task::create_routes(pool.clone()).await?)
-        .merge(api::inspection_record::create_routes(pool.clone()).await?)
-        .merge(api::instrument::create_routes(pool.clone()).await?)
-        .merge(api::audit::create_routes(pool.clone()).await?)
-        .merge(api::reagent::create_routes(pool.clone()).await?)
-        .merge(api::doc_integration::create_routes(pool.clone()).await?)
-        .merge(api::ai_integration::create_routes(pool.clone()).await?)
+        .merge(api::create_routes(pool.clone(), auth_state.clone(), config.clone()).await?)
         .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
+            auth_state.clone(),
             auth_middleware,
         ));
 
@@ -85,7 +58,7 @@ async fn main() -> Result<()> {
         .merge(protected_routes)
         .layer(cors);
 
-    let port = app_state.config.get_server().await.port;
+    let port = config.get_server().await.port;
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-LIMS 实验室信息管理系统启动中...");

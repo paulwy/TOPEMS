@@ -6,10 +6,10 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
+use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::api::ApiState;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -21,11 +21,7 @@ pub struct PaginationParams {
     pub category: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct Reagent {
     pub id: Uuid,
     pub name: String,
@@ -86,9 +82,7 @@ pub struct ReagentUsageRequest {
     pub used_by: String,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/reagents", get(list_reagents).post(create_reagent))
         .route(
@@ -96,14 +90,13 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
             get(get_reagent).put(update_reagent).delete(delete_reagent),
         )
         .route("/api/v1/reagents/{id}/usage", post(record_usage))
-        .route("/api/v1/reagents/low-stock", get(list_low_stock))
-        .with_state(state);
+        .route("/api/v1/reagents/low-stock", get(list_low_stock));
 
     Ok(app)
 }
 
 async fn list_reagents(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -167,7 +160,7 @@ async fn list_reagents(
 }
 
 async fn create_reagent(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Json(req): Json<CreateReagentRequest>,
 ) -> Json<ApiResponse<Reagent>> {
     let id = Uuid::new_v4();
@@ -208,13 +201,13 @@ async fn create_reagent(
         Ok(reagent) => Json(ApiResponse::success(reagent, "试剂创建成功")),
         Err(e) => {
             tracing::error!("创建试剂失败: {}", e);
-            Json(ApiResponse::error(500, "试剂创建失败"))
+            Json(ApiResponse::error(500, "创建试剂失败"))
         }
     }
 }
 
 async fn get_reagent(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Reagent>> {
     let result = sqlx::query_as::<_, Reagent>(
@@ -240,7 +233,7 @@ async fn get_reagent(
 }
 
 async fn update_reagent(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateReagentRequest>,
 ) -> Json<ApiResponse<Reagent>> {
@@ -297,13 +290,13 @@ async fn update_reagent(
         Ok(reagent) => Json(ApiResponse::success(reagent, "试剂更新成功")),
         Err(e) => {
             tracing::error!("更新试剂失败: {}", e);
-            Json(ApiResponse::error(500, "试剂更新失败"))
+            Json(ApiResponse::error(500, "更新试剂失败"))
         }
     }
 }
 
 async fn delete_reagent(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM lims.reagents WHERE id = $1")
@@ -316,13 +309,13 @@ async fn delete_reagent(
         Ok(_) => Json(ApiResponse::error(404, "试剂不存在")),
         Err(e) => {
             tracing::error!("删除试剂失败: {}", e);
-            Json(ApiResponse::error(500, "试剂删除失败"))
+            Json(ApiResponse::error(500, "删除试剂失败"))
         }
     }
 }
 
 async fn record_usage(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<ReagentUsageRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -390,7 +383,7 @@ async fn record_usage(
 }
 
 async fn list_low_stock(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<Reagent>>> {
     let result = sqlx::query_as::<_, Reagent>(
         r#"

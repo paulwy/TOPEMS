@@ -7,14 +7,13 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use crate::services::iam_client::{CreateUserRequest, IamClient};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -24,26 +23,17 @@ pub struct PaginationParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/employees", get(list_employees).post(create_employee))
         .route(
             "/api/v1/employees/{id}",
             get(get_employee).put(update_employee).delete(delete_employee),
         )
-        .with_state(state);
-
-    Ok(app)
 }
 
 async fn list_employees(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Employee>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -99,7 +89,7 @@ async fn list_employees(
 }
 
 async fn create_employee(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
@@ -191,7 +181,7 @@ async fn create_employee(
 }
 
 async fn get_employee(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Employee>> {
     let result = sqlx::query_as::<_, Employee>(
@@ -215,7 +205,7 @@ async fn get_employee(
 }
 
 async fn update_employee(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateEmployeeRequest>,
@@ -311,7 +301,7 @@ async fn update_employee(
 }
 
 async fn delete_employee(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

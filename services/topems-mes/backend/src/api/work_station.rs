@@ -7,34 +7,27 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateWorkStationRequest, UpdateWorkStationRequest, WorkStation};
 use topems_shared::{ApiResponse, PaginationParams, api_error};
 use crate::api::audit::log_audit_event;
 
-pub struct AppState {
-    pub db: PgPool,
-}
+use super::ApiState;
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/workstations", get(list_workstations).post(create_workstation))
         .route(
             "/api/v1/workstations/{id}",
             get(get_workstation).put(update_workstation),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
 
 async fn list_workstations(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -95,7 +88,7 @@ async fn list_workstations(
 }
 
 async fn create_workstation(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateWorkStationRequest>,
 ) -> Json<ApiResponse<WorkStation>> {
@@ -162,7 +155,7 @@ async fn create_workstation(
 }
 
 async fn get_workstation(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkStation>> {
     let result = sqlx::query_as::<_, WorkStation>(
@@ -186,7 +179,7 @@ async fn get_workstation(
 }
 
 async fn update_workstation(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateWorkStationRequest>,

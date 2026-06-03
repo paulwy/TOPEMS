@@ -8,12 +8,11 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 use utoipa::{ToSchema, IntoParams};
 
 use crate::models::{CreateSampleRequest, Sample, UpdateSampleRequest};
+use crate::api::ApiState;
 use topems_shared::Result;
 
 #[derive(Debug, Serialize)]
@@ -55,10 +54,6 @@ pub struct PaginationParams {
     pub status: Option<String>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListSamplesQuery {
     pub page: Option<i64>,
@@ -85,9 +80,7 @@ pub struct BatchOperationResult {
     pub errors: Vec<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
+pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/samples", get(list_samples).post(create_sample))
         .route("/api/v1/samples/batch", post(batch_create_samples).delete(batch_delete_samples))
@@ -96,8 +89,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
         .route(
             "/api/v1/samples/{id}",
             get(get_sample).put(update_sample).delete(delete_sample),
-        )
-        .with_state(state);
+        );
 
     Ok(app)
 }
@@ -121,7 +113,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     )
 )]
 async fn list_samples(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -196,7 +188,7 @@ async fn list_samples(
     )
 )]
 async fn create_sample(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
@@ -279,7 +271,7 @@ async fn create_sample(
     )
 )]
 async fn get_sample(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Sample>> {
     let result = sqlx::query_as::<_, Sample>(
@@ -320,7 +312,7 @@ async fn get_sample(
     )
 )]
 async fn update_sample(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateSampleRequest>,
@@ -419,7 +411,7 @@ async fn update_sample(
     )
 )]
 async fn delete_sample(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
@@ -487,7 +479,7 @@ async fn delete_sample(
     )
 )]
 async fn batch_create_samples(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<BatchCreateRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
@@ -576,7 +568,7 @@ async fn batch_create_samples(
     )
 )]
 async fn batch_delete_samples(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
@@ -662,7 +654,7 @@ async fn batch_delete_samples(
     )
 )]
 async fn export_samples(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
 ) -> Response {
     let result = sqlx::query_as::<_, Sample>(
@@ -835,7 +827,7 @@ pub struct CsvImportRow {
     )
 )]
 async fn import_samples(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     bytes: Bytes,
 ) -> Json<ApiResponse<BatchOperationResult>> {
@@ -857,8 +849,7 @@ async fn import_samples(
                 None,
                 "error".to_string(),
                 Some(e.to_string()),
-                &headers,
-            ).await;
+                &headers,            ).await;
             
             return Json(ApiResponse::error(400, "CSV 格式错误"));
         }
@@ -961,4 +952,3 @@ async fn import_samples(
         Json(ApiResponse::success(result, "部分导入成功"))
     }
 }
-

@@ -1298,18 +1298,28 @@ async fn main() -> Result<()> {
 
     let public_routes = Router::new()
         .route("/health", get(health_check))
-        .route("/api/v1/customers", get(list_customers))
-        .route("/api/v1/customers/{id}", get(get_customer))
-        .route("/api/v1/contacts", get(list_contacts))
-        .route("/api/v1/contacts/{id}", get(get_contact))
-        .route("/api/v1/opportunities", get(list_opportunities))
-        .route("/api/v1/opportunities/{id}", get(get_opportunity))
-        .route("/api/v1/interactions", get(list_interactions))
-        .route("/api/v1/interactions/{id}", get(get_interaction))
         .with_state(app_state.pool.clone());
+
+    let protected_routes = Router::new()
+        .route("/api/v1/customers", get(list_customers).post(create_customer))
+        .route("/api/v1/customers/{id}", get(get_customer).put(update_customer).delete(delete_customer))
+        .route("/api/v1/contacts", get(list_contacts).post(create_contact))
+        .route("/api/v1/contacts/{id}", get(get_contact).put(update_contact).delete(delete_contact))
+        .route("/api/v1/opportunities", get(list_opportunities).post(create_opportunity))
+        .route("/api/v1/opportunities/{id}", get(get_opportunity).put(update_opportunity).delete(delete_opportunity))
+        .route("/api/v1/interactions", get(list_interactions).post(create_interaction))
+        .route("/api/v1/interactions/{id}", get(get_interaction).put(update_interaction).delete(delete_interaction))
+        .route("/api/v1/audit-logs", get(list_audit_logs))
+        .route("/api/v1/audit-logs/{id}", get(get_audit_log))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
 
     let app = Router::new()
         .merge(public_routes)
+        .merge(protected_routes)
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8013".to_string());

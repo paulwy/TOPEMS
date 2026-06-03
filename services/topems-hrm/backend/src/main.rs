@@ -3,8 +3,6 @@ mod models;
 
 use anyhow::Result;
 use axum::{
-    extract::FromRef,
-    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -13,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
-use std::time::Instant;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
@@ -23,25 +20,7 @@ use topems_shared::{
     SystemMetrics, check_http_health,
 };
 use api::audit::log_audit_event;
-
-#[derive(Clone)]
-struct AppState {
-    pool: sqlx::PgPool,
-    auth_state: AuthState,
-    metrics: Arc<SystemMetrics>,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
-impl FromRef<AppState> for sqlx::PgPool {
-    fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
-    }
-}
+use api::ApiState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -68,51 +47,33 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
-
+    let auth_state = AuthState::from_env();
     let metrics = Arc::new(SystemMetrics::new());
 
-    let app_state = AppState {
-        pool: pool.clone(),
-        auth_state: AuthState::from_env(),
-        metrics: metrics.clone(),
-    };
-
     let cors = create_cors_layer();
-
-    let audit_router = api::audit::create_routes(pool.clone()).await?;
 
     let health_router = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/api/v1/metrics", get(get_metrics))
-        .with_state(app_state.clone());
+        .route("/api/v1/metrics", get(get_metrics));
 
     let protected_routes = Router::new()
-        .merge(api::employee::create_routes(pool.clone()).await?)
-        .merge(api::department::create_routes(pool.clone()).await?)
-        .merge(api::contract::create_routes(pool.clone()).await?)
-        .merge(api::attendance::create_routes(pool.clone()).await?)
-        .merge(api::position::create_routes(pool.clone()).await?)
-        .merge(api::leave::create_routes(pool.clone()).await?)
-        .merge(api::recruitment::create_routes(pool.clone()).await?)
-        .merge(api::payroll::create_routes(pool.clone()).await?)
-        .merge(api::performance::create_routes(pool.clone()).await?)
-        .merge(api::training::create_routes(pool.clone()).await?)
-        .merge(audit_router)
+        .merge(api::create_routes(pool.clone(), auth_state.clone(), metrics.clone()).await?)
         .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
+            auth_state.clone(),
             auth_middleware,
         ));
 
     let app = Router::new()
         .merge(health_router)
         .merge(protected_routes)
-        .layer(cors);
+        .layer(cors)
+        .with_state(ApiState {
+            db: pool,
+            auth_state,
+            metrics,
+            start_time: std::time::Instant::now(),
+        });
 
     let port = env::var("PORT").unwrap_or_else(|_| "8010".to_string());
     let addr = format!("0.0.0.0:{}", port);
@@ -127,47 +88,15 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn health_check(
-    axum::extract::State(state): axum::extract::State<AppState>,
-) -> Json<ApiResponse<HrmHealthSummary>> {
-    let database_health = check_database_health(&state.pool).await;
-    let iam_health = check_iam_health().await;
-
-    let overall_status = if database_health.status == HealthStatus::Healthy
-        && iam_health.status == HealthStatus::Healthy
-    {
-        HealthStatus::Healthy
-    } else if database_health.status == HealthStatus::Unhealthy
-        || iam_health.status == HealthStatus::Unhealthy
-    {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let summary = HrmHealthSummary {
-        service_name: "topems-hrm".to_string(),
-        status: overall_status,
-        uptime: state.metrics.get_uptime(),
-        dependencies: vec![database_health, iam_health],
-    };
-
-    Json(ApiResponse::success(summary, "健康检查"))
-}
-
-#[derive(Serialize, Clone)]
-struct HrmHealthSummary {
-    service_name: String,
-    status: HealthStatus,
-    uptime: String,
-    dependencies: Vec<DependencyHealth>,
+async fn health_check() -> Json<ApiResponse<&'static str>> {
+    Json(ApiResponse::success("TOPEMS-HRM is running", "健康检查"))
 }
 
 async fn health_check_detailed(
-    axum::extract::State(state): axum::extract::State<AppState>,
+    axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
-        check_database_health(&state.pool).await,
+        check_database_health(&state.db).await,
         check_iam_health().await,
     ];
 
@@ -200,7 +129,7 @@ async fn health_check_detailed(
 }
 
 async fn get_metrics(
-    axum::extract::State(state): axum::extract::State<AppState>,
+    axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<HrmServiceMetrics>> {
     let metrics = HrmServiceMetrics {
         service_name: "topems-hrm".to_string(),
@@ -209,8 +138,8 @@ async fn get_metrics(
         request_count: state.metrics.get_request_count(),
         error_count: state.metrics.get_error_count(),
         active_connections: state.metrics.get_active_connections(),
-        database_pool_size: state.pool.size() as u32,
-        database_pool_idle: state.pool.num_idle(),
+        database_pool_size: state.db.size() as u32,
+        database_pool_idle: state.db.num_idle(),
     };
 
     Json(ApiResponse::success(metrics, "服务指标"))

@@ -1,9 +1,10 @@
 use axum::{
-    extract::Path,
+    extract::{Path, State},
     http::StatusCode,
     Json,
+    Router,
+    routing::{get, post, put, delete},
 };
-use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::models::{
@@ -13,8 +14,18 @@ use crate::models::{
     },
 };
 
+use super::ApiState;
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+        .route("/api/v1/project-budgets", post(create_project_budget))
+        .route("/api/v1/project-budgets/:project_id", get(get_project_budget).put(update_project_budget))
+        .route("/api/v1/project-budgets/:budget_id/items", post(create_budget_item).get(get_budget_items))
+        .route("/api/v1/project-budgets/items/:id", put(update_budget_item).delete(delete_budget_item))
+}
+
 pub async fn create_project_budget(
-    pool: axum::extract::Extension<PgPool>,
+    State(state): State<ApiState>,
     Json(payload): Json<CreateBudgetRequest>,
 ) -> Result<Json<ProjectBudget>, (StatusCode, String)> {
     let budget_type = payload.budget_type.to_string();
@@ -40,7 +51,7 @@ pub async fn create_project_budget(
     .bind(&remaining_amount)
     .bind(&status)
     .bind("admin")
-    .fetch_one(&*pool)
+    .fetch_one(&state.db)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
@@ -48,14 +59,14 @@ pub async fn create_project_budget(
 }
 
 pub async fn get_project_budget(
-    pool: axum::extract::Extension<PgPool>,
+    State(state): State<ApiState>,
     Path(project_id): Path<Uuid>,
 ) -> Result<Json<ProjectBudget>, (StatusCode, String)> {
     let budget = sqlx::query_as::<_, ProjectBudget>(
         r#"SELECT * FROM project_budgets WHERE project_id = $1"#,
     )
     .bind(project_id)
-    .fetch_one(&*pool)
+    .fetch_one(&state.db)
     .await
     .map_err(|e| match e {
         sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Budget not found".to_string()),
@@ -66,7 +77,7 @@ pub async fn get_project_budget(
 }
 
 pub async fn update_project_budget(
-    pool: axum::extract::Extension<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateBudgetRequest>,
 ) -> Result<Json<ProjectBudget>, (StatusCode, String)> {
@@ -95,7 +106,7 @@ pub async fn update_project_budget(
     .bind(&payload.approved_by)
     .bind(&payload.approved_at)
     .bind(id)
-    .fetch_one(&*pool)
+    .fetch_one(&state.db)
     .await
     .map_err(|e| match e {
         sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Budget not found".to_string()),
@@ -106,7 +117,7 @@ pub async fn update_project_budget(
 }
 
 pub async fn create_budget_item(
-    pool: axum::extract::Extension<PgPool>,
+    State(state): State<ApiState>,
     Json(payload): Json<CreateBudgetItemRequest>,
 ) -> Result<Json<ProjectBudgetItem>, (StatusCode, String)> {
     let item = sqlx::query_as::<_, ProjectBudgetItem>(
@@ -122,7 +133,7 @@ pub async fn create_budget_item(
     .bind(&payload.budget_amount)
     .bind(0.0)
     .bind(&payload.remarks)
-    .fetch_one(&*pool)
+    .fetch_one(&state.db)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
@@ -130,14 +141,14 @@ pub async fn create_budget_item(
 }
 
 pub async fn get_budget_items(
-    pool: axum::extract::Extension<PgPool>,
+    State(state): State<ApiState>,
     Path(budget_id): Path<Uuid>,
 ) -> Result<Json<Vec<ProjectBudgetItem>>, (StatusCode, String)> {
     let items = sqlx::query_as::<_, ProjectBudgetItem>(
         r#"SELECT * FROM project_budget_items WHERE budget_id = $1 ORDER BY category, subcategory"#,
     )
     .bind(budget_id)
-    .fetch_all(&*pool)
+    .fetch_all(&state.db)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
@@ -145,7 +156,7 @@ pub async fn get_budget_items(
 }
 
 pub async fn update_budget_item(
-    pool: axum::extract::Extension<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateBudgetItemRequest>,
 ) -> Result<Json<ProjectBudgetItem>, (StatusCode, String)> {
@@ -168,7 +179,7 @@ pub async fn update_budget_item(
     .bind(&payload.used_amount)
     .bind(&payload.remarks)
     .bind(id)
-    .fetch_one(&*pool)
+    .fetch_one(&state.db)
     .await
     .map_err(|e| match e {
         sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Budget item not found".to_string()),
@@ -179,14 +190,14 @@ pub async fn update_budget_item(
 }
 
 pub async fn delete_budget_item(
-    pool: axum::extract::Extension<PgPool>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     let result = sqlx::query(
         r#"DELETE FROM project_budget_items WHERE id = $1"#,
     )
     .bind(id)
-    .execute(&*pool)
+    .execute(&state.db)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 

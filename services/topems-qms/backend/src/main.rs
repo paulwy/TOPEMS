@@ -28,6 +28,12 @@ impl FromRef<AppState> for AuthState {
     }
 }
 
+impl FromRef<AppState> for sqlx::PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
@@ -60,12 +66,20 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
+    let health_router = Router::new()
         .route("/health", get(health_check))
-        .merge(api::quality_standard::create_routes(pool.clone()).await?)
-        .merge(api::quality_inspection::create_routes(pool.clone()).await?)
-        .merge(api::quality_issue::create_routes(pool.clone()).await?)
-        .merge(api::corrective_action::create_routes(pool.clone()).await?)
+        .with_state(app_state.clone());
+
+    let protected_routes = Router::new()
+        .merge(api::create_routes(pool.clone(), app_state.auth_state.clone()).await?)
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ));
+
+    let app = Router::new()
+        .merge(health_router)
+        .merge(protected_routes)
         .layer(cors);
 
     let port = env::var("SERVER_PORT")
