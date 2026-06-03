@@ -166,6 +166,25 @@ struct PermissionInfo {
     description: Option<String>,
 }
 
+#[derive(Debug, Serialize)]
+struct AuditLogInfo {
+    id: String,
+    user_id: Option<String>,
+    action: String,
+    resource: Option<String>,
+    resource_id: Option<String>,
+    ip_address: Option<String>,
+    user_agent: Option<String>,
+    details: Option<serde_json::Value>,
+    created_at: String,
+}
+
+#[derive(Debug, Serialize)]
+struct ListAuditLogsResponse {
+    logs: Vec<AuditLogInfo>,
+    total: usize,
+}
+
 #[derive(Debug, Deserialize)]
 struct RefreshTokenRequest {
     refresh_token: String,
@@ -196,6 +215,17 @@ struct ChangePasswordRequest {
     new_password: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct ResetPasswordRequest {
+    email: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct SetNewPasswordRequest {
+    token: String,
+    new_password: String,
+}
+
 // Custom extractor for claims
 struct AuthenticatedUser(Claims);
 
@@ -218,11 +248,63 @@ where
 
 // Helper functions
 fn validate_password(password: &str) -> Result<(), String> {
-    if password.len() < 6 {
-        return Err("密码长度至少为6位".to_string());
+    if password.len() < 8 {
+        return Err("密码长度至少为8位".to_string());
+    }
+    
+    let has_uppercase = password.chars().any(|c| c.is_uppercase());
+    let has_lowercase = password.chars().any(|c| c.is_lowercase());
+    let has_number = password.chars().any(|c| c.is_numeric());
+    let has_special = password.chars().any(|c| !c.is_alphanumeric());
+    
+    if !has_uppercase {
+        return Err("密码必须包含至少一个大写字母".to_string());
+    }
+    if !has_lowercase {
+        return Err("密码必须包含至少一个小写字母".to_string());
+    }
+    if !has_number {
+        return Err("密码必须包含至少一个数字".to_string());
+    }
+    if !has_special {
+        return Err("密码必须包含至少一个特殊字符".to_string());
     }
     
     Ok(())
+}
+
+async fn log_audit(
+    state: &AppState,
+    user_id: Option<&str>,
+    action: &str,
+    resource: Option<&str>,
+    resource_id: Option<&str>,
+    ip_address: Option<&str>,
+    user_agent: Option<&str>,
+    details: Option<serde_json::Value>,
+) {
+    let result = sqlx::query(
+        r#"
+        INSERT INTO iam.audit_logs (id, user_id, action, resource, resource_id, ip_address, user_agent, details)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        "#
+    )
+    .bind(&uuid::Uuid::new_v4().to_string())
+    .bind(user_id)
+    .bind(action)
+    .bind(resource)
+    .bind(resource_id)
+    .bind(ip_address)
+    .bind(user_agent)
+    .bind(details)
+    .execute(&state.db)
+    .await;
+    
+    if let Err(e) = result {
+        tracing::error!("审计日志记录失败: {}", e);
+    } else {
+        tracing::info!("审计日志记录成功: action={}, user_id={}", action, user_id.unwrap_or("None"));
+    }
 }
 
 fn validate_email(email: &str) -> Result<(), String> {
@@ -390,6 +472,8 @@ async fn login(
                 };
                 
                 tracing::info!("✅ 用户登录成功: {}", user.1);
+                
+                let _ = log_audit(&state, Some(&user.0), "login", Some("user"), Some(&user.0), None, None, None).await;
                 
                 Json(ApiResponse::success(resp, &format!("欢迎回来，{}！", user.3.as_ref().unwrap_or(&user.1))))
             } else {
@@ -1428,6 +1512,7 @@ async fn delete_permission(
     match result {
         Ok(res) => {
             if res.rows_affected() > 0 {
+                let _ = log_audit(&state, Some(&claims.sub), "delete_permission", Some("permission"), Some(&permission_id), None, None, None).await;
                 Json(ApiResponse::success(String::new(), "删除权限成功"))
             } else {
                 Json(ApiResponse::error(404, "权限不存在"))
@@ -1435,6 +1520,202 @@ async fn delete_permission(
         }
         Err(e) => {
             tracing::error!("数据库删除错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+// 审计日志API
+async fn list_audit_logs(
+    State(state): State<AppState>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+) -> Json<ApiResponse<ListAuditLogsResponse>> {
+    if claims.role != "admin" {
+        return Json(ApiResponse::error(403, "仅管理员可访问审计日志"));
+    }
+    
+    let logs = sqlx::query_as::<_, (String, Option<String>, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<serde_json::Value>, chrono::DateTime<Utc>)>(
+        "SELECT id::text, user_id::text, action, resource, resource_id::text, ip_address::text, user_agent, details, created_at FROM iam.audit_logs ORDER BY created_at DESC LIMIT 100"
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    match logs {
+        Ok(logs) => {
+            let audit_logs: Vec<AuditLogInfo> = logs.into_iter().map(|log| {
+                AuditLogInfo {
+                    id: log.0,
+                    user_id: log.1,
+                    action: log.2,
+                    resource: log.3,
+                    resource_id: log.4,
+                    ip_address: log.5,
+                    user_agent: log.6,
+                    details: log.7,
+                    created_at: log.8.to_rfc3339(),
+                }
+            }).collect();
+            let total = audit_logs.len();
+            
+            Json(ApiResponse::success(ListAuditLogsResponse {
+                logs: audit_logs,
+                total,
+            }, "Success"))
+        }
+        Err(e) => {
+            tracing::error!("查询审计日志失败: {}", e);
+            Json(ApiResponse::error(500, "查询审计日志失败"))
+        }
+    }
+}
+
+async fn get_user_audit_logs(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+) -> Json<ApiResponse<ListAuditLogsResponse>> {
+    if claims.role != "admin" && claims.sub != user_id {
+        return Json(ApiResponse::error(403, "无权限访问"));
+    }
+    
+    let logs = sqlx::query_as::<_, (String, Option<String>, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<serde_json::Value>, chrono::DateTime<Utc>)>(
+        "SELECT id::text, user_id::text, action, resource, resource_id::text, ip_address::text, user_agent, details, created_at FROM iam.audit_logs WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50"
+    )
+    .bind(&user_id)
+    .fetch_all(&state.db)
+    .await;
+
+    match logs {
+        Ok(logs) => {
+            let audit_logs: Vec<AuditLogInfo> = logs.into_iter().map(|log| {
+                AuditLogInfo {
+                    id: log.0,
+                    user_id: log.1,
+                    action: log.2,
+                    resource: log.3,
+                    resource_id: log.4,
+                    ip_address: log.5,
+                    user_agent: log.6,
+                    details: log.7,
+                    created_at: log.8.to_rfc3339(),
+                }
+            }).collect();
+            let total = audit_logs.len();
+            
+            Json(ApiResponse::success(ListAuditLogsResponse {
+                logs: audit_logs,
+                total,
+            }, "Success"))
+        }
+        Err(e) => {
+            tracing::error!("查询用户审计日志失败: {}", e);
+            Json(ApiResponse::error(500, "查询审计日志失败"))
+        }
+    }
+}
+
+// 密码重置API
+async fn request_password_reset(
+    State(state): State<AppState>,
+    Json(req): Json<ResetPasswordRequest>,
+) -> Json<ApiResponse<()>> {
+    let result = sqlx::query_scalar::<_, (String, String)>(
+        "SELECT id::text, username FROM iam.users WHERE email = $1"
+    )
+    .bind(&req.email)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some((user_id, username))) => {
+            let reset_token = uuid::Uuid::new_v4().to_string();
+            let expires_at = Utc::now() + Duration::hours(1);
+            
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO iam.password_reset_tokens (id, user_id, token, expires_at)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT (user_id) DO UPDATE SET token = $3, expires_at = $4
+                "#
+            )
+            .bind(&uuid::Uuid::new_v4().to_string())
+            .bind(&user_id)
+            .bind(&reset_token)
+            .bind(expires_at)
+            .execute(&state.db)
+            .await;
+            
+            tracing::info!("🔑 密码重置请求: 用户 {} ({})", username, req.email);
+            
+            let _ = log_audit(&state, Some(&user_id), "password_reset_request", Some("user"), Some(&user_id), None, None, None).await;
+            
+            Json(ApiResponse::ok("密码重置链接已发送至您的邮箱"))
+        }
+        Ok(None) => {
+            Json(ApiResponse::error(404, "该邮箱未注册"))
+        }
+        Err(e) => {
+            tracing::error!("数据库查询错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn set_new_password(
+    State(state): State<AppState>,
+    Json(req): Json<SetNewPasswordRequest>,
+) -> Json<ApiResponse<()>> {
+    let result = sqlx::query_scalar::<_, (String, chrono::DateTime<Utc>)>(
+        "SELECT user_id::text, expires_at FROM iam.password_reset_tokens WHERE token = $1"
+    )
+    .bind(&req.token)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some((user_id, expires_at))) => {
+            if expires_at < Utc::now() {
+                return Json(ApiResponse::error(400, "重置链接已过期"));
+            }
+            
+            if let Err(msg) = validate_password(&req.new_password) {
+                return Json(ApiResponse::error(400, &msg));
+            }
+            
+            let new_password_hash = bcrypt::hash(&req.new_password, bcrypt::DEFAULT_COST).unwrap();
+            
+            let update_result = sqlx::query(
+                "UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2"
+            )
+            .bind(&new_password_hash)
+            .bind(&user_id)
+            .execute(&state.db)
+            .await;
+
+            match update_result {
+                Ok(_) => {
+                    let _ = sqlx::query(
+                        "DELETE FROM iam.password_reset_tokens WHERE token = $1"
+                    )
+                    .bind(&req.token)
+                    .execute(&state.db)
+                    .await;
+                    
+                    let _ = log_audit(&state, Some(&user_id), "password_reset", Some("user"), Some(&user_id), None, None, None).await;
+                    
+                    Json(ApiResponse::ok("密码重置成功"))
+                }
+                Err(e) => {
+                    tracing::error!("数据库更新错误: {}", e);
+                    Json(ApiResponse::error(500, "服务器内部错误"))
+                }
+            }
+        }
+        Ok(None) => {
+            Json(ApiResponse::error(400, "无效的重置链接"))
+        }
+        Err(e) => {
+            tracing::error!("数据库查询错误: {}", e);
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1492,7 +1773,9 @@ async fn main() {
     let auth_routes = Router::new()
         .route("/login", post(login))
         .route("/register", post(register))
-        .route("/refresh", post(refresh_token));
+        .route("/refresh", post(refresh_token))
+        .route("/password/reset", post(request_password_reset))
+        .route("/password/set", post(set_new_password));
     
     let user_routes = Router::new()
         .route("/me", get(get_current_user))
@@ -1523,10 +1806,16 @@ async fn main() {
         .route("/{permission_id}", delete(delete_permission))
         .without_v07_checks();
     
+    let audit_log_routes = Router::new()
+        .route("/", get(list_audit_logs))
+        .route("/user/{user_id}", get(get_user_audit_logs))
+        .without_v07_checks();
+    
     let protected_routes = Router::new()
         .nest("/users", user_routes)
         .nest("/roles", role_routes)
         .nest("/permissions", permission_routes)
+        .nest("/audit-logs", audit_log_routes)
         .layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
 
     let app = Router::new()

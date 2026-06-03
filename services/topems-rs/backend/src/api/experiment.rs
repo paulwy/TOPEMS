@@ -1,5 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -10,6 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{CreateExperimentRequest, Experiment, UpdateExperimentRequest};
+use crate::api::audit::log_audit_event;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -126,8 +128,17 @@ async fn list_experiments(
 
 async fn create_experiment(
     State(state): State<Arc<super::ApiState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateExperimentRequest>,
 ) -> Json<ApiResponse<Experiment>> {
+    if req.name.is_empty() {
+        return Json(ApiResponse::error(400, "试验名称不能为空"));
+    }
+
+    if req.code.is_empty() {
+        return Json(ApiResponse::error(400, "试验编码不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let phase = req.phase.clone();
@@ -170,13 +181,46 @@ async fn create_experiment(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(experiment) => Json(ApiResponse::success(experiment, "试验创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(experiment) => (
+            Json(ApiResponse::success(experiment.clone(), "试验创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建试验失败: {}", e);
-            Json(ApiResponse::error(500, "试验创建失败"))
+            (
+                Json(ApiResponse::error(500, "试验创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(experiment) = &result {
+        serde_json::to_value(experiment).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "experiment".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_experiment(
@@ -209,6 +253,7 @@ async fn get_experiment(
 async fn update_experiment(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateExperimentRequest>,
 ) -> Json<ApiResponse<Experiment>> {
     let existing = sqlx::query_as::<_, Experiment>(
@@ -223,6 +268,8 @@ async fn update_experiment(
         Ok(None) => return Json(ApiResponse::error(404, "试验不存在")),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询试验失败: {}", e))),
     };
+
+    let request_data = serde_json::to_value(&req).ok();
 
     let name = req.name.unwrap_or(existing.name);
     let status = req.status.unwrap_or(existing.status);
@@ -259,34 +306,101 @@ async fn update_experiment(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(experiment) => Json(ApiResponse::success(experiment, "试验更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(experiment) => (
+            Json(ApiResponse::success(experiment.clone(), "试验更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新试验失败: {}", e);
-            Json(ApiResponse::error(500, "试验更新失败"))
+            (
+                Json(ApiResponse::error(500, "试验更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(experiment) = &result {
+        serde_json::to_value(experiment).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "experiment".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_experiment(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM rs.experiments WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "试验删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::error(404, "试验不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "试验删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(ApiResponse::error(404, "试验不存在")),
+            "error".to_string(),
+            Some("试验不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除试验失败: {}", e);
-            Json(ApiResponse::error(500, "试验删除失败"))
+            (
+                Json(ApiResponse::error(500, "试验删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "experiment".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_experiment_records(

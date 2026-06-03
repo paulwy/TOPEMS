@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -9,7 +10,8 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use crate::api::audit::log_audit_event;
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult, api_error};
 use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -171,8 +173,17 @@ async fn list_reviews(
 
 async fn create_review(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreatePerformanceReviewRequest>,
 ) -> Json<ApiResponse<PerformanceReview>> {
+    if req.employee_id.is_nil() {
+        return Json(api_error(400, "员工ID不能为空"));
+    }
+
+    if req.review_period.is_empty() {
+        return Json(api_error(400, "评核周期不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -192,13 +203,46 @@ async fn create_review(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(review) => Json(ApiResponse::success(review, "绩效评核创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(review) => (
+            Json(ApiResponse::success(review.clone(), "绩效评核创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::error(500, "创建绩效评核失败"))
+            (
+                Json(api_error(500, "创建绩效评核失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(review) = &result {
+        serde_json::to_value(review).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "performance_review".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_review(
@@ -270,6 +314,7 @@ async fn update_review(
 async fn delete_review(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
         "DELETE FROM performance_reviews WHERE id = $1 AND status = 'draft'"
@@ -278,14 +323,50 @@ async fn delete_review(
     .execute(&state.db)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "绩效评核已删除")),
-        Ok(_) => Json(ApiResponse::<String>::error(404, "绩效评核不存在或状态不正确")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success(id.to_string(), "绩效评核已删除")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "绩效评核不存在或状态不正确")),
+            "error".to_string(),
+            Some("绩效评核不存在或状态不正确".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除绩效评核失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "删除绩效评核失败"))
+            (
+                Json(api_error(500, "删除绩效评核失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "performance_review".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn submit_review(
@@ -409,8 +490,17 @@ async fn list_goals(
 
 async fn create_goal(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreatePerformanceGoalRequest>,
 ) -> Json<ApiResponse<PerformanceGoal>> {
+    if req.employee_id.is_nil() {
+        return Json(api_error(400, "员工ID不能为空"));
+    }
+
+    if req.title.is_empty() {
+        return Json(api_error(400, "目标标题不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -433,13 +523,46 @@ async fn create_goal(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(goal) => Json(ApiResponse::success(goal, "绩效目标创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(goal) => (
+            Json(ApiResponse::success(goal.clone(), "绩效目标创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建绩效目标失败: {}", e);
-            Json(ApiResponse::<PerformanceGoal>::error(500, "创建绩效目标失败"))
+            (
+                Json(api_error(500, "创建绩效目标失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(goal) = &result {
+        serde_json::to_value(goal).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "performance_goal".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_goal(
@@ -511,19 +634,57 @@ async fn update_goal(
 async fn delete_goal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM performance_goals WHERE id = $1")
     .bind(id)
     .execute(&state.db)
     .await;
 
-    match result {
-        Ok(_) => Json(ApiResponse::success(id.to_string(), "绩效目标已删除")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success(id.to_string(), "绩效目标已删除")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "绩效目标不存在")),
+            "error".to_string(),
+            Some("绩效目标不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除绩效目标失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "删除绩效目标失败"))
+            (
+                Json(api_error(500, "删除绩效目标失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "performance_goal".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_employee_reviews(

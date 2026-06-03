@@ -92,6 +92,14 @@ async fn create_workstation(
     headers: HeaderMap,
     Json(req): Json<CreateWorkStationRequest>,
 ) -> Json<ApiResponse<WorkStation>> {
+    if req.name.is_empty() {
+        return Json(api_error(400, "工作站名称不能为空"));
+    }
+
+    if req.code.is_empty() {
+        return Json(api_error(400, "工作站编码不能为空"));
+    }
+
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();

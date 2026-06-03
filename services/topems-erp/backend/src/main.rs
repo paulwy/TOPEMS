@@ -1,6 +1,7 @@
 mod api;
 mod models;
 mod services;
+mod utils;
 
 use anyhow::Result;
 use axum::{
@@ -11,7 +12,7 @@ use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use topems_shared::{
@@ -54,6 +55,10 @@ async fn main() -> Result<()> {
         auth_state: AuthState::from_env(),
         metrics: metrics.clone(),
         start_time,
+        company_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
+        department_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
+        employee_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
+        dict_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(600))),
     };
 
     let cors = create_cors_layer();
@@ -76,7 +81,7 @@ async fn main() -> Result<()> {
         .merge(protected_routes)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8009".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8010".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-ERP 企业资源计划系统启动中...");

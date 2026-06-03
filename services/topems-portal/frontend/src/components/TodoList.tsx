@@ -6,8 +6,11 @@ interface TodoListProps {
   onUpdate: () => void;
 }
 
+type TodoTypeFilter = 'all' | 'personal' | 'approval' | 'notification' | 'system';
+
 const TodoList: React.FC<TodoListProps> = ({ todos, onUpdate }) => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [filter, setFilter] = useState<TodoTypeFilter>('all');
   const [newTodo, setNewTodo] = useState({
     title: '',
     service: '',
@@ -41,6 +44,32 @@ const TodoList: React.FC<TodoListProps> = ({ todos, onUpdate }) => {
     }
   };
 
+  const getTypeIcon = (todoType: string) => {
+    switch (todoType) {
+      case 'approval':
+        return '✏️';
+      case 'notification':
+        return '🔔';
+      case 'system':
+        return '⚙️';
+      default:
+        return '📝';
+    }
+  };
+
+  const getTypeText = (todoType: string) => {
+    switch (todoType) {
+      case 'approval':
+        return '审批';
+      case 'notification':
+        return '通知';
+      case 'system':
+        return '系统';
+      default:
+        return '个人';
+    }
+  };
+
   const handleComplete = async (id: string) => {
     try {
       await portalApi.completeTodo(id);
@@ -64,7 +93,19 @@ const TodoList: React.FC<TodoListProps> = ({ todos, onUpdate }) => {
     }
   };
 
-  const incompleteTodos = todos.filter((todo) => !todo.completed);
+  const filteredTodos = todos.filter((todo) => {
+    if (!todo.completed && filter === 'all') return true;
+    if (!todo.completed && filter === todo.todo_type) return true;
+    return false;
+  });
+
+  const typeCounts = {
+    all: todos.filter((t) => !t.completed).length,
+    personal: todos.filter((t) => !t.completed && t.todo_type === 'personal').length,
+    approval: todos.filter((t) => !t.completed && t.todo_type === 'approval').length,
+    notification: todos.filter((t) => !t.completed && t.todo_type === 'notification').length,
+    system: todos.filter((t) => !t.completed && t.todo_type === 'system').length,
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
@@ -72,9 +113,9 @@ const TodoList: React.FC<TodoListProps> = ({ todos, onUpdate }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <span className="text-xl mr-2">📋</span>
-            <h3 className="text-lg font-semibold text-gray-900">我的待办</h3>
+            <h3 className="text-lg font-semibold text-gray-900">统一待办中心</h3>
             <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full">
-              {incompleteTodos.length}
+              {typeCounts.all}
             </span>
           </div>
           <button
@@ -86,16 +127,45 @@ const TodoList: React.FC<TodoListProps> = ({ todos, onUpdate }) => {
         </div>
       </div>
 
+      <div className="flex border-b border-gray-100">
+        {([
+          { key: 'all' as TodoTypeFilter, label: '全部', count: typeCounts.all },
+          { key: 'approval' as TodoTypeFilter, label: '审批', count: typeCounts.approval },
+          { key: 'notification' as TodoTypeFilter, label: '通知', count: typeCounts.notification },
+          { key: 'system' as TodoTypeFilter, label: '系统', count: typeCounts.system },
+          { key: 'personal' as TodoTypeFilter, label: '个人', count: typeCounts.personal },
+        ] as const).map(({ key, label, count }) => (
+          <button
+            key={key}
+            onClick={() => setFilter(key)}
+            className={`flex-1 px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center space-x-1 ${
+              filter === key
+                ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span>{label}</span>
+            {count > 0 && (
+              <span className="px-1.5 py-0.5 text-xs bg-gray-200 rounded-full">
+                {count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-        {incompleteTodos.length === 0 ? (
+        {filteredTodos.length === 0 ? (
           <div className="p-8 text-center text-gray-400">
             暂无待办事项
           </div>
         ) : (
-          incompleteTodos.map((todo) => (
+          filteredTodos.map((todo) => (
             <div
               key={todo.id}
-              className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between"
+              className={`p-4 hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                todo.todo_type === 'approval' ? 'bg-blue-50/30' : ''
+              }`}
             >
               <div className="flex items-center space-x-3">
                 <button
@@ -107,9 +177,25 @@ const TodoList: React.FC<TodoListProps> = ({ todos, onUpdate }) => {
                   </svg>
                 </button>
                 <div>
-                  <div className="font-medium text-gray-900">{todo.title}</div>
+                  <div className="font-medium text-gray-900 flex items-center space-x-2">
+                    {getTypeIcon(todo.todo_type)}
+                    {todo.link_url ? (
+                      <a
+                        href={todo.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-primary-600 transition-colors"
+                      >
+                        {todo.title}
+                      </a>
+                    ) : (
+                      <span>{todo.title}</span>
+                    )}
+                  </div>
                   <div className="text-sm text-gray-500">
                     <span className="text-primary-600">{todo.service_name}</span>
+                    <span className="mx-2">·</span>
+                    <span>{getTypeText(todo.todo_type)}</span>
                     <span className="mx-2">·</span>
                     <span>{todo.due_date}</span>
                   </div>

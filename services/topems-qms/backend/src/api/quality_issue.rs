@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -8,8 +9,9 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use crate::models::{CreateQualityIssueRequest, QualityIssue, UpdateQualityIssueRequest};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, api_error};
 
 use super::ApiState;
 
@@ -95,8 +97,17 @@ async fn list_issues(
 
 async fn create_issue(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateQualityIssueRequest>,
 ) -> Json<ApiResponse<QualityIssue>> {
+    if req.title.is_empty() {
+        return Json(api_error(400, "质量问题标题不能为空"));
+    }
+
+    if req.severity.is_empty() {
+        return Json(api_error(400, "严重程度不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -121,13 +132,46 @@ async fn create_issue(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(issue) => Json(ApiResponse::success(issue, "质量问题创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(issue) => (
+            Json(ApiResponse::success(issue.clone(), "质量问题创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建质量问题失败: {}", e);
-            Json(ApiResponse::<QualityIssue>::error(500, "质量问题创建失败"))
+            (
+                Json(api_error(500, "质量问题创建失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(issue) = &result {
+        serde_json::to_value(issue).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "quality_issue".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_issue(

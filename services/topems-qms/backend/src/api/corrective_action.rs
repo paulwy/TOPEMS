@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -8,8 +9,9 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use crate::models::{CorrectiveAction, CreateCorrectiveActionRequest, UpdateCorrectiveActionRequest};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, api_error};
 
 use super::ApiState;
 
@@ -95,8 +97,17 @@ async fn list_actions(
 
 async fn create_action(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateCorrectiveActionRequest>,
 ) -> Json<ApiResponse<CorrectiveAction>> {
+    if req.issue_id.is_nil() {
+        return Json(api_error(400, "关联质量问题ID不能为空"));
+    }
+
+    if req.title.is_empty() {
+        return Json(api_error(400, "纠正措施标题不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -117,13 +128,46 @@ async fn create_action(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(action) => Json(ApiResponse::success(action, "纠正措施创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(action) => (
+            Json(ApiResponse::success(action.clone(), "纠正措施创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建纠正措施失败: {}", e);
-            Json(ApiResponse::<CorrectiveAction>::error(500, "纠正措施创建失败"))
+            (
+                Json(api_error(500, "纠正措施创建失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(action) = &result {
+        serde_json::to_value(action).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "corrective_action".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_action(

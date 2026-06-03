@@ -8,6 +8,10 @@ pub mod hrm;
 pub mod performance;
 pub mod database;
 pub mod logging;
+pub mod monitoring;
+pub mod backup;
+pub mod tenant;
+pub mod cluster;
 
 pub use config::{Config, AppConfig, ServiceConfig, ServiceRegistry, get_default_port};
 pub use error::{TopemsError, Result};
@@ -18,4 +22,8 @@ pub use health::{ServiceHealth, HealthStatus, DependencyHealth, HealthCheckRespo
 pub use hrm::{AppState, PaginationQuery, PaginatedResult};
 pub use performance::{PerformanceMetrics, MetricsSnapshot, RequestTimer};
 pub use database::{create_database_pool, test_database_connection};
-pub use logging::{init_logging, init_logging_with_filter};
+pub use logging::{LogEntry, LogQuery, LogStats, LogAggregator, TraceContext, create_log_filter, init_logging};
+pub use monitoring::{MonitoringState, ServiceHealth as MonServiceHealth, ServiceStatus, MonitoringMetrics, AlertRule, AlertSeverity, Alert, default_alert_rules};
+pub use backup::{BackupManager, BackupConfig, BackupMetadata, BackupType, BackupStatus, BackupRequest, RestoreRequest, BackupStatistics, BackupError, BackupSchedule, CompressionType};
+pub use tenant::{TenantManager, Tenant, TenantStatus, TenantPlan, TenantSettings, TenantUser, TenantRole, TenantContext, TenantError, TenantUpdate, UsageMetrics, UsageLimitExceeded};
+pub use cluster::{ClusterManager, ClusterConfig, ClusterMode, NodeConfig, NodeRole, NodeStatus, NodeHealth, LoadBalancerConfig, LoadBalancingAlgorithm, HealthCheckConfig, FailoverConfig, ClusterMetrics, ClusterEvent, ClusterEventType, EventSeverity, ClusterError};

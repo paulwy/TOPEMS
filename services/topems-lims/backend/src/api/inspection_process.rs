@@ -1,6 +1,7 @@
 use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -8,9 +9,10 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use crate::models::{CreateInspectionProcessRequest, InspectionProcess, UpdateInspectionProcessRequest};
 use crate::api::ApiState;
-use topems_shared::response::ApiResponse;
+use topems_shared::response::{ApiResponse, api_error};
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -95,8 +97,13 @@ async fn list_processes(
 
 async fn create_process(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateInspectionProcessRequest>,
 ) -> Json<ApiResponse<InspectionProcess>> {
+    if req.name.is_empty() {
+        return Json(api_error(400, "检验流程名称不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let steps_value = serde_json::to_value(req.steps).unwrap_or(serde_json::json!([]));
@@ -117,13 +124,46 @@ async fn create_process(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(process) => Json(ApiResponse::success(process, "检验流程创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(process) => (
+            Json(ApiResponse::success(process.clone(), "检验流程创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建检验流程失败: {}", e);
-            Json(ApiResponse::error(500, "检验流程创建失败"))
+            (
+                Json(api_error(500, "检验流程创建失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(process) = &result {
+        serde_json::to_value(process).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "inspection_process".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_process(
@@ -206,18 +246,55 @@ async fn update_process(
 async fn delete_process(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM lims.inspection_processes WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "检验流程删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "检验流程不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "检验流程删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "检验流程不存在")),
+            "error".to_string(),
+            Some("检验流程不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除检验流程失败: {}", e);
-            Json(ApiResponse::error(500, "检验流程删除失败"))
+            (
+                Json(api_error(500, "检验流程删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "inspection_process".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

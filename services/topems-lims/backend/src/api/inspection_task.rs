@@ -1,6 +1,7 @@
 use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -10,6 +11,7 @@ use uuid::Uuid;
 
 use crate::models::{CompleteStepRequest, CreateInspectionTaskRequest, InspectionProcess, InspectionRecord, InspectionTask, UpdateInspectionTaskRequest};
 use crate::api::ApiState;
+use crate::api::audit::log_audit_event;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -99,8 +101,13 @@ async fn list_tasks(
 
 async fn create_task(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateInspectionTaskRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
+    if req.inspector.is_empty() {
+        return Json(ApiResponse::error(400, "检验员不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -121,13 +128,46 @@ async fn create_task(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(task) => Json(ApiResponse::success(task, "检验任务创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(task) => (
+            Json(ApiResponse::success(task.clone(), "检验任务创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建检验任务失败: {}", e);
-            Json(ApiResponse::error(500, "检验任务创建失败"))
+            (
+                Json(ApiResponse::error(500, "检验任务创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(task) = &result {
+        serde_json::to_value(task).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "inspection_task".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_task(
@@ -157,6 +197,7 @@ async fn get_task(
 async fn update_task(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateInspectionTaskRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
     let existing = sqlx::query_as::<_, InspectionTask>(
@@ -171,6 +212,8 @@ async fn update_task(
         Ok(None) => return Json(ApiResponse::error(404, "检验任务不存在")),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询检验任务失败: {}", e))),
     };
+
+    let request_data = serde_json::to_value(&req).ok();
 
     let sample_id = req.sample_id.unwrap_or(existing.sample_id);
     let process_id = req.process_id.unwrap_or(existing.process_id);
@@ -195,13 +238,45 @@ async fn update_task(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(task) => Json(ApiResponse::success(task, "检验任务更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(task) => (
+            Json(ApiResponse::success(task.clone(), "检验任务更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新检验任务失败: {}", e);
-            Json(ApiResponse::error(500, "检验任务更新失败"))
+            (
+                Json(ApiResponse::error(500, "检验任务更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(task) = &result {
+        serde_json::to_value(task).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "inspection_task".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn complete_step(

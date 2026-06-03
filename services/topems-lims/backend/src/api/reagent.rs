@@ -1,6 +1,7 @@
 use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -10,6 +11,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::api::ApiState;
+use crate::api::audit::log_audit_event;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -161,8 +163,17 @@ async fn list_reagents(
 
 async fn create_reagent(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateReagentRequest>,
 ) -> Json<ApiResponse<Reagent>> {
+    if req.name.is_empty() {
+        return Json(ApiResponse::error(400, "试剂名称不能为空"));
+    }
+
+    if req.code.is_empty() {
+        return Json(ApiResponse::error(400, "试剂编码不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -197,13 +208,46 @@ async fn create_reagent(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(reagent) => Json(ApiResponse::success(reagent, "试剂创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(reagent) => (
+            Json(ApiResponse::success(reagent.clone(), "试剂创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建试剂失败: {}", e);
-            Json(ApiResponse::error(500, "创建试剂失败"))
+            (
+                Json(ApiResponse::error(500, "创建试剂失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(reagent) = &result {
+        serde_json::to_value(reagent).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "reagent".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_reagent(
@@ -235,6 +279,7 @@ async fn get_reagent(
 async fn update_reagent(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateReagentRequest>,
 ) -> Json<ApiResponse<Reagent>> {
     let existing = sqlx::query_as::<_, Reagent>(
@@ -249,6 +294,8 @@ async fn update_reagent(
         Ok(None) => return Json(ApiResponse::error(404, "试剂不存在")),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询试剂失败: {}", e))),
     };
+
+    let request_data = serde_json::to_value(&req).ok();
 
     let name = req.name.unwrap_or(existing.name);
     let status = req.status.unwrap_or(existing.status);
@@ -286,32 +333,101 @@ async fn update_reagent(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(reagent) => Json(ApiResponse::success(reagent, "试剂更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(reagent) => (
+            Json(ApiResponse::success(reagent.clone(), "试剂更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新试剂失败: {}", e);
-            Json(ApiResponse::error(500, "更新试剂失败"))
+            (
+                Json(ApiResponse::error(500, "更新试剂失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(reagent) = &result {
+        serde_json::to_value(reagent).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "reagent".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_reagent(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM lims.reagents WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "试剂删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "试剂不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "试剂删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(ApiResponse::error(404, "试剂不存在")),
+            "error".to_string(),
+            Some("试剂不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除试剂失败: {}", e);
-            Json(ApiResponse::error(500, "删除试剂失败"))
+            (
+                Json(ApiResponse::error(500, "删除试剂失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "reagent".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn record_usage(

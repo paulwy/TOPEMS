@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -8,8 +9,9 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use crate::models::{CreateAttendanceRequest, AttendanceRecord, UpdateAttendanceRequest};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
 
 pub fn create_routes() -> Router<ApiState> {
@@ -84,8 +86,13 @@ async fn list_attendance(
 
 async fn create_attendance(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateAttendanceRequest>,
 ) -> Json<ApiResponse<AttendanceRecord>> {
+    if req.employee_id.is_nil() {
+        return Json(api_error(400, "员工ID不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -112,13 +119,46 @@ async fn create_attendance(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(record) => Json(ApiResponse::success(record, "考勤记录创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(record) => (
+            Json(ApiResponse::success(record.clone(), "考勤记录创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建考勤记录失败: {}", e);
-            Json(ApiResponse::<AttendanceRecord>::error(500, "考勤记录创建失败"))
+            (
+                Json(api_error(500, "考勤记录创建失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(record) = &result {
+        serde_json::to_value(record).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "attendance".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_attendance(
@@ -206,18 +246,55 @@ async fn update_attendance(
 async fn delete_attendance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM attendance_records WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "考勤记录删除成功")),
-        Ok(_) => Json(ApiResponse::<String>::error(404, "考勤记录不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "考勤记录删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "考勤记录不存在")),
+            "error".to_string(),
+            Some("考勤记录不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除考勤记录失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "考勤记录删除失败"))
+            (
+                Json(api_error(500, "考勤记录删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "attendance".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

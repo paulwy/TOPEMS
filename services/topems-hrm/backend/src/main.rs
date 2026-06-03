@@ -1,5 +1,6 @@
 mod api;
 mod models;
+mod utils;
 
 use anyhow::Result;
 use axum::{
@@ -57,8 +58,14 @@ async fn main() -> Result<()> {
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics));
 
-    let protected_routes = Router::new()
-        .merge(api::create_routes(pool.clone(), auth_state.clone(), metrics.clone()).await?)
+    let api_state = ApiState {
+        db: pool.clone(),
+        auth_state: auth_state.clone(),
+        metrics: metrics.clone(),
+        start_time: std::time::Instant::now(),
+    };
+
+    let protected_routes = api::create_routes(api_state.clone()).await?
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,
@@ -68,14 +75,9 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .layer(cors)
-        .with_state(ApiState {
-            db: pool,
-            auth_state,
-            metrics,
-            start_time: std::time::Instant::now(),
-        });
+        .with_state(api_state);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8010".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8011".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-HRM 人力资源管理系统启动中...");

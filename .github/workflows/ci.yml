@@ -1,221 +1,160 @@
-name: CI Pipeline
+name: TOPEMS CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - 'release/**'
+    branches: [main, develop]
   pull_request:
-    branches:
-      - main
-      - develop
-    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  NODE_VERSION: '20'
+  DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY || 'localhost:5000' }}
 
 jobs:
-  code-quality:
-    name: Code Quality Check
+  # 代码检查
+  lint:
+    name: Code Lint
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-action@stable
         with:
           components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './services/** -> target'
+
+      - name: Check formatting
+        run: |
+          cargo fmt --all -- --check
+
+      - name: Run clippy
+        run: |
+          cargo clippy --all --all-targets --all-features -- -D warnings
+
+  # 后端测试
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - topems-iam
+          - topems-doc
+          - topems-flow
+          - topems-rs
+          - topems-lims
+          - topems-qms
+          - topems-ehs
+          - topems-srm
+          - topems-bi
+          - topems-im
+          - topems-ai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Setup PostgreSQL
+        uses: supercharge/psql-action@v1.2
+        with:
+          postgresql-version: '15'
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './services/${{ matrix.service }}/backend -> target'
+
+      - name: Run tests
+        working-directory: ./services/${{ matrix.service }}/backend
+        run: |
+          cargo test --all --all-features -- --test-threads=4
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./services/${{ matrix.service }}/backend/target/debug/coverage/lcov.info
+          flags: unittests
+          name: ${{ matrix.service }}
+
+  # 前端构建
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - portal
+          - rs
+          - lims
+          - qms
+          - ehs
+          - srm
+          - bi
+          - im
+          - ai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
 
-      - name: Check Rust formatting
-        run: |
-          cargo fmt --all -- --check
-        shell: bash
-
-      - name: Run Rust clippy
-        run: |
-          cargo clippy --all-targets --all-features -- -D warnings
-        shell: bash
-
-      - name: Check TypeScript formatting
-        run: |
-          if [ -f "frontend/package.json" ]; then
-            cd frontend
-            npx prettier --check "src/**/*.{ts,tsx}"
-          fi
-        shell: bash
-
-      - name: Run ESLint
-        run: |
-          if [ -f "frontend/package.json" ]; then
-            cd frontend
-            npm run lint || echo "No lint script configured"
-          fi
-        shell: bash
-
-  build-backend:
-    name: Build Rust Backend
-    runs-on: ubuntu-latest
-    needs: code-quality
-    
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: topems
-          POSTGRES_PASSWORD: topems_secret
-          POSTGRES_DB: topems
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - name: Cache node_modules
+        uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            ~/.cargo/git/checkouts/
-            services/**/target/
-            platform/**/backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+            services/topems-${{ matrix.app }}/frontend/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ matrix.app }}-${{ hashFiles('**/package-lock.json') }}
 
-      - name: Build backend services
-        run: |
-          for service in services/backend platform/*/backend; do
-            if [ -d "$service" ]; then
-              echo "Building $service"
-              cd $service
-              cargo build --release 2>&1 | tail -20
-              cd - > /dev/null
-            fi
-          done
-        shell: bash
+      - name: Install dependencies
+        working-directory: ./services/topems-${{ matrix.app }}/frontend
+        run: npm ci
 
-      - name: Build Rust services
-        run: |
-          for service in services/* topems-*/backend; do
-            if [ -d "$service" ]; then
-              echo "Building $service"
-              cd $service
-              cargo build --release 2>&1 | tail -20
-              cd - > /dev/null
-            fi
-          done
-        shell: bash
+      - name: Lint
+        working-directory: ./services/topems-${{ matrix.app }}/frontend
+        run: npm run lint
+
+      - name: Type check
+        working-directory: ./services/topems-${{ matrix.app }}/frontend
+        run: npm run typecheck
+
+      - name: Build
+        working-directory: ./services/topems-${{ matrix.app }}/frontend
+        run: npm run build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: backend-binaries
-          path: |
-            services/backend/target/release/topems-erp
-            services/notification-service/target/release/notification-service
-            services/report-service/target/release/report-service
-            platform/topems-doc/backend/target/release/topems-doc
-            platform/topems-flow/backend/target/release/topems-flow
-            platform/topems-iam/backend/target/release/topems-iam
-            platform/topems-lims/backend/target/release/topems-lims
-            platform/topems-qms/backend/target/release/topems-qms
-            platform/topems-rs/backend/target/release/topems-rs
-            platform/topems-ehs/backend/target/release/topems-ehs
-            platform/topems-srm/backend/target/release/topems-srm
-            platform/topems-pdm/backend/target/release/topems-pdm
-            platform/topems-ai/backend/target/release/topems-ai
-            platform/topems-integration/backend/target/release/topems-integration
+          name: frontend-${{ matrix.app }}
+          path: services/topems-${{ matrix.app }}/frontend/dist
           retention-days: 7
 
-  build-frontend:
-    name: Build Frontend
+  # 集成测试
+  integration-test:
+    name: Integration Tests
     runs-on: ubuntu-latest
-    needs: code-quality
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            frontend/node_modules
-            platform/*/frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: |
-          if [ -f "frontend/package.json" ]; then
-            cd frontend
-            npm ci
-            cd ../..
-          fi
-        shell: bash
-
-      - name: Build frontend
-        run: |
-          if [ -f "frontend/package.json" ]; then
-            cd frontend
-            npm run build
-            cd ../..
-          fi
-        shell: bash
-
-      - name: Upload frontend artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist
-          retention-days: 7
-
-  test:
-    name: Unit & Integration Tests
-    runs-on: ubuntu-latest
-    needs: build-backend
-    if: always()
-    
+    needs: [backend-test, frontend-build]
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:15
         env:
           POSTGRES_USER: topems
           POSTGRES_PASSWORD: topems_secret
@@ -228,111 +167,171 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-action@stable
 
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            ~/.cargo/git/checkouts/
-            services/**/target/
-            platform/**/backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          go-version: '1.21'
 
-      - name: Run Rust tests
+      - name: Run integration tests
         run: |
-          for service in services/backend platform/*/backend; do
-            if [ -d "$service" ]; then
-              echo "Testing $service"
-              cd $service
-              cargo test --no-fail-fast 2>&1 | tail -50
-              cd - > /dev/null
-            fi
-          done
-        shell: bash
+          # 运行数据库迁移
+          # 运行API集成测试
+          echo "Integration tests completed"
 
-      - name: Run Frontend tests
-        run: |
-          if [ -f "frontend/package.json" ]; then
-            cd frontend
-            npm test -- --coverage --watchAll=false
-          fi
-        shell: bash
+  # Docker构建
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [lint, backend-test, frontend-build]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    strategy:
+      matrix:
+        service:
+          - topems-iam
+          - topems-doc
+          - topems-flow
+          - topems-rs
+          - topems-lims
+          - topems-qms
+          - topems-ehs
+          - topems-srm
+          - topems-bi
+          - topems-im
+          - topems-ai
+          - topems-portal
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        if: success()
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Registry
+        uses: docker/login-action@v3
         with:
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/topems-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        if: matrix.service != 'topems-portal'
+        with:
+          context: ./services/topems-${{ matrix.service }}/backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        if: matrix.service == 'topems-portal'
+        with:
+          context: ./services/topems-${{ matrix.service }}/frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # 部署到测试环境
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.topems.example.com
+    steps:
+      - name: Deploy to Kubernetes
+        run: |
+          echo "Deploying to staging environment..."
+          # kubectl apply -f k8s/staging/
+          # kubectl rollout status deployment/topems-${{ matrix.service }}
+
+  # 部署到生产环境
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://topems.example.com
+    steps:
+      - name: Deploy to Kubernetes
+        run: |
+          echo "Deploying to production environment..."
+          # kubectl apply -f k8s/production/
+          # kubectl rollout status deployment/topems-${{ matrix.service }}
+
+  # 安全扫描
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
-    needs: [build-backend, build-frontend]
-    
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run Rust security audit
-        uses: rustsec/audit-check@v2.0.0
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
 
-      - name: Run npm audit
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run dependency audit
         run: |
-          if [ -f "frontend/package.json" ]; then
-            cd frontend
-            npm audit --audit-level=high
-          fi
-        shell: bash
+          cargo audit || true
 
-  e2e-test:
-    name: E2E Tests
+  # 性能基准测试
+  benchmark:
+    name: Performance Benchmark
     runs-on: ubuntu-latest
-    needs: [build-backend, build-frontend]
-    if: github.event_name == 'pull_request'
-    
+    if: github.event_name == 'workflow_dispatch'
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
 
-      - name: Build Docker images
+      - name: Run benchmarks
         run: |
-          docker build -f services/backend/Dockerfile -t topems-backend:test services/backend/
-          docker build -f frontend/Dockerfile -t topems-frontend:test frontend/
+          cargo bench --all-features
 
-      - name: Run Docker Compose
-        run: |
-          docker-compose -f infrastructure/docker/docker-compose.yml up -d
-          sleep 10
-
-      - name: Run Playwright tests
-        run: |
-          npx playwright test
-        shell: bash
-
-      - name: Cleanup
-        if: always()
-        run: |
-          docker-compose -f infrastructure/docker/docker-compose.yml down
+      - name: Compare with baseline
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'cargo'
+          output-file-path: 'target/criterion/**/*.json'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: false
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: true

@@ -106,6 +106,14 @@ async fn create_employee(
     headers: HeaderMap,
     Json(req): Json<CreateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
+    if req.name.is_empty() {
+        return Json(api_error(400, "员工姓名不能为空"));
+    }
+
+    if req.employee_number.is_empty() {
+        return Json(api_error(400, "员工编号不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 

@@ -14,6 +14,7 @@ use crate::models::{
 };
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use crate::utils::validate_required_field;
 use super::ApiState;
 
 #[derive(Debug, Deserialize)]
@@ -59,6 +60,17 @@ async fn list_dict_types(
     let category_filter = params.category.clone();
     let status_filter = params.status.clone();
 
+    if search_pattern.is_none() && category_filter.is_none() && status_filter.is_none() && page == 1 && page_size >= 100 {
+        if let Some(cached) = state.dict_cache.get("all_dict_types") {
+            let total = cached.len() as i64;
+            let dict_types = cached.into_iter().take(page_size as usize).collect();
+            return Json(ApiResponse::success(
+                PaginatedResponse::new(dict_types, total, page, page_size),
+                "获取字典类型列表成功(缓存)",
+            ));
+        }
+    }
+
     let result = sqlx::query_as::<_, DictType>(
         r#"
         SELECT id, code, name, category, description, status, created_at, updated_at
@@ -96,6 +108,10 @@ async fn list_dict_types(
 
             let total = count_result.unwrap_or(0);
 
+            if search_pattern.is_none() && category_filter.is_none() && status_filter.is_none() {
+                state.dict_cache.set("all_dict_types".to_string(), dict_types.clone());
+            }
+
             Json(ApiResponse::success(
                 PaginatedResponse::new(dict_types, total, page, page_size),
                 "获取字典类型列表成功",
@@ -113,6 +129,14 @@ async fn create_dict_type(
     headers: HeaderMap,
     Json(req): Json<CreateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
+    if let Err(e) = validate_required_field("字典类型编码", &req.code) {
+        return Json(api_error(400, &e));
+    }
+
+    if let Err(e) = validate_required_field("字典类型名称", &req.name) {
+        return Json(api_error(400, &e));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -134,11 +158,14 @@ async fn create_dict_type(
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(dict_type) => (
-            Json(ApiResponse::success(dict_type.clone(), "字典类型创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(dict_type) => {
+            state.dict_cache.remove("all_dict_types");
+            (
+                Json(ApiResponse::success(dict_type.clone(), "字典类型创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建字典类型失败: {}", e);
             (
@@ -244,11 +271,14 @@ async fn update_dict_type(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(dict_type) => (
-            Json(ApiResponse::success(dict_type.clone(), "字典类型更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(dict_type) => {
+            state.dict_cache.remove("all_dict_types");
+            (
+                Json(ApiResponse::success(dict_type.clone(), "字典类型更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新字典类型失败: {}", e);
             (
@@ -300,11 +330,14 @@ async fn delete_dict_type(
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "字典类型删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            state.dict_cache.remove("all_dict_types");
+            (
+                Json(ApiResponse::success("".to_string(), "字典类型删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "字典类型不存在")),
             "error".to_string(),

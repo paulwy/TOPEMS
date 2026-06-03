@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -9,7 +10,8 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use crate::api::audit::log_audit_event;
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult, api_error};
 use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -131,8 +133,13 @@ async fn list_positions(
 
 async fn create_position(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreatePositionRequest>,
 ) -> Json<ApiResponse<Position>> {
+    if req.name.is_empty() {
+        return Json(api_error(400, "岗位名称不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -157,13 +164,46 @@ async fn create_position(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(position) => Json(ApiResponse::success(position, "岗位创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(position) => (
+            Json(ApiResponse::success(position.clone(), "岗位创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建岗位失败: {}", e);
-            Json(ApiResponse::<Position>::error(500, "创建岗位失败"))
+            (
+                Json(api_error(500, "创建岗位失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(position) = &result {
+        serde_json::to_value(position).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "position".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_position(
@@ -239,6 +279,7 @@ async fn update_position(
 async fn delete_position(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
         "DELETE FROM positions WHERE id = $1"
@@ -247,11 +288,48 @@ async fn delete_position(
     .execute(&state.db)
     .await;
 
-    match result {
-        Ok(_) => Json(ApiResponse::success(id.to_string(), "岗位删除成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success(id.to_string(), "岗位删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "岗位不存在")),
+            "error".to_string(),
+            Some("岗位不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除岗位失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "删除岗位失败"))
+            (
+                Json(api_error(500, "删除岗位失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "position".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

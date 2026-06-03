@@ -411,7 +411,7 @@ async fn main() -> Result<()> {
         .with_state(state)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8011".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8050".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-GIS 厂区空间数字化系统启动中...");

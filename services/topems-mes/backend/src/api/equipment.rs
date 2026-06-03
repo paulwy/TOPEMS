@@ -141,6 +141,14 @@ async fn create_inspection(
     headers: HeaderMap,
     Json(req): Json<CreateInspectionRecord>,
 ) -> Json<ApiResponse<InspectionRecord>> {
+    if req.equipment_id.is_nil() {
+        return Json(api_error(400, "设备ID不能为空"));
+    }
+
+    if req.inspector.is_empty() {
+        return Json(api_error(400, "点检员不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let inspection_date = match chrono::NaiveDate::parse_from_str(&req.inspection_date, "%Y-%m-%d") {
@@ -300,6 +308,18 @@ async fn create_maintenance(
     headers: HeaderMap,
     Json(req): Json<CreateMaintenanceRecord>,
 ) -> Json<ApiResponse<MaintenanceRecord>> {
+    if req.equipment_id.is_nil() {
+        return Json(api_error(400, "设备ID不能为空"));
+    }
+
+    if req.maintenance_type.is_empty() {
+        return Json(api_error(400, "维护类型不能为空"));
+    }
+
+    if req.maintainer.is_empty() {
+        return Json(api_error(400, "维护人员不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let start_time = match chrono::DateTime::parse_from_rfc3339(&req.start_time) {

@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -12,7 +13,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use crate::api::audit::log_audit_event;
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult, api_error};
 use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -144,8 +146,13 @@ async fn list_payroll_runs(
 
 async fn create_payroll_run(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreatePayrollRunRequest>,
 ) -> Json<ApiResponse<PayrollRun>> {
+    if req.pay_period.is_empty() {
+        return Json(api_error(400, "薪资周期不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -163,13 +170,46 @@ async fn create_payroll_run(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(run) => Json(ApiResponse::success(run, "薪资周期创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(run) => (
+            Json(ApiResponse::success(run.clone(), "薪资周期创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建薪资周期失败: {}", e);
-            Json(ApiResponse::<PayrollRun>::error(500, "创建薪资周期失败"))
+            (
+                Json(api_error(500, "创建薪资周期失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(run) = &result {
+        serde_json::to_value(run).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "payroll_run".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_payroll_run(
@@ -212,6 +252,7 @@ async fn get_payroll_run(
 async fn delete_payroll_run(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
         "DELETE FROM payroll_runs WHERE id = $1 AND status = 'draft'"
@@ -220,14 +261,50 @@ async fn delete_payroll_run(
     .execute(&state.db)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "薪资周期已删除")),
-        Ok(_) => Json(ApiResponse::<String>::error(404, "薪资周期不存在或状态不正确")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success(id.to_string(), "薪资周期已删除")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "薪资周期不存在或状态不正确")),
+            "error".to_string(),
+            Some("薪资周期不存在或状态不正确".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除薪资周期失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "删除薪资周期失败"))
+            (
+                Json(api_error(500, "删除薪资周期失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "payroll_run".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn calculate_payroll_run(

@@ -91,6 +91,14 @@ async fn create_asset(
     headers: HeaderMap,
     Json(req): Json<CreateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
+    if req.name.is_empty() {
+        return Json(api_error(400, "资产名称不能为空"));
+    }
+
+    if req.asset_number.is_empty() {
+        return Json(api_error(400, "资产编号不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 

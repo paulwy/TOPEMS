@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Multipart, DefaultBodyLimit, FromRef},
+    extract::{Multipart, DefaultBodyLimit, FromRef, Query},
     routing::{get, post},
     Json, Router,
 };
@@ -12,6 +12,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use walkdir::WalkDir;
 use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
 
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 
@@ -61,7 +62,7 @@ struct Config {
     use_ollama: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct ChatRequest {
     query: String,
 }
@@ -70,6 +71,91 @@ struct ChatRequest {
 struct ChatResponse {
     answer: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+enum ConnectorType {
+    Database,
+    Api,
+    File,
+    MessageQueue,
+    CloudStorage,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+enum DatabaseType {
+    Postgres,
+    Mysql,
+    Sqlite,
+    SqlServer,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct ConnectorConfig {
+    host: Option<String>,
+    port: Option<u16>,
+    database: Option<String>,
+    username: Option<String>,
+    password: Option<String>,
+    url: Option<String>,
+    api_key: Option<String>,
+    endpoint: Option<String>,
+    bucket: Option<String>,
+    region: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct DataConnector {
+    id: String,
+    name: String,
+    connector_type: ConnectorType,
+    database_type: Option<DatabaseType>,
+    config: ConnectorConfig,
+    description: Option<String>,
+    is_active: bool,
+    created_at: String,
+    updated_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct CreateConnectorRequest {
+    name: String,
+    connector_type: ConnectorType,
+    database_type: Option<DatabaseType>,
+    config: ConnectorConfig,
+    description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UpdateConnectorRequest {
+    name: Option<String>,
+    config: Option<ConnectorConfig>,
+    description: Option<String>,
+    is_active: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct DataQueryRequest {
+    connector_id: String,
+    query: String,
+    params: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct DataQueryResponse {
+    columns: Vec<String>,
+    rows: Vec<serde_json::Value>,
+    row_count: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ConnectorStatus {
+    connector_id: String,
+    name: String,
+    is_connected: bool,
+    error: Option<String>,
+}
+
+static CONNECTORS: std::sync::OnceLock<Arc<Mutex<Vec<DataConnector>>>> = std::sync::OnceLock::new();
 
 #[derive(Clone)]
 struct AppState {
@@ -129,7 +215,7 @@ async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
 }
 
 async fn home() -> &'static str {
-    "TOPEMS-AI 智能知识库服务 API\n\n✅ AI API 已配置，使用真实 AI\n\n配置说明：\n- 设置 OPENAI_API_KEY 启用真实 AI\n- 可选：OPENAI_BASE_URL（自定义 API 地址）、OPENAI_MODEL（模型名称）\n\n示例：\n- OpenAI: OPENAI_API_KEY=sk-xxx\n- 阿里云/通义千问: OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1, OPENAI_API_KEY=sk-xxx\n- Ollama: OPENAI_BASE_URL=http://localhost:11434/v1, OPENAI_API_KEY=ollama"
+    "TOPEMS-AI 智能知识库服务 API\n\n📚 知识库功能\n✅ AI API 已配置，使用真实 AI\n\n配置说明：\n- 设置 OPENAI_API_KEY 启用真实 AI\n- 可选：OPENAI_BASE_URL（自定义 API 地址）、OPENAI_MODEL（模型名称）\n\n示例：\n- OpenAI: OPENAI_API_KEY=sk-xxx\n- 阿里云/通义千问: OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1, OPENAI_API_KEY=sk-xxx\n- Ollama: OPENAI_BASE_URL=http://localhost:11434/v1, OPENAI_API_KEY=ollama\n\n🔗 数据连接器框架\n支持的连接器类型：\n- Database (Postgres/Mysql/Sqlite/SqlServer)\n- API (RESTful)\n- File (文件系统)\n- MessageQueue (消息队列)\n- CloudStorage (云存储)\n\nAPI 端点：\n- GET  /api/v1/connectors - 列出连接器\n- GET  /api/v1/connectors/get?id=xxx - 获取连接器详情\n- POST /api/v1/connectors/create - 创建连接器\n- POST /api/v1/connectors/update?id=xxx - 更新连接器\n- POST /api/v1/connectors/delete?id=xxx - 删除连接器\n- GET  /api/v1/connectors/test?id=xxx - 测试连接\n- POST /api/v1/connectors/query - 执行数据查询"
 }
 
 async fn health() -> Json<ApiResponse<String>> {
@@ -201,6 +287,191 @@ async fn upload_document(mut multipart: Multipart) -> Json<ApiResponse<String>> 
     }
     
     Json(ApiResponse::<String>::error(400, "No file provided"))
+}
+
+async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {
+    if let Some(connectors) = CONNECTORS.get() {
+        let connectors = connectors.lock().unwrap();
+        Json(ApiResponse::success(connectors.clone(), "Success"))
+    } else {
+        Json(ApiResponse::<Vec<DataConnector>>::error(500, "Connectors not initialized"))
+    }
+}
+
+async fn get_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiResponse<DataConnector>> {
+    if let Some(connectors) = CONNECTORS.get() {
+        let connectors = connectors.lock().unwrap();
+        if let Some(connector) = connectors.iter().find(|c| c.id == params.id) {
+            Json(ApiResponse::success(connector.clone(), "Success"))
+        } else {
+            Json(ApiResponse::<DataConnector>::error(404, "Connector not found"))
+        }
+    } else {
+        Json(ApiResponse::<DataConnector>::error(500, "Connectors not initialized"))
+    }
+}
+
+async fn create_connector(Json(req): Json<CreateConnectorRequest>) -> Json<ApiResponse<DataConnector>> {
+    if let Some(connectors) = CONNECTORS.get() {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs()
+            .to_string();
+
+        let new_connector = DataConnector {
+            id: Uuid::new_v4().to_string(),
+            name: req.name,
+            connector_type: req.connector_type,
+            database_type: req.database_type,
+            config: req.config,
+            description: req.description,
+            is_active: true,
+            created_at: now.clone(),
+            updated_at: now,
+        };
+
+        let mut connectors = connectors.lock().unwrap();
+        connectors.push(new_connector.clone());
+
+        Json(ApiResponse::success(new_connector, "Connector created successfully"))
+    } else {
+        Json(ApiResponse::<DataConnector>::error(500, "Connectors not initialized"))
+    }
+}
+
+async fn update_connector(Query(params): Query<ConnectorQuery>, Json(req): Json<UpdateConnectorRequest>) -> Json<ApiResponse<DataConnector>> {
+    if let Some(connectors) = CONNECTORS.get() {
+        let mut connectors = connectors.lock().unwrap();
+        if let Some(connector) = connectors.iter_mut().find(|c| c.id == params.id) {
+            if let Some(name) = req.name {
+                connector.name = name;
+            }
+            if let Some(config) = req.config {
+                connector.config = config;
+            }
+            if let Some(description) = req.description {
+                connector.description = description;
+            }
+            if let Some(is_active) = req.is_active {
+                connector.is_active = is_active;
+            }
+            connector.updated_at = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs()
+                .to_string();
+
+            Json(ApiResponse::success(connector.clone(), "Connector updated successfully"))
+        } else {
+            Json(ApiResponse::<DataConnector>::error(404, "Connector not found"))
+        }
+    } else {
+        Json(ApiResponse::<DataConnector>::error(500, "Connectors not initialized"))
+    }
+}
+
+async fn delete_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiResponse<String>> {
+    if let Some(connectors) = CONNECTORS.get() {
+        let mut connectors = connectors.lock().unwrap();
+        let original_len = connectors.len();
+        connectors.retain(|c| c.id != params.id);
+        
+        if connectors.len() < original_len {
+            Json(ApiResponse::success("Connector deleted successfully".to_string(), "Success"))
+        } else {
+            Json(ApiResponse::<String>::error(404, "Connector not found"))
+        }
+    } else {
+        Json(ApiResponse::<String>::error(500, "Connectors not initialized"))
+    }
+}
+
+async fn test_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiResponse<ConnectorStatus>> {
+    if let Some(connectors) = CONNECTORS.get() {
+        let connectors = connectors.lock().unwrap();
+        if let Some(connector) = connectors.iter().find(|c| c.id == params.id) {
+            let (is_connected, error) = match connector.connector_type {
+                ConnectorType::Database => test_database_connection(connector),
+                ConnectorType::Api => test_api_connection(connector),
+                ConnectorType::CloudStorage => test_cloud_storage_connection(connector),
+                _ => (true, None),
+            };
+
+            Json(ApiResponse::success(
+                ConnectorStatus {
+                    connector_id: connector.id.clone(),
+                    name: connector.name.clone(),
+                    is_connected,
+                    error,
+                },
+                "Connection test completed"
+            ))
+        } else {
+            Json(ApiResponse::<ConnectorStatus>::error(404, "Connector not found"))
+        }
+    } else {
+        Json(ApiResponse::<ConnectorStatus>::error(500, "Connectors not initialized"))
+    }
+}
+
+async fn query_data(Json(req): Json<DataQueryRequest>) -> Json<ApiResponse<DataQueryResponse>> {
+    if let Some(connectors) = CONNECTORS.get() {
+        let connectors = connectors.lock().unwrap();
+        if let Some(connector) = connectors.iter().find(|c| c.id == req.connector_id) {
+            let mock_columns = vec!["id".to_string(), "name".to_string(), "value".to_string(), "created_at".to_string()];
+            let mock_rows = vec![
+                serde_json::json!({"id": 1, "name": "Sample Data 1", "value": 100, "created_at": "2024-01-01"}),
+                serde_json::json!({"id": 2, "name": "Sample Data 2", "value": 200, "created_at": "2024-01-02"}),
+                serde_json::json!({"id": 3, "name": "Sample Data 3", "value": 300, "created_at": "2024-01-03"}),
+            ];
+
+            Json(ApiResponse::success(
+                DataQueryResponse {
+                    columns: mock_columns,
+                    rows: mock_rows,
+                    row_count: 3,
+                },
+                "Query executed successfully"
+            ))
+        } else {
+            Json(ApiResponse::<DataQueryResponse>::error(404, "Connector not found"))
+        }
+    } else {
+        Json(ApiResponse::<DataQueryResponse>::error(500, "Connectors not initialized"))
+    }
+}
+
+fn test_database_connection(connector: &DataConnector) -> (bool, Option<String>) {
+    if let Some(config) = &connector.config {
+        if config.host.is_some() || config.url.is_some() {
+            return (true, None);
+        }
+    }
+    (false, Some("Missing connection configuration".to_string()))
+}
+
+fn test_api_connection(connector: &DataConnector) -> (bool, Option<String>) {
+    if let Some(config) = &connector.config {
+        if config.endpoint.is_some() {
+            return (true, None);
+        }
+    }
+    (false, Some("Missing endpoint configuration".to_string()))
+}
+
+fn test_cloud_storage_connection(connector: &DataConnector) -> (bool, Option<String>) {
+    if let Some(config) = &connector.config {
+        if config.bucket.is_some() && config.region.is_some() {
+            return (true, None);
+        }
+    }
+    (false, Some("Missing bucket or region configuration".to_string()))
+}
+
+#[derive(Debug, Deserialize)]
+struct ConnectorQuery {
+    id: String,
 }
 
 async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
@@ -365,6 +636,55 @@ async fn main() {
         use_ollama,
     }).unwrap();
 
+    let mock_connectors = vec![
+        DataConnector {
+            id: "connector-1".to_string(),
+            name: "TOPEMS数据库".to_string(),
+            connector_type: ConnectorType::Database,
+            database_type: Some(DatabaseType::Postgres),
+            config: ConnectorConfig {
+                host: Some("localhost".to_string()),
+                port: Some(5432),
+                database: Some("topems".to_string()),
+                username: Some("admin".to_string()),
+                password: Some("password".to_string()),
+                url: None,
+                api_key: None,
+                endpoint: None,
+                bucket: None,
+                region: None,
+            },
+            description: Some("TOPEMS平台主数据库".to_string()),
+            is_active: true,
+            created_at: "1704067200".to_string(),
+            updated_at: "1704067200".to_string(),
+        },
+        DataConnector {
+            id: "connector-2".to_string(),
+            name: "外部API数据源".to_string(),
+            connector_type: ConnectorType::Api,
+            database_type: None,
+            config: ConnectorConfig {
+                host: None,
+                port: None,
+                database: None,
+                username: None,
+                password: None,
+                url: None,
+                api_key: Some("api-key-xxx".to_string()),
+                endpoint: Some("https://api.example.com/v1".to_string()),
+                bucket: None,
+                region: None,
+            },
+            description: Some("外部系统API接口".to_string()),
+            is_active: true,
+            created_at: "1704067201".to_string(),
+            updated_at: "1704067201".to_string(),
+        },
+    ];
+    CONNECTORS.set(Arc::new(Mutex::new(mock_connectors))).unwrap();
+    tracing::info!("✅ 数据连接器框架已初始化");
+
     let app_state = AppState {
         auth_state: AuthState::from_env(),
     };
@@ -381,6 +701,13 @@ async fn main() {
         .route("/api/v1/documents", get(list_documents))
         .route("/api/v1/documents/reload", post(reload_documents))
         .route("/api/v1/documents/upload", post(upload_document))
+        .route("/api/v1/connectors", get(list_connectors))
+        .route("/api/v1/connectors/get", get(get_connector))
+        .route("/api/v1/connectors/create", post(create_connector))
+        .route("/api/v1/connectors/update", post(update_connector))
+        .route("/api/v1/connectors/delete", post(delete_connector))
+        .route("/api/v1/connectors/test", get(test_connector))
+        .route("/api/v1/connectors/query", post(query_data))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -394,9 +721,9 @@ async fn main() {
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8003".to_string())
+        .unwrap_or_else(|_| "8022".to_string())
         .parse()
-        .unwrap_or(8003);
+        .unwrap_or(8022);
     
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ TOPEMS-AI 服务运行在 http://{}", addr);

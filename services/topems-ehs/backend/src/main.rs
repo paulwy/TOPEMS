@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
         .layer(cors);
 
     let port = env::var("SERVER_PORT")
-        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8013".to_string()));
+        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8032".to_string()));
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
     tracing::info!("� TOPEMS-EHS 环境健康安全系统启动中...");
     tracing::info!("�📦 端口: {}", port);

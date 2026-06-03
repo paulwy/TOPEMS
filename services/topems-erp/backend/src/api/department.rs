@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -12,6 +11,7 @@ use uuid::Uuid;
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use crate::utils::validate_required_field;
 use super::ApiState;
 
 #[derive(Debug, Deserialize)]
@@ -41,6 +41,17 @@ async fn list_departments(
 
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
+
+    if search_pattern.is_none() && status_filter.is_none() && page == 1 && page_size >= 100 {
+        if let Some(cached) = state.department_cache.get("all_departments") {
+            let total = cached.len() as i64;
+            let departments = cached.into_iter().take(page_size as usize).collect();
+            return Json(ApiResponse::success(
+                PaginatedResponse::new(departments, total, page, page_size),
+                "获取部门列表成功(缓存)",
+            ));
+        }
+    }
 
     let result = sqlx::query_as::<_, Department>(
         r#"
@@ -75,6 +86,10 @@ async fn list_departments(
 
             let total = count_result.unwrap_or(0);
 
+            if search_pattern.is_none() && status_filter.is_none() {
+                state.department_cache.set("all_departments".to_string(), departments.clone());
+            }
+
             Json(ApiResponse::success(
                 PaginatedResponse::new(departments, total, page, page_size),
                 "获取部门列表成功",
@@ -92,6 +107,10 @@ async fn create_department(
     headers: HeaderMap,
     Json(req): Json<CreateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
+    if let Err(e) = validate_required_field("部门名称", &req.name) {
+        return Json(api_error(400, &e));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -114,11 +133,14 @@ async fn create_department(
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(department) => (
-            Json(ApiResponse::success(department.clone(), "部门创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(department) => {
+            state.department_cache.remove("all_departments");
+            (
+                Json(ApiResponse::success(department.clone(), "部门创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建部门失败: {}", e);
             (
@@ -229,11 +251,14 @@ async fn update_department(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(department) => (
-            Json(ApiResponse::success(department.clone(), "部门更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(department) => {
+            state.department_cache.remove("all_departments");
+            (
+                Json(ApiResponse::success(department.clone(), "部门更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新部门失败: {}", e);
             (
@@ -280,11 +305,14 @@ async fn delete_department(
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "部门删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            state.department_cache.remove("all_departments");
+            (
+                Json(ApiResponse::success("".to_string(), "部门删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "部门不存在")),
             "error".to_string(),

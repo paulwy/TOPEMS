@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -9,7 +10,8 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use crate::api::audit::log_audit_event;
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult, api_error};
 use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -138,8 +140,17 @@ async fn list_leaves(
 
 async fn create_leave(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateLeaveRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    if req.employee_id.is_nil() {
+        return Json(api_error(400, "员工ID不能为空"));
+    }
+
+    if req.leave_type.is_empty() {
+        return Json(api_error(400, "请假类型不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -162,13 +173,46 @@ async fn create_leave(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(leave) => Json(ApiResponse::success(leave, "请假申请提交成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(leave) => (
+            Json(ApiResponse::success(leave.clone(), "请假申请提交成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建请假申请失败: {}", e);
-            Json(ApiResponse::<LeaveRequest>::error(500, "创建请假申请失败"))
+            (
+                Json(api_error(500, "创建请假申请失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(leave) = &result {
+        serde_json::to_value(leave).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "leave".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_leave(
@@ -236,6 +280,7 @@ async fn update_leave(
 async fn delete_leave(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
         "DELETE FROM leave_requests WHERE id = $1 AND status = 'pending'"
@@ -244,14 +289,50 @@ async fn delete_leave(
     .execute(&state.db)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "请假申请已取消")),
-        Ok(_) => Json(ApiResponse::<String>::error(404, "请假申请不存在或已处理")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success(id.to_string(), "请假申请已取消")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "请假申请不存在或已处理")),
+            "error".to_string(),
+            Some("请假申请不存在或已处理".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除请假申请失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "删除请假申请失败"))
+            (
+                Json(api_error(500, "删除请假申请失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "leave".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn approve_leave(

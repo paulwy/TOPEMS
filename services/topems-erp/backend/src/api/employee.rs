@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -13,6 +12,7 @@ use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use crate::services::iam_client::{CreateUserRequest, IamClient};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
+use crate::utils::{validate_required_field, validate_email, validate_phone};
 use super::ApiState;
 
 #[derive(Debug, Deserialize)]
@@ -42,6 +42,17 @@ async fn list_employees(
 
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
+
+    if search_pattern.is_none() && status_filter.is_none() && page == 1 && page_size >= 100 {
+        if let Some(cached) = state.employee_cache.get("all_employees") {
+            let total = cached.len() as i64;
+            let employees = cached.into_iter().take(page_size as usize).collect();
+            return Json(ApiResponse::success(
+                PaginatedResponse::new(employees, total, page, page_size),
+                "获取员工列表成功(缓存)",
+            ));
+        }
+    }
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
@@ -76,6 +87,10 @@ async fn list_employees(
 
             let total = count_result.unwrap_or(0);
 
+            if search_pattern.is_none() && status_filter.is_none() {
+                state.employee_cache.set("all_employees".to_string(), employees.clone());
+            }
+
             Json(ApiResponse::success(
                 PaginatedResponse::new(employees, total, page, page_size),
                 "获取员工列表成功",
@@ -93,6 +108,26 @@ async fn create_employee(
     headers: HeaderMap,
     Json(req): Json<CreateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
+    if let Err(e) = validate_required_field("员工姓名", &req.name) {
+        return Json(api_error(400, &e));
+    }
+
+    if let Err(e) = validate_required_field("员工编号", &req.employee_number) {
+        return Json(api_error(400, &e));
+    }
+
+    if let Some(email) = &req.email {
+        if !validate_email(email) {
+            return Json(api_error(400, "邮箱格式不正确"));
+        }
+    }
+
+    if let Some(phone) = &req.phone {
+        if !validate_phone(phone) {
+            return Json(api_error(400, "手机号格式不正确"));
+        }
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -139,11 +174,14 @@ async fn create_employee(
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(employee) => (
-            Json(ApiResponse::success(employee.clone(), "员工创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(employee) => {
+            state.employee_cache.remove("all_employees");
+            (
+                Json(ApiResponse::success(employee.clone(), "员工创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建员工失败: {}", e);
             (
@@ -260,11 +298,14 @@ async fn update_employee(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(employee) => (
-            Json(ApiResponse::success(employee.clone(), "员工更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(employee) => {
+            state.employee_cache.remove("all_employees");
+            (
+                Json(ApiResponse::success(employee.clone(), "员工更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新员工失败: {}", e);
             (
@@ -333,11 +374,14 @@ async fn delete_employee(
     }
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "员工删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            state.employee_cache.remove("all_employees");
+            (
+                Json(ApiResponse::success("".to_string(), "员工删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "员工不存在")),
             "error".to_string(),

@@ -1,5 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -8,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -196,8 +198,17 @@ async fn list_by_experiment(
 
 async fn create_material_test(
     State(state): State<Arc<super::ApiState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
+    if req.material_name.is_empty() {
+        return Json(ApiResponse::error(400, "原料名称不能为空"));
+    }
+
+    if req.tested_by.is_empty() {
+        return Json(ApiResponse::error(400, "测试人员不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -225,13 +236,46 @@ async fn create_material_test(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(record) => Json(ApiResponse::success(record, "原料试验记录创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(record) => (
+            Json(ApiResponse::success(record.clone(), "原料试验记录创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建原料试验记录失败: {}", e);
-            Json(ApiResponse::error(500, "原料试验记录创建失败"))
+            (
+                Json(ApiResponse::error(500, "原料试验记录创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(record) = &result {
+        serde_json::to_value(record).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "material_test".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_material_test(
@@ -262,6 +306,7 @@ async fn get_material_test(
 async fn update_material_test(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
     let existing = sqlx::query_as::<_, MaterialTest>(
@@ -281,6 +326,8 @@ async fn update_material_test(
             ))
         }
     };
+
+    let request_data = serde_json::to_value(&req).ok();
 
     let material_name = req.material_name.unwrap_or(existing.material_name);
     let supplier = req.supplier.or(existing.supplier);
@@ -307,32 +354,99 @@ async fn update_material_test(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(record) => Json(ApiResponse::success(record, "原料试验记录更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(record) => (
+            Json(ApiResponse::success(record.clone(), "原料试验记录更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新原料试验记录失败: {}", e);
-            Json(ApiResponse::error(500, "原料试验记录更新失败"))
+            (
+                Json(ApiResponse::error(500, "原料试验记录更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(record) = &result {
+        serde_json::to_value(record).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "material_test".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_material_test(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM rs.material_tests WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "原料试验记录删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::error(404, "原料试验记录不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "原料试验记录删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(ApiResponse::error(404, "原料试验记录不存在")),
+            "error".to_string(),
+            Some("原料试验记录不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除原料试验记录失败: {}", e);
-            Json(ApiResponse::error(500, "原料试验记录删除失败"))
+            (
+                Json(ApiResponse::error(500, "原料试验记录删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "material_test".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

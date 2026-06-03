@@ -158,6 +158,15 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/performance", get(get_performance))
         .route("/api/v1/performance/reset", post(reset_performance))
         .route("/api/v1/performance/threshold", post(set_threshold))
+        .route("/api/v1/audit-logs", get(list_audit_logs))
+        .route("/api/v1/audit-logs/get", get(get_audit_log))
+        .route("/api/v1/audit-logs", post(create_audit_log))
+        .route("/api/v1/integration/trigger", post(trigger_workflow))
+        .route("/api/v1/integration/pending-approvals", post(get_pending_approvals))
+        .route("/api/v1/integration/submit-approval", post(submit_approval))
+        .route("/api/v1/integration/instances/{instance_id}", get(get_instance_details))
+        .route("/api/v1/integration/query-instances", post(query_instances))
+        .route("/api/v1/integration/workflows", get(list_workflows))
         .layer(axum::middleware::from_fn_with_state(
             auth_state,
             auth_middleware,

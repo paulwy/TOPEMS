@@ -5,6 +5,8 @@ pub mod notification;
 pub mod statistics;
 pub mod version;
 pub mod performance;
+pub mod audit;
+pub mod integration;
 
 pub use workflow::*;
 pub use instance::*;
@@ -13,3 +15,5 @@ pub use notification::*;
 pub use statistics::*;
 pub use version::*;
 pub use performance::*;
+pub use audit::*;
+pub use integration::*;

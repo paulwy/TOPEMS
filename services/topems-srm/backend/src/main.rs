@@ -83,7 +83,7 @@ async fn main() -> Result<()> {
         .merge(protected_routes)
         .layer(cors);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8018".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8041".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("📦 端口: {}", port);

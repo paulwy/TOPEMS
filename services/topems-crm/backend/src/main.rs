@@ -1322,7 +1322,7 @@ async fn main() -> Result<()> {
         .merge(protected_routes)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8013".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8012".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-CRM 客户关系管理系统启动中...");

@@ -83,7 +83,7 @@ async fn main() -> Result<()> {
         .layer(cors);
 
     let port = env::var("SERVER_PORT")
-        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8012".to_string()));
+        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8031".to_string()));
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-QMS 质量管理系统启动中...");

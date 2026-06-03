@@ -1,18 +1,71 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, State, WebSocketUpgrade},
     Json, Router,
+    extract::ws::{Message, WebSocket, Utf8Bytes},
 };
 use anyhow::Result;
 use axum::extract::FromRef;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
 use std::env;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use serde_json::json;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tokio::sync::broadcast;
+use futures_util::{SinkExt, StreamExt};
 
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsMessage {
+    pub msg_type: String,
+    pub chat_id: Option<String>,
+    pub sender_id: String,
+    pub sender_name: String,
+    pub content: String,
+    pub timestamp: String,
+}
+
+#[derive(Clone)]
+pub struct ChatState {
+    pub rooms: Arc<Mutex<Vec<ChatRoom>>>,
+    pub messages: Arc<Mutex<Vec<ChatMessage>>>,
+    pub project_groups: Arc<Mutex<Vec<ProjectGroup>>>,
+    pub notifications: Arc<Mutex<Vec<Notification>>>,
+    pub tx: broadcast::Sender<WsMessage>,
+}
+
+impl ChatState {
+    fn new() -> Self {
+        let (tx, _) = broadcast::channel(1000);
+        ChatState {
+            rooms: Arc::new(Mutex::new(Vec::new())),
+            messages: Arc::new(Mutex::new(Vec::new())),
+            project_groups: Arc::new(Mutex::new(Vec::new())),
+            notifications: Arc::new(Mutex::new(Vec::new())),
+            tx,
+        }
+    }
+}
+
+struct HandlerState {
+    chat_state: ChatState,
+    auth_state: AuthState,
+}
+
+impl FromRef<HandlerState> for AuthState {
+    fn from_ref(state: &HandlerState) -> Self {
+        state.auth_state.clone()
+    }
+}
+
+impl FromRef<HandlerState> for ChatState {
+    fn from_ref(state: &HandlerState) -> Self {
+        state.chat_state.clone()
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatRoom {
@@ -111,6 +164,8 @@ struct AppState {
     project_groups: Arc<Mutex<Vec<ProjectGroup>>>,
     notifications: Arc<Mutex<Vec<Notification>>>,
     auth_state: AuthState,
+    ws_connections: Arc<Mutex<HashMap<String, broadcast::Sender<WsMessage>>>>,
+    tx: broadcast::Sender<WsMessage>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -121,12 +176,15 @@ impl FromRef<AppState> for AuthState {
 
 impl AppState {
     fn new(auth_state: AuthState) -> Self {
+        let (tx, _) = broadcast::channel(1000);
         AppState {
             chat_rooms: Arc::new(Mutex::new(Vec::new())),
             chat_messages: Arc::new(Mutex::new(Vec::new())),
             project_groups: Arc::new(Mutex::new(Vec::new())),
             notifications: Arc::new(Mutex::new(Vec::new())),
             auth_state,
+            ws_connections: Arc::new(Mutex::new(HashMap::new())),
+            tx,
         }
     }
 }
@@ -323,6 +381,100 @@ async fn mark_all_notifications_read(
     Json(ApiResponse::success(json!({ "marked": true }), "标记所有通知已读成功"))
 }
 
+async fn ws_handler(
+    ws: WebSocketUpgrade,
+    State(state): State<AppState>,
+) -> impl axum::response::IntoResponse {
+    ws.on_upgrade(|socket| handle_socket(socket, state))
+}
+
+async fn handle_socket(socket: WebSocket, state: AppState) {
+    let (mut sender, mut receiver) = socket.split();
+    
+    let tx = state.tx.clone();
+    let state_clone = state.clone();
+    
+    let mut rx = tx.subscribe();
+    
+    let send_task = tokio::spawn(async move {
+        while let Ok(msg) = rx.recv().await {
+            let json_msg = serde_json::to_string(&msg).unwrap_or_default();
+            if sender.send(Message::Text(Utf8Bytes::from(json_msg))).await.is_err() {
+                break;
+            }
+        }
+    });
+    
+    let state_for_recv = state.clone();
+    
+    let recv_task = tokio::spawn(async move {
+        while let Some(msg_result) = receiver.next().await {
+            match msg_result {
+                Ok(Message::Text(text)) => {
+                    if let Ok(ws_msg) = serde_json::from_str::<WsMessage>(&text.to_string()) {
+                        let mut messages = state_for_recv.chat_messages.lock().unwrap();
+                        let mut rooms = state_for_recv.chat_rooms.lock().unwrap();
+                        
+                        let chat_id = ws_msg.chat_id.as_ref().and_then(|c| Uuid::parse_str(c).ok());
+                        
+                        if let Some(cid) = chat_id {
+                            let message = ChatMessage {
+                                id: Uuid::new_v4(),
+                                chat_id: cid,
+                                sender_id: ws_msg.sender_id.clone(),
+                                sender_name: ws_msg.sender_name.clone(),
+                                message_type: "text".to_string(),
+                                content: ws_msg.content.clone(),
+                                file_url: None,
+                                file_name: None,
+                                created_at: Utc::now(),
+                                is_read: false,
+                            };
+                            
+                            messages.push(message.clone());
+                            
+                            if let Some(index) = rooms.iter_mut().position(|r| r.id == cid) {
+                                rooms[index].last_message = Some(ws_msg.content.clone());
+                                rooms[index].last_message_time = Some(Utc::now());
+                                rooms[index].updated_at = Utc::now();
+                            }
+                            
+                            let _ = state_for_recv.tx.send(ws_msg);
+                        }
+                    }
+                }
+                Ok(Message::Close(_)) => {
+                    break;
+                }
+                _ => {}
+            }
+        }
+    });
+    
+    tokio::spawn(async move {
+        tokio::join!(send_task, recv_task);
+    });
+}
+
+async fn ws_connect(
+    Path(user_id): Path<String>,
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut connections = state.ws_connections.lock().unwrap();
+    let (tx, _) = broadcast::channel(100);
+    connections.insert(user_id, tx);
+    Json(ApiResponse::success(json!({ "connected": true }), "WebSocket连接成功"))
+}
+
+async fn ws_disconnect(
+    Path(user_id): Path<String>,
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut connections = state.ws_connections.lock().unwrap();
+    connections.remove(&user_id);
+    Json(ApiResponse::success(json!({ "disconnected": true }), "WebSocket断开成功"))
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
@@ -346,6 +498,7 @@ async fn main() -> Result<()> {
 
     let public_routes = Router::new()
         .route("/health", axum::routing::get(health_check))
+        .route("/ws", axum::routing::get(ws_handler))
         .route("/api/v1/chat-rooms", axum::routing::get(list_chat_rooms))
         .route("/api/v1/chat-rooms/{chat_id}", axum::routing::get(get_chat_room))
         .route("/api/v1/chat-rooms/{chat_id}/messages", axum::routing::get(list_chat_messages))
@@ -360,6 +513,8 @@ async fn main() -> Result<()> {
         .route("/api/v1/notifications/{user_id}", axum::routing::post(create_notification))
         .route("/api/v1/notifications/{notification_id}/read", axum::routing::put(mark_notification_read))
         .route("/api/v1/notifications/{user_id}/read-all", axum::routing::put(mark_all_notifications_read))
+        .route("/api/v1/ws/connect/{user_id}", axum::routing::post(ws_connect))
+        .route("/api/v1/ws/disconnect/{user_id}", axum::routing::post(ws_disconnect))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -371,12 +526,13 @@ async fn main() -> Result<()> {
         .layer(cors);
 
     let port = env::var("SERVER_PORT")
-        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8016".to_string()));
+        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8051".to_string()));
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-IM 即时通讯系统启动中...");
     tracing::info!("📦 端口: {}", port);
     tracing::info!("🔒 认证保护已启用");
+    tracing::info!("🔗 WebSocket端点: ws://0.0.0.0:{}/ws", port);
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;

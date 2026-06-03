@@ -1,19 +1,21 @@
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     Json,
     Router,
     routing::{get, post, put, delete},
 };
+use chrono::Utc;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use crate::models::{
     project_budget::{
         CreateBudgetItemRequest, CreateBudgetRequest,
         ProjectBudget, ProjectBudgetItem, UpdateBudgetItemRequest, UpdateBudgetRequest,
     },
 };
-
+use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
 
 pub fn create_routes() -> Router<ApiState> {
@@ -26,13 +28,22 @@ pub fn create_routes() -> Router<ApiState> {
 
 pub async fn create_project_budget(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(payload): Json<CreateBudgetRequest>,
-) -> Result<Json<ProjectBudget>, (StatusCode, String)> {
+) -> Json<ApiResponse<ProjectBudget>> {
+    if payload.project_id.is_nil() {
+        return Json(api_error(400, "项目ID不能为空"));
+    }
+
+    if payload.budget_type.is_empty() {
+        return Json(api_error(400, "预算类型不能为空"));
+    }
+
     let budget_type = payload.budget_type.to_string();
     let status = "DRAFT".to_string();
     let remaining_amount = payload.total_budget;
 
-    let budget = sqlx::query_as::<_, ProjectBudget>(
+    let result = sqlx::query_as::<_, ProjectBudget>(
         r#"
         INSERT INTO project_budgets (
             project_id, budget_type, fiscal_year, total_budget, 
@@ -52,10 +63,50 @@ pub async fn create_project_budget(
     .bind(&status)
     .bind("admin")
     .fetch_one(&state.db)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .await;
 
-    Ok(Json(budget))
+    let (response, status_str, error_msg) = match &result {
+        Ok(budget) => (
+            Json(ApiResponse::success(budget.clone(), "项目预算创建成功")),
+            "success".to_string(),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("创建项目预算失败: {}", e);
+            (
+                Json(api_error(500, "项目预算创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let request_data = serde_json::to_value(&payload).ok();
+    let response_data = if let Ok(budget) = &result {
+        serde_json::to_value(budget).ok()
+    } else {
+        None
+    };
+
+    if let Ok(budget) = &result {
+        log_audit_event(
+            &state.db,
+            "create".to_string(),
+            "project_budget".to_string(),
+            Some(budget.id),
+            None,
+            None,
+            None,
+            request_data,
+            response_data,
+            status_str,
+            error_msg,
+            &headers,
+        )
+        .await;
+    }
+
+    response
 }
 
 pub async fn get_project_budget(
@@ -192,18 +243,57 @@ pub async fn update_budget_item(
 pub async fn delete_budget_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<StatusCode, (StatusCode, String)> {
+    headers: HeaderMap,
+) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
         r#"DELETE FROM project_budget_items WHERE id = $1"#,
     )
     .bind(id)
     .execute(&state.db)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .await;
 
-    if result.rows_affected() == 0 {
-        return Err((StatusCode::NOT_FOUND, "Budget item not found".to_string()));
-    }
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "预算项目删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "预算项目不存在")),
+            "error".to_string(),
+            Some("预算项目不存在".to_string()),
+        ),
+        Err(e) => {
+            tracing::error!("删除预算项目失败: {}", e);
+            (
+                Json(api_error(500, "预算项目删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
 
-    Ok(StatusCode::NO_CONTENT)
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "project_budget_item".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
