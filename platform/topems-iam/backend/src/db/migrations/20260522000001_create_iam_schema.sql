@@ -67,6 +67,15 @@ CREATE TABLE IF NOT EXISTS iam.audit_logs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 密码重置令牌表
+CREATE TABLE IF NOT EXISTS iam.password_reset_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES iam.users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- 创建索引
 CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON iam.user_roles(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_roles_role_id ON iam.user_roles(role_id);

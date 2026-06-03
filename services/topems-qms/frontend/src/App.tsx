@@ -2,6 +2,7 @@ import React from 'react';
 import QualityStandardList from './pages/QualityStandardList';
 import QualityInspectionList from './pages/QualityInspectionList';
 import QualityIssueList from './pages/QualityIssueList';
+import CorrectiveActionList from './pages/CorrectiveActionList';
 import './index.css';
 
 function App() {
@@ -15,6 +16,8 @@ function App() {
         return <QualityInspectionList />;
       case 'issues':
         return <QualityIssueList />;
+      case 'actions':
+        return <CorrectiveActionList />;
       default:
         return <QualityStandardList />;
     }
@@ -61,6 +64,16 @@ function App() {
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
                   质量问题
+                </button>
+                <button
+                  onClick={() => setActiveTab('actions')}
+                  className={`${
+                    activeTab === 'actions'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  纠正措施
                 </button>
               </div>
             </div>

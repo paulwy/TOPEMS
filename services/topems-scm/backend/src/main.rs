@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
         .merge(protected_routes)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8007".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8040".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-SCM 供应链管理系统启动中...");

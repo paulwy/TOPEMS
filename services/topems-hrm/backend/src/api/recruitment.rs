@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -9,7 +10,8 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult};
+use crate::api::audit::log_audit_event;
+use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult, api_error};
 use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -227,8 +229,13 @@ async fn list_job_openings(
 
 async fn create_job_opening(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateJobOpeningRequest>,
 ) -> Json<ApiResponse<JobOpening>> {
+    if req.title.is_empty() {
+        return Json(api_error(400, "职位标题不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -255,13 +262,46 @@ async fn create_job_opening(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(opening) => Json(ApiResponse::success(opening, "职位创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(opening) => (
+            Json(ApiResponse::success(opening.clone(), "职位创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建职位失败: {}", e);
-            Json(ApiResponse::<JobOpening>::error(500, "创建职位失败"))
+            (
+                Json(api_error(500, "创建职位失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(opening) = &result {
+        serde_json::to_value(opening).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "job_opening".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_job_opening(
@@ -339,6 +379,7 @@ async fn update_job_opening(
 async fn delete_job_opening(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
         "DELETE FROM job_openings WHERE id = $1 AND status = 'draft'"
@@ -347,14 +388,50 @@ async fn delete_job_opening(
     .execute(&state.db)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "职位已删除")),
-        Ok(_) => Json(ApiResponse::<String>::error(404, "职位不存在或已发布")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success(id.to_string(), "职位已删除")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "职位不存在或已发布")),
+            "error".to_string(),
+            Some("职位不存在或已发布".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除职位失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "删除职位失败"))
+            (
+                Json(api_error(500, "删除职位失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "job_opening".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn publish_job_opening(
@@ -483,8 +560,13 @@ async fn list_candidates(
 
 async fn create_candidate(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateCandidateRequest>,
 ) -> Json<ApiResponse<Candidate>> {
+    if req.name.is_empty() {
+        return Json(api_error(400, "候选人姓名不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -508,13 +590,46 @@ async fn create_candidate(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(candidate) => Json(ApiResponse::success(candidate, "候选人添加成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(candidate) => (
+            Json(ApiResponse::success(candidate.clone(), "候选人添加成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("添加候选人失败: {}", e);
-            Json(ApiResponse::<Candidate>::error(500, "添加候选人失败"))
+            (
+                Json(api_error(500, "添加候选人失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(candidate) = &result {
+        serde_json::to_value(candidate).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "candidate".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_candidate(
@@ -588,19 +703,57 @@ async fn update_candidate(
 async fn delete_candidate(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM candidates WHERE id = $1")
     .bind(id)
     .execute(&state.db)
     .await;
 
-    match result {
-        Ok(_) => Json(ApiResponse::success(id.to_string(), "候选人已删除")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success(id.to_string(), "候选人已删除")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "候选人不存在")),
+            "error".to_string(),
+            Some("候选人不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除候选人失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "删除候选人失败"))
+            (
+                Json(api_error(500, "删除候选人失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "candidate".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn list_interviews(

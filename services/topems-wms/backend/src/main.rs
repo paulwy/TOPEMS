@@ -62,7 +62,7 @@ async fn main() -> Result<()> {
         .with_state(api_state)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8025".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8042".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-WMS 仓库管理系统启动中...");

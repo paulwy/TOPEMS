@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -8,8 +9,9 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use crate::models::{CreateQualityInspectionRequest, QualityInspection, UpdateQualityInspectionRequest};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, api_error};
 
 use super::ApiState;
 
@@ -95,8 +97,17 @@ async fn list_inspections(
 
 async fn create_inspection(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateQualityInspectionRequest>,
 ) -> Json<ApiResponse<QualityInspection>> {
+    if req.title.is_empty() {
+        return Json(api_error(400, "质量检查标题不能为空"));
+    }
+
+    if req.inspection_type.is_empty() {
+        return Json(api_error(400, "检查类型不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -118,13 +129,46 @@ async fn create_inspection(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(inspection) => Json(ApiResponse::success(inspection, "质量检查创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(inspection) => (
+            Json(ApiResponse::success(inspection.clone(), "质量检查创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建质量检查失败: {}", e);
-            Json(ApiResponse::<QualityInspection>::error(500, "质量检查创建失败"))
+            (
+                Json(api_error(500, "质量检查创建失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(inspection) = &result {
+        serde_json::to_value(inspection).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "quality_inspection".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_inspection(

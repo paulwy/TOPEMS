@@ -32,13 +32,43 @@ interface EquipmentInspection {
   next_check_date?: string;
 }
 
+interface EmergencyPlan {
+  id: string;
+  plan_id: string;
+  title: string;
+  type_: string;
+  scope: string;
+  version: string;
+  status: string;
+  effective_date: string;
+  department: string;
+}
+
+interface DrillRecord {
+  id: string;
+  drill_id: string;
+  title: string;
+  type_: string;
+  planned_date: string;
+  actual_date?: string;
+  participants: number;
+  duration: number;
+  score?: number;
+  status: string;
+  evaluator?: string;
+  remarks?: string;
+}
+
 function App() {
-  const [activeTab, setActiveTab] = useState<'hazards' | 'incidents' | 'inspections'>('hazards');
+  const [activeTab, setActiveTab] = useState<'hazards' | 'incidents' | 'inspections' | 'plans' | 'drills'>('hazards');
   const [hazards, setHazards] = useState<Hazard[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [inspections, setInspections] = useState<EquipmentInspection[]>([]);
+  const [emergencyPlans, setEmergencyPlans] = useState<EmergencyPlan[]>([]);
+  const [drillRecords, setDrillRecords] = useState<DrillRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [hazardForm, setHazardForm] = useState({
     description: '',
@@ -62,6 +92,25 @@ function App() {
     next_check_date: '',
   });
 
+  const [planForm, setPlanForm] = useState({
+    title: '',
+    type_: '火灾预案',
+    scope: '',
+    version: 'V1.0',
+    effective_date: '',
+    department: '',
+  });
+
+  const [drillForm, setDrillForm] = useState({
+    title: '',
+    type_: '消防演练',
+    planned_date: '',
+    actual_date: '',
+    participants: 0,
+    duration: 0,
+    status: '待执行',
+  });
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -78,9 +127,23 @@ function App() {
       const incidentsData = await incidentsRes.json();
       const inspectionsData = await inspectionsRes.json();
 
-      if (hazardsData.success) setHazards(hazardsData.data);
-      if (incidentsData.success) setIncidents(incidentsData.data);
-      if (inspectionsData.success) setInspections(inspectionsData.data);
+      if (hazardsData.success) setHazards(hazardsData.data || []);
+      if (incidentsData.success) setIncidents(incidentsData.data || []);
+      if (inspectionsData.success) setInspections(inspectionsData.data || []);
+
+      const mockPlans: EmergencyPlan[] = [
+        { id: '1', plan_id: 'EP-2024-001', title: '火灾应急救援预案', type_: '火灾预案', scope: '全厂区', version: 'V2.1', status: '有效', effective_date: '2024-01-15', department: '安全部' },
+        { id: '2', plan_id: 'EP-2024-002', title: '化学品泄漏应急处理预案', type_: '泄漏预案', scope: '化工仓库', version: 'V1.5', status: '有效', effective_date: '2024-03-20', department: '生产部' },
+        { id: '3', plan_id: 'EP-2024-003', title: '高温中暑应急救护预案', type_: '急救预案', scope: '生产车间', version: 'V1.2', status: '待更新', effective_date: '2023-08-10', department: '人力资源部' },
+      ];
+      setEmergencyPlans(mockPlans);
+
+      const mockDrills: DrillRecord[] = [
+        { id: '1', drill_id: 'DR-2024-001', title: '年度消防演练', type_: '消防演练', planned_date: '2024-06-15', actual_date: '2024-06-15', participants: 120, duration: 90, score: 92, status: '已完成', evaluator: '张安全' },
+        { id: '2', drill_id: 'DR-2024-002', title: '化学品泄漏应急演练', type_: '泄漏演练', planned_date: '2024-07-20', participants: 45, duration: 60, status: '待执行' },
+        { id: '3', drill_id: 'DR-2024-003', title: '高温中暑急救演练', type_: '急救演练', planned_date: '2024-05-10', actual_date: '2024-05-10', participants: 80, duration: 45, score: 88, status: '已完成', evaluator: '李医生' },
+      ];
+      setDrillRecords(mockDrills);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     } finally {
@@ -163,6 +226,50 @@ function App() {
     } catch (err) {
       console.error('Failed to add inspection:', err);
     }
+  };
+
+  const handleAddPlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newPlan: EmergencyPlan = {
+      id: Date.now().toString(),
+      plan_id: `EP-2024-${String(emergencyPlans.length + 1).padStart(3, '0')}`,
+      title: planForm.title,
+      type_: planForm.type_,
+      scope: planForm.scope,
+      version: planForm.version,
+      status: '有效',
+      effective_date: planForm.effective_date,
+      department: planForm.department,
+    };
+    setEmergencyPlans([...emergencyPlans, newPlan]);
+    setShowForm(false);
+    setPlanForm({ title: '', type_: '火灾预案', scope: '', version: 'V1.0', effective_date: '', department: '' });
+  };
+
+  const handleAddDrill = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newDrill: DrillRecord = {
+      id: Date.now().toString(),
+      drill_id: `DR-2024-${String(drillRecords.length + 1).padStart(3, '0')}`,
+      title: drillForm.title,
+      type_: drillForm.type_,
+      planned_date: drillForm.planned_date,
+      actual_date: drillForm.actual_date,
+      participants: drillForm.participants,
+      duration: drillForm.duration,
+      status: drillForm.status,
+    };
+    setDrillRecords([...drillRecords, newDrill]);
+    setShowForm(false);
+    setDrillForm({ title: '', type_: '消防演练', planned_date: '', actual_date: '', participants: 0, duration: 0, status: '待执行' });
+  };
+
+  const handleDeletePlan = (id: string) => {
+    setEmergencyPlans(emergencyPlans.filter(p => p.id !== id));
+  };
+
+  const handleDeleteDrill = (id: string) => {
+    setDrillRecords(drillRecords.filter(d => d.id !== id));
   };
 
   const getRiskColor = (level: string) => {
@@ -249,6 +356,26 @@ function App() {
             }`}
           >
             🔧 设备检查
+          </button>
+          <button
+            onClick={() => { setActiveTab('plans'); setShowForm(false); }}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              activeTab === 'plans'
+                ? 'bg-orange-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            📋 应急预案
+          </button>
+          <button
+            onClick={() => { setActiveTab('drills'); setShowForm(false); }}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              activeTab === 'drills'
+                ? 'bg-orange-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            🚨 演练记录
           </button>
         </div>
 
@@ -579,6 +706,289 @@ function App() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'plans' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-900">应急预案列表</h2>
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+              >
+                {showForm ? '取消' : '添加预案'}
+              </button>
+            </div>
+
+            {showForm && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-medium mb-4">添加应急预案</h3>
+                <form onSubmit={handleAddPlan} className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">预案标题</label>
+                    <input
+                      type="text"
+                      value={planForm.title}
+                      onChange={(e) => setPlanForm({...planForm, title: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">预案类型</label>
+                    <select
+                      value={planForm.type_}
+                      onChange={(e) => setPlanForm({...planForm, type_: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                    >
+                      <option value="火灾预案">火灾预案</option>
+                      <option value="泄漏预案">泄漏预案</option>
+                      <option value="急救预案">急救预案</option>
+                      <option value="其他预案">其他预案</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">适用范围</label>
+                    <input
+                      type="text"
+                      value={planForm.scope}
+                      onChange={(e) => setPlanForm({...planForm, scope: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">版本号</label>
+                    <input
+                      type="text"
+                      value={planForm.version}
+                      onChange={(e) => setPlanForm({...planForm, version: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">生效日期</label>
+                    <input
+                      type="date"
+                      value={planForm.effective_date}
+                      onChange={(e) => setPlanForm({...planForm, effective_date: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">负责部门</label>
+                    <input
+                      type="text"
+                      value={planForm.department}
+                      onChange={(e) => setPlanForm({...planForm, department: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                      required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <button
+                      type="submit"
+                      className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700"
+                    >
+                      提交
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">预案编号</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">标题</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">类型</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">适用范围</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">版本</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {emergencyPlans.map((plan) => (
+                    <tr key={plan.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{plan.plan_id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{plan.title}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{plan.type_}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{plan.scope}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{plan.version}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${plan.status === '有效' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {plan.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button
+                          onClick={() => handleDeletePlan(plan.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          删除
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'drills' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-900">演练记录列表</h2>
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+              >
+                {showForm ? '取消' : '添加演练'}
+              </button>
+            </div>
+
+            {showForm && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-medium mb-4">添加演练记录</h3>
+                <form onSubmit={handleAddDrill} className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">演练标题</label>
+                    <input
+                      type="text"
+                      value={drillForm.title}
+                      onChange={(e) => setDrillForm({...drillForm, title: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">演练类型</label>
+                    <select
+                      value={drillForm.type_}
+                      onChange={(e) => setDrillForm({...drillForm, type_: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                    >
+                      <option value="消防演练">消防演练</option>
+                      <option value="泄漏演练">泄漏演练</option>
+                      <option value="急救演练">急救演练</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">计划日期</label>
+                    <input
+                      type="date"
+                      value={drillForm.planned_date}
+                      onChange={(e) => setDrillForm({...drillForm, planned_date: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">实际日期</label>
+                    <input
+                      type="date"
+                      value={drillForm.actual_date}
+                      onChange={(e) => setDrillForm({...drillForm, actual_date: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">参与人数</label>
+                    <input
+                      type="number"
+                      value={drillForm.participants}
+                      onChange={(e) => setDrillForm({...drillForm, participants: parseInt(e.target.value) || 0})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">持续时长(分钟)</label>
+                    <input
+                      type="number"
+                      value={drillForm.duration}
+                      onChange={(e) => setDrillForm({...drillForm, duration: parseInt(e.target.value) || 0})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                    <select
+                      value={drillForm.status}
+                      onChange={(e) => setDrillForm({...drillForm, status: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md p-2"
+                    >
+                      <option value="待执行">待执行</option>
+                      <option value="已完成">已完成</option>
+                      <option value="已取消">已取消</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <button
+                      type="submit"
+                      className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700"
+                    >
+                      提交
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">演练编号</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">标题</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">类型</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">计划日期</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">参与人数</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">评分</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {drillRecords.map((drill) => (
+                    <tr key={drill.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{drill.drill_id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{drill.title}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{drill.type_}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{drill.planned_date}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{drill.participants}人</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {drill.score ? `${drill.score}分` : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          drill.status === '已完成' ? 'bg-green-100 text-green-800' :
+                          drill.status === '待执行' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {drill.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button
+                          onClick={() => handleDeleteDrill(drill.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          删除
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

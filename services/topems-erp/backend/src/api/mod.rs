@@ -1,12 +1,12 @@
-use anyhow::Result;
 use axum::{
     extract::FromRef,
     Router,
 };
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use topems_shared::{AuthState, SystemMetrics};
+use crate::utils::InMemoryCache;
 
 pub mod company;
 pub mod department;
@@ -29,6 +29,10 @@ pub struct ApiState {
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
+    pub company_cache: Arc<InMemoryCache<Vec<models::company::Company>>>,
+    pub department_cache: Arc<InMemoryCache<Vec<models::department::Department>>>,
+    pub employee_cache: Arc<InMemoryCache<Vec<models::employee::Employee>>>,
+    pub dict_cache: Arc<InMemoryCache<Vec<models::dict::DictType>>>,
 }
 
 impl FromRef<ApiState> for AuthState {

@@ -1,5 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -13,6 +14,7 @@ use crate::models::{
     CreateFormulaRequest, CreateFormulaVersionRequest, Formula, FormulaVersion,
     UpdateFormulaRequest,
 };
+use crate::api::audit::log_audit_event;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -107,8 +109,17 @@ async fn list_formulas(
 
 async fn create_formula(
     State(state): State<Arc<super::ApiState>>,
+    headers: HeaderMap,
     Json(req): Json<CreateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
+    if req.name.is_empty() {
+        return Json(ApiResponse::error(400, "配方名称不能为空"));
+    }
+
+    if req.code.is_empty() {
+        return Json(ApiResponse::error(400, "配方编码不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -147,13 +158,46 @@ async fn create_formula(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(formula) => Json(ApiResponse::success(formula, "配方创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(formula) => (
+            Json(ApiResponse::success(formula.clone(), "配方创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建配方失败: {}", e);
-            Json(ApiResponse::error(500, "配方创建失败"))
+            (
+                Json(ApiResponse::error(500, "配方创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(formula) = &result {
+        serde_json::to_value(formula).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "formula".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_formula(
@@ -186,6 +230,7 @@ async fn get_formula(
 async fn update_formula(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
     let existing = sqlx::query_as::<_, Formula>(
@@ -206,6 +251,8 @@ async fn update_formula(
         Ok(None) => return Json(ApiResponse::error(404, "配方不存在")),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询配方失败: {}", e))),
     };
+
+    let request_data = serde_json::to_value(&req).ok();
 
     let name = req.name.unwrap_or(existing.name);
     let category = req.category.or(existing.category);
@@ -245,34 +292,101 @@ async fn update_formula(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(formula) => Json(ApiResponse::success(formula, "配方更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(formula) => (
+            Json(ApiResponse::success(formula.clone(), "配方更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新配方失败: {}", e);
-            Json(ApiResponse::error(500, "配方更新失败"))
+            (
+                Json(ApiResponse::error(500, "配方更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(formula) = &result {
+        serde_json::to_value(formula).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "formula".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_formula(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM rs.formulas WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "配方删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::error(404, "配方不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "配方删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(ApiResponse::error(404, "配方不存在")),
+            "error".to_string(),
+            Some("配方不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除配方失败: {}", e);
-            Json(ApiResponse::error(500, "配方删除失败"))
+            (
+                Json(ApiResponse::error(500, "配方删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "formula".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_formula_versions(

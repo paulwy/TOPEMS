@@ -136,7 +136,7 @@
 
 ### 2.1 研发管理服务 (topems-rs)
 
-**服务地址**: `http://localhost:8005`
+**服务地址**: `http://localhost:8000`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -265,7 +265,7 @@
 
 ### 2.5 供应商管理服务 (topems-srm)
 
-**服务地址**: `http://localhost:8010`
+**服务地址**: `http://localhost:8018`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -343,7 +343,7 @@
 
 ### 3.1 报表服务 (topems-report)
 
-**服务地址**: `http://localhost:8011`
+**服务地址**: `http://localhost:8024`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -463,22 +463,27 @@ curl -X GET "http://localhost:8005/api/v1/projects" \
 | topems-doc | 8001 | ✅ |
 | topems-ai | 8003 | ✅ |
 | topems-flow | 8004 | ✅ |
-| topems-rs | 8005 | ✅ |
+| topems-rs | 8000 | ✅ |
 | topems-lims | 8006 | ✅ |
-| topems-qms | 8012 | 🔄 |
-| topems-ehs | 8013 | 🔄 |
-| topems-erp | 8009 | 📋 |
+| topems-qms | 8007 | 🔄 |
+| topems-ehs | 8008 | 🔄 |
+| topems-erp | 8009 | ✅ |
 | topems-srm | 8018 | 📋 |
 | topems-bi | 8022 | 🔄 |
-| topems-crm | 8014 | 📋 |
-| topems-hrm | 8010 | 📋 |
+| topems-crm | 8013 | 📋 |
+| topems-hrm | 8010 | ✅ |
 | topems-mes | 8014 | 📋 |
 | topems-pdm | 8015 | 📋 |
-| topems-scm | 8016 | 📋 |
-| topems-gis | 8011 | ✅ |
+| topems-scm | 8021 | 📋 |
+| topems-gis | 8011 | 📋 |
 | topems-im | 8016 | 📋 |
 | topems-mobile | 8019 | ✅ |
 | topems-notification | 8023 | ✅ |
+| topems-wms | 8020 | 📋 |
+| topems-mail | 8026 | 📋 |
+| topems-portal | 9021 | 📋 |
+| topems-integration | 8022 | 📋 |
+| topems-report | 8024 | 📋 |
 
 **状态说明**: ✅ 已实现 | 🔄 开发中 | 📋 规划中
 

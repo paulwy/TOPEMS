@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -12,7 +13,8 @@ use crate::models::{
     Contract, ContractPaginationParams, ContractRenewal, CreateContractRequest,
     CreateRenewalRequest, UpdateContractRequest,
 };
-use topems_shared::ApiResponse;
+use crate::api::audit::log_audit_event;
+use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
 
 pub fn create_routes() -> Router<ApiState> {
@@ -169,8 +171,17 @@ pub struct ExpiringParams {
 
 async fn create_contract(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
+    if req.employee_id.is_nil() {
+        return Json(api_error(400, "员工ID不能为空"));
+    }
+
+    if req.contract_type.is_empty() {
+        return Json(api_error(400, "合同类型不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let contract_no = req.contract_no.unwrap_or_else(|| format!("HT{}{}", now.timestamp(), id.to_string().split('-').next().unwrap_or("")));
@@ -207,13 +218,46 @@ async fn create_contract(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(contract) => Json(ApiResponse::success(contract, "合同创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(contract) => (
+            Json(ApiResponse::success(contract.clone(), "合同创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建合同失败: {}", e);
-            Json(ApiResponse::<Contract>::error(500, "合同创建失败"))
+            (
+                Json(api_error(500, "合同创建失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(contract) = &result {
+        serde_json::to_value(contract).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "contract".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_contract(
@@ -268,6 +312,7 @@ async fn get_contract(
 async fn update_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
     let existing = sqlx::query_as::<_, Contract>(
@@ -284,10 +329,11 @@ async fn update_contract(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::<Contract>::error(404, "合同不存在")),
-        Err(e) => return Json(ApiResponse::<Contract>::error(500, &format!("查询合同失败: {}", e))),
+        Ok(None) => return Json(api_error(404, "合同不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询合同失败: {}", e))),
     };
 
+    let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Contract>(
@@ -333,32 +379,101 @@ async fn update_contract(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(contract) => Json(ApiResponse::success(contract, "合同更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(contract) => (
+            Json(ApiResponse::success(contract.clone(), "合同更新成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新合同失败: {}", e);
-            Json(ApiResponse::<Contract>::error(500, "合同更新失败"))
+            (
+                Json(api_error(500, "合同更新失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(contract) = &result {
+        serde_json::to_value(contract).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "contract".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM contracts WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "合同删除成功")),
-        Ok(_) => Json(ApiResponse::<String>::error(404, "合同不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "合同删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "合同不存在")),
+            "error".to_string(),
+            Some("合同不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除合同失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "合同删除失败"))
+            (
+                Json(api_error(500, "合同删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "contract".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn create_renewal(

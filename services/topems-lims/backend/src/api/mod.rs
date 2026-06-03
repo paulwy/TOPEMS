@@ -14,6 +14,7 @@ pub mod audit;
 pub mod reagent;
 pub mod doc_integration;
 pub mod ai_integration;
+pub mod rs_integration;
 pub mod openapi;
 
 #[derive(Clone)]
@@ -48,6 +49,7 @@ pub async fn create_routes(db: PgPool, auth_state: AuthState, config: Config) ->
         .merge(reagent::create_routes().await?)
         .merge(doc_integration::create_routes().await?)
         .merge(ai_integration::create_routes().await?)
+        .merge(rs_integration::create_routes().await?)
         .with_state(state);
 
     Ok(app)

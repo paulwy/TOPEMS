@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProjectList from './pages/ProjectList';
+import ProjectDetail from './pages/ProjectDetail';
 import FormulaList from './pages/FormulaList';
 import ExperimentList from './pages/ExperimentList';
 import PatentList from './pages/PatentList';
@@ -144,6 +145,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:id"
+          element={
+            <ProtectedRoute>
+              <ProjectDetail />
             </ProtectedRoute>
           }
         />

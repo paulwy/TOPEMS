@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -11,6 +12,7 @@ use uuid::Uuid;
 
 use topems_shared::{ApiResponse, api_error};
 use crate::models::{CreateContactRequest, Contact, UpdateContactRequest};
+use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Deserialize)]
 pub struct ContactPaginationParams {
@@ -100,8 +102,13 @@ async fn list_contacts(
 
 async fn create_contact(
     State(pool): State<PgPool>,
+    headers: HeaderMap,
     Json(req): Json<CreateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
+    if req.first_name.is_empty() {
+        return Json(api_error(400, "联系人名字不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -126,13 +133,46 @@ async fn create_contact(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(contact) => Json(ApiResponse::success(contact, "联系人创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(contact) => (
+            Json(ApiResponse::success(contact.clone(), "联系人创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建联系人失败: {}", e);
-            Json(api_error(500, "联系人创建失败"))
+            (
+                Json(api_error(500, "联系人创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(contact) = &result {
+        serde_json::to_value(contact).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "create".to_string(),
+        "contact".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_contact(
@@ -162,6 +202,7 @@ async fn get_contact(
 async fn update_contact(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
     let existing = sqlx::query_as::<_, Contact>(
@@ -178,6 +219,8 @@ async fn update_contact(
         Ok(None) => return Json(api_error(404, "联系人不存在")),
         Err(e) => return Json(api_error(500, &format!("查询联系人失败: {}", e))),
     };
+
+    let request_data = serde_json::to_value(&req).ok();
 
     let first_name = req.first_name.unwrap_or(existing.first_name);
     let last_name = req.last_name.or(existing.last_name);
@@ -211,30 +254,99 @@ async fn update_contact(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(contact) => Json(ApiResponse::success(contact, "联系人更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(contact) => (
+            Json(ApiResponse::success(contact.clone(), "联系人更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新联系人失败: {}", e);
-            Json(api_error(500, "联系人更新失败"))
+            (
+                Json(api_error(500, "联系人更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(contact) = &result {
+        serde_json::to_value(contact).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "update".to_string(),
+        "contact".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_contact(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM contacts WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "联系人删除成功")),
-        Ok(_) => Json(api_error(404, "联系人不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "联系人删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "联系人不存在")),
+            "error".to_string(),
+            Some("联系人不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除联系人失败: {}", e);
-            Json(api_error(500, "联系人删除失败"))
+            (
+                Json(api_error(500, "联系人删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "delete".to_string(),
+        "contact".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

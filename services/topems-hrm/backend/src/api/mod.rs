@@ -41,14 +41,7 @@ impl FromRef<ApiState> for PgPool {
     }
 }
 
-pub async fn create_routes(db: PgPool, auth_state: AuthState, metrics: Arc<SystemMetrics>) -> Result<Router> {
-    let state = ApiState {
-        db,
-        auth_state,
-        metrics,
-        start_time: Instant::now(),
-    };
-    
+pub async fn create_routes(state: ApiState) -> Result<Router<ApiState>> {
     let app = Router::new()
         .merge(employee::create_routes())
         .merge(department::create_routes())

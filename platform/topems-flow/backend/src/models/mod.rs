@@ -209,3 +209,53 @@ impl ToString for NotificationType {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct AuditLog {
+    pub id: Uuid,
+    pub action: String,
+    pub resource_type: String,
+    pub resource_id: Option<Uuid>,
+    pub actor_id: Option<Uuid>,
+    pub actor_name: Option<String>,
+    pub previous_state: Option<serde_json::Value>,
+    pub new_state: Option<serde_json::Value>,
+    pub details: Option<serde_json::Value>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateAuditLogRequest {
+    pub action: String,
+    pub resource_type: String,
+    pub resource_id: Option<Uuid>,
+    pub actor_id: Option<Uuid>,
+    pub actor_name: Option<String>,
+    pub previous_state: Option<serde_json::Value>,
+    pub new_state: Option<serde_json::Value>,
+    pub details: Option<serde_json::Value>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuditLogQuery {
+    pub action: Option<String>,
+    pub resource_type: Option<String>,
+    pub resource_id: Option<Uuid>,
+    pub actor_id: Option<Uuid>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AuditLogResponse {
+    pub logs: Vec<AuditLog>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
+}

@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
         .merge(protected_routes)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8027".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8054".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-Mail 邮件服务启动中...");
@@ -225,7 +225,7 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
 
 async fn check_iam_health() -> DependencyHealth {
     let iam_url = env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8002".to_string());
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {

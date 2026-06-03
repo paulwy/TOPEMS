@@ -1,9 +1,9 @@
-# TOPEMS 本地开发数据库配置
-# 仅用于启动 PostgreSQL 和 Redis，后端服务在本地运行
+version: '3.8'
 
 volumes:
   postgres_data:
   redis_data:
+  nginx_logs:
 
 services:
   postgres:
@@ -21,6 +21,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - topems-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-topems} -d ${POSTGRES_DB:-topems}"]
       interval: 10s
@@ -39,6 +41,8 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - topems-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -46,3 +50,34 @@ services:
       retries: 5
       start_period: 5s
     restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    platform: linux/amd64
+    pull_policy: never
+    container_name: topems-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - nginx_logs:/var/log/nginx
+      - ../frontend/build:/usr/share/nginx/html:ro
+    networks:
+      - topems-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+networks:
+  topems-network:
+    driver: bridge
+    name: topems-network

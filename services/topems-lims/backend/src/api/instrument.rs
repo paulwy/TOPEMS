@@ -1,6 +1,7 @@
 use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -10,6 +11,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::api::ApiState;
+use crate::api::audit::log_audit_event;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -181,8 +183,17 @@ async fn list_instruments(
 
 async fn create_instrument(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateInstrumentRequest>,
 ) -> Json<ApiResponse<Instrument>> {
+    if req.name.is_empty() {
+        return Json(ApiResponse::error(400, "仪器名称不能为空"));
+    }
+
+    if req.code.is_empty() {
+        return Json(ApiResponse::error(400, "仪器编码不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -220,13 +231,46 @@ async fn create_instrument(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(instrument) => Json(ApiResponse::success(instrument, "仪器创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(instrument) => (
+            Json(ApiResponse::success(instrument.clone(), "仪器创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建仪器失败: {}", e);
-            Json(ApiResponse::error(500, "仪器创建失败"))
+            (
+                Json(ApiResponse::error(500, "仪器创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(instrument) = &result {
+        serde_json::to_value(instrument).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "instrument".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_instrument(
@@ -259,6 +303,7 @@ async fn get_instrument(
 async fn update_instrument(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateInstrumentRequest>,
 ) -> Json<ApiResponse<Instrument>> {
     let existing = sqlx::query_as::<_, Instrument>(
@@ -273,6 +318,8 @@ async fn update_instrument(
         Ok(None) => return Json(ApiResponse::error(404, "仪器不存在")),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询仪器失败: {}", e))),
     };
+
+    let request_data = serde_json::to_value(&req).ok();
 
     let name = req.name.unwrap_or(existing.name);
     let instrument_type = req.instrument_type.unwrap_or(existing.instrument_type);
@@ -309,32 +356,101 @@ async fn update_instrument(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(instrument) => Json(ApiResponse::success(instrument, "仪器更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(instrument) => (
+            Json(ApiResponse::success(instrument.clone(), "仪器更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新仪器失败: {}", e);
-            Json(ApiResponse::error(500, "仪器更新失败"))
+            (
+                Json(ApiResponse::error(500, "仪器更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(instrument) = &result {
+        serde_json::to_value(instrument).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "instrument".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_instrument(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM lims.instruments WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "仪器删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "仪器不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "仪器删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(ApiResponse::error(404, "仪器不存在")),
+            "error".to_string(),
+            Some("仪器不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除仪器失败: {}", e);
-            Json(ApiResponse::error(500, "仪器删除失败"))
+            (
+                Json(ApiResponse::error(500, "仪器删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "instrument".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_calibrations(

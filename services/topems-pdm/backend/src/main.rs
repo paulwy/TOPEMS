@@ -313,9 +313,9 @@ async fn main() {
         .layer(cors);
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| std::env::var("PORT").unwrap_or_else(|_| "8015".to_string()))
+        .unwrap_or_else(|_| std::env::var("PORT").unwrap_or_else(|_| "8023".to_string()))
         .parse()
-        .unwrap_or(8015);
+        .unwrap_or(8023);
     let addr = format!("0.0.0.0:{}", port);
     tracing::info!("✅ TOPEMS-PDM service is running at http://{}", addr);
     tracing::info!("🔒 Authentication protection enabled");

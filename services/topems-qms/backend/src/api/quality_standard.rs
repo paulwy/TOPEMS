@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -8,8 +9,9 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use crate::models::{CreateQualityStandardRequest, QualityStandard, UpdateQualityStandardRequest};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, api_error};
 
 use super::ApiState;
 
@@ -95,8 +97,17 @@ async fn list_standards(
 
 async fn create_standard(
     State(state): State<ApiState>,
+    headers: HeaderMap,
     Json(req): Json<CreateQualityStandardRequest>,
 ) -> Json<ApiResponse<QualityStandard>> {
+    if req.name.is_empty() {
+        return Json(api_error(400, "质量标准名称不能为空"));
+    }
+
+    if req.code.is_empty() {
+        return Json(api_error(400, "质量标准编码不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -118,13 +129,46 @@ async fn create_standard(
     .fetch_one(&state.db)
     .await;
 
-    match result {
-        Ok(standard) => Json(ApiResponse::success(standard, "质量标准创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(standard) => (
+            Json(ApiResponse::success(standard.clone(), "质量标准创建成功")),
+            "success",
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建质量标准失败: {}", e);
-            Json(ApiResponse::<QualityStandard>::error(500, "质量标准创建失败"))
+            (
+                Json(api_error(500, "质量标准创建失败")),
+                "error",
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(standard) = &result {
+        serde_json::to_value(standard).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "quality_standard".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_standard(
@@ -206,18 +250,55 @@ async fn update_standard(
 async fn delete_standard(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM qms.quality_standards WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "质量标准删除成功")),
-        Ok(_) => Json(ApiResponse::<String>::error(404, "质量标准不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "质量标准删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "质量标准不存在")),
+            "error".to_string(),
+            Some("质量标准不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除质量标准失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "质量标准删除失败"))
+            (
+                Json(api_error(500, "质量标准删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "quality_standard".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

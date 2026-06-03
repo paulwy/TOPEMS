@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -11,6 +12,7 @@ use uuid::Uuid;
 
 use topems_shared::{ApiResponse, api_error};
 use crate::models::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
+use crate::api::audit::log_audit_event;
 
 #[derive(Debug, Deserialize)]
 pub struct OpportunityPaginationParams {
@@ -100,8 +102,13 @@ async fn list_opportunities(
 
 async fn create_opportunity(
     State(pool): State<PgPool>,
+    headers: HeaderMap,
     Json(req): Json<CreateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
+    if req.name.is_empty() {
+        return Json(api_error(400, "销售机会名称不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -125,13 +132,46 @@ async fn create_opportunity(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(opportunity) => Json(ApiResponse::success(opportunity, "销售机会创建成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(opportunity) => (
+            Json(ApiResponse::success(opportunity.clone(), "销售机会创建成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("创建销售机会失败: {}", e);
-            Json(api_error(500, "销售机会创建失败"))
+            (
+                Json(api_error(500, "销售机会创建失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(opportunity) = &result {
+        serde_json::to_value(opportunity).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "create".to_string(),
+        "opportunity".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn get_opportunity(
@@ -161,6 +201,7 @@ async fn get_opportunity(
 async fn update_opportunity(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
     let existing = sqlx::query_as::<_, Opportunity>(
@@ -177,6 +218,8 @@ async fn update_opportunity(
         Ok(None) => return Json(api_error(404, "销售机会不存在")),
         Err(e) => return Json(api_error(500, &format!("查询销售机会失败: {}", e))),
     };
+
+    let request_data = serde_json::to_value(&req).ok();
 
     let name = req.name.unwrap_or(existing.name);
     let customer_id = req.customer_id.or(existing.customer_id);
@@ -208,30 +251,99 @@ async fn update_opportunity(
     .fetch_one(&pool)
     .await;
 
-    match result {
-        Ok(opportunity) => Json(ApiResponse::success(opportunity, "销售机会更新成功")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(opportunity) => (
+            Json(ApiResponse::success(opportunity.clone(), "销售机会更新成功")),
+            "success".to_string(),
+            None,
+        ),
         Err(e) => {
             tracing::error!("更新销售机会失败: {}", e);
-            Json(api_error(500, "销售机会更新失败"))
+            (
+                Json(api_error(500, "销售机会更新失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(opportunity) = &result {
+        serde_json::to_value(opportunity).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "update".to_string(),
+        "opportunity".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }
 
 async fn delete_opportunity(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM opportunities WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "销售机会删除成功")),
-        Ok(_) => Json(api_error(404, "销售机会不存在")),
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "销售机会删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "销售机会不存在")),
+            "error".to_string(),
+            Some("销售机会不存在".to_string()),
+        ),
         Err(e) => {
             tracing::error!("删除销售机会失败: {}", e);
-            Json(api_error(500, "销售机会删除失败"))
+            (
+                Json(api_error(500, "销售机会删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
         }
-    }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &pool,
+        "delete".to_string(),
+        "opportunity".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

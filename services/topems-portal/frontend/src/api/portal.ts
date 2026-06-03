@@ -27,6 +27,8 @@ export interface Todo {
   due_date: string;
   priority: string;
   completed: boolean;
+  todo_type: 'personal' | 'approval' | 'notification' | 'system';
+  link_url?: string;
 }
 
 export interface UserInfo {

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { projectApi, Project } from '../api/project';
-import { FileAttachments, AIAssistant } from '../components';
+import { FileAttachments, AIAssistant, AdvancedSearch, BatchActions } from '../components';
+import { FilterOption } from '../components/AdvancedSearch';
 
 const ProjectList: React.FC = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +15,50 @@ const ProjectList: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showAttachments, setShowAttachments] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [advancedFilters, setAdvancedFilters] = useState<Record<string, string | boolean>>({});
   const pageSize = 10;
+
+  const projectFilters: FilterOption[] = [
+    {
+      id: 'status',
+      label: '项目状态',
+      type: 'select',
+      options: [
+        { value: 'draft', label: '草稿' },
+        { value: 'active', label: '进行中' },
+        { value: 'paused', label: '已暂停' },
+        { value: 'completed', label: '已完成' },
+        { value: 'archived', label: '已归档' },
+      ],
+    },
+    {
+      id: 'project_type',
+      label: '项目类型',
+      type: 'select',
+      options: [
+        { value: 'research', label: '研发项目' },
+        { value: 'product', label: '产品项目' },
+        { value: 'process', label: '工艺项目' },
+      ],
+    },
+    {
+      id: 'leader',
+      label: '负责人',
+      type: 'text',
+      placeholder: '输入负责人姓名',
+    },
+    {
+      id: 'start_date_from',
+      label: '开始日期（起）',
+      type: 'date',
+    },
+    {
+      id: 'start_date_to',
+      label: '开始日期（止）',
+      type: 'date',
+    },
+  ];
 
   useEffect(() => {
     fetchProjects();
@@ -37,6 +83,67 @@ const ProjectList: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAdvancedSearch = (filters: Record<string, string | boolean>) => {
+    setAdvancedFilters(filters);
+    setSearch(filters['q'] as string || '');
+    setPage(1);
+  };
+
+  const handleResetSearch = () => {
+    setAdvancedFilters({});
+    setSearch('');
+    setPage(1);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === projects.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(projects.map((p) => p.id));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((i) => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`确定要删除选中的 ${selectedIds.length} 个项目吗？`)) return;
+    
+    try {
+      for (const id of selectedIds) {
+        await projectApi.delete(id);
+      }
+      setSelectedIds([]);
+      fetchProjects();
+    } catch (err) {
+      console.error('批量删除失败:', err);
+    }
+  };
+
+  const handleBatchExport = () => {
+    const selectedProjects = projects.filter((p) => selectedIds.includes(p.id));
+    const csv = [
+      '项目名称,项目编号,项目类型,状态,负责人,进度,开始日期',
+      ...selectedProjects.map((p) =>
+        `${p.name},${p.code},${p.project_type},${p.status},${p.leader},${p.progress}%,${p.start_date}`
+      ),
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `projects_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const getStatusBadge = (status: string) => {
@@ -84,30 +191,56 @@ const ProjectList: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <div className="flex gap-3">
-              <input
-                type="text"
-                placeholder="搜索项目名称或编号..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm">
-                新建项目
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+        <AdvancedSearch
+          filters={projectFilters}
+          onSearch={handleAdvancedSearch}
+          onReset={handleResetSearch}
+          initialValues={advancedFilters}
+        />
+
+        {selectedIds.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-blue-700">
+              已选择 <strong>{selectedIds.length}</strong> 个项目
+            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleBatchExport}
+                className="px-3 py-1.5 bg-white border border-blue-300 text-blue-700 text-sm rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                导出选中
+              </button>
+              <button
+                onClick={handleBatchDelete}
+                className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+              >
+                批量删除
+              </button>
+              <button
+                onClick={() => setSelectedIds([])}
+                className="px-3 py-1.5 text-gray-600 text-sm hover:text-gray-800 transition-colors"
+              >
+                取消选择
               </button>
             </div>
           </div>
+        )}
+
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
 
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead className="bg-slate-50">
                 <tr>
+                  <th className="px-4 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === projects.length && projects.length > 0}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                     项目名称
                   </th>
@@ -133,7 +266,15 @@ const ProjectList: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {projects.map((project) => (
-                  <tr key={project.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={project.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(project.id) ? 'bg-blue-50' : ''}`}>
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(project.id)}
+                        onChange={() => handleSelectOne(project.id)}
+                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-slate-900">{project.name}</div>
                     </td>
@@ -184,7 +325,7 @@ const ProjectList: React.FC = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
                         </button>
-                        <button className="p-2 text-slate-600 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="查看">
+                        <button onClick={() => navigate(`/projects/${project.id}`)} className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="查看详情">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />

@@ -273,7 +273,7 @@ async fn main() -> anyhow::Result<()> {
         .with_state(app_state)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8019".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8055".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-MOBILE 统一移动工作台启动中...");
