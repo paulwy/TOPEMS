@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -10,6 +10,8 @@ use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;
 use crate::models::{CreateAttendanceRequest, AttendanceRecord, UpdateAttendanceRequest};
+use crate::utils::permission::{check_permission, check_self_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
 
@@ -28,8 +30,13 @@ pub struct AttendancePaginationParams {
 
 async fn list_attendance(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<AttendancePaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::AttendanceRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;

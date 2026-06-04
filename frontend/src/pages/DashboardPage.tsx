@@ -40,6 +40,8 @@ import {
   Bell,
   Book,
   Mail,
+  FolderKanban,
+  FileCheck,
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
@@ -101,6 +103,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     mobile: false,
     notification: false,
     report: false,
+    pm: false,
   });
 
   // 模块到服务的映射
@@ -122,6 +125,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     hrm: 'hrm',
     erp: 'erp',
     gis: 'doc',
+    pm: 'pm', // 项目管理服务
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<
@@ -159,13 +163,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     const services = [
       { key: 'iam', port: 8000 },
       { key: 'doc', port: 8001 },
-      { key: 'flow', port: 8006 },
+      { key: 'flow', port: 8002 },
       { key: 'notification', port: 8003 },
       { key: 'erp', port: 8010 },
       { key: 'hrm', port: 8011 },
       { key: 'ai', port: 8013 },
       { key: 'rs', port: 8020 },
       { key: 'lims', port: 8022 },
+      { key: 'pm', port: 8050 },
       { key: 'report', port: 8053 },
       { key: 'mobile', port: 8055 },
     ];
@@ -364,6 +369,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const businessModules = useMemo(
     () =>
       [
+        {
+      title: '项目管理',
+      icon: FolderKanban,
+      description: '项目全生命周期、合同、预算、风险管理',
+      path: '/pm/projects',
+      color: 'bg-rose-500',
+      status: 'online' as const,
+      permission: null,
+      module: 'pm',
+    },
         {
           title: '公司管理',
           icon: Building,
@@ -647,6 +662,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               <div className='space-y-2'>
                 {[
                   { id: 'dashboard', label: '首页', icon: Activity },
+                  { id: 'pm', label: '项目管理', icon: FolderKanban, path: '/pm/projects' },
                   { id: 'addressbook', label: '通讯录', icon: Book },
                   { id: 'documents', label: '文档管理', icon: FileText },
                   { id: 'ai', label: 'AI 知识库', icon: Bot },
@@ -665,19 +681,23 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                       <button
                         key={item.id}
                         onClick={() => {
-                          const pathMap: Record<string, string> = {
-                            dashboard: '/dashboard',
-                            addressbook: '/addressbook',
-                            documents: '/documents',
-                            ai: '/ai',
-                            workflows: '/workflows',
-                            system: '/system',
-                            companies: '/companies',
-                            departments: '/departments',
-                            employees: '/employees',
-                            help: '/help',
-                          };
-                          navigate(pathMap[item.id] || `/${item.id}`);
+                          if (item.path) {
+                            navigate(item.path);
+                          } else {
+                            const pathMap: Record<string, string> = {
+                              dashboard: '/dashboard',
+                              addressbook: '/addressbook',
+                              documents: '/documents',
+                              ai: '/ai',
+                              workflows: '/workflows',
+                              system: '/system',
+                              companies: '/companies',
+                              departments: '/departments',
+                              employees: '/employees',
+                              help: '/help',
+                            };
+                            navigate(pathMap[item.id] || `/${item.id}`);
+                          }
                           setMobileMenuOpen(false);
                         }}
                         className={`w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors ${
@@ -1051,69 +1071,70 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             </div>
 
             {/* 核心服务 */}
-            <div className='mb-6'>
-              <h4 className='text-sm font-medium text-slate-500 mb-3'>核心服务</h4>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                {[
-                  { name: '身份认证', service: 'IAM', port: 8000, key: 'iam', icon: Shield },
-                  { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
-                  { name: '流程引擎', service: 'FLOW', port: 8002, key: 'flow', icon: GitBranch },
-                  { name: '通知服务', service: 'NOTIFICATION', port: 8003, key: 'notification', icon: Bell },
-                ].map((service) => (
-                  <ServiceStatusCard
-                    key={service.key}
-                    name={service.name}
-                    service={service.service}
-                    port={service.port}
-                    status={serviceStatuses[service.key]}
-                    icon={service.icon}
-                  />
-                ))}
-              </div>
+          <div className='mb-6'>
+            <h4 className='text-sm font-medium text-slate-500 mb-3'>核心服务</h4>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+              {[
+                { name: '身份认证', service: 'IAM', port: 8000, key: 'iam', icon: Shield },
+                { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
+                { name: '流程引擎', service: 'FLOW', port: 8002, key: 'flow', icon: GitBranch },
+                { name: '通知服务', service: 'NOTIFICATION', port: 8003, key: 'notification', icon: Bell },
+              ].map((service) => (
+                <ServiceStatusCard
+                  key={service.key}
+                  name={service.name}
+                  service={service.service}
+                  port={service.port}
+                  status={serviceStatuses[service.key]}
+                  icon={service.icon}
+                />
+              ))}
             </div>
+          </div>
 
-            {/* 业务服务 */}
-            <div className='mb-6'>
-              <h4 className='text-sm font-medium text-slate-500 mb-3'>业务服务</h4>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                {[
-                  { name: '研发管理', service: 'RS', port: 8020, key: 'rs', icon: FlaskConical },
-                  { name: '实验室管理', service: 'LIMS', port: 8022, key: 'lims', icon: ClipboardList },
-                  { name: '企业资源', service: 'ERP', port: 8010, key: 'erp', icon: Building },
-                  { name: '人力资源', service: 'HRM', port: 8011, key: 'hrm', icon: Users },
-                ].map((service) => (
-                  <ServiceStatusCard
-                    key={service.key}
-                    name={service.name}
-                    service={service.service}
-                    port={service.port}
-                    status={serviceStatuses[service.key]}
-                    icon={service.icon}
-                  />
-                ))}
-              </div>
+          {/* 业务服务 */}
+          <div className='mb-6'>
+            <h4 className='text-sm font-medium text-slate-500 mb-3'>业务服务</h4>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+              {[
+                { name: '研发管理', service: 'RS', port: 8020, key: 'rs', icon: FlaskConical },
+                { name: '实验室管理', service: 'LIMS', port: 8022, key: 'lims', icon: ClipboardList },
+                { name: '企业资源', service: 'ERP', port: 8010, key: 'erp', icon: Building },
+                { name: '人力资源', service: 'HRM', port: 8011, key: 'hrm', icon: Users },
+              ].map((service) => (
+                <ServiceStatusCard
+                  key={service.key}
+                  name={service.name}
+                  service={service.service}
+                  port={service.port}
+                  status={serviceStatuses[service.key]}
+                  icon={service.icon}
+                />
+              ))}
             </div>
+          </div>
 
-            {/* 增强服务 */}
-            <div>
-              <h4 className='text-sm font-medium text-slate-500 mb-3'>增强服务</h4>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                {[
-                  { name: 'AI 服务', service: 'AI', port: 8013, key: 'ai', icon: Bot },
-                  { name: '报表服务', service: 'REPORT', port: 8053, key: 'report', icon: BarChart3 },
-                  { name: '移动服务', service: 'MOBILE', port: 8055, key: 'mobile', icon: Smartphone },
-                ].map((service) => (
-                  <ServiceStatusCard
-                    key={service.key}
-                    name={service.name}
-                    service={service.service}
-                    port={service.port}
-                    status={serviceStatuses[service.key]}
-                    icon={service.icon}
-                  />
-                ))}
-              </div>
+          {/* 专业服务 */}
+          <div className='mb-6'>
+            <h4 className='text-sm font-medium text-slate-500 mb-3'>专业服务</h4>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+              {[
+                { name: '项目管理', service: 'PM', port: 8050, key: 'pm', icon: FolderKanban },
+                { name: 'AI 服务', service: 'AI', port: 8013, key: 'ai', icon: Bot },
+                { name: '报表服务', service: 'REPORT', port: 8053, key: 'report', icon: BarChart3 },
+                { name: '移动服务', service: 'MOBILE', port: 8055, key: 'mobile', icon: Smartphone },
+              ].map((service) => (
+                <ServiceStatusCard
+                  key={service.key}
+                  name={service.name}
+                  service={service.service}
+                  port={service.port}
+                  status={serviceStatuses[service.key]}
+                  icon={service.icon}
+                />
+              ))}
             </div>
+          </div>
           </div>
 
           {/* Recent Activities */}

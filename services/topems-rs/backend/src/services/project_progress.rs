@@ -9,11 +9,11 @@ pub async fn calculate_project_progress(db: &PgPool, project_id: Uuid) -> Result
         r#"
         SELECT 
             COUNT(*) as total_phases,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_phases,
+            COALESCE(SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END), 0) as completed_phases,
             COALESCE(SUM(progress), 0) as total_progress,
-            SUM(CASE WHEN status = 'completed' THEN weight ELSE 0 END) as completed_weight,
+            COALESCE(SUM(CASE WHEN status = 'completed' THEN weight ELSE 0 END), 0) as completed_weight,
             COALESCE(SUM(weight), 0) as total_weight
-        FROM rs.project_phases 
+        FROM project_phases 
         WHERE project_id = $1
         "#
     )
@@ -50,7 +50,7 @@ pub async fn update_project_progress(db: &PgPool, project_id: Uuid) -> Result<i3
 
     sqlx::query(
         r#"
-        UPDATE rs.projects 
+        UPDATE projects 
         SET progress = $1, updated_at = NOW()
         WHERE id = $2
         "#
@@ -69,7 +69,7 @@ pub async fn update_project_progress(db: &PgPool, project_id: Uuid) -> Result<i3
 pub async fn on_milestone_achieved(db: &PgPool, project_id: Uuid, milestone_id: Uuid) -> Result<(), sqlx::Error> {
     let phase_result = sqlx::query(
         r#"
-        SELECT phase_id FROM rs.project_milestones WHERE id = $1
+        SELECT phase_id FROM project_milestones WHERE id = $1
         "#
     )
     .bind(milestone_id)
@@ -92,8 +92,8 @@ pub async fn check_phase_completion(db: &PgPool, _project_id: Uuid, phase_id: Uu
         r#"
         SELECT 
             COUNT(*) as total_milestones,
-            SUM(CASE WHEN status = 'achieved' THEN 1 ELSE 0 END) as achieved_milestones
-        FROM rs.project_milestones 
+            COALESCE(SUM(CASE WHEN status = 'achieved' THEN 1 ELSE 0 END), 0) as achieved_milestones
+        FROM project_milestones 
         WHERE phase_id = $1
         "#
     )
@@ -107,7 +107,7 @@ pub async fn check_phase_completion(db: &PgPool, _project_id: Uuid, phase_id: Uu
     if total_milestones > 0 && achieved_milestones == total_milestones {
         sqlx::query(
             r#"
-            UPDATE rs.project_phases 
+            UPDATE project_phases 
             SET status = 'completed', progress = 100, updated_at = NOW()
             WHERE id = $1
             "#
@@ -131,7 +131,7 @@ pub async fn get_project_timeline(db: &PgPool, project_id: Uuid) -> Result<Vec<(
     let phases = sqlx::query(
         r#"
         SELECT name, start_date, end_date, status 
-        FROM rs.project_phases 
+        FROM project_phases 
         WHERE project_id = $1 
         ORDER BY phase_number
         "#
@@ -154,7 +154,7 @@ pub async fn get_project_timeline(db: &PgPool, project_id: Uuid) -> Result<Vec<(
     let milestones = sqlx::query(
         r#"
         SELECT name, target_date, actual_date, status 
-        FROM rs.project_milestones 
+        FROM project_milestones 
         WHERE project_id = $1 
         ORDER BY target_date
         "#

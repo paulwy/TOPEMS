@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
@@ -10,7 +10,8 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
-use topems_shared::{ApiResponse, PaginationParams, api_error};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::{ApiResponse, PaginationParams, api_error, auth::Claims};
 use crate::api::audit::log_audit_event;
 use super::ApiState;
 
@@ -25,8 +26,13 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_suppliers(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -86,9 +92,14 @@ async fn list_suppliers(
 
 async fn create_supplier(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -156,8 +167,13 @@ async fn create_supplier(
 
 async fn get_supplier(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Supplier>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, Supplier>(
         r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at
@@ -180,10 +196,15 @@ async fn get_supplier(
 
 async fn update_supplier(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
     
     let existing = sqlx::query_as::<_, Supplier>(
@@ -274,9 +295,14 @@ async fn update_supplier(
 
 async fn delete_supplier(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query("DELETE FROM suppliers WHERE id = $1")
         .bind(id)
         .execute(&state.db)

@@ -13,6 +13,8 @@ use topems_shared::{
     init_logging,
     test_database_connection,
     ApiResponse,
+    AuthState,
+    auth_middleware,
     Config,
     Result,
 };
@@ -53,13 +55,19 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
+    let auth_state = AuthState::from_env();
+
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route("/metrics", get(move || async move { metric_handle.render() }))
         .merge(auth::create_routes());
 
-    let protected_routes = api::create_routes(pool.clone());
+    let protected_routes = api::create_routes(pool.clone())
+        .layer(axum::middleware::from_fn_with_state(
+            auth_state.clone(),
+            auth_middleware,
+        ));
 
     let app = Router::new()
         .merge(public_routes)
@@ -72,6 +80,7 @@ async fn main() -> Result<()> {
 
     tracing::info!("🚀 TOPEMS-PM 统一项目管理系统启动中...");
     tracing::info!("📦 Port: {}", port);
+    tracing::info!("🔒 认证保护已启用");
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;

@@ -1,6 +1,6 @@
 use axum::{
     body::Bytes,
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::{header, HeaderMap},
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -15,6 +15,8 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
+use crate::services::project_permission::{check_project_permission, check_project_owner, ProjectPermission};
+use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 
@@ -91,8 +93,9 @@ async fn list_projects(
         r#"
         SELECT id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
-               created_by, created_at, updated_at
-        FROM rs.projects
+               created_by, created_at, updated_at, project_config, benefit_target,
+               risk_level, priority, tags, parent_id, workspace_id
+        FROM projects
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -110,7 +113,7 @@ async fn list_projects(
         Ok(projects) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM rs.projects
+                SELECT COUNT(*) FROM projects
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -162,14 +165,17 @@ async fn create_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        INSERT INTO rs.projects (
+        INSERT INTO projects (
             id, name, code, description, project_type, status, leader,
             team_members, start_date, end_date, budget, progress, created_by,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            created_at, updated_at, project_config, benefit_target, risk_level,
+            priority, tags, parent_id, workspace_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+                  $16, $17, $18, $19, $20, $21, $22)
         RETURNING id, name, code, description, project_type, status, leader,
                   team_members, start_date, end_date, budget, progress,
-                  created_by, created_at, updated_at
+                  created_by, created_at, updated_at, project_config, benefit_target,
+                  risk_level, priority, tags, parent_id, workspace_id
         "#,
     )
     .bind(id)
@@ -187,6 +193,13 @@ async fn create_project(
     .bind(&req.leader)
     .bind(now)
     .bind(now)
+    .bind(serde_json::json!({}))
+    .bind(serde_json::json!({}))
+    .bind("MEDIUM")
+    .bind(3)
+    .bind::<Vec<String>>(vec![])
+    .bind(None::<Uuid>)
+    .bind(None::<Uuid>)
     .fetch_one(&state.db)
     .await;
 
@@ -257,7 +270,13 @@ async fn create_project(
 async fn get_project(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Project>> {
+    match check_project_permission(&state.db, &claims, &id, &ProjectPermission::Read).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let cache_key = format!("project:{}", id);
 
     if let Some(cached) = cache_get(&cache_key).await {
@@ -268,8 +287,9 @@ async fn get_project(
         r#"
         SELECT id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
-               created_by, created_at, updated_at
-        FROM rs.projects WHERE id = $1
+               created_by, created_at, updated_at, project_config, benefit_target,
+               risk_level, priority, tags, parent_id, workspace_id
+        FROM projects WHERE id = $1
         "#,
     )
     .bind(id)
@@ -309,11 +329,17 @@ async fn get_project(
 async fn update_project(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<UpdateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
+    match check_project_permission(&state.db, &claims, &id, &ProjectPermission::Update).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let existing = sqlx::query_as::<_, Project>(
-        "SELECT id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at FROM rs.projects WHERE id = $1",
+        "SELECT id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM projects WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -341,13 +367,14 @@ async fn update_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        UPDATE rs.projects SET
+        UPDATE projects SET
             name = $2, description = $3, status = $4, leader = $5,
             team_members = $6, end_date = $7, budget = $8, progress = $9, updated_at = $10
         WHERE id = $1
         RETURNING id, name, code, description, project_type, status, leader,
                   team_members, start_date, end_date, budget, progress,
-                  created_by, created_at, updated_at
+                  created_by, created_at, updated_at, project_config, benefit_target,
+                  risk_level, priority, tags, parent_id, workspace_id
         "#,
     )
     .bind(id)
@@ -426,9 +453,15 @@ async fn update_project(
 async fn delete_project(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM rs.projects WHERE id = $1")
+    match check_project_owner(&state.db, &claims, &id).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
+    let result = sqlx::query("DELETE FROM projects WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -508,14 +541,17 @@ async fn batch_create_projects(
 
         let result = sqlx::query_as::<_, Project>(
             r#"
-            INSERT INTO rs.projects (
+            INSERT INTO projects (
                 id, name, code, description, project_type, status, leader,
                 team_members, start_date, end_date, budget, progress, created_by,
-                created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                created_at, updated_at, project_config, benefit_target, risk_level,
+                priority, tags, parent_id, workspace_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+                      $16, $17, $18, $19, $20, $21, $22)
             RETURNING id, name, code, description, project_type, status, leader,
                       team_members, start_date, end_date, budget, progress,
-                      created_by, created_at, updated_at
+                      created_by, created_at, updated_at, project_config, benefit_target,
+                      risk_level, priority, tags, parent_id, workspace_id
             "#,
         )
         .bind(id)
@@ -535,6 +571,13 @@ async fn batch_create_projects(
         .bind(&project_req.leader)
         .bind(now)
         .bind(now)
+        .bind(serde_json::json!({}))
+        .bind(serde_json::json!({}))
+        .bind("MEDIUM")
+        .bind(3)
+        .bind::<Vec<String>>(vec![])
+        .bind(None::<Uuid>)
+        .bind(None::<Uuid>)
         .fetch_one(&state.db)
         .await;
 
@@ -611,7 +654,7 @@ async fn batch_delete_projects(
         return Json(ApiResponse::error(400, "未提供要删除的项目 ID"));
     }
 
-    let result = sqlx::query(r#"DELETE FROM rs.projects WHERE id = ANY($1)"#)
+    let result = sqlx::query(r#"DELETE FROM projects WHERE id = ANY($1)"#)
         .bind(&req.ids)
         .execute(&state.db)
         .await;
@@ -701,8 +744,9 @@ async fn export_projects(State(state): State<Arc<super::ApiState>>, headers: Hea
         r#"
         SELECT id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
-               created_by, created_at, updated_at
-        FROM rs.projects
+               created_by, created_at, updated_at, project_config, benefit_target,
+               risk_level, priority, tags, parent_id, workspace_id
+        FROM projects
         ORDER BY created_at DESC
         "#,
     )
@@ -988,14 +1032,17 @@ async fn import_projects(
 
                 let insert_result = sqlx::query_as::<_, Project>(
                     r#"
-                    INSERT INTO rs.projects (
+                    INSERT INTO projects (
                         id, name, code, description, project_type, status, leader,
                         team_members, start_date, end_date, budget, progress, created_by,
-                        created_at, updated_at
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                        created_at, updated_at, project_config, benefit_target, risk_level,
+                        priority, tags, parent_id, workspace_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+                              $16, $17, $18, $19, $20, $21, $22)
                     RETURNING id, name, code, description, project_type, status, leader,
                               team_members, start_date, end_date, budget, progress,
-                              created_by, created_at, updated_at
+                              created_by, created_at, updated_at, project_config, benefit_target,
+                              risk_level, priority, tags, parent_id, workspace_id
                     "#,
                 )
                 .bind(id)
@@ -1013,6 +1060,13 @@ async fn import_projects(
                 .bind(&leader)
                 .bind(now)
                 .bind(now)
+                .bind(serde_json::json!({}))
+                .bind(serde_json::json!({}))
+                .bind("MEDIUM")
+                .bind(3)
+                .bind::<Vec<String>>(vec![])
+                .bind(None::<Uuid>)
+                .bind(None::<Uuid>)
                 .fetch_one(&state.db)
                 .await;
 
@@ -1110,7 +1164,7 @@ async fn get_project_dashboard(
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at,
                project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id
-        FROM rs.projects WHERE id = $1
+        FROM projects WHERE id = $1
         "#,
     )
     .bind(id)

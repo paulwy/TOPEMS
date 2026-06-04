@@ -1,18 +1,19 @@
-use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, Extension},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use topems_shared::{ApiResponse, api_error};
+use topems_shared::auth::Claims;
 use crate::models::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::api::audit::log_audit_event;
+use crate::services::permission::{check_permission, ModulePermission};
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct CustomerPaginationParams {
@@ -22,21 +23,31 @@ pub struct CustomerPaginationParams {
     pub status: Option<String>,
 }
 
-pub async fn create_routes() -> Result<Router> {
-    let app = Router::new()
+#[derive(Debug, Deserialize)]
+pub struct BatchDeleteRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/customers", get(list_customers).post(create_customer))
+        .route("/api/v1/customers/batch-delete", post(batch_delete_customers))
         .route(
             "/api/v1/customers/{id}",
             get(get_customer).put(update_customer).delete(delete_customer),
-        );
-
-    Ok(app)
+        )
 }
 
 async fn list_customers(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -58,7 +69,7 @@ async fn list_customers(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     match result {
@@ -72,14 +83,14 @@ async fn list_customers(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&pool)
+            .fetch_one(&state.db)
             .await;
 
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "customers": customers,
+                    "items": customers,
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -95,10 +106,16 @@ async fn list_customers(
 }
 
 async fn create_customer(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     if req.name.is_empty() {
         return Json(api_error(400, "客户名称不能为空"));
     }
@@ -125,7 +142,7 @@ async fn create_customer(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -152,7 +169,7 @@ async fn create_customer(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "create".to_string(),
         "customer".to_string(),
         Some(id),
@@ -171,9 +188,15 @@ async fn create_customer(
 }
 
 async fn get_customer(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Customer>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let result = sqlx::query_as::<_, Customer>(
         r#"
         SELECT id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at
@@ -181,7 +204,7 @@ async fn get_customer(
         "#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     match result {
@@ -195,18 +218,24 @@ async fn get_customer(
 }
 
 async fn update_customer(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let existing = sqlx::query_as::<_, Customer>(
         r#"
         SELECT id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at FROM customers WHERE id = $1
         "#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     let existing = match existing {
@@ -231,7 +260,7 @@ async fn update_customer(
     let result = sqlx::query_as::<_, Customer>(
         r#"
         UPDATE customers SET
-            name = $2, code = $3, industry = $4, website = $5, email = $6, phone = $7, address = $8, 
+            name = $2, code = $3, industry = $4, website = $5, email = $6, phone = $7, address = $8,
             status = $9, notes = $10, updated_at = $11
         WHERE id = $1
         RETURNING id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at
@@ -248,7 +277,7 @@ async fn update_customer(
     .bind(&status)
     .bind(&notes)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -274,7 +303,7 @@ async fn update_customer(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "update".to_string(),
         "customer".to_string(),
         Some(id),
@@ -293,13 +322,19 @@ async fn update_customer(
 }
 
 async fn delete_customer(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let result = sqlx::query("DELETE FROM customers WHERE id = $1")
         .bind(id)
-        .execute(&pool)
+        .execute(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -330,11 +365,73 @@ async fn delete_customer(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "delete".to_string(),
         "customer".to_string(),
         Some(id),
         None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn batch_delete_customers(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Json(req): Json<BatchDeleteRequest>,
+) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
+    if req.ids.is_empty() {
+        return Json(api_error(400, "请选择要删除的客户"));
+    }
+
+    let result = sqlx::query("DELETE FROM customers WHERE id = ANY($1)")
+        .bind(&req.ids)
+        .execute(&state.db)
+        .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) => (
+            Json(ApiResponse::success("".to_string(), &format!("成功删除 {} 个客户", r.rows_affected()))),
+            "success".to_string(),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("批量删除客户失败: {}", e);
+            (
+                Json(api_error(500, "批量删除客户失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    let entity_ids = serde_json::to_value(&req.ids).ok();
+    log_audit_event(
+        &state.db,
+        "batch_delete".to_string(),
+        "customer".to_string(),
+        None,
+        entity_ids,
         None,
         None,
         None,

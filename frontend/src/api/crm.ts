@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ApiResponse } from './client';
 
-const API_BASE_URL = import.meta.env.VITE_CRM_API_URL || 'http://localhost:8021';
+const API_BASE_URL = import.meta.env.VITE_CRM_API_URL || 'http://localhost:8012';
 
 const crmApi = axios.create({
   baseURL: API_BASE_URL,

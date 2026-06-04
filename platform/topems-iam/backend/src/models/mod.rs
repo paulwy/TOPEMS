@@ -54,3 +54,5 @@ pub struct AuditLog {
     pub details: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
 }
+
+pub mod permission;

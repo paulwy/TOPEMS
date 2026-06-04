@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -18,6 +18,8 @@ use crate::models::{
     SupplierContract, CreateSupplierContractRequest, UpdateSupplierContractRequest,
     SrmStatistics,
 };
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -103,8 +105,13 @@ pub async fn create_statistics_routes(db: PgPool) -> Result<Router> {
 
 async fn list_suppliers(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -164,8 +171,13 @@ async fn list_suppliers(
 
 async fn create_supplier(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -206,8 +218,13 @@ async fn create_supplier(
 
 async fn get_supplier(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Supplier>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, Supplier>(
         r#"
         SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
@@ -230,9 +247,14 @@ async fn get_supplier(
 
 async fn update_supplier(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let existing = sqlx::query_as::<_, Supplier>(
         "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1",
     )
@@ -298,8 +320,13 @@ async fn update_supplier(
 
 async fn delete_supplier(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query("DELETE FROM srm.suppliers WHERE id = $1")
         .bind(id)
         .execute(&state.db)
@@ -319,8 +346,13 @@ async fn delete_supplier(
 
 async fn list_evaluations(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -380,8 +412,13 @@ async fn list_evaluations(
 
 async fn create_evaluation(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let id = Uuid::new_v4();
     let now = Utc::now();
     let supplier_uuid = Uuid::parse_str(&req.supplier_id).unwrap_or_else(|_| Uuid::new_v4());
@@ -421,8 +458,13 @@ async fn create_evaluation(
 
 async fn get_evaluation(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
         SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
@@ -445,9 +487,14 @@ async fn get_evaluation(
 
 async fn update_evaluation(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
         "SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM srm.supplier_evaluations WHERE id = $1",
     )
@@ -509,8 +556,13 @@ async fn update_evaluation(
 
 async fn delete_evaluation(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query("DELETE FROM srm.supplier_evaluations WHERE id = $1")
         .bind(id)
         .execute(&state.db)
@@ -530,8 +582,13 @@ async fn delete_evaluation(
 
 async fn list_purchase_orders(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SourcingRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -591,8 +648,13 @@ async fn list_purchase_orders(
 
 async fn create_purchase_order(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SourcingWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let id = Uuid::new_v4();
     let now = Utc::now();
     let supplier_uuid = Uuid::parse_str(&req.supplier_id).unwrap_or_else(|_| Uuid::new_v4());
@@ -628,8 +690,13 @@ async fn create_purchase_order(
 
 async fn get_purchase_order(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SourcingRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, PurchaseOrder>(
         r#"
         SELECT id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at
@@ -652,9 +719,14 @@ async fn get_purchase_order(
 
 async fn update_purchase_order(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SourcingWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let existing = sqlx::query_as::<_, PurchaseOrder>(
         "SELECT id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at FROM srm.purchase_orders WHERE id = $1",
     )
@@ -712,8 +784,13 @@ async fn update_purchase_order(
 
 async fn delete_purchase_order(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SourcingWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query("DELETE FROM srm.purchase_orders WHERE id = $1")
         .bind(id)
         .execute(&state.db)
@@ -733,8 +810,13 @@ async fn delete_purchase_order(
 
 async fn list_contracts(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -794,8 +876,13 @@ async fn list_contracts(
 
 async fn create_contract(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSupplierContractRequest>,
 ) -> Json<ApiResponse<SupplierContract>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let id = Uuid::new_v4();
     let now = Utc::now();
     let supplier_uuid = Uuid::parse_str(&req.supplier_id).unwrap_or_else(|_| Uuid::new_v4());
@@ -840,8 +927,13 @@ async fn create_contract(
 
 async fn get_contract(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierContract>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
         SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
@@ -864,9 +956,14 @@ async fn get_contract(
 
 async fn update_contract(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSupplierContractRequest>,
 ) -> Json<ApiResponse<SupplierContract>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let existing = sqlx::query_as::<_, SupplierContract>(
         "SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM srm.supplier_contracts WHERE id = $1",
     )
@@ -932,8 +1029,13 @@ async fn update_contract(
 
 async fn delete_contract(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query("DELETE FROM srm.supplier_contracts WHERE id = $1")
         .bind(id)
         .execute(&state.db)
@@ -953,7 +1055,12 @@ async fn delete_contract(
 
 async fn get_statistics(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SrmStatistics>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let total_suppliers = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers")
         .fetch_one(&state.db)
         .await
@@ -1031,7 +1138,12 @@ struct SupplierOrderStats {
 
 async fn get_suppliers_with_stats(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let suppliers = sqlx::query_as::<_, Supplier>(
         "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers ORDER BY created_at DESC"
     )

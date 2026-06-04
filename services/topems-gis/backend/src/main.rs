@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State, Multipart},
+    extract::{Path, State, Multipart, Extension},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -14,11 +14,14 @@ use sqlx::PgPool;
 use csv::ReaderBuilder;
 
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::auth::Claims;
 
 mod db;
 mod models;
+mod services;
 use db::schema::init_tables;
 use models::{FactoryMap, DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto};
+use services::permission::{check_permission, GisPermission};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CreateFactoryMap {
@@ -122,8 +125,12 @@ async fn list_factory_maps(State(state): State<AppState>) -> Json<ApiResponse<se
 
 async fn create_factory_map(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFactoryMap>,
 ) -> Json<ApiResponse<FactoryMap>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::FactoryMapWrite).await {
+        return e;
+    }
     match sqlx::query_as::<_, FactoryMap>(
         r#"
         INSERT INTO factory_maps (name, code, map_type, file_url, bounds, description)
@@ -170,9 +177,13 @@ async fn get_factory_map(
 
 async fn update_factory_map(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateFactoryMap>,
 ) -> Json<ApiResponse<FactoryMap>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::FactoryMapWrite).await {
+        return e;
+    }
     match sqlx::query_as::<_, FactoryMap>(
         r#"
         UPDATE factory_maps 
@@ -204,8 +215,12 @@ async fn update_factory_map(
 
 async fn delete_factory_map(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::FactoryMapWrite).await {
+        return e;
+    }
     match sqlx::query("DELETE FROM factory_maps WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
@@ -289,8 +304,12 @@ async fn list_device_locations_by_map(
 
 async fn create_device_location(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocation>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+        return e;
+    }
     match sqlx::query_as::<_, DeviceLocation>(
         r#"
         INSERT INTO device_locations (map_id, device_name, device_code, device_type, position, status, description)
@@ -318,9 +337,13 @@ async fn create_device_location(
 
 async fn update_device_location(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocation>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+        return e;
+    }
     match sqlx::query_as::<_, DeviceLocation>(
         r#"
         UPDATE device_locations 
@@ -353,8 +376,12 @@ async fn update_device_location(
 
 async fn delete_device_location(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+        return e;
+    }
     match sqlx::query("DELETE FROM device_locations WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
@@ -438,8 +465,12 @@ async fn list_pipelines_by_map(
 
 async fn create_pipeline(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePipeline>,
 ) -> Json<ApiResponse<Pipeline>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::PipelineWrite).await {
+        return e;
+    }
     match sqlx::query_as::<_, Pipeline>(
         r#"
         INSERT INTO pipelines (map_id, name, code, pipeline_type, path, properties, status)
@@ -467,9 +498,13 @@ async fn create_pipeline(
 
 async fn update_pipeline(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreatePipeline>,
 ) -> Json<ApiResponse<Pipeline>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::PipelineWrite).await {
+        return e;
+    }
     match sqlx::query_as::<_, Pipeline>(
         r#"
         UPDATE pipelines 
@@ -502,8 +537,12 @@ async fn update_pipeline(
 
 async fn delete_pipeline(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::PipelineWrite).await {
+        return e;
+    }
     match sqlx::query("DELETE FROM pipelines WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
@@ -587,8 +626,12 @@ async fn list_warehouse_locations_by_map(
 
 async fn create_warehouse_location(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateWarehouseLocation>,
 ) -> Json<ApiResponse<WarehouseLocation>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::WarehouseLocationWrite).await {
+        return e;
+    }
     match sqlx::query_as::<_, WarehouseLocation>(
         r#"
         INSERT INTO warehouse_locations (map_id, warehouse_name, zone, position, capacity, usage_rate, status)
@@ -616,9 +659,13 @@ async fn create_warehouse_location(
 
 async fn update_warehouse_location(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateWarehouseLocation>,
 ) -> Json<ApiResponse<WarehouseLocation>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::WarehouseLocationWrite).await {
+        return e;
+    }
     match sqlx::query_as::<_, WarehouseLocation>(
         r#"
         UPDATE warehouse_locations 
@@ -651,8 +698,12 @@ async fn update_warehouse_location(
 
 async fn delete_warehouse_location(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::WarehouseLocationWrite).await {
+        return e;
+    }
     match sqlx::query("DELETE FROM warehouse_locations WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
@@ -736,8 +787,12 @@ async fn list_location_photos_by_map(
 
 async fn create_location_photo(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateLocationPhoto>,
 ) -> Json<ApiResponse<LocationPhoto>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::LocationPhotoWrite).await {
+        return e;
+    }
     let taken_at = payload.taken_at.unwrap_or_else(Utc::now);
     match sqlx::query_as::<_, LocationPhoto>(
         r#"
@@ -765,8 +820,12 @@ async fn create_location_photo(
 
 async fn delete_location_photo(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::LocationPhotoWrite).await {
+        return e;
+    }
     match sqlx::query("DELETE FROM location_photos WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
@@ -788,8 +847,12 @@ async fn delete_location_photo(
 
 async fn import_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::All).await {
+        return e;
+    }
     let mut file_data: Vec<u8> = Vec::new();
     let mut import_type: String = String::new();
 

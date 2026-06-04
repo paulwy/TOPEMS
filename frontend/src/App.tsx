@@ -77,11 +77,16 @@ const CustomerManagementPage = lazy(() => import('./pages/CustomerManagementPage
 const ContactManagementPage = lazy(() => import('./pages/ContactManagementPage'));
 const OpportunityManagementPage = lazy(() => import('./pages/OpportunityManagementPage'));
 const InteractionManagementPage = lazy(() => import('./pages/InteractionManagementPage'));
+const PmDashboardPage = lazy(() => import('./pages/PmDashboardPage'));
 const PmProjectListPage = lazy(() => import('./pages/PmProjectListPage'));
 const PmProjectDetailPage = lazy(() => import('./pages/PmProjectDetailPage'));
 const PmProjectCreatePage = lazy(() => import('./pages/PmProjectCreatePage'));
 const PmContractListPage = lazy(() => import('./pages/PmContractListPage'));
 const PmContractDetailPage = lazy(() => import('./pages/PmContractDetailPage'));
+const OfficeSuppliesManagementPage = lazy(() => import('./pages/OfficeSuppliesManagementPage'));
+const MeetingRoomManagementPage = lazy(() => import('./pages/MeetingRoomManagementPage'));
+const VehicleManagementPage = lazy(() => import('./pages/VehicleManagementPage'));
+const AnnouncementManagementPage = lazy(() => import('./pages/AnnouncementManagementPage'));
 
 const PageLoader: React.FC = () => (
   <div className='min-h-screen flex items-center justify-center bg-gray-50'>
@@ -381,6 +386,46 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['erp:admin']}>
                 <ModuleGate module='erp' action='admin'>
                   <AdministrationPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/office-supplies'
+            element={
+              <ProtectedRoute requiredPermissions={['erp:admin']}>
+                <ModuleGate module='erp' action='admin'>
+                  <OfficeSuppliesManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/meeting-rooms'
+            element={
+              <ProtectedRoute requiredPermissions={['erp:admin']}>
+                <ModuleGate module='erp' action='admin'>
+                  <MeetingRoomManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/vehicles'
+            element={
+              <ProtectedRoute requiredPermissions={['erp:admin']}>
+                <ModuleGate module='erp' action='admin'>
+                  <VehicleManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/announcements'
+            element={
+              <ProtectedRoute requiredPermissions={['erp:admin']}>
+                <ModuleGate module='erp' action='admin'>
+                  <AnnouncementManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
@@ -744,6 +789,14 @@ const AppContent: React.FC = () => {
                 <ModuleGate module='crm' action='read'>
                   <InteractionManagementPage />
                 </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/pm'
+            element={
+              <ProtectedRoute>
+                <PmDashboardPage />
               </ProtectedRoute>
             }
           />

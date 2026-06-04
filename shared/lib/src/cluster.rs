@@ -512,7 +512,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_node_health_calculation() {
-        let health = NodeHealth {
+        let mut health = NodeHealth {
             cpu_usage: 50.0,
             memory_usage: 60.0,
             disk_usage: 70.0,
@@ -522,9 +522,12 @@ mod tests {
             score: 0,
         };
         
+        // 先计算正确的健康分数
+        health.score = health.calculate_score();
+        
+        // 现在应该是健康的
         assert!(health.is_healthy());
-        let score = health.calculate_score();
-        assert!(score >= 70);
+        assert!(health.score >= 70);
     }
 
     #[tokio::test]

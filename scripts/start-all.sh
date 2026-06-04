@@ -132,16 +132,56 @@ if [ ! -f .env ]; then
     log_detail "创建环境变量配置..."
     cp .env.example .env
 fi
-docker-compose down 2>/dev/null || true
-docker-compose up -d
+
+# 检查容器是否已在运行
+if docker ps --format '{{.Names}}' | grep -E '^(topems-postgres|topems-redis)$' > /dev/null 2>&1; then
+    log_success "数据库容器已在运行，跳过创建"
+else
+    log_detail "启动数据库容器..."
+    docker-compose down 2>/dev/null || true
+    docker-compose up -d
+fi
+
 cd "$PROJECT_ROOT"
 wait_for_db
 sleep 2
 
 # 3. 配置环境变量
 log_info "配置环境变量..."
-export JWT_SECRET="topems-jwt-secret"
-export REFRESH_SECRET="topems-refresh-secret"
+
+# 从 .env 文件加载环境变量
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    log_detail "从 .env 文件加载配置..."
+    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+fi
+
+# 安全检查：确保 JWT_SECRET 和 REFRESH_SECRET 已设置
+if [ -z "$JWT_SECRET" ]; then
+    log_error "JWT_SECRET 环境变量未设置！请设置至少 32 字符的密钥"
+    log_info "示例: export JWT_SECRET='your-secure-jwt-secret-key-at-least-32-characters'"
+    exit 1
+fi
+
+if [ -z "$JWT_REFRESH_SECRET" ]; then
+    log_error "JWT_REFRESH_SECRET 环境变量未设置！请设置至少 32 字符的密钥"
+    log_info "示例: export JWT_REFRESH_SECRET='your-secure-refresh-secret-key-at-least-32-characters'"
+    exit 1
+fi
+
+# 验证密钥长度
+if [ ${#JWT_SECRET} -lt 32 ]; then
+    log_error "JWT_SECRET 长度不足 32 字符，不符合安全要求"
+    exit 1
+fi
+
+if [ ${#JWT_REFRESH_SECRET} -lt 32 ]; then
+    log_error "JWT_REFRESH_SECRET 长度不足 32 字符，不符合安全要求"
+    exit 1
+fi
+
+# 设置 REFRESH_SECRET 为 JWT_REFRESH_SECRET 的别名（兼容代码）
+export REFRESH_SECRET="$JWT_REFRESH_SECRET"
+
 export JWT_EXPIRY_HOURS="24"
 export RUST_LOG="info"
 export DATABASE_URL="postgres://topems:topems_secret@localhost:5432/topems"

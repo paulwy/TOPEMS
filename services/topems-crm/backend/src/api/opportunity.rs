@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, Extension},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
@@ -8,11 +8,15 @@ use axum::{
 use chrono::Utc;
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
+use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::{ApiResponse, api_error};
+use topems_shared::auth::Claims;
 use crate::models::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
 use crate::api::audit::log_audit_event;
+use crate::services::permission::{check_permission, ModulePermission};
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct OpportunityPaginationParams {
@@ -23,21 +27,31 @@ pub struct OpportunityPaginationParams {
     pub customer_id: Option<Uuid>,
 }
 
-pub async fn create_routes() -> Result<Router> {
-    let app = Router::new()
+#[derive(Debug, Deserialize)]
+pub struct BatchDeleteRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/opportunities", get(list_opportunities).post(create_opportunity))
+        .route("/api/v1/opportunities/batch-delete", post(batch_delete_opportunities))
         .route(
             "/api/v1/opportunities/{id}",
             get(get_opportunity).put(update_opportunity).delete(delete_opportunity),
-        );
-
-    Ok(app)
+        )
 }
 
 async fn list_opportunities(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<OpportunityPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -62,7 +76,7 @@ async fn list_opportunities(
     .bind(&customer_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     match result {
@@ -78,14 +92,14 @@ async fn list_opportunities(
             .bind(&search_pattern)
             .bind(&stage_filter)
             .bind(&customer_filter)
-            .fetch_one(&pool)
+            .fetch_one(&state.db)
             .await;
 
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "opportunities": opportunities,
+                    "items": opportunities,
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -101,10 +115,16 @@ async fn list_opportunities(
 }
 
 async fn create_opportunity(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     if req.name.is_empty() {
         return Json(api_error(400, "销售机会名称不能为空"));
     }
@@ -129,7 +149,7 @@ async fn create_opportunity(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -156,7 +176,7 @@ async fn create_opportunity(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "create".to_string(),
         "opportunity".to_string(),
         Some(id),
@@ -175,9 +195,15 @@ async fn create_opportunity(
 }
 
 async fn get_opportunity(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Opportunity>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
@@ -185,7 +211,7 @@ async fn get_opportunity(
         "#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     match result {
@@ -199,18 +225,24 @@ async fn get_opportunity(
 }
 
 async fn update_opportunity(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let existing = sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM opportunities WHERE id = $1
         "#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     let existing = match existing {
@@ -248,7 +280,7 @@ async fn update_opportunity(
     .bind(&close_date)
     .bind(&notes)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -274,7 +306,7 @@ async fn update_opportunity(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "update".to_string(),
         "opportunity".to_string(),
         Some(id),
@@ -293,13 +325,19 @@ async fn update_opportunity(
 }
 
 async fn delete_opportunity(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let result = sqlx::query("DELETE FROM opportunities WHERE id = $1")
         .bind(id)
-        .execute(&pool)
+        .execute(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -330,11 +368,72 @@ async fn delete_opportunity(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "delete".to_string(),
         "opportunity".to_string(),
         Some(id),
         None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn batch_delete_opportunities(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Json(req): Json<BatchDeleteRequest>,
+) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
+    if req.ids.is_empty() {
+        return Json(api_error(400, "请选择要删除的销售机会"));
+    }
+
+    let result = sqlx::query("DELETE FROM opportunities WHERE id = ANY($1)")
+        .bind(&req.ids)
+        .execute(&state.db)
+        .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) => (
+            Json(ApiResponse::success("".to_string(), &format!("成功删除 {} 个销售机会", r.rows_affected()))),
+            "success".to_string(),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("批量删除销售机会失败: {}", e);
+            (
+                Json(api_error(500, "批量删除销售机会失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "batch_delete".to_string(),
+        "opportunity".to_string(),
+        None,
+        serde_json::to_value(&req.ids).ok(),
         None,
         None,
         None,

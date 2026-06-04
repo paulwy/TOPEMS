@@ -1,27 +1,20 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use crate::services::iam_client::{CreateUserRequest, IamClient};
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use crate::services::permission::{check_employee_permission, check_permission, ModulePermission};
+use topems_shared::auth::Claims;
+use topems_shared::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
 use crate::api::audit::log_audit_event;
 use crate::utils::{validate_required_field, validate_email, validate_phone};
 use super::ApiState;
-
-#[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -34,8 +27,13 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_employees(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Employee>>> {
+    match check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -105,9 +103,15 @@ async fn list_employees(
 
 async fn create_employee(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
+    match check_permission(&state.db, &claims, &ModulePermission::EmployeeWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
     if let Err(e) = validate_required_field("员工姓名", &req.name) {
         return Json(api_error(400, &e));
     }
@@ -220,8 +224,13 @@ async fn create_employee(
 
 async fn get_employee(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Employee>> {
+    match check_employee_permission(&state.db, &claims, &id).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, Employee>(
         r#"
         SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at

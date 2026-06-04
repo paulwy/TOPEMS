@@ -71,6 +71,22 @@ export interface PaginatedResult<T> {
   page_size: number;
 }
 
+export interface EmailStats {
+  total: number;
+  sent_count: number;
+  failed_count: number;
+  pending_count: number;
+  today_count: number;
+  last_sent_at?: string;
+}
+
+export interface ResendResult {
+  total: number;
+  success: number;
+  failed: number;
+  failed_ids: string[];
+}
+
 export const emailApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Email>>> {
     const searchParams = new URLSearchParams();
@@ -98,6 +114,14 @@ export const emailApi = {
 
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.mail.delete(`/api/v1/mail/emails/${id}`);
+  },
+
+  async resend(emailIds: string[]): Promise<ApiResponse<ResendResult>> {
+    return apiClient.mail.post('/api/v1/mail/emails/resend', { email_ids: emailIds });
+  },
+
+  async getStats(): Promise<ApiResponse<EmailStats>> {
+    return apiClient.mail.get('/api/v1/mail/emails/stats');
   },
 };
 
@@ -128,6 +152,10 @@ export const templateApi = {
 
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.mail.delete(`/api/v1/mail/templates/${id}`);
+  },
+
+  async updateStatus(id: string, status: string): Promise<ApiResponse<EmailTemplate>> {
+    return apiClient.mail.put(`/api/v1/mail/templates/${id}/status`, { status });
   },
 
   async render(

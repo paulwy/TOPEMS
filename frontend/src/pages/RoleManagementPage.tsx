@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Search, Plus, Trash2, ChevronLeft, Key, AlertCircle, CheckCircle } from 'lucide-react';
+import { Shield, Search, Plus, Trash2, ChevronLeft, Key, AlertCircle, CheckCircle, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authApi, type Role, type Permission } from '../api/iam';
 import { useAppStore } from '../store';
@@ -26,6 +26,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [rolePermissions, setRolePermissions] = useState<Permission[]>([]);
@@ -85,6 +86,27 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
       }
     } catch (_err: any) {
       addNotification({ title: '失败', message: _err.message || '创建角色失败', type: 'error' });
+    }
+  };
+
+  const handleEditRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRole) return;
+    try {
+      const res = await authApi.updateRole(selectedRole.id, {
+        name: selectedRole.name,
+        description: selectedRole.description,
+      });
+      if (res.success) {
+        addNotification({ title: '成功', message: '角色更新成功', type: 'success' });
+        setShowEditModal(false);
+        setSelectedRole(null);
+        loadData();
+      } else {
+        addNotification({ title: '失败', message: res.message || '更新角色失败', type: 'error' });
+      }
+    } catch (_err: any) {
+      addNotification({ title: '失败', message: _err.message || '更新角色失败', type: 'error' });
     }
   };
 
@@ -234,6 +256,23 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => {
+                                  setSelectedRole(role);
+                                  setShowEditModal(true);
+                                }}
+                              >
+                                <Edit className='w-5 h-5' />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>编辑角色</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <Button variant='ghost' size='sm' onClick={() => openPermissionsModal(role)}>
                                 <Key className='w-5 h-5' />
                               </Button>
@@ -311,6 +350,55 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
               <Button type='submit'>创建</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className='max-w-md'>
+          <DialogHeader>
+            <DialogTitle>编辑角色</DialogTitle>
+          </DialogHeader>
+          {selectedRole && (
+            <form onSubmit={handleEditRole}>
+              <div className='space-y-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='edit-name'>角色名称 *</Label>
+                  <Input
+                    id='edit-name'
+                    type='text'
+                    required
+                    value={selectedRole.name}
+                    onChange={(e) => setSelectedRole({ ...selectedRole, name: e.target.value })}
+                    placeholder='例如：管理员、普通用户'
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='edit-description'>描述</Label>
+                  <Textarea
+                    id='edit-description'
+                    value={selectedRole.description || ''}
+                    onChange={(e) => setSelectedRole({ ...selectedRole, description: e.target.value })}
+                    rows={3}
+                    placeholder='描述这个角色的用途'
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className='mt-6'>
+                <Button
+                  type='button'
+                  variant='secondary'
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedRole(null);
+                  }}
+                >
+                  取消
+                </Button>
+                <Button type='submit'>保存</Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 

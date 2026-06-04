@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, Extension},
     http::HeaderMap,
     routing::get,
     Json, Router,
@@ -10,52 +10,16 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use topems_shared::{ApiResponse, api_error};
+use topems_shared::auth::Claims;
 use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+use crate::services::permission::{check_permission, ModulePermission};
+use super::ApiState;
 
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
-
-pub struct AppState {
-    pub db: PgPool,
-}
-
-pub async fn create_routes(db: PgPool) -> anyhow::Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/audit-logs", get(list_audit_logs))
         .route("/api/v1/audit-logs/{id}", get(get_audit_log))
-        .with_state(state);
-
-    Ok(app)
 }
 
 #[derive(Debug, Deserialize)]
@@ -71,9 +35,15 @@ pub struct ListAuditLogsQuery {
 }
 
 async fn list_audit_logs(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::All).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -131,7 +101,7 @@ async fn list_audit_logs(
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "audit_logs": logs,
+                    "items": logs,
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -141,15 +111,21 @@ async fn list_audit_logs(
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::error(500, "获取审计日志失败"))
+            Json(api_error(500, "获取审计日志失败"))
         }
     }
 }
 
 async fn get_audit_log(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
+    match check_permission(&state.db, &claims, &ModulePermission::All).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
         SELECT id, action, entity_type, entity_id, entity_ids,
@@ -164,10 +140,10 @@ async fn get_audit_log(
 
     match result {
         Ok(Some(log)) => Json(ApiResponse::success(log, "获取审计日志成功")),
-        Ok(None) => Json(ApiResponse::error(404, "审计日志不存在")),
+        Ok(None) => Json(api_error(404, "审计日志不存在")),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::error(500, "获取审计日志失败"))
+            Json(api_error(500, "获取审计日志失败"))
         }
     }
 }

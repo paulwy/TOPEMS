@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -8,7 +9,7 @@ pub struct Opportunity {
     pub id: Uuid,
     pub name: String,
     pub customer_id: Option<Uuid>,
-    pub value: Option<f64>,
+    pub value: Option<Decimal>,
     pub stage: String,
     pub probability: Option<i32>,
     pub close_date: Option<DateTime<Utc>>,
@@ -17,21 +18,21 @@ pub struct Opportunity {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateOpportunityRequest {
     pub name: String,
     pub customer_id: Option<Uuid>,
-    pub value: Option<f64>,
+    pub value: Option<Decimal>,
     pub probability: Option<i32>,
     pub close_date: Option<DateTime<Utc>>,
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateOpportunityRequest {
     pub name: Option<String>,
     pub customer_id: Option<Uuid>,
-    pub value: Option<f64>,
+    pub value: Option<Decimal>,
     pub stage: Option<String>,
     pub probability: Option<i32>,
     pub close_date: Option<DateTime<Utc>>,

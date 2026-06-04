@@ -1,83 +1,151 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
 
+// 项目相关类型
 export interface Project {
   id: string;
   name: string;
-  code?: string;
-  description: string;
-  project_type?: string;
+  code: string;
+  description?: string;
+  project_type: string;
   status: string;
-  leader?: string;
+  leader: string;
   team_members?: any;
-  start_date?: string;
+  start_date: string;
   end_date?: string;
   budget?: number;
-  progress?: number;
-  created_by?: string;
+  progress: number;
+  created_by: string;
   created_at: string;
   updated_at: string;
+  project_config?: any;
+  benefit_target?: any;
+  risk_level?: string;
+  priority?: number;
+  tags?: string[];
+  parent_id?: string;
+  workspace_id?: string;
 }
 
 export interface CreateProjectRequest {
   name: string;
-  code?: string;
-  description: string;
-  project_type?: string;
-  status: string;
-  leader?: string;
-  team_members?: string[];
-  start_date?: string;
+  code: string;
+  description?: string;
+  project_type: string;
+  leader: string;
+  team_members?: any;
+  start_date: string;
   end_date?: string;
   budget?: number;
+  project_config?: any;
+  benefit_target?: any;
+  risk_level?: string;
+  priority?: number;
+  tags?: string[];
+  parent_id?: string;
+  workspace_id?: string;
 }
 
-export interface ExperimentRecord {
+export interface UpdateProjectRequest {
+  name?: string;
+  description?: string;
+  status?: string;
+  leader?: string;
+  team_members?: any;
+  end_date?: string;
+  budget?: number;
+  progress?: number;
+  project_config?: any;
+  benefit_target?: any;
+  risk_level?: string;
+  priority?: number;
+  tags?: string[];
+  parent_id?: string;
+  workspace_id?: string;
+}
+
+// 试验相关类型
+export interface Experiment {
   id: string;
   name: string;
-  code?: string;
+  code: string;
   project_id: string;
   formula_id?: string;
-  title?: string;
-  description: string;
   experiment_type: string;
-  objective?: string;
-  method?: string;
-  result: string;
-  conclusions?: string;
+  phase: string;
   status: string;
+  objective: string;
+  method: string;
+  results: any;
+  conclusions?: string;
   experimenter: string;
-  started_at?: string;
+  batch_number?: string;
+  scale?: number;
+  scale_unit?: string;
+  started_at: string;
   completed_at?: string;
-  experiment_date?: string;
-  conclusion?: string;
-  created_by?: string;
+  created_by: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateExperimentRequest {
+  name: string;
+  code: string;
   project_id: string;
-  title: string;
-  description: string;
+  formula_id?: string;
   experiment_type: string;
-  result: string;
-  status: string;
+  phase: string;
+  objective: string;
+  method: string;
   experimenter: string;
+  batch_number?: string;
+  scale?: number;
+  scale_unit?: string;
 }
 
 export interface UpdateExperimentRequest {
-  title?: string;
-  description?: string;
-  experiment_type?: string;
-  result?: string;
+  name?: string;
   status?: string;
-  experimenter?: string;
-  conclusion?: string;
+  results?: any;
+  conclusions?: string;
+  completed_at?: string;
+  batch_number?: string;
+  scale?: number;
+  scale_unit?: string;
 }
 
-// ========== 配方管理类型定义 ==========
+export interface ExperimentRecord {
+  id: string;
+  experiment_id: string;
+  record_type: string;
+  content: string;
+  attachments: string[];
+  recorded_by: string;
+  recorded_at: string;
+}
 
+export interface CreateExperimentRecordRequest {
+  record_type: string;
+  content: string;
+  attachments?: string[];
+  recorded_by: string;
+}
+
+export interface BatchTraceItem {
+  id: string;
+  batch_number: string;
+  experiment_id: string;
+  experiment_name: string;
+  phase: string;
+  formula_id: string;
+  formula_name: string;
+  status: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+// 配方相关类型
 export interface Formula {
   id: string;
   project_id: string;
@@ -94,7 +162,7 @@ export interface Formula {
   approved_at?: string;
   effective_date?: string;
   expiration_date?: string;
-  created_by?: string;
+  created_by: string;
   created_at: string;
   updated_at: string;
 }
@@ -123,6 +191,21 @@ export interface CreateFormulaRequest {
   expiration_date?: string;
 }
 
+export interface UpdateFormulaRequest {
+  name?: string;
+  code?: string;
+  version?: string;
+  category?: string;
+  description?: string;
+  ingredients?: FormulaIngredient[];
+  process_steps?: string;
+  status?: string;
+  approval_status?: string;
+  approved_by?: string;
+  effective_date?: string;
+  expiration_date?: string;
+}
+
 export interface FormulaVersion {
   id: string;
   formula_id: string;
@@ -130,11 +213,17 @@ export interface FormulaVersion {
   changes?: string;
   approved_by?: string;
   approved_at?: string;
-  created_by?: string;
+  created_by: string;
   created_at: string;
   updated_at: string;
 }
 
+export interface CreateFormulaVersionRequest {
+  version: string;
+  changes: string;
+}
+
+// 批量操作相关
 export interface BatchCreateProjectsRequest {
   projects: CreateProjectRequest[];
 }
@@ -150,33 +239,92 @@ export interface BatchOperationResult {
   errors: string[];
 }
 
+// 项目仪表盘相关
+export interface ProjectDashboardResponse {
+  project: Project;
+  progress: any;
+  budget: any;
+  members: any[];
+  equipment: any[];
+  benefits: any;
+  risks: any[];
+}
+
+// 甘特图相关
+export interface GanttPhase {
+  id: string;
+  name: string;
+  project_id: string;
+  start_date?: string;
+  end_date?: string;
+  progress: number;
+  status: string;
+  predecessor_ids?: string[];
+}
+
+export interface GanttMilestone {
+  id: string;
+  name: string;
+  project_id: string;
+  date: string;
+  status: string;
+}
+
+export interface GanttResource {
+  id: string;
+  resource_type: string;
+  name: string;
+  assignments: any[];
+}
+
+export interface ProjectGanttResponse {
+  phases: GanttPhase[];
+  milestones: GanttMilestone[];
+  resources: GanttResource[];
+}
+
+// RS API 函数
 export const rsApi = {
-  listProjects: async (): Promise<ApiResponse<Project[]>> => {
-    return apiClient.rs.get<Project[]>('/api/v1/projects');
+  // 项目相关
+  listProjects: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: string;
+  }): Promise<ApiResponse<{ projects: Project[]; total: number; page: number; page_size: number }>> => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : '';
+    const url = queryParams ? `/api/v1/projects?${queryParams}` : '/api/v1/projects';
+    return apiClient.rs.get(url);
   },
 
   getProject: async (id: string): Promise<ApiResponse<Project>> => {
-    return apiClient.rs.get<Project>(`/api/v1/projects/${id}`);
+    return apiClient.rs.get(`/api/v1/projects/${id}`);
   },
 
   createProject: async (data: CreateProjectRequest): Promise<ApiResponse<Project>> => {
-    return apiClient.rs.post<Project>('/api/v1/projects', data);
+    return apiClient.rs.post('/api/v1/projects', data);
   },
 
-  updateProject: async (id: string, data: CreateProjectRequest): Promise<ApiResponse<Project>> => {
-    return apiClient.rs.put<Project>(`/api/v1/projects/${id}`, data);
+  updateProject: async (id: string, data: UpdateProjectRequest): Promise<ApiResponse<Project>> => {
+    return apiClient.rs.put(`/api/v1/projects/${id}`, data);
   },
 
-  deleteProject: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.rs.delete<boolean>(`/api/v1/projects/${id}`);
+  deleteProject: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.rs.delete(`/api/v1/projects/${id}`);
   },
 
   batchCreateProjects: async (data: BatchCreateProjectsRequest): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.rs.post<BatchOperationResult>('/api/v1/projects/batch', data);
+    return apiClient.rs.post('/api/v1/projects/batch', data);
   },
 
   batchDeleteProjects: async (data: BatchDeleteProjectsRequest): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.rs.delete<BatchOperationResult>('/api/v1/projects/batch', { data });
+    return apiClient.rs.delete('/api/v1/projects/batch', { data });
   },
 
   exportProjects: async (): Promise<Blob> => {
@@ -194,35 +342,131 @@ export const rsApi = {
     });
   },
 
-  listExperiments: async (): Promise<ApiResponse<ExperimentRecord[]>> => {
-    return apiClient.rs.get<ExperimentRecord[]>('/api/v1/experiments');
+  getProjectDashboard: async (id: string): Promise<ApiResponse<ProjectDashboardResponse>> => {
+    return apiClient.rs.get(`/api/v1/projects/${id}/dashboard`);
   },
 
-  getExperiment: async (id: string): Promise<ApiResponse<ExperimentRecord>> => {
-    return apiClient.rs.get<ExperimentRecord>(`/api/v1/experiments/${id}`);
+  getProjectGantt: async (id: string): Promise<ApiResponse<ProjectGanttResponse>> => {
+    return apiClient.rs.get(`/api/v1/projects/${id}/gantt`);
   },
 
-  createExperiment: async (data: CreateExperimentRequest): Promise<ApiResponse<ExperimentRecord>> => {
-    return apiClient.rs.post<ExperimentRecord>('/api/v1/experiments', data);
+  // 试验相关
+  listExperiments: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: string;
+    project_id?: string;
+    experiment_type?: string;
+  }): Promise<ApiResponse<{ experiments: Experiment[]; total: number; page: number; page_size: number }>> => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : '';
+    const url = queryParams ? `/api/v1/experiments?${queryParams}` : '/api/v1/experiments';
+    return apiClient.rs.get(url);
   },
 
-  updateExperiment: async (id: string, data: UpdateExperimentRequest): Promise<ApiResponse<ExperimentRecord>> => {
-    return apiClient.rs.put<ExperimentRecord>(`/api/v1/experiments/${id}`, data);
+  getExperiment: async (id: string): Promise<ApiResponse<Experiment>> => {
+    return apiClient.rs.get(`/api/v1/experiments/${id}`);
   },
 
-  deleteExperiment: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.rs.delete<boolean>(`/api/v1/experiments/${id}`);
+  createExperiment: async (data: CreateExperimentRequest): Promise<ApiResponse<Experiment>> => {
+    return apiClient.rs.post('/api/v1/experiments', data);
   },
 
-  listExperimentsByProject: async (projectId: string): Promise<ApiResponse<ExperimentRecord[]>> => {
-    return apiClient.rs.get<ExperimentRecord[]>(`/api/v1/experiments/project/${projectId}`);
+  updateExperiment: async (id: string, data: UpdateExperimentRequest): Promise<ApiResponse<Experiment>> => {
+    return apiClient.rs.put(`/api/v1/experiments/${id}`, data);
+  },
+
+  deleteExperiment: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.rs.delete(`/api/v1/experiments/${id}`);
+  },
+
+  listExperimentsByProject: async (projectId: string): Promise<ApiResponse<Experiment[]>> => {
+    return apiClient.rs.get(`/api/v1/experiments/project/${projectId}`);
+  },
+
+  listLabExperiments: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: string;
+  }): Promise<ApiResponse<{ experiments: Experiment[]; total: number; page: number; page_size: number }>> => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : '';
+    const url = queryParams ? `/api/v1/experiments/phase/lab?${queryParams}` : '/api/v1/experiments/phase/lab';
+    return apiClient.rs.get(url);
+  },
+
+  listPilotExperiments: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: string;
+  }): Promise<ApiResponse<{ experiments: Experiment[]; total: number; page: number; page_size: number }>> => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : '';
+    const url = queryParams ? `/api/v1/experiments/phase/pilot?${queryParams}` : '/api/v1/experiments/phase/pilot';
+    return apiClient.rs.get(url);
+  },
+
+  listScaleupExperiments: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: string;
+  }): Promise<ApiResponse<{ experiments: Experiment[]; total: number; page: number; page_size: number }>> => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : '';
+    const url = queryParams ? `/api/v1/experiments/phase/scaleup?${queryParams}` : '/api/v1/experiments/phase/scaleup';
+    return apiClient.rs.get(url);
+  },
+
+  advancePhase: async (id: string, data?: { new_status?: string }): Promise<ApiResponse<Experiment>> => {
+    return apiClient.rs.post(`/api/v1/experiments/${id}/advance-phase`, data || {});
+  },
+
+  traceBatch: async (batchNumber: string): Promise<ApiResponse<BatchTraceItem[]>> => {
+    return apiClient.rs.get(`/api/v1/batch-trace/${batchNumber}`);
+  },
+
+  // 试验记录相关
+  getExperimentRecords: async (experimentId: string): Promise<ApiResponse<ExperimentRecord[]>> => {
+    return apiClient.rs.get(`/api/v1/experiments/${experimentId}/records`);
+  },
+
+  createExperimentRecord: async (
+    experimentId: string,
+    data: CreateExperimentRecordRequest
+  ): Promise<ApiResponse<{ id: string; recorded_at: string }>> => {
+    return apiClient.rs.post(`/api/v1/experiments/${experimentId}/records`, data);
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.rs.get<string>('/health');
+    return apiClient.rs.get('/health');
   },
 };
 
+// 配方 API 函数
 export const formulaApi = {
   listFormulas: async (params?: { project_id?: string; status?: string }): Promise<ApiResponse<Formula[]>> => {
     let url = '/api/v1/formulas';
@@ -238,41 +482,39 @@ export const formulaApi = {
         url += `?${queryString}`;
       }
     }
-    return apiClient.rs.get<Formula[]>(url);
+    return apiClient.rs.get(url);
   },
 
   getFormula: async (id: string): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.get<Formula>(`/api/v1/formulas/${id}`);
+    return apiClient.rs.get(`/api/v1/formulas/${id}`);
   },
 
   createFormula: async (data: CreateFormulaRequest): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.post<Formula>('/api/v1/formulas', data);
+    return apiClient.rs.post('/api/v1/formulas', data);
   },
 
-  updateFormula: async (id: string, data: CreateFormulaRequest): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.put<Formula>(`/api/v1/formulas/${id}`, data);
+  updateFormula: async (id: string, data: UpdateFormulaRequest): Promise<ApiResponse<Formula>> => {
+    return apiClient.rs.put(`/api/v1/formulas/${id}`, data);
   },
 
   deleteFormula: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.rs.delete<boolean>(`/api/v1/formulas/${id}`);
+    return apiClient.rs.delete(`/api/v1/formulas/${id}`);
   },
 
   listVersions: async (formulaId: string): Promise<ApiResponse<FormulaVersion[]>> => {
-    return apiClient.rs.get<FormulaVersion[]>(`/api/v1/formulas/${formulaId}/versions`);
+    return apiClient.rs.get(`/api/v1/formulas/${formulaId}/versions`);
   },
 
-  createVersion: async (
-    formulaId: string,
-    data: { version: string; changes: string }
-  ): Promise<ApiResponse<FormulaVersion>> => {
-    return apiClient.rs.post<FormulaVersion>(`/api/v1/formulas/${formulaId}/versions`, data);
+  createVersion: async (formulaId: string, data: CreateFormulaVersionRequest): Promise<ApiResponse<FormulaVersion>> => {
+    return apiClient.rs.post(`/api/v1/formulas/${formulaId}/versions`, data);
   },
 
   approveFormula: async (id: string): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.post<Formula>(`/api/v1/formulas/${id}/approve`, {});
+    return apiClient.rs.post(`/api/v1/formulas/${id}/approve`, {});
   },
 };
 
+// 审计日志类型
 export interface AuditLog {
   id: string;
   action: string;
@@ -323,3 +565,26 @@ export const auditRsApi = {
     return apiClient.rs.get(`/api/v1/audit-logs/${id}`);
   },
 };
+
+// 导出向后兼容的旧类型（为了保持现有代码工作）
+export type { Experiment as LegacyExperimentRecord };
+
+export interface CreateExperimentRequestLegacy {
+  project_id: string;
+  title: string;
+  description: string;
+  experiment_type: string;
+  result: string;
+  status: string;
+  experimenter: string;
+}
+
+export interface UpdateExperimentRequestLegacy {
+  title?: string;
+  description?: string;
+  experiment_type?: string;
+  result?: string;
+  status?: string;
+  experimenter?: string;
+  conclusion?: string;
+}

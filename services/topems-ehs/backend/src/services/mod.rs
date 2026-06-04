@@ -1,3 +1,4 @@
+pub mod permission;
 
 use sqlx::PgPool;
 use crate::repositories::*;
@@ -6,7 +7,7 @@ use anyhow::Result;
 
 #[derive(Clone)]
 pub struct EhsService {
-    pool: PgPool,
+    pub pool: PgPool,
 }
 
 impl EhsService {

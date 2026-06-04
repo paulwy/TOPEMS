@@ -21,9 +21,9 @@ const HrmEmployeePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PaginatedResult<Employee>>({ items: [], total: 0, page: 1, page_size: 10 });
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
-  const [departmentFilter, setDepartmentFilter] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -70,13 +70,16 @@ const HrmEmployeePage: React.FC = () => {
   }, []);
 
   const handleSearch = () => {
-    fetchEmployees({ search: searchText, department_id: departmentFilter, status: statusFilter });
+    const params: any = { search: searchText };
+    if (departmentFilter && departmentFilter !== 'all') params.department_id = departmentFilter;
+    if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
+    fetchEmployees(params);
   };
 
   const handleReset = () => {
     setSearchText('');
-    setDepartmentFilter('');
-    setStatusFilter('');
+    setDepartmentFilter('all');
+    setStatusFilter('all');
     fetchEmployees();
   };
 
@@ -278,7 +281,7 @@ const HrmEmployeePage: React.FC = () => {
                     <SelectValue placeholder='全部部门' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value=''>全部部门</SelectItem>
+                    <SelectItem value='all'>全部部门</SelectItem>
                     {departments.map((d) => (
                       <SelectItem key={d.id} value={d.id}>
                         {d.name}
@@ -291,7 +294,7 @@ const HrmEmployeePage: React.FC = () => {
                     <SelectValue placeholder='全部状态' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value=''>全部状态</SelectItem>
+                    <SelectItem value='all'>全部状态</SelectItem>
                     <SelectItem value='active'>在职</SelectItem>
                     <SelectItem value='inactive'>离职</SelectItem>
                   </SelectContent>
@@ -387,14 +390,14 @@ const HrmEmployeePage: React.FC = () => {
                 <div className='space-y-2'>
                   <Label htmlFor='create-department'>所属部门</Label>
                   <Select
-                    value={(formData as Employee)?.department_id || ''}
-                    onValueChange={(value) => handleInputChange('department_id', value)}
+                    value={(formData as Employee)?.department_id || 'none'}
+                    onValueChange={(value) => handleInputChange('department_id', value === 'none' ? undefined : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder='请选择部门' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=''>无</SelectItem>
+                      <SelectItem value='none'>无</SelectItem>
                       {departments.map((d) => (
                         <SelectItem key={d.id} value={d.id}>
                           {d.name}
@@ -500,21 +503,21 @@ const HrmEmployeePage: React.FC = () => {
                   <div className='space-y-2'>
                     <Label htmlFor='edit-department'>所属部门</Label>
                     <Select
-                      value={(formData as Employee)?.department_id || ''}
-                      onValueChange={(value) => handleInputChange('department_id', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='请选择' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value=''>无</SelectItem>
-                        {departments.map((d) => (
-                          <SelectItem key={d.id} value={d.id}>
-                            {d.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    value={(formData as Employee)?.department_id || 'none'}
+                    onValueChange={(value) => handleInputChange('department_id', value === 'none' ? undefined : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='请选择' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='none'>无</SelectItem>
+                      {departments.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='edit-position'>职位</Label>

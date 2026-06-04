@@ -194,10 +194,7 @@ export interface ProjectBenefits {
   total_milestones: number;
 }
 
-export interface ProjectRisk {
-  level: string;
-  description: string;
-}
+
 
 export interface ProjectDashboardResponse {
   project: Project;
@@ -664,12 +661,7 @@ export interface NotificationType {
 
 export const pmApi = {
   projects: {
-    list: async (params?: {
-      project_type?: string;
-      status?: string;
-      page?: number;
-      page_size?: number;
-    }) => {
+    list: async (params?: { project_type?: string; status?: string; page?: number; page_size?: number }) => {
       const query = new URLSearchParams();
       if (params?.project_type) query.set('project_type', params.project_type);
       if (params?.status) query.set('status', params.status);
@@ -708,13 +700,16 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/phases`);
     },
 
-    create: async (projectId: string, data: {
-      name: string;
-      description?: string;
-      start_date?: string;
-      end_date?: string;
-      predecessor_ids?: string[];
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        name: string;
+        description?: string;
+        start_date?: string;
+        end_date?: string;
+        predecessor_ids?: string[];
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/phases`, data);
     },
 
@@ -722,16 +717,20 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/phases/${id}`);
     },
 
-    update: async (projectId: string, id: string, data: {
-      name?: string;
-      description?: string;
-      sequence_number?: number;
-      start_date?: string;
-      end_date?: string;
-      progress?: number;
-      status?: string;
-      predecessor_ids?: string[];
-    }) => {
+    update: async (
+      projectId: string,
+      id: string,
+      data: {
+        name?: string;
+        description?: string;
+        sequence_number?: number;
+        start_date?: string;
+        end_date?: string;
+        progress?: number;
+        status?: string;
+        predecessor_ids?: string[];
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/projects/${projectId}/phases/${id}`, data);
     },
 
@@ -745,13 +744,16 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/milestones`);
     },
 
-    create: async (projectId: string, data: {
-      name: string;
-      description?: string;
-      date: string;
-      phase_id?: string;
-      acceptance_criteria?: string;
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        name: string;
+        description?: string;
+        date: string;
+        phase_id?: string;
+        acceptance_criteria?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/milestones`, data);
     },
 
@@ -759,14 +761,18 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/milestones/${id}`);
     },
 
-    update: async (projectId: string, id: string, data: {
-      name?: string;
-      description?: string;
-      date?: string;
-      status?: string;
-      phase_id?: string;
-      acceptance_criteria?: string;
-    }) => {
+    update: async (
+      projectId: string,
+      id: string,
+      data: {
+        name?: string;
+        description?: string;
+        date?: string;
+        status?: string;
+        phase_id?: string;
+        acceptance_criteria?: string;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/projects/${projectId}/milestones/${id}`, data);
     },
 
@@ -780,13 +786,16 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/members`);
     },
 
-    create: async (projectId: string, data: {
-      user_id: string;
-      role: string;
-      responsibilities?: string;
-      start_date?: string;
-      end_date?: string;
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        user_id: string;
+        role: string;
+        responsibilities?: string;
+        start_date?: string;
+        end_date?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/members`, data);
     },
 
@@ -794,12 +803,16 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/members/${id}`);
     },
 
-    update: async (projectId: string, id: string, data: {
-      role?: string;
-      responsibilities?: string;
-      start_date?: string;
-      end_date?: string;
-    }) => {
+    update: async (
+      projectId: string,
+      id: string,
+      data: {
+        role?: string;
+        responsibilities?: string;
+        start_date?: string;
+        end_date?: string;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/projects/${projectId}/members/${id}`, data);
     },
 
@@ -813,16 +826,19 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/resources`);
     },
 
-    create: async (projectId: string, data: {
-      resource_type: string;
-      resource_id: string;
-      resource_service?: string;
-      role?: string;
-      start_date?: string;
-      end_date?: string;
-      allocation_percent?: number;
-      created_by?: string;
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        resource_type: string;
+        resource_id: string;
+        resource_service?: string;
+        role?: string;
+        start_date?: string;
+        end_date?: string;
+        allocation_percent?: number;
+        created_by?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/resources`, data);
     },
 
@@ -830,15 +846,19 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/resources/${id}`);
     },
 
-    update: async (projectId: string, id: string, data: {
-      role?: string;
-      start_date?: string;
-      end_date?: string;
-      allocation_percent?: number;
-      actual_hours?: number;
-      actual_cost?: number;
-      status?: string;
-    }) => {
+    update: async (
+      projectId: string,
+      id: string,
+      data: {
+        role?: string;
+        start_date?: string;
+        end_date?: string;
+        allocation_percent?: number;
+        actual_hours?: number;
+        actual_cost?: number;
+        status?: string;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/projects/${projectId}/resources/${id}`, data);
     },
 
@@ -852,22 +872,25 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/expenses`);
     },
 
-    create: async (projectId: string, data: {
-      phase_id?: string;
-      expense_type: string;
-      category?: string;
-      subcategory?: string;
-      description?: string;
-      amount: number;
-      currency?: string;
-      incurred_date: string;
-      budget_item_id?: string;
-      resource_id?: string;
-      expense_ref_id?: string;
-      approval_workflow_id?: string;
-      attachment_ids?: string[];
-      created_by?: string;
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        phase_id?: string;
+        expense_type: string;
+        category?: string;
+        subcategory?: string;
+        description?: string;
+        amount: number;
+        currency?: string;
+        incurred_date: string;
+        budget_item_id?: string;
+        resource_id?: string;
+        expense_ref_id?: string;
+        approval_workflow_id?: string;
+        attachment_ids?: string[];
+        created_by?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/expenses`, data);
     },
 
@@ -875,16 +898,20 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/expenses/${id}`);
     },
 
-    update: async (projectId: string, id: string, data: {
-      expense_type?: string;
-      category?: string;
-      subcategory?: string;
-      description?: string;
-      amount?: number;
-      paid_date?: string;
-      status?: string;
-      approved_by?: string;
-    }) => {
+    update: async (
+      projectId: string,
+      id: string,
+      data: {
+        expense_type?: string;
+        category?: string;
+        subcategory?: string;
+        description?: string;
+        amount?: number;
+        paid_date?: string;
+        status?: string;
+        approved_by?: string;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/projects/${projectId}/expenses/${id}`, data);
     },
 
@@ -902,19 +929,22 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/benefits/analysis`);
     },
 
-    calculate: async (projectId: string, data: {
-      period_type: string;
-      period_date: string;
-      planned_cost: number;
-      actual_cost: number;
-      planned_progress: number;
-      actual_progress: number;
-      planned_value: number;
-      earned_value: number;
-      actual_cost_eva: number;
-      notes?: string;
-      created_by?: string;
-    }) => {
+    calculate: async (
+      projectId: string,
+      data: {
+        period_type: string;
+        period_date: string;
+        planned_cost: number;
+        actual_cost: number;
+        planned_progress: number;
+        actual_progress: number;
+        planned_value: number;
+        earned_value: number;
+        actual_cost_eva: number;
+        notes?: string;
+        created_by?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/benefits`, data);
     },
   },
@@ -924,10 +954,13 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/projects/${projectId}/approval`);
     },
 
-    submit: async (projectId: string, data: {
-      comment?: string;
-      approver_id: string;
-    }) => {
+    submit: async (
+      projectId: string,
+      data: {
+        comment?: string;
+        approver_id: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/approval`, data);
     },
 
@@ -968,22 +1001,25 @@ export const pmApi = {
       return apiClient.pm.post('/api/v1/contracts', data);
     },
 
-    update: async (id: string, data: {
-      contract_name?: string;
-      contract_category?: string;
-      party_a_name?: string;
-      party_a_id?: string;
-      party_b_name?: string;
-      party_b_id?: string;
-      amount?: number;
-      currency?: string;
-      tax_rate?: number;
-      signing_date?: string;
-      effective_date?: string;
-      end_date?: string;
-      status?: string;
-      description?: string;
-    }) => {
+    update: async (
+      id: string,
+      data: {
+        contract_name?: string;
+        contract_category?: string;
+        party_a_name?: string;
+        party_a_id?: string;
+        party_b_name?: string;
+        party_b_id?: string;
+        amount?: number;
+        currency?: string;
+        tax_rate?: number;
+        signing_date?: string;
+        effective_date?: string;
+        end_date?: string;
+        status?: string;
+        description?: string;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/contracts/${id}`, data);
     },
 
@@ -1008,24 +1044,31 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/contracts/${contractId}/milestones`);
       },
 
-      create: async (contractId: string, data: {
-        name: string;
-        description?: string;
-        target_date: string;
-        payment_amount?: number;
-        payment_percent?: number;
-        project_milestone_id?: string;
-      }) => {
+      create: async (
+        contractId: string,
+        data: {
+          name: string;
+          description?: string;
+          target_date: string;
+          payment_amount?: number;
+          payment_percent?: number;
+          project_milestone_id?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/contracts/${contractId}/milestones`, data);
       },
 
-      update: async (contractId: string, milestoneId: string, data: {
-        name?: string;
-        description?: string;
-        target_date?: string;
-        payment_amount?: number;
-        payment_percent?: number;
-      }) => {
+      update: async (
+        contractId: string,
+        milestoneId: string,
+        data: {
+          name?: string;
+          description?: string;
+          target_date?: string;
+          payment_amount?: number;
+          payment_percent?: number;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/contracts/${contractId}/milestones/${milestoneId}`, data);
       },
 
@@ -1039,22 +1082,29 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/contracts/${contractId}/payments`);
       },
 
-      create: async (contractId: string, data: {
-        payment_number: number;
-        payment_name?: string;
-        payment_percent?: number;
-        payment_amount: number;
-        due_date: string;
-      }) => {
+      create: async (
+        contractId: string,
+        data: {
+          payment_number: number;
+          payment_name?: string;
+          payment_percent?: number;
+          payment_amount: number;
+          due_date: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/contracts/${contractId}/payments`, data);
       },
 
-      update: async (contractId: string, paymentId: string, data: {
-        payment_name?: string;
-        payment_percent?: number;
-        payment_amount?: number;
-        due_date?: string;
-      }) => {
+      update: async (
+        contractId: string,
+        paymentId: string,
+        data: {
+          payment_name?: string;
+          payment_percent?: number;
+          payment_amount?: number;
+          due_date?: string;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/contracts/${contractId}/payments/${paymentId}`, data);
       },
 
@@ -1068,25 +1118,28 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/projects/${projectId}/contracts`);
       },
 
-      create: async (projectId: string, data: {
-        contract_code: string;
-        contract_name: string;
-        contract_type: string;
-        contract_category?: string;
-        party_a_name?: string;
-        party_a_id?: string;
-        party_b_name?: string;
-        party_b_id?: string;
-        amount: number;
-        currency?: string;
-        tax_rate?: number;
-        signing_date?: string;
-        effective_date?: string;
-        end_date?: string;
-        template_id?: string;
-        description?: string;
-        created_by?: string;
-      }) => {
+      create: async (
+        projectId: string,
+        data: {
+          contract_code: string;
+          contract_name: string;
+          contract_type: string;
+          contract_category?: string;
+          party_a_name?: string;
+          party_a_id?: string;
+          party_b_name?: string;
+          party_b_id?: string;
+          amount: number;
+          currency?: string;
+          tax_rate?: number;
+          signing_date?: string;
+          effective_date?: string;
+          end_date?: string;
+          template_id?: string;
+          description?: string;
+          created_by?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/projects/${projectId}/contracts`, data);
       },
     },
@@ -1111,12 +1164,15 @@ export const pmApi = {
       return apiClient.pm.post('/api/v1/contract-templates', data);
     },
 
-    update: async (id: string, data: {
-      name?: string;
-      contract_type?: string;
-      description?: string;
-      content?: Record<string, unknown>;
-    }) => {
+    update: async (
+      id: string,
+      data: {
+        name?: string;
+        contract_type?: string;
+        description?: string;
+        content?: Record<string, unknown>;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/contract-templates/${id}`, data);
     },
 
@@ -1134,23 +1190,25 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/budgets/${id}`);
     },
 
-    create: async (data: {
-      project_id: string;
+    create: async (projectId: string, data: {
       budget_code: string;
       budget_name: string;
       budget_type?: string;
       total_amount: number;
       created_by?: string;
     }) => {
-      return apiClient.pm.post('/api/v1/projects/${data.project_id}/budgets', data);
+      return apiClient.pm.post(`/api/v1/projects/${projectId}/budgets`, data);
     },
 
-    update: async (id: string, data: {
-      budget_name?: string;
-      budget_type?: string;
-      total_amount?: number;
-      status?: string;
-    }) => {
+    update: async (
+      id: string,
+      data: {
+        budget_name?: string;
+        budget_type?: string;
+        total_amount?: number;
+        status?: string;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/budgets/${id}`, data);
     },
 
@@ -1167,24 +1225,31 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/budgets/${budgetId}/items`);
       },
 
-      create: async (budgetId: string, data: {
-        item_code?: string;
-        item_name: string;
-        category?: string;
-        subcategory?: string;
-        budget_amount: number;
-        description?: string;
-      }) => {
+      create: async (
+        budgetId: string,
+        data: {
+          item_code?: string;
+          item_name: string;
+          category?: string;
+          subcategory?: string;
+          budget_amount: number;
+          description?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/budgets/${budgetId}/items`, data);
       },
 
-      update: async (budgetId: string, itemId: string, data: {
-        item_name?: string;
-        category?: string;
-        subcategory?: string;
-        budget_amount?: number;
-        description?: string;
-      }) => {
+      update: async (
+        budgetId: string,
+        itemId: string,
+        data: {
+          item_name?: string;
+          category?: string;
+          subcategory?: string;
+          budget_amount?: number;
+          description?: string;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/budgets/${budgetId}/items/${itemId}`, data);
       },
 
@@ -1203,42 +1268,48 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/risks/${id}`);
     },
 
-    create: async (projectId: string, data: {
-      risk_code?: string;
-      risk_name: string;
-      risk_description?: string;
-      risk_category?: string;
-      risk_subcategory?: string;
-      likelihood: string;
-      impact: string;
-      risk_score: number;
-      mitigation_strategy?: string;
-      contingency_plan?: string;
-      trigger_condition?: string;
-      warning_threshold?: number;
-      owner?: string;
-      response_due_date?: string;
-      created_by?: string;
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        risk_code?: string;
+        risk_name: string;
+        risk_description?: string;
+        risk_category?: string;
+        risk_subcategory?: string;
+        likelihood: string;
+        impact: string;
+        risk_score: number;
+        mitigation_strategy?: string;
+        contingency_plan?: string;
+        trigger_condition?: string;
+        warning_threshold?: number;
+        owner?: string;
+        response_due_date?: string;
+        created_by?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/risks`, data);
     },
 
-    update: async (id: string, data: {
-      risk_name?: string;
-      risk_description?: string;
-      risk_category?: string;
-      risk_subcategory?: string;
-      likelihood?: string;
-      impact?: string;
-      risk_score?: number;
-      status?: string;
-      mitigation_strategy?: string;
-      contingency_plan?: string;
-      trigger_condition?: string;
-      warning_threshold?: number;
-      owner?: string;
-      response_due_date?: string;
-    }) => {
+    update: async (
+      id: string,
+      data: {
+        risk_name?: string;
+        risk_description?: string;
+        risk_category?: string;
+        risk_subcategory?: string;
+        likelihood?: string;
+        impact?: string;
+        risk_score?: number;
+        status?: string;
+        mitigation_strategy?: string;
+        contingency_plan?: string;
+        trigger_condition?: string;
+        warning_threshold?: number;
+        owner?: string;
+        response_due_date?: string;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/risks/${id}`, data);
     },
 
@@ -1247,11 +1318,14 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/risks/${riskId}/events`);
       },
 
-      create: async (riskId: string, data: {
-        event_type: string;
-        event_description?: string;
-        reported_by?: string;
-      }) => {
+      create: async (
+        riskId: string,
+        data: {
+          event_type: string;
+          event_description?: string;
+          reported_by?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/risks/${riskId}/events`, data);
       },
     },
@@ -1267,32 +1341,38 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/quality-checks/${id}`);
       },
 
-      create: async (projectId: string, data: {
-        check_code?: string;
-        check_name: string;
-        check_type?: string;
-        phase_id?: string;
-        milestone_id?: string;
-        check_criteria?: string;
-        acceptance_standard?: string;
-        created_by?: string;
-      }) => {
+      create: async (
+        projectId: string,
+        data: {
+          check_code?: string;
+          check_name: string;
+          check_type?: string;
+          phase_id?: string;
+          milestone_id?: string;
+          check_criteria?: string;
+          acceptance_standard?: string;
+          created_by?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/projects/${projectId}/quality-checks`, data);
       },
 
-      update: async (id: string, data: {
-        check_name?: string;
-        check_type?: string;
-        check_criteria?: string;
-        acceptance_standard?: string;
-        status?: string;
-        check_date?: string;
-        checked_by?: string;
-        result_details?: Record<string, any>;
-        nonconformities?: Record<string, any>;
-        corrective_actions?: Record<string, any>;
-        follow_up_date?: string;
-      }) => {
+      update: async (
+        id: string,
+        data: {
+          check_name?: string;
+          check_type?: string;
+          check_criteria?: string;
+          acceptance_standard?: string;
+          status?: string;
+          check_date?: string;
+          checked_by?: string;
+          result_details?: Record<string, any>;
+          nonconformities?: Record<string, any>;
+          corrective_actions?: Record<string, any>;
+          follow_up_date?: string;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/quality-checks/${id}`, data);
       },
     },
@@ -1306,30 +1386,36 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/defects/${id}`);
       },
 
-      create: async (projectId: string, data: {
-        defect_code?: string;
-        defect_name: string;
-        defect_description?: string;
-        severity: string;
-        priority: string;
-        check_id?: string;
-        assignee?: string;
-        due_date?: string;
-        created_by?: string;
-      }) => {
+      create: async (
+        projectId: string,
+        data: {
+          defect_code?: string;
+          defect_name: string;
+          defect_description?: string;
+          severity: string;
+          priority: string;
+          check_id?: string;
+          assignee?: string;
+          due_date?: string;
+          created_by?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/projects/${projectId}/defects`, data);
       },
 
-      update: async (id: string, data: {
-        defect_name?: string;
-        defect_description?: string;
-        severity?: string;
-        priority?: string;
-        status?: string;
-        assignee?: string;
-        due_date?: string;
-        resolution?: string;
-      }) => {
+      update: async (
+        id: string,
+        data: {
+          defect_name?: string;
+          defect_description?: string;
+          severity?: string;
+          priority?: string;
+          status?: string;
+          assignee?: string;
+          due_date?: string;
+          resolution?: string;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/defects/${id}`, data);
       },
 
@@ -1349,30 +1435,36 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/acceptance-plans/${id}`);
       },
 
-      create: async (projectId: string, data: {
-        plan_code?: string;
-        plan_name: string;
-        acceptance_type: string;
-        milestone_id?: string;
-        phase_id?: string;
-        acceptance_criteria?: string;
-        expected_date?: string;
-        participants?: Record<string, any>;
-        documents_required?: Record<string, any>;
-        created_by?: string;
-      }) => {
+      create: async (
+        projectId: string,
+        data: {
+          plan_code?: string;
+          plan_name: string;
+          acceptance_type: string;
+          milestone_id?: string;
+          phase_id?: string;
+          acceptance_criteria?: string;
+          expected_date?: string;
+          participants?: Record<string, any>;
+          documents_required?: Record<string, any>;
+          created_by?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/projects/${projectId}/acceptance-plans`, data);
       },
 
-      update: async (id: string, data: {
-        plan_name?: string;
-        acceptance_type?: string;
-        acceptance_criteria?: string;
-        expected_date?: string;
-        status?: string;
-        participants?: Record<string, any>;
-        documents_required?: Record<string, any>;
-      }) => {
+      update: async (
+        id: string,
+        data: {
+          plan_name?: string;
+          acceptance_type?: string;
+          acceptance_criteria?: string;
+          expected_date?: string;
+          status?: string;
+          participants?: Record<string, any>;
+          documents_required?: Record<string, any>;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/acceptance-plans/${id}`, data);
       },
     },
@@ -1382,20 +1474,26 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/acceptance-plans/${planId}/items`);
       },
 
-      create: async (planId: string, data: {
-        item_code?: string;
-        item_name: string;
-        item_description?: string;
-        required_standard?: string;
-      }) => {
+      create: async (
+        planId: string,
+        data: {
+          item_code?: string;
+          item_name: string;
+          item_description?: string;
+          required_standard?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/acceptance-plans/${planId}/items`, data);
       },
 
-      update: async (id: string, data: {
-        actual_result?: string;
-        is_passed?: boolean;
-        comments?: string;
-      }) => {
+      update: async (
+        id: string,
+        data: {
+          actual_result?: string;
+          is_passed?: boolean;
+          comments?: string;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/acceptance-items/${id}`, data);
       },
 
@@ -1413,28 +1511,34 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/acceptance-records/${id}`);
       },
 
-      create: async (planId: string, data: {
-        acceptance_date: string;
-        status: string;
-        conclusion?: string;
-        score?: number;
-        accepted_by?: string;
-        attendees?: Record<string, any>;
-        findings?: Record<string, any>;
-        recommendations?: Record<string, any>;
-        created_by?: string;
-      }) => {
+      create: async (
+        planId: string,
+        data: {
+          acceptance_date: string;
+          status: string;
+          conclusion?: string;
+          score?: number;
+          accepted_by?: string;
+          attendees?: Record<string, any>;
+          findings?: Record<string, any>;
+          recommendations?: Record<string, any>;
+          created_by?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/acceptance-plans/${planId}/records`, data);
       },
 
-      update: async (id: string, data: {
-        status?: string;
-        conclusion?: string;
-        score?: number;
-        attendees?: Record<string, any>;
-        findings?: Record<string, any>;
-        recommendations?: Record<string, any>;
-      }) => {
+      update: async (
+        id: string,
+        data: {
+          status?: string;
+          conclusion?: string;
+          score?: number;
+          attendees?: Record<string, any>;
+          findings?: Record<string, any>;
+          recommendations?: Record<string, any>;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/acceptance-records/${id}`, data);
       },
     },
@@ -1449,24 +1553,30 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/settlements/${id}`);
     },
 
-    create: async (projectId: string, data: {
-      settlement_code?: string;
-      settlement_name: string;
-      settlement_type: string;
-      settlement_period_start?: string;
-      settlement_period_end?: string;
-      description?: string;
-      created_by?: string;
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        settlement_code?: string;
+        settlement_name: string;
+        settlement_type: string;
+        settlement_period_start?: string;
+        settlement_period_end?: string;
+        description?: string;
+        created_by?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/settlements`, data);
     },
 
-    update: async (id: string, data: {
-      settlement_name?: string;
-      status?: string;
-      actual_amount?: number;
-      description?: string;
-    }) => {
+    update: async (
+      id: string,
+      data: {
+        settlement_name?: string;
+        status?: string;
+        actual_amount?: number;
+        description?: string;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/settlements/${id}`, data);
     },
 
@@ -1479,25 +1589,31 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/settlements/${settlementId}/items`);
       },
 
-      create: async (settlementId: string, data: {
-        item_code?: string;
-        item_name: string;
-        category?: string;
-        budget_amount: number;
-        actual_amount: number;
-        description?: string;
-        expense_ref_id?: string;
-        contract_ref_id?: string;
-      }) => {
+      create: async (
+        settlementId: string,
+        data: {
+          item_code?: string;
+          item_name: string;
+          category?: string;
+          budget_amount: number;
+          actual_amount: number;
+          description?: string;
+          expense_ref_id?: string;
+          contract_ref_id?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/settlements/${settlementId}/items`, data);
       },
 
-      update: async (id: string, data: {
-        item_name?: string;
-        category?: string;
-        actual_amount?: number;
-        description?: string;
-      }) => {
+      update: async (
+        id: string,
+        data: {
+          item_name?: string;
+          category?: string;
+          actual_amount?: number;
+          description?: string;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/settlement-items/${id}`, data);
       },
 
@@ -1511,15 +1627,18 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/settlements/${settlementId}/adjustments`);
       },
 
-      create: async (settlementId: string, data: {
-        adjustment_type: string;
-        adjustment_code?: string;
-        description?: string;
-        amount: number;
-        reason?: string;
-        supporting_documents?: Record<string, any>;
-        created_by?: string;
-      }) => {
+      create: async (
+        settlementId: string,
+        data: {
+          adjustment_type: string;
+          adjustment_code?: string;
+          description?: string;
+          amount: number;
+          reason?: string;
+          supporting_documents?: Record<string, any>;
+          created_by?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/settlements/${settlementId}/adjustments`, data);
       },
     },
@@ -1534,27 +1653,33 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/documents/${id}`);
     },
 
-    create: async (projectId: string, data: {
-      document_code?: string;
-      document_name: string;
-      document_type: string;
-      file_path: string;
-      file_size: number;
-      file_hash?: string;
-      description?: string;
-      tags?: string[];
-      created_by?: string;
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        document_code?: string;
+        document_name: string;
+        document_type: string;
+        file_path: string;
+        file_size: number;
+        file_hash?: string;
+        description?: string;
+        tags?: string[];
+        created_by?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/documents`, data);
     },
 
-    update: async (id: string, data: {
-      document_name?: string;
-      document_type?: string;
-      status?: string;
-      description?: string;
-      tags?: string[];
-    }) => {
+    update: async (
+      id: string,
+      data: {
+        document_name?: string;
+        document_type?: string;
+        status?: string;
+        description?: string;
+        tags?: string[];
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/documents/${id}`, data);
     },
 
@@ -1567,12 +1692,15 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/documents/${documentId}/versions`);
       },
 
-      create: async (documentId: string, data: {
-        file_path: string;
-        file_hash?: string;
-        change_note?: string;
-        created_by?: string;
-      }) => {
+      create: async (
+        documentId: string,
+        data: {
+          file_path: string;
+          file_hash?: string;
+          change_note?: string;
+          created_by?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/documents/${documentId}/versions`, data);
       },
     },
@@ -1586,19 +1714,25 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/folders/${id}`);
       },
 
-      create: async (projectId: string, data: {
-        parent_id?: string;
-        folder_name: string;
-        description?: string;
-        created_by?: string;
-      }) => {
+      create: async (
+        projectId: string,
+        data: {
+          parent_id?: string;
+          folder_name: string;
+          description?: string;
+          created_by?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/projects/${projectId}/folders`, data);
       },
 
-      update: async (id: string, data: {
-        folder_name?: string;
-        description?: string;
-      }) => {
+      update: async (
+        id: string,
+        data: {
+          folder_name?: string;
+          description?: string;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/folders/${id}`, data);
       },
 
@@ -1617,23 +1751,29 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/reports/${id}`);
     },
 
-    create: async (projectId: string, data: {
-      report_code?: string;
-      report_name: string;
-      report_type: string;
-      report_period?: string;
-      generated_by?: string;
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        report_code?: string;
+        report_name: string;
+        report_type: string;
+        report_period?: string;
+        generated_by?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/reports`, data);
     },
 
-    generate: async (projectId: string, data: {
-      report_code?: string;
-      report_name: string;
-      report_type: string;
-      report_period?: string;
-      generated_by?: string;
-    }) => {
+    generate: async (
+      projectId: string,
+      data: {
+        report_code?: string;
+        report_name: string;
+        report_type: string;
+        report_period?: string;
+        generated_by?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/reports/generate`, data);
     },
 
@@ -1656,10 +1796,13 @@ export const pmApi = {
         return apiClient.pm.post('/api/v1/report-templates', data);
       },
 
-      update: async (id: string, data: {
-        template_name?: string;
-        content?: Record<string, any>;
-      }) => {
+      update: async (
+        id: string,
+        data: {
+          template_name?: string;
+          content?: Record<string, any>;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/report-templates/${id}`, data);
       },
 
@@ -1691,10 +1834,13 @@ export const pmApi = {
       return apiClient.pm.post('/api/v1/notifications', data);
     },
 
-    update: async (id: string, data: {
-      status?: string;
-      read_at?: string;
-    }) => {
+    update: async (
+      id: string,
+      data: {
+        status?: string;
+        read_at?: string;
+      }
+    ) => {
       return apiClient.pm.put(`/api/v1/notifications/${id}`, data);
     },
 
@@ -1707,20 +1853,26 @@ export const pmApi = {
         return apiClient.pm.get(`/api/v1/projects/${projectId}/notification-settings`);
       },
 
-      create: async (projectId: string, data: {
-        notification_type: string;
-        enabled: boolean;
-        notify_before_days?: number;
-        preferred_channel?: string;
-      }) => {
+      create: async (
+        projectId: string,
+        data: {
+          notification_type: string;
+          enabled: boolean;
+          notify_before_days?: number;
+          preferred_channel?: string;
+        }
+      ) => {
         return apiClient.pm.post(`/api/v1/projects/${projectId}/notification-settings`, data);
       },
 
-      update: async (id: string, data: {
-        enabled?: boolean;
-        notify_before_days?: number;
-        preferred_channel?: string;
-      }) => {
+      update: async (
+        id: string,
+        data: {
+          enabled?: boolean;
+          notify_before_days?: number;
+          preferred_channel?: string;
+        }
+      ) => {
         return apiClient.pm.put(`/api/v1/notification-settings/${id}`, data);
       },
     },

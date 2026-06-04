@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::{get, post},
     http::{header, HeaderMap},
     response::{IntoResponse, Response},
@@ -12,47 +12,10 @@ use uuid::Uuid;
 use utoipa::{ToSchema, IntoParams};
 
 use crate::models::{CreateSampleRequest, Sample, UpdateSampleRequest};
+use crate::services::permission::{check_permission, ModulePermission};
 use crate::api::ApiState;
-use topems_shared::Result;
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
+use topems_shared::auth::Claims;
+use topems_shared::{Result, ApiResponse, PaginationParams};
 
 #[derive(Debug, Deserialize, IntoParams)]
 #[allow(dead_code)]
@@ -115,8 +78,13 @@ pub async fn create_routes() -> Result<Router<ApiState>> {
 )]
 async fn list_samples(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    if claims.is_superuser || claims.has_permission("lims.manage") || claims.has_permission("sample_read") {
+    } else {
+        return Json(ApiResponse::error(403, "权限不足：需要 sample_read 权限"));
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;

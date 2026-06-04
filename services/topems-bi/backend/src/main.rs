@@ -1,11 +1,6 @@
 use axum::{
-    extract::FromRef,
-    extract::Path,
-    extract::State,
-    routing::delete,
-    routing::get,
-    routing::post,
-    routing::put,
+    extract::{Extension, FromRef, Path, State},
+    routing::{delete, get, post, put},
     Json,
     Router,
 };
@@ -19,7 +14,10 @@ use serde_json::json;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use reqwest::Client;
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims};
+use crate::services::permission::{check_permission, BIPermission};
+
+mod services;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SampleStats {
@@ -280,7 +278,14 @@ async fn health_check() -> Json<ApiResponse<serde_json::Value>> {
     }), "健康检查"))
 }
 
-async fn list_dashboards(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn list_dashboards(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::DashboardRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let dashboards = state.dashboards.lock().unwrap();
     Json(ApiResponse::success(json!({
         "dashboards": dashboards.clone(),
@@ -290,8 +295,13 @@ async fn list_dashboards(State(state): State<AppState>) -> Json<ApiResponse<serd
 
 async fn create_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateDashboard>,
 ) -> Json<ApiResponse<Dashboard>> {
+    match check_permission(&claims, &BIPermission::DashboardWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let mut dashboards = state.dashboards.lock().unwrap();
 
     let dashboard = Dashboard {
@@ -310,8 +320,13 @@ async fn create_dashboard(
 
 async fn get_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Dashboard>> {
+    match check_permission(&claims, &BIPermission::DashboardRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let dashboards = state.dashboards.lock().unwrap();
     if let Some(dashboard) = dashboards.iter().find(|d| d.id == id) {
         Json(ApiResponse::success(dashboard.clone(), "获取仪表板成功"))
@@ -322,9 +337,14 @@ async fn get_dashboard(
 
 async fn update_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateDashboard>,
 ) -> Json<ApiResponse<Dashboard>> {
+    match check_permission(&claims, &BIPermission::DashboardWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let mut dashboards = state.dashboards.lock().unwrap();
     if let Some(dashboard) = dashboards.iter_mut().find(|d| d.id == id) {
         dashboard.name = payload.name;
@@ -339,8 +359,13 @@ async fn update_dashboard(
 
 async fn delete_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&claims, &BIPermission::DashboardWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let mut dashboards = state.dashboards.lock().unwrap();
     let initial_len = dashboards.len();
     dashboards.retain(|d| d.id != id);
@@ -351,7 +376,14 @@ async fn delete_dashboard(
     }
 }
 
-async fn list_reports(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn list_reports(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::ReportRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let reports = state.reports.lock().unwrap();
     Json(ApiResponse::success(json!({
         "reports": reports.clone(),
@@ -361,8 +393,13 @@ async fn list_reports(State(state): State<AppState>) -> Json<ApiResponse<serde_j
 
 async fn create_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateReport>,
 ) -> Json<ApiResponse<Report>> {
+    match check_permission(&claims, &BIPermission::ReportWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let mut reports = state.reports.lock().unwrap();
 
     let report = Report {
@@ -383,8 +420,13 @@ async fn create_report(
 
 async fn get_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Report>> {
+    match check_permission(&claims, &BIPermission::ReportRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let reports = state.reports.lock().unwrap();
     if let Some(report) = reports.iter().find(|r| r.id == id) {
         Json(ApiResponse::success(report.clone(), "获取报表成功"))
@@ -395,9 +437,14 @@ async fn get_report(
 
 async fn update_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateReport>,
 ) -> Json<ApiResponse<Report>> {
+    match check_permission(&claims, &BIPermission::ReportWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let mut reports = state.reports.lock().unwrap();
     if let Some(report) = reports.iter_mut().find(|r| r.id == id) {
         report.name = payload.name;
@@ -414,8 +461,13 @@ async fn update_report(
 
 async fn delete_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&claims, &BIPermission::ReportWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let mut reports = state.reports.lock().unwrap();
     let initial_len = reports.len();
     reports.retain(|r| r.id != id);
@@ -426,7 +478,13 @@ async fn delete_report(
     }
 }
 
-async fn get_analytics_summary() -> Json<ApiResponse<serde_json::Value>> {
+async fn get_analytics_summary(
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     Json(ApiResponse::success(json!({
         "key_metrics": [
             { "title": "生产效率", "value": 85.5, "unit": "%", "change": 2.3, "change_type": "increase", "icon": "📈" },
@@ -508,7 +566,14 @@ async fn fetch_rs_formula_stats(state: &AppState) -> Result<FormulaStats, reqwes
     }
 }
 
-async fn get_rs_data_summary(State(state): State<AppState>) -> Json<ApiResponse<RSDataSummary>> {
+async fn get_rs_data_summary(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<RSDataSummary>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let project_stats = fetch_rs_project_stats(&state).await.unwrap_or(ProjectStats {
         total_projects: 120,
         active_projects: 45,
@@ -539,7 +604,14 @@ async fn get_rs_data_summary(State(state): State<AppState>) -> Json<ApiResponse<
     Json(ApiResponse::success(summary, "获取RS数据摘要成功"))
 }
 
-async fn get_rs_project_timeline(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_rs_project_timeline(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let timeline_data = json!({
         "labels": ["1月", "2月", "3月", "4月", "5月", "6月"],
         "datasets": [
@@ -561,7 +633,14 @@ async fn get_rs_project_timeline(State(state): State<AppState>) -> Json<ApiRespo
     Json(ApiResponse::success(timeline_data, "获取项目时间线数据成功"))
 }
 
-async fn get_rs_experiment_success_rate(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_rs_experiment_success_rate(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let chart_data = json!({
         "labels": ["1月", "2月", "3月", "4月", "5月", "6月"],
         "datasets": [
@@ -578,7 +657,14 @@ async fn get_rs_experiment_success_rate(State(state): State<AppState>) -> Json<A
     Json(ApiResponse::success(chart_data, "获取试验成功率数据成功"))
 }
 
-async fn get_rs_material_usage(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_rs_material_usage(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let usage_data = json!({
         "labels": ["原材料A", "原材料B", "原材料C", "原材料D", "原材料E"],
         "datasets": [
@@ -599,7 +685,14 @@ async fn get_rs_material_usage(State(state): State<AppState>) -> Json<ApiRespons
     Json(ApiResponse::success(usage_data, "获取原材料使用数据成功"))
 }
 
-async fn get_rs_project_ranking(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_rs_project_ranking(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let ranking_data = json!({
         "projects": [
             { "id": 1, "name": "新型材料研发项目", "progress": 95, "status": "completed", "team": "研发一组" },
@@ -682,7 +775,14 @@ async fn fetch_lims_instrument_stats(state: &AppState) -> Result<InstrumentStats
     }
 }
 
-async fn get_lims_data_summary(State(state): State<AppState>) -> Json<ApiResponse<LIMSDataSummary>> {
+async fn get_lims_data_summary(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<LIMSDataSummary>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let sample_stats = fetch_lims_sample_stats(&state).await.unwrap_or(SampleStats {
         total_samples: 2450,
         pending_samples: 180,
@@ -714,7 +814,14 @@ async fn get_lims_data_summary(State(state): State<AppState>) -> Json<ApiRespons
     Json(ApiResponse::success(summary, "获取LIMS数据摘要成功"))
 }
 
-async fn get_lims_sample_timeline(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_lims_sample_timeline(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let timeline_data = json!({
         "labels": ["1月", "2月", "3月", "4月", "5月", "6月"],
         "datasets": [
@@ -736,7 +843,14 @@ async fn get_lims_sample_timeline(State(state): State<AppState>) -> Json<ApiResp
     Json(ApiResponse::success(timeline_data, "获取样品时间线数据成功"))
 }
 
-async fn get_lims_test_pass_rate(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_lims_test_pass_rate(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let chart_data = json!({
         "labels": ["1月", "2月", "3月", "4月", "5月", "6月"],
         "datasets": [
@@ -753,7 +867,14 @@ async fn get_lims_test_pass_rate(State(state): State<AppState>) -> Json<ApiRespo
     Json(ApiResponse::success(chart_data, "获取检验合格率数据成功"))
 }
 
-async fn get_lims_instrument_usage(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_lims_instrument_usage(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let usage_data = json!({
         "labels": ["高效液相色谱仪", "气相色谱仪", "质谱仪", "紫外分光光度计", "原子吸收光谱仪"],
         "datasets": [
@@ -774,7 +895,14 @@ async fn get_lims_instrument_usage(State(state): State<AppState>) -> Json<ApiRes
     Json(ApiResponse::success(usage_data, "获取仪器使用率数据成功"))
 }
 
-async fn get_lims_sample_status_distribution(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_lims_sample_status_distribution(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let distribution_data = json!({
         "labels": ["待检验", "检验中", "已完成", "不合格"],
         "datasets": [
@@ -862,7 +990,14 @@ async fn fetch_qms_action_stats(state: &AppState) -> Result<QMSActionStats, reqw
     }
 }
 
-async fn get_qms_data_summary(State(state): State<AppState>) -> Json<ApiResponse<QMSDataSummary>> {
+async fn get_qms_data_summary(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<QMSDataSummary>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let quality_stats = fetch_qms_quality_stats(&state).await.unwrap_or(QMSQualityStats {
         total_inspections: 3250,
         passed_inspections: 3180,
@@ -894,7 +1029,14 @@ async fn get_qms_data_summary(State(state): State<AppState>) -> Json<ApiResponse
     Json(ApiResponse::success(summary, "获取QMS数据摘要成功"))
 }
 
-async fn get_qms_quality_trend(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_qms_quality_trend(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let trend_data = json!({
         "labels": ["1月", "2月", "3月", "4月", "5月", "6月"],
         "datasets": [
@@ -911,7 +1053,14 @@ async fn get_qms_quality_trend(State(state): State<AppState>) -> Json<ApiRespons
     Json(ApiResponse::success(trend_data, "获取质量趋势数据成功"))
 }
 
-async fn get_qms_issue_distribution(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_qms_issue_distribution(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let distribution_data = json!({
         "labels": ["原材料", "工艺", "设备", "人员", "环境"],
         "datasets": [
@@ -1001,7 +1150,14 @@ async fn fetch_ehs_incident_stats(state: &AppState) -> Result<EHSIncidentStats, 
     }
 }
 
-async fn get_ehs_data_summary(State(state): State<AppState>) -> Json<ApiResponse<EHSDataSummary>> {
+async fn get_ehs_data_summary(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<EHSDataSummary>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let risk_stats = fetch_ehs_risk_stats(&state).await.unwrap_or(EHSRiskStats {
         total_risks: 125,
         high_risks: 15,
@@ -1033,7 +1189,14 @@ async fn get_ehs_data_summary(State(state): State<AppState>) -> Json<ApiResponse
     Json(ApiResponse::success(summary, "获取EHS数据摘要成功"))
 }
 
-async fn get_ehs_risk_distribution(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_ehs_risk_distribution(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let distribution_data = json!({
         "labels": ["高风险", "中风险", "低风险"],
         "datasets": [
@@ -1051,7 +1214,14 @@ async fn get_ehs_risk_distribution(State(state): State<AppState>) -> Json<ApiRes
     Json(ApiResponse::success(distribution_data, "获取风险等级分布数据成功"))
 }
 
-async fn get_ehs_incident_trend(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_ehs_incident_trend(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let trend_data = json!({
         "labels": ["1月", "2月", "3月", "4月", "5月", "6月"],
         "datasets": [
@@ -1113,7 +1283,14 @@ async fn fetch_srm_order_stats(state: &AppState) -> Result<SRMOrderStats, reqwes
     }
 }
 
-async fn get_srm_data_summary(State(state): State<AppState>) -> Json<ApiResponse<SRMDataSummary>> {
+async fn get_srm_data_summary(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<SRMDataSummary>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let supplier_stats = fetch_srm_supplier_stats(&state).await.unwrap_or(SRMSupplierStats {
         total_suppliers: 280,
         active_suppliers: 245,
@@ -1137,7 +1314,14 @@ async fn get_srm_data_summary(State(state): State<AppState>) -> Json<ApiResponse
     Json(ApiResponse::success(summary, "获取SRM数据摘要成功"))
 }
 
-async fn get_srm_supplier_ranking(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_srm_supplier_ranking(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let ranking_data = json!({
         "suppliers": [
             { "id": 1, "name": "鑫源材料科技", "rating": 4.9, "delivery_rate": 99.5, "quality_rate": 99.8 },
@@ -1151,7 +1335,14 @@ async fn get_srm_supplier_ranking(State(state): State<AppState>) -> Json<ApiResp
     Json(ApiResponse::success(ranking_data, "获取供应商排行榜数据成功"))
 }
 
-async fn get_srm_order_timeline(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_srm_order_timeline(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let timeline_data = json!({
         "labels": ["1月", "2月", "3月", "4月", "5月", "6月"],
         "datasets": [
@@ -1219,7 +1410,14 @@ async fn fetch_pdm_performance_stats(state: &AppState) -> Result<PDMPerformanceS
     }
 }
 
-async fn get_pdm_data_summary(State(state): State<AppState>) -> Json<ApiResponse<PDMDataSummary>> {
+async fn get_pdm_data_summary(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<PDMDataSummary>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let batch_stats = fetch_pdm_batch_stats(&state).await.unwrap_or(PDMBatchStats {
         total_batches: 450,
         completed_batches: 415,
@@ -1243,7 +1441,14 @@ async fn get_pdm_data_summary(State(state): State<AppState>) -> Json<ApiResponse
     Json(ApiResponse::success(summary, "获取PDM数据摘要成功"))
 }
 
-async fn get_pdm_production_trend(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_pdm_production_trend(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let trend_data = json!({
         "labels": ["1月", "2月", "3月", "4月", "5月", "6月"],
         "datasets": [
@@ -1265,7 +1470,14 @@ async fn get_pdm_production_trend(State(state): State<AppState>) -> Json<ApiResp
     Json(ApiResponse::success(trend_data, "获取生产趋势数据成功"))
 }
 
-async fn get_pdm_batch_status_distribution(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_pdm_batch_status_distribution(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let distribution_data = json!({
         "labels": ["已完成", "进行中", "已取消"],
         "datasets": [
@@ -1281,6 +1493,280 @@ async fn get_pdm_batch_status_distribution(State(state): State<AppState>) -> Jso
     });
 
     Json(ApiResponse::success(distribution_data, "获取批次状态分布数据成功"))
+}
+
+async fn get_development_analytics(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
+    let rs_data = fetch_rs_project_stats(&state).await.unwrap_or(ProjectStats {
+        total_projects: 120,
+        active_projects: 45,
+        completed_projects: 75,
+        avg_project_duration: 45.5,
+    });
+    
+    let analytics = json!({
+        "total_projects": rs_data.total_projects,
+        "active_projects": rs_data.active_projects,
+        "completed_projects": rs_data.completed_projects,
+        "project_status_distribution": {
+            "in_progress": rs_data.active_projects,
+            "pending_approval": 12,
+            "completed": rs_data.completed_projects,
+            "cancelled": 8
+        },
+        "monthly_new_projects": [
+            { "month": "1月", "count": 18 },
+            { "month": "2月", "count": 22 },
+            { "month": "3月", "count": 20 },
+            { "month": "4月", "count": 25 },
+            { "month": "5月", "count": 23 },
+            { "month": "6月", "count": 27 }
+        ],
+        "project_type_distribution": {
+            "research": 45,
+            "development": 52,
+            "improvement": 23
+        },
+        "generated_at": Utc::now().to_rfc3339()
+    });
+    
+    Json(ApiResponse::success(analytics, "获取研发分析数据成功"))
+}
+
+async fn get_quality_analytics(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
+    let qms_data = fetch_qms_quality_stats(&state).await.unwrap_or(QMSQualityStats {
+        total_inspections: 3250,
+        passed_inspections: 3180,
+        failed_inspections: 70,
+        pass_rate: 97.8,
+    });
+    
+    let analytics = json!({
+        "total_inspections": qms_data.total_inspections,
+        "passed_inspections": qms_data.passed_inspections,
+        "failed_inspections": qms_data.failed_inspections,
+        "pass_rate": qms_data.pass_rate,
+        "quality_trend": [
+            { "month": "1月", "pass_rate": 96.5 },
+            { "month": "2月", "pass_rate": 97.2 },
+            { "month": "3月", "pass_rate": 97.8 },
+            { "month": "4月", "pass_rate": 98.1 },
+            { "month": "5月", "pass_rate": 97.6 },
+            { "month": "6月", "pass_rate": 97.8 }
+        ],
+        "defect_types": {
+            "material": 45,
+            "process": 58,
+            "equipment": 32,
+            "other": 22
+        },
+        "generated_at": Utc::now().to_rfc3339()
+    });
+    
+    Json(ApiResponse::success(analytics, "获取质量分析数据成功"))
+}
+
+async fn get_production_analytics(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
+    let pdm_batch_data = fetch_pdm_batch_stats(&state).await.unwrap_or(PDMBatchStats {
+        total_batches: 450,
+        completed_batches: 415,
+        in_progress_batches: 28,
+        cancelled_batches: 7,
+    });
+    
+    let pdm_perf_data = fetch_pdm_performance_stats(&state).await.unwrap_or(PDMPerformanceStats {
+        total_output: 12500.0,
+        reject_quantity: 185.0,
+        pass_rate: 98.5,
+        avg_cycle_time: 4.2,
+    });
+    
+    let analytics = json!({
+        "total_production_batches": pdm_batch_data.total_batches,
+        "completed_batches": pdm_batch_data.completed_batches,
+        "in_progress_batches": pdm_batch_data.in_progress_batches,
+        "production_efficiency": pdm_perf_data.pass_rate,
+        "daily_output": [
+            { "date": "10-01", "output": 1850 },
+            { "date": "10-02", "output": 2100 },
+            { "date": "10-03", "output": 1980 },
+            { "date": "10-04", "output": 2350 },
+            { "date": "10-05", "output": 2200 },
+            { "date": "10-06", "output": 2420 },
+            { "date": "10-07", "output": 2150 }
+        ],
+        "product_line_usage": {
+            "line_a": 85,
+            "line_b": 92,
+            "line_c": 78
+        },
+        "generated_at": Utc::now().to_rfc3339()
+    });
+    
+    Json(ApiResponse::success(analytics, "获取生产分析数据成功"))
+}
+
+async fn get_laboratory_analytics(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
+    let lims_sample_data = fetch_lims_sample_stats(&state).await.unwrap_or(SampleStats {
+        total_samples: 2450,
+        pending_samples: 180,
+        completed_samples: 2150,
+        rejected_samples: 120,
+    });
+    
+    let lims_test_data = fetch_lims_test_stats(&state).await.unwrap_or(TestStats {
+        total_tests: 8920,
+        completed_tests: 8560,
+        pending_tests: 360,
+        pass_rate: 98.5,
+    });
+    
+    let lims_inst_data = fetch_lims_instrument_stats(&state).await.unwrap_or(InstrumentStats {
+        total_instruments: 45,
+        active_instruments: 42,
+        maintenance_instruments: 3,
+        avg_usage_rate: 87.5,
+    });
+    
+    let analytics = json!({
+        "total_samples": lims_sample_data.total_samples,
+        "completed_tests": lims_test_data.completed_tests,
+        "pending_tests": lims_test_data.pending_tests,
+        "instrument_usage_rate": lims_inst_data.avg_usage_rate,
+        "test_type_distribution": {
+            "chemical": 3800,
+            "physical": 2500,
+            "microbiological": 1200,
+            "other": 1420
+        },
+        "turnaround_time": {
+            "avg_hours": 24,
+            "max_hours": 72,
+            "min_hours": 4
+        },
+        "generated_at": Utc::now().to_rfc3339()
+    });
+    
+    Json(ApiResponse::success(analytics, "获取实验室分析数据成功"))
+}
+
+async fn get_analytics_overview(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&claims, &BIPermission::AnalyticsRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
+    let rs_data = fetch_rs_project_stats(&state).await.unwrap_or(ProjectStats {
+        total_projects: 120,
+        active_projects: 45,
+        completed_projects: 75,
+        avg_project_duration: 45.5,
+    });
+    
+    let lims_sample_data = fetch_lims_sample_stats(&state).await.unwrap_or(SampleStats {
+        total_samples: 2450,
+        pending_samples: 180,
+        completed_samples: 2150,
+        rejected_samples: 120,
+    });
+    
+    let qms_data = fetch_qms_quality_stats(&state).await.unwrap_or(QMSQualityStats {
+        total_inspections: 3250,
+        passed_inspections: 3180,
+        failed_inspections: 70,
+        pass_rate: 97.8,
+    });
+    
+    let pdm_batch_data = fetch_pdm_batch_stats(&state).await.unwrap_or(PDMBatchStats {
+        total_batches: 450,
+        completed_batches: 415,
+        in_progress_batches: 28,
+        cancelled_batches: 7,
+    });
+    
+    let overview = json!({
+        "modules": {
+            "rs": {
+                "name": "研发管理",
+                "total_projects": rs_data.total_projects,
+                "active_projects": rs_data.active_projects,
+                "completion_rate": ((rs_data.completed_projects as f64 / rs_data.total_projects as f64) * 100.0).round()
+            },
+            "lims": {
+                "name": "实验室管理",
+                "total_samples": lims_sample_data.total_samples,
+                "pending_samples": lims_sample_data.pending_samples,
+                "pass_rate": 98.5
+            },
+            "qms": {
+                "name": "质量管理",
+                "total_inspections": qms_data.total_inspections,
+                "passed_inspections": qms_data.passed_inspections,
+                "pass_rate": qms_data.pass_rate
+            },
+            "ehs": {
+                "name": "安全环保",
+                "total_risks": 125,
+                "high_risks": 15,
+                "incidents": 18
+            },
+            "srm": {
+                "name": "供应链管理",
+                "total_suppliers": 280,
+                "active_suppliers": 245,
+                "avg_rating": 4.5
+            },
+            "pdm": {
+                "name": "生产数据",
+                "total_batches": pdm_batch_data.total_batches,
+                "completed_batches": pdm_batch_data.completed_batches,
+                "efficiency": 98.5
+            }
+        },
+        "key_metrics": [
+            { "title": "研发项目数", "value": rs_data.total_projects, "unit": "个", "change": 12, "change_type": "increase", "icon": "📊" },
+            { "title": "样品检验数", "value": lims_sample_data.total_samples, "unit": "份", "change": 8, "change_type": "increase", "icon": "🧪" },
+            { "title": "生产批次", "value": pdm_batch_data.total_batches, "unit": "批", "change": 5, "change_type": "increase", "icon": "🏭" },
+            { "title": "质量合格率", "value": qms_data.pass_rate, "unit": "%", "change": 0.3, "change_type": "increase", "icon": "✅" }
+        ],
+        "generated_at": Utc::now().to_rfc3339()
+    });
+    
+    Json(ApiResponse::success(overview, "获取分析概览数据成功"))
 }
 
 #[tokio::main]
@@ -1307,6 +1793,11 @@ async fn main() -> Result<()> {
         .route("/api/v1/reports", get(list_reports).post(create_report))
         .route("/api/v1/reports/:id", get(get_report).put(update_report).delete(delete_report))
         .route("/api/v1/analytics/summary", get(get_analytics_summary))
+        .route("/api/v1/analytics/overview", get(get_analytics_overview))
+        .route("/api/v1/analytics/development", get(get_development_analytics))
+        .route("/api/v1/analytics/quality", get(get_quality_analytics))
+        .route("/api/v1/analytics/production", get(get_production_analytics))
+        .route("/api/v1/analytics/laboratory", get(get_laboratory_analytics))
         .route("/api/v1/bi/rs/summary", get(get_rs_data_summary))
         .route("/api/v1/bi/rs/project-timeline", get(get_rs_project_timeline))
         .route("/api/v1/bi/rs/experiment-success-rate", get(get_rs_experiment_success_rate))

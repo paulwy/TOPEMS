@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { chatroomApi, messageApi, notificationApi, projectGroupApi } from './api/client';
-import { ChatroomItem, MessageBubble, NotificationItem, ProjectCard, UserItem } from './components/Widgets';
+import { ChatroomItem, MessageBubble, NotificationItem, ProjectCard } from './components/Widgets';
 import type { Chatroom, ChatMessage, Notification, ProjectGroup, User } from './types';
 import { 
   MessageSquare, 
@@ -12,7 +12,6 @@ import {
   Settings,
   Menu,
   X,
-  ChevronLeft,
   UserPlus,
   UsersIcon,
   Paperclip,
@@ -38,10 +37,20 @@ const App: React.FC = () => {
   const [groupName, setGroupName] = useState('');
   const [showFileMenu, setShowFileMenu] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<{name: string, progress: number}[]>([]);
+  const [showChatSettings, setShowChatSettings] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const [editContent, setEditContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     loadData();
+    connectWebSocket();
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -53,6 +62,64 @@ const App: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const connectWebSocket = () => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    wsRef.current = new WebSocket(wsUrl);
+    
+    wsRef.current.onopen = () => {
+      console.log('WebSocket connected');
+    };
+    
+    wsRef.current.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        handleIncomingMessage(message);
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
+      }
+    };
+    
+    wsRef.current.onclose = () => {
+      console.log('WebSocket disconnected, reconnecting...');
+      setTimeout(connectWebSocket, 5000);
+    };
+    
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+  };
+
+  const handleIncomingMessage = (message: any) => {
+    if (message.chat_id && selectedChatroom && selectedChatroom.id === message.chat_id) {
+      const newMsg: ChatMessage = {
+        id: message.id || Date.now().toString(),
+        chatroom_id: message.chat_id,
+        sender_id: message.sender_id,
+        sender_name: message.sender_name,
+        message_type: message.message_type || 'text',
+        content: message.content,
+        attachments: [],
+        created_at: message.timestamp || new Date().toISOString(),
+        is_read: false,
+      };
+      setMessages(prev => [...prev, newMsg]);
+    }
+    
+    setChatrooms(prev => prev.map(room => {
+      if (room.id === message.chat_id) {
+        return {
+          ...room,
+          last_message: message.content,
+          last_message_time: message.timestamp,
+          unread_count: room.id === selectedChatroom?.id ? room.unread_count : room.unread_count + 1,
+        };
+      }
+      return room;
+    }));
+  };
 
   const loadData = async () => {
     try {
@@ -225,10 +292,46 @@ const App: React.FC = () => {
         message_type: 'text',
         content: newMessage,
       });
+      
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        const wsMsg = {
+          msg_type: 'message',
+          chat_id: selectedChatroom.id,
+          sender_id: 'current-user',
+          sender_name: '当前用户',
+          content: newMessage,
+          timestamp: new Date().toISOString(),
+        };
+        wsRef.current.send(JSON.stringify(wsMsg));
+      }
+      
       setMessages([...messages, message]);
       setNewMessage('');
     } catch (error) {
       console.error('Failed to send message:', error);
+    }
+  };
+
+  const handleEditMessage = async (message: ChatMessage) => {
+    if (!editContent.trim()) return;
+    
+    try {
+      setMessages(prev => prev.map(m => 
+        m.id === message.id ? { ...m, content: editContent } : m
+      ));
+      setEditingMessage(null);
+      setEditContent('');
+    } catch (error) {
+      console.error('Failed to edit message:', error);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      await messageApi.delete(messageId);
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+    } catch (error) {
+      console.error('Failed to delete message:', error);
     }
   };
 
@@ -244,9 +347,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
       <div className={`${showSidebar ? 'w-80' : 'w-0'} bg-white border-r border-gray-200 flex flex-col transition-all duration-300 overflow-hidden`}>
-        {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -265,7 +366,6 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input
@@ -278,7 +378,6 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="flex border-b border-gray-200">
           {[
             { key: 'chat', label: '全部', icon: MessageSquare },
@@ -310,7 +409,6 @@ const App: React.FC = () => {
           })}
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto hide-scrollbar">
           {activeTab === 'chat' && (
             <div className="p-2 space-y-1">
@@ -554,11 +652,9 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Area */}
       <div className="flex-1 flex flex-col">
         {selectedChatroom ? (
           <>
-            {/* Chat Header */}
             <div className="bg-white border-b border-gray-200 p-4 flex items-center space-x-4">
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
@@ -572,12 +668,14 @@ const App: React.FC = () => {
                   {selectedChatroom.member_count} 成员 · {selectedChatroom.room_type === 'direct' ? '私聊' : selectedChatroom.room_type === 'group' ? '群聊' : '项目组'}
                 </p>
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <button 
+                onClick={() => setShowChatSettings(!showChatSettings)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
                 <Settings size={20} />
               </button>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 hide-scrollbar bg-gray-50">
               {messages.length > 0 ? (
                 messages.map(message => (
@@ -585,6 +683,13 @@ const App: React.FC = () => {
                     key={message.id}
                     message={message}
                     isSent={message.sender_id === 'current-user'}
+                    onEdit={(msg) => { setEditingMessage(msg); setEditContent(msg.content); }}
+                    onDelete={handleDeleteMessage}
+                    editingId={editingMessage?.id}
+                    editContent={editingMessage?.id === message.id ? editContent : ''}
+                    onSaveEdit={handleEditMessage}
+                    onCancelEdit={() => { setEditingMessage(null); setEditContent(''); }}
+                    onChangeEdit={setEditContent}
                   />
                 ))
               ) : (
@@ -598,7 +703,6 @@ const App: React.FC = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Message Input */}
             <div className="bg-white border-t border-gray-200 p-4">
               <div className="flex items-center space-x-3">
                 <div className="relative">
@@ -699,6 +803,76 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showChatSettings && selectedChatroom && (
+        <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h3 className="font-semibold">聊天设置</h3>
+            <button 
+              onClick={() => setShowChatSettings(false)}
+              className="p-1 hover:bg-gray-100 rounded-full"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-2xl mb-3">
+                {selectedChatroom.name.charAt(0).toUpperCase()}
+              </div>
+              <h4 className="font-semibold text-gray-900">{selectedChatroom.name}</h4>
+              <p className="text-sm text-gray-500">
+                {selectedChatroom.room_type === 'direct' ? '私聊' : selectedChatroom.room_type === 'group' ? '群聊' : '项目组'}
+              </p>
+            </div>
+
+            <div>
+              <h5 className="text-sm font-medium text-gray-700 mb-3">成员列表</h5>
+              <div className="space-y-2">
+                {users.slice(0, 5).map(user => (
+                  <div key={user.id} className="flex items-center space-x-3">
+                    <div className="relative">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-xs font-medium">{user.name[0]}</span>
+                      </div>
+                      <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${
+                        user.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
+                      }`}></div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {user.status === 'online' ? '在线' : user.status === 'away' ? '离开' : '离线'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h5 className="text-sm font-medium text-gray-700 mb-3">聊天信息</h5>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">创建时间</span>
+                  <span className="text-gray-900">{new Date(selectedChatroom.created_at).toLocaleDateString('zh-CN')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">成员数量</span>
+                  <span className="text-gray-900">{selectedChatroom.member_count} 人</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t">
+              <button className="w-full py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                退出聊天
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

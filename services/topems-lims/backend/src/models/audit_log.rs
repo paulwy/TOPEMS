@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct AuditLog {
@@ -23,7 +23,6 @@ pub struct AuditLog {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-#[allow(dead_code)]
 pub struct CreateAuditLogRequest {
     pub action: String,
     pub entity_type: String,
@@ -40,7 +39,6 @@ pub struct CreateAuditLogRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-#[allow(dead_code)]
 pub struct AuditLogQuery {
     pub action: Option<String>,
     pub entity_type: Option<String>,

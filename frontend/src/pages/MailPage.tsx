@@ -21,6 +21,9 @@ import {
   Check,
   AlertTriangle,
   Trash,
+  BarChart3,
+  Play,
+  Pause,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
@@ -29,6 +32,7 @@ import {
   templateApi,
   type Email,
   type EmailTemplate,
+  type EmailStats,
   STATUS_OPTIONS,
   PRIORITY_OPTIONS,
   TEMPLATE_CATEGORIES,
@@ -133,6 +137,17 @@ const MailPage: React.FC = () => {
   const [showEyeModal, setShowEyeModal] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [renderedTemplate, setRenderedTemplate] = useState<{ subject: string; body: string } | null>(null);
+  const [stats, setStats] = useState<EmailStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'emails') {
+      loadEmails();
+      loadStats();
+    } else {
+      loadTemplates();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === 'emails') {
@@ -140,7 +155,21 @@ const MailPage: React.FC = () => {
     } else {
       loadTemplates();
     }
-  }, [activeTab, currentPage, searchQuery, statusFilter, priorityFilter, categoryFilter]);
+  }, [currentPage, searchQuery, statusFilter, priorityFilter, categoryFilter]);
+
+  const loadStats = async () => {
+    setStatsLoading(true);
+    try {
+      const res = await emailApi.getStats();
+      if (res.success && res.data) {
+        setStats(res.data);
+      }
+    } catch (err: any) {
+      addNotification({ title: '加载失败', message: err.message || '加载统计数据失败', type: 'error' });
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   const loadEmails = async () => {
     setLoading(true);
@@ -389,6 +418,49 @@ const MailPage: React.FC = () => {
     });
     setSelectedEmails([]);
     loadEmails();
+  };
+
+  const handleBatchResendEmails = async () => {
+    if (selectedEmails.length === 0) return;
+    if (!confirm(`确定要重新发送选中的 ${selectedEmails.length} 条邮件吗？`)) return;
+
+    try {
+      const res = await emailApi.resend(selectedEmails);
+      if (res.success && res.data) {
+        const result = res.data;
+        addNotification({
+          title: '完成',
+          message: `成功重发 ${result.success}/${result.total} 条邮件`,
+          type: result.success === result.total ? 'success' : 'warning',
+        });
+      } else {
+        addNotification({ title: '失败', message: res.message || '批量重发失败', type: 'error' });
+      }
+    } catch (err: any) {
+      addNotification({ title: '失败', message: err.message || '批量重发失败', type: 'error' });
+    }
+    setSelectedEmails([]);
+    loadEmails();
+    loadStats();
+  };
+
+  const handleToggleTemplateStatus = async (template: EmailTemplate) => {
+    const newStatus = template.status === 'active' ? 'inactive' : 'active';
+    try {
+      const res = await templateApi.updateStatus(template.id, newStatus);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: `模板已${newStatus === 'active' ? '启用' : '禁用'}`,
+          type: 'success',
+        });
+        loadTemplates();
+      } else {
+        addNotification({ title: '失败', message: res.message || '更新状态失败', type: 'error' });
+      }
+    } catch (err: any) {
+      addNotification({ title: '失败', message: err.message || '更新状态失败', type: 'error' });
+    }
   };
 
   const handleEyeTemplate = async (template: EmailTemplate) => {
@@ -709,6 +781,67 @@ const MailPage: React.FC = () => {
               </Select>
             </div>
 
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+              <Card className='bg-gradient-to-br from-blue-500 to-blue-600 border-none'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-blue-100 text-sm'>邮件总数</p>
+                      <p className='text-3xl font-bold text-white mt-1'>{statsLoading ? '...' : stats?.total || 0}</p>
+                    </div>
+                    <div className='w-12 h-12 bg-white/20 rounded-full flex items-center justify-center'>
+                      <Mail className='w-6 h-6 text-white' />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className='bg-gradient-to-br from-green-500 to-green-600 border-none'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-green-100 text-sm'>已发送</p>
+                      <p className='text-3xl font-bold text-white mt-1'>
+                        {statsLoading ? '...' : stats?.sent_count || 0}
+                      </p>
+                    </div>
+                    <div className='w-12 h-12 bg-white/20 rounded-full flex items-center justify-center'>
+                      <CheckCircle className='w-6 h-6 text-white' />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className='bg-gradient-to-br from-yellow-500 to-yellow-600 border-none'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-yellow-100 text-sm'>待发送</p>
+                      <p className='text-3xl font-bold text-white mt-1'>
+                        {statsLoading ? '...' : stats?.pending_count || 0}
+                      </p>
+                    </div>
+                    <div className='w-12 h-12 bg-white/20 rounded-full flex items-center justify-center'>
+                      <Clock className='w-6 h-6 text-white' />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className='bg-gradient-to-br from-red-500 to-red-600 border-none'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-red-100 text-sm'>发送失败</p>
+                      <p className='text-3xl font-bold text-white mt-1'>
+                        {statsLoading ? '...' : stats?.failed_count || 0}
+                      </p>
+                    </div>
+                    <div className='w-12 h-12 bg-white/20 rounded-full flex items-center justify-center'>
+                      <XCircle className='w-6 h-6 text-white' />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <Card>
               <CardContent className='p-0'>
                 {selectedEmails.length > 0 && (
@@ -716,10 +849,16 @@ const MailPage: React.FC = () => {
                     <span className='text-sm text-blue-700 dark:text-blue-300'>
                       已选择 {selectedEmails.length} 条记录
                     </span>
-                    <Button variant='destructive' size='sm' onClick={handleBatchDeleteEmails} className='gap-2'>
-                      <Trash className='w-4 h-4' />
-                      批量删除
-                    </Button>
+                    <div className='flex items-center space-x-2'>
+                      <Button variant='secondary' size='sm' onClick={handleBatchResendEmails} className='gap-2'>
+                        <RefreshCw className='w-4 h-4' />
+                        批量重发
+                      </Button>
+                      <Button variant='destructive' size='sm' onClick={handleBatchDeleteEmails} className='gap-2'>
+                        <Trash className='w-4 h-4' />
+                        批量删除
+                      </Button>
+                    </div>
                   </div>
                 )}
                 {loading ? (
@@ -1002,6 +1141,23 @@ const MailPage: React.FC = () => {
                                   title='编辑'
                                 >
                                   <Edit className='w-4 h-4' />
+                                </Button>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={() => handleToggleTemplateStatus(template)}
+                                  title={template.status === 'active' ? '禁用模板' : '启用模板'}
+                                  className={
+                                    template.status === 'active'
+                                      ? 'text-yellow-600 hover:text-yellow-700'
+                                      : 'text-green-600 hover:text-green-700'
+                                  }
+                                >
+                                  {template.status === 'active' ? (
+                                    <Pause className='w-4 h-4' />
+                                  ) : (
+                                    <Play className='w-4 h-4' />
+                                  )}
                                 </Button>
                                 <Button
                                   variant='ghost'

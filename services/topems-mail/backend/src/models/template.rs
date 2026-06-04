@@ -57,3 +57,71 @@ pub struct RenderTemplateRequest {
     pub template_code: String,
     pub data: serde_json::Value,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTemplateStatusRequest {
+    pub status: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    #[test]
+    fn test_email_template_serialization() {
+        let template = EmailTemplate {
+            id: Uuid::new_v4(),
+            code: "welcome_email".to_string(),
+            name: "Welcome Email".to_string(),
+            description: Some("Welcome email for new users".to_string()),
+            subject_template: "Welcome, {{name}}!".to_string(),
+            body_template: "Dear {{name}}, welcome to our platform!".to_string(),
+            body_html_template: Some("<h1>Welcome, {{name}}!</h1>".to_string()),
+            category: "marketing".to_string(),
+            tags: Some(serde_json::json!(["welcome", "onboarding"])),
+            status: "active".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let json = serde_json::to_string(&template).unwrap();
+        let deserialized: EmailTemplate = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(template.id, deserialized.id);
+        assert_eq!(template.code, deserialized.code);
+        assert_eq!(template.name, deserialized.name);
+    }
+
+    #[test]
+    fn test_create_template_request_validation() {
+        let request = CreateTemplateRequest {
+            code: "test_template".to_string(),
+            name: "Test Template".to_string(),
+            description: None,
+            subject_template: "Subject: {{var}}".to_string(),
+            body_template: "Body: {{var}}".to_string(),
+            body_html_template: None,
+            category: Some("general".to_string()),
+            tags: None,
+        };
+
+        assert!(!request.code.is_empty());
+        assert!(!request.name.is_empty());
+        assert!(request.subject_template.contains("{{var}}"));
+    }
+
+    #[test]
+    fn test_render_template_request() {
+        let request = RenderTemplateRequest {
+            template_code: "welcome".to_string(),
+            data: serde_json::json!({
+                "name": "John",
+                "email": "john@example.com"
+            }),
+        };
+
+        assert_eq!(request.template_code, "welcome");
+        assert!(request.data.get("name").is_some());
+    }
+}
