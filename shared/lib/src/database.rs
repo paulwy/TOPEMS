@@ -6,21 +6,27 @@ use sqlx::PgPool;
 use tracing::info;
 
 pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
+    let search_path = std::env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
+    
     let options = PgPoolOptions::new()
         .max_connections(config.pool_max_size)
         .min_connections(config.pool_min_size)
-        .after_connect(|conn, _meta| Box::pin(async move {
-            tracing::info!("after_connect called for new connection");
-            let result = sqlx::query("SET search_path TO rs, erp, public")
-                .execute(conn)
-                .await;
-            tracing::info!("after_connect SET search_path result: {:?}", result);
-            result.map_err(|e| {
-                tracing::error!("Failed to set search path: {}", e);
-                e
-            })?;
-            Ok(())
-        }));
+        .after_connect(move |conn, _meta| {
+            let search_path = search_path.clone();
+            Box::pin(async move {
+                tracing::info!("after_connect called for new connection");
+                let query = format!("SET search_path TO {}", search_path);
+                let result = sqlx::query(&query)
+                    .execute(conn)
+                    .await;
+                tracing::info!("after_connect SET search_path result: {:?}", result);
+                result.map_err(|e| {
+                    tracing::error!("Failed to set search path: {}", e);
+                    e
+                })?;
+                Ok(())
+            })
+        });
 
     let pool = options
         .connect(&config.url)

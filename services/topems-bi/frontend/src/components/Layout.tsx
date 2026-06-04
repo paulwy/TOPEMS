@@ -1,10 +1,11 @@
-import { LayoutDashboard, BarChart3, PieChart, Settings, Menu, X } from 'lucide-react'
+import { LayoutDashboard, BarChart3, PieChart, Settings, Menu, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 
 interface LayoutProps {
   children: React.ReactNode
   currentPage: string
   onPageChange: (page: string) => void
+  onModuleSelect?: (moduleId: string) => void
 }
 
 const menuItems = [
@@ -14,8 +15,18 @@ const menuItems = [
   { id: 'reports', label: '报表管理', icon: BarChart3 },
 ]
 
-export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
+const modules = [
+  { id: 'development', label: '研发管理', icon: '🔬' },
+  { id: 'quality', label: '质量管理', icon: '✅' },
+  { id: 'production', label: '生产数据', icon: '🏭' },
+  { id: 'laboratory', label: '实验室', icon: '🧪' },
+  { id: 'ehs', label: '安全环保', icon: '🛡️' },
+  { id: 'srm', label: '供应链', icon: '📦' },
+]
+
+export function Layout({ children, currentPage, onPageChange, onModuleSelect }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [modulesOpen, setModulesOpen] = useState(false)
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -38,7 +49,7 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
           </div>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = currentPage === item.id
@@ -57,6 +68,40 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
               </button>
             )
           })}
+
+          {sidebarOpen && (
+            <div className="pt-4 border-t border-gray-100">
+              <button
+                onClick={() => setModulesOpen(!modulesOpen)}
+                className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">📊</span>
+                  <span>模块分析</span>
+                </div>
+                {modulesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+
+              {modulesOpen && (
+                <div className="mt-1 space-y-1 pl-4">
+                  {modules.map((module) => (
+                    <button
+                      key={module.id}
+                      onClick={() => onModuleSelect?.(module.id)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                        currentPage === 'module'
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                    >
+                      <span>{module.icon}</span>
+                      <span>{module.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         <div className="p-3 border-t border-gray-200">

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{FromRef, Path, Query, State},
+    extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
@@ -11,6 +11,8 @@ use uuid::Uuid;
 use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
 use crate::api::audit::log_audit_event;
 use crate::api::ApiState;
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{ApiResponse, api_error};
 
 #[derive(Debug, Deserialize)]
@@ -37,8 +39,13 @@ where
 
 async fn list_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<InventoryPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -104,9 +111,14 @@ async fn list_inventory(
 
 async fn create_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateInventoryItemRequest>,
 ) -> Json<ApiResponse<InventoryItem>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -177,8 +189,13 @@ async fn create_inventory(
 
 async fn get_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InventoryItem>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, InventoryItem>(
         r#"
         SELECT id, sku, name, specification, unit, quantity, location_id, warehouse_id, 
@@ -202,10 +219,15 @@ async fn get_inventory(
 
 async fn update_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateInventoryItemRequest>,
 ) -> Json<ApiResponse<InventoryItem>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
     
@@ -305,9 +327,14 @@ async fn update_inventory(
 
 async fn delete_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query("DELETE FROM inventory_items WHERE id = $1")
         .bind(id)
         .execute(&state.db)

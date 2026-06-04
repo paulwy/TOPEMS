@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ApiResponse, Chatroom, ChatMessage, ProjectGroup, Notification } from './types';
+import type { ApiResponse, Chatroom, ChatMessage, ProjectGroup, Notification } from '../types';
 
 const api = axios.create({
   baseURL: 'http://localhost:8014',
@@ -41,7 +41,7 @@ export const messageApi = {
   getByChatroom: async (chatroomId: string): Promise<ChatMessage[]> => {
     try {
       const response = await api.get<ApiResponse>(`/api/v1/chat-rooms/${chatroomId}/messages`);
-      return response.data.data?.messages || [];
+      return response.data.data?.chat_messages || [];
     } catch (error) {
       console.error('Failed to fetch messages:', error);
       return [];
@@ -55,6 +55,20 @@ export const messageApi = {
   
   markAsRead: async (messageId: string): Promise<void> => {
     await api.put(`/api/v1/chat-messages/${messageId}/read`);
+  },
+  
+  delete: async (messageId: string): Promise<void> => {
+    await api.delete(`/api/v1/chat-messages/${messageId}`);
+  },
+  
+  search: async (chatroomId: string, keyword: string): Promise<ChatMessage[]> => {
+    try {
+      const response = await api.get<ApiResponse>(`/api/v1/chat-rooms/${chatroomId}/messages/search?keyword=${keyword}`);
+      return response.data.data?.messages || [];
+    } catch (error) {
+      console.error('Failed to search messages:', error);
+      return [];
+    }
   },
 };
 

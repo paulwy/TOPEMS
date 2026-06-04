@@ -311,6 +311,73 @@ impl EmailService {
 
         Ok(result.rows_affected() > 0)
     }
+
+    pub async fn resend_emails(&self, email_ids: &[Uuid]) -> serde_json::Value {
+        let mut success_count = 0;
+        let mut fail_count = 0;
+        let mut failed_ids = Vec::new();
+
+        for &email_id in email_ids {
+            if let Some(email) = self.get_email(email_id).await {
+                match self.deliver_email(&email).await {
+                    Ok(_) => {
+                        let _ = self.update_email_status(email_id, "sent".to_string(), Some(Utc::now()), None).await;
+                        success_count += 1;
+                    }
+                    Err(e) => {
+                        let _ = self.update_email_status(email_id, "failed".to_string(), None, Some(e.to_string())).await;
+                        fail_count += 1;
+                        failed_ids.push(email_id.to_string());
+                    }
+                }
+            } else {
+                fail_count += 1;
+                failed_ids.push(email_id.to_string());
+            }
+        }
+
+        serde_json::json!({
+            "total": email_ids.len(),
+            "success": success_count,
+            "failed": fail_count,
+            "failed_ids": failed_ids,
+        })
+    }
+
+    pub async fn get_email_stats(&self) -> Result<serde_json::Value> {
+        let result = sqlx::query!(
+            r#"
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent_count,
+                SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_count,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+                MAX(created_at) as last_sent_at
+            FROM mail.emails
+            "#,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        let today_count = sqlx::query_scalar!(
+            r#"
+            SELECT COUNT(*) FROM mail.emails 
+            WHERE created_at >= CURRENT_DATE
+            "#,
+        )
+        .fetch_one(&self.pool)
+        .await?
+        .unwrap_or(0);
+
+        Ok(serde_json::json!({
+            "total": result.total.unwrap_or(0),
+            "sent_count": result.sent_count.unwrap_or(0),
+            "failed_count": result.failed_count.unwrap_or(0),
+            "pending_count": result.pending_count.unwrap_or(0),
+            "today_count": today_count,
+            "last_sent_at": result.last_sent_at,
+        }))
+    }
 }
 
 pub struct TemplateService {
@@ -574,6 +641,40 @@ impl TemplateService {
         .await?;
 
         Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn update_template_status(&self, id: Uuid, status: &str) -> Result<EmailTemplate> {
+        let now = Utc::now();
+
+        let result = sqlx::query!(
+            r#"
+            UPDATE mail.templates
+            SET status = $2, updated_at = $3
+            WHERE id = $1
+            RETURNING id, code, name, description, subject_template, body_template,
+                      body_html_template, category, tags, status, created_at, updated_at
+            "#,
+            id,
+            status,
+            now,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(EmailTemplate {
+            id: result.id,
+            code: result.code,
+            name: result.name,
+            description: result.description,
+            subject_template: result.subject_template,
+            body_template: result.body_template,
+            body_html_template: result.body_html_template,
+            category: result.category,
+            tags: result.tags,
+            status: result.status,
+            created_at: result.created_at.unwrap_or(now),
+            updated_at: result.updated_at.unwrap_or(now),
+        })
     }
 
     pub fn render_template(template: &EmailTemplate, data: &Value) -> (String, String, Option<String>) {

@@ -35,6 +35,7 @@ export interface ServicesConfig {
   scm: string;
   portal: string;
   mail: string;
+  pm: string;
 }
 
 export interface FeaturesConfig {
@@ -116,6 +117,7 @@ declare global {
     readonly VITE_ERP_SERVICE_URL: string;
     readonly VITE_NOTIFICATION_SERVICE_URL: string;
     readonly VITE_REPORT_SERVICE_URL: string;
+    readonly VITE_PM_SERVICE_URL: string;
     readonly VITE_ENABLE_DEBUG_MODE: string;
     readonly VITE_ENABLE_HOT_RELOAD: string;
     readonly VITE_ENABLE_API_DOCS: string;

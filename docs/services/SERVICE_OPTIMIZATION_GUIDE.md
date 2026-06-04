@@ -329,9 +329,11 @@ DB_POOL_MIN_SIZE=2
 DB_CONNECT_TIMEOUT=10
 DB_IDLE_TIMEOUT=300
 
-# JWT 认证配置
-JWT_SECRET=topems-jwt-secret
-JWT_REFRESH_SECRET=topems-refresh-secret
+# JWT 认证配置（⚠️ 生产环境必须设置强密钥）
+# JWT_SECRET 和 JWT_REFRESH_SECRET 必须至少 32 字符长度
+# 示例生成命令: openssl rand -base64 32
+JWT_SECRET=<your-secure-jwt-secret-at-least-32-characters>
+JWT_REFRESH_SECRET=<your-secure-refresh-secret-at-least-32-characters>
 JWT_EXPIRY_HOURS=24
 JWT_REFRESH_EXPIRY_DAYS=7
 

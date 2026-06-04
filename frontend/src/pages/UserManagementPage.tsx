@@ -142,6 +142,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       const res = await authApi.updateUser(selectedUser.id, {
         full_name: selectedUser.full_name || undefined,
         email: selectedUser.email,
+        is_active: selectedUser.is_active,
       });
       if (res.success) {
         addNotification({ title: '成功', message: '用户更新成功', type: 'success' });
@@ -482,6 +483,16 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
                     onChange={(e) => setSelectedUser({ ...selectedUser, full_name: e.target.value })}
                     placeholder='输入姓名'
                   />
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <input
+                    type='checkbox'
+                    id='edit-is_active'
+                    checked={selectedUser.is_active}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, is_active: e.target.checked })}
+                    className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                  />
+                  <Label htmlFor='edit-is_active'>启用账户</Label>
                 </div>
               </div>
               <DialogFooter className='mt-6'>

@@ -1,3 +1,18 @@
+# ==============================================================================
+# 生产环境 Docker Compose 配置
+# ==============================================================================
+#
+# 【重要】部署前必须设置以下环境变量：
+#   - JWT_SECRET: JWT 令牌签名密钥（必须设置为强密码）
+#   - REFRESH_SECRET: Refresh Token 签名密钥（必须设置为强密码）
+#   - DB_USER: 数据库用户名
+#   - DB_PASSWORD: 数据库密码（必须设置为强密码）
+#   - DB_NAME: 数据库名称
+#
+# 建议使用 .env 文件或环境变量管理工具设置这些变量。
+# 切勿在版本控制系统中提交包含敏感信息的 .env 文件。
+# ==============================================================================
+
 version: '3.8'
 
 services:
@@ -46,7 +61,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8002
       RUST_LOG: info
     networks:
@@ -67,7 +82,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8000
       RUST_LOG: info
     networks:
@@ -108,7 +123,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8003
       RUST_LOG: info
     networks:
@@ -129,7 +144,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8001
       RUST_LOG: info
     networks:
@@ -150,7 +165,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8004
       RUST_LOG: info
     networks:
@@ -171,7 +186,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8005
       RUST_LOG: info
     networks:
@@ -192,7 +207,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8006
       RUST_LOG: info
     networks:
@@ -213,7 +228,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8007
       RUST_LOG: info
     networks:
@@ -234,7 +249,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8008
       RUST_LOG: info
     networks:
@@ -255,7 +270,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8009
       RUST_LOG: info
     networks:
@@ -276,7 +291,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8010
       RUST_LOG: info
     networks:
@@ -297,7 +312,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8011
       RUST_LOG: info
     networks:
@@ -318,7 +333,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8012
       RUST_LOG: info
     networks:
@@ -339,7 +354,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8013
       RUST_LOG: info
     networks:
@@ -360,7 +375,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8014
       RUST_LOG: info
     networks:
@@ -381,7 +396,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8015
       RUST_LOG: info
     networks:
@@ -402,7 +417,7 @@ services:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 8016
       RUST_LOG: info
     networks:

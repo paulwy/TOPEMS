@@ -18,7 +18,7 @@ pub struct Contact {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateContactRequest {
     pub customer_id: Option<Uuid>,
     pub first_name: String,
@@ -29,7 +29,7 @@ pub struct CreateContactRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateContactRequest {
     pub customer_id: Option<Uuid>,
     pub first_name: Option<String>,

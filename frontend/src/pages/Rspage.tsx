@@ -26,7 +26,7 @@ import {
   formulaApi,
   Project,
   CreateProjectRequest,
-  ExperimentRecord,
+  Experiment,
   CreateExperimentRequest,
   UpdateExperimentRequest,
   Formula,
@@ -42,7 +42,7 @@ const Rspage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'projects' | 'experiments' | 'formulas'>('projects');
   const [projects, setProjects] = useState<Project[]>([]);
-  const [experiments, setExperiments] = useState<ExperimentRecord[]>([]);
+  const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [formulas, setFormulas] = useState<Formula[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceStatuses, setServiceStatuses] = useState<{ [key: string]: boolean }>({
@@ -91,13 +91,16 @@ const Rspage: React.FC = () => {
   const [showFormulaDetailModal, setShowFormulaDetailModal] = useState(false);
   const [showFormulaVersionModal, setShowFormulaVersionModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [selectedExperiment, setSelectedExperiment] = useState<ExperimentRecord | null>(null);
+  const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
   const [selectedFormula, setSelectedFormula] = useState<Formula | null>(null);
   const [formulaVersions, setFormulaVersions] = useState<FormulaVersion[]>([]);
   const [formData, setFormData] = useState<CreateProjectRequest>({
     name: '',
+    code: '',
     description: '',
-    status: '立项',
+    project_type: '研发',
+    leader: '',
+    start_date: new Date().toISOString().split('T')[0],
   });
   const [formulaFormData, setFormulaFormData] = useState<CreateFormulaRequest>({
     project_id: '',
@@ -118,14 +121,15 @@ const Rspage: React.FC = () => {
   });
   const [experimentFormData, setExperimentFormData] = useState<CreateExperimentRequest>({
     project_id: '',
-    title: '',
-    description: '',
+    name: '',
+    code: '',
     experiment_type: '小试',
-    result: '',
-    status: '待开始',
+    phase: '小试',
+    objective: '',
+    method: '',
     experimenter: '',
   });
-  const [editingExperiment, setEditingExperiment] = useState<ExperimentRecord | null>(null);
+  const [editingExperiment, setEditingExperiment] = useState<Experiment | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingExperiment, setIsEditingExperiment] = useState(false);
   const [isEditingFormula, setIsEditingFormula] = useState(false);
@@ -137,7 +141,14 @@ const Rspage: React.FC = () => {
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
   const [showBatchCreateModal, setShowBatchCreateModal] = useState(false);
   const [batchCreateData, setBatchCreateData] = useState<CreateProjectRequest[]>([
-    { name: '', description: '', status: '立项' },
+    {
+      name: '',
+      code: '',
+      description: '',
+      project_type: '研发',
+      leader: '',
+      start_date: new Date().toISOString().split('T')[0],
+    },
   ]);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -150,6 +161,12 @@ const Rspage: React.FC = () => {
         if (value.length < 2) return '项目名称至少需要2个字符';
         if (value.length > 100) return '项目名称不能超过100个字符';
         return null;
+      case 'code':
+        if (!value.trim()) return '项目编号不能为空';
+        return null;
+      case 'leader':
+        if (!value.trim()) return '负责人不能为空';
+        return null;
       case 'description':
         if (value.length > 1000) return '描述不能超过1000个字符';
         return null;
@@ -160,10 +177,13 @@ const Rspage: React.FC = () => {
 
   const validateExperimentField = (field: string, value: string): string | null => {
     switch (field) {
-      case 'title':
-        if (!value.trim()) return '试验标题不能为空';
-        if (value.length < 2) return '试验标题至少需要2个字符';
-        if (value.length > 200) return '试验标题不能超过200个字符';
+      case 'name':
+        if (!value.trim()) return '试验名称不能为空';
+        if (value.length < 2) return '试验名称至少需要2个字符';
+        if (value.length > 200) return '试验名称不能超过200个字符';
+        return null;
+      case 'code':
+        if (!value.trim()) return '试验编号不能为空';
         return null;
       case 'project_id':
         if (!value) return '请选择关联项目';
@@ -171,11 +191,8 @@ const Rspage: React.FC = () => {
       case 'experimenter':
         if (value.length > 50) return '试验员姓名不能超过50个字符';
         return null;
-      case 'description':
-        if (value.length > 2000) return '描述不能超过2000个字符';
-        return null;
-      case 'result':
-        if (value.length > 5000) return '结果不能超过5000个字符';
+      case 'objective':
+        if (value.length > 2000) return '目标不能超过2000个字符';
         return null;
       default:
         return null;
@@ -247,7 +264,15 @@ const Rspage: React.FC = () => {
       errors.name = '项目名称不能超过100个字符';
     }
 
-    if (formData.description.length > 1000) {
+    if (!formData.code.trim()) {
+      errors.code = '项目编号不能为空';
+    }
+
+    if (!formData.leader.trim()) {
+      errors.leader = '负责人不能为空';
+    }
+
+    if (formData.description && formData.description.length > 1000) {
       errors.description = '描述不能超过1000个字符';
     }
 
@@ -258,19 +283,23 @@ const Rspage: React.FC = () => {
   const validateExperimentForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!experimentFormData.title.trim()) {
-      errors.title = '试验标题不能为空';
-    } else if (experimentFormData.title.length < 2) {
-      errors.title = '试验标题至少需要2个字符';
-    } else if (experimentFormData.title.length > 200) {
-      errors.title = '试验标题不能超过200个字符';
+    if (!experimentFormData.name.trim()) {
+      errors.name = '试验名称不能为空';
+    } else if (experimentFormData.name.length < 2) {
+      errors.name = '试验名称至少需要2个字符';
+    } else if (experimentFormData.name.length > 200) {
+      errors.name = '试验名称不能超过200个字符';
+    }
+
+    if (!experimentFormData.code.trim()) {
+      errors.code = '试验编号不能为空';
     }
 
     if (!experimentFormData.project_id) {
       errors.project_id = '请选择关联项目';
     }
 
-    if (experimentFormData.experimenter.length > 50) {
+    if (experimentFormData.experimenter && experimentFormData.experimenter.length > 50) {
       errors.experimenter = '试验员姓名不能超过50个字符';
     }
 
@@ -296,15 +325,11 @@ const Rspage: React.FC = () => {
     };
   };
 
-  const adaptExperiment = (e: any): ExperimentRecord => {
+  const adaptExperiment = (e: any): Experiment => {
     return {
       ...e,
-      // 将 name 映射到 title（兼容两种字段名）
-      title: e.title || e.name,
-      // 将 conclusions 映射到 conclusion（兼容两种字段名）
-      conclusion: e.conclusion || e.conclusions,
-      // 确保 experiment_date 存在
-      experiment_date: e.experiment_date || e.started_at || e.created_at,
+      // 确保 started_at 存在
+      started_at: e.started_at || e.created_at,
     };
   };
 
@@ -404,7 +429,14 @@ const Rspage: React.FC = () => {
       if (response.success) {
         showNotification('success', '项目创建成功');
         setShowModal(false);
-        setFormData({ name: '', description: '', status: '立项' });
+        setFormData({
+          name: '',
+          code: '',
+          description: '',
+          project_type: '研发',
+          leader: '',
+          start_date: new Date().toISOString().split('T')[0],
+        });
         setProjectErrors({});
         loadProjects();
       } else {
@@ -448,7 +480,14 @@ const Rspage: React.FC = () => {
         showNotification('success', '项目更新成功');
         setShowModal(false);
         setIsEditing(false);
-        setFormData({ name: '', description: '', status: '立项' });
+        setFormData({
+          name: '',
+          code: '',
+          description: '',
+          project_type: '研发',
+          leader: '',
+          start_date: new Date().toISOString().split('T')[0],
+        });
         setProjectErrors({});
         loadProjects();
       } else {
@@ -466,8 +505,21 @@ const Rspage: React.FC = () => {
     setSelectedProject(project);
     setFormData({
       name: project.name,
+      code: project.code,
       description: project.description,
-      status: project.status,
+      project_type: project.project_type,
+      leader: project.leader,
+      team_members: project.team_members,
+      start_date: project.start_date.split('T')[0],
+      end_date: project.end_date?.split('T')[0],
+      budget: project.budget,
+      project_config: project.project_config,
+      benefit_target: project.benefit_target,
+      risk_level: project.risk_level,
+      priority: project.priority,
+      tags: project.tags,
+      parent_id: project.parent_id,
+      workspace_id: project.workspace_id,
     });
     setIsEditing(true);
     setShowModal(true);
@@ -481,11 +533,12 @@ const Rspage: React.FC = () => {
   const openExperimentModal = (project?: Project) => {
     setExperimentFormData({
       project_id: project?.id || '',
-      title: '',
-      description: '',
+      name: '',
+      code: '',
       experiment_type: '小试',
-      result: '',
-      status: '待开始',
+      phase: '小试',
+      objective: '',
+      method: '',
       experimenter: '',
     });
     setEditingExperiment(null);
@@ -493,22 +546,27 @@ const Rspage: React.FC = () => {
     setShowExperimentModal(true);
   };
 
-  const openEditExperimentModal = (experiment: ExperimentRecord) => {
+  const openEditExperimentModal = (experiment: Experiment) => {
     setEditingExperiment(experiment);
     setExperimentFormData({
       project_id: experiment.project_id,
-      title: experiment.title,
-      description: experiment.description,
+      name: experiment.name,
+      code: experiment.code,
+      formula_id: experiment.formula_id,
       experiment_type: experiment.experiment_type,
-      result: experiment.result,
-      status: experiment.status,
+      phase: experiment.phase,
+      objective: experiment.objective,
+      method: experiment.method,
       experimenter: experiment.experimenter,
+      batch_number: experiment.batch_number,
+      scale: experiment.scale,
+      scale_unit: experiment.scale_unit,
     });
     setIsEditingExperiment(true);
     setShowExperimentModal(true);
   };
 
-  const openExperimentDetailModal = (experiment: ExperimentRecord) => {
+  const openExperimentDetailModal = (experiment: Experiment) => {
     setSelectedExperiment(experiment);
     setShowExperimentDetailModal(true);
   };
@@ -549,12 +607,14 @@ const Rspage: React.FC = () => {
     try {
       setCreating(true);
       const updateData: UpdateExperimentRequest = {
-        title: experimentFormData.title,
-        description: experimentFormData.description,
-        experiment_type: experimentFormData.experiment_type,
-        result: experimentFormData.result,
-        status: experimentFormData.status,
-        experimenter: experimentFormData.experimenter,
+        name: experimentFormData.name,
+        status: editingExperiment.status,
+        results: editingExperiment.results,
+        conclusions: editingExperiment.conclusions,
+        completed_at: editingExperiment.completed_at,
+        batch_number: experimentFormData.batch_number,
+        scale: experimentFormData.scale,
+        scale_unit: experimentFormData.scale_unit,
       };
       const response = await rsApi.updateExperiment(editingExperiment.id, updateData);
       if (response.success) {
@@ -811,8 +871,8 @@ const Rspage: React.FC = () => {
 
   const filteredExperiments = safeExperiments.filter(
     (e) =>
-      (e.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (e.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (e.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (e.objective || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (e.experimenter || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -863,7 +923,17 @@ const Rspage: React.FC = () => {
   };
 
   const addBatchCreateItem = () => {
-    setBatchCreateData((prev) => [...prev, { name: '', description: '', status: '立项' }]);
+    setBatchCreateData((prev) => [
+      ...prev,
+      {
+        name: '',
+        code: '',
+        description: '',
+        project_type: '研发',
+        leader: '',
+        start_date: new Date().toISOString().split('T')[0],
+      },
+    ]);
   };
 
   const removeBatchCreateItem = (index: number) => {
@@ -879,9 +949,11 @@ const Rspage: React.FC = () => {
   };
 
   const handleBatchCreate = async () => {
-    const validProjects = batchCreateData.filter((item) => item.name.trim() !== '');
+    const validProjects = batchCreateData.filter(
+      (item) => item.name.trim() !== '' && item.code.trim() !== '' && item.leader.trim() !== ''
+    );
     if (validProjects.length === 0) {
-      showNotification('error', '请至少填写一个项目的名称');
+      showNotification('error', '请至少填写一个项目的名称、编号和负责人');
       return;
     }
 
@@ -893,7 +965,16 @@ const Rspage: React.FC = () => {
         const result = response.data!;
         showNotification('success', `批量创建完成：成功 ${result.success} 个，失败 ${result.failed} 个`);
         setShowBatchCreateModal(false);
-        setBatchCreateData([{ name: '', description: '', status: '立项' }]);
+        setBatchCreateData([
+          {
+            name: '',
+            code: '',
+            description: '',
+            project_type: '研发',
+            leader: '',
+            start_date: new Date().toISOString().split('T')[0],
+          },
+        ]);
         loadProjects();
       } else {
         showNotification('error', response.message || '批量创建失败');
@@ -945,8 +1026,8 @@ const Rspage: React.FC = () => {
   };
 
   const downloadTemplate = () => {
-    const headers = ['name', 'description', 'status'];
-    const sampleRow = ['项目1', '项目描述', '立项'];
+    const headers = ['name', 'code', 'leader', 'project_type', 'description', 'status'];
+    const sampleRow = ['项目1', 'PRJ001', '张三', '研发', '项目描述', '立项'];
     const content = [headers, sampleRow].map((row) => row.join(',')).join('\n');
 
     const blob = new Blob([content], { type: 'text/csv' });
@@ -1060,7 +1141,10 @@ const Rspage: React.FC = () => {
   };
 
   const projectColumns: ColumnDef<Project>[] = [
+    { accessorKey: 'code', header: '项目编号' },
     { accessorKey: 'name', header: '项目名称' },
+    { accessorKey: 'leader', header: '负责人' },
+    { accessorKey: 'project_type', header: '项目类型' },
     {
       accessorKey: 'status',
       header: '状态',
@@ -1101,8 +1185,10 @@ const Rspage: React.FC = () => {
     },
   ];
 
-  const experimentColumns: ColumnDef<ExperimentRecord>[] = [
-    { accessorKey: 'title', header: '试验标题' },
+  const experimentColumns: ColumnDef<Experiment>[] = [
+    { accessorKey: 'code', header: '试验编号' },
+    { accessorKey: 'name', header: '试验名称' },
+    { accessorKey: 'phase', header: '阶段' },
     {
       accessorKey: 'experiment_type',
       header: '类型',
@@ -1125,9 +1211,9 @@ const Rspage: React.FC = () => {
     },
     { accessorKey: 'experimenter', header: '试验员' },
     {
-      accessorKey: 'experiment_date',
-      header: '日期',
-      cell: ({ row }) => <span>{new Date(row.original.experiment_date).toLocaleDateString('zh-CN')}</span>,
+      accessorKey: 'started_at',
+      header: '开始日期',
+      cell: ({ row }) => <span>{new Date(row.original.started_at).toLocaleDateString('zh-CN')}</span>,
     },
     {
       id: 'actions',
@@ -1613,7 +1699,7 @@ const Rspage: React.FC = () => {
                     <div className='flex items-start justify-between'>
                       <div className='flex-1'>
                         <div className='flex items-center space-x-3 mb-2'>
-                          <h3 className='text-lg font-semibold text-slate-900'>{experiment.title}</h3>
+                          <h3 className='text-lg font-semibold text-slate-900'>{experiment.name}</h3>
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(experiment.status)}`}
                           >
@@ -1625,19 +1711,21 @@ const Rspage: React.FC = () => {
                             {experiment.experiment_type}
                           </span>
                         </div>
-                        <p className='text-slate-600 mb-2'>{experiment.description}</p>
-                        <p className='text-sm text-slate-700 mb-3'>结果: {experiment.result}</p>
+                        <p className='text-slate-600 mb-2'>目标: {experiment.objective}</p>
+                        {experiment.results && (
+                          <p className='text-sm text-slate-700 mb-3'>结果: {String(experiment.results)}</p>
+                        )}
                         <div className='flex items-center space-x-4 text-sm text-slate-500'>
                           <span className='flex items-center'>
                             <Clock className='w-4 h-4 mr-1' />
-                            试验日期: {new Date(experiment.experiment_date).toLocaleDateString('zh-CN')}
+                            开始日期: {new Date(experiment.started_at).toLocaleDateString('zh-CN')}
                           </span>
                           <span>试验员: {experiment.experimenter}</span>
                           <span>项目: {getProjectName(experiment.project_id)}</span>
                         </div>
-                        {experiment.conclusion && (
+                        {experiment.conclusions && (
                           <div className='mt-3 p-3 bg-green-50 rounded-lg'>
-                            <p className='text-sm font-medium text-green-800'>结论: {experiment.conclusion}</p>
+                            <p className='text-sm font-medium text-green-800'>结论: {experiment.conclusions}</p>
                           </div>
                         )}
                       </div>
@@ -1810,6 +1898,62 @@ const Rspage: React.FC = () => {
                 <FieldError error={projectErrors.name && touched.project_name ? projectErrors.name : undefined} />
               </div>
               <div>
+                <label className='block text-sm font-medium text-slate-700 mb-2'>项目编号 *</label>
+                <input
+                  type='text'
+                  value={formData.code}
+                  onChange={(e) => {
+                    setFormData({ ...formData, code: e.target.value });
+                    handleProjectFieldChange('code', e.target.value);
+                  }}
+                  onBlur={(e) => handleProjectFieldBlur('code', e.target.value)}
+                  placeholder='请输入项目编号'
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                    projectErrors.code && touched.project_code ? 'border-red-500' : 'border-slate-200'
+                  }`}
+                />
+                <FieldError error={projectErrors.code && touched.project_code ? projectErrors.code : undefined} />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-slate-700 mb-2'>负责人 *</label>
+                <input
+                  type='text'
+                  value={formData.leader}
+                  onChange={(e) => {
+                    setFormData({ ...formData, leader: e.target.value });
+                    handleProjectFieldChange('leader', e.target.value);
+                  }}
+                  onBlur={(e) => handleProjectFieldBlur('leader', e.target.value)}
+                  placeholder='请输入负责人'
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                    projectErrors.leader && touched.project_leader ? 'border-red-500' : 'border-slate-200'
+                  }`}
+                />
+                <FieldError error={projectErrors.leader && touched.project_leader ? projectErrors.leader : undefined} />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-slate-700 mb-2'>项目类型</label>
+                <select
+                  value={formData.project_type}
+                  onChange={(e) => setFormData({ ...formData, project_type: e.target.value })}
+                  className='w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'
+                >
+                  <option value='研发'>研发</option>
+                  <option value='改进'>改进</option>
+                  <option value='测试'>测试</option>
+                  <option value='其他'>其他</option>
+                </select>
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-slate-700 mb-2'>开始日期</label>
+                <input
+                  type='date'
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  className='w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'
+                />
+              </div>
+              <div>
                 <label className='block text-sm font-medium text-slate-700 mb-2'>项目描述</label>
                 <textarea
                   value={formData.description}
@@ -1829,19 +1973,6 @@ const Rspage: React.FC = () => {
                     projectErrors.description && touched.project_description ? projectErrors.description : undefined
                   }
                 />
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-slate-700 mb-2'>项目状态</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className='w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'
-                >
-                  <option value='立项'>立项</option>
-                  <option value='进行中'>进行中</option>
-                  <option value='已完成'>已完成</option>
-                  <option value='已终止'>已终止</option>
-                </select>
               </div>
             </div>
             <div className='p-6 border-t border-slate-200 flex justify-end space-x-3'>
@@ -1994,22 +2125,41 @@ const Rspage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium text-slate-700 mb-2'>试验标题 *</label>
+                <label className='block text-sm font-medium text-slate-700 mb-2'>试验名称 *</label>
                 <input
                   type='text'
-                  value={experimentFormData.title}
+                  value={experimentFormData.name}
                   onChange={(e) => {
-                    setExperimentFormData({ ...experimentFormData, title: e.target.value });
-                    handleExperimentFieldChange('title', e.target.value);
+                    setExperimentFormData({ ...experimentFormData, name: e.target.value });
+                    handleExperimentFieldChange('name', e.target.value);
                   }}
-                  onBlur={(e) => handleExperimentFieldBlur('title', e.target.value)}
-                  placeholder='请输入试验标题'
+                  onBlur={(e) => handleExperimentFieldBlur('name', e.target.value)}
+                  placeholder='请输入试验名称'
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    experimentErrors.title && touched.experiment_title ? 'border-red-500' : 'border-slate-200'
+                    experimentErrors.name && touched.experiment_name ? 'border-red-500' : 'border-slate-200'
                   }`}
                 />
                 <FieldError
-                  error={experimentErrors.title && touched.experiment_title ? experimentErrors.title : undefined}
+                  error={experimentErrors.name && touched.experiment_name ? experimentErrors.name : undefined}
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-slate-700 mb-2'>试验编号 *</label>
+                <input
+                  type='text'
+                  value={experimentFormData.code}
+                  onChange={(e) => {
+                    setExperimentFormData({ ...experimentFormData, code: e.target.value });
+                    handleExperimentFieldChange('code', e.target.value);
+                  }}
+                  onBlur={(e) => handleExperimentFieldBlur('code', e.target.value)}
+                  placeholder='请输入试验编号'
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                    experimentErrors.code && touched.experiment_code ? 'border-red-500' : 'border-slate-200'
+                  }`}
+                />
+                <FieldError
+                  error={experimentErrors.code && touched.experiment_code ? experimentErrors.code : undefined}
                 />
               </div>
               <div>
@@ -2025,16 +2175,15 @@ const Rspage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className='block text-sm font-medium text-slate-700 mb-2'>试验状态</label>
+                <label className='block text-sm font-medium text-slate-700 mb-2'>试验阶段</label>
                 <select
-                  value={experimentFormData.status}
-                  onChange={(e) => setExperimentFormData({ ...experimentFormData, status: e.target.value })}
+                  value={experimentFormData.phase}
+                  onChange={(e) => setExperimentFormData({ ...experimentFormData, phase: e.target.value })}
                   className='w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'
                 >
-                  <option value='待开始'>待开始</option>
-                  <option value='进行中'>进行中</option>
-                  <option value='已完成'>已完成</option>
-                  <option value='已终止'>已终止</option>
+                  <option value='小试'>小试</option>
+                  <option value='中试'>中试</option>
+                  <option value='量产'>量产</option>
                 </select>
               </div>
               <div>
@@ -2063,47 +2212,43 @@ const Rspage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium text-slate-700 mb-2'>试验描述</label>
+                <label className='block text-sm font-medium text-slate-700 mb-2'>试验目标</label>
                 <textarea
-                  value={experimentFormData.description}
+                  value={experimentFormData.objective}
                   onChange={(e) => {
-                    setExperimentFormData({ ...experimentFormData, description: e.target.value });
-                    handleExperimentFieldChange('description', e.target.value);
+                    setExperimentFormData({ ...experimentFormData, objective: e.target.value });
+                    handleExperimentFieldChange('objective', e.target.value);
                   }}
-                  onBlur={(e) => handleExperimentFieldBlur('description', e.target.value)}
-                  placeholder='请输入试验描述'
+                  onBlur={(e) => handleExperimentFieldBlur('objective', e.target.value)}
+                  placeholder='请输入试验目标'
                   rows={3}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    experimentErrors.description && touched.experiment_description
-                      ? 'border-red-500'
-                      : 'border-slate-200'
+                    experimentErrors.objective && touched.experiment_objective ? 'border-red-500' : 'border-slate-200'
                   }`}
                 />
                 <FieldError
                   error={
-                    experimentErrors.description && touched.experiment_description
-                      ? experimentErrors.description
-                      : undefined
+                    experimentErrors.objective && touched.experiment_objective ? experimentErrors.objective : undefined
                   }
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium text-slate-700 mb-2'>试验结果</label>
+                <label className='block text-sm font-medium text-slate-700 mb-2'>试验方法</label>
                 <textarea
-                  value={experimentFormData.result}
+                  value={experimentFormData.method}
                   onChange={(e) => {
-                    setExperimentFormData({ ...experimentFormData, result: e.target.value });
-                    handleExperimentFieldChange('result', e.target.value);
+                    setExperimentFormData({ ...experimentFormData, method: e.target.value });
+                    handleExperimentFieldChange('method', e.target.value);
                   }}
-                  onBlur={(e) => handleExperimentFieldBlur('result', e.target.value)}
-                  placeholder='请输入试验结果'
+                  onBlur={(e) => handleExperimentFieldBlur('method', e.target.value)}
+                  placeholder='请输入试验方法'
                   rows={4}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    experimentErrors.result && touched.experiment_result ? 'border-red-500' : 'border-slate-200'
+                    experimentErrors.method && touched.experiment_method ? 'border-red-500' : 'border-slate-200'
                   }`}
                 />
                 <FieldError
-                  error={experimentErrors.result && touched.experiment_result ? experimentErrors.result : undefined}
+                  error={experimentErrors.method && touched.experiment_method ? experimentErrors.method : undefined}
                 />
               </div>
             </div>
@@ -2156,7 +2301,7 @@ const Rspage: React.FC = () => {
               <div className='space-y-6'>
                 <div>
                   <div className='flex items-center justify-between mb-4'>
-                    <h4 className='text-lg font-semibold text-slate-800'>{selectedExperiment.title}</h4>
+                    <h4 className='text-lg font-semibold text-slate-800'>{selectedExperiment.name}</h4>
                     <div className='flex space-x-2'>
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedExperiment.status)}`}
@@ -2170,34 +2315,41 @@ const Rspage: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  <p className='text-slate-600 mb-3'>{selectedExperiment.description}</p>
+                  <p className='text-slate-600 mb-3'>目标: {selectedExperiment.objective}</p>
                 </div>
 
                 <div className='p-4 bg-slate-50 rounded-lg'>
-                  <h5 className='font-semibold text-slate-800 mb-2'>试验结果</h5>
-                  <p className='text-slate-700'>{selectedExperiment.result}</p>
+                  <h5 className='font-semibold text-slate-800 mb-2'>试验方法</h5>
+                  <p className='text-slate-700'>{selectedExperiment.method}</p>
                 </div>
 
-                {selectedExperiment.conclusion && (
+                {selectedExperiment.results && (
+                  <div className='p-4 bg-blue-50 rounded-lg'>
+                    <h5 className='font-semibold text-blue-800 mb-2'>试验结果</h5>
+                    <p className='text-blue-700'>{String(selectedExperiment.results)}</p>
+                  </div>
+                )}
+
+                {selectedExperiment.conclusions && (
                   <div className='p-4 bg-green-50 rounded-lg'>
                     <h5 className='font-semibold text-green-800 mb-2'>试验结论</h5>
-                    <p className='text-green-700'>{selectedExperiment.conclusion}</p>
+                    <p className='text-green-700'>{selectedExperiment.conclusions}</p>
                   </div>
                 )}
 
                 <div className='grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg'>
                   <div>
                     <p className='text-sm text-slate-500 mb-1'>试验编号</p>
-                    <p className='font-medium text-slate-800 font-mono text-sm'>{selectedExperiment.id}</p>
+                    <p className='font-medium text-slate-800 font-mono text-sm'>{selectedExperiment.code}</p>
                   </div>
                   <div>
                     <p className='text-sm text-slate-500 mb-1'>关联项目</p>
                     <p className='font-medium text-slate-800'>{getProjectName(selectedExperiment.project_id)}</p>
                   </div>
                   <div>
-                    <p className='text-sm text-slate-500 mb-1'>试验日期</p>
+                    <p className='text-sm text-slate-500 mb-1'>开始日期</p>
                     <p className='font-medium text-slate-800'>
-                      {new Date(selectedExperiment.experiment_date).toLocaleDateString('zh-CN')}
+                      {new Date(selectedExperiment.started_at).toLocaleDateString('zh-CN')}
                     </p>
                   </div>
                   <div>
@@ -2250,7 +2402,7 @@ const Rspage: React.FC = () => {
               <button
                 onClick={() => {
                   setShowBatchCreateModal(false);
-                  setBatchCreateData([{ name: '', description: '', status: '立项' }]);
+                  setBatchCreateData([{ name: '', code: '', description: '', project_type: '研发', leader: '', start_date: new Date().toISOString().split('T')[0] }]);
                 }}
                 className='p-2 text-slate-400 hover:text-slate-600'
               >
@@ -2283,17 +2435,46 @@ const Rspage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className='block text-sm font-medium text-slate-700 mb-2'>项目状态</label>
+                      <label className='block text-sm font-medium text-slate-700 mb-2'>项目编号 *</label>
+                      <input
+                        type='text'
+                        value={item.code}
+                        onChange={(e) => updateBatchCreateItem(index, 'code', e.target.value)}
+                        placeholder='请输入项目编号'
+                        className='w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-slate-700 mb-2'>负责人 *</label>
+                      <input
+                        type='text'
+                        value={item.leader}
+                        onChange={(e) => updateBatchCreateItem(index, 'leader', e.target.value)}
+                        placeholder='请输入负责人'
+                        className='w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-slate-700 mb-2'>项目类型</label>
                       <select
-                        value={item.status}
-                        onChange={(e) => updateBatchCreateItem(index, 'status', e.target.value)}
+                        value={item.project_type}
+                        onChange={(e) => updateBatchCreateItem(index, 'project_type', e.target.value)}
                         className='w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'
                       >
-                        <option value='立项'>立项</option>
-                        <option value='进行中'>进行中</option>
-                        <option value='已完成'>已完成</option>
-                        <option value='已终止'>已终止</option>
+                        <option value='研发'>研发</option>
+                        <option value='改进'>改进</option>
+                        <option value='测试'>测试</option>
+                        <option value='其他'>其他</option>
                       </select>
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-slate-700 mb-2'>开始日期</label>
+                      <input
+                        type='date'
+                        value={item.start_date}
+                        onChange={(e) => updateBatchCreateItem(index, 'start_date', e.target.value)}
+                        className='w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'
+                      />
                     </div>
                     <div>
                       <label className='block text-sm font-medium text-slate-700 mb-2'>项目描述</label>
@@ -2320,7 +2501,16 @@ const Rspage: React.FC = () => {
               <button
                 onClick={() => {
                   setShowBatchCreateModal(false);
-                  setBatchCreateData([{ name: '', description: '', status: '立项' }]);
+                  setBatchCreateData([
+                    {
+                      name: '',
+                      code: '',
+                      description: '',
+                      project_type: '研发',
+                      leader: '',
+                      start_date: new Date().toISOString().split('T')[0],
+                    },
+                  ]);
                 }}
                 className='px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors'
               >

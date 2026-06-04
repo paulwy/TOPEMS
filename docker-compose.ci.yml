@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: topems-postgres-ci
+    environment:
+      POSTGRES_USER: topems
+      POSTGRES_PASSWORD: topems_secret
+      POSTGRES_DB: topems_test
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U topems"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: topems-redis-ci
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  topems-iam:
+    build:
+      context: ./platform/topems-iam/backend
+      dockerfile: Dockerfile
+    container_name: topems-iam-ci
+    environment:
+      DATABASE_URL: postgres://topems:topems_secret@postgres:5432/topems_test
+      REDIS_URL: redis://redis:6379
+      # JWT_SECRET: 测试密钥,仅用于CI环境,不用于生产环境
+      JWT_SECRET: test_jwt_secret_key_for_ci_testing
+      PORT: 8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  topems-rs:
+    build:
+      context: ./services/topems-rs/backend
+      dockerfile: Dockerfile
+    container_name: topems-rs-ci
+    environment:
+      DATABASE_URL: postgres://topems:topems_secret@postgres:5432/topems_test
+      REDIS_URL: redis://redis:6379
+      IAM_URL: http://topems-iam:8002
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      topems-iam:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local

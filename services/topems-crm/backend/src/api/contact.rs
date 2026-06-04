@@ -1,18 +1,21 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, Extension},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
+use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::{ApiResponse, api_error};
-use crate::models::{CreateContactRequest, Contact, UpdateContactRequest};
+use topems_shared::auth::Claims;
+use crate::models::{Contact, CreateContactRequest, UpdateContactRequest};
 use crate::api::audit::log_audit_event;
+use crate::services::permission::{check_permission, ModulePermission};
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct ContactPaginationParams {
@@ -23,21 +26,31 @@ pub struct ContactPaginationParams {
     pub customer_id: Option<Uuid>,
 }
 
-pub async fn create_routes() -> Result<Router> {
-    let app = Router::new()
+#[derive(Debug, Deserialize)]
+pub struct BatchDeleteRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/contacts", get(list_contacts).post(create_contact))
+        .route("/api/v1/contacts/batch-delete", post(batch_delete_contacts))
         .route(
             "/api/v1/contacts/{id}",
             get(get_contact).put(update_contact).delete(delete_contact),
-        );
-
-    Ok(app)
+        )
 }
 
 async fn list_contacts(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ContactPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -62,7 +75,7 @@ async fn list_contacts(
     .bind(&customer_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     match result {
@@ -78,14 +91,14 @@ async fn list_contacts(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&customer_filter)
-            .fetch_one(&pool)
+            .fetch_one(&state.db)
             .await;
 
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "contacts": contacts,
+                    "items": contacts,
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -101,10 +114,16 @@ async fn list_contacts(
 }
 
 async fn create_contact(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     if req.first_name.is_empty() {
         return Json(api_error(400, "联系人名字不能为空"));
     }
@@ -130,7 +149,7 @@ async fn create_contact(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -157,7 +176,7 @@ async fn create_contact(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "create".to_string(),
         "contact".to_string(),
         Some(id),
@@ -176,9 +195,15 @@ async fn create_contact(
 }
 
 async fn get_contact(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contact>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
@@ -186,7 +211,7 @@ async fn get_contact(
         "#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     match result {
@@ -200,18 +225,24 @@ async fn get_contact(
 }
 
 async fn update_contact(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let existing = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at FROM contacts WHERE id = $1
         "#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     let existing = match existing {
@@ -235,7 +266,7 @@ async fn update_contact(
     let result = sqlx::query_as::<_, Contact>(
         r#"
         UPDATE contacts SET
-            first_name = $2, last_name = $3, email = $4, phone = $5, position = $6, 
+            first_name = $2, last_name = $3, email = $4, phone = $5, position = $6,
             customer_id = $7, status = $8, notes = $9, updated_at = $10
         WHERE id = $1
         RETURNING id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
@@ -251,7 +282,7 @@ async fn update_contact(
     .bind(&status)
     .bind(&notes)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -277,7 +308,7 @@ async fn update_contact(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "update".to_string(),
         "contact".to_string(),
         Some(id),
@@ -296,13 +327,19 @@ async fn update_contact(
 }
 
 async fn delete_contact(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let result = sqlx::query("DELETE FROM contacts WHERE id = $1")
         .bind(id)
-        .execute(&pool)
+        .execute(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -333,11 +370,72 @@ async fn delete_contact(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "delete".to_string(),
         "contact".to_string(),
         Some(id),
         None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn batch_delete_contacts(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Json(req): Json<BatchDeleteRequest>,
+) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
+    if req.ids.is_empty() {
+        return Json(api_error(400, "请选择要删除的联系人"));
+    }
+
+    let result = sqlx::query("DELETE FROM contacts WHERE id = ANY($1)")
+        .bind(&req.ids)
+        .execute(&state.db)
+        .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) => (
+            Json(ApiResponse::success("".to_string(), &format!("成功删除 {} 个联系人", r.rows_affected()))),
+            "success".to_string(),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("批量删除联系人失败: {}", e);
+            (
+                Json(api_error(500, "批量删除联系人失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "batch_delete".to_string(),
+        "contact".to_string(),
+        None,
+        serde_json::to_value(&req.ids).ok(),
         None,
         None,
         None,

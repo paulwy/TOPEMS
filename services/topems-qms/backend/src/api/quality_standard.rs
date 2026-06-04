@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
@@ -11,6 +11,8 @@ use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;
 use crate::models::{CreateQualityStandardRequest, QualityStandard, UpdateQualityStandardRequest};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{ApiResponse, api_error};
 
 use super::ApiState;
@@ -36,8 +38,13 @@ pub async fn create_routes() -> Result<Router<ApiState>> {
 
 async fn list_standards(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<QualityStandardQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::QualityRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -10,16 +10,18 @@ use std::time::Duration;
 use uuid::Uuid;
 
 use crate::models::project_phase::{CreatePhaseRequest, ProjectPhase, UpdatePhaseRequest};
+use crate::services::project_permission::{check_project_permission, ProjectPermission};
 use crate::services::project_progress;
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
+use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<Arc<super::ApiState>> {
     Router::new()
         .route("/api/v1/phases", post(create_phase))
         .route(
-            "/api/v1/phases/project/{project_id}",
-            get(get_project_phases),
+            "/api/v1/projects/{project_id}/phases",
+            get(get_project_phases).post(create_phase),
         )
         .route("/api/v1/phases/{id}", put(update_phase))
         .route("/api/v1/phases/{id}", delete(delete_phase))
@@ -27,8 +29,14 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
 
 pub async fn create_phase(
     State(state): State<Arc<super::ApiState>>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
+    match check_project_permission(&state.db, &claims, &payload.project_id, &ProjectPermission::ManagePhases).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -52,13 +60,15 @@ pub async fn create_phase(
 
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
-        INSERT INTO rs.project_phases (
+        INSERT INTO project_phases (
             id, project_id, phase_number, name, description, 
-            start_date, end_date, status, progress, weight, predecessor_id
+            start_date, end_date, status, progress, weight, predecessor_id,
+            planned_duration_days, actual_duration_days
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id, project_id, phase_number, name, description, 
-                  start_date, end_date, status, progress, weight, predecessor_id, created_at, updated_at
+                  start_date, end_date, planned_duration_days, actual_duration_days,
+                  status, progress, weight, predecessor_id, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -72,6 +82,8 @@ pub async fn create_phase(
     .bind(0)
     .bind(weight)
     .bind(payload.predecessor_id)
+    .bind(None::<i32>)
+    .bind(None::<i32>)
     .fetch_one(&state.db)
     .await;
 
@@ -118,7 +130,13 @@ pub async fn create_phase(
 pub async fn get_project_phases(
     State(state): State<Arc<super::ApiState>>,
     Path(project_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
+    match check_project_permission(&state.db, &claims, &project_id, &ProjectPermission::Read).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
     let cache_key = format!("phases:{}", project_id);
@@ -137,7 +155,7 @@ pub async fn get_project_phases(
         r#"
         SELECT id, project_id, phase_number, name, description, 
                   start_date, end_date, status, progress, weight, predecessor_id, created_at, updated_at
-        FROM rs.project_phases 
+        FROM project_phases 
         WHERE project_id = $1 
         ORDER BY phase_number
         "#,
@@ -176,8 +194,28 @@ pub async fn get_project_phases(
 pub async fn update_phase(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<UpdatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
+    let project_id = match sqlx::query_scalar::<_, Uuid>(
+        "SELECT project_id FROM project_phases WHERE id = $1"
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await {
+        Ok(Some(pid)) => pid,
+        Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
+        Err(e) => {
+            tracing::error!("查询阶段所属项目失败: {}", e);
+            return Json(ApiResponse::error(500, "查询阶段失败"));
+        }
+    };
+
+    match check_project_permission(&state.db, &claims, &project_id, &ProjectPermission::ManagePhases).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -200,7 +238,7 @@ pub async fn update_phase(
 
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
-        UPDATE rs.project_phases
+        UPDATE project_phases
         SET 
             name = COALESCE($2, name),
             description = COALESCE($3, description),
@@ -278,6 +316,7 @@ pub async fn update_phase(
 pub async fn delete_phase(
     State(state): State<Arc<super::ApiState>>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<()>> {
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -288,10 +327,29 @@ pub async fn delete_phase(
         "删除项目阶段请求开始"
     );
 
+    let project_id = match sqlx::query_scalar::<_, Uuid>(
+        "SELECT project_id FROM project_phases WHERE id = $1"
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await {
+        Ok(Some(pid)) => pid,
+        Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
+        Err(e) => {
+            tracing::error!("查询阶段所属项目失败: {}", e);
+            return Json(ApiResponse::error(500, "查询阶段失败"));
+        }
+    };
+
+    match check_project_permission(&state.db, &claims, &project_id, &ProjectPermission::ManagePhases).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     // First get the project_id to invalidate cache
     let get_result = sqlx::query_scalar::<_, Uuid>(
         r#"
-        SELECT project_id FROM rs.project_phases WHERE id = $1
+        SELECT project_id FROM project_phases WHERE id = $1
         "#,
     )
     .bind(id)
@@ -313,7 +371,7 @@ pub async fn delete_phase(
 
     let result = sqlx::query(
         r#"
-        DELETE FROM rs.project_phases 
+        DELETE FROM project_phases 
         WHERE id = $1
         "#,
     )

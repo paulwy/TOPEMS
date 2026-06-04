@@ -114,6 +114,17 @@ export interface UpdatePermissionRequest {
   description?: string;
 }
 
+export interface UpdateRoleRequest {
+  name?: string;
+  description?: string;
+}
+
+export interface UpdateUserRequest {
+  full_name?: string;
+  email?: string;
+  is_active?: boolean;
+}
+
 export const authApi = {
   register: async (data: {
     username: string;
@@ -179,6 +190,10 @@ export const authApi = {
 
   createRole: async (data: { name: string; description?: string }): Promise<ApiResponse<Role>> => {
     return apiClient.iam.post<Role>('/api/v1/roles', data);
+  },
+
+  updateRole: async (roleId: string, data: UpdateRoleRequest): Promise<ApiResponse<Role>> => {
+    return apiClient.iam.put<Role>(`/api/v1/roles/${roleId}`, data);
   },
 
   deleteRole: async (id: string): Promise<ApiResponse<string>> => {
@@ -263,7 +278,7 @@ export const authApi = {
     return apiClient.iam.get<User>(`/api/v1/users/${userId}`);
   },
 
-  updateUser: async (userId: string, data: { full_name?: string; email?: string }): Promise<ApiResponse<User>> => {
+  updateUser: async (userId: string, data: UpdateUserRequest): Promise<ApiResponse<User>> => {
     return apiClient.iam.put<User>(`/api/v1/users/${userId}`, data);
   },
 

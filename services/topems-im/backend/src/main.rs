@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use std::env;
+use std::fmt::format;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use serde_json::json;
@@ -148,6 +149,68 @@ async fn get_chat_room(
     }
 }
 
+async fn update_chat_room(
+    State(state): State<AppState>,
+    Path(chat_id): Path<Uuid>,
+    Json(payload): Json<models::UpdateChatRoom>,
+) -> Json<ApiResponse<models::ChatRoom>> {
+    let now = Utc::now();
+
+    let result = sqlx::query_as!(
+        models::ChatRoom,
+        r#"
+        UPDATE chat_rooms
+        SET name = COALESCE($1, name),
+            room_type = COALESCE($2, room_type),
+            members = COALESCE($3, members),
+            updated_at = $4
+        WHERE id = $5
+        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
+        "#,
+        payload.name,
+        payload.room_type,
+        payload.members.map(|m| json!(m)),
+        now,
+        chat_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(room)) => Json(ApiResponse::success(room, "更新聊天室成功")),
+        Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update chat room: {}", e);
+            Json(ApiResponse::error(500, "更新聊天室失败"))
+        }
+    }
+}
+
+async fn delete_chat_room(
+    State(state): State<AppState>,
+    Path(chat_id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM chat_rooms
+        WHERE id = $1
+        RETURNING id
+        "#,
+        chat_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(_)) => Json(ApiResponse::success(json!({ "deleted": true }), "删除聊天室成功")),
+        Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
+        Err(e) => {
+            tracing::error!("Failed to delete chat room: {}", e);
+            Json(ApiResponse::error(500, "删除聊天室失败"))
+        }
+    }
+}
+
 async fn list_chat_messages(
     State(state): State<AppState>,
     Path(chat_id): Path<Uuid>,
@@ -262,6 +325,64 @@ async fn mark_message_read(
     }
 }
 
+async fn delete_chat_message(
+    State(state): State<AppState>,
+    Path(message_id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM chat_messages
+        WHERE id = $1
+        RETURNING id
+        "#,
+        message_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(_)) => Json(ApiResponse::success(json!({ "deleted": true }), "删除消息成功")),
+        Ok(None) => Json(ApiResponse::error(404, "消息不存在")),
+        Err(e) => {
+            tracing::error!("Failed to delete chat message: {}", e);
+            Json(ApiResponse::error(500, "删除消息失败"))
+        }
+    }
+}
+
+async fn search_chat_messages(
+    State(state): State<AppState>,
+    Path(chat_id): Path<Uuid>,
+    query: axum::extract::Query<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let keyword = query.get("keyword").and_then(|k| k.as_str()).unwrap_or("");
+    
+    let result = sqlx::query_as!(
+        models::ChatMessage,
+        r#"
+        SELECT id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
+        FROM chat_messages
+        WHERE chat_id = $1 AND content ILIKE $2
+        ORDER BY created_at DESC
+        "#,
+        chat_id,
+        format!("%{}%", keyword)
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(messages) => Json(ApiResponse::success(json!({
+            "messages": messages,
+            "total": messages.len()
+        }), "搜索消息成功")),
+        Err(e) => {
+            tracing::error!("Failed to search chat messages: {}", e);
+            Json(ApiResponse::error(500, "搜索消息失败"))
+        }
+    }
+}
+
 async fn list_project_groups(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as!(
         models::ProjectGroup,
@@ -329,7 +450,7 @@ async fn list_notifications(
     let result = sqlx::query_as!(
         models::Notification,
         r#"
-        SELECT id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+        SELECT id, user_id, title, content, notification_type, is_read, created_at
         FROM notifications
         WHERE user_id = $1
         ORDER BY created_at DESC
@@ -357,22 +478,19 @@ async fn create_notification(
 ) -> Json<ApiResponse<models::Notification>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let related_id = payload.related_id.and_then(|r| Uuid::parse_str(&r).ok());
 
     let result = sqlx::query_as!(
         models::Notification,
         r#"
-        INSERT INTO notifications (id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, false, $8)
-        RETURNING id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+        INSERT INTO notifications (id, user_id, title, content, notification_type, is_read, created_at)
+        VALUES ($1, $2, $3, $4, $5, false, $6)
+        RETURNING id, user_id, title, content, notification_type, is_read, created_at
         "#,
         id,
         payload.user_id,
         payload.title,
         payload.content,
         payload.notification_type,
-        related_id,
-        payload.related_type,
         now
     )
     .fetch_one(&state.pool)
@@ -397,7 +515,7 @@ async fn mark_notification_read(
         UPDATE notifications
         SET is_read = true
         WHERE id = $1
-        RETURNING id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+        RETURNING id, user_id, title, content, notification_type, is_read, created_at
         "#,
         notification_id
     )
@@ -574,14 +692,16 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
 async fn ws_connect(
     Path(user_id): Path<String>,
     State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let mut connections = state.ws_connections.lock().unwrap();
-    let (tx, _) = broadcast::channel(100);
-    connections.insert(user_id.clone(), tx);
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    {
+        let mut connections = state.ws_connections.lock().unwrap();
+        let (tx, _) = broadcast::channel(100);
+        connections.insert(user_id.clone(), tx);
+    }
 
     // 更新用户在线状态
     let now = Utc::now();
-    let _ = sqlx::query!(
+    sqlx::query!(
         r#"
         INSERT INTO user_online_status (user_id, is_online, last_seen)
         VALUES ($1, true, $2)
@@ -592,21 +712,27 @@ async fn ws_connect(
         now
     )
     .execute(&state.pool)
-    .await;
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to update user online status: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
-    Json(ApiResponse::success(json!({ "connected": true }), "WebSocket连接成功"))
+    Ok(Json(ApiResponse::success(json!({ "connected": true }), "WebSocket连接成功")))
 }
 
 async fn ws_disconnect(
     Path(user_id): Path<String>,
     State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let mut connections = state.ws_connections.lock().unwrap();
-    connections.remove(&user_id);
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    {
+        let mut connections = state.ws_connections.lock().unwrap();
+        connections.remove(&user_id);
+    }
 
     // 更新用户离线状态
     let now = Utc::now();
-    let _ = sqlx::query!(
+    sqlx::query!(
         r#"
         UPDATE user_online_status
         SET is_online = false, last_seen = $1
@@ -616,9 +742,13 @@ async fn ws_disconnect(
         user_id
     )
     .execute(&state.pool)
-    .await;
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to update user offline status: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
-    Json(ApiResponse::success(json!({ "disconnected": true }), "WebSocket断开成功"))
+    Ok(Json(ApiResponse::success(json!({ "disconnected": true }), "WebSocket断开成功")))
 }
 
 async fn get_user_online_status(
@@ -701,7 +831,11 @@ async fn main() -> Result<()> {
 
     let protected_routes = Router::new()
         .route("/api/v1/chat-rooms", axum::routing::post(create_chat_room))
+        .route("/api/v1/chat-rooms/{chat_id}", axum::routing::put(update_chat_room))
+        .route("/api/v1/chat-rooms/{chat_id}", axum::routing::delete(delete_chat_room))
         .route("/api/v1/chat-rooms/{chat_id}/messages", axum::routing::post(create_chat_message))
+        .route("/api/v1/chat-rooms/{chat_id}/messages/search", axum::routing::get(search_chat_messages))
+        .route("/api/v1/chat-messages/{message_id}", axum::routing::delete(delete_chat_message))
         .route("/api/v1/chat-messages/{message_id}/read", axum::routing::put(mark_message_read))
         .route("/api/v1/project-groups", axum::routing::post(create_project_group))
         .route("/api/v1/notifications/{user_id}", axum::routing::post(create_notification))

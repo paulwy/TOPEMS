@@ -126,6 +126,117 @@ cargo run
 ./scripts/init-database.sh
 ```
 
+## 🔒 安全配置
+
+### JWT 密钥配置
+
+本系统使用 JWT (JSON Web Token) 进行身份认证。在部署前，**必须**配置以下环境变量：
+
+```bash
+# JWT 访问令牌密钥
+JWT_SECRET=your-jwt-secret-key-here
+
+# JWT 刷新令牌密钥
+REFRESH_SECRET=your-refresh-secret-key-here
+```
+
+### ⚠️ 安全要求
+
+1. **密钥长度**：至少 32 个字符
+2. **密钥强度**：使用强随机密钥，建议使用密码管理器生成
+3. **生产环境**：**必须**设置强密钥，不得使用默认值
+4. **密钥管理**：
+   - 不要将密钥硬编码在代码中
+   - 不要将密钥提交到版本控制系统
+   - 定期轮换密钥
+   - 不同环境使用不同密钥
+
+### 生成安全密钥示例
+
+```bash
+# 使用 openssl 生成随机密钥
+openssl rand -base64 32
+
+# 或使用 Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+### 环境变量配置
+
+在项目根目录创建 `.env` 文件：
+
+```env
+# JWT 配置
+JWT_SECRET=<生成的32字符以上随机密钥>
+REFRESH_SECRET=<生成的32字符以上随机密钥>
+
+# 其他配置
+DATABASE_URL=postgresql://user:password@localhost:5432/topems
+```
+
+**注意**：`.env` 文件已添加到 `.gitignore`，不会被提交到代码仓库。
+
+### 权限管理系统
+
+TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
+
+#### 默认角色
+
+系统预置了以下角色：
+
+| 角色代码 | 角色名称 | 说明 |
+|---------|---------|------|
+| admin | 超级管理员 | 拥有所有权限，不可删除 |
+| developer | 开发人员 | 拥有开发相关权限 |
+| manager | 部门经理 | 拥有业务管理权限 |
+| user | 普通用户 | 拥有基础访问权限 |
+| guest | 访客 | 只读访问权限 |
+
+#### 权限分类
+
+权限按模块进行分类：
+
+| 模块 | 说明 | 权限示例 |
+|------|------|---------|
+| rs | 研发管理 | projects.read, phases.write |
+| erp | 企业资源计划 | employee.read, finance.write |
+| lims | 实验室管理 | sample.read, test.write |
+| qms | 质量管理 | standard.read, audit.write |
+| ehs | 环境健康安全 | incident.read, risk.write |
+| srm | 供应商管理 | supplier.read, contract.write |
+| gis | 地理信息系统 | map.read, device.write |
+| bi | 商业智能 | dashboard.read, report.write |
+| system | 系统管理 | users.read, roles.write |
+
+#### 权限管理 API
+
+权限管理通过 IAM 服务提供的 API 进行管理：
+
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| GET | /api/v1/permissions | 获取权限列表 |
+| POST | /api/v1/permissions | 创建权限 |
+| GET | /api/v1/roles | 获取角色列表 |
+| POST | /api/v1/roles | 创建角色 |
+| POST | /api/v1/roles/{id}/permissions | 分配权限给角色 |
+| POST | /api/v1/users/{id}/roles | 分配角色给用户 |
+| GET | /api/v1/users/{id}/effective-permissions | 获取用户有效权限 |
+
+#### 初始化权限数据
+
+数据库初始化脚本会自动创建权限表结构和默认数据：
+
+```bash
+# 运行数据库初始化脚本
+./scripts/init-database.sh
+```
+
+该脚本会：
+1. 创建数据库和用户
+2. 创建权限管理相关表（permissions, roles, role_permissions, user_roles, user_permissions）
+3. 初始化 70+ 个默认权限
+4. 创建 5 个默认角色并分配权限
+
 ## 📖 文档
 
 - [API概览](./docs/api/API_DOCUMENTATION.md) - API 文档总览

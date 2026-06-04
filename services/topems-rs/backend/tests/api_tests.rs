@@ -3,13 +3,13 @@ mod tests {
     use serde_json::json;
 
     async fn test_project_crud() {
-        let base_url = "http://localhost:8000";
+        let base_url = "http://localhost:8020";
         let client = reqwest::Client::new();
 
         println!("Testing RS Project CRUD...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -47,7 +47,8 @@ mod tests {
         assert_eq!(create_response.status(), 200);
 
         let created_data = create_response.json::<serde_json::Value>().await.unwrap();
-
+        println!("Create response: {}", serde_json::to_string_pretty(&created_data).unwrap());
+        
         let project_id = created_data["data"]["id"].as_str().unwrap();
         println!("   Created project with ID: {}", project_id);
 
@@ -100,13 +101,13 @@ mod tests {
     }
 
     async fn test_project_batch_operations() {
-        let base_url = "http://localhost:8000";
+        let base_url = "http://localhost:8020";
         let client = reqwest::Client::new();
 
         println!("\nTesting RS Project Batch Operations...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -214,13 +215,13 @@ mod tests {
     }
 
     async fn test_project_export_import() {
-        let base_url = "http://localhost:8000";
+        let base_url = "http://localhost:8020";
         let client = reqwest::Client::new();
 
         println!("\nTesting RS Project Export/Import...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -370,13 +371,13 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
     }
 
     async fn test_audit_logs() {
-        let base_url = "http://localhost:8000";
+        let base_url = "http://localhost:8020";
         let client = reqwest::Client::new();
 
         println!("\nTesting RS Audit Logs...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"

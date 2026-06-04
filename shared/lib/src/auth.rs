@@ -79,9 +79,19 @@ impl AuthState {
     }
     
     pub fn from_env() -> Self {
+        let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET environment variable must be set for security");
+        let refresh_secret = std::env::var("REFRESH_SECRET").expect("REFRESH_SECRET environment variable must be set for security");
+        
+        if jwt_secret.len() < 32 {
+            panic!("JWT_SECRET must be at least 32 characters long for security");
+        }
+        if refresh_secret.len() < 32 {
+            panic!("REFRESH_SECRET must be at least 32 characters long for security");
+        }
+        
         Self {
-            jwt_secret: std::env::var("JWT_SECRET").unwrap_or_else(|_| "topems-jwt-secret".to_string()),
-            refresh_secret: std::env::var("REFRESH_SECRET").unwrap_or_else(|_| "topems-refresh-secret".to_string()),
+            jwt_secret,
+            refresh_secret,
             token_expiry_hours: std::env::var("JWT_EXPIRY_HOURS")
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()
@@ -213,18 +223,7 @@ pub async fn auth_middleware(
     let path = req.uri().path();
     
     let public_paths = ["/", "/health", "/api/v1/auth/login", "/api/v1/auth/refresh"];
-    if public_paths.contains(&path) || path.starts_with("/api/v1/auth/") {
-        return next.run(req).await;
-    }
-    
-    let rust_env = std::env::var("RUST_ENV").unwrap_or_default();
-    let env = std::env::var("ENV").unwrap_or_default();
-    let is_development = rust_env == "development" || env == "dev";
-    
-    tracing::info!("RUST_ENV: {:?}, ENV: {:?}, is_development: {}", rust_env, env, is_development);
-    
-    if is_development {
-        tracing::debug!("Development mode - skipping auth");
+    if public_paths.contains(&path) {
         return next.run(req).await;
     }
 
@@ -250,10 +249,6 @@ pub async fn auth_middleware(
         Ok(token_data) => {
             let claims = token_data.claims;
             
-            if claims.exp < chrono::Utc::now().timestamp() as usize {
-                return api_error::<()>(401, "令牌已过期，请重新登录").into_response();
-            }
-            
             parts.extensions.insert(claims);
             
             let req = Request::from_parts(parts, body);
@@ -266,57 +261,57 @@ pub async fn auth_middleware(
     }
 }
 
-pub fn check_permission(claims: &Claims, permission: &str) -> Result<(), ApiResponse<()>> {
+pub fn check_permission<T>(claims: &Claims, permission: &str) -> Result<(), axum::Json<ApiResponse<T>>> {
     if claims.has_permission(permission) {
         Ok(())
     } else {
-        Err(api_error::<()>(
+        Err(axum::Json(api_error::<T>(
             403,
             &format!("权限不足：需要 {} 权限", permission),
-        ))
+        )))
     }
 }
 
-pub fn check_role(claims: &Claims, role: &str) -> Result<(), ApiResponse<()>> {
+pub fn check_role<T>(claims: &Claims, role: &str) -> Result<(), axum::Json<ApiResponse<T>>> {
     if claims.has_role(role) {
         Ok(())
     } else {
-        Err(api_error::<()>(
+        Err(axum::Json(api_error::<T>(
             403,
             &format!("权限不足：需要 {} 角色", role),
-        ))
+        )))
     }
 }
 
-pub fn require_superuser(claims: &Claims) -> Result<(), ApiResponse<()>> {
+pub fn require_superuser<T>(claims: &Claims) -> Result<(), axum::Json<ApiResponse<T>>> {
     if claims.is_superuser {
         Ok(())
     } else {
-        Err(api_error::<()>(
+        Err(axum::Json(api_error::<T>(
             403,
             "权限不足：需要超级管理员权限",
-        ))
+        )))
     }
 }
 
-pub fn require_any_permission(claims: &Claims, permissions: &[&str]) -> Result<(), ApiResponse<()>> {
+pub fn require_any_permission<T>(claims: &Claims, permissions: &[&str]) -> Result<(), axum::Json<ApiResponse<T>>> {
     if claims.has_any_permission(permissions) {
         Ok(())
     } else {
-        Err(api_error::<()>(
+        Err(axum::Json(api_error::<T>(
             403,
             &format!("权限不足：需要以下任一权限: {}", permissions.join(", ")),
-        ))
+        )))
     }
 }
 
-pub fn require_all_permissions(claims: &Claims, permissions: &[&str]) -> Result<(), ApiResponse<()>> {
+pub fn require_all_permissions<T>(claims: &Claims, permissions: &[&str]) -> Result<(), axum::Json<ApiResponse<T>>> {
     if claims.has_all_permissions(permissions) {
         Ok(())
     } else {
-        Err(api_error::<()>(
+        Err(axum::Json(api_error::<T>(
             403,
             &format!("权限不足：需要所有以下权限: {}", permissions.join(", ")),
-        ))
+        )))
     }
 }

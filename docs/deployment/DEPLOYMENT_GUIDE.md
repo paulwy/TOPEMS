@@ -110,8 +110,11 @@ POSTGRES_PORT=5432
 # Redis配置
 REDIS_URL=redis://localhost:6379
 
-# JWT配置
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
+# JWT配置（⚠️ 生产环境必须设置强密钥）
+# JWT_SECRET 必须至少 32 字符长度，建议使用随机生成的密钥
+# 示例生成命令: openssl rand -base64 32
+JWT_SECRET=<your-secure-jwt-secret-at-least-32-characters>
+REFRESH_SECRET=<your-secure-refresh-secret-at-least-32-characters>
 JWT_EXPIRES_IN=7200
 
 # 服务端口配置
@@ -120,6 +123,12 @@ PORTAL_PORT=3000
 RS_PORT=8081
 LIMS_PORT=8082
 ```
+
+⚠️ **安全警告**：
+- JWT_SECRET 和 REFRESH_SECRET 必须在生产环境中设置强密钥
+- 密钥长度必须至少 32 字符
+- 不要使用示例中的弱密钥
+- 不要将密钥提交到版本控制系统
 
 ### 3. 启动数据库
 
@@ -332,6 +341,81 @@ location /api/ {
     limit_req zone=api_limit burst=50 nodelay;
 }
 ```
+
+### 4. 权限管理配置
+
+TOPEMS 使用基于角色的访问控制（RBAC）系统，权限管理包括以下几个方面：
+
+#### 4.1 数据库初始化
+
+部署后需要初始化权限数据：
+
+```bash
+# 进入数据库容器
+docker-compose exec postgres psql -U topems -d topems
+
+# 创建权限表结构
+\i /docker-entrypoint-initdb.d/permission_schema.sql
+
+# 初始化默认权限和角色
+\i /docker-entrypoint-initdb.d/permission_seed.sql
+```
+
+#### 4.2 默认角色
+
+系统预置了以下角色：
+
+| 角色代码 | 角色名称 | 说明 |
+|---------|---------|------|
+| admin | 超级管理员 | 拥有所有权限，不可删除 |
+| developer | 开发人员 | 拥有开发相关权限 |
+| manager | 部门经理 | 拥有业务管理权限 |
+| user | 普通用户 | 拥有基础访问权限 |
+| guest | 访客 | 只读访问权限 |
+
+#### 4.3 权限分类
+
+权限按模块进行分类：
+
+| 模块 | 说明 | 权限示例 |
+|------|------|---------|
+| rs | 研发管理 | projects.read, phases.write |
+| erp | 企业资源计划 | employee.read, finance.write |
+| lims | 实验室管理 | sample.read, test.write |
+| qms | 质量管理 | standard.read, audit.write |
+| ehs | 环境健康安全 | incident.read, risk.write |
+| srm | 供应商管理 | supplier.read, contract.write |
+| gis | 地理信息系统 | map.read, device.write |
+| bi | 商业智能 | dashboard.read, report.write |
+| mail | 邮件服务 | email.read, template.write |
+| system | 系统管理 | users.read, roles.write |
+
+#### 4.4 API 权限检查
+
+所有 API 都需要进行权限检查，权限不足时返回 HTTP 403 错误：
+
+```json
+{
+    "success": false,
+    "code": "FORBIDDEN",
+    "message": "Insufficient permissions",
+    "data": null
+}
+```
+
+#### 4.5 权限管理 API
+
+权限管理通过 IAM 服务提供的 API 进行管理：
+
+| 方法 | 端点 | 说明 | 所需权限 |
+|------|------|------|---------|
+| GET | /api/v1/permissions | 获取权限列表 | system.permissions |
+| POST | /api/v1/permissions | 创建权限 | system.permissions |
+| GET | /api/v1/roles | 获取角色列表 | system.roles |
+| POST | /api/v1/roles | 创建角色 | system.roles |
+| POST | /api/v1/roles/{id}/permissions | 分配权限给角色 | system.roles |
+| POST | /api/v1/users/{id}/roles | 分配角色给用户 | system.users |
+| GET | /api/v1/users/{id}/effective-permissions | 获取用户有效权限 | system.users |
 
 ---
 

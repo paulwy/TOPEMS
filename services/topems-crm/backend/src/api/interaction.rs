@@ -1,18 +1,19 @@
-use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query, State, Extension},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use topems_shared::{ApiResponse, api_error};
+use topems_shared::auth::Claims;
 use crate::models::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
 use crate::api::audit::log_audit_event;
+use crate::services::permission::{check_permission, ModulePermission};
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct InteractionPaginationParams {
@@ -24,21 +25,31 @@ pub struct InteractionPaginationParams {
     pub contact_id: Option<Uuid>,
 }
 
-pub async fn create_routes() -> Result<Router> {
-    let app = Router::new()
+#[derive(Debug, Deserialize)]
+pub struct BatchDeleteRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .route("/api/v1/interactions", get(list_interactions).post(create_interaction))
+        .route("/api/v1/interactions/batch-delete", post(batch_delete_interactions))
         .route(
             "/api/v1/interactions/{id}",
             get(get_interaction).put(update_interaction).delete(delete_interaction),
-        );
-
-    Ok(app)
+        )
 }
 
 async fn list_interactions(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<InteractionPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -66,7 +77,7 @@ async fn list_interactions(
     .bind(&contact_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await;
 
     match result {
@@ -84,14 +95,14 @@ async fn list_interactions(
             .bind(&status_filter)
             .bind(&customer_filter)
             .bind(&contact_filter)
-            .fetch_one(&pool)
+            .fetch_one(&state.db)
             .await;
 
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "interactions": interactions,
+                    "items": interactions,
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -107,10 +118,16 @@ async fn list_interactions(
 }
 
 async fn create_interaction(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateInteractionRequest>,
 ) -> Json<ApiResponse<Interaction>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     if req.type_.is_empty() {
         return Json(api_error(400, "交互类型不能为空"));
     }
@@ -136,7 +153,7 @@ async fn create_interaction(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -163,7 +180,7 @@ async fn create_interaction(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "create".to_string(),
         "interaction".to_string(),
         Some(id),
@@ -182,9 +199,15 @@ async fn create_interaction(
 }
 
 async fn get_interaction(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Interaction>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let result = sqlx::query_as::<_, Interaction>(
         r#"
         SELECT id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
@@ -192,7 +215,7 @@ async fn get_interaction(
         "#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     match result {
@@ -206,18 +229,24 @@ async fn get_interaction(
 }
 
 async fn update_interaction(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateInteractionRequest>,
 ) -> Json<ApiResponse<Interaction>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let existing = sqlx::query_as::<_, Interaction>(
         r#"
         SELECT id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at FROM interactions WHERE id = $1
         "#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await;
 
     let existing = match existing {
@@ -236,29 +265,28 @@ async fn update_interaction(
     let status = req.status.unwrap_or(existing.status);
     let customer_id = req.customer_id.or(existing.customer_id);
     let contact_id = req.contact_id.or(existing.contact_id);
-    let notes = req.notes;
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
         UPDATE interactions SET
-            type = $2, subject = $3, content = $4, scheduled_at = $5, completed_at = $6, 
-            status = $7, customer_id = $8, contact_id = $9, updated_at = $10
+            customer_id = $2, contact_id = $3, type = $4, subject = $5, content = $6,
+            scheduled_at = $7, completed_at = $8, status = $9, updated_at = $10
         WHERE id = $1
         RETURNING id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(&customer_id)
+    .bind(&contact_id)
     .bind(&type_)
     .bind(&subject)
     .bind(&content)
     .bind(&scheduled_at)
     .bind(&completed_at)
     .bind(&status)
-    .bind(&customer_id)
-    .bind(&contact_id)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -284,7 +312,7 @@ async fn update_interaction(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "update".to_string(),
         "interaction".to_string(),
         Some(id),
@@ -303,13 +331,19 @@ async fn update_interaction(
 }
 
 async fn delete_interaction(
-    State(pool): State<PgPool>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
     let result = sqlx::query("DELETE FROM interactions WHERE id = $1")
         .bind(id)
-        .execute(&pool)
+        .execute(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -340,11 +374,72 @@ async fn delete_interaction(
     };
 
     log_audit_event(
-        &pool,
+        &state.db,
         "delete".to_string(),
         "interaction".to_string(),
         Some(id),
         None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn batch_delete_interactions(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Json(req): Json<BatchDeleteRequest>,
+) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+
+    if req.ids.is_empty() {
+        return Json(api_error(400, "请选择要删除的交互记录"));
+    }
+
+    let result = sqlx::query("DELETE FROM interactions WHERE id = ANY($1)")
+        .bind(&req.ids)
+        .execute(&state.db)
+        .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) => (
+            Json(ApiResponse::success("".to_string(), &format!("成功删除 {} 个交互记录", r.rows_affected()))),
+            "success".to_string(),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("批量删除交互记录失败: {}", e);
+            (
+                Json(api_error(500, "批量删除交互记录失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "batch_delete".to_string(),
+        "interaction".to_string(),
+        None,
+        serde_json::to_value(&req.ids).ok(),
         None,
         None,
         None,

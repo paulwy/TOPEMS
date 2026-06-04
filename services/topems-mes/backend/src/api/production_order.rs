@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
@@ -10,7 +10,8 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{CreateProductionOrderRequest, ProductionOrder, UpdateProductionOrderRequest};
-use topems_shared::{ApiResponse, PaginationParams, api_error};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::{ApiResponse, PaginationParams, api_error, auth::Claims};
 use crate::api::audit::log_audit_event;
 
 use super::ApiState;
@@ -28,8 +29,13 @@ pub async fn create_routes() -> Result<Router<ApiState>> {
 
 async fn list_orders(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -89,9 +95,14 @@ async fn list_orders(
 
 async fn create_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -159,8 +170,13 @@ async fn create_order(
 
 async fn get_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, ProductionOrder>(
         r#"
         SELECT id, order_number, product_name, product_code, quantity, unit, scheduled_start_date, scheduled_end_date, actual_start_date, actual_end_date, status, priority, created_at, updated_at
@@ -183,10 +199,15 @@ async fn get_order(
 
 async fn update_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
     
@@ -280,9 +301,14 @@ async fn update_order(
 
 async fn delete_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query("DELETE FROM production_orders WHERE id = $1")
         .bind(id)
         .execute(&state.db)

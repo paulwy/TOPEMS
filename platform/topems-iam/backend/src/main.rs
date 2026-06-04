@@ -210,6 +210,21 @@ struct ListUsersResponse {
 struct UpdateUserRequest {
     full_name: Option<String>,
     email: Option<String>,
+    is_active: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+struct UpdateRoleRequest {
+    name: Option<String>,
+    description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct UpdatePermissionRequest {
+    name: Option<String>,
+    resource: Option<String>,
+    action: Option<String>,
+    description: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -774,7 +789,7 @@ async fn update_current_user(
     }
     
     let result = sqlx::query(
-        "UPDATE iam.users SET email = COALESCE($1, email), full_name = COALESCE($2, full_name), updated_at = NOW() WHERE id = $3 RETURNING id, username, email, full_name, is_active, created_at"
+        "UPDATE iam.users SET email = COALESCE($1, email), full_name = COALESCE($2, full_name), updated_at = NOW() WHERE id = $3 RETURNING id, username, email, full_name, is_active, is_superuser, created_at"
     )
     .bind(&update_req.email)
     .bind(&update_req.full_name)
@@ -787,7 +802,7 @@ async fn update_current_user(
             let (roles, permissions) = get_user_roles_and_permissions(&state.db, &user.get::<String, _>("id")).await;
             let role = roles.first().cloned().unwrap_or_default();
             
-            let is_superuser = role == "admin";
+            let is_superuser = user.get::<bool, _>("is_superuser") || role == "admin";
             let user_info = UserInfo {
                 id: user.get::<String, _>("id"),
                 username: user.get::<String, _>("username"),
@@ -803,6 +818,79 @@ async fn update_current_user(
             };
             
             tracing::info!("✏️ 用户信息更新成功: {}", user_info.username);
+            
+            Json(ApiResponse::success(user_info, "用户信息更新成功"))
+        }
+        Ok(None) => Json(ApiResponse::error(404, "用户不存在")),
+        Err(e) => {
+            tracing::error!("数据库更新错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn update_user(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+    Json(update_req): Json<UpdateUserRequest>,
+) -> Json<ApiResponse<UserInfo>> {
+    let is_admin = claims.role == "admin" || claims.is_superuser || claims.roles.contains(&"admin".to_string());
+    if !is_admin {
+        return Json(ApiResponse::error(403, "仅管理员可更新其他用户"));
+    }
+    
+    if let Some(email) = &update_req.email {
+        if let Err(msg) = validate_email(email) {
+            return Json(ApiResponse::error(400, &msg));
+        }
+        
+        let exists = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM iam.users WHERE email = $1 AND id != $2::uuid)"
+        )
+        .bind(email)
+        .bind(&user_id)
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(false);
+        
+        if exists {
+            return Json(ApiResponse::error(409, "邮箱已被其他用户使用"));
+        }
+    }
+    
+    let result = sqlx::query(
+        "UPDATE iam.users SET email = COALESCE($1, email), full_name = COALESCE($2, full_name), is_active = COALESCE($3, is_active), updated_at = NOW() WHERE id = $4::uuid RETURNING id, username, email, full_name, is_active, is_superuser, created_at"
+    )
+    .bind(&update_req.email)
+    .bind(&update_req.full_name)
+    .bind(update_req.is_active)
+    .bind(&user_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(user)) => {
+            let (roles, permissions) = get_user_roles_and_permissions(&state.db, &user.get::<String, _>("id")).await;
+            let role = roles.first().cloned().unwrap_or_default();
+            
+            let is_superuser = user.get::<bool, _>("is_superuser") || role == "admin";
+            let user_info = UserInfo {
+                id: user.get::<String, _>("id"),
+                username: user.get::<String, _>("username"),
+                email: user.get::<String, _>("email"),
+                full_name: user.get::<Option<String>, _>("full_name"),
+                role,
+                roles,
+                permissions,
+                avatar_url: None,
+                created_at: user.get::<chrono::DateTime<Utc>, _>("created_at").to_rfc3339(),
+                is_active: user.get::<bool, _>("is_active"),
+                is_superuser,
+            };
+            
+            tracing::info!("✏️ 用户信息更新成功: {}", user_info.username);
+            let _ = log_audit(&state, Some(&claims.sub), "update_user", Some("user"), Some(&user_id), None, None, None).await;
             
             Json(ApiResponse::success(user_info, "用户信息更新成功"))
         }
@@ -1529,7 +1617,7 @@ async fn delete_role(
     if claims.role != "admin" {
         return Json(ApiResponse::error(403, "无权限操作"));
     }
-    
+
     let result = sqlx::query(
         "DELETE FROM iam.roles WHERE id = $1"
     )
@@ -1547,6 +1635,49 @@ async fn delete_role(
         }
         Err(e) => {
             tracing::error!("数据库删除错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn update_role(
+    State(state): State<AppState>,
+    Path(role_id): Path<String>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+    Json(update_req): Json<UpdateRoleRequest>,
+) -> Json<ApiResponse<RoleInfo>> {
+    if claims.role != "admin" {
+        return Json(ApiResponse::error(403, "无权限操作"));
+    }
+
+    let result = sqlx::query(
+        "UPDATE iam.roles 
+         SET name = COALESCE($1, name), 
+             description = COALESCE($2, description)
+         WHERE id = $3
+         RETURNING id, name, description, created_at"
+    )
+    .bind(&update_req.name)
+    .bind(&update_req.description)
+    .bind(&role_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let role = RoleInfo {
+                id: row.get("id"),
+                name: row.get("name"),
+                description: row.get("description"),
+                created_at: row.get::<chrono::DateTime<Utc>, _>("created_at").to_rfc3339(),
+            };
+            tracing::info!("✏️ 角色更新成功: {}", role.name);
+            let _ = log_audit(&state, Some(&claims.sub), "update_role", Some("role"), Some(&role_id), None, None, None).await;
+            Json(ApiResponse::success(role, "角色更新成功"))
+        }
+        Ok(None) => Json(ApiResponse::error(404, "角色不存在")),
+        Err(e) => {
+            tracing::error!("数据库更新错误: {}", e);
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1738,7 +1869,7 @@ async fn delete_permission(
     if claims.role != "admin" {
         return Json(ApiResponse::error(403, "无权限操作"));
     }
-    
+
     let result = sqlx::query(
         "DELETE FROM iam.permissions WHERE id = $1"
     )
@@ -1757,6 +1888,54 @@ async fn delete_permission(
         }
         Err(e) => {
             tracing::error!("数据库删除错误: {}", e);
+            Json(ApiResponse::error(500, "服务器内部错误"))
+        }
+    }
+}
+
+async fn update_permission(
+    State(state): State<AppState>,
+    Path(permission_id): Path<String>,
+    AuthenticatedUser(claims): AuthenticatedUser,
+    Json(update_req): Json<UpdatePermissionRequest>,
+) -> Json<ApiResponse<PermissionInfo>> {
+    if claims.role != "admin" {
+        return Json(ApiResponse::error(403, "无权限操作"));
+    }
+
+    let result = sqlx::query(
+        "UPDATE iam.permissions 
+         SET name = COALESCE($1, name), 
+             resource = COALESCE($2, resource),
+             action = COALESCE($3, action),
+             description = COALESCE($4, description)
+         WHERE id = $5
+         RETURNING id, name, resource, action, description"
+    )
+    .bind(&update_req.name)
+    .bind(&update_req.resource)
+    .bind(&update_req.action)
+    .bind(&update_req.description)
+    .bind(&permission_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let permission = PermissionInfo {
+                id: row.get("id"),
+                name: row.get("name"),
+                resource: row.get("resource"),
+                action: row.get("action"),
+                description: row.get("description"),
+            };
+            tracing::info!("✏️ 权限更新成功: {}", permission.name);
+            let _ = log_audit(&state, Some(&claims.sub), "update_permission", Some("permission"), Some(&permission_id), None, None, None).await;
+            Json(ApiResponse::success(permission, "权限更新成功"))
+        }
+        Ok(None) => Json(ApiResponse::error(404, "权限不存在")),
+        Err(e) => {
+            tracing::error!("数据库更新错误: {}", e);
             Json(ApiResponse::error(500, "服务器内部错误"))
         }
     }
@@ -1972,7 +2151,11 @@ async fn main() {
     dotenv::dotenv().ok();
 
     let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "topems-jwt-secret".to_string());
+        .expect("JWT_SECRET environment variable must be set for security");
+    
+    if jwt_secret.len() < 32 {
+        panic!("JWT_SECRET must be at least 32 characters long for security");
+    }
     
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -2014,39 +2197,42 @@ async fn main() {
         .route("/password/reset", post(request_password_reset))
         .route("/password/set", post(set_new_password));
     
-    let user_routes = Router::new()
-        .route("/me", get(get_current_user))
-        .route("/me", put(update_current_user))
-        .route("/me/password", post(change_password))
-        .route("/me/avatar", post(update_avatar))
-        .route("/me/preferences", get(get_preferences))
-        .route("/me/preferences", put(update_preferences))
-        .route("/", get(list_users))
-        .route("/", post(create_user))
-        .route("/{user_id}", get(get_user))
-        .route("/{user_id}", delete(delete_user))
-        .route("/{user_id}/roles", get(get_user_roles))
-        .route("/{user_id}/roles/{role_id}", post(add_user_role))
-        .route("/{user_id}/roles/{role_id}", delete(remove_user_role))
-        .route("/{user_id}/access-logs", get(get_user_access_logs))
-        .route("/access-logs", post(create_access_log))
-        .without_v07_checks();
+  let user_routes = Router::new()
+    .route("/me", get(get_current_user))
+    .route("/me", put(update_current_user))
+    .route("/me/password", post(change_password))
+    .route("/me/avatar", post(update_avatar))
+    .route("/me/preferences", get(get_preferences))
+    .route("/me/preferences", put(update_preferences))
+    .route("/", get(list_users))
+    .route("/", post(create_user))
+    .route("/{user_id}", get(get_user))
+    .route("/{user_id}", put(update_user))
+    .route("/{user_id}", delete(delete_user))
+    .route("/{user_id}/roles", get(get_user_roles))
+    .route("/{user_id}/roles/{role_id}", post(add_user_role))
+    .route("/{user_id}/roles/{role_id}", delete(remove_user_role))
+    .route("/{user_id}/access-logs", get(get_user_access_logs))
+    .route("/access-logs", post(create_access_log))
+    .without_v07_checks();
     
     let role_routes = Router::new()
-        .route("/", get(list_roles))
-        .route("/", post(create_role))
-        .route("/{role_id}", get(get_role))
-        .route("/{role_id}", delete(delete_role))
-        .route("/{role_id}/permissions", get(get_role_permissions))
-        .route("/{role_id}/permissions/{permission_id}", post(add_role_permission))
-        .route("/{role_id}/permissions/{permission_id}", delete(remove_role_permission))
-        .without_v07_checks();
+    .route("/", get(list_roles))
+    .route("/", post(create_role))
+    .route("/{role_id}", get(get_role))
+    .route("/{role_id}", put(update_role))
+    .route("/{role_id}", delete(delete_role))
+    .route("/{role_id}/permissions", get(get_role_permissions))
+    .route("/{role_id}/permissions/{permission_id}", post(add_role_permission))
+    .route("/{role_id}/permissions/{permission_id}", delete(remove_role_permission))
+    .without_v07_checks();
     
-    let permission_routes = Router::new()
-        .route("/", get(list_permissions))
-        .route("/", post(create_permission))
-        .route("/{permission_id}", delete(delete_permission))
-        .without_v07_checks();
+  let permission_routes = Router::new()
+    .route("/", get(list_permissions))
+    .route("/", post(create_permission))
+    .route("/{permission_id}", put(update_permission))
+    .route("/{permission_id}", delete(delete_permission))
+    .without_v07_checks();
     
     let access_log_routes = Router::new()
         .route("/user/{user_id}", get(get_user_access_logs))

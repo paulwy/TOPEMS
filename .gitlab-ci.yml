@@ -177,20 +177,73 @@ test:integration:
     DATABASE_URL: postgres://topems:topems_secret@postgres:5432/topems_test
     REDIS_URL: redis://redis:6379
   script:
+    - echo "Installing dependencies..."
+    - apt-get update && apt-get install -y postgresql-client curl
+    
+    - echo "Setting up test database schema..."
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -c "CREATE SCHEMA IF NOT EXISTS rs;"
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -c "CREATE SCHEMA IF NOT EXISTS rs_test;"
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -c "CREATE SCHEMA IF NOT EXISTS iam;"
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -f platform/topems-iam/backend/migrations/20260601000000_initial.sql 2>/dev/null || true
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -f services/topems-rs/backend/migrations/20260601000000_projects.sql 2>/dev/null || true
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -f services/topems-rs/backend/migrations/20260601000001_project_phases.sql 2>/dev/null || true
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -f services/topems-rs/backend/migrations/20260601000002_project_milestones.sql 2>/dev/null || true
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -f services/topems-rs/backend/migrations/20260601000003_project_members.sql 2>/dev/null || true
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -f services/topems-rs/backend/migrations/20260604000001_add_project_enhancements.sql 2>/dev/null || true
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -f services/topems-rs/backend/migrations/20260604000002_add_milestone_enhancements.sql 2>/dev/null || true
+    
+    - echo "Building IAM service..."
+    - cd platform/topems-iam/backend
+    - cargo build --release
+    
+    - echo "Building RS service..."
+    - cd ../../services/topems-rs/backend
+    - cargo build --release
+    
+    - echo "Starting IAM service..."
+    # JWT_SECRET: 测试密钥,仅用于CI环境,不用于生产环境
+    - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems_test REDIS_URL=redis://redis:6379 JWT_SECRET=test_jwt_secret_key_for_ci_testing PORT=8002 ./target/release/topems-iam &
+    - sleep 15
+    - curl -s http://localhost:8002/api/v1/health || (sleep 10 && curl -s http://localhost:8002/api/v1/health)
+    
+    - echo "Starting RS service..."
+    - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems_test REDIS_URL=redis://redis:6379 IAM_URL=http://localhost:8002 PORT=8000 ./target/release/topems-rs &
+    - sleep 15
+    - curl -s http://localhost:8000/api/v1/health || (sleep 10 && curl -s http://localhost:8000/api/v1/health)
+    
     - echo "Running integration tests..."
-    - for service in services/backend platform/*/backend; do
-        if [ -d "$service" ] && [ -f "$service/Cargo.toml" ]; then
-          echo "Integration testing $service";
-          cd $service;
-          cargo test --test '*' || { echo "Integration tests failed"; exit 1; };
-          cd -;
-        fi;
-      done
-  allow_failure: true
+    - cargo test --test api_tests -- --nocapture || { echo "API integration tests failed"; exit 1; }
+    - cargo test --test project_relation_tests -- --nocapture || { echo "Project relation integration tests failed"; exit 1; }
   only:
     - main
     - develop
     - merge_requests
+
+test:database:
+  stage: test
+  image: rust:1.76
+  services:
+    - postgres:16-alpine
+    - redis:7-alpine
+  variables:
+    POSTGRES_DB: topems_test
+    POSTGRES_USER: topems
+    POSTGRES_PASSWORD: topems_secret
+    DATABASE_URL: postgres://topems:topems_secret@postgres:5432/topems_test
+  script:
+    - echo "Setting up test database schema..."
+    - apt-get update && apt-get install -y postgresql-client
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -c "CREATE SCHEMA IF NOT EXISTS rs_test;"
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -c "CREATE TABLE IF NOT EXISTS rs_test.projects (id UUID PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(100) NOT NULL, description TEXT, project_type VARCHAR(100) NOT NULL, status VARCHAR(50) NOT NULL DEFAULT 'active', leader VARCHAR(255) NOT NULL, team_members JSONB, start_date TIMESTAMPTZ NOT NULL DEFAULT NOW(), end_date TIMESTAMPTZ, budget DOUBLE PRECISION, progress INTEGER NOT NULL DEFAULT 0, created_by VARCHAR(255) NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW(), project_config JSONB, benefit_target JSONB, risk_level VARCHAR(50), priority INTEGER, tags TEXT[], parent_id UUID, workspace_id UUID);"
+    
+    - echo "Running database tests for topems-rs..."
+    - cd services/topems-rs/backend
+    - cargo test --test-threads=1 || { echo "Database tests failed"; exit 1; }
+  only:
+    - main
+    - develop
+    - merge_requests
+    - tags
 
 test:frontend:
   stage: test

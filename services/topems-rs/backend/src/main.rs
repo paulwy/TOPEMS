@@ -67,11 +67,14 @@ async fn main() -> Result<()> {
     let schemas = sqlx::query("SELECT schema_name FROM information_schema.schemata ORDER BY schema_name").fetch_all(&pool).await;
     tracing::info!("All schemas: {:?}", schemas);
     
-    let tables = sqlx::query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'rs'").fetch_all(&pool).await;
-    tracing::info!("RS tables: {:?}", tables);
+    let schema_name = std::env::var("SCHEMA_NAME").unwrap_or_else(|_| "rs".to_string());
+    
+    let tables = sqlx::query(&format!("SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'", schema_name))
+        .fetch_all(&pool).await;
+    tracing::info!("{} tables: {:?}", schema_name.to_uppercase(), tables);
     
     // 尝试直接查询
-    let test_projects_direct = sqlx::query("SELECT * FROM rs.projects LIMIT 1").fetch_one(&pool).await;
+    let test_projects_direct = sqlx::query(&format!("SELECT * FROM {} LIMIT 1", schema_name)).fetch_one(&pool).await;
     tracing::info!("Test direct projects query: {:?}", test_projects_direct);
 
     // 4. 初始化数据库表
@@ -128,7 +131,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .execute(pool)
         .await?;
 
-    // 创建项目表
+    // 创建项目表（包含新字段）
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS rs.projects (
@@ -137,7 +140,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             code VARCHAR(100) NOT NULL,
             description TEXT,
             project_type VARCHAR(100) NOT NULL,
-            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            status VARCHAR(50) NOT NULL DEFAULT 'draft',
             leader VARCHAR(255) NOT NULL,
             team_members JSONB,
             start_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -146,7 +149,14 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             progress INTEGER NOT NULL DEFAULT 0,
             created_by VARCHAR(255) NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            project_config JSONB,
+            benefit_target JSONB,
+            risk_level VARCHAR(50),
+            priority INTEGER,
+            tags JSONB,
+            parent_id UUID,
+            workspace_id UUID
         )
         "#,
     )
@@ -163,9 +173,15 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             description TEXT,
             project_id UUID NOT NULL REFERENCES rs.projects(id) ON DELETE CASCADE,
             version VARCHAR(50) NOT NULL DEFAULT '1.0',
-            ingredients JSONB NOT NULL,
-            instructions TEXT,
+            category VARCHAR(100),
+            ingredients JSONB NOT NULL DEFAULT '[]',
+            process_steps TEXT,
             status VARCHAR(50) NOT NULL DEFAULT 'draft',
+            approval_status VARCHAR(50),
+            approved_by VARCHAR(255),
+            approved_at TIMESTAMPTZ,
+            effective_date TIMESTAMPTZ,
+            expiration_date TIMESTAMPTZ,
             created_by VARCHAR(255) NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -175,7 +191,26 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
-    // 创建实验表
+    // 创建配方版本表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS rs.formula_versions (
+            id UUID PRIMARY KEY,
+            formula_id UUID NOT NULL REFERENCES rs.formulas(id) ON DELETE CASCADE,
+            version VARCHAR(50) NOT NULL,
+            changes TEXT,
+            approved_by VARCHAR(255),
+            approved_at TIMESTAMPTZ,
+            created_by VARCHAR(255) NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 创建试验表（更新后的字段）
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS rs.experiments (
@@ -184,21 +219,39 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             code VARCHAR(100) NOT NULL,
             project_id UUID NOT NULL REFERENCES rs.projects(id) ON DELETE CASCADE,
             formula_id UUID REFERENCES rs.formulas(id) ON DELETE SET NULL,
-            title VARCHAR(255),
-            description TEXT,
             experiment_type VARCHAR(100) NOT NULL,
+            phase VARCHAR(50) NOT NULL DEFAULT 'lab',
+            status VARCHAR(50) NOT NULL DEFAULT 'planning',
             objective TEXT,
             method TEXT,
-            result TEXT NOT NULL,
+            results JSONB NOT NULL DEFAULT '{}',
             conclusions TEXT,
-            status VARCHAR(50) NOT NULL DEFAULT 'planning',
             experimenter VARCHAR(255) NOT NULL,
-            started_at TIMESTAMPTZ,
+            batch_number VARCHAR(100),
+            scale NUMERIC(15, 4),
+            scale_unit VARCHAR(50),
+            started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             completed_at TIMESTAMPTZ,
-            experiment_date TIMESTAMPTZ,
             created_by VARCHAR(255) NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 创建试验记录表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS rs.experiment_records (
+            id UUID PRIMARY KEY,
+            experiment_id UUID NOT NULL REFERENCES rs.experiments(id) ON DELETE CASCADE,
+            record_type VARCHAR(100) NOT NULL,
+            content TEXT NOT NULL,
+            attachments JSONB NOT NULL DEFAULT '[]',
+            recorded_by VARCHAR(255) NOT NULL,
+            recorded_at TIMESTAMPTZ DEFAULT NOW()
         )
         "#,
     )
@@ -339,6 +392,11 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
             target_date TIMESTAMPTZ,
             actual_date TIMESTAMPTZ,
             status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            deliverable_type VARCHAR(100),
+            acceptance_criteria TEXT,
+            acceptance_status VARCHAR(50),
+            accepted_by VARCHAR(255),
+            accepted_at TIMESTAMPTZ,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
         )
@@ -451,12 +509,13 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_code ON rs.experiments(code)"#)
         .execute(pool)
         .await?;
-    sqlx::query(
-        r#"CREATE INDEX IF NOT EXISTS idx_experiments_project_id ON rs.experiments(project_id)"#,
-    )
-    .execute(pool)
-    .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_project_id ON rs.experiments(project_id)"#)
+        .execute(pool)
+        .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiments_status ON rs.experiments(status)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_experiment_records_experiment_id ON rs.experiment_records(experiment_id)"#)
         .execute(pool)
         .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_materials_code ON rs.materials(code)"#)
@@ -471,17 +530,13 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON rs.audit_logs(action)"#)
         .execute(pool)
         .await?;
-    sqlx::query(
-        r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON rs.audit_logs(entity_type)"#,
-    )
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON rs.audit_logs(entity_type)"#)
         .execute(pool)
         .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON rs.audit_logs(user_id)"#)
         .execute(pool)
         .await?;
-    sqlx::query(
-        r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON rs.audit_logs(created_at)"#,
-    )
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON rs.audit_logs(created_at)"#)
         .execute(pool)
         .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON rs.audit_logs(status)"#)
@@ -502,6 +557,12 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .execute(pool)
         .await?;
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_payment_schedules_contract_id ON rs.payment_schedules(contract_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_project_milestones_project_id ON rs.project_milestones(project_id)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_project_members_project_id ON rs.project_members(project_id)"#)
         .execute(pool)
         .await?;
 

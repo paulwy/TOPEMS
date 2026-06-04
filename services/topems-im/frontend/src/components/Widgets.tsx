@@ -1,5 +1,5 @@
-import React from 'react';
-import type { Chatroom, ChatMessage, Notification } from '../types';
+import React, { useState } from 'react';
+import type { Chatroom, ChatMessage, Notification, ProjectGroup } from '../types';
 
 export const ChatroomItem: React.FC<{
   chatroom: Chatroom;
@@ -41,15 +41,116 @@ export const ChatroomItem: React.FC<{
   );
 };
 
-export const MessageBubble: React.FC<{ message: ChatMessage; isSent: boolean }> = ({ message, isSent }) => {
+export const MessageBubble: React.FC<{ 
+  message: ChatMessage; 
+  isSent: boolean; 
+  onEdit?: (message: ChatMessage) => void;
+  onDelete?: (messageId: string) => void;
+  editingId?: string;
+  editContent?: string;
+  onSaveEdit?: (message: ChatMessage) => void;
+  onCancelEdit?: () => void;
+  onChangeEdit?: (content: string) => void;
+}> = ({ 
+  message, 
+  isSent, 
+  onEdit, 
+  onDelete, 
+  editingId, 
+  editContent, 
+  onSaveEdit, 
+  onCancelEdit,
+  onChangeEdit 
+}) => {
+  const [showMenu, setShowMenu] = useState(false);
+
+  if (editingId === message.id) {
+    return (
+      <div className={`flex ${isSent ? 'justify-end' : 'justify-start'} mb-3`}>
+        <div className={`max-w-xs ${isSent ? 'chat-bubble-sent' : 'chat-bubble-received'} p-3 rounded-xl`}>
+          <textarea
+            value={editContent}
+            onChange={(e) => onChangeEdit?.(e.target.value)}
+            className="w-full bg-transparent border-none outline-none resize-none text-sm"
+            rows={2}
+            autoFocus
+          />
+          <div className="flex justify-end space-x-2 mt-2">
+            <button
+              onClick={onCancelEdit}
+              className="text-xs text-gray-500 hover:text-gray-700"
+            >
+              取消
+            </button>
+            <button
+              onClick={() => onSaveEdit?.(message)}
+              className="text-xs text-purple-600 hover:text-purple-700"
+            >
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex ${isSent ? 'justify-end' : 'justify-start'} mb-3 animate-slide-in`}>
-      <div className={`chat-bubble ${isSent ? 'chat-bubble-sent' : 'chat-bubble-received'}`}>
+      <div 
+        className={`chat-bubble ${isSent ? 'chat-bubble-sent' : 'chat-bubble-received'} relative`}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          if (isSent && (onEdit || onDelete)) {
+            setShowMenu(true);
+          }
+        }}
+      >
         {!isSent && <p className="text-xs text-gray-500 mb-1 font-medium">{message.sender_name}</p>}
-        <p className="text-sm">{message.content}</p>
+        
+        {message.message_type === 'image' ? (
+          <img 
+            src={message.content} 
+            alt="图片消息"
+            className="max-w-xs rounded-lg"
+          />
+        ) : message.message_type === 'file' ? (
+          <div className="flex items-center space-x-2">
+            <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="text-sm text-blue-600 hover:underline cursor-pointer">{message.content}</span>
+          </div>
+        ) : (
+          <p className="text-sm">{message.content}</p>
+        )}
+        
         <p className={`text-xs mt-1 ${isSent ? 'text-purple-200' : 'text-gray-400'}`}>
           {new Date(message.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
         </p>
+        
+        {showMenu && isSent && (
+          <div 
+            className="absolute top-0 right-0 mt-1 mr-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-20 min-w-[100px]"
+            onClick={() => setShowMenu(false)}
+          >
+            {onEdit && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(message); setShowMenu(false); }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              >
+                编辑
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(message.id); setShowMenu(false); }}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+              >
+                删除
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

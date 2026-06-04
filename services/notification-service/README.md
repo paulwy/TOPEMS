@@ -81,7 +81,7 @@ cd /Users/xingzhai/TOPEMS/services/notification-service
 cargo run
 ```
 
-服务将在 http://localhost:8006 启动
+服务将在 http://localhost:8023 启动
 
 ### 2. 启动前端开发服务器
 
@@ -102,10 +102,10 @@ RUST_LOG=notification_service=debug  # 日志级别
 
 ### 前端配置
 
-前端通知 API 地址配置在 `/frontend/src/api/notification.ts`:
+前端通知 API 地址通过 Vite 代理配置在 `/frontend/vite.config.ts`:
 
 ```typescript
-const API_BASE_URL = 'http://localhost:8006';
+'/notification': createServiceProxyConfig('notification', 'http://localhost:8023'),
 ```
 
 ## 使用示例
