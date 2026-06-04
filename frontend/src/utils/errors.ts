@@ -47,7 +47,7 @@ export const handleApiError = (error: unknown): AppError => {
   }
 
   const axiosError = error as { response?: { status: number; data?: { message?: string } } };
-  
+
   if (axiosError.response) {
     const { status } = axiosError.response;
     const message = axiosError.response.data?.message || 'Unknown error';

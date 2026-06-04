@@ -130,6 +130,7 @@ TOPEMS是一个基于微服务架构的企业级数字化平台，提供统一�
 | topems-mail | 8054 | 邮件服务 | /api/v1 |
 | topems-mobile | 8055 | 移动端服务 | /api/v1 |
 | topems-pdm | 8023 | 产品数据管理 | /api/v1 |
+| topems-pm | 8024 | 统一项目管理 | /api/v1 |
 
 ## 技术栈
 

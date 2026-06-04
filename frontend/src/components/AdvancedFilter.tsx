@@ -1,377 +1,261 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Filter, X, Plus, ChevronDown, ChevronUp,
-  Calendar, Search, SlidersHorizontal
-} from 'lucide-react';
+import React, { useState, type Key } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Filter, X, Plus, ChevronDown } from 'lucide-react';
+import dayjs from 'dayjs';
 
 export interface FilterCondition {
-  id: string;
   field: string;
   operator: string;
-  value: string | number | boolean;
+  value: string | number | Date | null;
 }
 
-export interface FilterGroup {
-  conditions: FilterCondition[];
-  operator: 'AND' | 'OR';
+export interface AdvancedFilterProps<T> {
+  fields: { key: keyof T; label: string; type: 'text' | 'number' | 'date' | 'select' }[];
+  selectOptions?: Record<string, { label: string; value: string }[]>;
+  onFilterChange: (conditions: FilterCondition[]) => void;
+  initialConditions?: FilterCondition[];
 }
 
-interface AdvancedFilterProps {
-  fields: { key: string; label: string; type: 'text' | 'number' | 'date' | 'select' | 'boolean' }[];
-  onApply: (filters: FilterGroup[]) => void;
-  onReset: () => void;
-  initialFilters?: FilterGroup[];
-}
+export const AdvancedFilter = <T extends Record<string, any>>({
+  fields,
+  selectOptions,
+  onFilterChange,
+  initialConditions = [],
+}: AdvancedFilterProps<T>) => {
+  const [conditions, setConditions] = useState<FilterCondition[]>(initialConditions);
+  const [showDropdown, setShowDropdown] = useState(false);
 
-const operators: Record<string, { label: string; value: string }[]> = {
-  text: [
-    { label: '包含', value: 'contains' },
-    { label: '不包含', value: 'not_contains' },
-    { label: '等于', value: 'equals' },
-    { label: '不等于', value: 'not_equals' },
-    { label: '以...开头', value: 'starts_with' },
-    { label: '以...结尾', value: 'ends_with' },
-    { label: '为空', value: 'is_empty' },
-    { label: '不为空', value: 'is_not_empty' },
-  ],
-  number: [
-    { label: '等于', value: 'equals' },
-    { label: '不等于', value: 'not_equals' },
-    { label: '大于', value: 'greater_than' },
-    { label: '小于', value: 'less_than' },
-    { label: '大于等于', value: 'greater_than_or_equal' },
-    { label: '小于等于', value: 'less_than_or_equal' },
-    { label: '为空', value: 'is_empty' },
-    { label: '不为空', value: 'is_not_empty' },
-  ],
-  date: [
-    { label: '等于', value: 'equals' },
-    { label: '不等于', value: 'not_equals' },
-    { label: '大于', value: 'greater_than' },
-    { label: '小于', value: 'less_than' },
-    { label: '大于等于', value: 'greater_than_or_equal' },
-    { label: '小于等于', value: 'less_than_or_equal' },
-    { label: '在范围内', value: 'between' },
-    { label: '为空', value: 'is_empty' },
-    { label: '不为空', value: 'is_not_empty' },
-  ],
-  select: [
-    { label: '等于', value: 'equals' },
-    { label: '不等于', value: 'not_equals' },
-    { label: '在列表中', value: 'in' },
-    { label: '不在列表中', value: 'not_in' },
-    { label: '为空', value: 'is_empty' },
-    { label: '不为空', value: 'is_not_empty' },
-  ],
-  boolean: [
-    { label: '是', value: 'is_true' },
-    { label: '否', value: 'is_false' },
-  ],
-};
-
-const AdvancedFilter: React.FC<AdvancedFilterProps> = ({ 
-  fields, 
-  onApply, 
-  onReset,
-  initialFilters 
-}) => {
-  const [groups, setGroups] = useState<FilterGroup[]>(initialFilters || [{ conditions: [], operator: 'AND' }]);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-
-  useEffect(() => {
-    if (initialFilters) {
-      setGroups(initialFilters);
-    }
-  }, [initialFilters]);
-
-  const addCondition = (groupIndex: number) => {
-    const newCondition: FilterCondition = {
-      id: `condition-${Date.now()}`,
-      field: fields[0]?.key || '',
-      operator: '',
-      value: '',
-    };
-    const newGroups = [...groups];
-    newGroups[groupIndex].conditions.push(newCondition);
-    setGroups(newGroups);
-    setHasChanges(true);
+  const operators: Record<string, { label: string; value: string }[]> = {
+    text: [
+      { label: '包含', value: 'contains' },
+      { label: '不包含', value: 'not_contains' },
+      { label: '等于', value: 'equals' },
+      { label: '不等于', value: 'not_equals' },
+      { label: '为空', value: 'is_empty' },
+    ],
+    number: [
+      { label: '等于', value: 'equals' },
+      { label: '不等于', value: 'not_equals' },
+      { label: '大于', value: 'greater_than' },
+      { label: '小于', value: 'less_than' },
+      { label: '大于等于', value: 'greater_or_equal' },
+      { label: '小于等于', value: 'less_or_equal' },
+    ],
+    date: [
+      { label: '等于', value: 'equals' },
+      { label: '不等于', value: 'not_equals' },
+      { label: '在之前', value: 'before' },
+      { label: '在之后', value: 'after' },
+      { label: '在期间', value: 'between' },
+    ],
+    select: [
+      { label: '等于', value: 'equals' },
+      { label: '不等于', value: 'not_equals' },
+      { label: '在列表中', value: 'in' },
+    ],
   };
 
-  const removeCondition = (groupIndex: number, conditionIndex: number) => {
-    const newGroups = [...groups];
-    newGroups[groupIndex].conditions.splice(conditionIndex, 1);
-    setGroups(newGroups);
-    setHasChanges(true);
+  const addCondition = () => {
+    setConditions([...conditions, { field: fields[0]?.key as string, operator: 'equals', value: null }]);
   };
 
-  const updateCondition = (groupIndex: number, conditionIndex: number, field: keyof FilterCondition, value: any) => {
-    const newGroups = [...groups];
-    newGroups[groupIndex].conditions[conditionIndex][field] = value;
-    
-    if (field === 'field') {
-      const fieldConfig = fields.find(f => f.key === value);
-      if (fieldConfig) {
-        const defaultOperator = operators[fieldConfig.type]?.[0]?.value || '';
-        newGroups[groupIndex].conditions[conditionIndex].operator = defaultOperator;
-        newGroups[groupIndex].conditions[conditionIndex].value = '';
-      }
-    }
-    
-    setGroups(newGroups);
-    setHasChanges(true);
+  const updateCondition = (index: number, updates: Partial<FilterCondition>) => {
+    const newConditions = [...conditions];
+    newConditions[index] = { ...newConditions[index], ...updates };
+    setConditions(newConditions);
   };
 
-  const addGroup = () => {
-    setGroups([...groups, { conditions: [], operator: 'AND' }]);
-    setHasChanges(true);
+  const removeCondition = (index: number) => {
+    setConditions(conditions.filter((_, i) => i !== index));
   };
 
-  const removeGroup = (groupIndex: number) => {
-    if (groups.length > 1) {
-      const newGroups = groups.filter((_, i) => i !== groupIndex);
-      setGroups(newGroups);
-      setHasChanges(true);
-    }
+  const getFieldType = (field: string) => {
+    const found = fields.find((f) => f.key === field);
+    return found?.type || 'text';
   };
 
-  const updateGroupOperator = (groupIndex: number, operator: 'AND' | 'OR') => {
-    const newGroups = [...groups];
-    newGroups[groupIndex].operator = operator;
-    setGroups(newGroups);
-    setHasChanges(true);
+  const applyFilters = () => {
+    onFilterChange(conditions);
+    setShowDropdown(false);
   };
 
-  const getFieldType = (fieldKey: string): 'text' | 'number' | 'date' | 'select' | 'boolean' => {
-    return fields.find(f => f.key === fieldKey)?.type || 'text';
-  };
-
-  const handleApply = () => {
-    const validGroups = groups.filter(g => g.conditions.length > 0);
-    onApply(validGroups);
-    setHasChanges(false);
-  };
-
-  const handleReset = () => {
-    setGroups([{ conditions: [], operator: 'AND' }]);
-    setHasChanges(false);
-    onReset();
-  };
-
-  const getConditionCount = () => {
-    return groups.reduce((count, group) => count + group.conditions.length, 0);
+  const resetFilters = () => {
+    setConditions([]);
+    onFilterChange([]);
+    setShowDropdown(false);
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
-      {/* Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition-colors"
-      >
-        <div className="flex items-center">
-          <SlidersHorizontal className="w-5 h-5 mr-2 text-gray-600" />
-          <span className="font-medium text-gray-700">高级筛选</span>
-          {getConditionCount() > 0 && (
-            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
-              {getConditionCount()} 条件
-            </span>
-          )}
-        </div>
-        {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-gray-500" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-gray-500" />
-        )}
-      </button>
+    <div className='relative'>
+      <Popover open={showDropdown} onOpenChange={setShowDropdown}>
+        <PopoverTrigger asChild>
+          <Button variant='outline' className='gap-2'>
+            <Filter className='w-4 h-4' />
+            高级筛选
+            <ChevronDown className='w-4 h-4' />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className='w-[480px] p-4' align='start'>
+          <div className='flex items-center justify-between mb-4'>
+            <h4 className='font-medium'>高级筛选</h4>
+            {conditions.length > 0 && (
+              <Button variant='ghost' size='sm' onClick={resetFilters}>
+                <X className='w-4 h-4' />
+                重置
+              </Button>
+            )}
+          </div>
 
-      {/* Content */}
-      {isExpanded && (
-        <div className="p-4 space-y-4">
-          {/* Filter Groups */}
-          {groups.map((group, groupIndex) => (
-            <div key={groupIndex} className="border border-gray-200 rounded-lg p-4">
-              {/* Group Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600 mr-2">条件组 {groupIndex + 1}</span>
-                  <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                    <button
-                      onClick={() => updateGroupOperator(groupIndex, 'AND')}
-                      className={`px-2 py-1 text-xs rounded transition-colors ${
-                        group.operator === 'AND'
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      AND
-                    </button>
-                    <button
-                      onClick={() => updateGroupOperator(groupIndex, 'OR')}
-                      className={`px-2 py-1 text-xs rounded transition-colors ${
-                        group.operator === 'OR'
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      OR
-                    </button>
-                  </div>
-                </div>
-                {groups.length > 1 && (
-                  <button
-                    onClick={() => removeGroup(groupIndex)}
-                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                    title="删除条件组"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+          <div className='space-y-3'>
+            {conditions.length === 0 ? (
+              <div className='text-center py-8 text-muted-foreground'>
+                <p>暂无筛选条件</p>
+                <p className='text-sm'>点击下方按钮添加筛选条件</p>
               </div>
+            ) : (
+              conditions.map((condition, index) => {
+                const fieldType = getFieldType(condition.field);
+                const options = selectOptions?.[condition.field];
 
-              {/* Conditions */}
-              <div className="space-y-3">
-                {group.conditions.length === 0 ? (
-                  <div className="text-center py-4 text-gray-400 text-sm">
-                    点击下方按钮添加筛选条件
-                  </div>
-                ) : (
-                  group.conditions.map((condition, conditionIndex) => (
-                    <div key={condition.id} className="flex items-center space-x-2">
-                      {/* Field */}
-                      <select
-                        value={condition.field}
-                        onChange={(e) => updateCondition(groupIndex, conditionIndex, 'field', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      >
-                        <option value="">选择字段</option>
-                        {fields.map(field => (
-                          <option key={field.key} value={field.key}>
+                return (
+                  <div key={index} className='flex items-center gap-2 p-2 bg-muted rounded-lg'>
+                    <Select value={condition.field} onValueChange={(value) => updateCondition(index, { field: value })}>
+                      <SelectTrigger className='w-28'>
+                        <SelectValue placeholder='字段' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fields.map((field) => (
+                          <SelectItem key={String(field.key) as Key} value={String(field.key)}>
                             {field.label}
-                          </option>
+                          </SelectItem>
                         ))}
-                      </select>
+                      </SelectContent>
+                    </Select>
 
-                      {/* Operator */}
-                      <select
-                        value={condition.operator}
-                        onChange={(e) => updateCondition(groupIndex, conditionIndex, 'operator', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      >
-                        <option value="">选择操作符</option>
-                        {operators[getFieldType(condition.field)]?.map(op => (
-                          <option key={op.value} value={op.value}>
+                    <Select
+                      value={condition.operator}
+                      onValueChange={(value) => updateCondition(index, { operator: value })}
+                    >
+                      <SelectTrigger className='w-28'>
+                        <SelectValue placeholder='操作' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {operators[fieldType]?.map((op) => (
+                          <SelectItem key={op.value} value={op.value}>
                             {op.label}
-                          </option>
+                          </SelectItem>
                         ))}
-                      </select>
+                      </SelectContent>
+                    </Select>
 
-                      {/* Value */}
-                      <div className="flex-1">
-                        {condition.operator === 'is_empty' || condition.operator === 'is_not_empty' ? (
-                          <div className="px-3 py-2 bg-gray-100 rounded-lg text-gray-500 text-sm">
-                            无需输入值
-                          </div>
-                        ) : condition.operator === 'between' && getFieldType(condition.field) === 'date' ? (
-                          <div className="flex space-x-2">
-                            <input
-                              type="date"
-                              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                              placeholder="开始日期"
-                            />
-                            <span className="flex items-center text-gray-500">至</span>
-                            <input
-                              type="date"
-                              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                              placeholder="结束日期"
-                            />
-                          </div>
-                        ) : getFieldType(condition.field) === 'date' ? (
-                          <input
-                            type="date"
-                            value={condition.value as string}
-                            onChange={(e) => updateCondition(groupIndex, conditionIndex, 'value', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          />
-                        ) : getFieldType(condition.field) === 'number' ? (
-                          <input
-                            type="number"
-                            value={condition.value as number}
-                            onChange={(e) => updateCondition(groupIndex, conditionIndex, 'value', parseFloat(e.target.value) || '')}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          />
-                        ) : getFieldType(condition.field) === 'boolean' ? (
-                          <select
-                            value={String(condition.value)}
-                            onChange={(e) => updateCondition(groupIndex, conditionIndex, 'value', e.target.value === 'true')}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    {condition.operator !== 'is_empty' && (
+                      <div className='flex-1'>
+                        {fieldType === 'select' && options ? (
+                          <Select
+                            value={String(condition.value || '')}
+                            onValueChange={(value) => updateCondition(index, { value })}
                           >
-                            <option value="">选择</option>
-                            <option value="true">是</option>
-                            <option value="false">否</option>
-                          </select>
+                            <SelectTrigger>
+                              <SelectValue placeholder='选择值' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {options.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : fieldType === 'date' ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant='outline' className='w-full justify-start'>
+                                {condition.value ? dayjs(condition.value).format('YYYY-MM-DD') : '选择日期'}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className='p-0' align='start'>
+                              <Calendar
+                                mode='single'
+                                selected={condition.value as Date | undefined}
+                                onSelect={(date) =>
+                                  updateCondition(index, { value: (Array.isArray(date) ? date[0] : date) || null })
+                                }
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        ) : fieldType === 'number' ? (
+                          <Input
+                            type='number'
+                            placeholder='输入数值'
+                            value={condition.value as number | undefined}
+                            onChange={(e) => updateCondition(index, { value: Number(e.target.value) })}
+                          />
                         ) : (
-                          <input
-                            type="text"
-                            value={condition.value as string}
-                            onChange={(e) => updateCondition(groupIndex, conditionIndex, 'value', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                            placeholder="输入值"
+                          <Input
+                            placeholder='输入值'
+                            value={condition.value as string | undefined}
+                            onChange={(e) => updateCondition(index, { value: e.target.value })}
                           />
                         )}
                       </div>
+                    )}
 
-                      {/* Remove */}
-                      <button
-                        onClick={() => removeCondition(groupIndex, conditionIndex)}
-                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                        title="删除条件"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Add Condition Button */}
-              <button
-                onClick={() => addCondition(groupIndex)}
-                className="mt-3 w-full flex items-center justify-center px-4 py-2 border border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                添加条件
-              </button>
-            </div>
-          ))}
-
-          {/* Add Group Button */}
-          <button
-            onClick={addGroup}
-            className="w-full flex items-center justify-center px-4 py-2 border border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-500"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            添加条件组（OR 逻辑）
-          </button>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end space-x-3 pt-2">
-            <button
-              onClick={handleReset}
-              disabled={!hasChanges}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              重置
-            </button>
-            <button
-              onClick={handleApply}
-              disabled={getConditionCount() === 0}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              应用筛选
-            </button>
+                    <Button variant='ghost' size='icon' onClick={() => removeCondition(index)}>
+                      <X className='w-4 h-4' />
+                    </Button>
+                  </div>
+                );
+              })
+            )}
           </div>
+
+          <div className='flex items-center justify-between mt-4 pt-4 border-t'>
+            <Button variant='outline' size='sm' onClick={addCondition} className='gap-1'>
+              <Plus className='w-4 h-4' />
+              添加条件
+            </Button>
+            <div className='flex gap-2'>
+              <Button variant='outline' size='sm' onClick={() => setShowDropdown(false)}>
+                取消
+              </Button>
+              <Button size='sm' onClick={applyFilters}>
+                应用筛选
+              </Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {conditions.length > 0 && !showDropdown && (
+        <div className='mt-2 flex flex-wrap gap-2'>
+          {conditions.map((condition, index) => {
+            const field = fields.find((f) => f.key === condition.field);
+            const fieldLabel = field?.label || condition.field;
+            const operator = operators[getFieldType(condition.field)]?.find((op) => op.value === condition.operator);
+            return (
+              <Badge key={index} variant='secondary' className='gap-1'>
+                {fieldLabel} {operator?.label}
+                {condition.value && ` "${condition.value}"`}
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='h-4 w-4 -ml-1'
+                  onClick={() => {
+                    const newConditions = conditions.filter((_, i) => i !== index);
+                    setConditions(newConditions);
+                    onFilterChange(newConditions);
+                  }}
+                >
+                  <X className='w-3 h-3' />
+                </Button>
+              </Badge>
+            );
+          })}
         </div>
       )}
     </div>

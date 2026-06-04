@@ -1,6 +1,5 @@
 import React from 'react';
-import { patrolApi, scanApi, taskApi } from '../api/client';
-import type { PatrolRecord, ScanRecord, MobileTask } from '../types';
+import type { PatrolRecord, MobileTask } from '../types';
 import { 
   Activity, 
   Scan, 
@@ -47,7 +46,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
 };
 
 export const PatrolCard: React.FC<{ record: PatrolRecord; onClick?: () => void }> = ({ record, onClick }) => {
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     pending: 'bg-gray-100 text-gray-600',
     in_progress: 'bg-blue-100 text-blue-600',
     completed: 'bg-green-100 text-green-600',
@@ -62,26 +61,26 @@ export const PatrolCard: React.FC<{ record: PatrolRecord; onClick?: () => void }
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-2">
           <Activity className="text-blue-600" size={20} />
-          <span className="font-semibold text-gray-900">{record.patrol_type === 'routine' ? '日常巡逻' : record.patrol_type === 'emergency' ? '紧急巡逻' : '专项巡逻'}</span>
+          <span className="font-semibold text-gray-900">{record.title}</span>
         </div>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[record.status]}`}>
-          {record.status === 'pending' ? '待开始' : record.status === 'in_progress' ? '进行中' : record.status === 'completed' ? '已完成' : '已取消'}
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[record.status] || 'bg-gray-100 text-gray-600'}`}>
+          {record.status === 'pending' ? '待开始' : record.status === 'in_progress' ? '进行中' : record.status === 'completed' ? '已完成' : record.status}
         </span>
       </div>
       
       <div className="space-y-2 text-sm text-gray-600">
         <div className="flex items-center space-x-2">
           <User size={16} />
-          <span>{record.patroller_name}</span>
+          <span>{record.checked_by}</span>
         </div>
         <div className="flex items-center space-x-2">
           <Calendar size={16} />
-          <span>{new Date(record.start_time).toLocaleString('zh-CN')}</span>
+          <span>{new Date(record.checked_at).toLocaleString('zh-CN')}</span>
         </div>
-        {record.location && (
+        {record.address && (
           <div className="flex items-center space-x-2">
             <MapPin size={16} />
-            <span>{record.location}</span>
+            <span>{record.address}</span>
           </div>
         )}
       </div>
@@ -90,7 +89,7 @@ export const PatrolCard: React.FC<{ record: PatrolRecord; onClick?: () => void }
 };
 
 export const TaskCard: React.FC<{ task: MobileTask; onComplete?: () => void }> = ({ task, onComplete }) => {
-  const priorityColors = {
+  const priorityColors: Record<string, string> = {
     low: 'bg-gray-100 text-gray-600',
     medium: 'bg-blue-100 text-blue-600',
     high: 'bg-orange-100 text-orange-600',
@@ -101,8 +100,8 @@ export const TaskCard: React.FC<{ task: MobileTask; onComplete?: () => void }> =
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 animate-slide-in">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-semibold text-gray-900 mb-1">{task.task_name}</h3>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColors[task.priority]}`}>
+          <h3 className="font-semibold text-gray-900 mb-1">{task.title}</h3>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColors[task.priority] || 'bg-gray-100 text-gray-600'}`}>
             {task.priority === 'low' ? '低' : task.priority === 'medium' ? '中' : task.priority === 'high' ? '高' : '紧急'}
           </span>
         </div>
@@ -119,7 +118,7 @@ export const TaskCard: React.FC<{ task: MobileTask; onComplete?: () => void }> =
       <p className="text-sm text-gray-600 mb-3">{task.description}</p>
       
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>{task.assignee_name}</span>
+        <span>{task.assignee}</span>
         {task.due_date && <span>截止: {new Date(task.due_date).toLocaleDateString('zh-CN')}</span>}
       </div>
     </div>

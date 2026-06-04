@@ -1,5 +1,4 @@
 import createLogger from './logger';
-import { authApi } from '../api/iam';
 
 const logger = createLogger('Session');
 
@@ -96,7 +95,7 @@ export const session = {
   hasAnyPermission(permissions: string[]): boolean {
     const user = this.getUser();
     if (!user) return false;
-    return permissions.some(p => user.permissions.includes(p));
+    return permissions.some((p) => user.permissions.includes(p));
   },
 
   hasRole(role: string): boolean {

@@ -55,7 +55,7 @@ export const validators: Validator = {
     }
 
     return null;
-  }
+  },
 };
 
 export const patterns = {
@@ -64,18 +64,18 @@ export const patterns = {
   phone: /^1[3-9]\d{9}$/,
   code: /^[a-zA-Z0-9]{3,20}$/,
   amount: /^\d+(\.\d{1,2})?$/,
-  date: /^\d{4}-\d{2}-\d{2}$/
+  date: /^\d{4}-\d{2}-\d{2}$/,
 };
 
 export const validationRules = {
   username: {
     required: true,
     maxLength: 20,
-    pattern: patterns.username
+    pattern: patterns.username,
   },
   email: {
     required: true,
-    pattern: patterns.email
+    pattern: patterns.email,
   },
   password: {
     required: true,
@@ -85,21 +85,21 @@ export const validationRules = {
         return '密码必须包含大小写字母和数字';
       }
       return true;
-    }
+    },
   },
   code: {
     required: true,
     minLength: 3,
     maxLength: 20,
-    pattern: patterns.code
+    pattern: patterns.code,
   },
   name: {
     required: true,
     minLength: 2,
-    maxLength: 100
+    maxLength: 100,
   },
   description: {
-    maxLength: 1000
+    maxLength: 1000,
   },
   amount: {
     custom: (value: any) => {
@@ -112,14 +112,14 @@ export const validationRules = {
         return '金额最多保留2位小数';
       }
       return true;
-    }
+    },
   },
   date: {
-    pattern: patterns.date
+    pattern: patterns.date,
   },
   phone: {
-    pattern: patterns.phone
-  }
+    pattern: patterns.phone,
+  },
 };
 
 export class FormValidator {
@@ -177,16 +177,13 @@ export class FormValidator {
       inspector: '检验员',
       experimenter: '试验员',
       assignee: '负责人',
-      proposer: '提议人'
+      proposer: '提议人',
     };
     return fieldNames[field] || field;
   }
 }
 
-export function validateForm(
-  data: Record<string, any>,
-  rules: Record<string, ValidationRule>
-): Record<string, string> {
+export function validateForm(data: Record<string, any>, rules: Record<string, ValidationRule>): Record<string, string> {
   const validator = new FormValidator(rules);
   validator.validate(data);
   return validator.getErrors();

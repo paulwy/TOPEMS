@@ -62,7 +62,7 @@ class ApiClient {
 
   constructor() {
     Object.entries(config.services).forEach(([name, baseURL]) => {
-      const timeout = name === "ai" ? AI_TIMEOUT : DEFAULT_TIMEOUT;
+      const timeout = name === 'ai' ? AI_TIMEOUT : DEFAULT_TIMEOUT;
       const client = axios.create({
         baseURL,
         timeout,
@@ -88,43 +88,43 @@ class ApiClient {
       );
 
       client.interceptors.response.use(
-      (response: AxiosResponse) => {
-        return response.data;
-      },
-      (error) => {
-        if (!error.response || error.code === 'ERR_NETWORK') {
-          return Promise.reject(error);
-        }
-        
-        if (error.response?.status === 401) {
-          const currentPath = window.location.pathname;
-          if (currentPath !== '/login' && currentPath !== '/register') {
-            if (localStorage.getItem('token')) {
-              logger.warn('Unauthorized, clearing invalid token and redirecting to login');
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              localStorage.removeItem('roles');
-              localStorage.removeItem('permissions');
-              apiClient.clearAuthToken();
-              window.location.href = '/login';
+        (response: AxiosResponse) => {
+          return response.data;
+        },
+        (error) => {
+          if (!error.response || error.code === 'ERR_NETWORK') {
+            return Promise.reject(error);
+          }
+
+          if (error.response?.status === 401) {
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/login' && currentPath !== '/register') {
+              if (localStorage.getItem('token')) {
+                logger.warn('Unauthorized, clearing invalid token and redirecting to login');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('roles');
+                localStorage.removeItem('permissions');
+                apiClient.clearAuthToken();
+                window.location.href = '/login';
+              }
             }
           }
+
+          // 减少健康检查错误和 404 错误在开发环境的日志输出
+          const isHealthCheck = error.config?.url?.includes('/health');
+          const isNotFound = error.response?.status === 404;
+          const isServiceUnavailable = error.response?.status === 503;
+          const isServerError = error.response?.status === 500;
+
+          // 只在生产环境或者不是健康检查/404/503的情况下才记录错误
+          if (isProduction() || !(isHealthCheck || isNotFound || isServiceUnavailable || isServerError)) {
+            logger.error('Response error:', error);
+          }
+
+          return Promise.reject(error);
         }
-        
-        // 减少健康检查错误和 404 错误在开发环境的日志输出
-        const isHealthCheck = error.config?.url?.includes('/health');
-        const isNotFound = error.response?.status === 404;
-        const isServiceUnavailable = error.response?.status === 503;
-        const isServerError = error.response?.status === 500;
-        
-        // 只在生产环境或者不是健康检查/404/503的情况下才记录错误
-        if (isProduction() || !(isHealthCheck || isNotFound || isServiceUnavailable || isServerError)) {
-          logger.error('Response error:', error);
-        }
-        
-        return Promise.reject(error);
-      }
-    );
+      );
 
       this.clients[name] = client as unknown as TypedAxiosInstance;
     });
@@ -222,18 +222,22 @@ class ApiClient {
     return this.clients.mes;
   }
 
+  get pm() {
+    return this.clients.pm;
+  }
+
   get mail() {
     return this.clients.mail;
   }
 
   setAuthToken(token: string) {
-    Object.values(this.clients).forEach(client => {
+    Object.values(this.clients).forEach((client) => {
       client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     });
   }
 
   clearAuthToken() {
-    Object.values(this.clients).forEach(client => {
+    Object.values(this.clients).forEach((client) => {
       delete client.defaults.headers.common['Authorization'];
     });
   }

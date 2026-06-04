@@ -8,17 +8,16 @@ export interface ApiResponse<T = any> {
 
 export interface PatrolRecord {
   id: string;
-  patrol_plan_id: string;
-  patroller_id: string;
-  patroller_name: string;
-  patrol_type: 'routine' | 'emergency' | 'special';
-  start_time: string;
-  end_time?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  location?: string;
-  notes?: string;
+  title: string;
+  description?: string;
+  location_lat: number;
+  location_lng: number;
+  address?: string;
+  patrol_type: string;
+  status: string;
+  checked_by: string;
+  checked_at: string;
   created_at: string;
-  updated_at?: string;
 }
 
 export interface ScanRecord {
@@ -50,19 +49,18 @@ export interface MediaFile {
 
 export interface MobileTask {
   id: string;
-  task_name: string;
-  task_type: 'inspection' | 'maintenance' | 'delivery' | 'collection' | 'other';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  assignee_id: string;
-  assignee_name: string;
-  location?: string;
+  title: string;
   description?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  task_type: string;
+  priority: string;
+  status: string;
+  assignee?: string;
+  location_lat?: number;
+  location_lng?: number;
   due_date?: string;
   completed_at?: string;
-  attachments?: string[];
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
 }
 
 export interface DashboardStats {

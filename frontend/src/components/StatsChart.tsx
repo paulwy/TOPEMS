@@ -1,5 +1,19 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  Legend,
+} from 'recharts';
 
 interface StatsChartProps {
   type: 'bar' | 'pie' | 'line';
@@ -24,9 +38,9 @@ export const StatsChart: React.FC<StatsChartProps> = ({
 }) => {
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
-        <div className="flex items-center justify-center h-40 text-slate-400">
+      <div className='bg-white rounded-xl shadow-sm p-6'>
+        <h3 className='text-lg font-semibold text-slate-900 mb-4'>{title}</h3>
+        <div className='flex items-center justify-center h-40 text-slate-400'>
           <p>暂无数据</p>
         </div>
       </div>
@@ -36,9 +50,9 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-slate-200">
-          <p className="font-medium text-slate-900">{payload[0].name}</p>
-          <p className="text-sm text-slate-600">{payload[0].value}</p>
+        <div className='bg-white p-3 rounded-lg shadow-lg border border-slate-200'>
+          <p className='font-medium text-slate-900'>{payload[0].name}</p>
+          <p className='text-sm text-slate-600'>{payload[0].value}</p>
         </div>
       );
     }
@@ -46,16 +60,16 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
+    <div className='bg-white rounded-xl shadow-sm p-6'>
+      <h3 className='text-lg font-semibold text-slate-900 mb-4'>{title}</h3>
+      <div className='h-64'>
+        <ResponsiveContainer width='100%' height='100%'>
           {type === 'pie' ? (
             <PieChart>
               <Pie
                 data={data}
-                cx="50%"
-                cy="50%"
+                cx='50%'
+                cy='50%'
                 innerRadius={40}
                 outerRadius={80}
                 paddingAngle={2}
@@ -72,19 +86,19 @@ export const StatsChart: React.FC<StatsChartProps> = ({
             </PieChart>
           ) : type === 'line' ? (
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray='3 3' />
               <XAxis dataKey={xKey} />
               <YAxis />
               <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey={yKey} stroke="#6366f1" strokeWidth={2} />
+              <Line type='monotone' dataKey={yKey} stroke='#6366f1' strokeWidth={2} />
             </LineChart>
           ) : (
             <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray='3 3' />
               <XAxis dataKey={xKey} />
               <YAxis />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey={yKey} fill="#6366f1" radius={[4, 4, 0, 0]}>
+              <Bar dataKey={yKey} fill='#6366f1' radius={[4, 4, 0, 0]}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry[colorKey] || colors[index % colors.length]} />
                 ))}

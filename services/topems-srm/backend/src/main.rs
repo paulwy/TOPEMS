@@ -73,6 +73,8 @@ async fn main() -> Result<()> {
         .merge(api::create_supplier_routes(pool.clone()).await?)
         .merge(api::create_evaluation_routes(pool.clone()).await?)
         .merge(api::create_purchase_order_routes(pool.clone()).await?)
+        .merge(api::create_contract_routes(pool.clone()).await?)
+        .merge(api::create_statistics_routes(pool.clone()).await?)
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -181,6 +183,32 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
+    // Supplier Contracts table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS srm.supplier_contracts (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            contract_no VARCHAR(100) NOT NULL UNIQUE,
+            supplier_id UUID NOT NULL REFERENCES srm.suppliers(id) ON DELETE CASCADE,
+            supplier_name VARCHAR(255),
+            title VARCHAR(255) NOT NULL,
+            contract_type VARCHAR(50) NOT NULL DEFAULT 'purchase',
+            total_amount DOUBLE PRECISION,
+            currency VARCHAR(10) NOT NULL DEFAULT 'CNY',
+            sign_date TIMESTAMPTZ,
+            start_date TIMESTAMPTZ,
+            end_date TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            remarks TEXT,
+            created_by UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_srm_suppliers_status ON srm.suppliers(status)"#)
         .execute(pool)
         .await?;
@@ -194,6 +222,14 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .await?;
 
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_srm_orders_status ON srm.purchase_orders(status)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_srm_contracts_supplier_id ON srm.supplier_contracts(supplier_id)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_srm_contracts_status ON srm.supplier_contracts(status)"#)
         .execute(pool)
         .await?;
 

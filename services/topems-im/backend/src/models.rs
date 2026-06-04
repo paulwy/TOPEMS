@@ -93,33 +93,18 @@ pub struct CreateNotification {
     pub related_type: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct UserOnlineStatus {
+    pub user_id: String,
+    pub is_online: bool,
+    pub last_seen: DateTime<Utc>,
 }
 
-impl<T> ApiResponse<T> {
-    pub fn success(data: T) -> Self {
-        ApiResponse {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: "Success".to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(message: &str, code: u16) -> Self {
-        ApiResponse {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UploadedFile {
+    pub file_id: String,
+    pub file_name: String,
+    pub file_path: String,
+    pub content_type: String,
+    pub size: usize,
 }

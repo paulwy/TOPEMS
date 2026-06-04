@@ -9,12 +9,7 @@ export const useImportExport = ({ apiEndpoint }: UseImportExportOptions) => {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const importData = async (
-    file: File,
-    entityType: string,
-    importMode: string,
-    skipErrors: boolean = false
-  ) => {
+  const importData = async (file: File, entityType: string, importMode: string, skipErrors: boolean = false) => {
     setIsImporting(true);
     setError(null);
 

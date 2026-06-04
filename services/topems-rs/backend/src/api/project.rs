@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
@@ -57,6 +57,8 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
             "/api/v1/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
         )
+        .route("/api/v1/projects/{id}/dashboard", get(get_project_dashboard))
+        .route("/api/v1/projects/{id}/gantt", get(get_project_gantt))
 }
 
 #[utoipa::path(
@@ -1069,4 +1071,314 @@ async fn import_projects(
     } else {
         Json(ApiResponse::success(result, "部分导入成功"))
     }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ProjectDashboardResponse {
+    pub project: Project,
+    pub progress: serde_json::Value,
+    pub budget: serde_json::Value,
+    pub members: Vec<serde_json::Value>,
+    pub equipment: Vec<serde_json::Value>,
+    pub benefits: serde_json::Value,
+    pub risks: Vec<serde_json::Value>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/projects/{id}/dashboard",
+    tag = "projects",
+    params(
+        ("id" = Uuid, Path, description = "Project ID")
+    ),
+    responses(
+        (status = 200, description = "Project dashboard data retrieved successfully", body = ApiResponse<ProjectDashboardResponse>),
+        (status = 404, description = "Project not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn get_project_dashboard(
+    State(state): State<Arc<super::ApiState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ProjectDashboardResponse>> {
+    let project_result = sqlx::query_as::<_, Project>(
+        r#"
+        SELECT id, name, code, description, project_type, status, leader,
+               team_members, start_date, end_date, budget, progress,
+               created_by, created_at, updated_at,
+               project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id
+        FROM rs.projects WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let project = match project_result {
+        Ok(Some(p)) => p,
+        Ok(None) => return Json(ApiResponse::error(404, "项目不存在")),
+        Err(e) => {
+            tracing::error!("获取项目失败: {}", e);
+            return Json(ApiResponse::error(500, "获取项目失败"));
+        }
+    };
+
+    let phases_result = sqlx::query!(
+        r#"
+        SELECT status, progress FROM rs.project_phases WHERE project_id = $1
+        "#,
+        id
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let phases = phases_result.unwrap_or_default();
+    let completed_phases = phases.iter().filter(|p| p.status == "COMPLETED").count();
+    let total_phases = phases.len();
+    let avg_progress = if total_phases > 0 {
+        phases.iter().map(|p| p.progress).sum::<i32>() / total_phases as i32
+    } else {
+        0
+    };
+
+    let progress_data = serde_json::json!({
+        "planned": project.progress,
+        "actual": avg_progress,
+        "completed_phases": completed_phases,
+        "total_phases": total_phases,
+        "trend": if avg_progress >= project.progress { "ahead" } else { "behind" }
+    });
+
+    let budget_data = serde_json::json!({
+        "total": project.budget,
+        "spent": 0.0,
+        "remaining": project.budget,
+        "utilization_rate": 0.0
+    });
+
+    let members_result = sqlx::query!(
+        r#"
+        SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1
+        "#,
+        id
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let members: Vec<serde_json::Value> = members_result
+        .unwrap_or_default()
+        .into_iter()
+        .map(|m| serde_json::json!({
+            "user_id": m.user_id,
+            "role": m.role
+        }))
+        .collect();
+
+    let milestones_result = sqlx::query!(
+        r#"
+        SELECT status FROM rs.project_milestones WHERE project_id = $1
+        "#,
+        id
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let milestones = milestones_result.unwrap_or_default();
+    let achieved_milestones = milestones.iter().filter(|m| m.status == "ACHIEVED").count();
+    let total_milestones = milestones.len();
+
+    let risks = vec![
+        if project.risk_level.as_deref() == Some("HIGH") || project.risk_level.as_deref() == Some("CRITICAL") {
+            serde_json::json!({
+                "level": project.risk_level,
+                "description": "风险等级较高"
+            })
+        } else if avg_progress < project.progress - 10 {
+            serde_json::json!({
+                "level": "medium",
+                "description": "进度落后超过10%"
+            })
+        } else {
+            serde_json::json!({
+                "level": "low",
+                "description": "项目运行正常"
+            })
+        }
+    ];
+
+    let benefits = serde_json::json!({
+        "cpi": 1.0,
+        "spi": avg_progress as f64 / project.progress.max(1) as f64,
+        "roi": 0.0,
+        "eac": project.budget,
+        "milestones_achieved": achieved_milestones,
+        "total_milestones": total_milestones
+    });
+
+    let response = ProjectDashboardResponse {
+        project,
+        progress: progress_data,
+        budget: budget_data,
+        members,
+        equipment: vec![],
+        benefits,
+        risks,
+    };
+
+    Json(ApiResponse::success(response, "获取项目仪表盘成功"))
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct GanttPhase {
+    pub id: Uuid,
+    pub name: String,
+    pub project_id: Uuid,
+    pub start_date: Option<DateTime<Utc>>,
+    pub end_date: Option<DateTime<Utc>>,
+    pub progress: i32,
+    pub status: String,
+    pub predecessor_ids: Vec<Uuid>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct GanttMilestone {
+    pub id: Uuid,
+    pub name: String,
+    pub project_id: Uuid,
+    pub date: DateTime<Utc>,
+    pub status: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct GanttResource {
+    pub id: Uuid,
+    pub resource_type: String,
+    pub name: String,
+    pub assignments: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ProjectGanttResponse {
+    pub phases: Vec<GanttPhase>,
+    pub milestones: Vec<GanttMilestone>,
+    pub resources: Vec<GanttResource>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/projects/{id}/gantt",
+    tag = "projects",
+    params(
+        ("id" = Uuid, Path, description = "Project ID")
+    ),
+    responses(
+        (status = 200, description = "Project gantt data retrieved successfully", body = ApiResponse<ProjectGanttResponse>),
+        (status = 404, description = "Project not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn get_project_gantt(
+    State(state): State<Arc<super::ApiState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ProjectGanttResponse>> {
+    let phases_result = sqlx::query_as::<_, crate::models::ProjectPhase>(
+        r#"
+        SELECT id, project_id, phase_number, name, description, start_date, end_date,
+               planned_duration_days, actual_duration_days, status, progress, weight,
+               predecessor_id, created_at, updated_at
+        FROM rs.project_phases WHERE project_id = $1 ORDER BY phase_number
+        "#,
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await;
+
+    let phases = match phases_result {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::error!("获取项目阶段失败: {}", e);
+            return Json(ApiResponse::error(500, "获取项目阶段失败"));
+        }
+    };
+
+    let gantt_phases: Vec<GanttPhase> = phases
+        .into_iter()
+        .map(|p| GanttPhase {
+            id: p.id,
+            name: p.name,
+            project_id: p.project_id,
+            start_date: p.start_date,
+            end_date: p.end_date,
+            progress: p.progress,
+            status: p.status,
+            predecessor_ids: p.predecessor_id.map(|pid| vec![pid]).unwrap_or_default(),
+        })
+        .collect();
+
+    let milestones_result = sqlx::query_as::<_, crate::models::ProjectMilestone>(
+        r#"
+        SELECT id, project_id, phase_id, name, description, target_date, actual_date,
+               status, created_at, updated_at, deliverable_type, acceptance_criteria,
+               acceptance_status, accepted_by, accepted_at
+        FROM rs.project_milestones WHERE project_id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await;
+
+    let milestones = match milestones_result {
+        Ok(m) => m,
+        Err(e) => {
+            tracing::error!("获取项目里程碑失败: {}", e);
+            return Json(ApiResponse::error(500, "获取项目里程碑失败"));
+        }
+    };
+
+    let gantt_milestones: Vec<GanttMilestone> = milestones
+        .into_iter()
+        .map(|m| GanttMilestone {
+            id: m.id,
+            name: m.name,
+            project_id: m.project_id,
+            date: m.target_date,
+            status: m.status,
+        })
+        .collect();
+
+    let members_result = sqlx::query!(
+        r#"
+        SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1
+        "#,
+        id
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let gantt_resources: Vec<GanttResource> = members_result
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|m| {
+            Uuid::parse_str(&m.user_id).ok().map(|uid| GanttResource {
+                id: uid,
+                resource_type: "person".to_string(),
+                name: m.role,
+                assignments: vec![],
+            })
+        })
+        .collect();
+
+    let response = ProjectGanttResponse {
+        phases: gantt_phases,
+        milestones: gantt_milestones,
+        resources: gantt_resources,
+    };
+
+    Json(ApiResponse::success(response, "获取甘特图数据成功"))
 }

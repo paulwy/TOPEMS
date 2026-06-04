@@ -164,7 +164,7 @@ export const mobileApi = {
   getDashboardStats: async (): Promise<ApiResponse<DashboardStats>> => {
     return apiClient.mobile.get<DashboardStats>('/api/v1/dashboard/stats');
   },
-  
+
   listPatrolRecords: async (): Promise<ApiResponse<ListResponse<PatrolRecord>>> => {
     return apiClient.mobile.get<ListResponse<PatrolRecord>>('/api/v1/patrol-records');
   },

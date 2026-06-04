@@ -200,7 +200,7 @@ export const pdmApi = {
     formData.append('file', file);
     formData.append('type', type);
     return apiClient.pdm.post<any>('/api/v1/import', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
 };

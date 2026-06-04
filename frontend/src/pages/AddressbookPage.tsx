@@ -103,7 +103,7 @@ export const AddressbookPage: React.FC = () => {
   }, [selectedType]);
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className='flex h-screen bg-slate-50'>
       <AddressbookSidebar
         departments={departments}
         selectedType={selectedType}
@@ -111,28 +111,14 @@ export const AddressbookPage: React.FC = () => {
         selectedDepartment={selectedDepartment}
         onDepartmentSelect={setSelectedDepartment}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <AddressbookHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onExport={handleExport}
-        />
-        <AddressbookFilters
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-        />
-        <div className="flex-1 overflow-y-auto">
-          <AddressbookList
-            contacts={contacts}
-            loading={loading}
-            onContactClick={handleContactClick}
-          />
+      <div className='flex-1 flex flex-col overflow-hidden'>
+        <AddressbookHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} onExport={handleExport} />
+        <AddressbookFilters statusFilter={statusFilter} onStatusChange={setStatusFilter} />
+        <div className='flex-1 overflow-y-auto'>
+          <AddressbookList contacts={contacts} loading={loading} onContactClick={handleContactClick} />
         </div>
       </div>
-      <ContactDetailModal
-        contact={selectedContact}
-        onClose={() => setSelectedContact(null)}
-      />
+      <ContactDetailModal contact={selectedContact} onClose={() => setSelectedContact(null)} />
     </div>
   );
 };

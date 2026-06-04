@@ -1,11 +1,11 @@
 use axum::{
     extract::{Path, Query, State},
-    http::HeaderMap,
+    http::{HeaderMap, Response},
     routing::*,
     Json, Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::models::{
@@ -16,6 +16,21 @@ use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 use crate::api::audit::log_audit_event;
 use crate::utils::validate_required_field;
 use super::ApiState;
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct BatchCreateDictItemRequest {
+    pub dict_type_id: Uuid,
+    pub items: Vec<CreateDictItemRequest>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DictItemExport {
+    pub code: String,
+    pub name: String,
+    pub value: Option<String>,
+    pub sort_order: i32,
+    pub status: String,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct DictTypeQueryParams {
@@ -41,7 +56,9 @@ pub fn create_routes() -> Router<ApiState> {
             get(get_dict_type).put(update_dict_type).delete(delete_dict_type),
         )
         .route("/api/v1/dict-types/:id/items", get(list_dict_items))
+        .route("/api/v1/dict-types/:id/items/export", get(export_dict_items))
         .route("/api/v1/dict-items", post(create_dict_item))
+        .route("/api/v1/dict-items/batch", post(batch_create_dict_items))
         .route(
             "/api/v1/dict-items/:id",
             get(get_dict_item).put(update_dict_item).delete(delete_dict_item),
@@ -674,4 +691,114 @@ async fn delete_dict_item(
     .await;
 
     response
+}
+
+async fn batch_create_dict_items(
+    State(state): State<ApiState>,
+    headers: HeaderMap,
+    Json(req): Json<BatchCreateDictItemRequest>,
+) -> Json<ApiResponse<Vec<DictItem>>> {
+    let mut created_items = Vec::new();
+    let now = Utc::now();
+
+    for item_req in req.items.iter() {
+        let id = Uuid::new_v4();
+        let sort_order = item_req.sort_order.unwrap_or(0);
+
+        let result = sqlx::query_as::<_, DictItem>(
+            r#"
+            INSERT INTO sys_dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
+            RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
+            "#,
+        )
+        .bind(id)
+        .bind(req.dict_type_id)
+        .bind(&item_req.code)
+        .bind(&item_req.name)
+        .bind(&item_req.value)
+        .bind(sort_order)
+        .bind(item_req.parent_id)
+        .bind(&item_req.extra_data)
+        .bind(now)
+        .bind(now)
+        .fetch_one(&state.db)
+        .await;
+
+        match result {
+            Ok(item) => created_items.push(item),
+            Err(e) => {
+                tracing::error!("批量创建字典项失败: {}", e);
+                return Json(api_error(500, &format!("批量创建字典项失败: {}", e)));
+            }
+        }
+    }
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = serde_json::to_value(&created_items).ok();
+
+    log_audit_event(
+        &state.db,
+        "batch_create".to_string(),
+        "dict_item".to_string(),
+        None,
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        "success".to_string(),
+        None,
+        &headers,
+    )
+    .await;
+
+    let count = created_items.len();
+    Json(ApiResponse::success(created_items, &format!("成功创建 {} 个字典项", count)))
+}
+
+async fn export_dict_items(
+    State(state): State<ApiState>,
+    Path(dict_type_id): Path<Uuid>,
+) -> Response<String> {
+    let result = sqlx::query_as::<_, DictItem>(
+        r#"
+        SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
+        FROM sys_dict_items
+        WHERE dict_type_id = $1
+        ORDER BY sort_order ASC, created_at ASC
+        "#,
+    )
+    .bind(dict_type_id)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(items) => {
+            let export_items: Vec<DictItemExport> = items.into_iter()
+                .map(|item| DictItemExport {
+                    code: item.code,
+                    name: item.name,
+                    value: item.value,
+                    sort_order: item.sort_order,
+                    status: item.status,
+                })
+                .collect();
+
+            let json_data = serde_json::to_string_pretty(&export_items).unwrap_or_default();
+            
+            Response::builder()
+                .header("Content-Type", "application/json")
+                .header("Content-Disposition", "attachment; filename=\"dict_items.json\"")
+                .body(json_data)
+                .unwrap()
+        }
+        Err(e) => {
+            tracing::error!("导出字典项失败: {}", e);
+            Response::builder()
+                .status(500)
+                .body(format!("导出字典项失败: {}", e))
+                .unwrap()
+        }
+    }
 }

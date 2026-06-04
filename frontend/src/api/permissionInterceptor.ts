@@ -15,15 +15,17 @@ export const createPermissionInterceptor = () => {
         if (error.response?.status === 403) {
           const errorMessage = error.response?.data?.message || '权限不足';
           console.warn('Permission denied:', errorMessage);
-          
-          window.dispatchEvent(new CustomEvent('permission-denied', {
-            detail: {
-              message: errorMessage,
-              requiredPermission: error.response?.data?.requiredPermission,
-            }
-          }));
+
+          window.dispatchEvent(
+            new CustomEvent('permission-denied', {
+              detail: {
+                message: errorMessage,
+                requiredPermission: error.response?.data?.requiredPermission,
+              },
+            })
+          );
         }
-        
+
         // 暂时禁用自动重定向，避免登录后闪退
         // 只在有 token 但认证失败时重定向（不拦截登录页的请求）
         if (error.response?.status === 401) {
@@ -39,30 +41,29 @@ export const createPermissionInterceptor = () => {
             }
           }
         }
-        
+
         return Promise.reject(error);
       }
     );
   });
 };
 
-export const checkPermissionBeforeRequest = (
-  permission: string,
-  callback: () => void
-) => {
+export const checkPermissionBeforeRequest = (permission: string, callback: () => void) => {
   const permissions = JSON.parse(localStorage.getItem('permissions') || '[]');
   const isSuperuser = JSON.parse(localStorage.getItem('user') || '{}')?.is_superuser;
-  
+
   if (isSuperuser || permissions.includes(permission)) {
     callback();
   } else {
     console.warn(`Permission denied: ${permission}`);
-    window.dispatchEvent(new CustomEvent('permission-denied', {
-      detail: {
-        message: `您没有 ${permission} 权限`,
-        requiredPermission: permission,
-      }
-    }));
+    window.dispatchEvent(
+      new CustomEvent('permission-denied', {
+        detail: {
+          message: `您没有 ${permission} 权限`,
+          requiredPermission: permission,
+        },
+      })
+    );
   }
 };
 
@@ -81,7 +82,7 @@ export const withPermissionCheck = async <T>(
           code: 403,
           message: error.response?.data?.message || '权限不足',
           requiredPermission: permission,
-        }
+        },
       };
     }
     throw error;
@@ -96,7 +97,7 @@ export const logPermissionAccess = async (
 ) => {
   try {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    
+
     if (!user.id) {
       console.warn('Cannot log access: user not authenticated');
       return;

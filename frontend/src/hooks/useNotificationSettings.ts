@@ -46,16 +46,16 @@ const LEGACY_SOUND_KEY = 'notificationSound';
 const migrateLegacySettings = (): NotificationSettingsData => {
   const desktopEnabled = localStorage.getItem(LEGACY_DESKTOP_KEY);
   const soundEnabled = localStorage.getItem(LEGACY_SOUND_KEY);
-  
+
   const migrated: NotificationSettingsData = { ...DEFAULT_SETTINGS };
-  
+
   if (desktopEnabled !== null) {
     migrated.enableDesktop = desktopEnabled === 'true';
   }
   if (soundEnabled !== null) {
     migrated.enableSound = soundEnabled === 'true';
   }
-  
+
   return migrated;
 };
 
@@ -75,27 +75,30 @@ export const useNotificationSettings = () => {
     return migrateLegacySettings();
   });
 
-  const setSettings = useCallback((newSettings: NotificationSettingsData | ((prev: NotificationSettingsData) => NotificationSettingsData)) => {
-    setSettingsState(prev => {
-      const updated = typeof newSettings === 'function' ? newSettings(prev) : newSettings;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
+  const setSettings = useCallback(
+    (newSettings: NotificationSettingsData | ((prev: NotificationSettingsData) => NotificationSettingsData)) => {
+      setSettingsState((prev) => {
+        const updated = typeof newSettings === 'function' ? newSettings(prev) : newSettings;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    },
+    []
+  );
 
   // 检查是否在免打扰时段
   const isInQuietHours = useCallback((): boolean => {
     if (!settings.quietHours.enabled) return false;
-    
+
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
-    
+
     const [startHour, startMinute] = settings.quietHours.start.split(':').map(Number);
     const [endHour, endMinute] = settings.quietHours.end.split(':').map(Number);
-    
+
     const startTime = startHour * 60 + startMinute;
     const endTime = endHour * 60 + endMinute;
-    
+
     if (startTime <= endTime) {
       return currentTime >= startTime && currentTime < endTime;
     } else {
@@ -105,17 +108,22 @@ export const useNotificationSettings = () => {
   }, [settings.quietHours]);
 
   // 检查通知类型是否启用
-  const isNotificationTypeEnabled = useCallback((type: string): boolean => {
-    // @ts-ignore
-    return settings.types[type] ?? true;
-  }, [settings.types]);
+  const isNotificationTypeEnabled = useCallback(
+    (type: string): boolean => {
+      return (settings.types as Record<string, boolean>)[type] ?? true;
+    },
+    [settings.types]
+  );
 
   // 检查通知是否应该显示/播放声音
-  const shouldShowNotification = useCallback((type?: string): boolean => {
-    if (isInQuietHours()) return false;
-    if (type && !isNotificationTypeEnabled(type)) return false;
-    return true;
-  }, [isInQuietHours, isNotificationTypeEnabled]);
+  const shouldShowNotification = useCallback(
+    (type?: string): boolean => {
+      if (isInQuietHours()) return false;
+      if (type && !isNotificationTypeEnabled(type)) return false;
+      return true;
+    },
+    [isInQuietHours, isNotificationTypeEnabled]
+  );
 
   const shouldPlaySound = useCallback((): boolean => {
     if (!settings.enableSound) return false;
@@ -130,25 +138,31 @@ export const useNotificationSettings = () => {
   }, [settings.enableDesktop, isInQuietHours]);
 
   // 切换设置
-  const toggleSetting = useCallback((key: keyof Omit<NotificationSettingsData, 'types' | 'quietHours'>) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  }, [setSettings]);
+  const toggleSetting = useCallback(
+    (key: keyof Omit<NotificationSettingsData, 'types' | 'quietHours'>) => {
+      setSettings((prev) => ({
+        ...prev,
+        [key]: !prev[key],
+      }));
+    },
+    [setSettings]
+  );
 
-  const toggleNotificationType = useCallback((type: keyof NotificationSettingsData['types']) => {
-    setSettings(prev => ({
-      ...prev,
-      types: {
-        ...prev.types,
-        [type]: !prev.types[type],
-      },
-    }));
-  }, [setSettings]);
+  const toggleNotificationType = useCallback(
+    (type: keyof NotificationSettingsData['types']) => {
+      setSettings((prev) => ({
+        ...prev,
+        types: {
+          ...prev.types,
+          [type]: !prev.types[type],
+        },
+      }));
+    },
+    [setSettings]
+  );
 
   const toggleQuietHours = useCallback(() => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       quietHours: {
         ...prev.quietHours,
@@ -157,15 +171,18 @@ export const useNotificationSettings = () => {
     }));
   }, [setSettings]);
 
-  const updateQuietHours = useCallback((field: 'start' | 'end', value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      quietHours: {
-        ...prev.quietHours,
-        [field]: value,
-      },
-    }));
-  }, [setSettings]);
+  const updateQuietHours = useCallback(
+    (field: 'start' | 'end', value: string) => {
+      setSettings((prev) => ({
+        ...prev,
+        quietHours: {
+          ...prev.quietHours,
+          [field]: value,
+        },
+      }));
+    },
+    [setSettings]
+  );
 
   return {
     settings,

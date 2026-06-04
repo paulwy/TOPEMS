@@ -12,6 +12,12 @@ pub mod monitoring;
 pub mod backup;
 pub mod tenant;
 pub mod cluster;
+pub mod redis;
+pub mod rate_limit;
+pub mod repository;
+pub mod messaging;
+pub mod storage;
+pub mod validation;
 
 pub use config::{Config, AppConfig, ServiceConfig, ServiceRegistry, get_default_port};
 pub use error::{TopemsError, Result};
@@ -27,3 +33,9 @@ pub use monitoring::{MonitoringState, ServiceHealth as MonServiceHealth, Service
 pub use backup::{BackupManager, BackupConfig, BackupMetadata, BackupType, BackupStatus, BackupRequest, RestoreRequest, BackupStatistics, BackupError, BackupSchedule, CompressionType};
 pub use tenant::{TenantManager, Tenant, TenantStatus, TenantPlan, TenantSettings, TenantUser, TenantRole, TenantContext, TenantError, TenantUpdate, UsageMetrics, UsageLimitExceeded};
 pub use cluster::{ClusterManager, ClusterConfig, ClusterMode, NodeConfig, NodeRole, NodeStatus, NodeHealth, LoadBalancerConfig, LoadBalancingAlgorithm, HealthCheckConfig, FailoverConfig, ClusterMetrics, ClusterEvent, ClusterEventType, EventSeverity, ClusterError};
+pub use redis::{RedisPool, RedisCacheService, CacheService};
+pub use rate_limit::{RateLimitConfig, RateLimitMiddleware};
+pub use repository::{Repository, PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder};
+pub use messaging::{Message, MessageProducer, MessageConsumer, RedisMessageBroker, InMemoryMessageBroker};
+pub use storage::{StorageConfig, FileMetadata, StorageService, LocalStorage};
+pub use validation::{ValidationError, ValidationResult, Validator};

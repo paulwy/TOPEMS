@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  X, FileSpreadsheet, File, FileText, Download,
-  CheckCircle, Loader2, Columns
-} from 'lucide-react';
+import { X, FileSpreadsheet, File, FileText, Download, CheckCircle, Loader2, Columns } from 'lucide-react';
 import { ReportData, ExportFormat, ExportReportRequest } from '../api/report';
 
 interface ExportModalProps {
@@ -25,21 +22,21 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       label: 'Excel (.xlsx)',
       icon: FileSpreadsheet,
       description: '适合数据分析，支持公式和图表',
-      color: 'green'
+      color: 'green',
     },
     {
       value: 'pdf' as ExportFormat,
       label: 'PDF (.pdf)',
       icon: File,
       description: '适合打印和文档分享',
-      color: 'red'
+      color: 'red',
     },
     {
       value: 'csv' as ExportFormat,
       label: 'CSV (.csv)',
       icon: FileText,
       description: '适合数据交换和程序读取',
-      color: 'blue'
+      color: 'blue',
     },
   ];
 
@@ -57,7 +54,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       setExportError(null);
 
       for (let i = 0; i <= 100; i += 10) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         setExportProgress(i);
       }
 
@@ -94,16 +91,18 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
 
   const generateCSV = (data: any[], columns: string[]) => {
     const headers = columns.join(',');
-    const rows = data.map(row => 
-      columns.map(col => {
-        const value = row[col];
-        if (value === undefined || value === null) return '';
-        const str = String(value);
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      }).join(',')
+    const rows = data.map((row) =>
+      columns
+        .map((col) => {
+          const value = row[col];
+          if (value === undefined || value === null) return '';
+          const str = String(value);
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        })
+        .join(',')
     );
     return [headers, ...rows].join('\n');
   };
@@ -112,7 +111,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     return {
       type: 'excel',
       headers: columns,
-      rows: data.map(row => columns.map(col => row[col] ?? ''))
+      rows: data.map((row) => columns.map((col) => row[col] ?? '')),
     };
   };
 
@@ -121,7 +120,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       type: 'pdf',
       title: report.config.title,
       headers: columns,
-      rows: data.map(row => columns.map(col => row[col] ?? ''))
+      rows: data.map((row) => columns.map((col) => row[col] ?? '')),
     };
   };
 
@@ -175,34 +174,29 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
+    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
+      <div className='bg-white rounded-xl shadow-xl w-full max-w-2xl'>
         {/* Header */}
-        <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-green-50 to-emerald-50">
-          <div className="flex justify-between items-center">
+        <div className='p-6 border-b border-slate-200 bg-gradient-to-r from-green-50 to-emerald-50'>
+          <div className='flex justify-between items-center'>
             <div>
-              <h3 className="text-xl font-semibold text-slate-900">导出报表</h3>
-              <p className="text-sm text-slate-600 mt-1">{report.config.title}</p>
+              <h3 className='text-xl font-semibold text-slate-900'>导出报表</h3>
+              <p className='text-sm text-slate-600 mt-1'>{report.config.title}</p>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
-            >
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className='p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg'>
+              <X className='w-5 h-5' />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className='p-6 space-y-6'>
           {!exporting && !exportComplete && !exportError && (
             <>
               {/* Format Selection */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">
-                  选择导出格式
-                </label>
-                <div className="grid grid-cols-3 gap-3">
+                <label className='block text-sm font-medium text-slate-700 mb-3'>选择导出格式</label>
+                <div className='grid grid-cols-3 gap-3'>
                   {formatOptions.map((option) => {
                     const Icon = option.icon;
                     return (
@@ -215,11 +209,13 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                             : `border-slate-200 ${getFormatColor(option.color)}`
                         }`}
                       >
-                        <Icon className={`w-8 h-8 mx-auto mb-2 ${
-                          format === option.value ? 'text-blue-600' : `text-${option.color}-600`
-                        }`} />
-                        <p className="font-medium text-slate-900">{option.label}</p>
-                        <p className="text-xs text-slate-500 mt-1">{option.description}</p>
+                        <Icon
+                          className={`w-8 h-8 mx-auto mb-2 ${
+                            format === option.value ? 'text-blue-600' : `text-${option.color}-600`
+                          }`}
+                        />
+                        <p className='font-medium text-slate-900'>{option.label}</p>
+                        <p className='text-xs text-slate-500 mt-1'>{option.description}</p>
                       </button>
                     );
                   })}
@@ -227,86 +223,84 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
               </div>
 
               {/* Options */}
-              <div className="space-y-4">
+              <div className='space-y-4'>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    自定义文件名（可选）
-                  </label>
+                  <label className='block text-sm font-medium text-slate-700 mb-2'>自定义文件名（可选）</label>
                   <input
-                    type="text"
+                    type='text'
                     value={customFilename}
                     onChange={(e) => setCustomFilename(e.target.value)}
                     placeholder={generateFilename()}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className='w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'
                   />
-                  <p className="text-xs text-slate-500 mt-1">
-                    默认文件名包含报表名称和导出日期
-                  </p>
+                  <p className='text-xs text-slate-500 mt-1'>默认文件名包含报表名称和导出日期</p>
                 </div>
 
                 {format === 'csv' && (
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                  <label className='flex items-center space-x-2 cursor-pointer'>
                     <input
-                      type="checkbox"
+                      type='checkbox'
                       checked={includeHeaders}
                       onChange={(e) => setIncludeHeaders(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded"
+                      className='w-4 h-4 text-blue-600 rounded'
                     />
-                    <span className="text-sm text-slate-700">包含表头</span>
+                    <span className='text-sm text-slate-700'>包含表头</span>
                   </label>
                 )}
               </div>
 
               {/* Preview */}
-              <div className="bg-slate-50 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Columns className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm font-medium text-slate-700">导出预览</span>
+              <div className='bg-slate-50 rounded-lg p-4'>
+                <div className='flex items-center space-x-2 mb-2'>
+                  <Columns className='w-4 h-4 text-slate-500' />
+                  <span className='text-sm font-medium text-slate-700'>导出预览</span>
                 </div>
-                <div className="space-y-1 text-sm text-slate-600">
+                <div className='space-y-1 text-sm text-slate-600'>
                   <p>• 报表名称：{report.config.title}</p>
                   <p>• 数据行数：{report.row_count} 条</p>
                   <p>• 导出列数：{report.config.columns.length} 列</p>
                   <p>• 导出格式：{format.toUpperCase()}</p>
-                  <p>• 文件名：{generateFilename()}.{format === 'excel' ? 'csv' : format}</p>
+                  <p>
+                    • 文件名：{generateFilename()}.{format === 'excel' ? 'csv' : format}
+                  </p>
                 </div>
               </div>
             </>
           )}
 
           {exporting && (
-            <div className="text-center py-12">
-              <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
-              <p className="text-lg font-medium text-slate-900">正在导出报表...</p>
-              <div className="mt-4 w-full bg-slate-200 rounded-full h-2.5">
-                <div 
-                  className="bg-blue-600 h-2.5 rounded-full transition-all"
+            <div className='text-center py-12'>
+              <Loader2 className='w-16 h-16 text-blue-600 animate-spin mx-auto mb-4' />
+              <p className='text-lg font-medium text-slate-900'>正在导出报表...</p>
+              <div className='mt-4 w-full bg-slate-200 rounded-full h-2.5'>
+                <div
+                  className='bg-blue-600 h-2.5 rounded-full transition-all'
                   style={{ width: `${exportProgress}%` }}
                 />
               </div>
-              <p className="text-sm text-slate-600 mt-2">{exportProgress}%</p>
+              <p className='text-sm text-slate-600 mt-2'>{exportProgress}%</p>
             </div>
           )}
 
           {exportComplete && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className='text-center py-12'>
+              <div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+                <CheckCircle className='w-8 h-8 text-green-600' />
               </div>
-              <p className="text-lg font-medium text-slate-900">导出成功！</p>
-              <p className="text-sm text-slate-600 mt-2">文件已开始下载</p>
+              <p className='text-lg font-medium text-slate-900'>导出成功！</p>
+              <p className='text-sm text-slate-600 mt-2'>文件已开始下载</p>
             </div>
           )}
 
           {exportError && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <X className="w-8 h-8 text-red-600" />
+            <div className='text-center py-12'>
+              <div className='w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+                <X className='w-8 h-8 text-red-600' />
               </div>
-              <p className="text-lg font-medium text-red-900">{exportError}</p>
+              <p className='text-lg font-medium text-red-900'>{exportError}</p>
               <button
                 onClick={() => setExportError(null)}
-                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className='mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700'
               >
                 重试
               </button>
@@ -316,18 +310,15 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
 
         {/* Footer */}
         {!exporting && !exportComplete && !exportError && (
-          <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
-            >
+          <div className='p-6 border-t border-slate-200 flex justify-end space-x-3'>
+            <button onClick={onClose} className='px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200'>
               取消
             </button>
             <button
               onClick={handleExport}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+              className='px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center'
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className='w-4 h-4 mr-2' />
               导出
             </button>
           </div>

@@ -13,11 +13,7 @@ export function useFormValidation<T extends Record<string, any>>(initialData: T)
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const validateField = useCallback((
-    field: keyof T,
-    value: any,
-    rules?: ValidationRule
-  ): string | null => {
+  const validateField = useCallback((field: keyof T, value: any, rules?: ValidationRule): string | null => {
     if (!rules) return null;
 
     if (rules.required && (!value || (typeof value === 'string' && !value.trim()))) {
@@ -48,14 +44,29 @@ export function useFormValidation<T extends Record<string, any>>(initialData: T)
     return null;
   }, []);
 
-  const handleFieldChange = useCallback((
-    field: keyof T,
-    value: any,
-    rules?: ValidationRule
-  ) => {
-    if (touched[field as string]) {
+  const handleFieldChange = useCallback(
+    (field: keyof T, value: any, rules?: ValidationRule) => {
+      if (touched[field as string]) {
+        const error = validateField(field, value, rules);
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          if (error) {
+            newErrors[field as string] = error;
+          } else {
+            delete newErrors[field as string];
+          }
+          return newErrors;
+        });
+      }
+    },
+    [touched, validateField]
+  );
+
+  const handleFieldBlur = useCallback(
+    (field: keyof T, value: any, rules?: ValidationRule) => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
       const error = validateField(field, value, rules);
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         if (error) {
           newErrors[field as string] = error;
@@ -64,61 +75,50 @@ export function useFormValidation<T extends Record<string, any>>(initialData: T)
         }
         return newErrors;
       });
-    }
-  }, [touched, validateField]);
+    },
+    [validateField]
+  );
 
-  const handleFieldBlur = useCallback((
-    field: keyof T,
-    value: any,
-    rules?: ValidationRule
-  ) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    const error = validateField(field, value, rules);
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      if (error) {
-        newErrors[field as string] = error;
-      } else {
-        delete newErrors[field as string];
+  const validateForm = useCallback(
+    (data: T, rules: Record<string, ValidationRule>): boolean => {
+      const formErrors: Record<string, string> = {};
+      let isValid = true;
+
+      for (const [field, rule] of Object.entries(rules)) {
+        const value = data[field as keyof T];
+        const error = validateField(field as keyof T, value, rule);
+
+        if (error) {
+          formErrors[field] = error;
+          isValid = false;
+        }
       }
-      return newErrors;
-    });
-  }, [validateField]);
 
-  const validateForm = useCallback((
-    data: T,
-    rules: Record<string, ValidationRule>
-  ): boolean => {
-    const formErrors: Record<string, string> = {};
-    let isValid = true;
-
-    for (const [field, rule] of Object.entries(rules)) {
-      const value = data[field as keyof T];
-      const error = validateField(field as keyof T, value, rule);
-      
-      if (error) {
-        formErrors[field] = error;
-        isValid = false;
-      }
-    }
-
-    setErrors(formErrors);
-    setTouched(Object.keys(rules).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
-    return isValid;
-  }, [validateField]);
+      setErrors(formErrors);
+      setTouched(Object.keys(rules).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
+      return isValid;
+    },
+    [validateField]
+  );
 
   const clearErrors = useCallback(() => {
     setErrors({});
     setTouched({});
   }, []);
 
-  const getFieldError = useCallback((field: string): string | undefined => {
-    return touched[field] ? errors[field] : undefined;
-  }, [errors, touched]);
+  const getFieldError = useCallback(
+    (field: string): string | undefined => {
+      return touched[field] ? errors[field] : undefined;
+    },
+    [errors, touched]
+  );
 
-  const hasFieldError = useCallback((field: string): boolean => {
-    return touched[field] && !!errors[field];
-  }, [errors, touched]);
+  const hasFieldError = useCallback(
+    (field: string): boolean => {
+      return touched[field] && !!errors[field];
+    },
+    [errors, touched]
+  );
 
   return {
     errors,
@@ -129,7 +129,7 @@ export function useFormValidation<T extends Record<string, any>>(initialData: T)
     validateForm,
     clearErrors,
     getFieldError,
-    hasFieldError
+    hasFieldError,
   };
 }
 
@@ -137,7 +137,5 @@ export function getInputClassName(
   hasError: boolean,
   baseClass: string = 'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
 ): string {
-  return hasError
-    ? `${baseClass} border-red-500`
-    : `${baseClass} border-slate-200`;
+  return hasError ? `${baseClass} border-red-500` : `${baseClass} border-slate-200`;
 }

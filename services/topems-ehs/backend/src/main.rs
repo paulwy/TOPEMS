@@ -156,6 +156,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         CREATE TABLE IF NOT EXISTS ehs.emergency_plans (
             id UUID PRIMARY KEY,
             plan_no VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
             plan_type VARCHAR(100) NOT NULL,
             scope TEXT,
             trigger_conditions TEXT,
@@ -176,6 +177,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         r#"
         CREATE TABLE IF NOT EXISTS ehs.drill_records (
             id UUID PRIMARY KEY,
+            drill_no VARCHAR(100) NOT NULL UNIQUE,
             plan_id UUID REFERENCES ehs.emergency_plans(id),
             drill_name VARCHAR(255) NOT NULL,
             drill_date TIMESTAMPTZ,

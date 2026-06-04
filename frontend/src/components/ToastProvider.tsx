@@ -31,15 +31,15 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
   const showToast = useCallback((type: Toast['type'], message: string) => {
     const id = `${Date.now()}-${Math.random()}`;
-    setToasts(prev => [...prev, { id, type, message }]);
-    
+    setToasts((prev) => [...prev, { id, type, message }]);
+
     setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
+      setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 3000);
   }, []);
 
   const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   return (
@@ -59,22 +59,23 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => 
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map(toast => (
+    <div className='fixed top-4 right-4 z-50 space-y-2'>
+      {toasts.map((toast) => (
         <div
           key={toast.id}
           className={`px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-in ${
-            toast.type === 'success' ? 'bg-green-500 text-white' :
-            toast.type === 'error' ? 'bg-red-500 text-white' :
-            toast.type === 'warning' ? 'bg-yellow-500 text-white' :
-            'bg-blue-500 text-white'
+            toast.type === 'success'
+              ? 'bg-green-500 text-white'
+              : toast.type === 'error'
+                ? 'bg-red-500 text-white'
+                : toast.type === 'warning'
+                  ? 'bg-yellow-500 text-white'
+                  : 'bg-blue-500 text-white'
           }`}
           onClick={() => onRemove(toast.id)}
         >
-          <span className="flex-1">{toast.message}</span>
-          <button className="text-white hover:text-gray-200">
-            ×
-          </button>
+          <span className='flex-1'>{toast.message}</span>
+          <button className='text-white hover:text-gray-200'>×</button>
         </div>
       ))}
     </div>

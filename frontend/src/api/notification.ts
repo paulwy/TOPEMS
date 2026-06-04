@@ -46,78 +46,52 @@ export const getNotifications = async (
 ): Promise<ApiResponse<NotificationListResponse>> => {
   const params: Record<string, any> = {
     page,
-    page_size: pageSize
+    page_size: pageSize,
   };
-  
+
   if (notificationType) {
     params.notification_type = notificationType;
   }
-  
-  const response = await apiClient.notification.get<NotificationListResponse>(
-    '/api/v1/notifications',
-    { params }
-  );
-  
+
+  const response = await apiClient.notification.get<NotificationListResponse>('/api/v1/notifications', { params });
+
   return response;
 };
 
 export const getUnreadNotifications = async (): Promise<ApiResponse<Notification[]>> => {
-  const response = await apiClient.notification.get<Notification[]>(
-    '/api/v1/notifications/unread'
-  );
-  
+  const response = await apiClient.notification.get<Notification[]>('/api/v1/notifications/unread');
+
   return response;
 };
 
 export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
-  const response = await apiClient.notification.get<number>(
-    '/api/v1/notifications/unread-count'
-  );
-  
+  const response = await apiClient.notification.get<number>('/api/v1/notifications/unread-count');
+
   return response;
 };
 
 export const markAsRead = async (id: string): Promise<ApiResponse<Notification>> => {
-  return await apiClient.notification.put<Notification>(
-    `/api/v1/notifications/${id}/read`
-  );
+  return await apiClient.notification.put<Notification>(`/api/v1/notifications/${id}/read`);
 };
 
 export const markAllAsRead = async (): Promise<ApiResponse<number>> => {
-  return await apiClient.notification.put<number>(
-    '/api/v1/notifications/read-all'
-  );
+  return await apiClient.notification.put<number>('/api/v1/notifications/read-all');
 };
 
 export const deleteNotification = async (id: string): Promise<ApiResponse<boolean>> => {
-  return await apiClient.notification.delete<boolean>(
-    `/api/v1/notifications/${id}`
-  );
+  return await apiClient.notification.delete<boolean>(`/api/v1/notifications/${id}`);
 };
 
 export const createNotification = async (
   notification: CreateNotificationRequest
 ): Promise<ApiResponse<Notification>> => {
-  return await apiClient.notification.post<Notification>(
-    '/api/v1/notifications',
-    notification
-  );
+  return await apiClient.notification.post<Notification>('/api/v1/notifications', notification);
 };
 
-export const bulkMarkAsRead = async (
-  ids: string[]
-): Promise<ApiResponse<number>> => {
-  return await apiClient.notification.put<number>(
-    '/api/v1/notifications/bulk/read',
-    { ids }
-  );
+export const bulkMarkAsRead = async (ids: string[]): Promise<ApiResponse<number>> => {
+  return await apiClient.notification.put<number>('/api/v1/notifications/bulk/read', { ids });
 };
 
-export const bulkDeleteNotifications = async (
-  ids: string[]
-): Promise<ApiResponse<number>> => {
-  return await apiClient.notification.post<number>(
-    '/api/v1/notifications/bulk/delete',
-    { ids }
-  );
+export const bulkDeleteNotifications = async (ids: string[]): Promise<ApiResponse<number>> => {
+  return await apiClient.notification.post<number>('/api/v1/notifications/bulk/delete', { ids });
 };

@@ -177,15 +177,15 @@ export interface CreateMaintenanceRecordRequest {
 
 function buildQueryString(params?: ListParams): string {
   if (!params) return '';
-  
+
   const searchParams = new URLSearchParams();
-  
+
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       searchParams.append(key, String(value));
     }
   });
-  
+
   const queryString = searchParams.toString();
   return queryString ? `?${queryString}` : '';
 }
@@ -226,20 +226,16 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 export const instrumentApi = {
   ...createCrudApi<Instrument>('/api/v1/instruments'),
 
-  listInstruments: (params?: ListParams) =>
-    createCrudApi<Instrument>('/api/v1/instruments').list(params),
+  listInstruments: (params?: ListParams) => createCrudApi<Instrument>('/api/v1/instruments').list(params),
 
-  getInstrument: (id: string) =>
-    createCrudApi<Instrument>('/api/v1/instruments').get(id),
+  getInstrument: (id: string) => createCrudApi<Instrument>('/api/v1/instruments').get(id),
 
-  createInstrument: (data: CreateInstrumentRequest) =>
-    createCrudApi<Instrument>('/api/v1/instruments').create(data),
+  createInstrument: (data: CreateInstrumentRequest) => createCrudApi<Instrument>('/api/v1/instruments').create(data),
 
   updateInstrument: (id: string, data: CreateInstrumentRequest) =>
     createCrudApi<Instrument>('/api/v1/instruments').update(id, data),
 
-  deleteInstrument: (id: string) =>
-    createCrudApi<Instrument>('/api/v1/instruments').delete(id),
+  deleteInstrument: (id: string) => createCrudApi<Instrument>('/api/v1/instruments').delete(id),
 };
 
 export const maintenanceApi = {
@@ -261,20 +257,15 @@ export const maintenanceApi = {
 export const sampleApi = {
   ...createCrudApi<Sample>('/api/v1/samples'),
 
-  listSamples: (params?: ListParams) => 
-    createCrudApi<Sample>('/api/v1/samples').list(params),
+  listSamples: (params?: ListParams) => createCrudApi<Sample>('/api/v1/samples').list(params),
 
-  getSample: (id: string) => 
-    createCrudApi<Sample>('/api/v1/samples').get(id),
+  getSample: (id: string) => createCrudApi<Sample>('/api/v1/samples').get(id),
 
-  createSample: (data: CreateSampleRequest) => 
-    createCrudApi<Sample>('/api/v1/samples').create(data),
+  createSample: (data: CreateSampleRequest) => createCrudApi<Sample>('/api/v1/samples').create(data),
 
-  updateSample: (id: string, data: CreateSampleRequest) => 
-    createCrudApi<Sample>('/api/v1/samples').update(id, data),
+  updateSample: (id: string, data: CreateSampleRequest) => createCrudApi<Sample>('/api/v1/samples').update(id, data),
 
-  deleteSample: (id: string) => 
-    createCrudApi<Sample>('/api/v1/samples').delete(id),
+  deleteSample: (id: string) => createCrudApi<Sample>('/api/v1/samples').delete(id),
 
   batchCreateSamples: async (data: BatchCreateSamplesRequest): Promise<ApiResponse<BatchOperationResult>> => {
     return apiClient.lims.post('/api/v1/samples/batch', data);
@@ -303,26 +294,21 @@ export const sampleApi = {
 export const processApi = {
   ...createCrudApi<InspectionProcess>('/api/v1/processes'),
 
-  listProcesses: (params?: ListParams) => 
-    createCrudApi<InspectionProcess>('/api/v1/processes').list(params),
+  listProcesses: (params?: ListParams) => createCrudApi<InspectionProcess>('/api/v1/processes').list(params),
 
-  getProcess: (id: string) => 
-    createCrudApi<InspectionProcess>('/api/v1/processes').get(id),
+  getProcess: (id: string) => createCrudApi<InspectionProcess>('/api/v1/processes').get(id),
 };
 
 export const taskApi = {
   ...createCrudApi<InspectionTask>('/api/v1/tasks'),
 
-  listTasks: (params?: ListParams) => 
-    createCrudApi<InspectionTask>('/api/v1/tasks').list(params),
+  listTasks: (params?: ListParams) => createCrudApi<InspectionTask>('/api/v1/tasks').list(params),
 
-  createTask: (data: CreateInspectionTaskRequest) => 
-    createCrudApi<InspectionTask>('/api/v1/tasks').create(data),
+  createTask: (data: CreateInspectionTaskRequest) => createCrudApi<InspectionTask>('/api/v1/tasks').create(data),
 
-  getTask: (id: string) => 
-    createCrudApi<InspectionTask>('/api/v1/tasks').get(id),
+  getTask: (id: string) => createCrudApi<InspectionTask>('/api/v1/tasks').get(id),
 
-  updateTask: (id: string, data: CreateInspectionTaskRequest) => 
+  updateTask: (id: string, data: CreateInspectionTaskRequest) =>
     createCrudApi<InspectionTask>('/api/v1/tasks').update(id, data),
 
   completeStep: async (id: string, data: CreateInspectionRecordRequest): Promise<ApiResponse<InspectionTask>> => {
@@ -333,10 +319,9 @@ export const taskApi = {
 export const recordApi = {
   ...createCrudApi<InspectionRecord>('/api/v1/records'),
 
-  listRecords: (params?: ListParams) => 
-    createCrudApi<InspectionRecord>('/api/v1/records').list(params),
+  listRecords: (params?: ListParams) => createCrudApi<InspectionRecord>('/api/v1/records').list(params),
 
-  createRecord: (data: CreateInspectionRecordRequest) => 
+  createRecord: (data: CreateInspectionRecordRequest) =>
     createCrudApi<InspectionRecord>('/api/v1/records').create(data),
 
   listRecordsByTask: async (taskId: string): Promise<ApiResponse<InspectionRecord[]>> => {
@@ -371,7 +356,9 @@ export interface AuditLogQueryParams {
 }
 
 export const auditLimsApi = {
-  listAuditLogs: async (params?: AuditLogQueryParams): Promise<ApiResponse<{ audit_logs: AuditLog[], total: number }>> => {
+  listAuditLogs: async (
+    params?: AuditLogQueryParams
+  ): Promise<ApiResponse<{ audit_logs: AuditLog[]; total: number }>> => {
     let url = '/api/v1/audit-logs';
     if (params) {
       const searchParams = new URLSearchParams();

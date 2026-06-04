@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface PerformanceMetrics {
   pageLoadTime: number;
@@ -150,16 +150,20 @@ class PerformanceMonitor {
 
   // 导出性能报告
   exportReport(): string {
-    return JSON.stringify({
-      metrics: this.metrics,
-      apiCalls: this.apiCalls,
-      summary: {
-        averageApiResponseTime: this.getAverageApiResponseTime(),
-        apiSuccessRate: this.getApiSuccessRate(),
-        slowApiCalls: this.getSlowApiCalls().length,
+    return JSON.stringify(
+      {
+        metrics: this.metrics,
+        apiCalls: this.apiCalls,
+        summary: {
+          averageApiResponseTime: this.getAverageApiResponseTime(),
+          apiSuccessRate: this.getApiSuccessRate(),
+          slowApiCalls: this.getSlowApiCalls().length,
+        },
+        exportedAt: new Date().toISOString(),
       },
-      exportedAt: new Date().toISOString(),
-    }, null, 2);
+      null,
+      2
+    );
   }
 }
 
@@ -192,10 +196,7 @@ export function usePerformanceMonitor() {
 }
 
 // API 调用包装器
-export async function measureApiCall<T>(
-  endpoint: string,
-  apiCall: () => Promise<T>
-): Promise<T> {
+export async function measureApiCall<T>(endpoint: string, apiCall: () => Promise<T>): Promise<T> {
   const startTime = performance.now();
 
   try {
@@ -260,19 +261,15 @@ export function PerformanceWarnings() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md shadow-lg">
-      <h3 className="font-semibold text-yellow-800 mb-2">⚠️ 性能警告</h3>
+    <div className='fixed bottom-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md shadow-lg'>
+      <h3 className='font-semibold text-yellow-800 mb-2'>⚠️ 性能警告</h3>
 
-      {successRate < 95 && (
-        <div className="text-sm text-yellow-700 mb-2">
-          API 成功率: {successRate.toFixed(1)}%
-        </div>
-      )}
+      {successRate < 95 && <div className='text-sm text-yellow-700 mb-2'>API 成功率: {successRate.toFixed(1)}%</div>}
 
       {slowCalls.length > 0 && (
-        <div className="text-sm text-yellow-700">
-          <div className="font-medium mb-1">慢 API 调用 ({slowCalls.length}):</div>
-          <ul className="list-disc list-inside">
+        <div className='text-sm text-yellow-700'>
+          <div className='font-medium mb-1'>慢 API 调用 ({slowCalls.length}):</div>
+          <ul className='list-disc list-inside'>
             {slowCalls.slice(0, 3).map((call, idx) => (
               <li key={idx}>
                 {call.endpoint}: {(call.duration / 1000).toFixed(2)}s

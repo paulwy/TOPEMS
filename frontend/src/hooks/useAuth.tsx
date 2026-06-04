@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo, createContext, useContext, ReactNode } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, createContext, useContext, ReactNode } from 'react';
 import { authApi } from '../api/iam';
 import apiClient from '../api/client';
 import type { ApiResponse } from '../api/client';
@@ -83,15 +83,18 @@ export interface LoginCredentials {
   password: string;
 }
 
-const AuthContext = createContext<(AuthState & {
-  login: (credentials: LoginCredentials) => Promise<any>;
-  logout: () => void;
-  hasPermission: (permission: string) => boolean;
-  hasRole: (role: string) => boolean;
-  hasAnyPermission: (permissions: string[]) => boolean;
-  hasAllPermissions: (permissions: string[]) => boolean;
-  refreshPermissions: () => Promise<void>;
-}) | null>(null);
+const AuthContext = createContext<
+  | (AuthState & {
+      login: (credentials: LoginCredentials) => Promise<any>;
+      logout: () => void;
+      hasPermission: (permission: string) => boolean;
+      hasRole: (role: string) => boolean;
+      hasAnyPermission: (permissions: string[]) => boolean;
+      hasAllPermissions: (permissions: string[]) => boolean;
+      refreshPermissions: () => Promise<void>;
+    })
+  | null
+>(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -129,7 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { access_token } = response.data;
         localStorage.setItem('token', access_token);
         apiClient.setAuthToken(access_token);
-        setState(prev => ({ ...prev, token: access_token }));
+        setState((prev) => ({ ...prev, token: access_token }));
         return true;
       }
     } catch (error) {
@@ -174,17 +177,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (refreshInterval) {
             clearInterval(refreshInterval);
           }
-          refreshInterval = setInterval(async () => {
-            console.log('Attempting to refresh token...');
-            await refreshToken();
-          }, 50 * 60 * 1000);
-
+          refreshInterval = setInterval(
+            async () => {
+              console.log('Attempting to refresh token...');
+              await refreshToken();
+            },
+            50 * 60 * 1000
+          );
         } catch (error) {
           console.error('Failed to initialize auth:', error);
           logout();
         }
       } else {
-        setState(prev => ({ ...prev, isLoading: false }));
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
     };
 
@@ -243,7 +248,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('user');
     localStorage.removeItem('roles');
     localStorage.removeItem('permissions');
-    
+
     setState({
       user: null,
       token: null,
@@ -257,13 +262,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const hasPermission = useCallback((permission: string) => {
     const { permissions, user } = stateRef.current;
     if (user?.is_superuser) return true;
-    
+
     const permissionId = permissionNameToId[permission];
     const altFormat = permission.replace(':', '_');
-    
-    return permissions.includes(permission) || 
-           permissions.includes(altFormat) ||
-           (permissionId && permissions.includes(permissionId));
+
+    return (
+      permissions.includes(permission) ||
+      permissions.includes(altFormat) ||
+      (permissionId && permissions.includes(permissionId))
+    );
   }, []);
 
   const hasRole = useCallback((role: string) => {
@@ -275,13 +282,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const hasAnyPermission = useCallback((perms: string[]) => {
     const { permissions, user } = stateRef.current;
     if (user?.is_superuser) return true;
-    return perms.some(perm => permissions.includes(perm));
+    return perms.some((perm) => permissions.includes(perm));
   }, []);
 
   const hasAllPermissions = useCallback((perms: string[]) => {
     const { permissions, user } = stateRef.current;
     if (user?.is_superuser) return true;
-    return perms.every(perm => permissions.includes(perm));
+    return perms.every((perm) => permissions.includes(perm));
   }, []);
 
   const refreshPermissions = useCallback(async () => {
@@ -289,14 +296,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await authApi.getMyPermissions();
       if (response.success && response.data) {
         const { roles, permissions } = response.data;
-        
-        localStorage.setItem('roles', JSON.stringify(roles.map(r => r.id)));
-        localStorage.setItem('permissions', JSON.stringify(permissions.map(p => p.id)));
-        
-        setState(prev => ({
+
+        localStorage.setItem('roles', JSON.stringify(roles.map((r) => r.id)));
+        localStorage.setItem('permissions', JSON.stringify(permissions.map((p) => p.id)));
+
+        setState((prev) => ({
           ...prev,
-          roles: roles.map(r => r.id),
-          permissions: permissions.map(p => p.id),
+          roles: roles.map((r) => r.id),
+          permissions: permissions.map((p) => p.id),
         }));
       }
     } catch (error) {
@@ -305,31 +312,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   // 稳定 Context 值
-  const contextValue = useMemo(() => ({
-    ...state,
-    login,
-    logout,
-    hasPermission,
-    hasRole,
-    hasAnyPermission,
-    hasAllPermissions,
-    refreshPermissions,
-  }), [
-    state,
-    login,
-    logout,
-    hasPermission,
-    hasRole,
-    hasAnyPermission,
-    hasAllPermissions,
-    refreshPermissions
-  ]);
-
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      ...state,
+      login,
+      logout,
+      hasPermission,
+      hasRole,
+      hasAnyPermission,
+      hasAllPermissions,
+      refreshPermissions,
+    }),
+    [state, login, logout, hasPermission, hasRole, hasAnyPermission, hasAllPermissions, refreshPermissions]
   );
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

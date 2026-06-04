@@ -93,6 +93,7 @@ pub struct UpdateSafetyCheckRequest {
 pub struct EmergencyPlan {
     pub id: Uuid,
     pub plan_no: String,
+    pub name: String,
     pub plan_type: String,
     pub scope: Option<String>,
     pub trigger_conditions: Option<String>,
@@ -134,6 +135,7 @@ pub struct UpdateEmergencyPlanRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct DrillRecord {
     pub id: Uuid,
+    pub drill_no: String,
     pub plan_id: Option<Uuid>,
     pub drill_name: String,
     pub drill_date: Option<DateTime<Utc>>,
@@ -151,6 +153,7 @@ pub struct DrillRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateDrillRecordRequest {
+    pub drill_no: String,
     pub plan_id: Option<Uuid>,
     pub drill_name: String,
     pub drill_date: Option<DateTime<Utc>>,
@@ -165,6 +168,7 @@ pub struct CreateDrillRecordRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateDrillRecordRequest {
+    pub drill_no: Option<String>,
     pub plan_id: Option<Uuid>,
     pub drill_name: Option<String>,
     pub drill_date: Option<DateTime<Utc>>,

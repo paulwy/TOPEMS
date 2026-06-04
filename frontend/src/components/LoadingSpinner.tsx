@@ -14,7 +14,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', cla
   };
 
   return (
-    <div role="status" aria-label="Loading">
+    <div role='status' aria-label='Loading'>
       <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} />
     </div>
   );
@@ -30,12 +30,12 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, child
   if (!isLoading) return <>{children}</>;
 
   return (
-    <div className="relative">
+    <div className='relative'>
       {children}
-      <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex items-center justify-center z-50">
-        <div className="text-center">
-          <LoadingSpinner size="lg" className="mx-auto" />
-          {message && <p className="mt-4 text-gray-600 dark:text-gray-300">{message}</p>}
+      <div className='absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex items-center justify-center z-50'>
+        <div className='text-center'>
+          <LoadingSpinner size='lg' className='mx-auto' />
+          {message && <p className='mt-4 text-gray-600 dark:text-gray-300'>{message}</p>}
         </div>
       </div>
     </div>
@@ -43,9 +43,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, child
 };
 
 export const SkeletonLoader: React.FC<{ className?: string }> = ({ className = '' }) => {
-  return (
-    <div className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`} />
-  );
+  return <div className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`} />;
 };
 
 export default LoadingSpinner;

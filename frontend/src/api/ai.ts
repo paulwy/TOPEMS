@@ -91,7 +91,7 @@ export const aiApi = {
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.category) searchParams.set('category', params.category);
-    
+
     const queryString = searchParams.toString();
     return apiClient.ai.get(`/api/v1/documents${queryString ? '?' + queryString : ''}`);
   },

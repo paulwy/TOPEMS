@@ -1,7 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Plus, Search, Eye, Edit2, Trash2, FileText, Calendar, AlertCircle, 
-  Check, X, RefreshCw, Clock, FileTextIcon
+import {
+  Plus,
+  Search,
+  Eye,
+  Edit2,
+  Trash2,
+  FileText,
+  Calendar,
+  AlertCircle,
+  Check,
+  X,
+  RefreshCw,
+  Clock,
+  FileTextIcon,
 } from 'lucide-react';
 import type { Contract, ContractRenewal, Employee } from '../api/hrm';
 import { contractApi, contractRenewalApi, employeeApi } from '../api/hrm';
@@ -378,7 +389,7 @@ export default function HrmContractPage() {
 
   const getEmployeeName = (id?: string) => {
     if (!id) return '-';
-    return employees.find(e => e.id === id)?.name || '-';
+    return employees.find((e) => e.id === id)?.name || '-';
   };
 
   const getDaysUntilExpiry = (endDate?: string) => {
@@ -395,29 +406,34 @@ export default function HrmContractPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className='min-h-screen bg-gray-50'>
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
-          notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`}>
+        <div
+          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+            notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+          }`}
+        >
           {notification.message}
         </div>
       )}
 
       {confirmDialog && (
         <Dialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className='sm:max-w-md'>
             <DialogHeader>
               <DialogTitle>{confirmDialog.title}</DialogTitle>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="secondary" onClick={() => setConfirmDialog(null)}>
+              <Button variant='secondary' onClick={() => setConfirmDialog(null)}>
                 取消
               </Button>
-              <Button variant="destructive" onClick={() => {
-                confirmDialog.onConfirm();
-                setConfirmDialog(null);
-              }}>
+              <Button
+                variant='destructive'
+                onClick={() => {
+                  confirmDialog.onConfirm();
+                  setConfirmDialog(null);
+                }}
+              >
                 确定
               </Button>
             </DialogFooter>
@@ -425,14 +441,14 @@ export default function HrmContractPage() {
         </Dialog>
       )}
 
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+      <div className='bg-white shadow-sm border-b'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4'>
+          <div className='flex items-center justify-between'>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">合同管理</h1>
-              <p className="text-sm text-gray-500 mt-1">管理员工合同信息，包括合同创建、到期提醒和续签流程</p>
+              <h1 className='text-xl font-semibold text-gray-900'>合同管理</h1>
+              <p className='text-sm text-gray-500 mt-1'>管理员工合同信息，包括合同创建、到期提醒和续签流程</p>
             </div>
-            <Button onClick={handleCreate} className="flex items-center gap-2">
+            <Button onClick={handleCreate} className='flex items-center gap-2'>
               <Plus size={18} />
               新建合同
             </Button>
@@ -440,34 +456,34 @@ export default function HrmContractPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
+        <Card className='shadow-sm'>
+          <CardHeader className='pb-3'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+              <div className='flex items-center gap-4 flex-wrap'>
+                <div className='relative'>
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' size={16} />
                   <Input
-                    type="text"
-                    placeholder="搜索合同编号或员工姓名"
+                    type='text'
+                    placeholder='搜索合同编号或员工姓名'
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="pl-10 w-64"
+                    className='pl-10 w-64'
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="全部状态" />
+                  <SelectTrigger className='w-40'>
+                    <SelectValue placeholder='全部状态' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">全部状态</SelectItem>
-                    <SelectItem value="active">生效中</SelectItem>
-                    <SelectItem value="expired">已到期</SelectItem>
-                    <SelectItem value="terminated">已终止</SelectItem>
+                    <SelectItem value=''>全部状态</SelectItem>
+                    <SelectItem value='active'>生效中</SelectItem>
+                    <SelectItem value='expired'>已到期</SelectItem>
+                    <SelectItem value='terminated'>已终止</SelectItem>
                   </SelectContent>
                 </Select>
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className='flex items-center gap-2 cursor-pointer'>
                   <Checkbox
                     checked={showExpiringOnly}
                     onCheckedChange={(e) => {
@@ -475,70 +491,73 @@ export default function HrmContractPage() {
                       setCurrentPage(1);
                     }}
                   />
-                  <span className="text-sm text-gray-600">仅显示即将到期(30天内)</span>
+                  <span className='text-sm text-gray-600'>仅显示即将到期(30天内)</span>
                 </label>
               </div>
-              <Button variant="outline" onClick={loadData} className="flex items-center gap-2">
+              <Button variant='outline' onClick={loadData} className='flex items-center gap-2'>
                 <RefreshCw size={16} />
                 刷新
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="pt-0">
-            <ScrollArea className="max-h-[600px]">
+          <CardContent className='pt-0'>
+            <ScrollArea className='max-h-[600px]'>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-32">合同编号</TableHead>
+                    <TableHead className='w-32'>合同编号</TableHead>
                     <TableHead>员工</TableHead>
                     <TableHead>合同类型</TableHead>
-                    <TableHead className="w-24">薪资</TableHead>
-                    <TableHead className="w-48">有效期</TableHead>
-                    <TableHead className="w-20">状态</TableHead>
-                    <TableHead className="w-40">操作</TableHead>
+                    <TableHead className='w-24'>薪资</TableHead>
+                    <TableHead className='w-48'>有效期</TableHead>
+                    <TableHead className='w-20'>状态</TableHead>
+                    <TableHead className='w-40'>操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <TableCell colSpan={7} className='text-center py-12'>
+                        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
                       </TableCell>
                     </TableRow>
                   ) : data.items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-12 text-gray-500">暂无数据</TableCell>
+                      <TableCell colSpan={7} className='text-center py-12 text-gray-500'>
+                        暂无数据
+                      </TableCell>
                     </TableRow>
                   ) : (
                     data.items.map((item) => {
                       const days = getDaysUntilExpiry(item.end_date);
                       const isExpiringSoon = hasExpiringSoon(item.end_date);
-                      
+
                       return (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
+                        <TableRow key={item.id} className='hover:bg-gray-50'>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <FileTextIcon className="w-4 h-4 text-blue-500" />
-                              <span className="font-medium text-gray-900">{item.contract_no || '-'}</span>
+                            <div className='flex items-center gap-2'>
+                              <FileTextIcon className='w-4 h-4 text-blue-500' />
+                              <span className='font-medium text-gray-900'>{item.contract_no || '-'}</span>
                             </div>
                           </TableCell>
                           <TableCell>{getEmployeeName(item.employee_id)}</TableCell>
                           <TableCell>
-                            {contractTypes.find(t => t.value === item.contract_type)?.label || item.contract_type}
+                            {contractTypes.find((t) => t.value === item.contract_type)?.label || item.contract_type}
                           </TableCell>
+                          <TableCell>{item.salary ? `${item.salary.toLocaleString()}` : '-'}</TableCell>
                           <TableCell>
-                            {item.salary ? `${item.salary.toLocaleString()}` : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                              <span className={`text-sm ${isExpiringSoon ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
-                                {new Date(item.start_date).toLocaleDateString('zh-CN')} ~ {item.end_date ? new Date(item.end_date).toLocaleDateString('zh-CN') : '无固定期限'}
+                            <div className='flex items-center gap-2'>
+                              <Calendar className='w-3.5 h-3.5 text-gray-400' />
+                              <span
+                                className={`text-sm ${isExpiringSoon ? 'text-orange-600 font-medium' : 'text-gray-600'}`}
+                              >
+                                {new Date(item.start_date).toLocaleDateString('zh-CN')} ~{' '}
+                                {item.end_date ? new Date(item.end_date).toLocaleDateString('zh-CN') : '无固定期限'}
                               </span>
                             </div>
                             {isExpiringSoon && days !== null && (
-                              <div className="mt-1 flex items-center gap-1 text-xs text-orange-600">
-                                <AlertCircle className="w-3 h-3" />
+                              <div className='mt-1 flex items-center gap-1 text-xs text-orange-600'>
+                                <AlertCircle className='w-3 h-3' />
                                 <span>剩余{days}天到期</span>
                               </div>
                             )}
@@ -549,20 +568,32 @@ export default function HrmContractPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => handleView(item)} title="查看">
-                                <Eye className="w-4 h-4" />
+                            <div className='flex gap-1'>
+                              <Button variant='ghost' size='icon' onClick={() => handleView(item)} title='查看'>
+                                <Eye className='w-4 h-4' />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleEdit(item)} title="编辑">
-                                <Edit2 className="w-4 h-4" />
+                              <Button variant='ghost' size='icon' onClick={() => handleEdit(item)} title='编辑'>
+                                <Edit2 className='w-4 h-4' />
                               </Button>
                               {item.status === 'active' && (
-                                <Button variant="ghost" size="icon" onClick={() => handleRenew(item)} title="续签" className="text-green-600 hover:text-green-700 hover:bg-green-50">
-                                  <RefreshCw className="w-4 h-4" />
+                                <Button
+                                  variant='ghost'
+                                  size='icon'
+                                  onClick={() => handleRenew(item)}
+                                  title='续签'
+                                  className='text-green-600 hover:text-green-700 hover:bg-green-50'
+                                >
+                                  <RefreshCw className='w-4 h-4' />
                                 </Button>
                               )}
-                              <Button variant="ghost" size="icon" onClick={() => showConfirm('确定删除该合同吗?', () => handleDelete(item.id))} title="删除" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                                <Trash2 className="w-4 h-4" />
+                              <Button
+                                variant='ghost'
+                                size='icon'
+                                onClick={() => showConfirm('确定删除该合同吗?', () => handleDelete(item.id))}
+                                title='删除'
+                                className='text-red-600 hover:text-red-700 hover:bg-red-50'
+                              >
+                                <Trash2 className='w-4 h-4' />
                               </Button>
                             </div>
                           </TableCell>
@@ -574,25 +605,23 @@ export default function HrmContractPage() {
               </Table>
             </ScrollArea>
 
-            <div className="flex items-center justify-between pt-4 border-t">
-              <span className="text-sm text-gray-500">
-                共 {data.total} 条记录
-              </span>
-              <div className="flex gap-2">
+            <div className='flex items-center justify-between pt-4 border-t'>
+              <span className='text-sm text-gray-500'>共 {data.total} 条记录</span>
+              <div className='flex gap-2'>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
-                  className="px-4 py-2"
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                  className='px-4 py-2'
                 >
                   上一页
                 </Button>
-                <span className="text-sm text-gray-600 px-2">第 {currentPage} 页</span>
+                <span className='text-sm text-gray-600 px-2'>第 {currentPage} 页</span>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   disabled={currentPage * data.page_size >= data.total}
-                  onClick={() => setCurrentPage(p => p + 1)}
-                  className="px-4 py-2"
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                  className='px-4 py-2'
                 >
                   下一页
                 </Button>
@@ -603,252 +632,265 @@ export default function HrmContractPage() {
       </div>
 
       <Dialog open={modalVisible} onOpenChange={setModalVisible}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className='sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col'>
           <DialogHeader>
             <DialogTitle>
               {modalType === 'create' ? '新建合同' : modalType === 'edit' ? '编辑合同' : '合同详情'}
             </DialogTitle>
           </DialogHeader>
-          <ScrollArea className="flex-1 py-4">
+          <ScrollArea className='flex-1 py-4'>
             {modalType !== 'view' ? (
-              <div className="space-y-4 px-4">
+              <div className='space-y-4 px-4'>
                 <div>
-                  <Label htmlFor="employee_id">员工 *</Label>
-                  <Select value={formState.employee_id} onValueChange={(value) => setFormState(s => ({ ...s, employee_id: value }))}>
+                  <Label htmlFor='employee_id'>员工 *</Label>
+                  <Select
+                    value={formState.employee_id}
+                    onValueChange={(value) => setFormState((s) => ({ ...s, employee_id: value }))}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="请选择员工" />
+                      <SelectValue placeholder='请选择员工' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">请选择员工</SelectItem>
-                      {employees.map(e => (
-                        <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                      <SelectItem value=''>请选择员工</SelectItem>
+                      {employees.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="contract_no">合同编号</Label>
+                  <Label htmlFor='contract_no'>合同编号</Label>
                   <Input
-                    id="contract_no"
-                    type="text"
+                    id='contract_no'
+                    type='text'
                     value={formState.contract_no}
-                    onChange={(e) => setFormState(s => ({ ...s, contract_no: e.target.value }))}
+                    onChange={(e) => setFormState((s) => ({ ...s, contract_no: e.target.value }))}
                     disabled={modalType === 'create'}
                     placeholder={modalType === 'create' ? '自动生成' : ''}
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="contract_type">合同类型 *</Label>
-                  <Select value={formState.contract_type} onValueChange={(value) => setFormState(s => ({ ...s, contract_type: value }))}>
+                  <Label htmlFor='contract_type'>合同类型 *</Label>
+                  <Select
+                    value={formState.contract_type}
+                    onValueChange={(value) => setFormState((s) => ({ ...s, contract_type: value }))}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="请选择合同类型" />
+                      <SelectValue placeholder='请选择合同类型' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">请选择合同类型</SelectItem>
-                      {contractTypes.map(t => (
-                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      <SelectItem value=''>请选择合同类型</SelectItem>
+                      {contractTypes.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <Label htmlFor="party_a_name">甲方名称</Label>
+                    <Label htmlFor='party_a_name'>甲方名称</Label>
                     <Input
-                      id="party_a_name"
-                      type="text"
+                      id='party_a_name'
+                      type='text'
                       value={formState.party_a_name}
-                      onChange={(e) => setFormState(s => ({ ...s, party_a_name: e.target.value }))}
-                      placeholder="公司名称"
+                      onChange={(e) => setFormState((s) => ({ ...s, party_a_name: e.target.value }))}
+                      placeholder='公司名称'
                     />
                   </div>
                   <div>
-                    <Label htmlFor="party_a_contact">甲方联系人</Label>
+                    <Label htmlFor='party_a_contact'>甲方联系人</Label>
                     <Input
-                      id="party_a_contact"
-                      type="text"
+                      id='party_a_contact'
+                      type='text'
                       value={formState.party_a_contact}
-                      onChange={(e) => setFormState(s => ({ ...s, party_a_contact: e.target.value }))}
-                      placeholder="联系人姓名"
+                      onChange={(e) => setFormState((s) => ({ ...s, party_a_contact: e.target.value }))}
+                      placeholder='联系人姓名'
                     />
                   </div>
                   <div>
-                    <Label htmlFor="party_b_name">乙方名称</Label>
+                    <Label htmlFor='party_b_name'>乙方名称</Label>
                     <Input
-                      id="party_b_name"
-                      type="text"
+                      id='party_b_name'
+                      type='text'
                       value={formState.party_b_name}
-                      onChange={(e) => setFormState(s => ({ ...s, party_b_name: e.target.value }))}
-                      placeholder="员工姓名"
+                      onChange={(e) => setFormState((s) => ({ ...s, party_b_name: e.target.value }))}
+                      placeholder='员工姓名'
                     />
                   </div>
                   <div>
-                    <Label htmlFor="party_b_contact">乙方联系人</Label>
+                    <Label htmlFor='party_b_contact'>乙方联系人</Label>
                     <Input
-                      id="party_b_contact"
-                      type="text"
+                      id='party_b_contact'
+                      type='text'
                       value={formState.party_b_contact}
-                      onChange={(e) => setFormState(s => ({ ...s, party_b_contact: e.target.value }))}
-                      placeholder="员工联系方式"
+                      onChange={(e) => setFormState((s) => ({ ...s, party_b_contact: e.target.value }))}
+                      placeholder='员工联系方式'
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <Label htmlFor="start_date">开始日期 *</Label>
+                    <Label htmlFor='start_date'>开始日期 *</Label>
                     <Input
-                      id="start_date"
-                      type="date"
+                      id='start_date'
+                      type='date'
                       value={formState.start_date}
-                      onChange={(e) => setFormState(s => ({ ...s, start_date: e.target.value }))}
+                      onChange={(e) => setFormState((s) => ({ ...s, start_date: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="end_date">结束日期</Label>
+                    <Label htmlFor='end_date'>结束日期</Label>
                     <Input
-                      id="end_date"
-                      type="date"
+                      id='end_date'
+                      type='date'
                       value={formState.end_date}
-                      onChange={(e) => setFormState(s => ({ ...s, end_date: e.target.value }))}
-                      placeholder="无固定期限"
+                      onChange={(e) => setFormState((s) => ({ ...s, end_date: e.target.value }))}
+                      placeholder='无固定期限'
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className='grid grid-cols-3 gap-4'>
                   <div>
-                    <Label htmlFor="salary">薪资</Label>
+                    <Label htmlFor='salary'>薪资</Label>
                     <Input
-                      id="salary"
-                      type="number"
+                      id='salary'
+                      type='number'
                       value={formState.salary}
-                      onChange={(e) => setFormState(s => ({ ...s, salary: e.target.value }))}
-                      placeholder="0"
+                      onChange={(e) => setFormState((s) => ({ ...s, salary: e.target.value }))}
+                      placeholder='0'
                     />
                   </div>
                   <div>
-                    <Label htmlFor="probation_period_days">试用期(天)</Label>
+                    <Label htmlFor='probation_period_days'>试用期(天)</Label>
                     <Input
-                      id="probation_period_days"
-                      type="number"
+                      id='probation_period_days'
+                      type='number'
                       value={formState.probation_period_days}
-                      onChange={(e) => setFormState(s => ({ ...s, probation_period_days: e.target.value }))}
-                      placeholder="0"
+                      onChange={(e) => setFormState((s) => ({ ...s, probation_period_days: e.target.value }))}
+                      placeholder='0'
                     />
                   </div>
                   <div>
-                    <Label htmlFor="reminder_days">提前提醒天数</Label>
+                    <Label htmlFor='reminder_days'>提前提醒天数</Label>
                     <Input
-                      id="reminder_days"
-                      type="number"
+                      id='reminder_days'
+                      type='number'
                       value={formState.reminder_days}
-                      onChange={(e) => setFormState(s => ({ ...s, reminder_days: e.target.value }))}
-                      placeholder="30"
+                      onChange={(e) => setFormState((s) => ({ ...s, reminder_days: e.target.value }))}
+                      placeholder='30'
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="contract_file_path">合同文件路径</Label>
+                  <Label htmlFor='contract_file_path'>合同文件路径</Label>
                   <Input
-                    id="contract_file_path"
-                    type="text"
+                    id='contract_file_path'
+                    type='text'
                     value={formState.contract_file_path}
-                    onChange={(e) => setFormState(s => ({ ...s, contract_file_path: e.target.value }))}
-                    placeholder="上传文件路径"
+                    onChange={(e) => setFormState((s) => ({ ...s, contract_file_path: e.target.value }))}
+                    placeholder='上传文件路径'
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="notes">备注</Label>
+                  <Label htmlFor='notes'>备注</Label>
                   <textarea
-                    id="notes"
+                    id='notes'
                     value={formState.notes}
-                    onChange={(e) => setFormState(s => ({ ...s, notes: e.target.value }))}
+                    onChange={(e) => setFormState((s) => ({ ...s, notes: e.target.value }))}
                     rows={3}
-                    placeholder="备注信息"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder='备注信息'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                   />
                 </div>
               </div>
             ) : (
-              <div className="px-4">
+              <div className='px-4'>
                 {currentContract && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">合同编号</p>
-                          <p className="font-medium">{currentContract.contract_no || '-'}</p>
+                  <div className='space-y-4'>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <Card className='bg-gray-50 border-none'>
+                        <CardContent className='p-3'>
+                          <p className='text-sm text-gray-500'>合同编号</p>
+                          <p className='font-medium'>{currentContract.contract_no || '-'}</p>
                         </CardContent>
                       </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">员工</p>
-                          <p className="font-medium">{getEmployeeName(currentContract.employee_id)}</p>
+                      <Card className='bg-gray-50 border-none'>
+                        <CardContent className='p-3'>
+                          <p className='text-sm text-gray-500'>员工</p>
+                          <p className='font-medium'>{getEmployeeName(currentContract.employee_id)}</p>
                         </CardContent>
                       </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">合同类型</p>
-                          <p className="font-medium">
-                            {contractTypes.find(t => t.value === currentContract.contract_type)?.label || currentContract.contract_type}
+                      <Card className='bg-gray-50 border-none'>
+                        <CardContent className='p-3'>
+                          <p className='text-sm text-gray-500'>合同类型</p>
+                          <p className='font-medium'>
+                            {contractTypes.find((t) => t.value === currentContract.contract_type)?.label ||
+                              currentContract.contract_type}
                           </p>
                         </CardContent>
                       </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">状态</p>
+                      <Card className='bg-gray-50 border-none'>
+                        <CardContent className='p-3'>
+                          <p className='text-sm text-gray-500'>状态</p>
                           <Badge className={statusMap[currentContract.status]?.color || 'bg-gray-100 text-gray-600'}>
                             {statusMap[currentContract.status]?.text || currentContract.status}
                           </Badge>
                         </CardContent>
                       </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">薪资</p>
-                          <p className="font-medium">{currentContract.salary?.toLocaleString() || '-'}</p>
+                      <Card className='bg-gray-50 border-none'>
+                        <CardContent className='p-3'>
+                          <p className='text-sm text-gray-500'>薪资</p>
+                          <p className='font-medium'>{currentContract.salary?.toLocaleString() || '-'}</p>
                         </CardContent>
                       </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">试用期</p>
-                          <p className="font-medium">{currentContract.probation_period_days || 0} 天</p>
+                      <Card className='bg-gray-50 border-none'>
+                        <CardContent className='p-3'>
+                          <p className='text-sm text-gray-500'>试用期</p>
+                          <p className='font-medium'>{currentContract.probation_period_days || 0} 天</p>
                         </CardContent>
                       </Card>
                     </div>
-                    <Card className="bg-gray-50 border-none">
-                      <CardContent className="p-3">
-                        <p className="text-sm text-gray-500">有效期</p>
-                        <p className="font-medium">
-                          {new Date(currentContract.start_date).toLocaleDateString('zh-CN')} 
-                          ~ {currentContract.end_date ? new Date(currentContract.end_date).toLocaleDateString('zh-CN') : '无固定期限'}
+                    <Card className='bg-gray-50 border-none'>
+                      <CardContent className='p-3'>
+                        <p className='text-sm text-gray-500'>有效期</p>
+                        <p className='font-medium'>
+                          {new Date(currentContract.start_date).toLocaleDateString('zh-CN')}~{' '}
+                          {currentContract.end_date
+                            ? new Date(currentContract.end_date).toLocaleDateString('zh-CN')
+                            : '无固定期限'}
                         </p>
                       </CardContent>
                     </Card>
-                    <Card className="bg-gray-50 border-none">
-                      <CardContent className="p-3">
-                        <p className="text-sm text-gray-500">甲方信息</p>
-                        <p className="font-medium">{currentContract.party_a_name || '-'}</p>
-                        <p className="text-sm">{currentContract.party_a_contact || '-'}</p>
+                    <Card className='bg-gray-50 border-none'>
+                      <CardContent className='p-3'>
+                        <p className='text-sm text-gray-500'>甲方信息</p>
+                        <p className='font-medium'>{currentContract.party_a_name || '-'}</p>
+                        <p className='text-sm'>{currentContract.party_a_contact || '-'}</p>
                       </CardContent>
                     </Card>
-                    <Card className="bg-gray-50 border-none">
-                      <CardContent className="p-3">
-                        <p className="text-sm text-gray-500">乙方信息</p>
-                        <p className="font-medium">{currentContract.party_b_name || '-'}</p>
-                        <p className="text-sm">{currentContract.party_b_contact || '-'}</p>
+                    <Card className='bg-gray-50 border-none'>
+                      <CardContent className='p-3'>
+                        <p className='text-sm text-gray-500'>乙方信息</p>
+                        <p className='font-medium'>{currentContract.party_b_name || '-'}</p>
+                        <p className='text-sm'>{currentContract.party_b_contact || '-'}</p>
                       </CardContent>
                     </Card>
                     {currentContract.notes && (
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">备注</p>
-                          <p className="font-medium">{currentContract.notes}</p>
+                      <Card className='bg-gray-50 border-none'>
+                        <CardContent className='p-3'>
+                          <p className='text-sm text-gray-500'>备注</p>
+                          <p className='font-medium'>{currentContract.notes}</p>
                         </CardContent>
                       </Card>
                     )}
@@ -856,60 +898,78 @@ export default function HrmContractPage() {
                 )}
 
                 {showRenewals && (
-                  <div className="mt-4 pt-4 border-t">
-                    <h3 className="font-medium mb-3">续签记录</h3>
+                  <div className='mt-4 pt-4 border-t'>
+                    <h3 className='font-medium mb-3'>续签记录</h3>
                     {renewals.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">暂无续签记录</p>
+                      <p className='text-gray-500 text-center py-4'>暂无续签记录</p>
                     ) : (
-                      <div className="space-y-2">
-                        {renewals.map(renewal => (
-                          <Card key={renewal.id} className="border">
-                            <CardContent className="p-3">
-                              <div className="flex justify-between items-start mb-2">
+                      <div className='space-y-2'>
+                        {renewals.map((renewal) => (
+                          <Card key={renewal.id} className='border'>
+                            <CardContent className='p-3'>
+                              <div className='flex justify-between items-start mb-2'>
                                 <div>
-                                  <span className="font-medium">{renewalTypes.find(t => t.value === renewal.renewal_type)?.label || renewal.renewal_type}</span>
-                                  <span className="ml-2 text-sm text-gray-500">
+                                  <span className='font-medium'>
+                                    {renewalTypes.find((t) => t.value === renewal.renewal_type)?.label ||
+                                      renewal.renewal_type}
+                                  </span>
+                                  <span className='ml-2 text-sm text-gray-500'>
                                     {new Date(renewal.created_at).toLocaleString('zh-CN')}
                                   </span>
                                 </div>
-                                <Badge className={renewalStatusMap[renewal.status]?.color || 'bg-gray-100 text-gray-600'}>
+                                <Badge
+                                  className={renewalStatusMap[renewal.status]?.color || 'bg-gray-100 text-gray-600'}
+                                >
                                   {renewalStatusMap[renewal.status]?.text || renewal.status}
                                 </Badge>
                               </div>
-                              <div className="text-sm text-gray-600 mb-2">
-                                新合同期限: {new Date(renewal.new_start_date).toLocaleDateString('zh-CN')} ~ {renewal.new_end_date ? new Date(renewal.new_end_date).toLocaleDateString('zh-CN') : '无固定期限'}
+                              <div className='text-sm text-gray-600 mb-2'>
+                                新合同期限: {new Date(renewal.new_start_date).toLocaleDateString('zh-CN')} ~{' '}
+                                {renewal.new_end_date
+                                  ? new Date(renewal.new_end_date).toLocaleDateString('zh-CN')
+                                  : '无固定期限'}
                               </div>
                               {renewal.new_salary && (
-                                <div className="text-sm text-gray-600 mb-2">
+                                <div className='text-sm text-gray-600 mb-2'>
                                   新薪资: {renewal.new_salary.toLocaleString()}
                                 </div>
                               )}
                               {renewal.renewal_reason && (
-                                <div className="text-sm text-gray-600 mb-2">
-                                  续签原因: {renewal.renewal_reason}
-                                </div>
+                                <div className='text-sm text-gray-600 mb-2'>续签原因: {renewal.renewal_reason}</div>
                               )}
                               {renewal.rejection_reason && (
-                                <div className="text-sm text-red-600">
-                                  拒绝理由: {renewal.rejection_reason}
-                                </div>
+                                <div className='text-sm text-red-600'>拒绝理由: {renewal.rejection_reason}</div>
                               )}
-                              <div className="flex gap-2 mt-3">
+                              <div className='flex gap-2 mt-3'>
                                 {renewal.status === 'pending' && (
                                   <>
-                                    <Button size="sm" onClick={() => handleApproveRenewal(renewal.id)} className="flex items-center gap-1">
-                                      <Check className="w-3 h-3" />
+                                    <Button
+                                      size='sm'
+                                      onClick={() => handleApproveRenewal(renewal.id)}
+                                      className='flex items-center gap-1'
+                                    >
+                                      <Check className='w-3 h-3' />
                                       批准
                                     </Button>
-                                    <Button size="sm" variant="destructive" onClick={() => handleRejectRenewal(renewal.id)} className="flex items-center gap-1">
-                                      <X className="w-3 h-3" />
+                                    <Button
+                                      size='sm'
+                                      variant='destructive'
+                                      onClick={() => handleRejectRenewal(renewal.id)}
+                                      className='flex items-center gap-1'
+                                    >
+                                      <X className='w-3 h-3' />
                                       拒绝
                                     </Button>
                                   </>
                                 )}
                                 {renewal.status === 'approved' && (
-                                  <Button size="sm" variant="outline" onClick={() => handleExecuteRenewal(renewal.id)} className="flex items-center gap-1">
-                                    <RefreshCw className="w-3 h-3" />
+                                  <Button
+                                    size='sm'
+                                    variant='outline'
+                                    onClick={() => handleExecuteRenewal(renewal.id)}
+                                    className='flex items-center gap-1'
+                                  >
+                                    <RefreshCw className='w-3 h-3' />
                                     执行续签
                                   </Button>
                                 )}
@@ -927,21 +987,17 @@ export default function HrmContractPage() {
           <DialogFooter>
             {modalType !== 'view' ? (
               <>
-                <Button variant="secondary" onClick={() => setModalVisible(false)}>
+                <Button variant='secondary' onClick={() => setModalVisible(false)}>
                   取消
                 </Button>
-                <Button onClick={handleSave}>
-                  {modalType === 'create' ? '创建' : '保存'}
-                </Button>
+                <Button onClick={handleSave}>{modalType === 'create' ? '创建' : '保存'}</Button>
               </>
             ) : (
               <>
-                <Button variant="secondary" onClick={() => setShowRenewals(!showRenewals)}>
+                <Button variant='secondary' onClick={() => setShowRenewals(!showRenewals)}>
                   {showRenewals ? '隐藏续签记录' : '查看续签记录'}
                 </Button>
-                <Button onClick={() => setModalVisible(false)}>
-                  关闭
-                </Button>
+                <Button onClick={() => setModalVisible(false)}>关闭</Button>
               </>
             )}
           </DialogFooter>
@@ -949,78 +1005,81 @@ export default function HrmContractPage() {
       </Dialog>
 
       <Dialog open={renewModalVisible} onOpenChange={setRenewModalVisible}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className='sm:max-w-md'>
           <DialogHeader>
             <DialogTitle>合同续签申请</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className='space-y-4 py-4'>
             <div>
-              <Label htmlFor="renewal_type">续签类型 *</Label>
-              <Select value={renewFormState.renewal_type} onValueChange={(value) => setRenewFormState(s => ({ ...s, renewal_type: value }))}>
+              <Label htmlFor='renewal_type'>续签类型 *</Label>
+              <Select
+                value={renewFormState.renewal_type}
+                onValueChange={(value) => setRenewFormState((s) => ({ ...s, renewal_type: value }))}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="请选择续签类型" />
+                  <SelectValue placeholder='请选择续签类型' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">请选择续签类型</SelectItem>
-                  {renewalTypes.map(t => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  <SelectItem value=''>请选择续签类型</SelectItem>
+                  {renewalTypes.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className='grid grid-cols-2 gap-4'>
               <div>
-                <Label htmlFor="new_start_date">新合同开始日期 *</Label>
+                <Label htmlFor='new_start_date'>新合同开始日期 *</Label>
                 <Input
-                  id="new_start_date"
-                  type="date"
+                  id='new_start_date'
+                  type='date'
                   value={renewFormState.new_start_date}
-                  onChange={(e) => setRenewFormState(s => ({ ...s, new_start_date: e.target.value }))}
+                  onChange={(e) => setRenewFormState((s) => ({ ...s, new_start_date: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="new_end_date">新合同结束日期</Label>
+                <Label htmlFor='new_end_date'>新合同结束日期</Label>
                 <Input
-                  id="new_end_date"
-                  type="date"
+                  id='new_end_date'
+                  type='date'
                   value={renewFormState.new_end_date}
-                  onChange={(e) => setRenewFormState(s => ({ ...s, new_end_date: e.target.value }))}
-                  placeholder="无固定期限"
+                  onChange={(e) => setRenewFormState((s) => ({ ...s, new_end_date: e.target.value }))}
+                  placeholder='无固定期限'
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="new_salary">新薪资</Label>
+              <Label htmlFor='new_salary'>新薪资</Label>
               <Input
-                id="new_salary"
-                type="number"
+                id='new_salary'
+                type='number'
                 value={renewFormState.new_salary}
-                onChange={(e) => setRenewFormState(s => ({ ...s, new_salary: e.target.value }))}
-                placeholder="不修改请留空"
+                onChange={(e) => setRenewFormState((s) => ({ ...s, new_salary: e.target.value }))}
+                placeholder='不修改请留空'
               />
             </div>
 
             <div>
-              <Label htmlFor="renewal_reason">续签原因</Label>
+              <Label htmlFor='renewal_reason'>续签原因</Label>
               <textarea
-                id="renewal_reason"
+                id='renewal_reason'
                 value={renewFormState.renewal_reason}
-                onChange={(e) => setRenewFormState(s => ({ ...s, renewal_reason: e.target.value }))}
+                onChange={(e) => setRenewFormState((s) => ({ ...s, renewal_reason: e.target.value }))}
                 rows={3}
-                placeholder="请说明续签原因"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder='请说明续签原因'
+                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setRenewModalVisible(false)}>
+            <Button variant='secondary' onClick={() => setRenewModalVisible(false)}>
               取消
             </Button>
-            <Button onClick={handleSubmitRenew}>
-              提交申请
-            </Button>
+            <Button onClick={handleSubmitRenew}>提交申请</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

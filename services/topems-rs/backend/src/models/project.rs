@@ -58,6 +58,32 @@ pub enum ProjectStatus {
     Cancelled,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum RiskLevel {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+impl Default for RiskLevel {
+    fn default() -> Self {
+        RiskLevel::Medium
+    }
+}
+
+impl std::fmt::Display for RiskLevel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RiskLevel::Low => write!(f, "LOW"),
+            RiskLevel::Medium => write!(f, "MEDIUM"),
+            RiskLevel::High => write!(f, "HIGH"),
+            RiskLevel::Critical => write!(f, "CRITICAL"),
+        }
+    }
+}
+
 impl Default for ProjectStatus {
     fn default() -> Self {
         ProjectStatus::Draft
@@ -109,6 +135,15 @@ pub struct Project {
     pub created_by: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    
+    // 新增字段
+    pub project_config: Option<serde_json::Value>,
+    pub benefit_target: Option<serde_json::Value>,
+    pub risk_level: Option<String>,
+    pub priority: Option<i32>,
+    pub tags: Option<Vec<String>>,
+    pub parent_id: Option<Uuid>,
+    pub workspace_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -122,6 +157,15 @@ pub struct CreateProjectRequest {
     pub start_date: DateTime<Utc>,
     pub end_date: Option<DateTime<Utc>>,
     pub budget: Option<f64>,
+    
+    // 新增字段
+    pub project_config: Option<serde_json::Value>,
+    pub benefit_target: Option<serde_json::Value>,
+    pub risk_level: Option<String>,
+    pub priority: Option<i32>,
+    pub tags: Option<Vec<String>>,
+    pub parent_id: Option<Uuid>,
+    pub workspace_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -134,6 +178,15 @@ pub struct UpdateProjectRequest {
     pub end_date: Option<DateTime<Utc>>,
     pub budget: Option<f64>,
     pub progress: Option<i32>,
+    
+    // 新增字段
+    pub project_config: Option<serde_json::Value>,
+    pub benefit_target: Option<serde_json::Value>,
+    pub risk_level: Option<String>,
+    pub priority: Option<i32>,
+    pub tags: Option<Vec<String>>,
+    pub parent_id: Option<Uuid>,
+    pub workspace_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

@@ -52,29 +52,32 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   const renderTrend = () => {
     if (change === undefined || change === null) return null;
-    
+
     const isPositive = change >= 0;
-    const trendIcon = isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />;
+    const trendIcon = isPositive ? <TrendingUp className='w-4 h-4' /> : <TrendingDown className='w-4 h-4' />;
     const trendColor = isPositive ? 'text-green-500' : 'text-red-500';
-    
+
     return (
       <div className={`flex items-center space-x-1 ${trendColor}`}>
         {trendIcon}
-        <span className="text-sm font-medium">{change > 0 ? '+' : ''}{change}%</span>
+        <span className='text-sm font-medium'>
+          {change > 0 ? '+' : ''}
+          {change}%
+        </span>
       </div>
     );
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm text-slate-600 mb-1">{title}</p>
-          <div className="flex items-baseline space-x-1">
+    <div className='bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow'>
+      <div className='flex items-start justify-between'>
+        <div className='flex-1'>
+          <p className='text-sm text-slate-600 mb-1'>{title}</p>
+          <div className='flex items-baseline space-x-1'>
             <span className={`text-3xl font-bold ${colors.text}`}>
               {typeof value === 'number' ? value.toLocaleString() : value}
             </span>
-            {unit && <span className="text-sm text-slate-500">{unit}</span>}
+            {unit && <span className='text-sm text-slate-500'>{unit}</span>}
           </div>
           {renderTrend()}
         </div>

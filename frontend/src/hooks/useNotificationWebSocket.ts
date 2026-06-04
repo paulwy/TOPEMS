@@ -36,7 +36,7 @@ export const useNotificationWebSocket = ({
   const onUnreadCountChangeRef = useRef(onUnreadCountChange);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const { shouldShowNotification, shouldPlaySound, shouldShowDesktopNotification } = useNotificationSettings();
 
   // 更新 refs 中的回调，避免 connect 函数依赖变化
@@ -45,31 +45,34 @@ export const useNotificationWebSocket = ({
     onUnreadCountChangeRef.current = onUnreadCountChange;
   }, [onNotification, onUnreadCountChange]);
 
-  const showDesktopNotification = useCallback((notification: Notification) => {
-    if (!shouldShowDesktopNotification()) return;
-    
-    if (!('Notification' in window)) {
-      return;
-    }
+  const showDesktopNotification = useCallback(
+    (notification: Notification) => {
+      if (!shouldShowDesktopNotification()) return;
 
-    if (Notification.permission === 'granted') {
-      new Notification(notification.title, {
-        body: notification.content,
-        icon: '/favicon.ico',
-        tag: notification.id,
-      });
-    } else if (Notification.permission !== 'denied') {
-      Notification.requestPermission().then((permission) => {
-        if (permission === 'granted') {
-          new Notification(notification.title, {
-            body: notification.content,
-            icon: '/favicon.ico',
-            tag: notification.id,
-          });
-        }
-      });
-    }
-  }, [shouldShowDesktopNotification]);
+      if (!('Notification' in window)) {
+        return;
+      }
+
+      if (Notification.permission === 'granted') {
+        new Notification(notification.title, {
+          body: notification.content,
+          icon: '/favicon.ico',
+          tag: notification.id,
+        });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+            new Notification(notification.title, {
+              body: notification.content,
+              icon: '/favicon.ico',
+              tag: notification.id,
+            });
+          }
+        });
+      }
+    },
+    [shouldShowDesktopNotification]
+  );
 
   const playNotificationSound = useCallback(() => {
     if (!shouldPlaySound()) return;
@@ -81,23 +84,23 @@ export const useNotificationWebSocket = ({
           const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
           const oscillator = audioContext.createOscillator();
           const gainNode = audioContext.createGain();
-          
+
           oscillator.connect(gainNode);
           gainNode.connect(audioContext.destination);
-          
+
           oscillator.frequency.value = 800;
           oscillator.type = 'sine';
-          
+
           gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
           gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-          
+
           oscillator.start(audioContext.currentTime);
           oscillator.stop(audioContext.currentTime + 0.2);
         } catch (beepErr) {
           console.log('Web Audio API not available:', beepErr);
         }
       };
-      
+
       // 先尝试播放文件，如果失败则用 Beep
       const audio = new Audio('/notification-sound.mp3');
       audio.volume = 0.5;
@@ -129,10 +132,12 @@ export const useNotificationWebSocket = ({
         setError(null);
         reconnectAttemptsRef.current = 0;
 
-        ws.send(JSON.stringify({
-          type: 'subscribe',
-          payload: { user_id: userId },
-        }));
+        ws.send(
+          JSON.stringify({
+            type: 'subscribe',
+            payload: { user_id: userId },
+          })
+        );
 
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -144,7 +149,7 @@ export const useNotificationWebSocket = ({
       ws.onmessage = (event) => {
         try {
           const message: WsMessage = JSON.parse(event.data);
-          
+
           switch (message.type) {
             case 'notification':
               if (onNotificationRef.current && message.payload) {
@@ -179,7 +184,7 @@ export const useNotificationWebSocket = ({
       ws.onclose = () => {
         logger.info('WebSocket disconnected');
         setIsConnected(false);
-        
+
         if (pingIntervalRef.current) {
           clearInterval(pingIntervalRef.current);
         }
@@ -199,13 +204,20 @@ export const useNotificationWebSocket = ({
       logger.error('Failed to create WebSocket:', err);
       setError('Failed to create WebSocket connection');
     }
-  }, [userId, reconnectInterval, maxReconnectAttempts, shouldShowNotification, showDesktopNotification, playNotificationSound]);
+  }, [
+    userId,
+    reconnectInterval,
+    maxReconnectAttempts,
+    shouldShowNotification,
+    showDesktopNotification,
+    playNotificationSound,
+  ]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
     }
-    
+
     if (pingIntervalRef.current) {
       clearInterval(pingIntervalRef.current);
     }

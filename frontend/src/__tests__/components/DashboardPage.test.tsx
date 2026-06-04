@@ -20,9 +20,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
         <AuthProvider>
           <ToastProvider>
             <LoadingProvider>
-              <BrowserRouter>
-                {ui}
-              </BrowserRouter>
+              <BrowserRouter>{ui}</BrowserRouter>
             </LoadingProvider>
           </ToastProvider>
         </AuthProvider>

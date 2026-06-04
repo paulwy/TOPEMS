@@ -1,0 +1,83 @@
+import React from 'react';
+import { MessageSquare, Users, User, Clock } from 'lucide-react';
+import type { ChatRoom } from '../../api/im';
+
+interface ChatRoomItemProps {
+  chatRoom: ChatRoom;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, onClick }) => {
+  const getRoomIcon = () => {
+    switch (chatRoom.room_type) {
+      case 'direct':
+        return <User className='w-5 h-5' />;
+      case 'group':
+        return <Users className='w-5 h-5' />;
+      default:
+        return <MessageSquare className='w-5 h-5' />;
+    }
+  };
+
+  const formatTime = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) {
+      return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    } else if (days === 1) {
+      return '昨天';
+    } else if (days < 7) {
+      return `${days}天前`;
+    } else {
+      return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+    }
+  };
+
+  const getMemberCount = () => {
+    if (Array.isArray(chatRoom.members)) {
+      return chatRoom.members.length;
+    }
+    return 0;
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+        isActive ? 'bg-indigo-50 border-l-4 border-indigo-600' : 'hover:bg-gray-50'
+      }`}
+    >
+      <div className='flex items-start gap-3'>
+        <div
+          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+            isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+          }`}
+        >
+          {getRoomIcon()}
+        </div>
+        <div className='flex-1 min-w-0'>
+          <div className='flex items-center justify-between'>
+            <h3 className='font-medium text-gray-900 truncate'>{chatRoom.name || '未命名会话'}</h3>
+            {chatRoom.last_message_time && (
+              <span className='text-xs text-gray-500 flex items-center gap-1'>
+                <Clock className='w-3 h-3' />
+                {formatTime(chatRoom.last_message_time)}
+              </span>
+            )}
+          </div>
+          <div className='flex items-center justify-between mt-1'>
+            <p className='text-sm text-gray-500 truncate'>{chatRoom.last_message || '暂无消息'}</p>
+            {chatRoom.room_type !== 'direct' && (
+              <span className='text-xs text-gray-400 ml-2'>{getMemberCount()}人</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

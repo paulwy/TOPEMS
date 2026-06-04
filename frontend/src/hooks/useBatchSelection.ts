@@ -7,15 +7,11 @@ export const useBatchSelection = <T>(items: T[], idKey: string = 'id') => {
   const isIndeterminate = !allItemsSelected && selectedIds.length > 0;
 
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) 
-        ? prev.filter(itemId => itemId !== id)
-        : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]));
   };
 
   const selectAll = () => {
-    setSelectedIds(items.map(item => String(item[idKey as keyof T])));
+    setSelectedIds(items.map((item) => String(item[idKey as keyof T])));
   };
 
   const deselectAll = () => {

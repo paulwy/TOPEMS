@@ -83,9 +83,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
         <AuthProvider>
           <ToastProvider>
             <LoadingProvider>
-              <BrowserRouter>
-                {ui}
-              </BrowserRouter>
+              <BrowserRouter>{ui}</BrowserRouter>
             </LoadingProvider>
           </ToastProvider>
         </AuthProvider>
@@ -113,7 +111,7 @@ describe('AuditLogPage', () => {
 
   test('renders LIMS and RS service tabs', async () => {
     renderAuditLogPage();
-    
+
     await waitFor(() => {
       expect(screen.getByText('LIMS')).toBeInTheDocument();
       expect(screen.getByText('RS')).toBeInTheDocument();

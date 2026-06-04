@@ -28,7 +28,7 @@ pub async fn create_routes() -> Result<Router<ApiState>> {
         .route("/api/v1/improvements", get(list_actions).post(create_action))
         .route(
             "/api/v1/improvements/{id}",
-            get(get_action).put(update_action),
+            get(get_action).put(update_action).delete(delete_action),
         );
 
     Ok(app)
@@ -250,4 +250,60 @@ async fn update_action(
             Json(ApiResponse::<CorrectiveAction>::error(500, "纠正措施更新失败"))
         }
     }
+}
+
+async fn delete_action(
+    State(state): State<ApiState>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query("DELETE FROM qms.corrective_actions WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "纠正措施删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "纠正措施不存在")),
+            "error".to_string(),
+            Some("纠正措施不存在".to_string()),
+        ),
+        Err(e) => {
+            tracing::error!("删除纠正措施失败: {}", e);
+            (
+                Json(api_error(500, "纠正措施删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "corrective_action".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

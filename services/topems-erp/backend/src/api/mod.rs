@@ -23,6 +23,10 @@ pub mod payment_schedule;
 pub mod addressbook;
 pub mod voucher;
 pub mod finance_reports;
+pub mod office_supplies;
+pub mod meeting_room;
+pub mod vehicles;
+pub mod announcement;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -64,4 +68,8 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(addressbook::create_routes())
         .merge(voucher::create_routes())
         .merge(finance_reports::create_routes())
+        .merge(office_supplies::create_routes())
+        .merge(meeting_room::create_routes())
+        .merge(vehicles::create_routes())
+        .merge(announcement::create_routes())
 }

@@ -3,11 +3,24 @@ import { useFileApi } from '../hooks/useFileApi';
 import { useFolderApi } from '../hooks/useFolderApi';
 import { useTauriFile } from '../hooks/useTauriFile';
 import { FileMetadata, Folder } from '../types';
-import { FileIcon, Download, Trash2, Eye, RefreshCw, FileText, Image, Edit3, FolderPlus } from 'lucide-react';
+import {
+  FileIcon,
+  Download,
+  Trash2,
+  Eye,
+  RefreshCw,
+  FileText,
+  Image,
+  Edit3,
+  FolderPlus,
+  History,
+  Search,
+} from 'lucide-react';
 import { FilePreview } from '../components/FilePreview';
 import { FileEditor } from '../components/FileEditor';
 import { FolderTree } from '../components/FolderTree';
 import { NewFolderModal } from '../components/NewFolderModal';
+import { FileVersionHistoryModal } from '../components/FileVersionHistoryModal';
 
 declare global {
   interface Window {
@@ -31,6 +44,9 @@ export function FileListPage() {
   const [editFile, setEditFile] = useState<FileMetadata | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
+  const [showVersionHistoryModal, setShowVersionHistoryModal] = useState(false);
+  const [versionHistoryFile, setVersionHistoryFile] = useState<FileMetadata | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.__TAURI__) {
@@ -142,6 +158,16 @@ export function FileListPage() {
     refreshFiles();
   };
 
+  const handleShowVersionHistory = (file: FileMetadata) => {
+    setVersionHistoryFile(file);
+    setShowVersionHistoryModal(true);
+  };
+
+  const handleRestoreVersion = (restoredFile: FileMetadata) => {
+    // 更新文件列表中对应文件
+    setFiles(prev => prev.map(f => f.id === restoredFile.id ? restoredFile : f));
+  };
+
   const handleDelete = async (file: FileMetadata) => {
     if (!window.confirm(`确定要删除文件 "${file.name}" 吗？`)) {
       return;
@@ -198,6 +224,13 @@ export function FileListPage() {
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
   const currentPath = selectedFolder ? selectedFolder.name : '全部文件';
 
+  // 应用搜索筛选
+  const filteredFiles = searchQuery
+    ? files.filter(file => 
+        file.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : files;
+
   return (
     <div className="flex gap-6">
       <div className="w-64 flex-shrink-0">
@@ -222,24 +255,44 @@ export function FileListPage() {
       </div>
 
       <div className="flex-1">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{currentPath}</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              共 {total} 个文件 · {tauriAvailable ? '桌面模式' : '网页模式'}
-            </p>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{currentPath}</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                共 {total} 个文件 · {tauriAvailable ? '桌面模式' : '网页模式'}
+              </p>
+            </div>
+            <button
+              onClick={refreshFiles}
+              disabled={loading}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              刷新
+            </button>
           </div>
-          <button
-            onClick={refreshFiles}
-            disabled={loading}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            刷新
-          </button>
+
+          {/* 搜索框 */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="搜索文件..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
         </div>
 
-        {files.length === 0 ? (
+        {filteredFiles.length === 0 && searchQuery ? (
+          <div className="text-center py-12 bg-white rounded-lg shadow">
+            <FileIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-semibold text-gray-900">未找到匹配的文件</h3>
+            <p className="mt-1 text-sm text-gray-500">尝试使用其他关键词搜索</p>
+          </div>
+        ) : filteredFiles.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <FileIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-semibold text-gray-900">暂无文件</h3>
@@ -248,7 +301,7 @@ export function FileListPage() {
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
-              {files.map((file) => (
+              {filteredFiles.map((file) => (
                 <li key={file.id}>
                   <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
                     <div className="flex items-center">
@@ -260,9 +313,19 @@ export function FileListPage() {
                         <p className="text-sm text-gray-500">
                           {(file.size / 1024).toFixed(2)} KB · {file.created_by} · {file.content_type}
                         </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          创建: {new Date(file.created_at).toLocaleString()} · 更新: {new Date(file.updated_at).toLocaleString()}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => handleShowVersionHistory(file)}
+                        className="inline-flex items-center p-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        title="版本历史"
+                      >
+                        <History className="h-4 w-4" />
+                      </button>
                       <button
                         onClick={() => handlePreview(file)}
                         disabled={previewingId === file.id}
@@ -322,6 +385,17 @@ export function FileListPage() {
           parentId={selectedFolderId}
           onSuccess={handleFolderCreated}
         />
+
+        {showVersionHistoryModal && versionHistoryFile && (
+          <FileVersionHistoryModal
+            file={versionHistoryFile}
+            onClose={() => {
+              setShowVersionHistoryModal(false);
+              setVersionHistoryFile(null);
+            }}
+            onRestore={handleRestoreVersion}
+          />
+        )}
       </div>
     </div>
   );

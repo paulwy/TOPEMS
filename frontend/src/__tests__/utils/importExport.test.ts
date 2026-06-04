@@ -1,9 +1,4 @@
-import {
-  readFileAsBase64,
-  downloadBase64File,
-  parseFileExtension,
-  getImportModeLabel,
-} from '../../utils/importExport';
+import { readFileAsBase64, downloadBase64File, parseFileExtension, getImportModeLabel } from '../../utils/importExport';
 
 describe('importExport utils', () => {
   describe('parseFileExtension', () => {
@@ -40,11 +35,11 @@ describe('importExport utils', () => {
       const testFile = new File([testContent], 'test.txt', { type: 'text/plain' });
 
       const result = await readFileAsBase64(testFile);
-      
+
       // Verify we get a base64 string
       expect(typeof result).toBe('string');
       expect(result.length).toBeGreaterThan(0);
-      
+
       // Decode and verify content
       const decoded = atob(result);
       expect(decoded).toContain('test content');

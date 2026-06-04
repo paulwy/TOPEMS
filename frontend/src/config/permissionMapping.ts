@@ -78,9 +78,7 @@ export const mapPermissionIdToName = (permissionId: string): string | null => {
 };
 
 export const mapPermissionIdsToNames = (permissionIds: string[]): string[] => {
-  return permissionIds
-    .map(id => mapPermissionIdToName(id))
-    .filter((name): name is string => name !== null);
+  return permissionIds.map((id) => mapPermissionIdToName(id)).filter((name): name is string => name !== null);
 };
 
 export const ALL_ADMIN_PERMISSIONS = [

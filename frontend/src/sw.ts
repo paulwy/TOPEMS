@@ -31,9 +31,7 @@ registerRoute(
 // Cache static assets with cache-first
 registerRoute(
   ({ request }) =>
-    request.destination === 'style' ||
-    request.destination === 'script' ||
-    request.destination === 'image',
+    request.destination === 'style' || request.destination === 'script' || request.destination === 'image',
   new CacheFirst({
     cacheName: 'static-assets',
     plugins: [
@@ -69,7 +67,7 @@ self.addEventListener('sync', (event) => {
 async function syncData() {
   const queue = await caches.open('sync-queue');
   const requests = await queue.keys();
-  
+
   for (const request of requests) {
     try {
       const response = await fetch(request);

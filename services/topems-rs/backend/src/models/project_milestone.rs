@@ -40,6 +40,13 @@ pub struct ProjectMilestone {
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    
+    // 验收相关字段
+    pub deliverable_type: Option<String>,
+    pub acceptance_criteria: Option<String>,
+    pub acceptance_status: Option<String>,
+    pub accepted_by: Option<String>,
+    pub accepted_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -49,6 +56,10 @@ pub struct CreateMilestoneRequest {
     pub name: String,
     pub description: Option<String>,
     pub target_date: DateTime<Utc>,
+    
+    // 验收相关字段
+    pub deliverable_type: Option<String>,
+    pub acceptance_criteria: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -58,4 +69,11 @@ pub struct UpdateMilestoneRequest {
     pub target_date: Option<DateTime<Utc>>,
     pub actual_date: Option<DateTime<Utc>>,
     pub status: Option<MilestoneStatus>,
+    
+    // 验收相关字段
+    pub deliverable_type: Option<String>,
+    pub acceptance_criteria: Option<String>,
+    pub acceptance_status: Option<String>,
+    pub accepted_by: Option<String>,
+    pub accepted_at: Option<DateTime<Utc>>,
 }

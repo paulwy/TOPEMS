@@ -105,7 +105,7 @@ export const mesEquipmentApi = {
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
-    
+
     const queryString = searchParams.toString();
     return apiClient.mes.get(`/api/v1/inspections${queryString ? '?' + queryString : ''}`);
   },
@@ -119,7 +119,7 @@ export const mesEquipmentApi = {
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
-    
+
     const queryString = searchParams.toString();
     return apiClient.mes.get(`/api/v1/maintenances${queryString ? '?' + queryString : ''}`);
   },
