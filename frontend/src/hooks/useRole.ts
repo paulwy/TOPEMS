@@ -6,13 +6,19 @@ export type Role = 'admin' | 'manager' | 'user' | 'guest';
 export const useRole = () => {
   const { hasRole, roles, user } = useAuth();
 
-  const checkRole = useCallback((role: string): boolean => {
-    return hasRole(role);
-  }, [hasRole]);
+  const checkRole = useCallback(
+    (role: string): boolean => {
+      return hasRole(role);
+    },
+    [hasRole]
+  );
 
-  const checkAnyRole = useCallback((roleList: string[]): boolean => {
-    return roleList.some(role => hasRole(role));
-  }, [hasRole]);
+  const checkAnyRole = useCallback(
+    (roleList: string[]): boolean => {
+      return roleList.some((role) => hasRole(role));
+    },
+    [hasRole]
+  );
 
   const isAdmin = useCallback((): boolean => {
     return user?.is_superuser || hasRole('admin');
@@ -63,31 +69,34 @@ export const useRole = () => {
   }, [user?.is_superuser, hasRole]);
 
   // 避免引用稳定化
-  return useMemo(() => ({
-    roles,
-    currentRole,
-    roleLevel,
-    checkRole,
-    checkAnyRole,
-    isAdmin,
-    isManager,
-    isUser,
-    isGuest,
-    getRoleName,
-    getRoleLevel,
-  }), [
-    roles,
-    currentRole,
-    roleLevel,
-    checkRole,
-    checkAnyRole,
-    isAdmin,
-    isManager,
-    isUser,
-    isGuest,
-    getRoleName,
-    getRoleLevel
-  ]);
+  return useMemo(
+    () => ({
+      roles,
+      currentRole,
+      roleLevel,
+      checkRole,
+      checkAnyRole,
+      isAdmin,
+      isManager,
+      isUser,
+      isGuest,
+      getRoleName,
+      getRoleLevel,
+    }),
+    [
+      roles,
+      currentRole,
+      roleLevel,
+      checkRole,
+      checkAnyRole,
+      isAdmin,
+      isManager,
+      isUser,
+      isGuest,
+      getRoleName,
+      getRoleLevel,
+    ]
+  );
 };
 
 export default useRole;

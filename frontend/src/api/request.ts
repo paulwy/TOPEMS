@@ -14,27 +14,24 @@ export interface RequestOptions {
 /**
  * 统一处理 API 响应
  */
-export function handleResponse<T>(
-  response: ApiResponse<T>,
-  options?: RequestOptions
-): T {
+export function handleResponse<T>(response: ApiResponse<T>, options?: RequestOptions): T {
   if (!response.success) {
     const error: AppError = {
       code: response.code,
       message: response.message,
       details: response.data,
     };
-    
+
     if (!options?.skipErrorHandler) {
       logger.error('API Error:', error);
       if (!options?.skipErrorToast) {
         throw error;
       }
     }
-    
+
     throw error;
   }
-  
+
   return response.data;
 }
 
@@ -74,13 +71,13 @@ export async function paginatedRequest<T>(
   params: { page?: number; page_size?: number; search?: string; [key: string]: any } = {}
 ): Promise<{ items: T[]; total: number; page: number; page_size: number }> {
   const response = await requestFn(params);
-  
+
   if (!response.success) {
     throw {
       code: response.code,
       message: response.message,
     };
   }
-  
+
   return response.data;
 }

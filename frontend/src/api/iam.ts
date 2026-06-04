@@ -115,18 +115,23 @@ export interface UpdatePermissionRequest {
 }
 
 export const authApi = {
-  register: async (data: { username: string; email: string; password: string; full_name?: string }): Promise<ApiResponse<AuthTokens>> => {
+  register: async (data: {
+    username: string;
+    email: string;
+    password: string;
+    full_name?: string;
+  }): Promise<ApiResponse<AuthTokens>> => {
     return apiClient.iam.post<AuthTokens>('/api/v1/auth/register', data);
   },
 
   login: async (data: { username: string; password: string }): Promise<ApiResponse<any>> => {
     const response = await apiClient.iam.post<any>('/api/v1/auth/login', data);
-    
+
     if (response.success && response.data) {
       localStorage.setItem('token', response.data.access_token);
       apiClient.setAuthToken(response.data.access_token);
     }
-    
+
     return response;
   },
 
@@ -147,19 +152,16 @@ export const authApi = {
   },
 
   checkPermission: async (permission: string): Promise<ApiResponse<PermissionCheckResponse>> => {
-    return apiClient.iam.post<PermissionCheckResponse>(
-      '/api/v1/users/me/permissions/check',
-      { permission }
-    );
+    return apiClient.iam.post<PermissionCheckResponse>('/api/v1/users/me/permissions/check', { permission });
   },
 
   refreshToken: async (token: string): Promise<ApiResponse<any>> => {
     const response = await apiClient.iam.post<any>('/api/v1/auth/refresh', { token });
-    
+
     if (response.success && response.data) {
       apiClient.setAuthToken(response.data.access_token);
     }
-    
+
     return response;
   },
 
@@ -188,15 +190,11 @@ export const authApi = {
   },
 
   addRolePermission: async (roleId: string, permissionId: string): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>(
-      `/api/v1/roles/${roleId}/permissions/${permissionId}`
-    );
+    return apiClient.iam.post<string>(`/api/v1/roles/${roleId}/permissions/${permissionId}`);
   },
 
   removeRolePermission: async (roleId: string, permissionId: string): Promise<ApiResponse<string>> => {
-    return apiClient.iam.delete<string>(
-      `/api/v1/roles/${roleId}/permissions/${permissionId}`
-    );
+    return apiClient.iam.delete<string>(`/api/v1/roles/${roleId}/permissions/${permissionId}`);
   },
 
   listPermissions: async (): Promise<ApiResponse<Permission[]>> => {
@@ -242,16 +240,18 @@ export const authApi = {
     const params = new URLSearchParams();
     if (limit) params.append('limit', limit.toString());
     if (offset) params.append('offset', offset.toString());
-    return apiClient.iam.get<AccessLog[]>(
-      `/api/v1/access-logs/user/${userId}?${params}`
-    );
+    return apiClient.iam.get<AccessLog[]>(`/api/v1/access-logs/user/${userId}?${params}`);
   },
 
   createAccessLog: async (data: CreateAccessLogRequest): Promise<ApiResponse<AccessLog>> => {
     return apiClient.iam.post<AccessLog>('/api/v1/access-logs', data);
   },
 
-  listUsers: async (params?: { page?: number; page_size?: number; search?: string }): Promise<ApiResponse<{ users: User[]; total: number }>> => {
+  listUsers: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+  }): Promise<ApiResponse<{ users: User[]; total: number }>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
@@ -296,8 +296,12 @@ export const authApi = {
     return apiClient.iam.delete<string>(`/api/v1/users/${userId}`);
   },
 
-  createUser: async (data: { username: string; email: string; password: string; full_name?: string }): Promise<ApiResponse<User>> => {
+  createUser: async (data: {
+    username: string;
+    email: string;
+    password: string;
+    full_name?: string;
+  }): Promise<ApiResponse<User>> => {
     return apiClient.iam.post<User>('/api/v1/users', data);
   },
 };
-

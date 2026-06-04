@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { analyticsApi } from '../api'
+import { fetchAnalyticsOverview } from '../api/client'
 
 function AnalyticsOverview() {
   const [overview, setOverview] = useState<any>(null)
@@ -11,9 +11,9 @@ function AnalyticsOverview() {
 
   const loadOverview = async () => {
     try {
-      const res = await analyticsApi.getOverview()
-      if (res.data.success && res.data.data) {
-        setOverview(res.data.data)
+      const res = await fetchAnalyticsOverview()
+      if (res.success && res.data) {
+        setOverview(res.data)
       }
     } catch (e) {
       console.error('Failed to load overview:', e)

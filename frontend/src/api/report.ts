@@ -153,7 +153,10 @@ export const reportApi = {
   },
 
   // 导出统计报表
-  exportStatsReport: async (reportType: 'users' | 'permissions' | 'activities', format: ExportFormat): Promise<ApiResponse<ExportResult>> => {
+  exportStatsReport: async (
+    reportType: 'users' | 'permissions' | 'activities',
+    format: ExportFormat
+  ): Promise<ApiResponse<ExportResult>> => {
     return apiClient.report.post<ExportResult>(`/api/v1/reports-center/export/${reportType}`, { format });
   },
 };

@@ -33,16 +33,18 @@ const ExportButton: React.FC<ExportButtonProps> = ({
   const generateCSV = () => {
     const BOM = '\uFEFF';
     const headers = columns.join(',');
-    const rows = data.map(row =>
-      columns.map(col => {
-        const value = row[col];
-        if (value === undefined || value === null) return '';
-        const str = String(value);
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      }).join(',')
+    const rows = data.map((row) =>
+      columns
+        .map((col) => {
+          const value = row[col];
+          if (value === undefined || value === null) return '';
+          const str = String(value);
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        })
+        .join(',')
     );
     return BOM + [headers, ...rows].join('\n');
   };
@@ -87,7 +89,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       setExporting(true);
       onExportStart?.();
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       let content: string;
       const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -121,28 +123,29 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       disabled={disabled || exporting}
       className={`
         px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2
-        ${disabled
-          ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-          : exportComplete
-            ? 'bg-green-600 text-white hover:bg-green-700'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
+        ${
+          disabled
+            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+            : exportComplete
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
         }
         ${buttonClassName}
       `}
     >
       {exporting ? (
         <>
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className='w-4 h-4 animate-spin' />
           <span>导出中...</span>
         </>
       ) : exportComplete ? (
         <>
-          <CheckCircle className="w-4 h-4" />
+          <CheckCircle className='w-4 h-4' />
           <span>导出成功</span>
         </>
       ) : (
         <>
-          <Download className="w-4 h-4" />
+          <Download className='w-4 h-4' />
           <span>{buttonText}</span>
         </>
       )}

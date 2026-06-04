@@ -3,10 +3,8 @@ import type { RuntimeConfig } from './types';
 // Safe access to import.meta.env with Jest fallback
 function getEnv(key: string, defaultValue: string = ''): string {
   // First, check if we have a global mock (for Jest)
-  // @ts-ignore
-  if (typeof global !== 'undefined' && global.import?.meta?.env) {
-    // @ts-ignore
-    return global.import.meta.env[key] || defaultValue;
+  if (typeof global !== 'undefined' && (global as any).import?.meta?.env) {
+    return (global as any).import.meta.env[key] || defaultValue;
   }
 
   // Then, check for Vite's import.meta.env - use a string check to avoid early syntax errors
@@ -91,7 +89,7 @@ const config: RuntimeConfig = {
     errorTracking: getEnvBool('VITE_ENABLE_ERROR_TRACKING', false),
   },
   theme: {
-    default: (getEnv('VITE_DEFAULT_THEME', 'light') as 'light' | 'dark'),
+    default: getEnv('VITE_DEFAULT_THEME', 'light') as 'light' | 'dark',
     enableDarkMode: getEnvBool('VITE_ENABLE_DARK_MODE', false),
   },
   i18n: {

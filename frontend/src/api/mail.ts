@@ -79,23 +79,23 @@ export const emailApi = {
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
     if (params?.priority) searchParams.set('priority', params.priority);
-    
+
     const queryString = searchParams.toString();
     return apiClient.mail.get(`/api/v1/mail/emails${queryString ? '?' + queryString : ''}`);
   },
-  
+
   async get(id: string): Promise<ApiResponse<Email>> {
     return apiClient.mail.get(`/api/v1/mail/emails/${id}`);
   },
-  
+
   async send(data: SendEmailRequest): Promise<ApiResponse<Email>> {
     return apiClient.mail.post('/api/v1/mail/emails', data);
   },
-  
+
   async sendWithTemplate(data: SendEmailWithTemplateRequest): Promise<ApiResponse<Email>> {
     return apiClient.mail.post('/api/v1/mail/emails/send-with-template', data);
   },
-  
+
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.mail.delete(`/api/v1/mail/emails/${id}`);
   },
@@ -109,28 +109,31 @@ export const templateApi = {
     if (params?.search) searchParams.set('search', params.search);
     if (params?.category) searchParams.set('category', params.category);
     if (params?.status) searchParams.set('status', params.status);
-    
+
     const queryString = searchParams.toString();
     return apiClient.mail.get(`/api/v1/mail/templates${queryString ? '?' + queryString : ''}`);
   },
-  
+
   async get(id: string): Promise<ApiResponse<EmailTemplate>> {
     return apiClient.mail.get(`/api/v1/mail/templates/${id}`);
   },
-  
+
   async create(data: Partial<EmailTemplate>): Promise<ApiResponse<EmailTemplate>> {
     return apiClient.mail.post('/api/v1/mail/templates', data);
   },
-  
+
   async update(id: string, data: Partial<EmailTemplate>): Promise<ApiResponse<EmailTemplate>> {
     return apiClient.mail.put(`/api/v1/mail/templates/${id}`, data);
   },
-  
+
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.mail.delete(`/api/v1/mail/templates/${id}`);
   },
-  
-  async render(templateCode: string, data: Record<string, any>): Promise<ApiResponse<{ subject: string; body: string; body_html?: string }>> {
+
+  async render(
+    templateCode: string,
+    data: Record<string, any>
+  ): Promise<ApiResponse<{ subject: string; body: string; body_html?: string }>> {
     return apiClient.mail.post('/api/v1/mail/templates/render', { template_code: templateCode, data });
   },
 };

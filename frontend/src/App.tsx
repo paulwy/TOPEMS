@@ -55,6 +55,7 @@ const HrmPayrollPage = lazy(() => import('./pages/HrmPayrollPage'));
 const HrmPerformancePage = lazy(() => import('./pages/HrmPerformancePage'));
 const HrmAttendancePage = lazy(() => import('./pages/HrmAttendancePage'));
 const HrmEmployeeDetailPage = lazy(() => import('./pages/HrmEmployeeDetailPage'));
+const HrmEmployeePage = lazy(() => import('./pages/HrmEmployeePage'));
 const HrmTrainingPage = lazy(() => import('./pages/HrmTrainingPage'));
 const HrmReportsPage = lazy(() => import('./pages/HrmReportsPage'));
 const PerformanceMonitorPage = lazy(() => import('./pages/PerformanceMonitorPage'));
@@ -70,25 +71,36 @@ const SystemManagementPage = lazy(() => import('./pages/SystemManagementPage'));
 const DictionaryManagementPage = lazy(() => import('./pages/DictionaryManagementPage'));
 const DatabaseStructurePage = lazy(() => import('./pages/DatabaseStructurePage'));
 const MailPage = lazy(() => import('./pages/MailPage'));
+const CRMPage = lazy(() => import('./pages/CRMPage'));
+const CRMDashboardPage = lazy(() => import('./pages/CRMDashboardPage'));
+const CustomerManagementPage = lazy(() => import('./pages/CustomerManagementPage'));
+const ContactManagementPage = lazy(() => import('./pages/ContactManagementPage'));
+const OpportunityManagementPage = lazy(() => import('./pages/OpportunityManagementPage'));
+const InteractionManagementPage = lazy(() => import('./pages/InteractionManagementPage'));
+const PmProjectListPage = lazy(() => import('./pages/PmProjectListPage'));
+const PmProjectDetailPage = lazy(() => import('./pages/PmProjectDetailPage'));
+const PmProjectCreatePage = lazy(() => import('./pages/PmProjectCreatePage'));
+const PmContractListPage = lazy(() => import('./pages/PmContractListPage'));
+const PmContractDetailPage = lazy(() => import('./pages/PmContractDetailPage'));
 
 const PageLoader: React.FC = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="text-center">
-      <LoadingSpinner size="lg" />
-      <p className="mt-4 text-gray-600">加载中...</p>
+  <div className='min-h-screen flex items-center justify-center bg-gray-50'>
+    <div className='text-center'>
+      <LoadingSpinner size='lg' />
+      <p className='mt-4 text-gray-600'>加载中...</p>
     </div>
   </div>
 );
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { logout } = useAuth();
 
   return (
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route
-            path="/login"
+            path='/login'
             element={
               <GuestRoute>
                 <LoginPage />
@@ -96,7 +108,7 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/dashboard"
+            path='/dashboard'
             element={
               <ProtectedRoute>
                 <DashboardPage onLogout={logout} />
@@ -104,7 +116,7 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/addressbook"
+            path='/addressbook'
             element={
               <ProtectedRoute>
                 <AddressbookPage />
@@ -112,47 +124,47 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/documents"
+            path='/documents'
             element={
               <ProtectedRoute requiredPermissions={['doc:read']}>
-                <ModuleGate module="doc" action="read">
+                <ModuleGate module='doc' action='read'>
                   <DocumentsPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/ai"
+            path='/ai'
             element={
               <ProtectedRoute requiredPermissions={['ai:read']}>
-                <ModuleGate module="ai" action="read">
+                <ModuleGate module='ai' action='read'>
                   <AIPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/workflows"
+            path='/workflows'
             element={
               <ProtectedRoute requiredPermissions={['workflow:read']}>
-                <ModuleGate module="workflow" action="read">
+                <ModuleGate module='workflow' action='read'>
                   <FlowWorkflowPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/workflow-designer"
+            path='/workflow-designer'
             element={
               <ProtectedRoute requiredPermissions={['workflow:write']}>
-                <ModuleGate module="workflow" action="write">
+                <ModuleGate module='workflow' action='write'>
                   <WorkflowDesignerPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/rs"
+            path='/rs'
             element={
               <ProtectedRoute>
                 <Rspage />
@@ -160,7 +172,7 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/lims"
+            path='/lims'
             element={
               <ProtectedRoute>
                 <Limspage />
@@ -168,67 +180,67 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/qms"
+            path='/qms'
             element={
               <ProtectedRoute requiredPermissions={['qms:read']}>
-                <ModuleGate module="qms" action="read">
+                <ModuleGate module='qms' action='read'>
                   <Qmspage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/ehs"
+            path='/ehs'
             element={
               <ProtectedRoute requiredPermissions={['ehs:read']}>
-                <ModuleGate module="ehs" action="read">
+                <ModuleGate module='ehs' action='read'>
                   <Ehspage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/srm"
+            path='/srm'
             element={
               <ProtectedRoute requiredPermissions={['srm:read']}>
-                <ModuleGate module="srm" action="read">
+                <ModuleGate module='srm' action='read'>
                   <Srmpage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/pdm"
+            path='/pdm'
             element={
               <ProtectedRoute requiredPermissions={['pdm:read']}>
-                <ModuleGate module="pdm" action="read">
+                <ModuleGate module='pdm' action='read'>
                   <Pdmpage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/gis"
+            path='/gis'
             element={
               <ProtectedRoute requiredPermissions={['gis:read']}>
-                <ModuleGate module="gis" action="read">
+                <ModuleGate module='gis' action='read'>
                   <Gispage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/im"
+            path='/im'
             element={
               <ProtectedRoute requiredPermissions={['im:read']}>
-                <ModuleGate module="im" action="read">
+                <ModuleGate module='im' action='read'>
                   <Impage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/notifications"
+            path='/notifications'
             element={
               <ProtectedRoute>
                 <NotificationCenter />
@@ -236,7 +248,7 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/profile"
+            path='/profile'
             element={
               <ProtectedRoute>
                 <ProfilePage />
@@ -244,177 +256,177 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/users"
+            path='/users'
             element={
               <ProtectedRoute requiredPermissions={['iam:admin']}>
-                <ModuleGate module="iam" action="admin">
+                <ModuleGate module='iam' action='admin'>
                   <UserManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/roles"
+            path='/roles'
             element={
               <ProtectedRoute requiredPermissions={['iam:admin']}>
-                <ModuleGate module="iam" action="admin">
+                <ModuleGate module='iam' action='admin'>
                   <RoleManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/permissions"
+            path='/permissions'
             element={
               <ProtectedRoute requiredPermissions={['iam:admin']}>
-                <ModuleGate module="iam" action="admin">
+                <ModuleGate module='iam' action='admin'>
                   <PermissionManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/companies"
+            path='/companies'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <CompanyManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/departments"
+            path='/departments'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <DepartmentManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/employees"
+            path='/employees'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <EmployeeManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/assets"
+            path='/assets'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <AssetManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/equipment"
+            path='/equipment'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <EquipmentManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/finance"
+            path='/finance'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <FinanceExpensePage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/finance/vouchers"
+            path='/finance/vouchers'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <FinanceVoucherPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/finance/receivable-payable"
+            path='/finance/receivable-payable'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <FinanceReceivablePayablePage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/finance/reports"
+            path='/finance/reports'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <FinanceReportsPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/administration"
+            path='/administration'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <AdministrationPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/budget"
+            path='/budget'
             element={
               <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module="erp" action="admin">
+                <ModuleGate module='erp' action='admin'>
                   <BudgetManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/audit"
+            path='/audit'
             element={
               <ProtectedRoute requiredPermissions={['iam:admin']}>
-                <ModuleGate module="iam" action="admin">
+                <ModuleGate module='iam' action='admin'>
                   <AuditLogPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/reports"
+            path='/reports'
             element={
               <ProtectedRoute requiredPermissions={['iam:admin']}>
-                <ModuleGate module="iam" action="admin">
+                <ModuleGate module='iam' action='admin'>
                   <ReportPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/document-center"
+            path='/document-center'
             element={
               <ProtectedRoute requiredPermissions={['doc:read']}>
-                <ModuleGate module="doc" action="read">
+                <ModuleGate module='doc' action='read'>
                   <DocumentCenterPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/help"
+            path='/help'
             element={
               <ProtectedRoute>
                 <HelpCenterPage />
@@ -422,157 +434,167 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/templates"
+            path='/templates'
             element={
               <ProtectedRoute requiredPermissions={['doc:admin']}>
-                <ModuleGate module="doc" action="admin">
+                <ModuleGate module='doc' action='admin'>
                   <TemplateManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/positions"
+            path='/hrm/positions'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
                   <HrmPositionPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/leave"
+            path='/hrm/employees'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
+                  <HrmEmployeePage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/hrm/leave'
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module='hrm' action='read'>
                   <HrmLeavePage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/contracts"
+            path='/hrm/contracts'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
                   <HrmContractPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/recruitment"
+            path='/hrm/recruitment'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
                   <HrmRecruitmentPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/payroll"
+            path='/hrm/payroll'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
                   <HrmPayrollPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/performance"
+            path='/hrm/performance'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
                   <HrmPerformancePage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/attendance"
+            path='/hrm/attendance'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
                   <HrmAttendancePage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/employee/:id"
+            path='/hrm/employee/:id'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
                   <HrmEmployeeDetailPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/training"
+            path='/hrm/training'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
                   <HrmTrainingPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hrm/reports"
+            path='/hrm/reports'
             element={
               <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module="hrm" action="read">
+                <ModuleGate module='hrm' action='read'>
                   <HrmReportsPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/flow/instances"
+            path='/flow/instances'
             element={
               <ProtectedRoute requiredPermissions={['workflow:read']}>
-                <ModuleGate module="workflow" action="read">
+                <ModuleGate module='workflow' action='read'>
                   <FlowInstanceListPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/flow/instance/:id"
+            path='/flow/instance/:id'
             element={
               <ProtectedRoute requiredPermissions={['workflow:read']}>
-                <ModuleGate module="workflow" action="read">
+                <ModuleGate module='workflow' action='read'>
                   <FlowInstanceDetailPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/flow/approvals"
+            path='/flow/approvals'
             element={
               <ProtectedRoute requiredPermissions={['workflow:read']}>
-                <ModuleGate module="workflow" action="read">
+                <ModuleGate module='workflow' action='read'>
                   <FlowApprovalPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/flow/approval/:id"
+            path='/flow/approval/:id'
             element={
               <ProtectedRoute requiredPermissions={['workflow:read']}>
-                <ModuleGate module="workflow" action="read">
+                <ModuleGate module='workflow' action='read'>
                   <FlowApprovalDetailPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/flow/notifications"
+            path='/flow/notifications'
             element={
               <ProtectedRoute>
                 <FlowNotificationCenter />
@@ -580,27 +602,27 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/flow/statistics"
+            path='/flow/statistics'
             element={
               <ProtectedRoute requiredPermissions={['workflow:read']}>
-                <ModuleGate module="workflow" action="read">
+                <ModuleGate module='workflow' action='read'>
                   <FlowStatisticsPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/flow/history"
+            path='/flow/history'
             element={
               <ProtectedRoute requiredPermissions={['workflow:read']}>
-                <ModuleGate module="workflow" action="read">
+                <ModuleGate module='workflow' action='read'>
                   <FlowVersionHistoryPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/mobile-workstation"
+            path='/mobile-workstation'
             element={
               <ProtectedRoute>
                 <MobileWorkstationPage />
@@ -608,37 +630,37 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/system"
+            path='/system'
             element={
               <ProtectedRoute requiredPermissions={['iam:admin']}>
-                <ModuleGate module="iam" action="admin">
+                <ModuleGate module='iam' action='admin'>
                   <SystemManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/dictionaries"
+            path='/dictionaries'
             element={
               <ProtectedRoute requiredPermissions={['iam:admin']}>
-                <ModuleGate module="iam" action="admin">
+                <ModuleGate module='iam' action='admin'>
                   <DictionaryManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/database"
+            path='/database'
             element={
               <ProtectedRoute requiredPermissions={['iam:admin']}>
-                <ModuleGate module="iam" action="admin">
+                <ModuleGate module='iam' action='admin'>
                   <DatabaseStructurePage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/performance"
+            path='/performance'
             element={
               <ProtectedRoute>
                 <PerformanceMonitorPage />
@@ -646,27 +668,135 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/debug"
+            path='/debug'
             element={
               <ProtectedRoute requiredPermissions={['iam:admin']}>
-                <ModuleGate module="iam" action="admin">
+                <ModuleGate module='iam' action='admin'>
                   <ConfigDebugPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/mail"
+            path='/mail'
             element={
               <ProtectedRoute requiredPermissions={['mail:read']}>
-                <ModuleGate module="mail" action="read">
+                <ModuleGate module='mail' action='read'>
                   <MailPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path='/crm'
+            element={
+              <ProtectedRoute requiredPermissions={['crm:read']}>
+                <ModuleGate module='crm' action='read'>
+                  <CRMPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/crm/dashboard'
+            element={
+              <ProtectedRoute requiredPermissions={['crm:read']}>
+                <ModuleGate module='crm' action='read'>
+                  <CRMDashboardPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/crm/customers'
+            element={
+              <ProtectedRoute requiredPermissions={['crm:read']}>
+                <ModuleGate module='crm' action='read'>
+                  <CustomerManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/crm/contacts'
+            element={
+              <ProtectedRoute requiredPermissions={['crm:read']}>
+                <ModuleGate module='crm' action='read'>
+                  <ContactManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/crm/opportunities'
+            element={
+              <ProtectedRoute requiredPermissions={['crm:read']}>
+                <ModuleGate module='crm' action='read'>
+                  <OpportunityManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/crm/interactions'
+            element={
+              <ProtectedRoute requiredPermissions={['crm:read']}>
+                <ModuleGate module='crm' action='read'>
+                  <InteractionManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/pm/projects'
+            element={
+              <ProtectedRoute>
+                <PmProjectListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/pm/projects/create'
+            element={
+              <ProtectedRoute>
+                <PmProjectCreatePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/pm/projects/:id'
+            element={
+              <ProtectedRoute>
+                <PmProjectDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/pm/projects/:id/edit'
+            element={
+              <ProtectedRoute>
+                <PmProjectCreatePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/pm/contracts'
+            element={
+              <ProtectedRoute>
+                <PmContractListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/pm/contracts/:id'
+            element={
+              <ProtectedRoute>
+                <PmContractDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path='/' element={<Navigate to='/dashboard' replace />} />
+          <Route path='*' element={<Navigate to='/dashboard' replace />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

@@ -28,7 +28,7 @@ pub async fn create_routes() -> Result<Router<ApiState>> {
         .route("/api/v1/issues", get(list_issues).post(create_issue))
         .route(
             "/api/v1/issues/{id}",
-            get(get_issue).put(update_issue),
+            get(get_issue).put(update_issue).delete(delete_issue),
         );
 
     Ok(app)
@@ -252,4 +252,60 @@ async fn update_issue(
             Json(ApiResponse::<QualityIssue>::error(500, "质量问题更新失败"))
         }
     }
+}
+
+async fn delete_issue(
+    State(state): State<ApiState>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query("DELETE FROM qms.quality_issues WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "质量问题删除成功")),
+            "success".to_string(),
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "质量问题不存在")),
+            "error".to_string(),
+            Some("质量问题不存在".to_string()),
+        ),
+        Err(e) => {
+            tracing::error!("删除质量问题失败: {}", e);
+            (
+                Json(api_error(500, "质量问题删除失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "quality_issue".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str,
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

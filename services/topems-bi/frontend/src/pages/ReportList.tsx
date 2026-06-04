@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { reportApi, Report } from '../api'
+import { fetchReports, createReport, updateReport, deleteReport } from '../api/client'
+import type { Report } from '../types'
 
 function ReportList() {
   const [reports, setReports] = useState<Report[]>([])
@@ -20,9 +21,9 @@ function ReportList() {
 
   const loadReports = async () => {
     try {
-      const res = await reportApi.getReports()
-      if (res.data.success && res.data.data) {
-        setReports(res.data.data.reports || [])
+      const res = await fetchReports()
+      if (res.success && res.data) {
+        setReports(res.data.reports || [])
       }
     } catch (e) {
       console.error('Failed to load reports:', e)
@@ -39,9 +40,9 @@ function ReportList() {
         config: JSON.parse(formData.config)
       }
       if (editing) {
-        await reportApi.updateReport(editing.id, data)
+        await updateReport(editing.id, data)
       } else {
-        await reportApi.createReport(data)
+        await createReport(data)
       }
       setShowForm(false)
       setEditing(null)
@@ -55,7 +56,7 @@ function ReportList() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个报表吗？')) return
     try {
-      await reportApi.deleteReport(id)
+      await deleteReport(id)
       loadReports()
     } catch (e) {
       console.error('Failed to delete report:', e)

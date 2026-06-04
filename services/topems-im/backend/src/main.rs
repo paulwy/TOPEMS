@@ -1,7 +1,8 @@
 use axum::{
-    extract::{Path, State, WebSocketUpgrade},
+    extract::{Path, State, WebSocketUpgrade, Multipart},
     Json, Router,
     extract::ws::{Message, WebSocket, Utf8Bytes},
+    http::StatusCode,
 };
 use anyhow::Result;
 use axum::extract::FromRef;
@@ -15,8 +16,13 @@ use serde_json::json;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tokio::sync::broadcast;
 use futures_util::{SinkExt, StreamExt};
+use sqlx::PgPool;
+use tower_http::services::ServeDir;
 
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+
+mod db;
+mod models;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WsMessage {
@@ -29,143 +35,11 @@ pub struct WsMessage {
 }
 
 #[derive(Clone)]
-pub struct ChatState {
-    pub rooms: Arc<Mutex<Vec<ChatRoom>>>,
-    pub messages: Arc<Mutex<Vec<ChatMessage>>>,
-    pub project_groups: Arc<Mutex<Vec<ProjectGroup>>>,
-    pub notifications: Arc<Mutex<Vec<Notification>>>,
+pub struct AppState {
+    pub pool: PgPool,
+    pub auth_state: AuthState,
+    pub ws_connections: Arc<Mutex<HashMap<String, broadcast::Sender<WsMessage>>>>,
     pub tx: broadcast::Sender<WsMessage>,
-}
-
-impl ChatState {
-    fn new() -> Self {
-        let (tx, _) = broadcast::channel(1000);
-        ChatState {
-            rooms: Arc::new(Mutex::new(Vec::new())),
-            messages: Arc::new(Mutex::new(Vec::new())),
-            project_groups: Arc::new(Mutex::new(Vec::new())),
-            notifications: Arc::new(Mutex::new(Vec::new())),
-            tx,
-        }
-    }
-}
-
-struct HandlerState {
-    chat_state: ChatState,
-    auth_state: AuthState,
-}
-
-impl FromRef<HandlerState> for AuthState {
-    fn from_ref(state: &HandlerState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
-impl FromRef<HandlerState> for ChatState {
-    fn from_ref(state: &HandlerState) -> Self {
-        state.chat_state.clone()
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChatRoom {
-    pub id: Uuid,
-    pub name: Option<String>,
-    pub room_type: String,
-    pub members: serde_json::Value,
-    pub created_by: String,
-    pub last_message: Option<String>,
-    pub last_message_time: Option<DateTime<Utc>>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateChatRoom {
-    pub name: Option<String>,
-    pub room_type: String,
-    pub members: Vec<String>,
-    pub created_by: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChatMessage {
-    pub id: Uuid,
-    pub chat_id: Uuid,
-    pub sender_id: String,
-    pub sender_name: String,
-    pub message_type: String,
-    pub content: String,
-    pub file_url: Option<String>,
-    pub file_name: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub is_read: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateChatMessage {
-    pub chat_id: String,
-    pub sender_id: String,
-    pub sender_name: String,
-    pub message_type: String,
-    pub content: String,
-    pub file_url: Option<String>,
-    pub file_name: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProjectGroup {
-    pub id: Uuid,
-    pub name: String,
-    pub description: Option<String>,
-    pub project_id: Option<Uuid>,
-    pub members: serde_json::Value,
-    pub created_by: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateProjectGroup {
-    pub name: String,
-    pub description: Option<String>,
-    pub project_id: Option<String>,
-    pub members: Vec<String>,
-    pub created_by: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Notification {
-    pub id: Uuid,
-    pub user_id: String,
-    pub title: String,
-    pub content: String,
-    pub notification_type: String,
-    pub related_id: Option<Uuid>,
-    pub related_type: Option<String>,
-    pub is_read: bool,
-    pub created_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateNotification {
-    pub user_id: String,
-    pub title: String,
-    pub content: String,
-    pub notification_type: String,
-    pub related_id: Option<String>,
-    pub related_type: Option<String>,
-}
-
-#[derive(Clone)]
-struct AppState {
-    chat_rooms: Arc<Mutex<Vec<ChatRoom>>>,
-    chat_messages: Arc<Mutex<Vec<ChatMessage>>>,
-    project_groups: Arc<Mutex<Vec<ProjectGroup>>>,
-    notifications: Arc<Mutex<Vec<Notification>>>,
-    auth_state: AuthState,
-    ws_connections: Arc<Mutex<HashMap<String, broadcast::Sender<WsMessage>>>>,
-    tx: broadcast::Sender<WsMessage>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -175,13 +49,10 @@ impl FromRef<AppState> for AuthState {
 }
 
 impl AppState {
-    fn new(auth_state: AuthState) -> Self {
+    fn new(pool: PgPool, auth_state: AuthState) -> Self {
         let (tx, _) = broadcast::channel(1000);
         AppState {
-            chat_rooms: Arc::new(Mutex::new(Vec::new())),
-            chat_messages: Arc::new(Mutex::new(Vec::new())),
-            project_groups: Arc::new(Mutex::new(Vec::new())),
-            notifications: Arc::new(Mutex::new(Vec::new())),
+            pool,
             auth_state,
             ws_connections: Arc::new(Mutex::new(HashMap::new())),
             tx,
@@ -194,44 +65,86 @@ async fn health_check() -> Json<ApiResponse<&'static str>> {
 }
 
 async fn list_chat_rooms(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let rooms = state.chat_rooms.lock().unwrap();
-    Json(ApiResponse::success(json!({
-        "chat_rooms": rooms.clone(),
-        "total": rooms.len()
-    }), "获取聊天室列表成功"))
+    let result = sqlx::query_as!(
+        models::ChatRoom,
+        r#"
+        SELECT id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
+        FROM chat_rooms
+        ORDER BY updated_at DESC
+        "#
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(rooms) => Json(ApiResponse::success(json!({
+            "chat_rooms": rooms,
+            "total": rooms.len()
+        }), "获取聊天室列表成功")),
+        Err(e) => {
+            tracing::error!("Failed to list chat rooms: {}", e);
+            Json(ApiResponse::error(500, "获取聊天室列表失败"))
+        }
+    }
 }
 
 async fn create_chat_room(
     State(state): State<AppState>,
-    Json(payload): Json<CreateChatRoom>,
-) -> Json<ApiResponse<ChatRoom>> {
-    let mut rooms = state.chat_rooms.lock().unwrap();
-    
-    let room = ChatRoom {
-        id: Uuid::new_v4(),
-        name: payload.name,
-        room_type: payload.room_type,
-        members: json!(payload.members),
-        created_by: payload.created_by,
-        last_message: None,
-        last_message_time: None,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
-    
-    rooms.push(room.clone());
-    Json(ApiResponse::success(room, "创建聊天室成功"))
+    Json(payload): Json<models::CreateChatRoom>,
+) -> Json<ApiResponse<models::ChatRoom>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let result = sqlx::query_as!(
+        models::ChatRoom,
+        r#"
+        INSERT INTO chat_rooms (id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NULL, NULL, $6, $7)
+        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
+        "#,
+        id,
+        payload.name,
+        payload.room_type,
+        json!(payload.members),
+        payload.created_by,
+        now,
+        now
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(room) => Json(ApiResponse::success(room, "创建聊天室成功")),
+        Err(e) => {
+            tracing::error!("Failed to create chat room: {}", e);
+            Json(ApiResponse::error(500, "创建聊天室失败"))
+        }
+    }
 }
 
 async fn get_chat_room(
     State(state): State<AppState>,
     Path(chat_id): Path<Uuid>,
-) -> Json<ApiResponse<ChatRoom>> {
-    let rooms = state.chat_rooms.lock().unwrap();
-    if let Some(room) = rooms.iter().find(|r| r.id == chat_id) {
-        Json(ApiResponse::success(room.clone(), "获取聊天室成功"))
-    } else {
-        Json(ApiResponse::<ChatRoom>::error(404, "Chat room not found"))
+) -> Json<ApiResponse<models::ChatRoom>> {
+    let result = sqlx::query_as!(
+        models::ChatRoom,
+        r#"
+        SELECT id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
+        FROM chat_rooms
+        WHERE id = $1
+        "#,
+        chat_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(room)) => Json(ApiResponse::success(room, "获取聊天室成功")),
+        Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get chat room: {}", e);
+            Json(ApiResponse::error(500, "获取聊天室失败"))
+        }
     }
 }
 
@@ -239,146 +152,338 @@ async fn list_chat_messages(
     State(state): State<AppState>,
     Path(chat_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let messages = state.chat_messages.lock().unwrap();
-    let room_messages: Vec<_> = messages.iter().filter(|m| m.chat_id == chat_id).cloned().collect();
-    Json(ApiResponse::success(json!({
-        "chat_messages": room_messages,
-        "total": room_messages.len()
-    }), "获取聊天消息成功"))
+    let result = sqlx::query_as!(
+        models::ChatMessage,
+        r#"
+        SELECT id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
+        FROM chat_messages
+        WHERE chat_id = $1
+        ORDER BY created_at ASC
+        "#,
+        chat_id
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(messages) => Json(ApiResponse::success(json!({
+            "chat_messages": messages,
+            "total": messages.len()
+        }), "获取聊天消息成功")),
+        Err(e) => {
+            tracing::error!("Failed to list chat messages: {}", e);
+            Json(ApiResponse::error(500, "获取聊天消息失败"))
+        }
+    }
 }
 
 async fn create_chat_message(
     State(state): State<AppState>,
-    Json(payload): Json<CreateChatMessage>,
-) -> Json<ApiResponse<ChatMessage>> {
+    Json(payload): Json<models::CreateChatMessage>,
+) -> Json<ApiResponse<models::ChatMessage>> {
     let chat_id = match Uuid::parse_str(&payload.chat_id) {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::<ChatMessage>::error(400, "Invalid chat_id")),
+        Err(_) => return Json(ApiResponse::error(400, "无效的聊天室ID")),
     };
-    
-    let mut messages = state.chat_messages.lock().unwrap();
-    let mut rooms = state.chat_rooms.lock().unwrap();
-    
-    let message = ChatMessage {
-        id: Uuid::new_v4(),
+
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let result = sqlx::query_as!(
+        models::ChatMessage,
+        r#"
+        INSERT INTO chat_messages (id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false)
+        RETURNING id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
+        "#,
+        id,
         chat_id,
-        sender_id: payload.sender_id,
-        sender_name: payload.sender_name,
-        message_type: payload.message_type,
-        content: payload.content.clone(),
-        file_url: payload.file_url,
-        file_name: payload.file_name,
-        created_at: Utc::now(),
-        is_read: false,
-    };
-    
-    messages.push(message.clone());
-    
-    if let Some(index) = rooms.iter_mut().position(|r| r.id == chat_id) {
-        rooms[index].last_message = Some(payload.content);
-        rooms[index].last_message_time = Some(message.created_at);
-        rooms[index].updated_at = Utc::now();
+        payload.sender_id,
+        payload.sender_name,
+        payload.message_type,
+        payload.content.clone(),
+        payload.file_url,
+        payload.file_name,
+        now
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    if let Ok(ref message) = result {
+        // 更新聊天室的最后消息
+        let _ = sqlx::query!(
+            r#"
+            UPDATE chat_rooms
+            SET last_message = $1, last_message_time = $2, updated_at = $3
+            WHERE id = $4
+            "#,
+            payload.content,
+            now,
+            now,
+            chat_id
+        )
+        .execute(&state.pool)
+        .await;
     }
-    
-    Json(ApiResponse::success(message, "发送消息成功"))
+
+    match result {
+        Ok(message) => Json(ApiResponse::success(message, "发送消息成功")),
+        Err(e) => {
+            tracing::error!("Failed to create chat message: {}", e);
+            Json(ApiResponse::error(500, "发送消息失败"))
+        }
+    }
 }
 
 async fn mark_message_read(
     State(state): State<AppState>,
     Path(message_id): Path<Uuid>,
-) -> Json<ApiResponse<ChatMessage>> {
-    let mut messages = state.chat_messages.lock().unwrap();
-    if let Some(index) = messages.iter_mut().position(|m| m.id == message_id) {
-        messages[index].is_read = true;
-        return Json(ApiResponse::success(messages[index].clone(), "标记消息已读成功"));
+) -> Json<ApiResponse<models::ChatMessage>> {
+    let result = sqlx::query_as!(
+        models::ChatMessage,
+        r#"
+        UPDATE chat_messages
+        SET is_read = true
+        WHERE id = $1
+        RETURNING id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
+        "#,
+        message_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(message)) => Json(ApiResponse::success(message, "标记消息已读成功")),
+        Ok(None) => Json(ApiResponse::error(404, "消息不存在")),
+        Err(e) => {
+            tracing::error!("Failed to mark message read: {}", e);
+            Json(ApiResponse::error(500, "标记消息已读失败"))
+        }
     }
-    Json(ApiResponse::<ChatMessage>::error(404, "Message not found"))
 }
 
 async fn list_project_groups(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let groups = state.project_groups.lock().unwrap();
-    Json(ApiResponse::success(json!({
-        "project_groups": groups.clone(),
-        "total": groups.len()
-    }), "获取项目群组成功"))
+    let result = sqlx::query_as!(
+        models::ProjectGroup,
+        r#"
+        SELECT id, name, description, project_id, members, created_by, created_at, updated_at
+        FROM project_groups
+        ORDER BY created_at DESC
+        "#
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(groups) => Json(ApiResponse::success(json!({
+            "project_groups": groups,
+            "total": groups.len()
+        }), "获取项目群组成功")),
+        Err(e) => {
+            tracing::error!("Failed to list project groups: {}", e);
+            Json(ApiResponse::error(500, "获取项目群组失败"))
+        }
+    }
 }
 
 async fn create_project_group(
     State(state): State<AppState>,
-    Json(payload): Json<CreateProjectGroup>,
-) -> Json<ApiResponse<ProjectGroup>> {
-    let mut groups = state.project_groups.lock().unwrap();
-    
-    let group = ProjectGroup {
-        id: Uuid::new_v4(),
-        name: payload.name,
-        description: payload.description,
-        project_id: payload.project_id.and_then(|p| Uuid::parse_str(&p).ok()),
-        members: json!(payload.members),
-        created_by: payload.created_by,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
-    
-    groups.push(group.clone());
-    Json(ApiResponse::success(group, "创建项目群组成功"))
+    Json(payload): Json<models::CreateProjectGroup>,
+) -> Json<ApiResponse<models::ProjectGroup>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+    let project_id = payload.project_id.and_then(|p| Uuid::parse_str(&p).ok());
+
+    let result = sqlx::query_as!(
+        models::ProjectGroup,
+        r#"
+        INSERT INTO project_groups (id, name, description, project_id, members, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, name, description, project_id, members, created_by, created_at, updated_at
+        "#,
+        id,
+        payload.name,
+        payload.description,
+        project_id,
+        json!(payload.members),
+        payload.created_by,
+        now,
+        now
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(group) => Json(ApiResponse::success(group, "创建项目群组成功")),
+        Err(e) => {
+            tracing::error!("Failed to create project group: {}", e);
+            Json(ApiResponse::error(500, "创建项目群组失败"))
+        }
+    }
 }
 
 async fn list_notifications(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let notifications = state.notifications.lock().unwrap();
-    let user_notifications: Vec<_> = notifications.iter().filter(|n| n.user_id == user_id).cloned().collect();
-    Json(ApiResponse::success(json!({
-        "notifications": user_notifications,
-        "total": user_notifications.len()
-    }), "获取通知列表成功"))
+    let result = sqlx::query_as!(
+        models::Notification,
+        r#"
+        SELECT id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+        FROM notifications
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        "#,
+        user_id
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(notifications) => Json(ApiResponse::success(json!({
+            "notifications": notifications,
+            "total": notifications.len()
+        }), "获取通知列表成功")),
+        Err(e) => {
+            tracing::error!("Failed to list notifications: {}", e);
+            Json(ApiResponse::error(500, "获取通知列表失败"))
+        }
+    }
 }
 
 async fn create_notification(
     State(state): State<AppState>,
-    Json(payload): Json<CreateNotification>,
-) -> Json<ApiResponse<Notification>> {
-    let mut notifications = state.notifications.lock().unwrap();
-    
-    let notification = Notification {
-        id: Uuid::new_v4(),
-        user_id: payload.user_id,
-        title: payload.title,
-        content: payload.content,
-        notification_type: payload.notification_type,
-        related_id: payload.related_id.and_then(|r| Uuid::parse_str(&r).ok()),
-        related_type: payload.related_type,
-        is_read: false,
-        created_at: Utc::now(),
-    };
-    
-    notifications.push(notification.clone());
-    Json(ApiResponse::success(notification, "创建通知成功"))
+    Json(payload): Json<models::CreateNotification>,
+) -> Json<ApiResponse<models::Notification>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+    let related_id = payload.related_id.and_then(|r| Uuid::parse_str(&r).ok());
+
+    let result = sqlx::query_as!(
+        models::Notification,
+        r#"
+        INSERT INTO notifications (id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, false, $8)
+        RETURNING id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+        "#,
+        id,
+        payload.user_id,
+        payload.title,
+        payload.content,
+        payload.notification_type,
+        related_id,
+        payload.related_type,
+        now
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(notification) => Json(ApiResponse::success(notification, "创建通知成功")),
+        Err(e) => {
+            tracing::error!("Failed to create notification: {}", e);
+            Json(ApiResponse::error(500, "创建通知失败"))
+        }
+    }
 }
 
 async fn mark_notification_read(
     State(state): State<AppState>,
     Path(notification_id): Path<Uuid>,
-) -> Json<ApiResponse<Notification>> {
-    let mut notifications = state.notifications.lock().unwrap();
-    if let Some(index) = notifications.iter_mut().position(|n| n.id == notification_id) {
-        notifications[index].is_read = true;
-        return Json(ApiResponse::success(notifications[index].clone(), "标记通知已读成功"));
+) -> Json<ApiResponse<models::Notification>> {
+    let result = sqlx::query_as!(
+        models::Notification,
+        r#"
+        UPDATE notifications
+        SET is_read = true
+        WHERE id = $1
+        RETURNING id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+        "#,
+        notification_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(notification)) => Json(ApiResponse::success(notification, "标记通知已读成功")),
+        Ok(None) => Json(ApiResponse::error(404, "通知不存在")),
+        Err(e) => {
+            tracing::error!("Failed to mark notification read: {}", e);
+            Json(ApiResponse::error(500, "标记通知已读失败"))
+        }
     }
-    Json(ApiResponse::<Notification>::error(404, "Notification not found"))
 }
 
 async fn mark_all_notifications_read(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let mut notifications = state.notifications.lock().unwrap();
-    for notification in notifications.iter_mut().filter(|n| n.user_id == user_id) {
-        notification.is_read = true;
+    let result = sqlx::query!(
+        r#"
+        UPDATE notifications
+        SET is_read = true
+        WHERE user_id = $1
+        "#,
+        user_id
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(ApiResponse::success(json!({ "marked": true }), "标记所有通知已读成功")),
+        Err(e) => {
+            tracing::error!("Failed to mark all notifications read: {}", e);
+            Json(ApiResponse::error(500, "标记所有通知已读失败"))
+        }
     }
-    Json(ApiResponse::success(json!({ "marked": true }), "标记所有通知已读成功"))
+}
+
+async fn upload_file(
+    State(state): State<AppState>,
+    mut multipart: Multipart,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let upload_dir = env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string());
+    
+    // 创建上传目录
+    tokio::fs::create_dir_all(&upload_dir).await.map_err(|e| {
+        tracing::error!("Failed to create upload directory: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let mut uploaded_files = Vec::new();
+
+    while let Some(field) = multipart.next_field().await.map_err(|e| {
+        tracing::error!("Failed to get multipart field: {}", e);
+        StatusCode::BAD_REQUEST
+    })? {
+        let file_name = field.file_name().unwrap_or("unknown").to_string();
+        let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
+        
+        let data = field.bytes().await.map_err(|e| {
+            tracing::error!("Failed to read file data: {}", e);
+            StatusCode::BAD_REQUEST
+        })?;
+
+        let file_id = Uuid::new_v4();
+        let file_path = format!("{}/{}-{}", upload_dir, file_id, file_name);
+
+        tokio::fs::write(&file_path, &data).await.map_err(|e| {
+            tracing::error!("Failed to write file: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        uploaded_files.push(json!({
+            "file_id": file_id.to_string(),
+            "file_name": file_name,
+            "file_path": file_path,
+            "content_type": content_type,
+            "size": data.len()
+        }));
+    }
+
+    Ok(Json(ApiResponse::success(json!({
+        "files": uploaded_files
+    }), "文件上传成功")))
 }
 
 async fn ws_handler(
@@ -392,8 +497,6 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
     let (mut sender, mut receiver) = socket.split();
     
     let tx = state.tx.clone();
-    let state_clone = state.clone();
-    
     let mut rx = tx.subscribe();
     
     let send_task = tokio::spawn(async move {
@@ -412,34 +515,46 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
             match msg_result {
                 Ok(Message::Text(text)) => {
                     if let Ok(ws_msg) = serde_json::from_str::<WsMessage>(&text.to_string()) {
-                        let mut messages = state_for_recv.chat_messages.lock().unwrap();
-                        let mut rooms = state_for_recv.chat_rooms.lock().unwrap();
-                        
                         let chat_id = ws_msg.chat_id.as_ref().and_then(|c| Uuid::parse_str(c).ok());
                         
                         if let Some(cid) = chat_id {
-                            let message = ChatMessage {
-                                id: Uuid::new_v4(),
-                                chat_id: cid,
-                                sender_id: ws_msg.sender_id.clone(),
-                                sender_name: ws_msg.sender_name.clone(),
-                                message_type: "text".to_string(),
-                                content: ws_msg.content.clone(),
-                                file_url: None,
-                                file_name: None,
-                                created_at: Utc::now(),
-                                is_read: false,
-                            };
-                            
-                            messages.push(message.clone());
-                            
-                            if let Some(index) = rooms.iter_mut().position(|r| r.id == cid) {
-                                rooms[index].last_message = Some(ws_msg.content.clone());
-                                rooms[index].last_message_time = Some(Utc::now());
-                                rooms[index].updated_at = Utc::now();
+                            let id = Uuid::new_v4();
+                            let now = Utc::now();
+
+                            // 保存消息到数据库
+                            let result = sqlx::query!(
+                                r#"
+                                INSERT INTO chat_messages (id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read)
+                                VALUES ($1, $2, $3, $4, 'text', $5, NULL, NULL, $6, false)
+                                "#,
+                                id,
+                                cid,
+                                ws_msg.sender_id.clone(),
+                                ws_msg.sender_name.clone(),
+                                ws_msg.content.clone(),
+                                now
+                            )
+                            .execute(&state_for_recv.pool)
+                            .await;
+
+                            if result.is_ok() {
+                                // 更新聊天室的最后消息
+                                let _ = sqlx::query!(
+                                    r#"
+                                    UPDATE chat_rooms
+                                    SET last_message = $1, last_message_time = $2, updated_at = $3
+                                    WHERE id = $4
+                                    "#,
+                                    ws_msg.content.clone(),
+                                    now,
+                                    now,
+                                    cid
+                                )
+                                .execute(&state_for_recv.pool)
+                                .await;
+
+                                let _ = state_for_recv.tx.send(ws_msg);
                             }
-                            
-                            let _ = state_for_recv.tx.send(ws_msg);
                         }
                     }
                 }
@@ -462,7 +577,23 @@ async fn ws_connect(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut connections = state.ws_connections.lock().unwrap();
     let (tx, _) = broadcast::channel(100);
-    connections.insert(user_id, tx);
+    connections.insert(user_id.clone(), tx);
+
+    // 更新用户在线状态
+    let now = Utc::now();
+    let _ = sqlx::query!(
+        r#"
+        INSERT INTO user_online_status (user_id, is_online, last_seen)
+        VALUES ($1, true, $2)
+        ON CONFLICT (user_id)
+        DO UPDATE SET is_online = true, last_seen = $2
+        "#,
+        user_id,
+        now
+    )
+    .execute(&state.pool)
+    .await;
+
     Json(ApiResponse::success(json!({ "connected": true }), "WebSocket连接成功"))
 }
 
@@ -472,7 +603,55 @@ async fn ws_disconnect(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut connections = state.ws_connections.lock().unwrap();
     connections.remove(&user_id);
+
+    // 更新用户离线状态
+    let now = Utc::now();
+    let _ = sqlx::query!(
+        r#"
+        UPDATE user_online_status
+        SET is_online = false, last_seen = $1
+        WHERE user_id = $2
+        "#,
+        now,
+        user_id
+    )
+    .execute(&state.pool)
+    .await;
+
     Json(ApiResponse::success(json!({ "disconnected": true }), "WebSocket断开成功"))
+}
+
+async fn get_user_online_status(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query!(
+        r#"
+        SELECT is_online, last_seen
+        FROM user_online_status
+        WHERE user_id = $1
+        "#,
+        user_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(record)) => Json(ApiResponse::success(json!({
+            "user_id": user_id,
+            "is_online": record.is_online,
+            "last_seen": record.last_seen
+        }), "获取用户在线状态成功")),
+        Ok(None) => Json(ApiResponse::success(json!({
+            "user_id": user_id,
+            "is_online": false,
+            "last_seen": null
+        }), "用户未记录在线状态")),
+        Err(e) => {
+            tracing::error!("Failed to get user online status: {}", e);
+            Json(ApiResponse::error(500, "获取用户在线状态失败"))
+        }
+    }
 }
 
 #[tokio::main]
@@ -486,15 +665,28 @@ async fn main() -> Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    let database_url = env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+
     let jwt_secret = env::var("JWT_SECRET")
         .unwrap_or_else(|_| {
             tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
             "topems-default-jwt-secret-change-me-in-production".to_string()
         });
 
-    let app_state = AppState::new(AuthState::from_env());
+    // 创建数据库连接池
+    let pool = db::create_pool(&database_url).await?;
+    tracing::info!("Database connection pool created");
+
+    // 运行数据库迁移
+    db::run_migrations(&pool).await?;
+    tracing::info!("Database migrations completed");
+
+    let app_state = AppState::new(pool, AuthState::from_env());
 
     let cors = create_cors_layer();
+
+    let upload_dir = env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string());
 
     let public_routes = Router::new()
         .route("/health", axum::routing::get(health_check))
@@ -503,7 +695,9 @@ async fn main() -> Result<()> {
         .route("/api/v1/chat-rooms/{chat_id}", axum::routing::get(get_chat_room))
         .route("/api/v1/chat-rooms/{chat_id}/messages", axum::routing::get(list_chat_messages))
         .route("/api/v1/project-groups", axum::routing::get(list_project_groups))
-        .route("/api/v1/notifications/{user_id}", axum::routing::get(list_notifications));
+        .route("/api/v1/notifications/{user_id}", axum::routing::get(list_notifications))
+        .route("/api/v1/users/{user_id}/online-status", axum::routing::get(get_user_online_status))
+        .nest_service("/uploads", ServeDir::new(&upload_dir));
 
     let protected_routes = Router::new()
         .route("/api/v1/chat-rooms", axum::routing::post(create_chat_room))
@@ -515,6 +709,7 @@ async fn main() -> Result<()> {
         .route("/api/v1/notifications/{user_id}/read-all", axum::routing::put(mark_all_notifications_read))
         .route("/api/v1/ws/connect/{user_id}", axum::routing::post(ws_connect))
         .route("/api/v1/ws/disconnect/{user_id}", axum::routing::post(ws_disconnect))
+        .route("/api/v1/files/upload", axum::routing::post(upload_file))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -533,6 +728,7 @@ async fn main() -> Result<()> {
     tracing::info!("📦 端口: {}", port);
     tracing::info!("🔒 认证保护已启用");
     tracing::info!("🔗 WebSocket端点: ws://0.0.0.0:{}/ws", port);
+    tracing::info!("📁 文件上传目录: {}", upload_dir);
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;

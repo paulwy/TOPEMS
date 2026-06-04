@@ -7,10 +7,12 @@ export interface SafetyHazard {
   name: string;
   category: string;
   level: string;
-  description: string;
-  location: string;
-  control_measures: string[];
+  description: string | null;
+  location: string | null;
+  risk_assessment: string | null;
+  control_measures: any;
   status: string;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -20,8 +22,9 @@ export interface CreateSafetyHazardRequest {
   name: string;
   category: string;
   level: string;
-  description: string;
-  location: string;
+  description?: string | null;
+  location?: string | null;
+  risk_assessment?: string | null;
   control_measures: string[];
   status: string;
 }
@@ -31,11 +34,13 @@ export interface SafetyCheck {
   check_no: string;
   check_type: string;
   inspector: string;
-  check_date: string;
-  location: string;
+  check_date: string | null;
+  location: string | null;
   result: string;
-  issues: string[];
+  issues: any;
+  attachments: any | null;
   status: string;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -44,9 +49,11 @@ export interface CreateSafetyCheckRequest {
   check_no: string;
   check_type: string;
   inspector: string;
-  location: string;
+  check_date?: string | null;
+  location?: string | null;
   result: string;
   issues: string[];
+  attachments?: string[] | null;
   status: string;
 }
 
@@ -55,12 +62,13 @@ export interface EmergencyPlan {
   plan_no: string;
   name: string;
   plan_type: string;
-  scope: string;
-  trigger_conditions: string;
-  response_procedures: string;
-  responsible_persons: string[];
-  contact_info: string;
+  scope: string | null;
+  trigger_conditions: string | null;
+  response_procedures: string | null;
+  responsible_persons: any;
+  contact_info: string | null;
   status: string;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -69,39 +77,44 @@ export interface CreateEmergencyPlanRequest {
   plan_no: string;
   name: string;
   plan_type: string;
-  scope: string;
-  trigger_conditions: string;
-  response_procedures: string;
+  scope?: string | null;
+  trigger_conditions?: string | null;
+  response_procedures?: string | null;
   responsible_persons: string[];
-  contact_info: string;
+  contact_info?: string | null;
   status: string;
 }
 
 export interface DrillRecord {
   id: string;
   drill_no: string;
-  plan_id?: string;
+  plan_id: string | null;
   drill_name: string;
-  drill_date: string;
-  participants: string[];
+  drill_date: string | null;
+  participants: any;
   duration_hours: number;
-  location: string;
-  summary: string;
-  issues_found: string;
-  improvements: string;
+  location: string | null;
+  summary: string | null;
+  issues_found: string | null;
+  improvements: string | null;
+  attachments: any | null;
+  created_by: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface CreateDrillRecordRequest {
   drill_no: string;
-  plan_id?: string;
+  plan_id?: string | null;
   drill_name: string;
+  drill_date?: string | null;
   participants: string[];
   duration_hours: number;
-  location: string;
-  summary: string;
-  issues_found: string;
-  improvements: string;
+  location?: string | null;
+  summary?: string | null;
+  issues_found?: string | null;
+  improvements?: string | null;
+  attachments?: string[] | null;
 }
 
 export const ehsApi = {

@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Send, FileText, Trash2, Eye, RefreshCw, Plus, Edit2, Check, X, RotateCcw, Search, BarChart3 } from 'lucide-react';
+import {
+  Mail,
+  Send,
+  FileText,
+  Trash2,
+  Eye,
+  RefreshCw,
+  Plus,
+  Edit2,
+  Check,
+  X,
+  RotateCcw,
+  Search,
+  BarChart3,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -40,7 +54,13 @@ const EmailManagementPage: React.FC = () => {
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [showStats, setShowStats] = useState(false);
-  const [stats, setStats] = useState<{ total: number; sentCount: number; failedCount: number; pendingCount: number; todayCount: number } | null>(null);
+  const [stats, setStats] = useState<{
+    total: number;
+    sentCount: number;
+    failedCount: number;
+    pendingCount: number;
+    todayCount: number;
+  } | null>(null);
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -86,7 +106,7 @@ const EmailManagementPage: React.FC = () => {
       const response = await getEmailLogs(page, pageSize, filters.status || undefined, filters.search || undefined);
       if (response.success && response.data) {
         setEmailLogs(response.data.items);
-        setPagination(prev => ({
+        setPagination((prev) => ({
           ...prev,
           page: response.data.page,
           pageSize: response.data.pageSize,
@@ -103,14 +123,14 @@ const EmailManagementPage: React.FC = () => {
   };
 
   const handlePageChange = (page: number) => {
-    setPagination(prev => ({ ...prev, page }));
+    setPagination((prev) => ({ ...prev, page }));
     fetchLogs(page, pagination.pageSize);
   };
 
   const handleFilterChange = (key: 'status' | 'search', value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
     if (key === 'status' || key === 'search') {
-      setPagination(prev => ({ ...prev, page: 1 }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
       fetchLogs(1, pagination.pageSize);
     }
   };
@@ -166,7 +186,7 @@ const EmailManagementPage: React.FC = () => {
     try {
       const response = await deleteEmailLog(id);
       if (response.success) {
-        setEmailLogs(prev => prev.filter(log => log.id !== id));
+        setEmailLogs((prev) => prev.filter((log) => log.id !== id));
         addNotification({ title: '成功', message: '删除成功', type: 'success' });
       }
     } catch (error) {
@@ -227,10 +247,10 @@ const EmailManagementPage: React.FC = () => {
   };
 
   const handleTemplateChange = (templateId: string) => {
-    setComposeForm(prev => ({ ...prev, selectedTemplate: templateId }));
-    const template = templates.find(t => t.id === templateId);
+    setComposeForm((prev) => ({ ...prev, selectedTemplate: templateId }));
+    const template = templates.find((t) => t.id === templateId);
     if (template) {
-      setComposeForm(prev => ({
+      setComposeForm((prev) => ({
         ...prev,
         subject: template.subject,
         body: template.body,
@@ -241,7 +261,7 @@ const EmailManagementPage: React.FC = () => {
       while ((match = regex.exec(template.body)) !== null) {
         variables[match[1]] = '';
       }
-      setComposeForm(prev => ({ ...prev, variables }));
+      setComposeForm((prev) => ({ ...prev, variables }));
     }
   };
 
@@ -279,7 +299,7 @@ const EmailManagementPage: React.FC = () => {
     try {
       const response = await deleteEmailTemplate(id);
       if (response.success) {
-        setTemplates(prev => prev.filter(t => t.id !== id));
+        setTemplates((prev) => prev.filter((t) => t.id !== id));
         addNotification({ title: '成功', message: '删除成功', type: 'success' });
       }
     } catch (error) {
@@ -291,17 +311,17 @@ const EmailManagementPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'sent':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">已发送</Badge>;
+        return <Badge className='bg-green-100 text-green-700 hover:bg-green-100'>已发送</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">待发送</Badge>;
+        return <Badge className='bg-yellow-100 text-yellow-700 hover:bg-yellow-100'>待发送</Badge>;
       case 'failed':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">发送失败</Badge>;
+        return <Badge className='bg-red-100 text-red-700 hover:bg-red-100'>发送失败</Badge>;
       case 'active':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">启用</Badge>;
+        return <Badge className='bg-green-100 text-green-700 hover:bg-green-100'>启用</Badge>;
       case 'inactive':
-        return <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100">禁用</Badge>;
+        return <Badge className='bg-gray-100 text-gray-700 hover:bg-gray-100'>禁用</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-700">{status}</Badge>;
+        return <Badge className='bg-gray-100 text-gray-700'>{status}</Badge>;
     }
   };
 
@@ -316,27 +336,25 @@ const EmailManagementPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">邮件管理</h1>
-          <p className="text-gray-500 mt-1">管理邮件发送记录和邮件模板</p>
+    <div className='min-h-screen bg-gray-50'>
+      <div className='max-w-7xl mx-auto px-4 py-6'>
+        <div className='mb-6'>
+          <h1 className='text-2xl font-bold text-gray-900'>邮件管理</h1>
+          <p className='text-gray-500 mt-1'>管理邮件发送记录和邮件模板</p>
         </div>
 
         <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              {tabs.map(tab => (
+          <CardHeader className='pb-2'>
+            <div className='flex items-center gap-2'>
+              {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
+                    activeTab === tab.id ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  <tab.icon className="w-4 h-4" />
+                  <tab.icon className='w-4 h-4' />
                   {tab.label}
                 </button>
               ))}
@@ -344,58 +362,58 @@ const EmailManagementPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             {activeTab === 'logs' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <div className='text-sm text-gray-500'>
                     共 {pagination.total} 条记录（第 {pagination.page} / {pagination.totalPages} 页）
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button onClick={handleGetStats} variant="outline" className="gap-2">
-                      <BarChart3 className="w-4 h-4" />
+                  <div className='flex items-center gap-2'>
+                    <Button onClick={handleGetStats} variant='outline' className='gap-2'>
+                      <BarChart3 className='w-4 h-4' />
                       统计
                     </Button>
-                    <Button onClick={() => fetchLogs()} className="gap-2">
-                      <RefreshCw className="w-4 h-4" />
+                    <Button onClick={() => fetchLogs()} className='gap-2'>
+                      <RefreshCw className='w-4 h-4' />
                       刷新
                     </Button>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-1 max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <div className='flex items-center gap-3'>
+                  <div className='relative flex-1 max-w-xs'>
+                    <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
                     <Input
-                      placeholder="搜索收件人邮箱..."
+                      placeholder='搜索收件人邮箱...'
                       value={filters.search}
-                      onChange={e => handleFilterChange('search', e.target.value)}
-                      className="pl-10"
+                      onChange={(e) => handleFilterChange('search', e.target.value)}
+                      className='pl-10'
                     />
                   </div>
-                  <Select value={filters.status} onValueChange={value => handleFilterChange('status', value)}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="全部状态" />
+                  <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                    <SelectTrigger className='w-32'>
+                      <SelectValue placeholder='全部状态' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">全部状态</SelectItem>
-                      <SelectItem value="sent">已发送</SelectItem>
-                      <SelectItem value="pending">待发送</SelectItem>
-                      <SelectItem value="failed">发送失败</SelectItem>
+                      <SelectItem value=''>全部状态</SelectItem>
+                      <SelectItem value='sent'>已发送</SelectItem>
+                      <SelectItem value='pending'>待发送</SelectItem>
+                      <SelectItem value='failed'>发送失败</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  <div className='flex items-center justify-center py-12'>
+                    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600' />
                   </div>
                 ) : emailLogs.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                    <Mail className="w-16 h-16 mb-4 text-gray-300" />
+                  <div className='flex flex-col items-center justify-center py-12 text-gray-500'>
+                    <Mail className='w-16 h-16 mb-4 text-gray-300' />
                     <p>暂无邮件日志</p>
                   </div>
                 ) : (
                   <>
-                    <div className="overflow-x-auto">
+                    <div className='overflow-x-auto'>
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -407,23 +425,23 @@ const EmailManagementPage: React.FC = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {emailLogs.map(log => (
+                          {emailLogs.map((log) => (
                             <TableRow key={log.id}>
-                              <TableCell className="max-w-xs truncate" title={log.toEmail}>
+                              <TableCell className='max-w-xs truncate' title={log.toEmail}>
                                 {log.toEmail}
                               </TableCell>
-                              <TableCell className="max-w-xs truncate" title={log.subject}>
+                              <TableCell className='max-w-xs truncate' title={log.subject}>
                                 {log.subject}
                               </TableCell>
                               <TableCell>{getStatusBadge(log.status)}</TableCell>
                               <TableCell>{log.sentAt ? formatDate(log.sentAt) : '-'}</TableCell>
                               <TableCell>
-                                <div className="flex items-center gap-2">
+                                <div className='flex items-center gap-2'>
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="sm" onClick={() => setViewingLog(log)}>
-                                          <Eye className="w-4 h-4" />
+                                        <Button variant='ghost' size='sm' onClick={() => setViewingLog(log)}>
+                                          <Eye className='w-4 h-4' />
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>查看详情</TooltipContent>
@@ -433,8 +451,13 @@ const EmailManagementPage: React.FC = () => {
                                     <TooltipProvider>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600" onClick={() => handleResendEmail(log.id)}>
-                                            <RotateCcw className="w-4 h-4" />
+                                          <Button
+                                            variant='ghost'
+                                            size='sm'
+                                            className='text-blue-500 hover:text-blue-600'
+                                            onClick={() => handleResendEmail(log.id)}
+                                          >
+                                            <RotateCcw className='w-4 h-4' />
                                           </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>重新发送</TooltipContent>
@@ -444,8 +467,13 @@ const EmailManagementPage: React.FC = () => {
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => handleDeleteLog(log.id)}>
-                                          <Trash2 className="w-4 h-4" />
+                                        <Button
+                                          variant='ghost'
+                                          size='sm'
+                                          className='text-red-500 hover:text-red-600'
+                                          onClick={() => handleDeleteLog(log.id)}
+                                        >
+                                          <Trash2 className='w-4 h-4' />
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>删除</TooltipContent>
@@ -459,19 +487,19 @@ const EmailManagementPage: React.FC = () => {
                       </Table>
                     </div>
 
-                    <div className="flex items-center justify-center gap-2">
+                    <div className='flex items-center justify-center gap-2'>
                       <Button
-                        variant="outline"
+                        variant='outline'
                         onClick={() => handlePageChange(pagination.page - 1)}
                         disabled={pagination.page === 1}
                       >
                         上一页
                       </Button>
-                      <span className="text-sm text-gray-600">
+                      <span className='text-sm text-gray-600'>
                         {pagination.page} / {pagination.totalPages}
                       </span>
                       <Button
-                        variant="outline"
+                        variant='outline'
                         onClick={() => handlePageChange(pagination.page + 1)}
                         disabled={pagination.page === pagination.totalPages}
                       >
@@ -484,46 +512,46 @@ const EmailManagementPage: React.FC = () => {
             )}
 
             {activeTab === 'compose' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
+              <div className='space-y-4'>
+                <div className='flex items-center gap-3'>
                   <Input
-                    placeholder="收件人"
+                    placeholder='收件人'
                     value={composeForm.toEmail}
-                    onChange={e => setComposeForm(prev => ({ ...prev, toEmail: e.target.value }))}
-                    className="flex-1"
+                    onChange={(e) => setComposeForm((prev) => ({ ...prev, toEmail: e.target.value }))}
+                    className='flex-1'
                   />
                   <Button
-                    variant="outline"
-                    onClick={() => setComposeForm(prev => ({ ...prev, useTemplate: !prev.useTemplate }))}
+                    variant='outline'
+                    onClick={() => setComposeForm((prev) => ({ ...prev, useTemplate: !prev.useTemplate }))}
                     className={composeForm.useTemplate ? 'bg-blue-50 text-blue-600' : ''}
                   >
-                    {composeForm.useTemplate ? <Check className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                    {composeForm.useTemplate ? <Check className='w-4 h-4' /> : <FileText className='w-4 h-4' />}
                     使用模板
                   </Button>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className='flex items-center gap-3'>
                   <Input
-                    placeholder="抄送（可选）"
+                    placeholder='抄送（可选）'
                     value={composeForm.ccEmail}
-                    onChange={e => setComposeForm(prev => ({ ...prev, ccEmail: e.target.value }))}
-                    className="flex-1"
+                    onChange={(e) => setComposeForm((prev) => ({ ...prev, ccEmail: e.target.value }))}
+                    className='flex-1'
                   />
                   <Input
-                    placeholder="密送（可选）"
+                    placeholder='密送（可选）'
                     value={composeForm.bccEmail}
-                    onChange={e => setComposeForm(prev => ({ ...prev, bccEmail: e.target.value }))}
-                    className="flex-1"
+                    onChange={(e) => setComposeForm((prev) => ({ ...prev, bccEmail: e.target.value }))}
+                    className='flex-1'
                   />
                 </div>
 
                 {composeForm.useTemplate && (
                   <Select value={composeForm.selectedTemplate} onValueChange={handleTemplateChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="选择模板" />
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='选择模板' />
                     </SelectTrigger>
                     <SelectContent>
-                      {templates.map(template => (
+                      {templates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.templateName}
                         </SelectItem>
@@ -533,18 +561,20 @@ const EmailManagementPage: React.FC = () => {
                 )}
 
                 {composeForm.useTemplate && Object.keys(composeForm.variables).length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-700">模板变量：</p>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className='space-y-2'>
+                    <p className='text-sm font-medium text-gray-700'>模板变量：</p>
+                    <div className='grid grid-cols-2 gap-2'>
                       {Object.entries(composeForm.variables).map(([key, value]) => (
-                        <div key={key} className="flex items-center gap-2">
-                          <Label className="w-20">{key}:</Label>
+                        <div key={key} className='flex items-center gap-2'>
+                          <Label className='w-20'>{key}:</Label>
                           <Input
                             value={value}
-                            onChange={e => setComposeForm(prev => ({
-                              ...prev,
-                              variables: { ...prev.variables, [key]: e.target.value }
-                            }))}
+                            onChange={(e) =>
+                              setComposeForm((prev) => ({
+                                ...prev,
+                                variables: { ...prev.variables, [key]: e.target.value },
+                              }))
+                            }
                           />
                         </div>
                       ))}
@@ -553,21 +583,21 @@ const EmailManagementPage: React.FC = () => {
                 )}
 
                 <Input
-                  placeholder="主题"
+                  placeholder='主题'
                   value={composeForm.subject}
-                  onChange={e => setComposeForm(prev => ({ ...prev, subject: e.target.value }))}
+                  onChange={(e) => setComposeForm((prev) => ({ ...prev, subject: e.target.value }))}
                 />
 
                 <Textarea
-                  placeholder="邮件内容"
+                  placeholder='邮件内容'
                   value={composeForm.body}
-                  onChange={e => setComposeForm(prev => ({ ...prev, body: e.target.value }))}
-                  className="min-h-[200px]"
+                  onChange={(e) => setComposeForm((prev) => ({ ...prev, body: e.target.value }))}
+                  className='min-h-[200px]'
                 />
 
-                <div className="flex justify-end">
-                  <Button onClick={handleSendEmail} disabled={loading} className="gap-2">
-                    <Send className="w-4 h-4" />
+                <div className='flex justify-end'>
+                  <Button onClick={handleSendEmail} disabled={loading} className='gap-2'>
+                    <Send className='w-4 h-4' />
                     {loading ? '发送中...' : '发送邮件'}
                   </Button>
                 </div>
@@ -575,72 +605,85 @@ const EmailManagementPage: React.FC = () => {
             )}
 
             {activeTab === 'templates' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
-                    共 {templates.length} 个模板
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button onClick={fetchTemplates} variant="outline" className="gap-2">
-                      <RefreshCw className="w-4 h-4" />
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <div className='text-sm text-gray-500'>共 {templates.length} 个模板</div>
+                  <div className='flex items-center gap-2'>
+                    <Button onClick={fetchTemplates} variant='outline' className='gap-2'>
+                      <RefreshCw className='w-4 h-4' />
                       刷新
                     </Button>
-                    <Button onClick={() => {
-                      setEditingTemplate(null);
-                      setTemplateForm({ templateName: '', subject: '', body: '', status: 'active' });
-                      setShowTemplateForm(true);
-                    }} className="gap-2">
-                      <Plus className="w-4 h-4" />
+                    <Button
+                      onClick={() => {
+                        setEditingTemplate(null);
+                        setTemplateForm({ templateName: '', subject: '', body: '', status: 'active' });
+                        setShowTemplateForm(true);
+                      }}
+                      className='gap-2'
+                    >
+                      <Plus className='w-4 h-4' />
                       新建模板
                     </Button>
                   </div>
                 </div>
 
                 {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  <div className='flex items-center justify-center py-12'>
+                    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600' />
                   </div>
                 ) : templates.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                    <FileText className="w-16 h-16 mb-4 text-gray-300" />
+                  <div className='flex flex-col items-center justify-center py-12 text-gray-500'>
+                    <FileText className='w-16 h-16 mb-4 text-gray-300' />
                     <p>暂无邮件模板</p>
-                    <Button onClick={() => setShowTemplateForm(true)} className="mt-4 gap-2">
-                      <Plus className="w-4 h-4" />
+                    <Button onClick={() => setShowTemplateForm(true)} className='mt-4 gap-2'>
+                      <Plus className='w-4 h-4' />
                       创建模板
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid gap-4">
-                    {templates.map(template => (
-                      <div key={template.id} className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium text-gray-900">{template.templateName}</h3>
+                  <div className='grid gap-4'>
+                    {templates.map((template) => (
+                      <div
+                        key={template.id}
+                        className='p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors'
+                      >
+                        <div className='flex items-start justify-between mb-2'>
+                          <div className='flex-1'>
+                            <div className='flex items-center gap-2'>
+                              <h3 className='font-medium text-gray-900'>{template.templateName}</h3>
                               {getStatusBadge(template.status)}
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">{template.subject}</p>
+                            <p className='text-sm text-gray-500 mt-1'>{template.subject}</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => {
-                              setEditingTemplate(template);
-                              setTemplateForm({
-                                templateName: template.templateName,
-                                subject: template.subject,
-                                body: template.body,
-                                status: template.status as 'active' | 'inactive',
-                              });
-                              setShowTemplateForm(true);
-                            }}>
-                              <Edit2 className="w-4 h-4" />
+                          <div className='flex items-center gap-2'>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              onClick={() => {
+                                setEditingTemplate(template);
+                                setTemplateForm({
+                                  templateName: template.templateName,
+                                  subject: template.subject,
+                                  body: template.body,
+                                  status: template.status as 'active' | 'inactive',
+                                });
+                                setShowTemplateForm(true);
+                              }}
+                            >
+                              <Edit2 className='w-4 h-4' />
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDeleteTemplate(template.id)}>
-                              <Trash2 className="w-4 h-4" />
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='text-red-500'
+                              onClick={() => handleDeleteTemplate(template.id)}
+                            >
+                              <Trash2 className='w-4 h-4' />
                             </Button>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 line-clamp-2">{template.body}</p>
-                        <p className="text-xs text-gray-400 mt-2">创建于 {formatDate(template.createdAt)}</p>
+                        <p className='text-sm text-gray-600 line-clamp-2'>{template.body}</p>
+                        <p className='text-xs text-gray-400 mt-2'>创建于 {formatDate(template.createdAt)}</p>
                       </div>
                     ))}
                   </div>
@@ -651,52 +694,50 @@ const EmailManagementPage: React.FC = () => {
         </Card>
 
         <Dialog open={!!viewingLog} onOpenChange={() => setViewingLog(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className='max-w-2xl'>
             <DialogHeader>
               <DialogTitle>邮件详情</DialogTitle>
             </DialogHeader>
             {viewingLog && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className='space-y-4'>
+                <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <Label className="text-sm text-gray-500">发件人</Label>
-                    <p className="mt-1">{viewingLog.fromEmail}</p>
+                    <Label className='text-sm text-gray-500'>发件人</Label>
+                    <p className='mt-1'>{viewingLog.fromEmail}</p>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">收件人</Label>
-                    <p className="mt-1">{viewingLog.toEmail}</p>
+                    <Label className='text-sm text-gray-500'>收件人</Label>
+                    <p className='mt-1'>{viewingLog.toEmail}</p>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">抄送</Label>
-                    <p className="mt-1">{viewingLog.ccEmail || '-'}</p>
+                    <Label className='text-sm text-gray-500'>抄送</Label>
+                    <p className='mt-1'>{viewingLog.ccEmail || '-'}</p>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">密送</Label>
-                    <p className="mt-1">{viewingLog.bccEmail || '-'}</p>
+                    <Label className='text-sm text-gray-500'>密送</Label>
+                    <p className='mt-1'>{viewingLog.bccEmail || '-'}</p>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">状态</Label>
-                    <p className="mt-1">{getStatusBadge(viewingLog.status)}</p>
+                    <Label className='text-sm text-gray-500'>状态</Label>
+                    <p className='mt-1'>{getStatusBadge(viewingLog.status)}</p>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">发送时间</Label>
-                    <p className="mt-1">{viewingLog.sentAt ? formatDate(viewingLog.sentAt) : '-'}</p>
+                    <Label className='text-sm text-gray-500'>发送时间</Label>
+                    <p className='mt-1'>{viewingLog.sentAt ? formatDate(viewingLog.sentAt) : '-'}</p>
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-500">主题</Label>
-                  <p className="mt-1 font-medium">{viewingLog.subject}</p>
+                  <Label className='text-sm text-gray-500'>主题</Label>
+                  <p className='mt-1 font-medium'>{viewingLog.subject}</p>
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-500">内容</Label>
-                  <div className="mt-1 p-4 bg-gray-50 rounded-lg whitespace-pre-wrap">
-                    {viewingLog.body}
-                  </div>
+                  <Label className='text-sm text-gray-500'>内容</Label>
+                  <div className='mt-1 p-4 bg-gray-50 rounded-lg whitespace-pre-wrap'>{viewingLog.body}</div>
                 </div>
                 {viewingLog.errorMessage && (
                   <div>
-                    <Label className="text-sm text-gray-500">错误信息</Label>
-                    <p className="mt-1 text-red-600">{viewingLog.errorMessage}</p>
+                    <Label className='text-sm text-gray-500'>错误信息</Label>
+                    <p className='mt-1 text-red-600'>{viewingLog.errorMessage}</p>
                   </div>
                 )}
               </div>
@@ -704,41 +745,49 @@ const EmailManagementPage: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showTemplateForm} onOpenChange={() => {
-          setShowTemplateForm(false);
-          setEditingTemplate(null);
-          setTemplateForm({ templateName: '', subject: '', body: '', status: 'active' });
-        }}>
-          <DialogContent className="max-w-2xl">
+        <Dialog
+          open={showTemplateForm}
+          onOpenChange={() => {
+            setShowTemplateForm(false);
+            setEditingTemplate(null);
+            setTemplateForm({ templateName: '', subject: '', body: '', status: 'active' });
+          }}
+        >
+          <DialogContent className='max-w-2xl'>
             <DialogHeader>
               <DialogTitle>{editingTemplate ? '编辑模板' : '新建邮件模板'}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 mt-4">
+            <div className='space-y-4 mt-4'>
               <div>
                 <Label>模板名称</Label>
                 <Input
                   value={templateForm.templateName}
-                  onChange={e => setTemplateForm(prev => ({ ...prev, templateName: e.target.value }))}
-                  placeholder="请输入模板名称"
+                  onChange={(e) => setTemplateForm((prev) => ({ ...prev, templateName: e.target.value }))}
+                  placeholder='请输入模板名称'
                 />
               </div>
               <div>
                 <Label>主题</Label>
                 <Input
                   value={templateForm.subject}
-                  onChange={e => setTemplateForm(prev => ({ ...prev, subject: e.target.value }))}
-                  placeholder="请输入邮件主题"
+                  onChange={(e) => setTemplateForm((prev) => ({ ...prev, subject: e.target.value }))}
+                  placeholder='请输入邮件主题'
                 />
               </div>
               <div>
                 <Label>状态</Label>
-                <Select value={templateForm.status} onValueChange={value => setTemplateForm(prev => ({ ...prev, status: value as 'active' | 'inactive' }))}>
+                <Select
+                  value={templateForm.status}
+                  onValueChange={(value) =>
+                    setTemplateForm((prev) => ({ ...prev, status: value as 'active' | 'inactive' }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">启用</SelectItem>
-                    <SelectItem value="inactive">禁用</SelectItem>
+                    <SelectItem value='active'>启用</SelectItem>
+                    <SelectItem value='inactive'>禁用</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -746,13 +795,13 @@ const EmailManagementPage: React.FC = () => {
                 <Label>内容（支持变量 {'{{变量名}}'}）</Label>
                 <Textarea
                   value={templateForm.body}
-                  onChange={e => setTemplateForm(prev => ({ ...prev, body: e.target.value }))}
-                  placeholder="请输入邮件内容，使用 {{变量名}} 定义变量"
-                  className="min-h-[200px]"
+                  onChange={(e) => setTemplateForm((prev) => ({ ...prev, body: e.target.value }))}
+                  placeholder='请输入邮件内容，使用 {{变量名}} 定义变量'
+                  className='min-h-[200px]'
                 />
               </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowTemplateForm(false)}>
+              <div className='flex justify-end gap-2'>
+                <Button variant='outline' onClick={() => setShowTemplateForm(false)}>
                   取消
                 </Button>
                 <Button onClick={handleSaveTemplate} disabled={loading}>
@@ -764,35 +813,35 @@ const EmailManagementPage: React.FC = () => {
         </Dialog>
 
         <Dialog open={showStats} onOpenChange={() => setShowStats(false)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className='max-w-md'>
             <DialogHeader>
               <DialogTitle>邮件统计</DialogTitle>
             </DialogHeader>
             {stats && (
-              <div className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-600">总邮件数</p>
-                    <p className="text-2xl font-bold text-blue-700 mt-1">{stats.total}</p>
+              <div className='space-y-4 mt-4'>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='p-4 bg-blue-50 rounded-lg'>
+                    <p className='text-sm text-blue-600'>总邮件数</p>
+                    <p className='text-2xl font-bold text-blue-700 mt-1'>{stats.total}</p>
                   </div>
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-600">已发送</p>
-                    <p className="text-2xl font-bold text-green-700 mt-1">{stats.sentCount}</p>
+                  <div className='p-4 bg-green-50 rounded-lg'>
+                    <p className='text-sm text-green-600'>已发送</p>
+                    <p className='text-2xl font-bold text-green-700 mt-1'>{stats.sentCount}</p>
                   </div>
-                  <div className="p-4 bg-red-50 rounded-lg">
-                    <p className="text-sm text-red-600">发送失败</p>
-                    <p className="text-2xl font-bold text-red-700 mt-1">{stats.failedCount}</p>
+                  <div className='p-4 bg-red-50 rounded-lg'>
+                    <p className='text-sm text-red-600'>发送失败</p>
+                    <p className='text-2xl font-bold text-red-700 mt-1'>{stats.failedCount}</p>
                   </div>
-                  <div className="p-4 bg-yellow-50 rounded-lg">
-                    <p className="text-sm text-yellow-600">待发送</p>
-                    <p className="text-2xl font-bold text-yellow-700 mt-1">{stats.pendingCount}</p>
+                  <div className='p-4 bg-yellow-50 rounded-lg'>
+                    <p className='text-sm text-yellow-600'>待发送</p>
+                    <p className='text-2xl font-bold text-yellow-700 mt-1'>{stats.pendingCount}</p>
                   </div>
                 </div>
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-purple-600">今日发送</p>
-                  <p className="text-2xl font-bold text-purple-700 mt-1">{stats.todayCount}</p>
+                <div className='p-4 bg-purple-50 rounded-lg'>
+                  <p className='text-sm text-purple-600'>今日发送</p>
+                  <p className='text-2xl font-bold text-purple-700 mt-1'>{stats.todayCount}</p>
                 </div>
-                <div className="flex justify-end">
+                <div className='flex justify-end'>
                   <Button onClick={() => setShowStats(false)}>关闭</Button>
                 </div>
               </div>

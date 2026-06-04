@@ -27,20 +27,20 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
     const loadAndPreview = async () => {
       console.log('开始预览:', { fileName, contentType, fileId });
-      
+
       if (!containerRef.current) {
         console.error('容器引用为 null');
         return;
       }
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
         const container = containerRef.current;
         container.innerHTML = '';
         console.log('容器已清空');
-        
+
         if (contentType.includes('image/')) {
           console.log('预览图片');
           const imgUrl = await docApi.preview(fileId);
@@ -60,7 +60,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           console.log('预览 DOCX');
           const blob = await docApi.download(fileId);
           console.log('获取到 Blob，大小:', blob.size);
-          
+
           // 再次检查容器是否还存在
           if (containerRef.current) {
             console.log('开始调用 docx-preview renderAsync');
@@ -90,48 +90,43 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
     // 延迟一点确保 DOM 已渲染
     const timer = setTimeout(loadAndPreview, 200);
-    
+
     return () => clearTimeout(timer);
   }, [isOpen, fileId, fileName, contentType]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
+      <div className='bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col'>
         {/* 头部 */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <FileText className="w-6 h-6 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900 truncate">
-              {fileName}
-            </h2>
+        <div className='flex items-center justify-between p-4 border-b border-gray-200'>
+          <div className='flex items-center space-x-3'>
+            <FileText className='w-6 h-6 text-blue-600' />
+            <h2 className='text-lg font-semibold text-gray-900 truncate'>{fileName}</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
+          <button onClick={onClose} className='p-2 hover:bg-gray-100 rounded-lg transition-colors'>
+            <X className='w-5 h-5 text-gray-500' />
           </button>
         </div>
 
         {/* 内容区域 */}
-        <div className="flex-1 overflow-auto bg-gray-50 relative">
+        <div className='flex-1 overflow-auto bg-gray-50 relative'>
           {/* 加载和错误状态使用绝对定位 */}
           {loading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10">
-              <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
-              <p className="text-gray-600">正在加载文档...</p>
+            <div className='absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10'>
+              <Loader2 className='w-10 h-10 text-blue-600 animate-spin mb-3' />
+              <p className='text-gray-600'>正在加载文档...</p>
             </div>
           )}
 
           {error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10">
-              <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
-              <p className="text-red-600 mb-4">{error}</p>
+            <div className='absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10'>
+              <AlertCircle className='w-10 h-10 text-red-500 mb-3' />
+              <p className='text-red-600 mb-4'>{error}</p>
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                className='px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors'
               >
                 关闭
               </button>
@@ -139,17 +134,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           )}
 
           {/* 容器始终渲染和显示 */}
-          <div
-            ref={containerRef}
-            className="p-4 min-h-[80vh]"
-          />
+          <div ref={containerRef} className='p-4 min-h-[80vh]' />
         </div>
 
         {/* 底部操作栏 */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div className='p-4 border-t border-gray-200 bg-gray-50'>
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            className='w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors'
           >
             关闭
           </button>

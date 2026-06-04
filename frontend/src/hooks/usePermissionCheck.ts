@@ -15,36 +15,38 @@ export const usePermissionCheck = () => {
     }
   }, []);
 
-  const checkPermissionsBatch = useCallback(async (permissions: string[]) => {
-    try {
-      const results = await Promise.all(
-        permissions.map(perm => checkPermissionFromServer(perm))
-      );
-      return {
-        allowed: results.every(r => r),
-        results: permissions.reduce((acc, perm, idx) => {
-          acc[perm] = results[idx];
-          return acc;
-        }, {} as Record<string, boolean>)
-      };
-    } catch (error) {
-      console.error('Batch permission check error:', error);
-      return {
-        allowed: false,
-        results: permissions.reduce((acc, perm) => {
-          acc[perm] = false;
-          return acc;
-        }, {} as Record<string, boolean>)
-      };
-    }
-  }, [checkPermissionFromServer]);
+  const checkPermissionsBatch = useCallback(
+    async (permissions: string[]) => {
+      try {
+        const results = await Promise.all(permissions.map((perm) => checkPermissionFromServer(perm)));
+        return {
+          allowed: results.every((r) => r),
+          results: permissions.reduce(
+            (acc, perm, idx) => {
+              acc[perm] = results[idx];
+              return acc;
+            },
+            {} as Record<string, boolean>
+          ),
+        };
+      } catch (error) {
+        console.error('Batch permission check error:', error);
+        return {
+          allowed: false,
+          results: permissions.reduce(
+            (acc, perm) => {
+              acc[perm] = false;
+              return acc;
+            },
+            {} as Record<string, boolean>
+          ),
+        };
+      }
+    },
+    [checkPermissionFromServer]
+  );
 
-  const logAccess = useCallback(async (
-    action: string,
-    resource: string,
-    success: boolean,
-    errorMessage?: string
-  ) => {
+  const logAccess = useCallback(async (action: string, resource: string, success: boolean, errorMessage?: string) => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       await authApi.createAccessLog({

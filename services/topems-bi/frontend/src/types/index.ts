@@ -2,8 +2,8 @@ export interface Dashboard {
   id: string;
   name: string;
   description?: string;
-  layout: any;
-  created_by: string;
+  layout?: any;
+  created_by?: string;
   created_at: string;
   updated_at: string;
 }
@@ -15,7 +15,19 @@ export interface Report {
   report_type: string;
   config: any;
   data_source?: string;
-  created_by: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DashboardWidget {
+  id: string;
+  dashboard_id: string;
+  report_id?: string;
+  widget_type: string;
+  title?: string;
+  position: any;
+  config?: any;
   created_at: string;
   updated_at: string;
 }

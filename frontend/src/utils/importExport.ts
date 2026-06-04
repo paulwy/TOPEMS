@@ -1,95 +1,166 @@
-export interface ImportTemplate {
-  entity_type: string;
-  template_name: string;
-  columns: TemplateColumn[];
+import * as XLSX from 'xlsx';
+import dayjs from 'dayjs';
+
+export interface ExportColumn<T> {
+  key: keyof T;
+  label: string;
+  format?: (value: any) => string;
 }
 
-export interface TemplateColumn {
-  field: string;
-  header: string;
-  required: boolean;
-  field_type: string;
-  description: string;
+export const exportToExcel = <T>(data: T[], columns: ExportColumn<T>[], fileName: string = 'export'): void => {
+  const headers = columns.map((col) => col.label);
+
+  const rows = data.map((item) =>
+    columns.map((col) => {
+      const value = item[col.key];
+      if (col.format) {
+        return col.format(value);
+      }
+      if (value === null || value === undefined) {
+        return '';
+      }
+      if (typeof value === 'boolean') {
+        return value ? '是' : '否';
+      }
+      if (value instanceof Date || (typeof value === 'string' && dayjs(value).isValid())) {
+        return dayjs(value).format('YYYY-MM-DD HH:mm:ss');
+      }
+      return String(value);
+    })
+  );
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+  XLSX.writeFile(workbook, `${fileName}_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`);
+};
+
+export interface ImportResult<T> {
+  success: boolean;
+  data: T[];
+  errors: { row: number; message: string }[];
 }
 
-export interface ImportRequest {
-  entity_type: string;
-  file_data: string;
-  file_format: string;
-  import_mode: string;
-  skip_errors: boolean;
-}
-
-export interface ExportRequest {
-  entity_type: string;
-  filters?: Record<string, string>;
-  columns: string[];
-  file_format: string;
-}
-
-export interface ImportResult {
-  total_rows: number;
-  success_rows: number;
-  failed_rows: ImportRowError[];
-  errors: string[];
-}
-
-export interface ImportRowError {
-  row: number;
-  field: string;
-  message: string;
-  value: string;
-}
-
-export interface ImportStatus {
-  id: string;
-  entity_type: string;
-  status: string;
-  progress: number;
-  total_rows: number;
-  processed_rows: number;
-  success_rows: number;
-  failed_rows: number;
-  errors: string[];
-  created_at: string;
-}
-
-export const readFileAsBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
+export const importFromExcel = async <T>(
+  file: File,
+  columns: ExportColumn<T>[],
+  transform?: (raw: Record<string, any>) => T
+): Promise<ImportResult<T>> => {
+  return new Promise((resolve) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const base64 = result.split(',')[1];
-      resolve(base64);
+
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+
+        const rawData = XLSX.utils.sheet_to_json(worksheet) as Record<string, any>[];
+
+        const errors: { row: number; message: string }[] = [];
+        const result: T[] = [];
+
+        rawData.forEach((row, index) => {
+          try {
+            if (transform) {
+              const item = transform(row);
+              result.push(item);
+            } else {
+              const item: any = {};
+              columns.forEach((col) => {
+                item[col.key] = row[col.label];
+              });
+              result.push(item as T);
+            }
+          } catch (error) {
+            errors.push({
+              row: index + 2,
+              message: error instanceof Error ? error.message : '导入失败',
+            });
+          }
+        });
+
+        resolve({
+          success: errors.length === 0,
+          data: result,
+          errors,
+        });
+      } catch (error) {
+        resolve({
+          success: false,
+          data: [],
+          errors: [{ row: 0, message: error instanceof Error ? error.message : '读取文件失败' }],
+        });
+      }
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+
+    reader.onerror = () => {
+      resolve({
+        success: false,
+        data: [],
+        errors: [{ row: 0, message: '读取文件失败' }],
+      });
+    };
+
+    reader.readAsArrayBuffer(file);
   });
 };
 
-export const downloadBase64File = (base64Data: string, filename: string) => {
+export const exportToCSV = <T>(data: T[], columns: ExportColumn<T>[], fileName: string = 'export'): void => {
+  const headers = columns.map((col) => col.label).join(',');
+
+  const rows = data.map((item) =>
+    columns
+      .map((col) => {
+        const value = item[col.key];
+        let result: string;
+
+        if (col.format) {
+          result = col.format(value);
+        } else if (value === null || value === undefined) {
+          result = '';
+        } else if (typeof value === 'boolean') {
+          result = value ? '是' : '否';
+        } else if (value instanceof Date || (typeof value === 'string' && dayjs(value).isValid())) {
+          result = dayjs(value).format('YYYY-MM-DD HH:mm:ss');
+        } else {
+          result = String(value);
+        }
+
+        if (result.includes(',')) {
+          result = `"${result}"`;
+        }
+        return result;
+      })
+      .join(',')
+  );
+
+  const csvContent = [headers, ...rows].join('\n');
+
+  const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
-  link.href = `data:application/octet-stream;base64,${base64Data}`;
-  link.download = filename;
+
+  link.href = URL.createObjectURL(blob);
+  link.download = `${fileName}_${dayjs().format('YYYYMMDD_HHmmss')}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 };
 
-export const parseFileExtension = (filename: string): string => {
-  const ext = filename.split('.').pop()?.toLowerCase();
-  return ext === 'xlsx' || ext === 'xls' ? 'xlsx' : 'csv';
-};
+export const downloadTemplate = <T>(columns: ExportColumn<T>[], fileName: string = 'template'): void => {
+  const headers = columns.map((col) => col.label);
+  const csvContent = headers.join('\n');
 
-export const getImportModeLabel = (mode: string): string => {
-  switch (mode) {
-    case 'create':
-      return '仅创建（跳过已存在）';
-    case 'update':
-      return '仅更新';
-    case 'create_update':
-      return '创建或更新';
-    default:
-      return mode;
-  }
+  const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+
+  link.href = URL.createObjectURL(blob);
+  link.download = `${fileName}_template.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };

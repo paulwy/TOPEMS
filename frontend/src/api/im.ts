@@ -1,5 +1,6 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
+import config from '../config/runtime';
 
 export interface ChatMessage {
   id: string;
@@ -125,5 +126,21 @@ export const imApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.im.get<string>('/health');
+  },
+
+  uploadFile: async (formData: FormData): Promise<ApiResponse<any>> => {
+    const baseURL = config.services.im;
+    const response = await fetch(`${baseURL}/api/v1/files/upload`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: formData,
+    });
+    return response.json();
+  },
+
+  getUserOnlineStatus: async (userId: string): Promise<ApiResponse<any>> => {
+    return apiClient.im.get<any>(`/api/v1/users/${userId}/online-status`);
   },
 };

@@ -23,15 +23,11 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
     return <>{children}</>;
   }
 
-  let hasPermission = false;
-
-  if (Array.isArray(permission)) {
-    hasPermission = requireAll
+  const hasPermission = Array.isArray(permission)
+    ? requireAll
       ? checkAllPermissions(permission)
-      : checkAnyPermission(permission);
-  } else {
-    hasPermission = checkPermission(permission);
-  }
+      : checkAnyPermission(permission)
+    : checkPermission(permission);
 
   if (hasPermission) {
     return <>{children}</>;
@@ -39,7 +35,7 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
 
   if (showDisabled) {
     return (
-      <div className="opacity-50 cursor-not-allowed" title="您没有此操作的权限">
+      <div className='opacity-50 cursor-not-allowed' title='您没有此操作的权限'>
         {children}
       </div>
     );
@@ -69,15 +65,11 @@ export const RoleGate: React.FC<RoleGateProps> = ({
     return <>{children}</>;
   }
 
-  let hasRole = false;
-
-  if (Array.isArray(role)) {
-    hasRole = requireAll
-      ? role.every(r => checkRole(r))
-      : checkAnyRole(role);
-  } else {
-    hasRole = checkRole(role);
-  }
+  const hasRole = Array.isArray(role)
+    ? requireAll
+      ? role.every((r) => checkRole(r))
+      : checkAnyRole(role)
+    : checkRole(role);
 
   if (hasRole) {
     return <>{children}</>;
@@ -85,7 +77,7 @@ export const RoleGate: React.FC<RoleGateProps> = ({
 
   if (showDisabled) {
     return (
-      <div className="opacity-50 cursor-not-allowed" title="您没有此角色权限">
+      <div className='opacity-50 cursor-not-allowed' title='您没有此角色权限'>
         {children}
       </div>
     );
@@ -134,7 +126,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
 
   if (showDisabled) {
     return (
-      <div className="opacity-50 cursor-not-allowed" title={`您没有${module}模块的${action}权限`}>
+      <div className='opacity-50 cursor-not-allowed' title={`您没有${module}模块的${action}权限`}>
         {children}
       </div>
     );
@@ -149,11 +141,7 @@ interface AdminGateProps {
   showDisabled?: boolean;
 }
 
-export const AdminGate: React.FC<AdminGateProps> = ({
-  children,
-  fallback = null,
-  showDisabled = false,
-}) => {
+export const AdminGate: React.FC<AdminGateProps> = ({ children, fallback = null, showDisabled = false }) => {
   const { isAdmin } = useRole();
 
   if (isAdmin()) {
@@ -162,7 +150,7 @@ export const AdminGate: React.FC<AdminGateProps> = ({
 
   if (showDisabled) {
     return (
-      <div className="opacity-50 cursor-not-allowed" title="需要管理员权限">
+      <div className='opacity-50 cursor-not-allowed' title='需要管理员权限'>
         {children}
       </div>
     );

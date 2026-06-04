@@ -15,6 +15,8 @@ use crate::models::{
     CreateSupplierRequest, UpdateSupplierRequest,
     CreateSupplierEvaluationRequest, UpdateSupplierEvaluationRequest,
     CreatePurchaseOrderRequest, UpdatePurchaseOrderRequest,
+    SupplierContract, CreateSupplierContractRequest, UpdateSupplierContractRequest,
+    SrmStatistics,
 };
 use topems_shared::ApiResponse;
 
@@ -67,6 +69,31 @@ pub async fn create_purchase_order_routes(db: PgPool) -> Result<Router> {
             "/api/v1/purchase-orders/{id}",
             get(get_purchase_order).put(update_purchase_order).delete(delete_purchase_order),
         )
+        .with_state(state);
+
+    Ok(app)
+}
+
+pub async fn create_contract_routes(db: PgPool) -> Result<Router> {
+    let state = Arc::new(AppState { db });
+
+    let app = Router::new()
+        .route("/api/v1/supplier-contracts", get(list_contracts).post(create_contract))
+        .route(
+            "/api/v1/supplier-contracts/{id}",
+            get(get_contract).put(update_contract).delete(delete_contract),
+        )
+        .with_state(state);
+
+    Ok(app)
+}
+
+pub async fn create_statistics_routes(db: PgPool) -> Result<Router> {
+    let state = Arc::new(AppState { db });
+
+    let app = Router::new()
+        .route("/api/v1/statistics", get(get_statistics))
+        .route("/api/v1/suppliers-with-stats", get(get_suppliers_with_stats))
         .with_state(state);
 
     Ok(app)
@@ -698,6 +725,369 @@ async fn delete_purchase_order(
         Err(e) => {
             tracing::error!("删除采购订单失败: {}", e);
             Json(ApiResponse::<String>::error(500, "采购订单删除失败"))
+        }
+    }
+}
+
+// ==================== Contract Handlers ====================
+
+async fn list_contracts(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<ListQueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
+    let status_filter = params.status.clone();
+
+    let result = sqlx::query_as::<_, SupplierContract>(
+        r#"
+        SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
+        FROM srm.supplier_contracts
+        WHERE ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4
+        "#,
+    )
+    .bind(&search_pattern)
+    .bind(&status_filter)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(contracts) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM srm.supplier_contracts
+                WHERE ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                "#,
+            )
+            .bind(&search_pattern)
+            .bind(&status_filter)
+            .fetch_one(&state.db)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "contracts": contracts,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "获取供应商合同列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取供应商合同列表失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商合同列表失败"))
+        }
+    }
+}
+
+async fn create_contract(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateSupplierContractRequest>,
+) -> Json<ApiResponse<SupplierContract>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+    let supplier_uuid = Uuid::parse_str(&req.supplier_id).unwrap_or_else(|_| Uuid::new_v4());
+
+    let sign_date = req.sign_date.as_ref().and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&Utc));
+    let start_date = req.start_date.as_ref().and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&Utc));
+    let end_date = req.end_date.as_ref().and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&Utc));
+
+    let result = sqlx::query_as::<_, SupplierContract>(
+        r#"
+        INSERT INTO srm.supplier_contracts (id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        RETURNING id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&req.contract_no)
+    .bind(supplier_uuid)
+    .bind(&req.supplier_name)
+    .bind(&req.title)
+    .bind(&req.contract_type)
+    .bind(req.total_amount)
+    .bind(&req.currency)
+    .bind(sign_date)
+    .bind(start_date)
+    .bind(end_date)
+    .bind(&req.status)
+    .bind(&req.remarks)
+    .bind(now)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(contract) => Json(ApiResponse::success(contract, "供应商合同创建成功")),
+        Err(e) => {
+            tracing::error!("创建供应商合同失败: {}", e);
+            Json(ApiResponse::<SupplierContract>::error(500, "供应商合同创建失败"))
+        }
+    }
+}
+
+async fn get_contract(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<SupplierContract>> {
+    let result = sqlx::query_as::<_, SupplierContract>(
+        r#"
+        SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
+        FROM srm.supplier_contracts WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(contract)) => Json(ApiResponse::success(contract, "获取供应商合同成功")),
+        Ok(None) => Json(ApiResponse::<SupplierContract>::error(404, "供应商合同不存在")),
+        Err(e) => {
+            tracing::error!("获取供应商合同失败: {}", e);
+            Json(ApiResponse::<SupplierContract>::error(500, "获取供应商合同失败"))
+        }
+    }
+}
+
+async fn update_contract(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateSupplierContractRequest>,
+) -> Json<ApiResponse<SupplierContract>> {
+    let existing = sqlx::query_as::<_, SupplierContract>(
+        "SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM srm.supplier_contracts WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(c)) => c,
+        Ok(None) => return Json(ApiResponse::<SupplierContract>::error(404, "供应商合同不存在")),
+        Err(e) => return Json(ApiResponse::<SupplierContract>::error(500, &format!("查询供应商合同失败: {}", e))),
+    };
+
+    let contract_no = req.contract_no.unwrap_or(existing.contract_no);
+    let supplier_id = req.supplier_id
+        .map(|v| Uuid::parse_str(&v).unwrap_or(existing.supplier_id))
+        .unwrap_or(existing.supplier_id);
+    let supplier_name = req.supplier_name.or(existing.supplier_name);
+    let title = req.title.unwrap_or(existing.title);
+    let contract_type = req.contract_type.unwrap_or(existing.contract_type);
+    let total_amount = req.total_amount.or(existing.total_amount);
+    let currency = req.currency.unwrap_or(existing.currency);
+    let sign_date = req.sign_date.or(existing.sign_date);
+    let start_date = req.start_date.or(existing.start_date);
+    let end_date = req.end_date.or(existing.end_date);
+    let status = req.status.unwrap_or(existing.status);
+    let remarks = req.remarks.or(existing.remarks);
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, SupplierContract>(
+        r#"
+        UPDATE srm.supplier_contracts SET
+            contract_no = $2, supplier_id = $3, supplier_name = $4, title = $5, contract_type = $6, total_amount = $7, currency = $8, sign_date = $9, start_date = $10, end_date = $11, status = $12, remarks = $13, updated_at = $14
+        WHERE id = $1
+        RETURNING id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(contract_no)
+    .bind(supplier_id)
+    .bind(supplier_name)
+    .bind(title)
+    .bind(contract_type)
+    .bind(total_amount)
+    .bind(currency)
+    .bind(sign_date)
+    .bind(start_date)
+    .bind(end_date)
+    .bind(status)
+    .bind(remarks)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(contract) => Json(ApiResponse::success(contract, "供应商合同更新成功")),
+        Err(e) => {
+            tracing::error!("更新供应商合同失败: {}", e);
+            Json(ApiResponse::<SupplierContract>::error(500, "供应商合同更新失败"))
+        }
+    }
+}
+
+async fn delete_contract(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query("DELETE FROM srm.supplier_contracts WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "供应商合同删除成功")),
+        Ok(_) => Json(ApiResponse::<String>::error(404, "供应商合同不存在")),
+        Err(e) => {
+            tracing::error!("删除供应商合同失败: {}", e);
+            Json(ApiResponse::<String>::error(500, "供应商合同删除失败"))
+        }
+    }
+}
+
+// ==================== Statistics Handlers ====================
+
+async fn get_statistics(
+    State(state): State<Arc<AppState>>,
+) -> Json<ApiResponse<SrmStatistics>> {
+    let total_suppliers = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let active_suppliers = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let total_evaluations = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_evaluations")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let avg_score = sqlx::query_scalar::<_, Option<f64>>("SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(None)
+        .unwrap_or(0.0);
+
+    let total_orders = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.purchase_orders")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let total_order_amount = sqlx::query_scalar::<_, Option<f64>>("SELECT SUM(total_amount) FROM srm.purchase_orders WHERE total_amount IS NOT NULL")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(None)
+        .unwrap_or(0.0);
+
+    let pending_orders = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.purchase_orders WHERE status = 'pending'")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let completed_orders = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.purchase_orders WHERE status = 'completed' OR status = 'delivered'")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let total_contracts = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let active_contracts = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let stats = SrmStatistics {
+        total_suppliers,
+        active_suppliers,
+        total_evaluations,
+        avg_score,
+        total_orders,
+        total_order_amount,
+        pending_orders,
+        completed_orders,
+        total_contracts,
+        active_contracts,
+    };
+
+    Json(ApiResponse::success(stats, "获取统计数据成功"))
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct SupplierOrderStats {
+    supplier_id: Uuid,
+    total_orders: i64,
+    total_amount: Option<f64>,
+}
+
+async fn get_suppliers_with_stats(
+    State(state): State<Arc<AppState>>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let suppliers = sqlx::query_as::<_, Supplier>(
+        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers ORDER BY created_at DESC"
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    match suppliers {
+        Ok(suppliers) => {
+            let mut result = Vec::new();
+
+            for supplier in suppliers {
+                let order_stats = sqlx::query_as::<_, SupplierOrderStats>(
+                    r#"
+                    SELECT supplier_id, COUNT(*) as total_orders, SUM(total_amount) as total_amount
+                    FROM srm.purchase_orders
+                    WHERE supplier_id = $1
+                    GROUP BY supplier_id
+                    "#,
+                )
+                .bind(supplier.id)
+                .fetch_optional(&state.db)
+                .await
+                .unwrap_or(None);
+
+                let avg_score = sqlx::query_scalar::<_, Option<f64>>(
+                    "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE supplier_id = $1 AND overall_score IS NOT NULL"
+                )
+                .bind(supplier.id)
+                .fetch_one(&state.db)
+                .await
+                .unwrap_or(None);
+
+                let last_order = sqlx::query_scalar::<_, Option<chrono::DateTime<Utc>>>(
+                    "SELECT order_date FROM srm.purchase_orders WHERE supplier_id = $1 ORDER BY order_date DESC LIMIT 1"
+                )
+                .bind(supplier.id)
+                .fetch_optional(&state.db)
+                .await
+                .unwrap_or(None);
+
+                let stats = serde_json::json!({
+                    "supplier": supplier,
+                    "total_orders": order_stats.as_ref().map(|s| s.total_orders).unwrap_or(0),
+                    "total_amount": order_stats.as_ref().and_then(|s| s.total_amount).unwrap_or(0.0),
+                    "avg_evaluation_score": avg_score,
+                    "last_order_date": last_order
+                });
+
+                result.push(stats);
+            }
+
+            Json(ApiResponse::success(result, "获取供应商统计数据成功"))
+        }
+        Err(e) => {
+            tracing::error!("获取供应商统计数据失败: {}", e);
+            Json(ApiResponse::<Vec<serde_json::Value>>::error(500, "获取供应商统计数据失败"))
         }
     }
 }

@@ -12,13 +12,13 @@ describe('LoadingSpinner', () => {
   });
 
   it('renders with small size', () => {
-    render(<LoadingSpinner size="sm" />);
+    render(<LoadingSpinner size='sm' />);
     const spinner = screen.getByRole('status');
     expect(spinner).toBeInTheDocument();
   });
 
   it('renders with large size', () => {
-    render(<LoadingSpinner size="lg" />);
+    render(<LoadingSpinner size='lg' />);
     const spinner = screen.getByRole('status');
     expect(spinner).toBeInTheDocument();
   });
@@ -26,28 +26,18 @@ describe('LoadingSpinner', () => {
 
 describe('EmptyState', () => {
   it('renders with title', () => {
-    render(<EmptyState title="No files found" />);
+    render(<EmptyState title='No files found' />);
     expect(screen.getByText('No files found')).toBeInTheDocument();
   });
 
   it('renders with description', () => {
-    render(
-      <EmptyState 
-        title="No files found" 
-        description="Upload your first file to get started" 
-      />
-    );
+    render(<EmptyState title='No files found' description='Upload your first file to get started' />);
     expect(screen.getByText('Upload your first file to get started')).toBeInTheDocument();
   });
 
   it('renders with action button', () => {
     const handleClick = jest.fn();
-    render(
-      <EmptyState 
-        title="No files found"
-        action={{ label: 'Upload File', onClick: handleClick }}
-      />
-    );
+    render(<EmptyState title='No files found' action={{ label: 'Upload File', onClick: handleClick }} />);
     const button = screen.getByText('Upload File');
     expect(button).toBeInTheDocument();
     button.click();
@@ -55,19 +45,19 @@ describe('EmptyState', () => {
   });
 
   it('renders with different icons', () => {
-    const { unmount } = render(<EmptyState title="File Test" icon="file" />);
+    const { unmount } = render(<EmptyState title='File Test' icon='file' />);
     expect(screen.getByText('File Test')).toBeInTheDocument();
     unmount();
-    
-    render(<EmptyState title="Folder Test" icon="folder" />);
+
+    render(<EmptyState title='Folder Test' icon='folder' />);
     expect(screen.getByText('Folder Test')).toBeInTheDocument();
     unmount();
-    
-    render(<EmptyState title="Search Test" icon="search" />);
+
+    render(<EmptyState title='Search Test' icon='search' />);
     expect(screen.getByText('Search Test')).toBeInTheDocument();
     unmount();
-    
-    render(<EmptyState title="Inbox Test" icon="inbox" />);
+
+    render(<EmptyState title='Inbox Test' icon='inbox' />);
     expect(screen.getByText('Inbox Test')).toBeInTheDocument();
   });
 });

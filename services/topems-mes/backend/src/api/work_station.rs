@@ -96,7 +96,7 @@ async fn create_workstation(
         return Json(api_error(400, "工作站名称不能为空"));
     }
 
-    if req.code.is_empty() {
+    if req.code.as_ref().map_or(true, String::is_empty) {
         return Json(api_error(400, "工作站编码不能为空"));
     }
 

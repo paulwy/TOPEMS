@@ -230,15 +230,15 @@ export interface PaginatedResult<T> {
 
 function buildQueryString(params?: ListParams): string {
   if (!params) return '';
-  
+
   const searchParams = new URLSearchParams();
-  
+
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       searchParams.append(key, String(value));
     }
   });
-  
+
   const queryString = searchParams.toString();
   return queryString ? `?${queryString}` : '';
 }
@@ -281,20 +281,16 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 export const workflowApi = {
   ...createCrudApi<Workflow>('/api/v1/workflows'),
 
-  listWorkflows: (params?: ListParams) =>
-    createCrudApi<Workflow>('/api/v1/workflows').list(params),
+  listWorkflows: (params?: ListParams) => createCrudApi<Workflow>('/api/v1/workflows').list(params),
 
-  getWorkflow: (id: string) =>
-    createCrudApi<Workflow>('/api/v1/workflows').get(id),
+  getWorkflow: (id: string) => createCrudApi<Workflow>('/api/v1/workflows').get(id),
 
-  createWorkflow: (data: CreateWorkflowRequest) =>
-    createCrudApi<Workflow>('/api/v1/workflows').create(data),
+  createWorkflow: (data: CreateWorkflowRequest) => createCrudApi<Workflow>('/api/v1/workflows').create(data),
 
   updateWorkflow: (id: string, data: UpdateWorkflowRequest) =>
     createCrudApi<Workflow>('/api/v1/workflows').update(id, data),
 
-  deleteWorkflow: (id: string) =>
-    createCrudApi<Workflow>('/api/v1/workflows').delete(id),
+  deleteWorkflow: (id: string) => createCrudApi<Workflow>('/api/v1/workflows').delete(id),
 
   getVersions: (workflowId: string, params?: ListParams) => {
     const queryString = buildQueryString(params);

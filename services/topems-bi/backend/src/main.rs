@@ -1,8 +1,11 @@
 use axum::{
     extract::FromRef,
+    extract::Path,
     extract::State,
+    routing::delete,
     routing::get,
     routing::post,
+    routing::put,
     Json,
     Router,
 };
@@ -305,6 +308,49 @@ async fn create_dashboard(
     Json(ApiResponse::success(dashboard, "创建仪表板成功"))
 }
 
+async fn get_dashboard(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Dashboard>> {
+    let dashboards = state.dashboards.lock().unwrap();
+    if let Some(dashboard) = dashboards.iter().find(|d| d.id == id) {
+        Json(ApiResponse::success(dashboard.clone(), "获取仪表板成功"))
+    } else {
+        Json(ApiResponse::error(404, "仪表板不存在"))
+    }
+}
+
+async fn update_dashboard(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<CreateDashboard>,
+) -> Json<ApiResponse<Dashboard>> {
+    let mut dashboards = state.dashboards.lock().unwrap();
+    if let Some(dashboard) = dashboards.iter_mut().find(|d| d.id == id) {
+        dashboard.name = payload.name;
+        dashboard.description = payload.description;
+        dashboard.layout = payload.layout;
+        dashboard.updated_at = Utc::now();
+        Json(ApiResponse::success(dashboard.clone(), "更新仪表板成功"))
+    } else {
+        Json(ApiResponse::error(404, "仪表板不存在"))
+    }
+}
+
+async fn delete_dashboard(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    let mut dashboards = state.dashboards.lock().unwrap();
+    let initial_len = dashboards.len();
+    dashboards.retain(|d| d.id != id);
+    if dashboards.len() < initial_len {
+        Json(ApiResponse::success("删除成功".to_string(), "删除仪表板成功"))
+    } else {
+        Json(ApiResponse::error(404, "仪表板不存在"))
+    }
+}
+
 async fn list_reports(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let reports = state.reports.lock().unwrap();
     Json(ApiResponse::success(json!({
@@ -333,6 +379,51 @@ async fn create_report(
 
     reports.push(report.clone());
     Json(ApiResponse::success(report, "创建报表成功"))
+}
+
+async fn get_report(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Report>> {
+    let reports = state.reports.lock().unwrap();
+    if let Some(report) = reports.iter().find(|r| r.id == id) {
+        Json(ApiResponse::success(report.clone(), "获取报表成功"))
+    } else {
+        Json(ApiResponse::error(404, "报表不存在"))
+    }
+}
+
+async fn update_report(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<CreateReport>,
+) -> Json<ApiResponse<Report>> {
+    let mut reports = state.reports.lock().unwrap();
+    if let Some(report) = reports.iter_mut().find(|r| r.id == id) {
+        report.name = payload.name;
+        report.description = payload.description;
+        report.report_type = payload.report_type;
+        report.config = payload.config;
+        report.data_source = payload.data_source;
+        report.updated_at = Utc::now();
+        Json(ApiResponse::success(report.clone(), "更新报表成功"))
+    } else {
+        Json(ApiResponse::error(404, "报表不存在"))
+    }
+}
+
+async fn delete_report(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    let mut reports = state.reports.lock().unwrap();
+    let initial_len = reports.len();
+    reports.retain(|r| r.id != id);
+    if reports.len() < initial_len {
+        Json(ApiResponse::success("删除成功".to_string(), "删除报表成功"))
+    } else {
+        Json(ApiResponse::error(404, "报表不存在"))
+    }
 }
 
 async fn get_analytics_summary() -> Json<ApiResponse<serde_json::Value>> {
@@ -1212,7 +1303,9 @@ async fn main() -> Result<()> {
 
     let protected_routes = Router::new()
         .route("/api/v1/dashboards", get(list_dashboards).post(create_dashboard))
+        .route("/api/v1/dashboards/:id", get(get_dashboard).put(update_dashboard).delete(delete_dashboard))
         .route("/api/v1/reports", get(list_reports).post(create_report))
+        .route("/api/v1/reports/:id", get(get_report).put(update_report).delete(delete_report))
         .route("/api/v1/analytics/summary", get(get_analytics_summary))
         .route("/api/v1/bi/rs/summary", get(get_rs_data_summary))
         .route("/api/v1/bi/rs/project-timeline", get(get_rs_project_timeline))

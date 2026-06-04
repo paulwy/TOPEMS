@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sqlx::FromRow;
 use uuid::Uuid;
 
@@ -20,6 +21,15 @@ pub struct Asset {
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    // 设备专用字段
+    pub serial_number: Option<String>,
+    pub manufacturer: Option<String>,
+    pub rated_power: Option<f64>,
+    pub rated_voltage: Option<f64>,
+    pub rated_current: Option<f64>,
+    pub specifications: Option<Value>,
+    pub image_url: Option<String>,
+    pub department: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -34,6 +44,15 @@ pub struct CreateAssetRequest {
     pub location: Option<String>,
     #[serde(default, with = "option_uuid")]
     pub responsible_id: Option<Uuid>,
+    // 设备专用字段
+    pub serial_number: Option<String>,
+    pub manufacturer: Option<String>,
+    pub rated_power: Option<f64>,
+    pub rated_voltage: Option<f64>,
+    pub rated_current: Option<f64>,
+    pub specifications: Option<Value>,
+    pub image_url: Option<String>,
+    pub department: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -48,4 +67,13 @@ pub struct UpdateAssetRequest {
     #[serde(default, with = "option_uuid")]
     pub responsible_id: Option<Uuid>,
     pub status: Option<String>,
+    // 设备专用字段
+    pub serial_number: Option<String>,
+    pub manufacturer: Option<String>,
+    pub rated_power: Option<f64>,
+    pub rated_voltage: Option<f64>,
+    pub rated_current: Option<f64>,
+    pub specifications: Option<Value>,
+    pub image_url: Option<String>,
+    pub department: Option<String>,
 }

@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Shield, Search, Plus, Edit, Trash2, ChevronLeft,
-  Users, Key, AlertCircle, XCircle, CheckCircle
-} from 'lucide-react';
+import { Shield, Search, Plus, Trash2, ChevronLeft, Key, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authApi, type Role, type Permission } from '../api/iam';
 import { useAppStore } from '../store';
@@ -20,10 +17,10 @@ interface RoleManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 
-const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) => {
+const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _onNavigate }) => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
-  
+
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +44,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
     setLoading(true);
     setError(null);
     try {
-      const [rolesRes, permsRes] = await Promise.all([
-        authApi.listRoles(),
-        authApi.listPermissions()
-      ]);
+      const [rolesRes, permsRes] = await Promise.all([authApi.listRoles(), authApi.listPermissions()]);
 
       if (rolesRes.success && rolesRes.data) {
         setRoles(rolesRes.data);
@@ -58,8 +52,8 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
       if (permsRes.success && permsRes.data) {
         setAllPermissions(permsRes.data);
       }
-    } catch (err: any) {
-      setError(err.message || '加载数据失败');
+    } catch (_err: any) {
+      setError(_err.message || '加载数据失败');
       addNotification({ title: '加载失败', message: '加载数据失败', type: 'error' });
     } finally {
       setLoading(false);
@@ -72,7 +66,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
       if (res.success && res.data) {
         setRolePermissions(res.data);
       }
-    } catch (err: any) {
+    } catch (_err: any) {
       addNotification({ title: '加载失败', message: '加载角色权限失败', type: 'error' });
     }
   };
@@ -89,8 +83,8 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
       } else {
         addNotification({ title: '失败', message: res.message || '创建角色失败', type: 'error' });
       }
-    } catch (err: any) {
-      addNotification({ title: '失败', message: err.message || '创建角色失败', type: 'error' });
+    } catch (_err: any) {
+      addNotification({ title: '失败', message: _err.message || '创建角色失败', type: 'error' });
     }
   };
 
@@ -105,8 +99,8 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
       } else {
         addNotification({ title: '失败', message: res.message || '删除角色失败', type: 'error' });
       }
-    } catch (err: any) {
-      addNotification({ title: '失败', message: err.message || '删除角色失败', type: 'error' });
+    } catch (_err: any) {
+      addNotification({ title: '失败', message: _err.message || '删除角色失败', type: 'error' });
     }
   };
 
@@ -119,8 +113,8 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
       } else {
         addNotification({ title: '失败', message: res.message || '添加权限失败', type: 'error' });
       }
-    } catch (err: any) {
-      addNotification({ title: '失败', message: err.message || '添加权限失败', type: 'error' });
+    } catch (_err: any) {
+      addNotification({ title: '失败', message: _err.message || '添加权限失败', type: 'error' });
     }
   };
 
@@ -133,8 +127,8 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
       } else {
         addNotification({ title: '失败', message: res.message || '移除权限失败', type: 'error' });
       }
-    } catch (err: any) {
-      addNotification({ title: '失败', message: err.message || '移除权限失败', type: 'error' });
+    } catch (_err: any) {
+      addNotification({ title: '失败', message: _err.message || '移除权限失败', type: 'error' });
     }
   };
 
@@ -144,37 +138,33 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
     setShowPermissionsModal(true);
   };
 
-  const filteredRoles = roles.filter(role =>
-    role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (role.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredRoles = roles.filter(
+    (role) =>
+      role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      role.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/dashboard')}
-              >
-                <ChevronLeft className="w-5 h-5" />
+    <div className='min-h-screen bg-gray-50 dark:bg-gray-900'>
+      <div className='bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-4'>
+              <Button variant='ghost' onClick={() => navigate('/dashboard')}>
+                <ChevronLeft className='w-5 h-5' />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <Shield className="w-7 h-7 mr-3 text-indigo-600" />
+                <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center'>
+                  <Shield className='w-7 h-7 mr-3 text-indigo-600' />
                   角色管理
                 </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  管理用户角色、权限配置
-                </p>
+                <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>管理用户角色、权限配置</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className='flex items-center space-x-2'>
               <ModeToggle />
               <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className='w-5 h-5 mr-2' />
                 创建角色
               </Button>
             </div>
@@ -182,90 +172,86 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+        <div className='mb-6 flex items-center space-x-4'>
+          <div className='flex-1 relative'>
+            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
             <Input
-              type="text"
-              placeholder="搜索角色名称或描述..."
+              type='text'
+              placeholder='搜索角色名称或描述...'
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className='pl-10'
             />
           </div>
-          <Button variant="secondary" onClick={loadData}>
+          <Button variant='secondary' onClick={loadData}>
             刷新
           </Button>
         </div>
 
         <Card>
-          <CardContent className="p-0">
+          <CardContent className='p-0'>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
-                <p className="mt-2 text-gray-500 dark:text-gray-400">加载中...</p>
+              <div className='p-8 text-center'>
+                <div className='inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent'></div>
+                <p className='mt-2 text-gray-500 dark:text-gray-400'>加载中...</p>
               </div>
             ) : error ? (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadData}>
+              <div className='p-8 text-center'>
+                <AlertCircle className='w-12 h-12 text-red-500 mx-auto mb-3' />
+                <p className='text-red-600 dark:text-red-400'>{error}</p>
+                <Button className='mt-4' onClick={loadData}>
                   重试
                 </Button>
               </div>
             ) : filteredRoles.length === 0 ? (
-              <div className="p-8 text-center">
-                <Shield className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">暂无角色</p>
+              <div className='p-8 text-center'>
+                <Shield className='w-12 h-12 text-gray-400 mx-auto mb-3' />
+                <p className='text-gray-500 dark:text-gray-400'>暂无角色</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className='divide-y divide-gray-200 dark:divide-gray-700'>
                 {filteredRoles.map((role) => (
-                  <div key={role.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Shield className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                  <div key={role.id} className='p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-start space-x-4'>
+                        <div className='w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0'>
+                          <Shield className='w-6 h-6 text-indigo-600 dark:text-indigo-400' />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{role.name}</h3>
+                        <div className='flex-1'>
+                          <div className='flex items-center space-x-3'>
+                            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>{role.name}</h3>
                           </div>
                           {role.description && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{role.description}</p>
+                            <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>{role.description}</p>
                           )}
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                          <p className='text-xs text-gray-400 dark:text-gray-500 mt-2'>
                             创建时间: {new Date(role.created_at).toLocaleString('zh-CN')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className='flex items-center space-x-2'>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openPermissionsModal(role)}
-                              >
-                                <Key className="w-5 h-5" />
+                              <Button variant='ghost' size='sm' onClick={() => openPermissionsModal(role)}>
+                                <Key className='w-5 h-5' />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>管理权限</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        
+
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 dark:text-red-400"
+                                variant='ghost'
+                                size='sm'
+                                className='text-red-600 hover:text-red-700 dark:text-red-400'
                                 onClick={() => handleDeleteRole(role.id)}
                               >
-                                <Trash2 className="w-5 h-5" />
+                                <Trash2 className='w-5 h-5' />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>删除角色</TooltipContent>
@@ -282,39 +268,39 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
       </div>
 
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className='max-w-md'>
           <DialogHeader>
             <DialogTitle>创建新角色</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateRole}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">角色名称 *</Label>
+            <div className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='name'>角色名称 *</Label>
                 <Input
-                  id="name"
-                  type="text"
+                  id='name'
+                  type='text'
                   required
                   value={newRole.name}
                   onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
-                  placeholder="例如：管理员、普通用户"
+                  placeholder='例如：管理员、普通用户'
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">描述</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='description'>描述</Label>
                 <Textarea
-                  id="description"
+                  id='description'
                   value={newRole.description}
                   onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
                   rows={3}
-                  placeholder="描述这个角色的用途"
+                  placeholder='描述这个角色的用途'
                 />
               </div>
             </div>
-            
-            <DialogFooter className="mt-6">
+
+            <DialogFooter className='mt-6'>
               <Button
-                type="button"
-                variant="secondary"
+                type='button'
+                variant='secondary'
                 onClick={() => {
                   setShowCreateModal(false);
                   setNewRole({ name: '', description: '' });
@@ -322,50 +308,51 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
               >
                 取消
               </Button>
-              <Button type="submit">创建</Button>
+              <Button type='submit'>创建</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showPermissionsModal} onOpenChange={setShowPermissionsModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className='max-w-2xl'>
           <DialogHeader>
             <DialogTitle>角色权限 - {selectedRole?.name}</DialogTitle>
           </DialogHeader>
-          <div className="overflow-y-auto max-h-[60vh]">
-            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">可选权限</h4>
-            <div className="space-y-2">
+          <div className='overflow-y-auto max-h-[60vh]'>
+            <h4 className='font-medium text-gray-900 dark:text-gray-100 mb-4'>可选权限</h4>
+            <div className='space-y-2'>
               {allPermissions.map((perm) => {
-                const hasPermission = rolePermissions.some(p => p.id === perm.id);
+                const hasPermission = rolePermissions.some((p) => p.id === perm.id);
                 return (
-                  <div key={perm.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{perm.name}</span>
-                        {hasPermission && (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        )}
+                  <div
+                    key={perm.id}
+                    className='flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg'
+                  >
+                    <div className='flex-1'>
+                      <div className='flex items-center space-x-2'>
+                        <span className='font-medium text-gray-900 dark:text-gray-100'>{perm.name}</span>
+                        {hasPermission && <CheckCircle className='w-4 h-4 text-green-500' />}
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{perm.description}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                      <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>{perm.description}</p>
+                      <p className='text-xs text-gray-400 dark:text-gray-500'>
                         资源: {perm.resource} | 操作: {perm.action}
                       </p>
                     </div>
                     {hasPermission ? (
                       <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 dark:text-red-400"
+                        variant='secondary'
+                        size='sm'
+                        className='text-red-600 hover:text-red-700 dark:text-red-400'
                         onClick={() => selectedRole && handleRemovePermission(selectedRole.id, perm.id)}
                       >
                         移除
                       </Button>
                     ) : (
                       <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                        variant='secondary'
+                        size='sm'
+                        className='text-indigo-600 hover:text-indigo-700 dark:text-indigo-400'
                         onClick={() => selectedRole && handleAddPermission(selectedRole.id, perm.id)}
                       >
                         添加
@@ -377,11 +364,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate }) =
             </div>
           </div>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowPermissionsModal(false)}
-            >
+            <Button type='button' variant='secondary' onClick={() => setShowPermissionsModal(false)}>
               关闭
             </Button>
           </DialogFooter>

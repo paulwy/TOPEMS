@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { dashboardApi, Dashboard } from '../api'
+import { fetchDashboards, createDashboard, updateDashboard, deleteDashboard } from '../api/client'
+import type { Dashboard } from '../types'
 
 function DashboardList() {
   const [dashboards, setDashboards] = useState<Dashboard[]>([])
@@ -18,9 +19,9 @@ function DashboardList() {
 
   const loadDashboards = async () => {
     try {
-      const res = await dashboardApi.getDashboards()
-      if (res.data.success && res.data.data) {
-        setDashboards(res.data.data.dashboards || [])
+      const res = await fetchDashboards()
+      if (res.success && res.data) {
+        setDashboards(res.data.dashboards || [])
       }
     } catch (e) {
       console.error('Failed to load dashboards:', e)
@@ -37,9 +38,9 @@ function DashboardList() {
         layout: formData.layout ? JSON.parse(formData.layout) : null
       }
       if (editing) {
-        await dashboardApi.updateDashboard(editing.id, data)
+        await updateDashboard(editing.id, data)
       } else {
-        await dashboardApi.createDashboard(data)
+        await createDashboard(data)
       }
       setShowForm(false)
       setEditing(null)
@@ -53,7 +54,7 @@ function DashboardList() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个仪表盘吗？')) return
     try {
-      await dashboardApi.deleteDashboard(id)
+      await deleteDashboard(id)
       loadDashboards()
     } catch (e) {
       console.error('Failed to delete dashboard:', e)

@@ -73,39 +73,39 @@ export const templateApi = {
     if (params?.category) searchParams.set('category', params.category);
     if (params?.module) searchParams.set('module', params.module);
     if (params?.is_active !== undefined) searchParams.set('is_active', String(params.is_active));
-    
+
     const queryString = searchParams.toString();
     return await apiClient.doc.get(`/api/v1/templates${queryString ? '?' + queryString : ''}`);
   },
-  
+
   async get(id: string): Promise<ApiResponse<Template>> {
     return await apiClient.doc.get(`/api/v1/templates/${id}`);
   },
-  
+
   async create(data: CreateTemplateRequest): Promise<ApiResponse<Template>> {
     return await apiClient.doc.post('/api/v1/templates', data);
   },
-  
+
   async update(id: string, data: Partial<CreateTemplateRequest>): Promise<ApiResponse<Template>> {
     return await apiClient.doc.put(`/api/v1/templates/${id}`, data);
   },
-  
+
   async delete(id: string): Promise<ApiResponse<string>> {
     return await apiClient.doc.delete(`/api/v1/templates/${id}`);
   },
-  
+
   async listCategories(): Promise<ApiResponse<TemplateCategory[]>> {
     return await apiClient.doc.get('/api/v1/templates/categories');
   },
-  
+
   async render(id: string, variables: Record<string, any>): Promise<ApiResponse<string>> {
     return await apiClient.doc.post(`/api/v1/templates/${id}/render`, { variables });
   },
-  
+
   async duplicate(id: string): Promise<ApiResponse<Template>> {
     return await apiClient.doc.post(`/api/v1/templates/${id}/duplicate`);
   },
-  
+
   async toggleStatus(id: string): Promise<ApiResponse<Template>> {
     return await apiClient.doc.put(`/api/v1/templates/${id}/toggle-status`);
   },

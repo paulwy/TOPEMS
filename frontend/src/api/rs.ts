@@ -261,7 +261,10 @@ export const formulaApi = {
     return apiClient.rs.get<FormulaVersion[]>(`/api/v1/formulas/${formulaId}/versions`);
   },
 
-  createVersion: async (formulaId: string, data: { version: string; changes: string }): Promise<ApiResponse<FormulaVersion>> => {
+  createVersion: async (
+    formulaId: string,
+    data: { version: string; changes: string }
+  ): Promise<ApiResponse<FormulaVersion>> => {
     return apiClient.rs.post<FormulaVersion>(`/api/v1/formulas/${formulaId}/versions`, data);
   },
 
@@ -297,7 +300,9 @@ export interface AuditLogQueryParams {
 }
 
 export const auditRsApi = {
-  listAuditLogs: async (params?: AuditLogQueryParams): Promise<ApiResponse<{ audit_logs: AuditLog[], total: number }>> => {
+  listAuditLogs: async (
+    params?: AuditLogQueryParams
+  ): Promise<ApiResponse<{ audit_logs: AuditLog[]; total: number }>> => {
     let url = '/api/v1/audit-logs';
     if (params) {
       const searchParams = new URLSearchParams();

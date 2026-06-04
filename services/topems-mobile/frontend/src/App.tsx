@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { patrolApi, scanApi, taskApi } from './api/client';
+import { patrolApi, taskApi } from './api/client';
 import { StatsCards, PatrolCard, TaskCard, QuickAction } from './components/Widgets';
+import ProfilePage from './pages/ProfilePage';
+import ScanPage from './pages/ScanPage';
+import MediaPage from './pages/MediaPage';
 import { 
   Map, 
   ScanLine, 
   Camera, 
-  Mic, 
-  Video,
   Plus,
   Bell,
   User,
   Settings,
-  ChevronRight
+  Home,
+  ClipboardList,
+  CheckCircle
 } from 'lucide-react';
 import type { PatrolRecord, MobileTask, DashboardStats } from './types';
 
@@ -24,7 +27,9 @@ const App: React.FC = () => {
   });
   const [patrols, setPatrols] = useState<PatrolRecord[]>([]);
   const [tasks, setTasks] = useState<MobileTask[]>([]);
-  const [activeTab, setActiveTab] = useState<'home' | 'patrol' | 'task'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'patrol' | 'task' | 'profile'>('home');
+  const [showScanPage, setShowScanPage] = useState(false);
+  const [showMediaPage, setShowMediaPage] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -76,11 +81,11 @@ const App: React.FC = () => {
   };
 
   const handleScan = () => {
-    alert('扫码功能开发中...');
+    setShowScanPage(true);
   };
 
   const handleTakePhoto = () => {
-    alert('拍照功能开发中...');
+    setShowMediaPage(true);
   };
 
   const handleCompleteTask = async (taskId: string) => {
@@ -281,22 +286,40 @@ const App: React.FC = () => {
         )}
       </div>
 
+      {/* Profile Page */}
+      {activeTab === 'profile' && <ProfilePage />}
+
+      {showScanPage && <ScanPage onBack={() => setShowScanPage(false)} />}
+      {showMediaPage && <MediaPage onBack={() => setShowMediaPage(false)} />}
+
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 glass">
         <div className="flex items-center justify-around">
-          <button className="flex flex-col items-center space-y-1 text-blue-600">
+          <button 
+            onClick={() => setActiveTab('home')}
+            className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'home' ? 'text-blue-600' : 'text-gray-500'}`}
+          >
             <Home size={24} />
             <span className="text-xs font-medium">首页</span>
           </button>
-          <button className="flex flex-col items-center space-y-1 text-gray-500">
+          <button 
+            onClick={() => setActiveTab('patrol')}
+            className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'patrol' ? 'text-blue-600' : 'text-gray-500'}`}
+          >
             <Map size={24} />
             <span className="text-xs font-medium">巡逻</span>
           </button>
-          <button className="flex flex-col items-center space-y-1 text-gray-500">
+          <button 
+            onClick={() => setActiveTab('task')}
+            className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'task' ? 'text-blue-600' : 'text-gray-500'}`}
+          >
             <ClipboardList size={24} />
             <span className="text-xs font-medium">任务</span>
           </button>
-          <button className="flex flex-col items-center space-y-1 text-gray-500">
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'profile' ? 'text-blue-600' : 'text-gray-500'}`}
+          >
             <User size={24} />
             <span className="text-xs font-medium">我的</span>
           </button>
@@ -307,29 +330,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-// Import additional icons
-const Home = ({ size = 24, className = '' }: { size?: number; className?: string }) => (
-  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-  </svg>
-);
-
-const ClipboardList = ({ size = 24, className = '' }: { size?: number; className?: string }) => (
-  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-    <path d="M12 11h4"></path>
-    <path d="M12 16h4"></path>
-    <path d="M8 11h.01"></path>
-    <path d="M8 16h.01"></path>
-  </svg>
-);
-
-const CheckCircle = ({ size = 24, className = '' }: { size?: number; className?: string }) => (
-  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-  </svg>
-);

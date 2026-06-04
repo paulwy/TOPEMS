@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  HelpCircle, Search, Book, MessageCircle, FileText, 
-  Video, ChevronRight, ChevronDown, ChevronLeft,
-  ExternalLink, Download, Star, Clock, Eye, ThumbsUp
+import {
+  HelpCircle,
+  Search,
+  Book,
+  MessageCircle,
+  FileText,
+  Video,
+  ChevronRight,
+  ChevronDown,
+  ChevronLeft,
+  ExternalLink,
+  Download,
+  Star,
+  Clock,
+  Eye,
+  ThumbsUp,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
@@ -42,7 +54,7 @@ interface VideoTutorial {
 const HelpCenterPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'articles' | 'videos' | 'faq'>('articles');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -56,42 +68,42 @@ const HelpCenterPage: React.FC = () => {
       name: '快速入门',
       icon: '🚀',
       description: '新用户必读，快速上手 TOPEMS 系统',
-      article_count: 8
+      article_count: 8,
     },
     {
       id: '2',
       name: '系统管理',
       icon: '⚙️',
       description: '用户、角色、权限等系统配置',
-      article_count: 12
+      article_count: 12,
     },
     {
       id: '3',
       name: 'ERP 模块',
       icon: '📦',
       description: '企业资源计划相关功能',
-      article_count: 15
+      article_count: 15,
     },
     {
       id: '4',
       name: 'HRM 模块',
       icon: '👥',
       description: '人力资源管理相关功能',
-      article_count: 10
+      article_count: 10,
     },
     {
       id: '5',
       name: 'CRM 模块',
       icon: '🤝',
       description: '客户关系管理相关功能',
-      article_count: 8
+      article_count: 8,
     },
     {
       id: '6',
       name: '报表管理',
       icon: '📊',
       description: '报表设计和生成',
-      article_count: 6
+      article_count: 6,
     },
   ]);
 
@@ -142,7 +154,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       likes: 89,
       created_at: '2024-01-15',
       updated_at: '2024-03-20',
-      tags: ['项目', '入门', '教程']
+      tags: ['项目', '入门', '教程'],
     },
     {
       id: '2',
@@ -195,7 +207,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       likes: 67,
       created_at: '2024-01-20',
       updated_at: '2024-04-10',
-      tags: ['权限', '系统管理', '安全']
+      tags: ['权限', '系统管理', '安全'],
     },
     {
       id: '3',
@@ -247,7 +259,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       likes: 45,
       created_at: '2024-02-05',
       updated_at: '2024-04-15',
-      tags: ['报表', '设计器', '教程']
+      tags: ['报表', '设计器', '教程'],
     },
   ]);
 
@@ -259,7 +271,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       thumbnail: 'https://via.placeholder.com/320x180',
       duration: '10:25',
       module: '系统',
-      url: '#'
+      url: '#',
     },
     {
       id: '2',
@@ -268,7 +280,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       thumbnail: 'https://via.placeholder.com/320x180',
       duration: '25:30',
       module: 'RS',
-      url: '#'
+      url: '#',
     },
     {
       id: '3',
@@ -277,14 +289,15 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       thumbnail: 'https://via.placeholder.com/320x180',
       duration: '15:45',
       module: 'IAM',
-      url: '#'
+      url: '#',
     },
   ]);
 
-  const filteredArticles = articles.filter(article => 
-    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    article.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    article.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredArticles = articles.filter(
+    (article) =>
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleArticleClick = (article: HelpArticle) => {
@@ -297,29 +310,27 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className='min-h-screen bg-gray-50'>
       <NotificationContainer notifications={notifications} onClose={hideNotification} />
-      
+
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <HelpCircle className="w-16 h-16 mx-auto mb-4 opacity-90" />
-            <h1 className="text-4xl font-bold mb-4">帮助中心</h1>
-            <p className="text-xl text-blue-100 mb-8">
-              找到您需要的答案，了解如何使用 TOPEMS 系统
-            </p>
-            
+      <div className='bg-gradient-to-r from-blue-600 to-purple-600 text-white'>
+        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16'>
+          <div className='text-center'>
+            <HelpCircle className='w-16 h-16 mx-auto mb-4 opacity-90' />
+            <h1 className='text-4xl font-bold mb-4'>帮助中心</h1>
+            <p className='text-xl text-blue-100 mb-8'>找到您需要的答案，了解如何使用 TOPEMS 系统</p>
+
             {/* Search Bar */}
-            <div className="max-w-2xl mx-auto">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className='max-w-2xl mx-auto'>
+              <div className='relative'>
+                <Search className='absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
                 <input
-                  type="text"
+                  type='text'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="搜索帮助文章、视频教程..."
-                  className="w-full pl-12 pr-4 py-4 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-300 shadow-lg"
+                  placeholder='搜索帮助文章、视频教程...'
+                  className='w-full pl-12 pr-4 py-4 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-300 shadow-lg'
                 />
               </div>
             </div>
@@ -328,116 +339,110 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       </div>
 
       {/* Quick Links */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <button className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-3">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Book className="w-6 h-6 text-blue-600" />
+      <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8'>
+        <div className='grid grid-cols-3 gap-4 mb-8'>
+          <button className='bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-3'>
+            <div className='w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center'>
+              <Book className='w-6 h-6 text-blue-600' />
             </div>
-            <div className="text-left">
-              <div className="font-semibold text-gray-900">使用文档</div>
-              <div className="text-sm text-gray-500">详细的功能说明</div>
-            </div>
-          </button>
-          
-          <button className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-3">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Video className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="text-left">
-              <div className="font-semibold text-gray-900">视频教程</div>
-              <div className="text-sm text-gray-500">直观的学习方式</div>
+            <div className='text-left'>
+              <div className='font-semibold text-gray-900'>使用文档</div>
+              <div className='text-sm text-gray-500'>详细的功能说明</div>
             </div>
           </button>
-          
-          <button className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-3">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <MessageCircle className="w-6 h-6 text-purple-600" />
+
+          <button className='bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-3'>
+            <div className='w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center'>
+              <Video className='w-6 h-6 text-green-600' />
             </div>
-            <div className="text-left">
-              <div className="font-semibold text-gray-900">在线客服</div>
-              <div className="text-sm text-gray-500">7x24 小时支持</div>
+            <div className='text-left'>
+              <div className='font-semibold text-gray-900'>视频教程</div>
+              <div className='text-sm text-gray-500'>直观的学习方式</div>
+            </div>
+          </button>
+
+          <button className='bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-3'>
+            <div className='w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center'>
+              <MessageCircle className='w-6 h-6 text-purple-600' />
+            </div>
+            <div className='text-left'>
+              <div className='font-semibold text-gray-900'>在线客服</div>
+              <div className='text-sm text-gray-500'>7x24 小时支持</div>
             </div>
           </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {/* Tabs */}
-        <div className="flex space-x-4 mb-8 border-b border-gray-200">
+        <div className='flex space-x-4 mb-8 border-b border-gray-200'>
           <button
             onClick={() => setActiveTab('articles')}
             className={`pb-4 px-2 font-medium transition-colors ${
-              activeTab === 'articles' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
+              activeTab === 'articles'
+                ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            <Book className="w-5 h-5 inline mr-2" />
+            <Book className='w-5 h-5 inline mr-2' />
             帮助文章
           </button>
           <button
             onClick={() => setActiveTab('videos')}
             className={`pb-4 px-2 font-medium transition-colors ${
-              activeTab === 'videos' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === 'videos' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            <Video className="w-5 h-5 inline mr-2" />
+            <Video className='w-5 h-5 inline mr-2' />
             视频教程
           </button>
           <button
             onClick={() => setActiveTab('faq')}
             className={`pb-4 px-2 font-medium transition-colors ${
-              activeTab === 'faq' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === 'faq' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            <FileText className="w-5 h-5 inline mr-2" />
+            <FileText className='w-5 h-5 inline mr-2' />
             常见问题
           </button>
         </div>
 
         {/* Tab Content */}
         {activeTab === 'articles' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
             {/* Categories */}
-            <div className="lg:col-span-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">分类浏览</h3>
-              <div className="space-y-2">
+            <div className='lg:col-span-1'>
+              <h3 className='text-lg font-semibold text-gray-900 mb-4'>分类浏览</h3>
+              <div className='space-y-2'>
                 {categories.map((category) => (
                   <div key={category.id}>
                     <button
-                      onClick={() => setExpandedCategory(
-                        expandedCategory === category.id ? null : category.id
-                      )}
-                      className="w-full flex items-center justify-between p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors"
+                      onClick={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
+                      className='w-full flex items-center justify-between p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors'
                     >
-                      <div className="flex items-center space-x-3">
-                        <span className="text-2xl">{category.icon}</span>
-                        <div className="text-left">
-                          <div className="font-medium text-gray-900">{category.name}</div>
-                          <div className="text-sm text-gray-500">{category.article_count} 篇文章</div>
+                      <div className='flex items-center space-x-3'>
+                        <span className='text-2xl'>{category.icon}</span>
+                        <div className='text-left'>
+                          <div className='font-medium text-gray-900'>{category.name}</div>
+                          <div className='text-sm text-gray-500'>{category.article_count} 篇文章</div>
                         </div>
                       </div>
                       {expandedCategory === category.id ? (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                        <ChevronDown className='w-5 h-5 text-gray-400' />
                       ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                        <ChevronRight className='w-5 h-5 text-gray-400' />
                       )}
                     </button>
                     {expandedCategory === category.id && (
-                      <div className="ml-6 mt-2 space-y-2">
+                      <div className='ml-6 mt-2 space-y-2'>
                         {articles
-                          .filter(a => a.category === category.name)
-                          .map(article => (
+                          .filter((a) => a.category === category.name)
+                          .map((article) => (
                             <button
                               key={article.id}
                               onClick={() => handleArticleClick(article)}
-                              className="w-full text-left p-3 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className='w-full text-left p-3 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors'
                             >
                               {article.title}
                             </button>
@@ -450,54 +455,52 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
             </div>
 
             {/* Articles List */}
-            <div className="lg:col-span-2">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className='lg:col-span-2'>
+              <h3 className='text-lg font-semibold text-gray-900 mb-4'>
                 {searchQuery ? `搜索结果: "${searchQuery}"` : '热门文章'}
               </h3>
-              <div className="space-y-4">
+              <div className='space-y-4'>
                 {filteredArticles.map((article) => (
                   <div
                     key={article.id}
                     onClick={() => handleArticleClick(article)}
-                    className="bg-white rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
+                    className='bg-white rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer'
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                    <div className='flex items-start justify-between'>
+                      <div className='flex-1'>
+                        <div className='flex items-center space-x-2 mb-2'>
+                          <span className='px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full'>
                             {article.category}
                           </span>
-                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          <span className='px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full'>
                             {article.module}
                           </span>
                         </div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                          {article.title}
-                        </h4>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="flex items-center">
-                            <Eye className="w-4 h-4 mr-1" />
+                        <h4 className='text-lg font-semibold text-gray-900 mb-2'>{article.title}</h4>
+                        <div className='flex items-center space-x-4 text-sm text-gray-500'>
+                          <span className='flex items-center'>
+                            <Eye className='w-4 h-4 mr-1' />
                             {article.views} 次浏览
                           </span>
-                          <span className="flex items-center">
-                            <ThumbsUp className="w-4 h-4 mr-1" />
+                          <span className='flex items-center'>
+                            <ThumbsUp className='w-4 h-4 mr-1' />
                             {article.likes} 次点赞
                           </span>
-                          <span className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1" />
+                          <span className='flex items-center'>
+                            <Clock className='w-4 h-4 mr-1' />
                             {article.updated_at}
                           </span>
                         </div>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                      <ChevronRight className='w-5 h-5 text-gray-400' />
                     </div>
                   </div>
                 ))}
-                
+
                 {filteredArticles.length === 0 && (
-                  <div className="text-center py-12">
-                    <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">未找到相关文章</p>
+                  <div className='text-center py-12'>
+                    <Search className='w-12 h-12 text-gray-400 mx-auto mb-4' />
+                    <p className='text-gray-500'>未找到相关文章</p>
                   </div>
                 )}
               </div>
@@ -506,27 +509,25 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
         )}
 
         {activeTab === 'videos' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {videos.map((video) => (
-              <div key={video.id} className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="relative">
-                  <div className="bg-gray-200 aspect-video flex items-center justify-center">
-                    <Video className="w-12 h-12 text-gray-400" />
+              <div key={video.id} className='bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow'>
+                <div className='relative'>
+                  <div className='bg-gray-200 aspect-video flex items-center justify-center'>
+                    <Video className='w-12 h-12 text-gray-400' />
                   </div>
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">
+                  <div className='absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm'>
                     {video.duration}
                   </div>
                 </div>
-                <div className="p-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
-                      {video.module}
-                    </span>
+                <div className='p-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
+                    <span className='px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full'>{video.module}</span>
                   </div>
-                  <h4 className="font-semibold text-gray-900 mb-2">{video.title}</h4>
-                  <p className="text-sm text-gray-500 mb-4">{video.description}</p>
-                  <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <Video className="w-4 h-4" />
+                  <h4 className='font-semibold text-gray-900 mb-2'>{video.title}</h4>
+                  <p className='text-sm text-gray-500 mb-4'>{video.description}</p>
+                  <button className='w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'>
+                    <Video className='w-4 h-4' />
                     <span>观看视频</span>
                   </button>
                 </div>
@@ -536,34 +537,34 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
         )}
 
         {activeTab === 'faq' && (
-          <div className="max-w-3xl mx-auto">
-            <div className="space-y-4">
+          <div className='max-w-3xl mx-auto'>
+            <div className='space-y-4'>
               {[
                 {
                   q: '如何重置密码？',
-                  a: '在登录页面点击"忘记密码"，输入注册邮箱，系统会发送重置链接到您的邮箱。'
+                  a: '在登录页面点击"忘记密码"，输入注册邮箱，系统会发送重置链接到您的邮箱。',
                 },
                 {
                   q: '如何申请新功能？',
-                  a: '您可以通过"反馈建议"功能提交功能需求，我们会定期评估并纳入后续版本规划。'
+                  a: '您可以通过"反馈建议"功能提交功能需求，我们会定期评估并纳入后续版本规划。',
                 },
                 {
                   q: '数据导出有限制吗？',
-                  a: '付费版本支持批量导出，无数据量限制。免费版本每次最多导出 1000 条记录。'
+                  a: '付费版本支持批量导出，无数据量限制。免费版本每次最多导出 1000 条记录。',
                 },
                 {
                   q: '系统支持哪些浏览器？',
-                  a: '推荐使用 Chrome、Firefox、Edge、Safari 的最新版本。IE 浏览器不再支持。'
+                  a: '推荐使用 Chrome、Firefox、Edge、Safari 的最新版本。IE 浏览器不再支持。',
                 },
               ].map((faq, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-6 hover:shadow-md transition-shadow">
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
-                    <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm mr-3">
+                <div key={idx} className='bg-white rounded-lg p-6 hover:shadow-md transition-shadow'>
+                  <h4 className='font-semibold text-gray-900 mb-2 flex items-center'>
+                    <span className='w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm mr-3'>
                       Q
                     </span>
                     {faq.q}
                   </h4>
-                  <p className="text-gray-600 ml-9">{faq.a}</p>
+                  <p className='text-gray-600 ml-9'>{faq.a}</p>
                 </div>
               ))}
             </div>
@@ -573,12 +574,12 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
 
       {/* Article Detail Modal */}
       {showArticleDetail && selectedArticle && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
+          <div className='bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col'>
+            <div className='p-6 border-b border-gray-200 flex justify-between items-center'>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedArticle.title}</h2>
-                <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                <h2 className='text-2xl font-bold text-gray-900'>{selectedArticle.title}</h2>
+                <div className='flex items-center space-x-4 mt-2 text-sm text-gray-500'>
                   <span>{selectedArticle.category}</span>
                   <span>·</span>
                   <span>{selectedArticle.updated_at}</span>
@@ -591,51 +592,49 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                   setShowArticleDetail(false);
                   setSelectedArticle(null);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className='p-2 hover:bg-gray-100 rounded-lg'
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className='w-6 h-6' />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="prose max-w-none">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700">
-                  {selectedArticle.content}
-                </pre>
+            <div className='flex-1 overflow-y-auto p-6'>
+              <div className='prose max-w-none'>
+                <pre className='whitespace-pre-wrap text-sm text-gray-700'>{selectedArticle.content}</pre>
               </div>
-              
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
+
+              <div className='mt-8 pt-6 border-t border-gray-200'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center space-x-2'>
                     {selectedArticle.tags?.map((tag, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
+                      <span key={idx} className='px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full'>
                         #{tag}
                       </span>
                     ))}
                   </div>
                   <button
                     onClick={() => handleLikeArticle(selectedArticle.id)}
-                    className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    className='flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
                   >
-                    <ThumbsUp className="w-4 h-4" />
+                    <ThumbsUp className='w-4 h-4' />
                     <span>有帮助 ({selectedArticle.likes})</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 border-t border-gray-200 flex justify-between">
-              <button className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                <Download className="w-4 h-4" />
+            <div className='p-6 border-t border-gray-200 flex justify-between'>
+              <button className='flex items-center space-x-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors'>
+                <Download className='w-4 h-4' />
                 <span>下载 PDF</span>
               </button>
-              <div className="flex space-x-3">
+              <div className='flex space-x-3'>
                 <button
                   onClick={() => {
                     setShowArticleDetail(false);
                     setSelectedArticle(null);
                   }}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                  className='px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200'
                 >
                   关闭
                 </button>
