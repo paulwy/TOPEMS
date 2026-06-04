@@ -14,17 +14,15 @@ use crate::services::project_progress;
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use topems_shared::response::ApiResponse;
 
-pub async fn create_routes() -> topems_shared::Result<Router> {
-    let app = Router::new()
+pub fn create_routes() -> Router<Arc<super::ApiState>> {
+    Router::new()
         .route("/api/v1/phases", post(create_phase))
         .route(
             "/api/v1/phases/project/{project_id}",
             get(get_project_phases),
         )
         .route("/api/v1/phases/{id}", put(update_phase))
-        .route("/api/v1/phases/{id}", delete(delete_phase));
-
-    Ok(app)
+        .route("/api/v1/phases/{id}", delete(delete_phase))
 }
 
 pub async fn create_phase(

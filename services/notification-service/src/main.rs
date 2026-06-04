@@ -1,7 +1,7 @@
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
-        Path, Query, State, FromRef,
+        Path, Query, State, FromRef, Request,
     },
     routing::{delete, get, post, put},
     Json, Router,
@@ -14,7 +14,7 @@ use uuid::Uuid;
 use sqlx::PgPool;
 use dotenv;
 use serde::{Deserialize, Serialize};
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims};
 
 mod models;
 mod db;
@@ -88,7 +88,7 @@ async fn main() {
     tracing::info!("🚀 TOPEMS Notification Service starting...");
 
     let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems_notifications".to_string());
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
 
     let pool = match PgPool::connect(&database_url).await {
         Ok(p) => {
@@ -119,9 +119,13 @@ async fn main() {
         .route("/api/v1/notifications", post(create_notification))
         .route("/api/v1/notifications/unread", get(get_unread_notifications))
         .route("/api/v1/notifications/unread-count", get(get_unread_count))
-        .route("/api/v1/notifications/:id/read", put(mark_as_read))
+        .route("/api/v1/notifications/{id}/read", put(mark_as_read))
         .route("/api/v1/notifications/read-all", put(mark_all_as_read))
-        .route("/api/v1/notifications/:id", delete(delete_notification))
+        .route("/api/v1/notifications/{id}", delete(delete_notification))
+        .route("/api/v1/notifications/bulk/read", put(bulk_mark_as_read))
+        .route("/api/v1/notifications/bulk/delete", post(bulk_delete_notifications))
+        .route("/api/v1/health/detailed", get(detailed_health))
+        .route("/api/v1/metrics", get(get_metrics))
         .route("/ws/notifications", get(ws_handler))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
@@ -135,9 +139,9 @@ async fn main() {
         .with_state(state);
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8006".to_string())
+        .unwrap_or_else(|_| "8003".to_string())
         .parse()
-        .unwrap_or(8006);
+        .unwrap_or(8003);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ Notification Service is running at http://{}", addr);
 
@@ -160,12 +164,22 @@ async fn health() -> Json<ApiResponse<String>> {
     ))
 }
 
+fn extract_user_id(req: &Request) -> String {
+    req.extensions()
+        .get::<Claims>()
+        .map(|claims| claims.sub.clone())
+        .unwrap_or_else(|| {
+            std::env::var("CURRENT_USER_ID")
+                .unwrap_or_else(|_| "user_001".to_string())
+        })
+}
+
 async fn list_notifications(
     State(state): State<AppState>,
     Query(query): Query<NotificationListQuery>,
+    req: Request,
 ) -> Json<ApiResponse<NotificationListResponse>> {
-    let user_id = std::env::var("CURRENT_USER_ID")
-        .unwrap_or_else(|_| "user_001".to_string());
+    let user_id = extract_user_id(&req);
     
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(20);
@@ -226,9 +240,9 @@ async fn create_notification(
 
 async fn get_unread_notifications(
     State(state): State<AppState>,
+    req: Request,
 ) -> Json<ApiResponse<Vec<Notification>>> {
-    let user_id = std::env::var("CURRENT_USER_ID")
-        .unwrap_or_else(|_| "user_001".to_string());
+    let user_id = extract_user_id(&req);
     
     let notifications = Repository::get_unread_notifications(&state.pool, &user_id).await.unwrap_or_default();
 
@@ -237,9 +251,9 @@ async fn get_unread_notifications(
 
 async fn get_unread_count(
     State(state): State<AppState>,
+    req: Request,
 ) -> Json<ApiResponse<usize>> {
-    let user_id = std::env::var("CURRENT_USER_ID")
-        .unwrap_or_else(|_| "user_001".to_string());
+    let user_id = extract_user_id(&req);
     
     let count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
 
@@ -249,6 +263,7 @@ async fn get_unread_count(
 async fn mark_as_read(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    req: Request,
 ) -> Json<ApiResponse<Notification>> {
     match Uuid::parse_str(&id) {
         Ok(uuid) => {
@@ -256,7 +271,8 @@ async fn mark_as_read(
                 Ok(Some(notification)) => {
                     let _ = state.tx.send(WsMessage::NewNotification(notification.clone()));
                     
-                    let unread_count = Repository::get_unread_count(&state.pool, &notification.user_id).await.unwrap_or(0);
+                    let user_id = extract_user_id(&req);
+                    let unread_count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
                     let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
                     
                     Json(ApiResponse::success(notification, "Notification marked as read"))
@@ -274,9 +290,9 @@ async fn mark_as_read(
 
 async fn mark_all_as_read(
     State(state): State<AppState>,
+    req: Request,
 ) -> Json<ApiResponse<usize>> {
-    let user_id = std::env::var("CURRENT_USER_ID")
-        .unwrap_or_else(|_| "user_001".to_string());
+    let user_id = extract_user_id(&req);
     
     match Repository::mark_all_as_read(&state.pool, &user_id).await {
         Ok(count) => {
@@ -318,6 +334,118 @@ async fn delete_notification(
         }
         Err(_) => Json(ApiResponse::error(400, "Invalid notification ID")),
     }
+}
+
+async fn bulk_mark_as_read(
+    State(state): State<AppState>,
+    Json(req): Json<BulkOperationRequest>,
+) -> Json<ApiResponse<usize>> {
+    let mut uuids = Vec::new();
+    for id_str in &req.ids {
+        if let Ok(uuid) = Uuid::parse_str(id_str) {
+            uuids.push(uuid);
+        }
+    }
+    
+    if uuids.is_empty() {
+        return Json(ApiResponse::error(400, "No valid notification IDs provided"));
+    }
+    
+    match Repository::bulk_mark_as_read(&state.pool, &uuids).await {
+        Ok(count) => {
+            let _ = state.tx.send(WsMessage::UnreadCount(0));
+            Json(ApiResponse::success(count, &format!("Marked {} notifications as read", count)))
+        }
+        Err(e) => {
+            tracing::error!("Failed to bulk mark as read: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to bulk mark as read: {}", e)))
+        }
+    }
+}
+
+async fn bulk_delete_notifications(
+    State(state): State<AppState>,
+    Json(req): Json<BulkOperationRequest>,
+) -> Json<ApiResponse<usize>> {
+    let mut uuids = Vec::new();
+    for id_str in &req.ids {
+        if let Ok(uuid) = Uuid::parse_str(id_str) {
+            uuids.push(uuid);
+        }
+    }
+    
+    if uuids.is_empty() {
+        return Json(ApiResponse::error(400, "No valid notification IDs provided"));
+    }
+    
+    match Repository::bulk_delete_notifications(&state.pool, &uuids).await {
+        Ok(count) => {
+            let _ = state.tx.send(WsMessage::UnreadCount(0));
+            Json(ApiResponse::success(count, &format!("Deleted {} notifications", count)))
+        }
+        Err(e) => {
+            tracing::error!("Failed to bulk delete notifications: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to bulk delete notifications: {}", e)))
+        }
+    }
+}
+
+async fn detailed_health(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
+        Ok(_) => "healthy",
+        Err(_) => "unhealthy",
+    };
+    
+    let metrics = get_metrics_internal(&state.pool).await;
+    
+    let response = serde_json::json!({
+        "service": "notification-service",
+        "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+        "dependencies": [
+            {
+                "name": "postgresql",
+                "status": db_status,
+                "message": if db_status == "healthy" { "Connection successful" } else { "Connection failed" }
+            }
+        ],
+        "metrics": metrics,
+        "version": "1.0.0"
+    });
+    
+    Json(ApiResponse::success(response, "Detailed health check"))
+}
+
+async fn get_metrics(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let metrics = get_metrics_internal(&state.pool).await;
+    Json(ApiResponse::success(metrics, "Metrics retrieved successfully"))
+}
+
+async fn get_metrics_internal(pool: &PgPool) -> serde_json::Value {
+    let total_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications").fetch_one(pool).await;
+    let unread_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE is_read = FALSE").fetch_one(pool).await;
+    let system_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'system'").fetch_one(pool).await;
+    let workflow_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'workflow'").fetch_one(pool).await;
+    let reminder_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'reminder'").fetch_one(pool).await;
+    let alert_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'alert'").fetch_one(pool).await;
+    let message_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'message'").fetch_one(pool).await;
+    
+    serde_json::json!({
+        "total_notifications": total_count.unwrap_or(0),
+        "unread_notifications": unread_count.unwrap_or(0),
+        "notifications_by_type": {
+            "system": system_count.unwrap_or(0),
+            "workflow": workflow_count.unwrap_or(0),
+            "reminder": reminder_count.unwrap_or(0),
+            "alert": alert_count.unwrap_or(0),
+            "message": message_count.unwrap_or(0)
+        },
+        "timestamp": chrono::Utc::now().to_rfc3339()
+    })
 }
 
 async fn ws_handler(

@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{
     extract::FromRef,
     Router,
@@ -41,8 +40,8 @@ impl FromRef<ApiState> for PgPool {
     }
 }
 
-pub async fn create_routes(state: ApiState) -> Result<Router<ApiState>> {
-    let app = Router::new()
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
         .merge(employee::create_routes())
         .merge(department::create_routes())
         .merge(contract::create_routes())
@@ -55,7 +54,4 @@ pub async fn create_routes(state: ApiState) -> Result<Router<ApiState>> {
         .merge(performance::create_routes())
         .merge(training::create_routes())
         .merge(reports::create_routes())
-        .with_state(state);
-
-    Ok(app)
 }

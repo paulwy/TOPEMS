@@ -1,8 +1,7 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::State,
     http::{header, HeaderMap},
-    response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::post,
     Json, Router,
 };
 use chrono::{Duration, Utc};
@@ -10,7 +9,7 @@ use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPool, Row};
 use std::sync::Arc;
-use utoipa::{IntoParams, ToSchema};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::User;
@@ -203,7 +202,7 @@ async fn login(
 )]
 async fn refresh_token(
     State(state): State<Arc<AppState>>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<RefreshRequest>,
 ) -> Json<ApiResponse<TokenResponse>> {
     let result = sqlx::query(r#"SELECT user_id FROM rs.refresh_tokens WHERE token = $1 AND expires_at > NOW()"#)

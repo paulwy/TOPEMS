@@ -19,7 +19,7 @@ pub struct QualityInspection {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateQualityInspectionRequest {
     pub title: String,
     pub description: Option<String>,
@@ -28,7 +28,7 @@ pub struct CreateQualityInspectionRequest {
     pub inspector: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateQualityInspectionRequest {
     pub title: Option<String>,
     pub description: Option<String>,

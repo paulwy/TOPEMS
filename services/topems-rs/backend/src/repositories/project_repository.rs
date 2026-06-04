@@ -3,13 +3,15 @@ use serde_json;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
-use crate::models::{CreateProjectRequest, Project, ProjectStatus, UpdateProjectRequest};
+use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use topems_shared::{Result, TopemsError};
 
+#[allow(dead_code)]
 pub struct ProjectRepository {
     db: PgPool,
 }
 
+#[allow(dead_code)]
 impl ProjectRepository {
     pub fn new(db: PgPool) -> Self {
         Self { db }

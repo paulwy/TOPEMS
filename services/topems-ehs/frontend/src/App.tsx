@@ -131,19 +131,14 @@ function App() {
       if (incidentsData.success) setIncidents(incidentsData.data || []);
       if (inspectionsData.success) setInspections(inspectionsData.data || []);
 
-      const mockPlans: EmergencyPlan[] = [
-        { id: '1', plan_id: 'EP-2024-001', title: '火灾应急救援预案', type_: '火灾预案', scope: '全厂区', version: 'V2.1', status: '有效', effective_date: '2024-01-15', department: '安全部' },
-        { id: '2', plan_id: 'EP-2024-002', title: '化学品泄漏应急处理预案', type_: '泄漏预案', scope: '化工仓库', version: 'V1.5', status: '有效', effective_date: '2024-03-20', department: '生产部' },
-        { id: '3', plan_id: 'EP-2024-003', title: '高温中暑应急救护预案', type_: '急救预案', scope: '生产车间', version: 'V1.2', status: '待更新', effective_date: '2023-08-10', department: '人力资源部' },
-      ];
-      setEmergencyPlans(mockPlans);
-
-      const mockDrills: DrillRecord[] = [
-        { id: '1', drill_id: 'DR-2024-001', title: '年度消防演练', type_: '消防演练', planned_date: '2024-06-15', actual_date: '2024-06-15', participants: 120, duration: 90, score: 92, status: '已完成', evaluator: '张安全' },
-        { id: '2', drill_id: 'DR-2024-002', title: '化学品泄漏应急演练', type_: '泄漏演练', planned_date: '2024-07-20', participants: 45, duration: 60, status: '待执行' },
-        { id: '3', drill_id: 'DR-2024-003', title: '高温中暑急救演练', type_: '急救演练', planned_date: '2024-05-10', actual_date: '2024-05-10', participants: 80, duration: 45, score: 88, status: '已完成', evaluator: '李医生' },
-      ];
-      setDrillRecords(mockDrills);
+      const [plansRes, drillsRes] = await Promise.all([
+        fetch('/api/v1/emergency-plans'),
+        fetch('/api/v1/drill-records'),
+      ]);
+      const plansData = await plansRes.json();
+      const drillsData = await drillsRes.json();
+      if (plansData.success) setEmergencyPlans(plansData.data || []);
+      if (drillsData.success) setDrillRecords(drillsData.data || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     } finally {

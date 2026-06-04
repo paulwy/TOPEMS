@@ -89,7 +89,7 @@ async fn main() -> Result<()> {
         .route("/metrics", get(move || async move { metric_handle.render() }))
         .merge(api::auth::create_routes(pool.clone(), auth_state.clone()).await?);
 
-    let protected_routes = api::create_routes(pool.clone(), auth_state.clone(), config.clone()).await?
+    let protected_routes = api::create_routes(pool.clone(), auth_state.clone(), config.clone())
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,

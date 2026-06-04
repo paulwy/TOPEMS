@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;
@@ -56,7 +56,7 @@ async fn list_departments(
     let result = sqlx::query_as::<_, Department>(
         r#"
         SELECT id, name, code, parent_id, company_id, description, status, created_at, updated_at
-        FROM departments
+        FROM erp.departments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -74,7 +74,7 @@ async fn list_departments(
         Ok(departments) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM departments
+                SELECT COUNT(*) FROM erp.departments
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -116,7 +116,7 @@ async fn create_department(
 
     let result = sqlx::query_as::<_, Department>(
         r#"
-        INSERT INTO departments (id, name, code, parent_id, company_id, description, status, created_at, updated_at)
+        INSERT INTO erp.departments (id, name, code, parent_id, company_id, description, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, $8)
         RETURNING id, name, code, parent_id, company_id, description, status, created_at, updated_at
         "#,
@@ -184,7 +184,7 @@ async fn get_department(
     let result = sqlx::query_as::<_, Department>(
         r#"
         SELECT id, name, code, parent_id, company_id, description, status, created_at, updated_at
-        FROM departments WHERE id = $1
+        FROM erp.departments WHERE id = $1
         "#,
     )
     .bind(id)
@@ -208,7 +208,7 @@ async fn update_department(
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let existing = sqlx::query_as::<_, Department>(
-        "SELECT id, name, code, parent_id, company_id, description, status, created_at, updated_at FROM departments WHERE id = $1",
+        "SELECT id, name, code, parent_id, company_id, description, status, created_at, updated_at FROM erp.departments WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -233,7 +233,7 @@ async fn update_department(
 
     let result = sqlx::query_as::<_, Department>(
         r#"
-        UPDATE departments SET
+        UPDATE erp.departments SET
             name = $2, code = $3, parent_id = $4, company_id = $5, description = $6, status = $7, updated_at = $8
         WHERE id = $1
         RETURNING id, name, code, parent_id, company_id, description, status, created_at, updated_at
@@ -299,7 +299,7 @@ async fn delete_department(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM departments WHERE id = $1")
+    let result = sqlx::query("DELETE FROM erp.departments WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

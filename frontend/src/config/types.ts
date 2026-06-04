@@ -41,7 +41,6 @@ export interface FeaturesConfig {
   debugMode: boolean;
   hotReload: boolean;
   apiDocs: boolean;
-  mockData: boolean;
   oauthGithub: boolean;
   oauthGoogle: boolean;
   darkMode: boolean;
@@ -120,7 +119,6 @@ declare global {
     readonly VITE_ENABLE_DEBUG_MODE: string;
     readonly VITE_ENABLE_HOT_RELOAD: string;
     readonly VITE_ENABLE_API_DOCS: string;
-    readonly VITE_ENABLE_MOCK_DATA: string;
     readonly VITE_OAUTH_GITHUB_ENABLED: string;
     readonly VITE_OAUTH_GOOGLE_ENABLED: string;
     readonly VITE_ENABLE_DARK_MODE: string;

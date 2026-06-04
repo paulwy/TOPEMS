@@ -21,6 +21,49 @@ const Limspage: React.FC = () => {
   const [records, setRecords] = useState<InspectionRecord[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [serviceStatuses, setServiceStatuses] = useState<{[key: string]: boolean}>({
+    lims: false,
+  });
+
+  // Check if a specific service is up
+  const isServiceUp = (serviceName: string): boolean => {
+    return serviceStatuses[serviceName] || false;
+  };
+
+  // Check service status
+  const checkServiceStatus = async (
+    serviceName: string, 
+    port: number, 
+    setStatus: (up: boolean) => void
+  ) => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      
+      const response = await fetch(`http://localhost:${port}/health`, {
+        signal: controller.signal,
+        method: 'GET',
+      });
+      clearTimeout(timeoutId);
+      setStatus(response.ok);
+    } catch {
+      setStatus(false);
+    }
+  };
+
+  // Check all services on mount and periodically
+  useEffect(() => {
+    const checkAllServices = () => {
+      checkServiceStatus('lims', 8022, (up) => 
+        setServiceStatuses(prev => ({ ...prev, lims: up }))
+      );
+    };
+
+    checkAllServices();
+    const intervalId = setInterval(checkAllServices, 10000);
+
+    return () => clearInterval(intervalId);
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('全部');
   const [showModal, setShowModal] = useState(false);
@@ -93,8 +136,12 @@ const Limspage: React.FC = () => {
   const [importPreview, setImportPreview] = useState<string[][] | null>(null);
 
   useEffect(() => {
-    loadAllData();
-  }, []);
+    if (isServiceUp('lims')) {
+      loadAllData();
+    } else {
+      setLoading(false);
+    }
+  }, [serviceStatuses.lims]);
 
   const loadAllData = async () => {
     try {
@@ -1048,6 +1095,28 @@ const Limspage: React.FC = () => {
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
           <p className="text-slate-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isServiceUp('lims')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg">
+          <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ClipboardList className="w-8 h-8 text-cyan-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">实验室管理服务未启动</h2>
+          <p className="text-slate-600 mb-6">
+            LIMS 服务正在启动中，请稍后刷新页面，或者联系管理员启动服务。
+          </p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            返回首页
+          </button>
         </div>
       </div>
     );

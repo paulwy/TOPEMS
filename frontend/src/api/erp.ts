@@ -106,12 +106,15 @@ export interface Receivable {
   id: string;
   invoice_number: string;
   customer_name?: string;
+  supplier_name?: string;
   project_name?: string;
+  category?: string;
   amount: number;
   invoice_date?: string;
   due_date?: string;
   status: string;
   received_amount?: number;
+  paid_amount?: number;
   created_at: string;
   updated_at: string;
 }

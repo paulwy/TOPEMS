@@ -161,9 +161,9 @@ cleanup_port 8011 || true
 cleanup_port 8012 || true
 cleanup_port 8015 || true
 cleanup_port 8016 || true
-cleanup_port 8017 || true
+cleanup_port 8013 || true
 cleanup_port 8018 || true
-cleanup_port 8019 || true
+cleanup_port 8055 || true
 cleanup_port 8023 || true
 cleanup_port 3000 || true
 
@@ -393,15 +393,15 @@ fi
 
 # MOBILE服务
 echo "----------------------------------------"
-log_info "处理服务: mobile (端口 8019)"
+log_info "处理服务: mobile (端口 8055)"
 MOBILE_PID=""
 if check_executable "services/topems-mobile/backend" "mobile"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-mobile/backend"
-    PORT=8019 ./target/release/topems-mobile &
+    PORT=8055 ./target/release/topems-mobile &
     MOBILE_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "mobile 服务已启动 (PID: $MOBILE_PID, 端口: 8019)"
+    log_success "mobile 服务已启动 (PID: $MOBILE_PID, 端口: 8055)"
 else
     log_warn "跳过 mobile 服务"
 fi
@@ -643,14 +643,14 @@ fi
 # MOBILE检查
 total_count=$((total_count + 1))
 if [ -n "$MOBILE_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8019/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} MOBILE (8019) - 运行正常"
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8055/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} MOBILE (8055) - 运行正常"
         success_count=$((success_count + 1))
     else
-        echo -e "${YELLOW}⏳${NC} MOBILE (8019) - 启动中/检查失败"
+        echo -e "${YELLOW}⏳${NC} MOBILE (8055) - 启动中/检查失败"
     fi
 else
-    echo -e "${RED}❌${NC} MOBILE (8019) - 未启动"
+    echo -e "${RED}❌${NC} MOBILE (8055) - 未启动"
 fi
 
 # NOTIFICATION检查
@@ -698,8 +698,8 @@ echo "   EHS: http://localhost:8016"
 echo "   GIS: http://localhost:8011"
 echo "   PDM: http://localhost:8015"
 echo "   SRM: http://localhost:8018"
-echo "   IM: http://localhost:8017"
-echo "   MOBILE: http://localhost:8019"
+echo "   IM: http://localhost:8016"
+echo "   MOBILE: http://localhost:8055"
 echo ""
 echo "📄 文档管理页面: http://localhost:3000/documents"
 echo ""

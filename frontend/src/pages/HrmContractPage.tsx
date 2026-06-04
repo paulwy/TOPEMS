@@ -471,7 +471,7 @@ export default function HrmContractPage() {
                   <Checkbox
                     checked={showExpiringOnly}
                     onCheckedChange={(e) => {
-                      setShowExpiringOnly(e);
+                      setShowExpiringOnly(Boolean(e));
                       setCurrentPage(1);
                     }}
                   />
@@ -614,7 +614,7 @@ export default function HrmContractPage() {
               <div className="space-y-4 px-4">
                 <div>
                   <Label htmlFor="employee_id">员工 *</Label>
-                  <Select id="employee_id" value={formState.employee_id} onValueChange={(value) => setFormState(s => ({ ...s, employee_id: value }))}>
+                  <Select value={formState.employee_id} onValueChange={(value) => setFormState(s => ({ ...s, employee_id: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="请选择员工" />
                     </SelectTrigger>
@@ -641,7 +641,7 @@ export default function HrmContractPage() {
 
                 <div>
                   <Label htmlFor="contract_type">合同类型 *</Label>
-                  <Select id="contract_type" value={formState.contract_type} onValueChange={(value) => setFormState(s => ({ ...s, contract_type: value }))}>
+                  <Select value={formState.contract_type} onValueChange={(value) => setFormState(s => ({ ...s, contract_type: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="请选择合同类型" />
                     </SelectTrigger>
@@ -956,7 +956,7 @@ export default function HrmContractPage() {
           <div className="space-y-4 py-4">
             <div>
               <Label htmlFor="renewal_type">续签类型 *</Label>
-              <Select id="renewal_type" value={renewFormState.renewal_type} onValueChange={(value) => setRenewFormState(s => ({ ...s, renewal_type: value }))}>
+              <Select value={renewFormState.renewal_type} onValueChange={(value) => setRenewFormState(s => ({ ...s, renewal_type: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="请选择续签类型" />
                 </SelectTrigger>

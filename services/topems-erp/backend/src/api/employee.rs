@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;
@@ -57,7 +57,7 @@ async fn list_employees(
     let result = sqlx::query_as::<_, Employee>(
         r#"
         SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at
-        FROM employees
+        FROM erp.employees
         WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -75,7 +75,7 @@ async fn list_employees(
         Ok(employees) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM employees
+                SELECT COUNT(*) FROM erp.employees
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -152,7 +152,7 @@ async fn create_employee(
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        INSERT INTO employees (id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at)
+        INSERT INTO erp.employees (id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', $11, $12, $13)
         RETURNING id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at
         "#,
@@ -225,7 +225,7 @@ async fn get_employee(
     let result = sqlx::query_as::<_, Employee>(
         r#"
         SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at
-        FROM employees WHERE id = $1
+        FROM erp.employees WHERE id = $1
         "#,
     )
     .bind(id)
@@ -249,7 +249,7 @@ async fn update_employee(
     Json(req): Json<UpdateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
     let existing = sqlx::query_as::<_, Employee>(
-        "SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at FROM employees WHERE id = $1",
+        "SELECT id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, user_id, created_at, updated_at FROM erp.employees WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -277,7 +277,7 @@ async fn update_employee(
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        UPDATE employees SET
+        UPDATE erp.employees SET
             name = $2, gender = $3, birth_date = $4, hire_date = $5, department_id = $6, position = $7, email = $8, phone = $9, status = $10, updated_at = $11
         WHERE id = $1
         RETURNING id, employee_number, name, gender, birth_date, hire_date, department_id, position, email, phone, status, created_at, updated_at
@@ -347,7 +347,7 @@ async fn delete_employee(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let employee_result = sqlx::query_as::<_, Employee>(
-        "SELECT id, user_id FROM employees WHERE id = $1",
+        "SELECT id, user_id FROM erp.employees WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -359,7 +359,7 @@ async fn delete_employee(
         Err(e) => return Json(api_error(500, &format!("查询员工失败: {}", e))),
     };
 
-    let result = sqlx::query("DELETE FROM employees WHERE id = $1")
+    let result = sqlx::query("DELETE FROM erp.employees WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

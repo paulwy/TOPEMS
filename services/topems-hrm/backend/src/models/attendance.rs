@@ -17,7 +17,7 @@ pub struct AttendanceRecord {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateAttendanceRequest {
     pub employee_id: Uuid,
     pub date: DateTime<Utc>,
@@ -28,7 +28,7 @@ pub struct CreateAttendanceRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateAttendanceRequest {
     pub check_in: Option<DateTime<Utc>>,
     pub check_out: Option<DateTime<Utc>>,

@@ -4,6 +4,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 use utoipa::ToSchema;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ScheduleType {
@@ -26,6 +27,7 @@ impl std::fmt::Display for ScheduleType {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ScheduleStatus {

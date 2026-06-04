@@ -1,0 +1,10 @@
+{
+  "users": [
+    { "id": "user1", "name": "张三", "avatar": "", "status": "online" },
+    { "id": "user2", "name": "李四", "avatar": "", "status": "online" },
+    { "id": "user3", "name": "王五", "avatar": "", "status": "away" },
+    { "id": "user4", "name": "赵六", "avatar": "", "status": "offline" },
+    { "id": "user5", "name": "钱七", "avatar": "", "status": "online" },
+    { "id": "user6", "name": "孙八", "avatar": "", "status": "offline" }
+  ]
+}

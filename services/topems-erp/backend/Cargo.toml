@@ -12,7 +12,7 @@ tower = "0.5"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "uuid", "derive", "bigdecimal", "rust_decimal"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "uuid", "bigdecimal", "rust_decimal"] }
 chrono = { version = "0.4", features = ["serde", "clock"] }
 uuid = { version = "1", features = ["serde", "v4"] }
 tracing = "0.1"

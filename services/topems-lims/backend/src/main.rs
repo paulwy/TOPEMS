@@ -3,8 +3,10 @@ mod models;
 
 use axum::{
     routing::get,
-    Json, Router,
+    serve, Json, Router,
 };
+use tokio::net::TcpListener;
+use socket2::{Socket, Domain, Type, Protocol};
 use topems_shared::{
     ApiResponse,
     AuthState,
@@ -65,8 +67,35 @@ async fn main() -> Result<()> {
     tracing::info!("📦 端口: {}", port);
     tracing::info!("🔒 认证保护已启用");
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
+    use std::net::SocketAddr;
+    use std::os::fd::AsRawFd;
+    use libc::{setsockopt, SOL_SOCKET, SO_REUSEADDR, SO_REUSEPORT};
+    
+    let socket = Socket::new(Domain::IPV4, Type::STREAM, Some(Protocol::TCP))?;
+    
+    let optval: libc::c_int = 1;
+    unsafe {
+        setsockopt(
+            socket.as_raw_fd(),
+            SOL_SOCKET,
+            SO_REUSEADDR,
+            &optval as *const _ as *const libc::c_void,
+            std::mem::size_of::<libc::c_int>() as libc::socklen_t,
+        );
+        setsockopt(
+            socket.as_raw_fd(),
+            SOL_SOCKET,
+            SO_REUSEPORT,
+            &optval as *const _ as *const libc::c_void,
+            std::mem::size_of::<libc::c_int>() as libc::socklen_t,
+        );
+    }
+    
+    let socket_addr: SocketAddr = addr.parse().unwrap();
+    socket.bind(&socket_addr.into())?;
+    socket.listen(1024)?;
+    let listener = TcpListener::from_std(socket.into())?;
+    serve(listener, app.into_make_service()).await?;
 
     Ok(())
 }

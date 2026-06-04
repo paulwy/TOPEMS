@@ -1,8 +1,7 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use bigdecimal::BigDecimal;
@@ -30,7 +29,7 @@ pub struct Position {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreatePositionRequest {
     pub name: String,
     pub code: Option<String>,
@@ -42,7 +41,7 @@ pub struct CreatePositionRequest {
     pub requirements: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdatePositionRequest {
     pub name: Option<String>,
     pub code: Option<String>,
@@ -85,7 +84,7 @@ async fn list_positions(
     let result = sqlx::query_as::<_, Position>(
         r#"
         SELECT id, name, code, department_id, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
-        FROM positions
+        FROM hrm.positions
         WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR department_id = $2)
           AND ($3::text IS NULL OR status = $3)
@@ -105,7 +104,7 @@ async fn list_positions(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM positions
+                SELECT COUNT(*) FROM hrm.positions
                 WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -145,7 +144,7 @@ async fn create_position(
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        INSERT INTO positions (id, name, code, department_id, level, min_salary, max_salary, description, requirements, status, created_at, updated_at)
+        INSERT INTO hrm.positions (id, name, code, department_id, level, min_salary, max_salary, description, requirements, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
         RETURNING id, name, code, department_id, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
         "#
@@ -211,7 +210,7 @@ async fn get_position(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Position>> {
     let result = sqlx::query_as::<_, Position>(
-        "SELECT id, name, code, department_id, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM positions WHERE id = $1"
+        "SELECT id, name, code, department_id, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -236,7 +235,7 @@ async fn update_position(
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        UPDATE positions
+        UPDATE hrm.positions
         SET
             name = COALESCE($1, name),
             code = COALESCE($2, code),
@@ -282,7 +281,7 @@ async fn delete_position(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
-        "DELETE FROM positions WHERE id = $1"
+        "DELETE FROM hrm.positions WHERE id = $1"
     )
     .bind(id)
     .execute(&state.db)

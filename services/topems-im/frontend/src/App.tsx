@@ -65,15 +65,14 @@ const App: React.FC = () => {
       setNotifications(notificationsData);
       setProjects(projectsData);
 
-      const mockUsers: User[] = [
-        { id: 'user1', name: '张三', avatar: '', status: 'online' },
-        { id: 'user2', name: '李四', avatar: '', status: 'online' },
-        { id: 'user3', name: '王五', avatar: '', status: 'away' },
-        { id: 'user4', name: '赵六', avatar: '', status: 'offline' },
-        { id: 'user5', name: '钱七', avatar: '', status: 'online' },
-        { id: 'user6', name: '孙八', avatar: '', status: 'offline' },
-      ];
-      setUsers(mockUsers);
+      try {
+        const usersResponse = await fetch('/api/v1/users');
+        const usersData = await usersResponse.json();
+        setUsers(usersData.success ? usersData.data : []);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+        setUsers([]);
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
     }

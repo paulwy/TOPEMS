@@ -1,10 +1,9 @@
-use anyhow::Result;
 use axum::{
     extract::{Query, State},
     routing::get,
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -25,9 +24,11 @@ pub fn create_routes() -> Router<ApiState> {
 pub struct ReportParams {
     pub start_date: Option<String>,
     pub end_date: Option<String>,
+    #[allow(dead_code)]
     pub department_id: Option<Uuid>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct EmployeeSummaryResponse {
     pub total_employees: i64,
@@ -44,35 +45,35 @@ async fn employee_summary(
     State(state): State<ApiState>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let start_date = params.start_date.clone();
-    let end_date = params.end_date.clone();
+    let _start_date = params.start_date.clone();
+    let _end_date = params.end_date.clone();
 
     let total_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM employees"#,
+        r#"SELECT COUNT(*) FROM hrm.employees"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let active_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM employees WHERE status = 'active'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let inactive_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM employees WHERE status = 'inactive'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'inactive'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let male_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM employees WHERE gender = 'male'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'male'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let female_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM employees WHERE gender = 'female'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'female'"#,
     )
     .fetch_one(&state.db)
     .await;
@@ -80,7 +81,7 @@ async fn employee_summary(
     let tenure_result = sqlx::query_scalar::<_, f64>(
         r#"
         SELECT AVG(EXTRACT(DAY FROM CURRENT_DATE - hire_date)) 
-        FROM employees 
+        FROM hrm.employees 
         WHERE hire_date IS NOT NULL AND status = 'active'
         "#,
     )
@@ -92,7 +93,7 @@ async fn employee_summary(
     
     let new_hires_result = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM employees 
+        SELECT COUNT(*) FROM hrm.employees 
         WHERE TO_CHAR(hire_date, 'YYYY-MM') = $1
         "#,
     )
@@ -102,7 +103,7 @@ async fn employee_summary(
 
     let terminations_result = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM employees 
+        SELECT COUNT(*) FROM hrm.employees 
         WHERE status = 'inactive' 
         AND TO_CHAR(updated_at, 'YYYY-MM') = $1
         "#,
@@ -134,6 +135,7 @@ async fn employee_summary(
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct DepartmentSummaryResponse {
     pub department_id: Uuid,
@@ -142,18 +144,26 @@ pub struct DepartmentSummaryResponse {
     pub active_count: i64,
 }
 
+#[derive(Debug, sqlx::FromRow)]
+struct DepartmentSummaryRow {
+    department_id: Uuid,
+    department_name: String,
+    employee_count: Option<i64>,
+    active_count: Option<i64>,
+}
+
 async fn department_summary(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, DepartmentSummaryRow>(
         r#"
         SELECT 
             d.id as department_id,
             d.name as department_name,
             COUNT(e.id) as employee_count,
             SUM(CASE WHEN e.status = 'active' THEN 1 ELSE 0 END) as active_count
-        FROM departments d
-        LEFT JOIN employees e ON d.id = e.department_id
+        FROM hrm.departments d
+        LEFT JOIN hrm.employees e ON d.id = e.department_id
         GROUP BY d.id, d.name
         ORDER BY d.name
         "#,
@@ -187,6 +197,7 @@ async fn department_summary(
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct ContractSummaryResponse {
     pub total_contracts: i64,
@@ -204,32 +215,32 @@ async fn contract_summary(
     let next_month = (now + chrono::Duration::days(30)).format("%Y-%m").to_string();
 
     let total_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM contracts"#,
+        r#"SELECT COUNT(*) FROM hrm.contracts"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let active_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM contracts WHERE end_date > CURRENT_DATE"#,
+        r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date > CURRENT_DATE"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let expired_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM contracts WHERE end_date <= CURRENT_DATE"#,
+        r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date <= CURRENT_DATE"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let expiring_this_month_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1 AND end_date > CURRENT_DATE"#,
+        r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1 AND end_date > CURRENT_DATE"#,
     )
     .bind(&current_month)
     .fetch_one(&state.db)
     .await;
 
     let expiring_next_month_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1"#,
+        r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1"#,
     )
     .bind(&next_month)
     .fetch_one(&state.db)
@@ -255,6 +266,7 @@ async fn contract_summary(
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct TrainingSummaryResponse {
     pub total_plans: i64,
@@ -270,37 +282,37 @@ async fn training_summary(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let total_plans_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM training_plans"#,
+        r#"SELECT COUNT(*) FROM hrm.training_plans"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let active_plans_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM training_plans WHERE status = 'active'"#,
+        r#"SELECT COUNT(*) FROM hrm.training_plans WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let total_courses_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM training_courses"#,
+        r#"SELECT COUNT(*) FROM hrm.training_courses"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let completed_courses_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM training_courses WHERE status = 'completed'"#,
+        r#"SELECT COUNT(*) FROM hrm.training_courses WHERE status = 'completed'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let total_records_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM training_records"#,
+        r#"SELECT COUNT(*) FROM hrm.training_records"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let completed_records_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM training_records WHERE status = 'completed'"#,
+        r#"SELECT COUNT(*) FROM hrm.training_records WHERE status = 'completed'"#,
     )
     .fetch_one(&state.db)
     .await;
@@ -333,6 +345,7 @@ async fn training_summary(
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct AttendanceSummaryResponse {
     pub total_records: i64,
@@ -355,7 +368,7 @@ async fn attendance_summary(
     });
 
     let total_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM attendance WHERE date BETWEEN $1 AND $2"#,
+        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -363,7 +376,7 @@ async fn attendance_summary(
     .await;
 
     let on_time_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM attendance WHERE date BETWEEN $1 AND $2 AND status = 'on_time'"#,
+        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'on_time'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -371,7 +384,7 @@ async fn attendance_summary(
     .await;
 
     let late_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM attendance WHERE date BETWEEN $1 AND $2 AND status = 'late'"#,
+        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'late'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -379,7 +392,7 @@ async fn attendance_summary(
     .await;
 
     let absent_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM attendance WHERE date BETWEEN $1 AND $2 AND status = 'absent'"#,
+        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'absent'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -387,7 +400,7 @@ async fn attendance_summary(
     .await;
 
     let leave_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM leave_applications WHERE start_date <= $2 AND end_date >= $1 AND status = 'approved'"#,
+        r#"SELECT COUNT(*) FROM hrm.leave_requests WHERE start_date <= $2 AND end_date >= $1 AND status = 'approved'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -423,6 +436,7 @@ async fn attendance_summary(
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct PayrollSummaryResponse {
     pub total_payroll: f64,
@@ -437,41 +451,41 @@ async fn payroll_summary(
     State(state): State<ApiState>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let start_date = params.start_date.clone();
-    let end_date = params.end_date.clone();
+    let _start_date = params.start_date.clone();
+    let _end_date = params.end_date.clone();
 
-    let total_payroll_result = sqlx::query_scalar::<_, f64>(
-        r#"SELECT COALESCE(SUM(amount), 0) FROM payroll_payments"#,
+    let total_payroll_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
+        r#"SELECT COALESCE(SUM(net_amount), 0) FROM hrm.payroll_items"#,
     )
     .fetch_one(&state.db)
     .await;
 
-    let avg_salary_result = sqlx::query_scalar::<_, f64>(
-        r#"SELECT COALESCE(AVG(base_salary), 0) FROM employees WHERE status = 'active'"#,
+    let avg_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
+        r#"SELECT COALESCE(AVG(salary), 0) FROM hrm.contracts WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;
 
-    let min_salary_result = sqlx::query_scalar::<_, f64>(
-        r#"SELECT COALESCE(MIN(base_salary), 0) FROM employees WHERE status = 'active' AND base_salary IS NOT NULL"#,
+    let min_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
+        r#"SELECT COALESCE(MIN(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#,
     )
     .fetch_one(&state.db)
     .await;
 
-    let max_salary_result = sqlx::query_scalar::<_, f64>(
-        r#"SELECT COALESCE(MAX(base_salary), 0) FROM employees WHERE status = 'active' AND base_salary IS NOT NULL"#,
+    let max_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
+        r#"SELECT COALESCE(MAX(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let employee_count_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM employees WHERE status = 'active'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;
 
-    let bonus_total_result = sqlx::query_scalar::<_, f64>(
-        r#"SELECT COALESCE(SUM(bonus), 0) FROM payroll_payments"#,
+    let bonus_total_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
+        r#"SELECT COALESCE(SUM(CASE WHEN item_type = 'bonus' THEN amount ELSE 0 END), 0) FROM hrm.payroll_details"#,
     )
     .fetch_one(&state.db)
     .await;
@@ -481,7 +495,7 @@ async fn payroll_summary(
             Json(ApiResponse::success(
                 serde_json::json!({
                     "total_payroll": total_payroll,
-                    "avg_salary": avg_salary.round(),
+                    "avg_salary": avg_salary,
                     "min_salary": min_salary,
                     "max_salary": max_salary,
                     "employee_count": employee_count,

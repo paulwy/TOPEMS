@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{
     extract::FromRef,
     Router,
@@ -40,30 +39,28 @@ impl FromRef<ApiState> for PgPool {
     }
 }
 
-pub async fn create_routes(
+pub fn create_routes(
     db: PgPool,
     auth_state: AuthState,
     config: Config,
-) -> Result<Router> {
+) -> Router {
     let state = Arc::new(ApiState {
         db,
         auth_state,
         config,
     });
 
-    let app = Router::new()
-        .merge(project::create_routes().await?)
-        .merge(formula::create_routes().await?)
-        .merge(experiment::create_routes().await?)
-        .merge(material::create_routes().await?)
-        .merge(doc_integration::create_routes().await?)
-        .merge(ai_integration::create_routes().await?)
-        .merge(audit::create_routes().await?)
-        .merge(project_phase::create_routes().await?)
-        .merge(project_milestone::create_routes().await?)
-        .merge(project_member::create_routes().await?)
-        .merge(project_report::create_routes().await?)
-        .with_state(state);
-
-    Ok(app)
+    Router::new()
+        .merge(project::create_routes())
+        .merge(formula::create_routes())
+        .merge(experiment::create_routes())
+        .merge(material::create_routes())
+        .merge(doc_integration::create_routes())
+        .merge(ai_integration::create_routes())
+        .merge(audit::create_routes())
+        .merge(project_phase::create_routes())
+        .merge(project_milestone::create_routes())
+        .merge(project_member::create_routes())
+        .merge(project_report::create_routes())
+        .with_state(state)
 }

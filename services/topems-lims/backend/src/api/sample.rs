@@ -55,6 +55,7 @@ pub struct PaginationParams {
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
+#[allow(dead_code)]
 pub struct ListSamplesQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -703,9 +704,9 @@ async fn export_samples(
                     sample.description.unwrap_or_default(),
                     sample.status.clone(),
                     sample.project_id.map(|u| u.to_string()).unwrap_or_default(),
-                    sample.received_date.to_rfc3339(),
-                    sample.created_at.to_rfc3339(),
-                    sample.updated_at.to_rfc3339(),
+                    sample.received_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                    sample.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                    sample.updated_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 ];
                 
                 if let Err(e) = wtr.write_record(&row) {
@@ -806,6 +807,7 @@ async fn export_samples(
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct CsvImportRow {
     pub name: String,
     pub description: Option<String>,

@@ -22,10 +22,15 @@ pub struct IamApiResponse<T> {
 #[derive(Debug, Clone, Deserialize)]
 pub struct IamUser {
     pub id: Uuid,
+    #[allow(dead_code)]
     pub username: String,
+    #[allow(dead_code)]
     pub email: String,
+    #[allow(dead_code)]
     pub full_name: Option<String>,
+    #[allow(dead_code)]
     pub is_active: bool,
+    #[allow(dead_code)]
     pub is_superuser: Option<bool>,
 }
 
@@ -40,6 +45,7 @@ struct LoginData {
     access_token: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 struct LoginResponse {
     data: Option<LoginData>,
@@ -133,6 +139,7 @@ impl IamClient {
         api_response.data.ok_or_else(|| anyhow!("IAM API returned no user data"))
     }
 
+    #[allow(dead_code)]
     pub async fn get_user(&self, user_id: Uuid) -> Result<Option<IamUser>> {
         let token = self.get_admin_token().await?;
         let url = format!("{}/api/v1/users/{}", self.base_url, user_id);

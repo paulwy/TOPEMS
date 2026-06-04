@@ -60,7 +60,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(cors)
         .layer(CookieManagerLayer::new());
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8021".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8005".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-PORTAL 统一门户系统启动中...");

@@ -3,7 +3,7 @@ use dashmap::DashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-#[derive(Clone, Clone)]
+#[derive(Clone)]
 struct CacheEntry<T> {
     value: T,
     expires_at: Instant,

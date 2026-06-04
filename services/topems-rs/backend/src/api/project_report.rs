@@ -53,18 +53,17 @@ pub struct PerformanceMetrics {
 pub struct ReportQuery {
     pub start_date: Option<String>,
     pub end_date: Option<String>,
+    #[allow(dead_code)]
     pub project_type: Option<String>,
 }
 
-pub async fn create_routes() -> topems_shared::Result<Router> {
-    let router = Router::new()
+pub fn create_routes() -> Router<Arc<super::ApiState>> {
+    Router::new()
         .route("/api/v1/reports/projects/summary", get(get_project_summary))
         .route("/api/v1/reports/projects/trends", get(get_project_trends))
         .route("/api/v1/reports/projects/types", get(get_project_type_stats))
         .route("/api/v1/reports/projects/performance", get(get_performance_metrics))
-        .route("/api/v1/reports/projects/{id}/details", get(get_project_detail_report));
-
-    Ok(router)
+        .route("/api/v1/reports/projects/{id}/details", get(get_project_detail_report))
 }
 
 pub async fn get_project_summary(

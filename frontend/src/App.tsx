@@ -37,6 +37,7 @@ const AssetManagementPage = lazy(() => import('./pages/AssetManagementPage'));
 const EquipmentManagementPage = lazy(() => import('./pages/EquipmentManagementPage'));
 const FinanceExpensePage = lazy(() => import('./pages/FinanceExpensePage'));
 const FinanceVoucherPage = lazy(() => import('./pages/FinanceVoucherPage'));
+const FinanceReceivablePayablePage = lazy(() => import('./pages/FinanceReceivablePayablePage'));
 const FinanceReportsPage = lazy(() => import('./pages/FinanceReportsPage'));
 const AdministrationPage = lazy(() => import('./pages/AdministrationPage'));
 const BudgetManagementPage = lazy(() => import('./pages/BudgetManagementPage'));
@@ -338,6 +339,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['erp:admin']}>
                 <ModuleGate module="erp" action="admin">
                   <FinanceVoucherPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/receivable-payable"
+            element={
+              <ProtectedRoute requiredPermissions={['erp:admin']}>
+                <ModuleGate module="erp" action="admin">
+                  <FinanceReceivablePayablePage />
                 </ModuleGate>
               </ProtectedRoute>
             }

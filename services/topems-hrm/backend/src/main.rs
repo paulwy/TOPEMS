@@ -7,20 +7,18 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
+use std::time::Instant;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use uuid::Uuid;
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer,
     ServiceHealth, HealthStatus, DependencyHealth,
     SystemMetrics, check_http_health,
 };
-use api::audit::log_audit_event;
 use api::ApiState;
 
 #[tokio::main]
@@ -35,7 +33,7 @@ async fn main() -> Result<()> {
         .init();
 
     let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://xingzhai@localhost/topems_hrm".to_string());
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
 
     let pool = PgPoolOptions::new()
         .max_connections(10)
@@ -48,34 +46,35 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let auth_state = AuthState::from_env();
+    let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
+
+    let api_state = ApiState {
+        db: pool.clone(),
+        auth_state: AuthState::from_env(),
+        metrics: metrics.clone(),
+        start_time,
+    };
 
     let cors = create_cors_layer();
 
     let health_router = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/api/v1/metrics", get(get_metrics));
+        .route("/api/v1/metrics", get(get_metrics))
+        .with_state(api_state.clone());
 
-    let api_state = ApiState {
-        db: pool.clone(),
-        auth_state: auth_state.clone(),
-        metrics: metrics.clone(),
-        start_time: std::time::Instant::now(),
-    };
-
-    let protected_routes = api::create_routes(api_state.clone()).await?
+    let protected_routes = api::create_routes()
         .layer(axum::middleware::from_fn_with_state(
-            auth_state.clone(),
+            api_state.auth_state.clone(),
             auth_middleware,
-        ));
+        ))
+        .with_state(api_state.clone());
 
     let app = Router::new()
         .merge(health_router)
         .merge(protected_routes)
-        .layer(cors)
-        .with_state(api_state);
+        .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8011".to_string());
     let addr = format!("0.0.0.0:{}", port);
@@ -90,8 +89,40 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("TOPEMS-HRM is running", "健康检查"))
+async fn health_check(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+) -> Json<ApiResponse<String>> {
+    let database_health = check_database_health(&state.db).await;
+    let iam_health = check_iam_health().await;
+
+    let overall_status = if database_health.status == HealthStatus::Healthy
+        && iam_health.status == HealthStatus::Healthy
+    {
+        HealthStatus::Healthy
+    } else if database_health.status == HealthStatus::Unhealthy
+        || iam_health.status == HealthStatus::Unhealthy
+    {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let status_str = match overall_status {
+        HealthStatus::Healthy => "healthy".to_string(),
+        HealthStatus::Degraded => "degraded".to_string(),
+        HealthStatus::Unhealthy => "unhealthy".to_string(),
+    };
+
+    Json(ApiResponse::success(status_str, "健康检查"))
+}
+
+#[allow(dead_code)]
+#[derive(Serialize, Clone)]
+struct HrmHealthSummary {
+    service_name: String,
+    status: HealthStatus,
+    uptime: String,
+    dependencies: Vec<DependencyHealth>,
 }
 
 async fn health_check_detailed(
@@ -214,16 +245,38 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .execute(pool)
         .await?;
 
+    sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS hrm"#)
+        .execute(pool)
+        .await?;
+
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS employees (
+        CREATE TABLE IF NOT EXISTS hrm.departments (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            name VARCHAR(255) NOT NULL,
+            code VARCHAR(100),
+            parent_id UUID REFERENCES hrm.departments(id),
+            manager_id UUID,
+            description TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS hrm.employees (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             employee_number VARCHAR(100) NOT NULL UNIQUE,
             name VARCHAR(255) NOT NULL,
             gender VARCHAR(10),
             birth_date TIMESTAMPTZ,
             hire_date TIMESTAMPTZ,
-            department_id UUID,
+            department_id UUID REFERENCES hrm.departments(id),
             position VARCHAR(100),
             job_title VARCHAR(255),
             email VARCHAR(255),
@@ -242,27 +295,9 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS departments (
+        CREATE TABLE IF NOT EXISTS hrm.contracts (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            name VARCHAR(255) NOT NULL,
-            code VARCHAR(100),
-            parent_id UUID REFERENCES departments(id),
-            manager_id UUID REFERENCES employees(id),
-            description TEXT,
-            status VARCHAR(50) NOT NULL DEFAULT 'active',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS contracts (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            employee_id UUID REFERENCES employees(id),
+            employee_id UUID REFERENCES hrm.employees(id),
             contract_no VARCHAR(100) UNIQUE,
             contract_type VARCHAR(50) NOT NULL,
             party_a_name VARCHAR(255),
@@ -287,17 +322,17 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS contract_renewals (
+        CREATE TABLE IF NOT EXISTS hrm.contract_renewals (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            contract_id UUID REFERENCES contracts(id),
-            previous_contract_id UUID REFERENCES contracts(id),
+            contract_id UUID REFERENCES hrm.contracts(id),
+            previous_contract_id UUID REFERENCES hrm.contracts(id),
             renewal_type VARCHAR(50) NOT NULL,
             renewal_reason TEXT,
             new_start_date TIMESTAMPTZ NOT NULL,
             new_end_date TIMESTAMPTZ,
             new_salary NUMERIC(15,2),
             status VARCHAR(50) NOT NULL DEFAULT 'pending',
-            approver_id UUID REFERENCES employees(id),
+            approver_id UUID REFERENCES hrm.employees(id),
             approved_at TIMESTAMPTZ,
             rejection_reason TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -310,9 +345,9 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS attendance_records (
+        CREATE TABLE IF NOT EXISTS hrm.attendance_records (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            employee_id UUID REFERENCES employees(id),
+            employee_id UUID REFERENCES hrm.employees(id),
             date TIMESTAMPTZ NOT NULL,
             check_in TIMESTAMPTZ,
             check_out TIMESTAMPTZ,
@@ -329,11 +364,11 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS positions (
+        CREATE TABLE IF NOT EXISTS hrm.positions (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             name VARCHAR(255) NOT NULL,
             code VARCHAR(100) UNIQUE,
-            department_id UUID REFERENCES departments(id),
+            department_id UUID REFERENCES hrm.departments(id),
             level VARCHAR(50),
             min_salary NUMERIC(15,2),
             max_salary NUMERIC(15,2),
@@ -350,16 +385,16 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS leave_requests (
+        CREATE TABLE IF NOT EXISTS hrm.leave_requests (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            employee_id UUID REFERENCES employees(id) NOT NULL,
+            employee_id UUID REFERENCES hrm.employees(id) NOT NULL,
             leave_type VARCHAR(50) NOT NULL,
             start_date TIMESTAMPTZ NOT NULL,
             end_date TIMESTAMPTZ NOT NULL,
             days NUMERIC(5,2) NOT NULL,
             reason TEXT,
             status VARCHAR(50) NOT NULL DEFAULT 'pending',
-            approver_id UUID REFERENCES employees(id),
+            approver_id UUID REFERENCES hrm.employees(id),
             approved_at TIMESTAMPTZ,
             rejection_reason TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -372,12 +407,12 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS job_openings (
+        CREATE TABLE IF NOT EXISTS hrm.job_openings (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             title VARCHAR(255) NOT NULL,
             code VARCHAR(100),
-            department_id UUID REFERENCES departments(id),
-            position_id UUID REFERENCES positions(id),
+            department_id UUID REFERENCES hrm.departments(id),
+            position_id UUID REFERENCES hrm.positions(id),
             employment_type VARCHAR(50),
             location VARCHAR(255),
             description TEXT,
@@ -397,13 +432,13 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS candidates (
+        CREATE TABLE IF NOT EXISTS hrm.candidates (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             name VARCHAR(255) NOT NULL,
             email VARCHAR(255),
             phone VARCHAR(50),
-            position_id UUID REFERENCES positions(id),
-            job_opening_id UUID REFERENCES job_openings(id),
+            position_id UUID REFERENCES hrm.positions(id),
+            job_opening_id UUID REFERENCES hrm.job_openings(id),
             resume_path VARCHAR(500),
             source VARCHAR(100),
             status VARCHAR(50) NOT NULL DEFAULT 'new',
@@ -417,10 +452,10 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS interviews (
+        CREATE TABLE IF NOT EXISTS hrm.interviews (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            candidate_id UUID REFERENCES candidates(id) NOT NULL,
-            interviewer_id UUID REFERENCES employees(id),
+            candidate_id UUID REFERENCES hrm.candidates(id) NOT NULL,
+            interviewer_id UUID REFERENCES hrm.employees(id),
             round INTEGER DEFAULT 1,
             scheduled_at TIMESTAMPTZ,
             actual_at TIMESTAMPTZ,
@@ -439,7 +474,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS payroll_runs (
+        CREATE TABLE IF NOT EXISTS hrm.payroll_runs (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             pay_period VARCHAR(50) NOT NULL,
             status VARCHAR(50) NOT NULL DEFAULT 'draft',
@@ -456,9 +491,9 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS payroll_items (
+        CREATE TABLE IF NOT EXISTS hrm.payroll_items (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            payroll_run_id UUID REFERENCES payroll_runs(id) NOT NULL,
+            payroll_run_id UUID REFERENCES hrm.payroll_runs(id) NOT NULL,
             employee_id UUID NOT NULL,
             gross_amount NUMERIC(15,2) DEFAULT 0,
             net_amount NUMERIC(15,2) DEFAULT 0,
@@ -477,9 +512,9 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS payroll_details (
+        CREATE TABLE IF NOT EXISTS hrm.payroll_details (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            payroll_item_id UUID REFERENCES payroll_items(id) NOT NULL,
+            payroll_item_id UUID REFERENCES hrm.payroll_items(id) NOT NULL,
             item_type VARCHAR(50) NOT NULL,
             category VARCHAR(100),
             description VARCHAR(500),
@@ -493,7 +528,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS performance_reviews (
+        CREATE TABLE IF NOT EXISTS hrm.performance_reviews (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             employee_id UUID NOT NULL,
             review_period VARCHAR(50) NOT NULL,
@@ -514,7 +549,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS performance_goals (
+        CREATE TABLE IF NOT EXISTS hrm.performance_goals (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             employee_id UUID NOT NULL,
             title VARCHAR(255) NOT NULL,
@@ -534,7 +569,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS training_plans (
+        CREATE TABLE IF NOT EXISTS hrm.training_plans (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             name VARCHAR(255) NOT NULL,
             code VARCHAR(100) UNIQUE,
@@ -553,9 +588,9 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS training_courses (
+        CREATE TABLE IF NOT EXISTS hrm.training_courses (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            plan_id UUID REFERENCES training_plans(id),
+            plan_id UUID REFERENCES hrm.training_plans(id),
             name VARCHAR(255) NOT NULL,
             code VARCHAR(100) UNIQUE,
             category VARCHAR(100) NOT NULL,
@@ -577,9 +612,9 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS training_records (
+        CREATE TABLE IF NOT EXISTS hrm.training_records (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            course_id UUID REFERENCES training_courses(id),
+            course_id UUID REFERENCES hrm.training_courses(id),
             employee_id UUID NOT NULL,
             enrollment_date TIMESTAMPTZ NOT NULL,
             attendance_status VARCHAR(50) NOT NULL,
@@ -598,7 +633,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS audit_logs (
+        CREATE TABLE IF NOT EXISTS hrm.audit_logs (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             action VARCHAR(50) NOT NULL,
             entity_type VARCHAR(50) NOT NULL,
@@ -619,21 +654,59 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_hrm_audit_logs_action ON hrm.audit_logs(action)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_hrm_audit_logs_entity_type ON hrm.audit_logs(entity_type)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_hrm_audit_logs_user_id ON hrm.audit_logs(user_id)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_hrm_audit_logs_created_at ON hrm.audit_logs(created_at DESC)"#)
         .execute(pool)
         .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status)"#)
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_hrm_audit_logs_status ON hrm.audit_logs(status)"#)
         .execute(pool)
         .await?;
+
+    sqlx::query(r#"GRANT ALL PRIVILEGES ON SCHEMA hrm TO topems"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA hrm TO topems"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA hrm TO topems"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        INSERT INTO hrm.departments (id, name, code, description, status)
+        VALUES 
+            (gen_random_uuid(), '技术部', 'TECH', '技术研发部门', 'active'),
+            (gen_random_uuid(), '人力资源部', 'HR', '人事管理部门', 'active'),
+            (gen_random_uuid(), '财务部', 'FINANCE', '财务管理部门', 'active'),
+            (gen_random_uuid(), '市场部', 'MARKET', '市场营销部门', 'active')
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        INSERT INTO hrm.employees (id, employee_number, name, gender, hire_date, department_id, position, email, phone, status)
+        VALUES 
+            (gen_random_uuid(), 'HRM001', '张三', 'male', '2020-01-15', (SELECT id FROM hrm.departments WHERE code = 'TECH' LIMIT 1), '高级软件工程师', 'zhangsan@topems.com', '13800138001', 'active'),
+            (gen_random_uuid(), 'HRM002', '李四', 'female', '2021-03-20', (SELECT id FROM hrm.departments WHERE code = 'TECH' LIMIT 1), 'UI设计师', 'lisi@topems.com', '13800138002', 'active'),
+            (gen_random_uuid(), 'HRM003', '王五', 'male', '2019-08-10', (SELECT id FROM hrm.departments WHERE code = 'HR' LIMIT 1), 'HR经理', 'wangwu@topems.com', '13800138003', 'active'),
+            (gen_random_uuid(), 'HRM004', '赵六', 'female', '2022-06-01', (SELECT id FROM hrm.departments WHERE code = 'HR' LIMIT 1), '人事专员', 'zhaoliu@topems.com', '13800138004', 'active')
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .execute(pool)
+    .await?;
 
     tracing::info!("✅ 数据库表初始化完成");
 

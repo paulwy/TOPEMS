@@ -2,7 +2,7 @@ use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;
@@ -106,7 +106,9 @@ async fn create_process(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let steps_value = serde_json::to_value(req.steps).unwrap_or(serde_json::json!([]));
+    let name = req.name.clone();
+    let description = req.description.clone();
+    let steps_value = serde_json::to_value(&req.steps).unwrap_or(serde_json::json!([]));
 
     let result = sqlx::query_as::<_, InspectionProcess>(
         r#"
@@ -116,8 +118,8 @@ async fn create_process(
         "#,
     )
     .bind(id)
-    .bind(&req.name)
-    .bind(&req.description)
+    .bind(&name)
+    .bind(&description)
     .bind(steps_value)
     .bind(now)
     .bind(now)

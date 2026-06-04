@@ -1828,10 +1828,10 @@ async fn main() {
         .layer(tower_http::trace::TraceLayer::new_for_http())
         .without_v07_checks();
 
-    let port = std::env::var("PORT")
-        .unwrap_or_else(|_| "8002".to_string())
+    let port = std::env::var("SERVER_PORT")
+        .unwrap_or_else(|_| "8000".to_string())
         .parse()
-        .unwrap_or(8002);
+        .unwrap_or(8000);
     
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ TOPEMS-IAM 服务运行在 http://{}", addr);

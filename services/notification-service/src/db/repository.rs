@@ -15,18 +15,27 @@ impl Repository {
     ) -> sqlx::Result<Vec<Notification>> {
         let offset = (page - 1) * page_size;
         
-        let mut query = sqlx::query(
-            "SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
-        );
-        query = query.bind(user_id).bind(page_size as i64).bind(offset as i64);
-        
-        if let Some(nt) = ntype {
-            query = sqlx::query(
+        let rows = if let Some(nt) = ntype {
+            sqlx::query(
                 "SELECT * FROM notifications WHERE user_id = $1 AND notification_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
-            ).bind(user_id).bind(nt.to_string()).bind(page_size as i64).bind(offset as i64);
-        }
+            )
+            .bind(user_id)
+            .bind(nt.to_string())
+            .bind(page_size as i64)
+            .bind(offset as i64)
+            .fetch_all(pool)
+            .await?
+        } else {
+            sqlx::query(
+                "SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            )
+            .bind(user_id)
+            .bind(page_size as i64)
+            .bind(offset as i64)
+            .fetch_all(pool)
+            .await?
+        };
         
-        let rows = query.fetch_all(pool).await?;
         rows.iter().map(|row| Notification::from_row(row)).collect()
     }
 
@@ -163,6 +172,32 @@ impl Repository {
         .execute(pool)
         .await?;
         Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn bulk_mark_as_read(
+        pool: &PgPool,
+        notification_ids: &[Uuid],
+    ) -> sqlx::Result<usize> {
+        let result = sqlx::query(
+            "UPDATE notifications SET is_read = TRUE, read_at = CURRENT_TIMESTAMP WHERE id = ANY($1)"
+        )
+        .bind(notification_ids)
+        .execute(pool)
+        .await?;
+        Ok(result.rows_affected() as usize)
+    }
+
+    pub async fn bulk_delete_notifications(
+        pool: &PgPool,
+        notification_ids: &[Uuid],
+    ) -> sqlx::Result<usize> {
+        let result = sqlx::query(
+            "DELETE FROM notifications WHERE id = ANY($1)"
+        )
+        .bind(notification_ids)
+        .execute(pool)
+        .await?;
+        Ok(result.rows_affected() as usize)
     }
 
     pub async fn get_notification(

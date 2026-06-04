@@ -50,6 +50,7 @@ pub struct ProjectSamplesQuery {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+#[allow(dead_code)]
 pub struct ProjectWithSamples {
     pub project_id: Uuid,
     pub project_name: Option<String>,
@@ -61,6 +62,7 @@ pub struct ProjectWithSamples {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+#[allow(dead_code)]
 pub struct SampleWithInspection {
     pub sample: Sample,
     pub latest_inspection: Option<InspectionRecord>,
@@ -68,6 +70,7 @@ pub struct SampleWithInspection {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+#[allow(dead_code)]
 pub struct RsProjectInfo {
     pub id: Uuid,
     pub name: String,
@@ -90,9 +93,9 @@ pub struct BatchLinkRequest {
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/rs/projects/:project_id/samples", get(get_project_samples))
-        .route("/api/v1/rs/samples/:sample_id/project", get(get_sample_project))
-        .route("/api/v1/rs/samples/:sample_id/inspections", get(get_sample_inspections))
+        .route("/api/v1/rs/projects/{project_id}/samples", get(get_project_samples))
+        .route("/api/v1/rs/samples/{sample_id}/project", get(get_sample_project))
+        .route("/api/v1/rs/samples/{sample_id}/inspections", get(get_sample_inspections))
         .route("/api/v1/rs/samples/link", post(link_sample_to_project))
         .route("/api/v1/rs/samples/batch-link", post(batch_link_samples));
 
@@ -125,24 +128,24 @@ async fn get_project_samples(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let sample_count = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) FROM samples WHERE project_id = $1"#,
+    let sample_count: i64 = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) as "count!" FROM samples WHERE project_id = $1"#,
         project_id
     )
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let completed_count = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) FROM samples WHERE project_id = $1 AND status = 'completed'"#,
+    let completed_count: i64 = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) as "count!" FROM samples WHERE project_id = $1 AND status = 'completed'"#,
         project_id
     )
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let pending_count = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) FROM samples WHERE project_id = $1 AND status != 'completed'"#,
+    let pending_count: i64 = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) as "count!" FROM samples WHERE project_id = $1 AND status != 'completed'"#,
         project_id
     )
     .fetch_one(&state.db)
@@ -268,8 +271,8 @@ async fn get_sample_inspections(
 
     match sample {
         Ok(Some(sample)) => {
-            let inspection_count = sqlx::query_scalar!(
-                r#"SELECT COUNT(*) FROM inspection_records r 
+            let inspection_count: i64 = sqlx::query_scalar!(
+                r#"SELECT COUNT(*) as "count!" FROM inspection_records r 
                    JOIN inspection_tasks t ON r.task_id = t.id 
                    WHERE t.sample_id = $1"#,
                 sample_id

@@ -703,11 +703,11 @@ const FinanceVoucherPage: React.FC = () => {
                   {newVoucher.items.map((item, index) => (
                     <div key={index} className="flex items-center space-x-2 p-3 bg-slate-50 rounded-md">
                       <span className="w-6 text-center text-sm font-medium text-slate-500">{item.line_number}</span>
-                      <Select 
-                        value={item.subject_code}
-                        onValueChange={(value) => updateVoucherItem(index, 'subject_code', value)}
-                        className="flex-1"
-                      >
+                      <div className="flex-1">
+                        <Select 
+                          value={item.subject_code}
+                          onValueChange={(value) => updateVoucherItem(index, 'subject_code', value)}
+                        >
                         <SelectTrigger>
                           <SelectValue placeholder="选择科目" />
                         </SelectTrigger>
@@ -716,7 +716,8 @@ const FinanceVoucherPage: React.FC = () => {
                             <SelectItem key={s.id} value={s.code}>{s.code} - {s.name}</SelectItem>
                           ))}
                         </SelectContent>
-                      </Select>
+                        </Select>
+                      </div>
                       <Input 
                         className="w-32"
                         type="text"

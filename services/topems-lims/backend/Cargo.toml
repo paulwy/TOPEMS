@@ -24,6 +24,8 @@ topems-shared = { path = "../../../shared/lib" }
 utoipa = { version = "4", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "6", features = ["axum"] }
 csv = "1"
+socket2 = { version = "0.5", features = ["all"] }
+libc = "0.2"
 
 [dev-dependencies]
 tokio-test = "0.4"

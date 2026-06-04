@@ -19,7 +19,7 @@ pub struct QualityIssue {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateQualityIssueRequest {
     pub title: String,
     pub description: String,
@@ -31,7 +31,7 @@ pub struct CreateQualityIssueRequest {
     pub due_date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateQualityIssueRequest {
     pub title: Option<String>,
     pub description: Option<String>,

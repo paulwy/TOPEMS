@@ -59,16 +59,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     monthlyTrend: [] as { name: string; value: number }[]
   });
   const [serviceStatuses, setServiceStatuses] = useState<Record<string, boolean>>({
-    iam: true,
-    rs: true,
-    lims: true,
+    iam: false,
+    rs: false,
+    lims: false,
     doc: false,
     ai: false,
     flow: false,
     erp: false,
     hrm: false,
     mobile: false,
-    notification: false
+    notification: false,
+    report: false,
   });
 
   // 模块到服务的映射
@@ -103,61 +104,48 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const { getRoleName } = useRole();
   const initialized = useRef(false);
 
-  // 检查权限和服务状态
-  const shouldShowModule = useCallback((module: { permission?: string | null, module?: string | null }): boolean => {
-    const hasAccess = !module.permission || 
-      (user?.is_superuser ? true : hasPermission(module.permission));
-    
-    if (!hasAccess) return false;
+  // 检查单个服务状态
+  const checkServiceStatus = useCallback(async (serviceKey: string, port: number) => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-    if (!module.module) return true;
-    
-    const serviceKey = moduleToService[module.module];
-    return serviceStatuses[serviceKey];
-  }, [hasPermission, user?.is_superuser, moduleToService, serviceStatuses]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
+      const response = await fetch(`http://localhost:${port}/health`, {
+        signal: controller.signal,
+        method: 'GET',
+      });
+      clearTimeout(timeoutId);
+      return response.ok;
+    } catch {
+      return false;
     }
+  }, []);
 
-    if (initialized.current) {
-      return;
-    }
-    initialized.current = true;
+  // 检查所有服务状态
+  const checkAllServicesStatus = useCallback(async () => {
+    const services = [
+      { key: 'iam', port: 8000 },
+      { key: 'doc', port: 8001 },
+      { key: 'flow', port: 8006 },
+      { key: 'notification', port: 8003 },
+      { key: 'erp', port: 8010 },
+      { key: 'hrm', port: 8011 },
+      { key: 'ai', port: 8013 },
+      { key: 'rs', port: 8020 },
+      { key: 'lims', port: 8022 },
+      { key: 'report', port: 8053 },
+      { key: 'mobile', port: 8055 },
+    ];
 
-    const init = async () => {
-      try {
-        setServiceStatuses({
-          iam: true,
-          rs: true,
-          lims: true,
-          doc: false,
-          ai: false,
-          flow: false,
-          erp: false,
-          hrm: false,
-          mobile: false,
-          notification: false
-        });
-        
-        await loadStats().catch((err) => {
-          console.warn('加载统计数据失败:', err);
-        });
-        
-        await loadRecentActivities().catch((err) => {
-          console.warn('加载最近活动失败:', err);
-        });
-      } catch (err) {
-        console.error('初始化失败:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const statusPromises = services.map(async (service) => {
+      const status = await checkServiceStatus(service.key, service.port);
+      return { [service.key]: status };
+    });
 
-    init();
-  }, [navigate, isAuthenticated]);
+    const results = await Promise.all(statusPromises);
+    const newStatuses = Object.assign({}, ...results);
+    setServiceStatuses(newStatuses as Record<string, boolean>);
+  }, [checkServiceStatus]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -188,6 +176,59 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     ];
     setRecentActivities(activities);
   }, []);
+
+  // 检查权限和服务状态
+  const shouldShowModule = useCallback((module: { permission?: string | null, module?: string | null }): boolean => {
+    const hasAccess = !module.permission || 
+      (user?.is_superuser ? true : hasPermission(module.permission));
+    
+    if (!hasAccess) return false;
+
+    if (!module.module) return true;
+    
+    const serviceKey = moduleToService[module.module];
+    return serviceStatuses[serviceKey];
+  }, [hasPermission, user?.is_superuser, moduleToService, serviceStatuses]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    if (initialized.current) {
+      return;
+    }
+    initialized.current = true;
+
+    const init = async () => {
+      try {
+        // 初始检查所有服务状态
+        await checkAllServicesStatus();
+        
+        await loadStats().catch((err) => {
+          console.warn('加载统计数据失败:', err);
+        });
+        
+        await loadRecentActivities().catch((err) => {
+          console.warn('加载最近活动失败:', err);
+        });
+      } catch (err) {
+        console.error('初始化失败:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    init();
+    
+    // 每30秒检查一次服务状态
+    const intervalId = setInterval(() => {
+      checkAllServicesStatus();
+    }, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [navigate, isAuthenticated, checkAllServicesStatus, loadStats, loadRecentActivities]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -496,13 +537,19 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   ].filter(module => shouldShowModule(module)), [shouldShowModule]);
 
   const quickActions = useMemo(() => [
-    { label: '上传文件', icon: FileText, path: '/documents', color: 'text-blue-500' },
-    { label: 'AI 问答', icon: Brain, path: '/ai', color: 'text-purple-500' },
-    { label: '发起流程', icon: GitBranch, path: '/workflows', color: 'text-green-500' },
-    { label: '我的待办', icon: Clock, path: '/workflows', color: 'text-orange-500' },
-    { label: '通知中心', icon: Bell, path: '/notifications', color: 'text-yellow-500' },
-    { label: '个人中心', icon: User, path: '/profile', color: 'text-indigo-500' },
+    { label: '上传文件', icon: FileText, path: '/documents', color: 'text-blue-500', service: 'doc' },
+    { label: 'AI 问答', icon: Brain, path: '/ai', color: 'text-purple-500', service: 'ai' },
+    { label: '发起流程', icon: GitBranch, path: '/workflows', color: 'text-green-500', service: 'flow' },
+    { label: '我的待办', icon: Clock, path: '/workflows', color: 'text-orange-500', service: 'flow' },
+    { label: '通知中心', icon: Bell, path: '/notifications', color: 'text-yellow-500', service: 'notification' },
+    { label: '个人中心', icon: User, path: '/profile', color: 'text-indigo-500', service: null },
   ], []);
+
+  // 检查快速操作是否应该显示
+  const shouldShowQuickAction = useCallback((action: { service?: string | null }): boolean => {
+    if (!action.service) return true;
+    return serviceStatuses[action.service];
+  }, [serviceStatuses]);
 
   if (loading) {
     return (
@@ -647,7 +694,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
             <h3 className="text-lg font-semibold text-slate-900 mb-3">快速操作</h3>
             <div className="grid grid-cols-4 gap-2 mb-6">
-              {quickActions.map((action) => {
+              {quickActions.filter(shouldShowQuickAction).map((action) => {
                 const Icon = action.icon;
                 return (
                   <button
@@ -673,8 +720,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 { name: '流程引擎', status: serviceStatuses.flow },
                 { name: '企业资源', status: serviceStatuses.erp },
                 { name: '人力资源', status: serviceStatuses.hrm },
-                { name: '移动服务', status: serviceStatuses.mobile },
                 { name: '通知服务', status: serviceStatuses.notification },
+                { name: '报表服务', status: serviceStatuses.report },
+                { name: '移动服务', status: serviceStatuses.mobile },
               ].map((service) => (
                 <div key={service.name} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                   <span className="text-sm text-slate-700">{service.name}</span>
@@ -697,7 +745,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           <div className="mb-8 bg-white rounded-xl shadow-sm p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">⚡ 快速操作</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {quickActions.map((action) => {
+              {quickActions.filter(shouldShowQuickAction).map((action) => {
                 const Icon = action.icon;
                 return (
                   <button
@@ -923,31 +971,83 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
           {/* Service Status */}
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-              <Activity className="w-5 h-5 mr-2 text-green-500" />
-              服务状态监控
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
-              {[
-                { name: '身份认证', service: 'IAM', port: 8002, key: 'iam', icon: Shield },
-                { name: '研发管理', service: 'RS', port: 8000, key: 'rs', icon: FlaskConical },
-                { name: '实验室管理', service: 'LIMS', port: 8005, key: 'lims', icon: ClipboardList },
-                { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
-                { name: 'AI 服务', service: 'AI', port: 8003, key: 'ai', icon: Bot },
-                { name: '流程引擎', service: 'FLOW', port: 8004, key: 'flow', icon: GitBranch },
-                { name: '企业资源', service: 'ERP', port: 8009, key: 'erp', icon: Building },
-                { name: '人力资源', service: 'HRM', port: 8010, key: 'hrm', icon: Users },
-                { name: '移动服务', service: 'MOBILE', port: 8019, key: 'mobile', icon: Smartphone },
-              ].map((service) => (
-                <ServiceStatusCard
-                  key={service.key}
-                  name={service.name}
-                  service={service.service}
-                  port={service.port}
-                  status={serviceStatuses[service.key]}
-                  icon={service.icon}
-                />
-              ))}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 flex items-center">
+                <Activity className="w-5 h-5 mr-2 text-green-500" />
+                服务状态监控
+              </h3>
+              <button 
+                onClick={checkAllServicesStatus}
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+              >
+                <Activity className="w-4 h-4 mr-1" />
+                刷新状态
+              </button>
+            </div>
+            
+            {/* 核心服务 */}
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-slate-500 mb-3">核心服务</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { name: '身份认证', service: 'IAM', port: 8000, key: 'iam', icon: Shield },
+                  { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
+                  { name: '流程引擎', service: 'FLOW', port: 8002, key: 'flow', icon: GitBranch },
+                  { name: '通知服务', service: 'NOTIFICATION', port: 8003, key: 'notification', icon: Bell },
+                ].map((service) => (
+                  <ServiceStatusCard
+                    key={service.key}
+                    name={service.name}
+                    service={service.service}
+                    port={service.port}
+                    status={serviceStatuses[service.key]}
+                    icon={service.icon}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            {/* 业务服务 */}
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-slate-500 mb-3">业务服务</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { name: '研发管理', service: 'RS', port: 8020, key: 'rs', icon: FlaskConical },
+                  { name: '实验室管理', service: 'LIMS', port: 8022, key: 'lims', icon: ClipboardList },
+                  { name: '企业资源', service: 'ERP', port: 8010, key: 'erp', icon: Building },
+                  { name: '人力资源', service: 'HRM', port: 8011, key: 'hrm', icon: Users },
+                ].map((service) => (
+                  <ServiceStatusCard
+                    key={service.key}
+                    name={service.name}
+                    service={service.service}
+                    port={service.port}
+                    status={serviceStatuses[service.key]}
+                    icon={service.icon}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            {/* 增强服务 */}
+            <div>
+              <h4 className="text-sm font-medium text-slate-500 mb-3">增强服务</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { name: 'AI 服务', service: 'AI', port: 8013, key: 'ai', icon: Bot },
+                  { name: '报表服务', service: 'REPORT', port: 8053, key: 'report', icon: BarChart3 },
+                  { name: '移动服务', service: 'MOBILE', port: 8055, key: 'mobile', icon: Smartphone },
+                ].map((service) => (
+                  <ServiceStatusCard
+                    key={service.key}
+                    name={service.name}
+                    service={service.service}
+                    port={service.port}
+                    status={serviceStatuses[service.key]}
+                    icon={service.icon}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 

@@ -8,6 +8,7 @@ use serde::Serialize;
 use thiserror::Error;
 use tracing::error;
 
+#[allow(dead_code)]
 #[derive(Error, Debug)]
 pub enum HrmError {
     #[error("数据库错误: {0}")]
@@ -28,6 +29,7 @@ pub enum HrmError {
     Conflict(String),
 }
 
+#[allow(dead_code)]
 #[derive(Serialize)]
 struct ErrorResponse {
     success: bool,
@@ -97,4 +99,5 @@ impl IntoResponse for HrmError {
     }
 }
 
+#[allow(dead_code)]
 pub type Result<T> = std::result::Result<T, HrmError>;

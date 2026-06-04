@@ -28,6 +28,7 @@ pub mod option_uuid {
 pub mod option_uuid_vec {
     use super::*;
 
+    #[allow(dead_code)]
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Vec<Uuid>>, D::Error>
     where
         D: Deserializer<'de>,
@@ -52,6 +53,7 @@ pub mod option_uuid_vec {
         }
     }
 
+    #[allow(dead_code)]
     pub fn serialize<S>(value: &Option<Vec<Uuid>>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,

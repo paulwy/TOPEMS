@@ -19,7 +19,7 @@ pub struct CorrectiveAction {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateCorrectiveActionRequest {
     pub issue_id: Uuid,
     pub title: String,
@@ -27,7 +27,7 @@ pub struct CreateCorrectiveActionRequest {
     pub assigned_to: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateCorrectiveActionRequest {
     pub title: Option<String>,
     pub description: Option<String>,

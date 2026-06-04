@@ -1,6 +1,6 @@
-# TOPEMS
+# TOPEMS 企业级数字化平台
 
-> 企业级数字化平台 - 文档管理、AI 协作、流程自动化、数据分析、质量管理、供应链管理
+> 统一身份认证与授权管理、文档管理、AI协作、流程自动化、数据分析、质量管理、供应链管理
 
 ![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -9,27 +9,32 @@
 
 ## 🌟 功能特性
 
-### 核心功能
-
+### 核心服务
+- 🔐 **身份认证** - IAM 身份认证，统一权限管理，安全审计
 - 📄 **文档管理** - 智能文档管理，版本控制，协作编辑
-- 🤖 **AI 协作** - 智能问答，文档摘要，自动化建议
 - 🔀 **流程自动化** - 可视化流程设计，审批工作流
+- 📢 **通知服务** - 实时通知，消息推送
+
+### 业务服务
+- 🤖 **AI 服务** - 智能问答，文档摘要，自动化建议
 - 📊 **数据分析** - 实时报表，数据可视化
-- 🔐 **统一认证** - 多租户，权限管理，安全审计
 - 🏭 **质量管控** - QMS质量管理，EHS安全环保
 - 💼 **资源规划** - ERP企业资源，MES制造执行
 - 📦 **供应链** - SCM供应链，SRM供应商，CRM客户关系
 - 📦 **仓储物流** - WMS仓库管理
-- 📈 **商业智能** - BI数据分析，PORTAL统一门户
 - 👥 **人力资源** - HRM人力资源管理
 - 🔬 **实验室** - LIMS实验室管理
 - 🔬 **研发管理** - RS科研研发
 - 🌍 **地理信息** - GIS服务
 - 📋 **产品数据** - PDM产品数据管理
 - 💬 **即时通讯** - IM即时通讯
+- 📈 **商业智能** - BI数据分析
+- 📮 **邮件服务** - 邮件发送与模板
+- 📱 **移动端** - 移动端API服务
+- 🏠 **企业门户** - 统一门户入口
+- 🔗 **系统集成** - 系统集成服务
 
 ### 技术亮点
-
 - ⚡ **高性能** - Rust 后端，极快响应
 - 📱 **响应式** - 完美适配移动端
 - 🎨 **现代化** - 优雅的 UI 设计
@@ -38,87 +43,61 @@
 - 🎯 **微服务架构** - 20+个独立服务，灵活扩展
 - 🔄 **统一架构** - 统一的认证保护和架构规范化
 
-## 🚀 快速开始
-
-### 使用 Docker Compose（推荐）
-
-```bash
-# 1. 克隆项目
-git clone https://github.com/your-org/topems.git
-cd topems
-
-# 2. 启动所有服务
-chmod +x scripts/start-all-services.sh
-./scripts/start-all-services.sh
-
-# 3. 访问应用
-# 前端: http://localhost:3000
-# IAM API: http://localhost:8002
-```
-
-### 手动启动
-
-查看 [项目指南](./docs/PROJECT_GUIDE.md) 了解详细步骤。
-
 ## 📁 项目结构
 
 ```
 topems/
 ├── docs/                          # 文档
-├── scripts/                       # 脚本工具
+│   ├── api/                      # API 文档
+│   ├── architecture/             # 架构设计
+│   ├── deployment/               # 部署指南
+│   ├── guides/                   # 用户指南
+│   ├── services/                 # 服务文档
+│   └── user/                     # 用户手册
 ├── frontend/                      # 前端应用
 │   ├── src/
 │   │   ├── components/           # 可复用组件
 │   │   ├── pages/               # 页面组件
 │   │   ├── hooks/               # 自定义 hooks
 │   │   ├── api/                 # API 客户端
-│   │   └── store/               # Zustand 状态管理
+│   │   └── store/               # 状态管理
 │   └── vite.config.ts           # Vite 配置
-├── services/                      # 后端微服务
-│   ├── topems-iam/              # IAM 身份认证服务 (8002)
-│   ├── topems-doc/              # DOC 文档管理服务 (8001)
-│   ├── topems-ai/               # AI 服务 (8003)
-│   ├── topems-flow/             # FLOW 工作流服务 (8004)
-│   ├── topems-rs/               # RS 研发管理服务 (8005)
-│   ├── topems-lims/             # LIMS 实验室管理 (8006)
-│   ├── topems-qms/              # QMS 质量管理 (8007)
-│   ├── topems-ehs/              # EHS 安全环保 (8008)
-│   ├── topems-erp/              # ERP 企业资源 (8009)
-│   ├── topems-hrm/              # HRM 人力资源 (8010)
-│   ├── topems-crm/              # CRM 客户关系 (8013)
-│   ├── topems-mes/              # MES 制造执行 (8014)
-│   ├── topems-scm/              # SCM 供应链 (8016)
-│   ├── topems-srm/              # SRM 供应商 (8018)
-│   ├── topems-wms/              # WMS 仓库管理 (8020)
-│   ├── topems-bi/               # BI 商业智能 (8022)
-│   ├── topems-notification/     # NOTIFICATION 通知服务 (8023)
-│   ├── topems-im/               # IM 即时通讯 (8024)
-│   ├── topems-gis/              # GIS 地理信息 (8025)
-│   ├── topems-mail/             # MAIL 邮件服务 (8026)
-│   ├── topems-pdm/              # PDM 产品数据 (8027)
-│   ├── topems-integration/      # INTEGRATION 系统集成 (8028)
-│   ├── topems-mobile/           # MOBILE 移动服务 (8029)
-│   └── topems-portal/           # PORTAL 统一门户 (9021)
-├── platform/                     # 平台服务
-│   ├── topems-iam/              # IAM 身份认证
-│   ├── topems-flow/             # FLOW 工作流
-│   └── topems-doc/              # DOC 文档管理
-├── shared/                       # 共享库
-│   ├── lib/                     # topems-shared 库
-│   └── proto/                   # Protocol Buffers
-├── docker-compose.yml             # Docker 配置
-└── README.md                      # 本文档
+├── platform/                      # 核心平台服务
+│   ├── topems-iam/              # 身份认证服务 (8000)
+│   ├── topems-doc/              # 文档管理服务 (8001)
+│   └── topems-flow/             # 工作流服务 (8006)
+├── services/                      # 业务应用服务
+│   ├── notification-service/     # 通知服务 (8003)
+│   ├── topems-integration/      # 集成服务 (8004)
+│   ├── topems-portal/           # 企业门户 (8005)
+│   ├── topems-erp/              # 企业资源计划 (8010)
+│   ├── topems-hrm/              # 人力资源管理 (8011)
+│   ├── topems-ai/               # AI 知识库 (8013)
+│   ├── topems-rs/               # 研发管理系统 (8020)
+│   ├── topems-lims/             # 实验室系统 (8022)
+│   ├── topems-crm/              # 客户关系管理 (8012)
+│   ├── topems-mes/              # 制造执行系统 (8030)
+│   ├── topems-qms/              # 质量管理系统 (8031)
+│   ├── topems-ehs/              # 安全管理系统 (8032)
+│   ├── topems-scm/              # 供应链系统 (8040)
+│   ├── topems-srm/              # 供应商管理 (8041)
+│   ├── topems-wms/              # 仓库管理系统 (8042)
+│   ├── topems-gis/              # 地理信息系统 (8050)
+│   ├── topems-im/               # 即时通讯 (8051)
+│   ├── topems-bi/               # 商业智能 (8052)
+│   ├── report-service/           # 报表服务 (8053)
+│   ├── topems-mail/             # 邮件服务 (8054)
+│   ├── topems-mobile/           # 移动端服务 (8055)
+│   └── topems-pdm/              # 产品数据管理 (8023)
+├── shared/                        # 共享库
+│   └── lib/                     # topems-shared 库
+├── scripts/                       # 管理脚本
+├── tools/                         # 开发工具
+├── templates/                     # 数据模板
+└── docker-compose.yml             # Docker 配置
 ```
 
-## 📖 文档
-
-- [项目指南](./docs/PROJECT_GUIDE.md) - 详细的开发和部署指南
-- [服务状态报告](./docs/SERVICE_STATUS_REPORT.md) - 最新服务状态
-- [优化报告](./docs/OPTIMIZATION_REPORT.md) - 性能优化报告
-- [代码审查](./docs/CODE_REVIEW_REPORT.md) - 代码质量报告
-- [实施总结](./IMPLEMENTATION_SUMMARY.md) - 完整的实施总结
-
-## 🛠️ 开发
+## 🚀 快速开始
 
 ### 前端开发
 
@@ -134,114 +113,49 @@ npm run dev
 
 ```bash
 # 启动单个服务（示例 IAM）
-cd services/topems-iam/backend
+cd platform/topems-iam/backend
 cargo run
 ```
 
-服务运行在 http://localhost:8002
+服务运行在 http://localhost:8000
 
-### 启动所有服务
-
-```bash
-# 使用启动脚本
-cd /Users/air/TOPEMS
-chmod +x scripts/start-all-services.sh
-./scripts/start-all-services.sh
-
-# 检查服务状态
-chmod +x scripts/check-services-status.sh
-./scripts/check-services-status.sh
-```
-
-## 📦 部署
-
-### 前端部署
+### 数据库初始化
 
 ```bash
-cd frontend
-npm run build
-
-# 使用 Nginx 部署
-# 详见 docs/PROJECT_GUIDE.md
+# 使用脚本初始化数据库
+./scripts/init-database.sh
 ```
 
-### 后端部署
+## 📖 文档
 
-```bash
-# 编译所有服务
-cd services/topems-iam/backend
-cargo build --release
+- [API概览](./docs/api/API_DOCUMENTATION.md) - API 文档总览
+- [架构设计](./docs/architecture/overview.md) - 系统架构设计
+- [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md) - 部署指南
+- [用户指南](./docs/guides/USER_GUIDE.md) - 用户使用指南
+- [服务文档](./docs/services/) - 各个服务详细文档
 
-# 使用部署脚本
-chmod +x ../../scripts/deploy-backend.sh
-../../scripts/deploy-backend.sh
-```
+## 🛠️ 脚本工具
 
-## 🧪 测试
-
-```bash
-# 前端测试
-cd frontend
-npm run test
-
-# 后端测试
-cd services/topems-iam/backend
-cargo test
-
-# 运行所有测试
-./scripts/run-all-tests.sh
-```
-
-## 📊 性能指标
-
-| 指标 | 当前值 | 状态 |
-|------|--------|------|
-| 首屏加载时间 | 1.5s | ✅ |
-| 包体积 | 600KB (gzip) | ✅ |
-| API 响应时间 | 50ms | ✅ |
-| 数据库查询 | 20ms | ✅ |
-| 服务数量 | 20+个 | ✅ |
-
-详细信息请查看 [优化报告](./docs/OPTIMIZATION_REPORT.md)。
-
-## 🔄 CI/CD
-
-使用 GitHub Actions 自动化构建和部署，详见 [.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml)。
-
-## 🤝 贡献
-
-欢迎贡献！请查看 [项目指南](./docs/PROJECT_GUIDE.md#贡献指南)。
-
-### 提交规范
-
-- `feat`: 新功能
-- `fix`: 修复 bug
-- `docs`: 文档更新
-- `style`: 代码格式调整
-- `refactor`: 重构
-- `perf`: 性能优化
-- `test`: 测试相关
-- `chore`: 构建/工具变动
+- `scripts/init-database.sh` - 初始化数据库
+- `scripts/init-hrm-data.py` - 初始化 HRM 数据
+- `scripts/manage-services.sh` - 管理所有服务
+- `scripts/start-all.sh` - 启动所有服务
+- `scripts/stop-all.sh` - 停止所有服务
+- `scripts/cleanup.sh` - 清理临时文件
+- `scripts/quick-start.sh` - 快速启动项目
 
 ## 📄 许可证
 
-MIT License - 详见 [LICENSE](./LICENSE) 文件。
+MIT License
 
 ## 👥 团队
 
-- Product Manager
 - Engineering Lead
 - Frontend Engineers
 - Backend Engineers
 - DevOps Engineers
 
-## 📞 联系我们
-
-- Issues: [GitHub Issues](https://github.com/your-org/topems/issues)
-- Discussions: [GitHub Discussions](https://github.com/your-org/topems/discussions)
-- Mail: team@topems.example.com
-
 ---
 
-**最后更新**: 2026-06-03
+**最后更新**: 2026-06-04
 **版本**: v2.0.0

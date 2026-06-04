@@ -124,6 +124,7 @@ pub async fn check_phase_completion(db: &PgPool, _project_id: Uuid, phase_id: Uu
 }
 
 #[instrument(level = "info", skip(db))]
+#[allow(dead_code)]
 pub async fn get_project_timeline(db: &PgPool, project_id: Uuid) -> Result<Vec<(DateTime<Utc>, String, String)>, sqlx::Error> {
     let mut timeline: Vec<(DateTime<Utc>, String, String)> = Vec::new();
 

@@ -9,6 +9,7 @@ lazy_static! {
     static ref ASSET_NUMBER_REGEX: Regex = Regex::new(r"^[A-Za-z0-9]{2,20}$").unwrap();
 }
 
+#[allow(dead_code)]
 pub fn validate_email(email: &str) -> bool {
     EMAIL_REGEX.is_match(email)
 }
@@ -17,10 +18,12 @@ pub fn validate_phone(phone: &str) -> bool {
     PHONE_REGEX.is_match(phone)
 }
 
+#[allow(dead_code)]
 pub fn validate_employee_number(number: &str) -> bool {
     EMPLOYEE_NUMBER_REGEX.is_match(number)
 }
 
+#[allow(dead_code)]
 pub fn validate_asset_number(number: &str) -> bool {
     ASSET_NUMBER_REGEX.is_match(number)
 }
@@ -33,6 +36,7 @@ pub fn validate_required_field(field: &str, value: &str) -> Result<(), String> {
     }
 }
 
+#[allow(dead_code)]
 pub fn validate_string_length(field: &str, value: &str, min: usize, max: usize) -> Result<(), String> {
     let len = value.chars().count();
     if len < min {

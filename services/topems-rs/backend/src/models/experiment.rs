@@ -58,6 +58,7 @@ pub struct UpdateExperimentRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct ExperimentRecord {
     pub id: Uuid,
     pub experiment_id: Uuid,
@@ -69,6 +70,7 @@ pub struct ExperimentRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct BatchTraceItem {
     pub id: Uuid,
     pub batch_number: String,
