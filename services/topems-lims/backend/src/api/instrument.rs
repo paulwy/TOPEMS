@@ -2,7 +2,7 @@ use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;
@@ -44,6 +44,7 @@ pub struct Instrument {
 }
 
 #[derive(Debug, Serialize, FromRow)]
+#[allow(dead_code)]
 pub struct MaintenanceRecord {
     pub id: Uuid,
     pub instrument_id: Uuid,
@@ -57,7 +58,7 @@ pub struct MaintenanceRecord {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateInstrumentRequest {
     pub name: String,
     pub code: String,
@@ -74,7 +75,7 @@ pub struct CreateInstrumentRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateInstrumentRequest {
     pub name: Option<String>,
     pub instrument_type: Option<String>,
@@ -90,6 +91,7 @@ pub struct UpdateInstrumentRequest {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct CreateMaintenanceRequest {
     pub maintenance_type: String,
     pub description: String,
@@ -194,6 +196,7 @@ async fn create_instrument(
         return Json(ApiResponse::error(400, "仪器编码不能为空"));
     }
 
+    let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -231,9 +234,14 @@ async fn create_instrument(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
+    let response_data = match &result {
+        Ok(instrument) => serde_json::to_value(instrument).ok(),
+        Err(_) => None,
+    };
+    
+    let (response, status_str, error_msg) = match result {
         Ok(instrument) => (
-            Json(ApiResponse::success(instrument.clone(), "仪器创建成功")),
+            Json(ApiResponse::success(instrument, "仪器创建成功")),
             "success".to_string(),
             None,
         ),
@@ -245,13 +253,6 @@ async fn create_instrument(
                 Some(e.to_string()),
             )
         }
-    };
-
-    let request_data = serde_json::to_value(&req).ok();
-    let response_data = if let Ok(instrument) = &result {
-        serde_json::to_value(instrument).ok()
-    } else {
-        None
     };
 
     log_audit_event(
@@ -356,9 +357,14 @@ async fn update_instrument(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
+    let response_data = match &result {
+        Ok(instrument) => serde_json::to_value(instrument).ok(),
+        Err(_) => None,
+    };
+    
+    let (response, status_str, error_msg) = match result {
         Ok(instrument) => (
-            Json(ApiResponse::success(instrument.clone(), "仪器更新成功")),
+            Json(ApiResponse::success(instrument, "仪器更新成功")),
             "success".to_string(),
             None,
         ),
@@ -370,12 +376,6 @@ async fn update_instrument(
                 Some(e.to_string()),
             )
         }
-    };
-
-    let response_data = if let Ok(instrument) = &result {
-        serde_json::to_value(instrument).ok()
-    } else {
-        None
     };
 
     log_audit_event(

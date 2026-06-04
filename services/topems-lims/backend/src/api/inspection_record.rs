@@ -1,7 +1,7 @@
 use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
-    routing::{get, post},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;

@@ -3,28 +3,12 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
-// 通用的服务不可用错误处理 - 对于健康检查直接返回成功，避免控制台错误
-const createServiceProxyConfig = (serviceName: string, target: string) => ({
+// 通用的服务不可用错误处理
+const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
   target,
   changeOrigin: true,
-  rewrite: (path) => path.replace(new RegExp(`^\\/${serviceName}`), ''),
+  rewrite: skipRewrite ? undefined : (path) => path.replace(new RegExp(`^\\/${serviceName}`), ''),
   configure: (proxy) => {
-    proxy.on('proxyReq', (proxyReq, req, res) => {
-      // 对于健康检查请求，直接返回成功，不实际代理
-      if (req.url?.includes('/health')) {
-        if (!res.headersSent) {
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({
-            code: 200,
-            success: true,
-            message: `${serviceName.toUpperCase()} service health check (mocked)`,
-            data: { status: 'ok' }
-          }));
-        }
-        proxyReq.destroy(); // 中止代理请求
-      }
-    });
-    
     proxy.on('error', (err, req, res) => {
       // 健康检查失败不打印警告
       if (!req.url?.includes('/health')) {
@@ -158,10 +142,7 @@ export default defineConfig({
       host: 'localhost',
     },
     proxy: {
-      '/api/v1/files': {
-        target: 'http://localhost:8001',
-        changeOrigin: true,
-      },
+      '/api/v1/files': createServiceProxyConfig('doc', 'http://localhost:8001', true),
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -172,16 +153,16 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/iam/, ''),
       },
       '/doc': createServiceProxyConfig('doc', 'http://localhost:8001'),
-      '/flow': createServiceProxyConfig('flow', 'http://localhost:8002'),
+      '/flow': createServiceProxyConfig('flow', 'http://localhost:8006'),
       '/notification': createServiceProxyConfig('notification', 'http://localhost:8003'),
       '/integration': createServiceProxyConfig('integration', 'http://localhost:8004'),
       '/portal': createServiceProxyConfig('portal', 'http://localhost:8005'),
-      '/erp': createServiceProxyConfig('erp', 'http://localhost:8010'),
+      '/erp': createServiceProxyConfig('erp', 'http://localhost:8009'),
       '/hrm': createServiceProxyConfig('hrm', 'http://localhost:8011'),
       '/crm': createServiceProxyConfig('crm', 'http://localhost:8012'),
+      '/ai': createServiceProxyConfig('ai', 'http://localhost:8013'),
       '/rs': createServiceProxyConfig('rs', 'http://localhost:8020'),
-      '/lims': createServiceProxyConfig('lims', 'http://localhost:8021'),
-      '/ai': createServiceProxyConfig('ai', 'http://localhost:8022'),
+      '/lims': createServiceProxyConfig('lims', 'http://localhost:8022'),
       '/pdm': createServiceProxyConfig('pdm', 'http://localhost:8023'),
       '/mes': createServiceProxyConfig('mes', 'http://localhost:8030'),
       '/qms': createServiceProxyConfig('qms', 'http://localhost:8031'),

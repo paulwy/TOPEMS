@@ -1,8 +1,7 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;
@@ -50,7 +49,7 @@ async fn list_employees(
                department_id, position, job_title, email, phone, 
                emergency_contact_name, emergency_contact_phone, address, status, 
                created_at, updated_at
-        FROM employees
+        FROM hrm.employees
         WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR department_id = $3)
@@ -70,7 +69,7 @@ async fn list_employees(
         Ok(employees) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM employees
+                SELECT COUNT(*) FROM hrm.employees
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR department_id = $3)
@@ -119,7 +118,7 @@ async fn create_employee(
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        INSERT INTO employees (
+        INSERT INTO hrm.employees (
             id, employee_number, name, gender, birth_date, hire_date, 
             department_id, position, job_title, email, phone, 
             emergency_contact_name, emergency_contact_phone, address, 
@@ -201,7 +200,7 @@ async fn get_employee(
                department_id, position, job_title, email, phone, 
                emergency_contact_name, emergency_contact_phone, address, status, 
                created_at, updated_at
-        FROM employees WHERE id = $1
+        FROM hrm.employees WHERE id = $1
         "#,
     )
     .bind(id)
@@ -229,7 +228,7 @@ async fn update_employee(
         SELECT id, employee_number, name, gender, birth_date, hire_date, 
                department_id, position, job_title, email, phone, 
                emergency_contact_name, emergency_contact_phone, address, status, 
-               created_at, updated_at FROM employees WHERE id = $1
+               created_at, updated_at FROM hrm.employees WHERE id = $1
         "#,
     )
     .bind(id)
@@ -262,7 +261,7 @@ async fn update_employee(
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        UPDATE employees SET
+        UPDATE hrm.employees SET
             name = $2, gender = $3, birth_date = $4, hire_date = $5, 
             department_id = $6, position = $7, job_title = $8, 
             email = $9, phone = $10, emergency_contact_name = $11, 
@@ -338,7 +337,7 @@ async fn delete_employee(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM employees WHERE id = $1")
+    let result = sqlx::query("DELETE FROM hrm.employees WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -22,8 +22,8 @@ import {
   healthCheck,
 } from './api';
 
-const MOCK_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
-const MOCK_USER_NAME = '当前用户';
+const CURRENT_USER_ID = process.env.REACT_APP_USER_ID || 'user_001';
+const CURRENT_USER_NAME = process.env.REACT_APP_USER_NAME || '当前用户';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'workflows' | 'instances' | 'approvals' | 'todos'>('workflows');
@@ -57,7 +57,7 @@ function App() {
         getWorkflows(),
         getInstances(),
         getApprovals(),
-        getApprovals(undefined, MOCK_USER_ID, 'pending'),
+        getApprovals(undefined, CURRENT_USER_ID, 'pending'),
       ]);
       if (wfRes.success) setWorkflows(wfRes.data || []);
       if (instRes.success) setInstances(instRes.data || []);
@@ -97,7 +97,7 @@ function App() {
     try {
       const req: StartInstanceRequest = {
         workflow_id: workflowId,
-        initiator_id: MOCK_USER_ID,
+        initiator_id: CURRENT_USER_ID,
         data,
       };
       const res = await startInstance(req);
@@ -118,8 +118,8 @@ function App() {
       const req: ProcessApprovalRequest = {
         action,
         comment,
-        actor_id: MOCK_USER_ID,
-        actor_name: MOCK_USER_NAME,
+        actor_id: CURRENT_USER_ID,
+        actor_name: CURRENT_USER_NAME,
       };
       const res = await processApproval(approvalId, req);
       if (res.success) {
@@ -776,7 +776,7 @@ function CreateWorkflowModal({
       {
         node_id: 'start',
         name: '开始审批',
-        approvers: [MOCK_USER_ID],
+        approvers: [CURRENT_USER_ID],
         approval_type: 'single',
         timeout_hours: 24,
         auto_action: 'reject'
@@ -794,7 +794,7 @@ function CreateWorkflowModal({
         name,
         description: description || undefined,
         definition,
-        created_by: MOCK_USER_ID,
+        created_by: CURRENT_USER_ID,
       });
     } catch (err) {
       alert('JSON 格式错误');

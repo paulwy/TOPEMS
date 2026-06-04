@@ -63,20 +63,26 @@ export default function App() {
       }
     }
     if (tab === 'contracts' && contracts.length === 0) {
-      const mockContracts: Contract[] = [
-        { id: '1', contract_no: 'CT-2024-001', supplier_id: 'SUP-001', supplier_name: '鑫源材料科技', contract_type: '框架协议', amount: 5000000, currency: 'CNY', start_date: '2024-01-01', end_date: '2024-12-31', status: '有效' },
-        { id: '2', contract_no: 'CT-2024-002', supplier_id: 'SUP-002', supplier_name: '恒信化工', contract_type: '采购合同', amount: 2000000, currency: 'CNY', start_date: '2024-03-15', end_date: '2024-06-15', status: '已完成' },
-        { id: '3', contract_no: 'CT-2024-003', supplier_id: 'SUP-003', supplier_name: '鼎盛原料', contract_type: '采购合同', amount: 1500000, currency: 'CNY', start_date: '2024-05-01', end_date: '2024-11-30', status: '有效' },
-      ];
-      setContracts(mockContracts);
+      try {
+        const response = await fetch('/api/v1/contracts');
+        const data = await response.json();
+        if (data.success) {
+          setContracts(data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch contracts:', error);
+      }
     }
     if (tab === 'requirements' && requirements.length === 0) {
-      const mockRequirements: PurchaseRequirement[] = [
-        { id: '1', req_no: 'PR-2024-001', material_code: 'M001', material_name: '原材料A', quantity: 500, unit: '吨', required_date: '2024-07-15', status: '已处理', department: '生产部' },
-        { id: '2', req_no: 'PR-2024-002', material_code: 'M002', material_name: '原材料B', quantity: 300, unit: '吨', required_date: '2024-07-20', status: '待处理', department: '生产部' },
-        { id: '3', req_no: 'PR-2024-003', material_code: 'M003', material_name: '包装材料', quantity: 1000, unit: '箱', required_date: '2024-07-25', status: '待处理', department: '物流部' },
-      ];
-      setRequirements(mockRequirements);
+      try {
+        const response = await fetch('/api/v1/purchase-requirements');
+        const data = await response.json();
+        if (data.success) {
+          setRequirements(data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch purchase requirements:', error);
+      }
     }
   };
 

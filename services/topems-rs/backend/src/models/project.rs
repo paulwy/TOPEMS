@@ -42,7 +42,7 @@ impl<'q> Encode<'q, Postgres> for ProjectType {
     fn encode_by_ref(
         &self,
         buf: &mut <Postgres as sqlx::Database>::ArgumentBuffer<'q>,
-    ) -> Result<sqlx::encode::IsNull, Box<(dyn std::error::Error + Send + Sync + 'static)>> {
+    ) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync + 'static>> {
         <&str as Encode<'q, Postgres>>::encode_by_ref(&self.to_string().as_str(), buf)
     }
 }
@@ -87,7 +87,7 @@ impl<'q> Encode<'q, Postgres> for ProjectStatus {
     fn encode_by_ref(
         &self,
         buf: &mut <Postgres as sqlx::Database>::ArgumentBuffer<'q>,
-    ) -> Result<sqlx::encode::IsNull, Box<(dyn std::error::Error + Send + Sync + 'static)>> {
+    ) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync + 'static>> {
         <&str as Encode<'q, Postgres>>::encode_by_ref(&self.to_string().as_str(), buf)
     }
 }
@@ -137,6 +137,7 @@ pub struct UpdateProjectRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct ProjectSummary {
     pub id: Uuid,
     pub name: String,

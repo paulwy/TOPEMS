@@ -2,7 +2,7 @@ use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;
@@ -43,7 +43,7 @@ pub struct Reagent {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateReagentRequest {
     pub name: String,
     pub code: String,
@@ -60,7 +60,7 @@ pub struct CreateReagentRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateReagentRequest {
     pub name: Option<String>,
     pub category: Option<String>,
@@ -174,6 +174,7 @@ async fn create_reagent(
         return Json(ApiResponse::error(400, "试剂编码不能为空"));
     }
 
+    let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -208,9 +209,14 @@ async fn create_reagent(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
+    let response_data = match &result {
+        Ok(reagent) => serde_json::to_value(reagent).ok(),
+        Err(_) => None,
+    };
+    
+    let (response, status_str, error_msg) = match result {
         Ok(reagent) => (
-            Json(ApiResponse::success(reagent.clone(), "试剂创建成功")),
+            Json(ApiResponse::success(reagent, "试剂创建成功")),
             "success".to_string(),
             None,
         ),
@@ -222,13 +228,6 @@ async fn create_reagent(
                 Some(e.to_string()),
             )
         }
-    };
-
-    let request_data = serde_json::to_value(&req).ok();
-    let response_data = if let Ok(reagent) = &result {
-        serde_json::to_value(reagent).ok()
-    } else {
-        None
     };
 
     log_audit_event(
@@ -333,9 +332,14 @@ async fn update_reagent(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
+    let response_data = match &result {
+        Ok(reagent) => serde_json::to_value(reagent).ok(),
+        Err(_) => None,
+    };
+    
+    let (response, status_str, error_msg) = match result {
         Ok(reagent) => (
-            Json(ApiResponse::success(reagent.clone(), "试剂更新成功")),
+            Json(ApiResponse::success(reagent, "试剂更新成功")),
             "success".to_string(),
             None,
         ),
@@ -347,12 +351,6 @@ async fn update_reagent(
                 Some(e.to_string()),
             )
         }
-    };
-
-    let response_data = if let Ok(reagent) = &result {
-        serde_json::to_value(reagent).ok()
-    } else {
-        None
     };
 
     log_audit_event(

@@ -5,7 +5,6 @@ use axum::{
     Json,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use dotenv::dotenv;
 use sqlx::PgPool;
 use std::net::SocketAddr;
 use chrono::Utc;
@@ -161,12 +160,6 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/audit-logs", get(list_audit_logs))
         .route("/api/v1/audit-logs/get", get(get_audit_log))
         .route("/api/v1/audit-logs", post(create_audit_log))
-        .route("/api/v1/integration/trigger", post(trigger_workflow))
-        .route("/api/v1/integration/pending-approvals", post(get_pending_approvals))
-        .route("/api/v1/integration/submit-approval", post(submit_approval))
-        .route("/api/v1/integration/instances/{instance_id}", get(get_instance_details))
-        .route("/api/v1/integration/query-instances", post(query_instances))
-        .route("/api/v1/integration/workflows", get(list_workflows))
         .layer(axum::middleware::from_fn_with_state(
             auth_state,
             auth_middleware,
@@ -181,9 +174,9 @@ async fn main() -> anyhow::Result<()> {
 
     let _host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8004".to_string())
+        .unwrap_or_else(|_| "8006".to_string())
         .parse()
-        .unwrap_or(8004);
+        .unwrap_or(8006);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(tokio::time::Duration::from_mins(5));

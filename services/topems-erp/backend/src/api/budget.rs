@@ -1,11 +1,10 @@
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
+    routing::*,
     Json,
     Router,
-    routing::{get, post, put, delete},
 };
-use chrono::Utc;
 use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;

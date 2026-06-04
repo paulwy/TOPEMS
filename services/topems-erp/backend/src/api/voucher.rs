@@ -1,14 +1,15 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{
+#[allow(unused_imports)]
+use crate::models::finance::{
     AccountingSubject, CreateAccountingSubjectRequest, UpdateAccountingSubjectRequest,
     FinancialVoucher, CreateFinancialVoucherRequest, UpdateFinancialVoucherRequest,
     VoucherItem, VoucherItemRequest, U8VoucherImportRequest, U8VoucherData, U8VoucherItem,
@@ -100,7 +101,7 @@ async fn create_subject(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let is_cash_flow = req.is_cash_flow.unwrap_or(false);
-    let status = req.status.unwrap_or_else(|| "active".to_string());
+    let status = req.status.clone().unwrap_or_else(|| "active".to_string());
 
     let result = sqlx::query_as::<_, AccountingSubject>(
         r#"
@@ -210,8 +211,8 @@ async fn update_subject(
 
     let request_data = serde_json::to_value(&req).ok();
 
-    let name = req.name.or(existing.name);
-    let category = req.category.or(existing.category);
+    let name = req.name.or(Some(existing.name));
+    let category = req.category.or(Some(existing.category));
     let parent_code = req.parent_code.or(existing.parent_code);
     let description = req.description.or(existing.description);
     let is_cash_flow = req.is_cash_flow.unwrap_or(existing.is_cash_flow);
@@ -442,15 +443,17 @@ async fn create_voucher(
 
     for item in &req.items {
         let item_id = Uuid::new_v4();
-        let subject_name = item.subject_name.clone().unwrap_or_else(|| {
-            let subject: Result<AccountingSubject, _> = sqlx::query_as(
+        let subject_name = if let Some(name) = &item.subject_name {
+            name.clone()
+        } else {
+            let subject = sqlx::query_as::<_, AccountingSubject>(
                 "SELECT name FROM erp.accounting_subjects WHERE code = $1",
             )
             .bind(&item.subject_code)
             .fetch_optional(&state.db)
             .await;
             subject.ok().flatten().map(|s| s.name).unwrap_or_default()
-        });
+        };
 
         let _ = sqlx::query(
             r#"
@@ -568,8 +571,8 @@ async fn update_voucher(
 
     let request_data = serde_json::to_value(&req).ok();
 
-    let voucher_date = req.voucher_date.or(existing.voucher_date);
-    let period = req.period.or(existing.period);
+    let voucher_date = req.voucher_date.or(Some(existing.voucher_date));
+    let period = req.period.or(Some(existing.period));
     let attachment_count = req.attachment_count.or(existing.attachment_count);
     let summary = req.summary.or(existing.summary);
     let checker_id = req.checker_id.or(existing.checker_id);
@@ -803,7 +806,7 @@ async fn import_u8_vouchers(
     let result = VoucherImportResult {
         success_count,
         failed_count,
-        errors,
+        errors: errors.clone(),
         imported_vouchers,
     };
 

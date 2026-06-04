@@ -4,9 +4,10 @@ use axum::{
 };
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use topems_shared::{AuthState, SystemMetrics};
 use crate::utils::InMemoryCache;
+use crate::models;
 
 pub mod company;
 pub mod department;

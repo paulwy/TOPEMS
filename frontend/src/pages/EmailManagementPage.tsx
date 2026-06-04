@@ -354,7 +354,7 @@ const EmailManagementPage: React.FC = () => {
                       <BarChart3 className="w-4 h-4" />
                       统计
                     </Button>
-                    <Button onClick={fetchLogs} className="gap-2">
+                    <Button onClick={() => fetchLogs()} className="gap-2">
                       <RefreshCw className="w-4 h-4" />
                       刷新
                     </Button>

@@ -9,7 +9,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use sqlx::postgres::PgPool;
+
 use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -44,8 +44,8 @@ pub struct BatchOperationResult {
     pub errors: Vec<String>,
 }
 
-pub async fn create_routes() -> topems_shared::Result<Router> {
-    let app = Router::new()
+pub fn create_routes() -> Router<Arc<super::ApiState>> {
+    Router::new()
         .route("/api/v1/projects", get(list_projects).post(create_project))
         .route(
             "/api/v1/projects/batch",
@@ -56,9 +56,7 @@ pub async fn create_routes() -> topems_shared::Result<Router> {
         .route(
             "/api/v1/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
-        );
-
-    Ok(app)
+        )
 }
 
 #[utoipa::path(

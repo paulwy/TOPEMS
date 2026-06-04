@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;
@@ -56,7 +56,7 @@ async fn list_companies(
     let result = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, name, short_name, registration_number, tax_number, address, contact_phone, email, website, status, created_at, updated_at
-        FROM companies
+        FROM erp.companies
         WHERE ($1::text IS NULL OR name ILIKE $1 OR short_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -74,7 +74,7 @@ async fn list_companies(
         Ok(companies) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM companies
+                SELECT COUNT(*) FROM erp.companies
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR short_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -128,7 +128,7 @@ async fn create_company(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        INSERT INTO companies (id, name, short_name, registration_number, tax_number, address, contact_phone, email, website, status, created_at, updated_at)
+        INSERT INTO erp.companies (id, name, short_name, registration_number, tax_number, address, contact_phone, email, website, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
         RETURNING id, name, short_name, registration_number, tax_number, address, contact_phone, email, website, status, created_at, updated_at
         "#,
@@ -196,7 +196,7 @@ async fn get_company(
     let result = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, name, short_name, registration_number, tax_number, address, contact_phone, email, website, status, created_at, updated_at
-        FROM companies WHERE id = $1
+        FROM erp.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -220,7 +220,7 @@ async fn update_company(
     Json(req): Json<UpdateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
     let existing = sqlx::query_as::<_, Company>(
-        "SELECT id, name, short_name, registration_number, tax_number, address, contact_phone, email, website, status, created_at, updated_at FROM companies WHERE id = $1",
+        "SELECT id, name, short_name, registration_number, tax_number, address, contact_phone, email, website, status, created_at, updated_at FROM erp.companies WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -248,7 +248,7 @@ async fn update_company(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        UPDATE companies SET
+        UPDATE erp.companies SET
             name = $2, short_name = $3, registration_number = $4, tax_number = $5, address = $6, contact_phone = $7, email = $8, website = $9, status = $10, updated_at = $11
         WHERE id = $1
         RETURNING id, name, short_name, registration_number, tax_number, address, contact_phone, email, website, status, created_at, updated_at
@@ -317,7 +317,7 @@ async fn delete_company(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM companies WHERE id = $1")
+    let result = sqlx::query("DELETE FROM erp.companies WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

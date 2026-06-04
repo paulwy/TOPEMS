@@ -26,10 +26,6 @@ once_cell = "1.19"
 name = "topems-flow"
 path = "src/main.rs"
 
-[[bin]]
-name = "topems-flow-mock"
-path = "src/main_mock.rs"
-
 [dev-dependencies]
 axum = { version = "0.8", features = ["macros"] }
 tower = { version = "0.4", features = ["util"] }

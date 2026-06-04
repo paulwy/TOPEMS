@@ -176,6 +176,7 @@ pub struct VoucherImportResult {
     pub imported_vouchers: Vec<FinancialVoucher>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ExpenseStatus {
@@ -214,6 +215,7 @@ impl From<String> for ExpenseStatus {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ReceivableStatus {
@@ -252,6 +254,7 @@ impl From<String> for ReceivableStatus {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PayableStatus {

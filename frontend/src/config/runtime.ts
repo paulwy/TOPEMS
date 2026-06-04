@@ -78,7 +78,6 @@ const config: RuntimeConfig = {
     debugMode: getEnvBool('VITE_ENABLE_DEBUG_MODE', false),
     hotReload: getEnvBool('VITE_ENABLE_HOT_RELOAD', false),
     apiDocs: getEnvBool('VITE_ENABLE_API_DOCS', false),
-    mockData: getEnvBool('VITE_ENABLE_MOCK_DATA', false),
     oauthGithub: getEnvBool('VITE_OAUTH_GITHUB_ENABLED', false),
     oauthGoogle: getEnvBool('VITE_OAUTH_GOOGLE_ENABLED', false),
     darkMode: getEnvBool('VITE_ENABLE_DARK_MODE', false),

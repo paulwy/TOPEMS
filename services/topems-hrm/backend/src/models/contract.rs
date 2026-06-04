@@ -25,7 +25,7 @@ pub struct Contract {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateContractRequest {
     pub employee_id: Uuid,
     pub contract_no: Option<String>,
@@ -43,7 +43,7 @@ pub struct CreateContractRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateContractRequest {
     pub contract_no: Option<String>,
     pub contract_type: Option<String>,
@@ -81,6 +81,7 @@ pub struct ContractRenewal {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateRenewalRequest {
+    #[allow(dead_code)]
     pub contract_id: Uuid,
     pub renewal_type: String,
     pub renewal_reason: Option<String>,
@@ -96,5 +97,6 @@ pub struct ContractPaginationParams {
     pub employee_id: Option<Uuid>,
     pub status: Option<String>,
     pub contract_type: Option<String>,
+    #[allow(dead_code)]
     pub expiring_soon: Option<bool>,
 }

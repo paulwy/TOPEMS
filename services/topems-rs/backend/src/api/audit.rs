@@ -12,12 +12,10 @@ use uuid::Uuid;
 use crate::models::AuditLog;
 use topems_shared::response::ApiResponse;
 
-pub async fn create_routes() -> topems_shared::Result<Router> {
-    let app = Router::new()
+pub fn create_routes() -> Router<Arc<super::ApiState>> {
+    Router::new()
         .route("/api/v1/audit-logs", get(list_audit_logs))
-        .route("/api/v1/audit-logs/{id}", get(get_audit_log));
-
-    Ok(app)
+        .route("/api/v1/audit-logs/{id}", get(get_audit_log))
 }
 
 #[derive(Debug, Deserialize, ToSchema)]

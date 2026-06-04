@@ -6,10 +6,15 @@ use sqlx::FromRow;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum NotificationType {
+    #[serde(rename = "system")]
     System,
+    #[serde(rename = "workflow")]
     Workflow,
+    #[serde(rename = "reminder")]
     Reminder,
+    #[serde(rename = "alert")]
     Alert,
+    #[serde(rename = "message")]
     Message,
 }
 
@@ -104,6 +109,12 @@ pub struct NotificationListQuery {
     pub page: Option<usize>,
     pub page_size: Option<usize>,
     pub notification_type: Option<NotificationType>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BulkOperationRequest {
+    pub ids: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

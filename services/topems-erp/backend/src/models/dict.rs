@@ -107,6 +107,7 @@ pub struct ModifyColumnRequest {
     pub column: DbColumnDefinition,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DropColumnRequest {
     pub table_name: String,

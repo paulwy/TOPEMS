@@ -3,7 +3,7 @@ import {
   TrendingUp, TrendingDown, DollarSign, PieChart, BarChart3,
   ChevronLeft, Calendar, ArrowUpRight, ArrowDownRight, Building2,
   Clock, FileText, Users, CreditCard, Wallet, Activity, Target,
-  TrendingFlat, RefreshCw, Layers, PiggyBank, TrendingUpDown
+  Minus, RefreshCw, Layers, PiggyBank
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -316,7 +316,7 @@ const FinanceReportsPage: React.FC = () => {
               <span>费用分析</span>
             </TabsTrigger>
             <TabsTrigger value="profit" className="flex items-center space-x-2">
-              <TrendingUpDown className="w-4 h-4" />
+              <TrendingUp className="w-4 h-4" />
               <span>利润分析</span>
             </TabsTrigger>
           </TabsList>
@@ -1154,6 +1154,13 @@ const FinanceReportsPage: React.FC = () => {
               </div>
             ) : cashFlowAnalysis && (
               <>
+                {(() => {
+                  const netCashFlowAbs = Math.abs(cashFlowAnalysis.net_cash_flow || 1);
+                  const operatingPercent = (cashFlowAnalysis.operating_cash_flow / netCashFlowAbs) * 100;
+                  const investingPercent = Math.abs((cashFlowAnalysis.investing_cash_flow / netCashFlowAbs) * 100);
+                  const financingPercent = Math.abs((cashFlowAnalysis.financing_cash_flow / netCashFlowAbs) * 100);
+                  return (
+                    <>
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -1228,21 +1235,21 @@ const FinanceReportsPage: React.FC = () => {
                                 <span className="text-sm">经营活动</span>
                                 <span className="font-medium">{formatPercent((cashFlowAnalysis.operating_cash_flow / Math.abs(cashFlowAnalysis.net_cash_flow || 1)) * 100)}</span>
                               </div>
-                              <Progress value={(cashFlowAnalysis.operating_cash_flow / Math.abs(cashFlowAnalysis.net_cash_flow || 1)) * 100} className="h-3" />
+                              <Progress value={operatingPercent} className="h-3" />
                             </div>
                             <div>
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm">投资活动</span>
                                 <span className="font-medium">{formatPercent((cashFlowAnalysis.investing_cash_flow / Math.abs(cashFlowAnalysis.net_cash_flow || 1)) * 100)}</span>
                               </div>
-                              <Progress value={Math.abs((cashFlowAnalysis.investing_cash_flow / Math.abs(cashFlowAnalysis.net_cash_flow || 1)) * 100} className="h-3 bg-blue-200" />
+                              <Progress value={investingPercent} className="h-3 bg-blue-200" />
                             </div>
                             <div>
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm">筹资活动</span>
                                 <span className="font-medium">{formatPercent((cashFlowAnalysis.financing_cash_flow / Math.abs(cashFlowAnalysis.net_cash_flow || 1)) * 100)}</span>
                               </div>
-                              <Progress value={Math.abs((cashFlowAnalysis.financing_cash_flow / Math.abs(cashFlowAnalysis.net_cash_flow || 1)) * 100} className="h-3 bg-purple-200" />
+                              <Progress value={financingPercent} className="h-3 bg-purple-200" />
                             </div>
                           </div>
                         </CardContent>
@@ -1250,6 +1257,8 @@ const FinanceReportsPage: React.FC = () => {
                     </div>
                   </CardContent>
                 </Card>
+                    </>
+                  )})()}
               </>
             )}
           </TabsContent>
@@ -1369,7 +1378,7 @@ const FinanceReportsPage: React.FC = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <TrendingUpDown className="w-5 h-5 mr-2 text-indigo-600" />
+                      <TrendingUp className="w-5 h-5 mr-2 text-indigo-600" />
                       利润分析
                       <span className="ml-2 text-sm font-normal text-slate-500">{profitAnalysis.period}</span>
                     </CardTitle>

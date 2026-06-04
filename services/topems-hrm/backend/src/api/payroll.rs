@@ -1,8 +1,7 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use bigdecimal::BigDecimal;
@@ -10,11 +9,10 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::str::FromStr;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;
-use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult, api_error};
+use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -56,7 +54,7 @@ pub struct PayrollDetail {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreatePayrollRunRequest {
     pub pay_period: String,
 }
@@ -97,7 +95,7 @@ async fn list_payroll_runs(
     let result = sqlx::query_as::<_, PayrollRun>(
         r#"
         SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
-        FROM payroll_runs
+        FROM hrm.payroll_runs
         WHERE ($1::text IS NULL OR $1 = '' OR pay_period ILIKE '%' || $1 || '%')
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -115,7 +113,7 @@ async fn list_payroll_runs(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM payroll_runs
+                SELECT COUNT(*) FROM hrm.payroll_runs
                 WHERE ($1::text IS NULL OR $1 = '' OR pay_period ILIKE '%' || $1 || '%')
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -158,7 +156,7 @@ async fn create_payroll_run(
 
     let result = sqlx::query_as::<_, PayrollRun>(
         r#"
-        INSERT INTO payroll_runs (id, pay_period, status, total_amount, employee_count, created_at, updated_at)
+        INSERT INTO hrm.payroll_runs (id, pay_period, status, total_amount, employee_count, created_at, updated_at)
         VALUES ($1, $2, 'draft', 0, 0, $3, $4)
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#
@@ -217,7 +215,7 @@ async fn get_payroll_run(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PayrollRun>(
-        "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM payroll_runs WHERE id = $1"
+        "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM hrm.payroll_runs WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -226,7 +224,7 @@ async fn get_payroll_run(
     match result {
         Ok(Some(run)) => {
             let items = sqlx::query_as::<_, PayrollItem>(
-                "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM payroll_items WHERE payroll_run_id = $1"
+                "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM hrm.payroll_items WHERE payroll_run_id = $1"
             )
             .bind(id)
             .fetch_all(&state.db)
@@ -255,7 +253,7 @@ async fn delete_payroll_run(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
-        "DELETE FROM payroll_runs WHERE id = $1 AND status = 'draft'"
+        "DELETE FROM hrm.payroll_runs WHERE id = $1 AND status = 'draft'"
     )
     .bind(id)
     .execute(&state.db)
@@ -314,7 +312,7 @@ async fn calculate_payroll_run(
     let now = Utc::now();
 
     let result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM employees WHERE status = 'active'"
+        "SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"
     )
     .fetch_one(&state.db)
     .await;
@@ -324,7 +322,7 @@ async fn calculate_payroll_run(
 
     let result = sqlx::query_as::<_, PayrollRun>(
         r#"
-        UPDATE payroll_runs
+        UPDATE hrm.payroll_runs
         SET status = 'calculated', total_amount = $2, employee_count = $3, updated_at = $4
         WHERE id = $1 AND status = 'draft'
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
@@ -350,7 +348,7 @@ async fn calculate_payroll_run(
     }
 }
 
-async fn create_payroll_items(db: &PgPool, payroll_run_id: Uuid, emp_count: i32) -> Result<()> {
+async fn create_payroll_items(db: &PgPool, payroll_run_id: Uuid, emp_count: i32) -> Result<(), sqlx::Error> {
     for i in 1..=emp_count {
         let item_id = Uuid::new_v4();
         let emp_id = Uuid::new_v4();
@@ -361,7 +359,7 @@ async fn create_payroll_items(db: &PgPool, payroll_run_id: Uuid, emp_count: i32)
 
         let _ = sqlx::query(
             r#"
-            INSERT INTO payroll_items (id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, created_at, updated_at)
+            INSERT INTO hrm.payroll_items (id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW(), NOW())
             "#
         )
@@ -387,7 +385,7 @@ async fn pay_payroll_run(
 
     let _ = sqlx::query(
         r#"
-        UPDATE payroll_items
+        UPDATE hrm.payroll_items
         SET status = 'paid', paid_at = $2
         WHERE payroll_run_id = $1 AND status = 'pending'
         "#
@@ -399,7 +397,7 @@ async fn pay_payroll_run(
 
     let result = sqlx::query_as::<_, PayrollRun>(
         r#"
-        UPDATE payroll_runs
+        UPDATE hrm.payroll_runs
         SET status = 'paid', paid_at = $2, updated_at = $2
         WHERE id = $1 AND status = 'calculated'
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
@@ -435,7 +433,7 @@ async fn list_payroll_items(
     let result = sqlx::query_as::<_, PayrollItem>(
         r#"
         SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at
-        FROM payroll_items
+        FROM hrm.payroll_items
         WHERE ($1::uuid IS NULL OR payroll_run_id = $1)
           AND ($2::uuid IS NULL OR employee_id = $2)
           AND ($3::text IS NULL OR status = $3)
@@ -455,7 +453,7 @@ async fn list_payroll_items(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM payroll_items
+                SELECT COUNT(*) FROM hrm.payroll_items
                 WHERE ($1::uuid IS NULL OR payroll_run_id = $1)
                   AND ($2::uuid IS NULL OR employee_id = $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -491,7 +489,7 @@ async fn get_payroll_item(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PayrollItem>(
-        "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM payroll_items WHERE id = $1"
+        "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM hrm.payroll_items WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -500,7 +498,7 @@ async fn get_payroll_item(
     match result {
         Ok(Some(item)) => {
             let details = sqlx::query_as::<_, PayrollDetail>(
-                "SELECT id, payroll_item_id, item_type, category, description, amount, created_at FROM payroll_details WHERE payroll_item_id = $1"
+                "SELECT id, payroll_item_id, item_type, category, description, amount, created_at FROM hrm.payroll_details WHERE payroll_item_id = $1"
             )
             .bind(id)
             .fetch_all(&state.db)
@@ -536,7 +534,7 @@ async fn list_payroll_details(
     let result = sqlx::query_as::<_, PayrollDetail>(
         r#"
         SELECT id, payroll_item_id, item_type, category, description, amount, created_at
-        FROM payroll_details
+        FROM hrm.payroll_details
         WHERE ($1::uuid IS NULL OR payroll_item_id = $1)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
@@ -551,7 +549,7 @@ async fn list_payroll_details(
     match result {
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM payroll_details WHERE ($1::uuid IS NULL OR payroll_item_id = $1)",
+                "SELECT COUNT(*) FROM hrm.payroll_details WHERE ($1::uuid IS NULL OR payroll_item_id = $1)",
             )
             .bind(&payroll_item_id)
             .fetch_one(&state.db)
@@ -584,7 +582,7 @@ async fn create_payroll_detail(
 
     let result = sqlx::query_as::<_, PayrollDetail>(
         r#"
-        INSERT INTO payroll_details (id, payroll_item_id, item_type, category, description, amount, created_at)
+        INSERT INTO hrm.payroll_details (id, payroll_item_id, item_type, category, description, amount, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, NOW())
         RETURNING id, payroll_item_id, item_type, category, description, amount, created_at
         "#

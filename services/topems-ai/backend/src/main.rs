@@ -20,10 +20,15 @@ use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 struct Document {
     id: String,
     title: String,
-    content: String,
-    created_at: String,
     filename: String,
-    path: String,
+    file_path: Option<String>,
+    file_size: Option<u64>,
+    mime_type: Option<String>,
+    content_hash: Option<String>,
+    created_at: String,
+    updated_at: String,
+    status: String,
+    error_message: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -70,6 +75,24 @@ struct ChatRequest {
 #[derive(Debug, Serialize)]
 struct ChatResponse {
     answer: String,
+    sources: Vec<SearchResult>,
+}
+
+#[derive(Debug, Serialize)]
+struct SearchResult {
+    chunk: ChunkInfo,
+    document: Document,
+    similarity: f64,
+}
+
+#[derive(Debug, Serialize)]
+struct ChunkInfo {
+    id: String,
+    document_id: String,
+    chunk_index: i32,
+    content: String,
+    created_at: String,
+    metadata: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -185,30 +208,42 @@ async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
         .filter(|e| e.file_type().is_file())
     {
         let file_path = entry.path();
-        if let Ok(content) = fs::read_to_string(file_path) {
-            let filename = file_path.file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .to_string();
-            let title = file_path.file_stem()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .to_string();
-            let created_at = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs()
-                .to_string();
+        let metadata = entry.metadata().ok();
+        let filename = file_path.file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        let title = file_path.file_stem()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs()
+            .to_string();
+
+        let ext = file_path.extension().unwrap_or_default().to_string_lossy().to_string();
+        let mime_type = match ext.as_str() {
+            "txt" => Some("text/plain".to_string()),
+            "md" => Some("text/markdown".to_string()),
+            "json" => Some("application/json".to_string()),
+            _ => None,
+        };
             
-            docs.push(Document {
-                id: filename.clone(),
-                title,
-                content,
-                created_at,
-                filename,
-                path: file_path.to_string_lossy().to_string(),
-            });
-        }
+        docs.push(Document {
+            id: filename.clone(),
+            title,
+            filename: filename.clone(),
+            file_path: Some(file_path.to_string_lossy().to_string()),
+            file_size: metadata.map(|m| m.len()),
+            mime_type,
+            content_hash: None,
+            created_at: now.clone(),
+            updated_at: now,
+            status: "processed".to_string(),
+            error_message: None,
+        });
     }
     
     docs
@@ -242,14 +277,35 @@ async fn reload_documents() -> Json<ApiResponse<Vec<Document>>> {
     }
 }
 
+async fn delete_document(Query(params): Query<DocumentQuery>) -> Json<ApiResponse<String>> {
+    if let Some(docs_arc) = DOCUMENTS.get() {
+        let mut docs = docs_arc.lock().unwrap();
+        let original_len = docs.len();
+        
+        if let Some(doc) = docs.iter().find(|d| d.id == params.id) {
+            if let Some(file_path) = &doc.file_path {
+                let _ = fs::remove_file(file_path);
+            }
+        }
+        
+        docs.retain(|d| d.id != params.id);
+        
+        if docs.len() < original_len {
+            Json(ApiResponse::success("Document deleted successfully".to_string(), "Success"))
+        } else {
+            Json(ApiResponse::<String>::error(404, "Document not found"))
+        }
+    } else {
+        Json(ApiResponse::<String>::error(500, "Documents not loaded"))
+    }
+}
+
 async fn upload_document(mut multipart: Multipart) -> Json<ApiResponse<String>> {
     while let Some(field) = multipart.next_field().await.unwrap_or(None) {
         let name = field.name().unwrap_or_default().to_string();
         if name == "file" {
             let filename = field.file_name().unwrap_or_default().to_string();
             let data = field.bytes().await.unwrap_or_default();
-            
-            let content = String::from_utf8_lossy(&data).to_string();
             
             let path = Path::new(DOCS_DIR).join(&filename);
             match fs::write(&path, &data) {
@@ -261,19 +317,32 @@ async fn upload_document(mut multipart: Multipart) -> Json<ApiResponse<String>> 
                             .unwrap_or_default()
                             .to_string_lossy()
                             .to_string();
-                        let created_at = SystemTime::now()
+                        let now = SystemTime::now()
                             .duration_since(UNIX_EPOCH)
                             .unwrap_or_default()
                             .as_secs()
                             .to_string();
+
+                        let ext = Path::new(&filename).extension().unwrap_or_default().to_string_lossy().to_string();
+                        let mime_type = match ext.as_str() {
+                            "txt" => Some("text/plain".to_string()),
+                            "md" => Some("text/markdown".to_string()),
+                            "json" => Some("application/json".to_string()),
+                            _ => None,
+                        };
                         
                         docs.push(Document {
                             id: filename.clone(),
                             title,
-                            content,
-                            created_at,
                             filename: filename.clone(),
-                            path: path.to_string_lossy().to_string(),
+                            file_path: Some(path.to_string_lossy().to_string()),
+                            file_size: Some(data.len() as u64),
+                            mime_type,
+                            content_hash: None,
+                            created_at: now.clone(),
+                            updated_at: now,
+                            status: "processed".to_string(),
+                            error_message: None,
                         });
                         
                         return Json(ApiResponse::success("Document uploaded successfully".to_string(), &format!("Uploaded: {}", filename)));
@@ -351,7 +420,7 @@ async fn update_connector(Query(params): Query<ConnectorQuery>, Json(req): Json<
                 connector.config = config;
             }
             if let Some(description) = req.description {
-                connector.description = description;
+                connector.description = Some(description);
             }
             if let Some(is_active) = req.is_active {
                 connector.is_active = is_active;
@@ -418,19 +487,12 @@ async fn test_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiRespons
 async fn query_data(Json(req): Json<DataQueryRequest>) -> Json<ApiResponse<DataQueryResponse>> {
     if let Some(connectors) = CONNECTORS.get() {
         let connectors = connectors.lock().unwrap();
-        if let Some(connector) = connectors.iter().find(|c| c.id == req.connector_id) {
-            let mock_columns = vec!["id".to_string(), "name".to_string(), "value".to_string(), "created_at".to_string()];
-            let mock_rows = vec![
-                serde_json::json!({"id": 1, "name": "Sample Data 1", "value": 100, "created_at": "2024-01-01"}),
-                serde_json::json!({"id": 2, "name": "Sample Data 2", "value": 200, "created_at": "2024-01-02"}),
-                serde_json::json!({"id": 3, "name": "Sample Data 3", "value": 300, "created_at": "2024-01-03"}),
-            ];
-
+        if let Some(_connector) = connectors.iter().find(|c| c.id == req.connector_id) {
             Json(ApiResponse::success(
                 DataQueryResponse {
-                    columns: mock_columns,
-                    rows: mock_rows,
-                    row_count: 3,
+                    columns: vec![],
+                    rows: vec![],
+                    row_count: 0,
                 },
                 "Query executed successfully"
             ))
@@ -443,34 +505,36 @@ async fn query_data(Json(req): Json<DataQueryRequest>) -> Json<ApiResponse<DataQ
 }
 
 fn test_database_connection(connector: &DataConnector) -> (bool, Option<String>) {
-    if let Some(config) = &connector.config {
-        if config.host.is_some() || config.url.is_some() {
-            return (true, None);
-        }
+    let config = &connector.config;
+    if config.host.is_some() || config.url.is_some() {
+        return (true, None);
     }
     (false, Some("Missing connection configuration".to_string()))
 }
 
 fn test_api_connection(connector: &DataConnector) -> (bool, Option<String>) {
-    if let Some(config) = &connector.config {
-        if config.endpoint.is_some() {
-            return (true, None);
-        }
+    let config = &connector.config;
+    if config.endpoint.is_some() {
+        return (true, None);
     }
     (false, Some("Missing endpoint configuration".to_string()))
 }
 
 fn test_cloud_storage_connection(connector: &DataConnector) -> (bool, Option<String>) {
-    if let Some(config) = &connector.config {
-        if config.bucket.is_some() && config.region.is_some() {
-            return (true, None);
-        }
+    let config = &connector.config;
+    if config.bucket.is_some() && config.region.is_some() {
+        return (true, None);
     }
     (false, Some("Missing bucket or region configuration".to_string()))
 }
 
 #[derive(Debug, Deserialize)]
 struct ConnectorQuery {
+    id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct DocumentQuery {
     id: String,
 }
 
@@ -481,9 +545,11 @@ async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
         Vec::new()
     };
     
-    let context = docs
+    let search_results = search_documents(&docs, &req.query);
+    
+    let context = search_results
         .iter()
-        .map(|doc| format!("- {}: {}", doc.title, doc.content))
+        .map(|r| format!("- {}: {}", r.document.title, r.chunk.content))
         .collect::<Vec<_>>()
         .join("\n");
     
@@ -513,19 +579,54 @@ async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
             }
             Ok(Err(e)) => {
                 tracing::error!("❌ AI 调用失败: {}", e);
-                get_mock_response(&req.query)
+                format!("AI 调用失败: {}", e)
             }
             Err(_) => {
                 tracing::error!("❌ AI 调用超时（超过 120 秒）");
-                get_mock_response(&req.query)
+                "AI 调用超时，请稍后重试".to_string()
             }
         }
     } else {
-        tracing::info!("⚠️ 使用模拟 AI 响应（未配置 API Key）");
-        get_mock_response(&req.query)
+        tracing::warn!("⚠️ AI API 未配置，需要设置 OPENAI_API_KEY 或配置 Ollama");
+        "请配置 AI API 以启用智能问答功能。\n\n配置方式：\n- OpenAI: 设置环境变量 OPENAI_API_KEY=sk-xxx\n- 阿里云通义千问: 设置 OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1 和 OPENAI_API_KEY=sk-xxx\n- Ollama: 设置 OPENAI_BASE_URL=http://localhost:11434/v1".to_string()
     };
     
-    Json(ApiResponse::success(ChatResponse { answer }, "Success"))
+    Json(ApiResponse::success(ChatResponse { answer, sources: search_results }, "Success"))
+}
+
+fn search_documents(docs: &[Document], query: &str) -> Vec<SearchResult> {
+    let mut results = Vec::new();
+    let query_lower = query.to_lowercase();
+    
+    for doc in docs {
+        let title_lower = doc.title.to_lowercase();
+        let filename_lower = doc.filename.to_lowercase();
+        
+        if title_lower.contains(&query_lower) || filename_lower.contains(&query_lower) {
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs()
+                .to_string();
+            
+            results.push(SearchResult {
+                chunk: ChunkInfo {
+                    id: Uuid::new_v4().to_string(),
+                    document_id: doc.id.clone(),
+                    chunk_index: 0,
+                    content: doc.title.clone(),
+                    created_at: now,
+                    metadata: serde_json::json!({}),
+                },
+                document: doc.clone(),
+                similarity: 0.85,
+            });
+        }
+    }
+    
+    results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal));
+    results.truncate(3);
+    results
 }
 
 async fn call_ai_api(
@@ -571,21 +672,6 @@ async fn call_ai_api(
         Ok(choice.message.content.clone())
     } else {
         Err("No response from AI".into())
-    }
-}
-
-fn get_mock_response(query: &str) -> String {
-    let lower_query = query.to_lowercase();
-    
-    if lower_query.contains("topems") || lower_query.contains("系统") {
-        "TOPEMS 是面向化工新材料研发生产企业的全业务数字化平台，包含以下核心模块：\n\n1. TOPEMS-DOC - 文档管理\n2. TOPEMS-IAM - 身份认证\n3. TOPEMS-AI - AI 知识库（我就是）\n4. TOPEMS-FLOW - 工作流\n5. 还有 TOPEMS-RS、TOPEMS-LIMS、TOPEMS-QMS 等业务系统\n\n如需更多帮助，请继续提问！".to_string()
-    } else if lower_query.contains("研发") || lower_query.contains("化工") {
-        "化工新材料研发通常包含以下阶段：\n\n1. 立项阶段：确定研究方向和目标\n2. 配方研发：实验室小试研发\n3. 小试实验：在小规模试验设备中验证\n4. 中试放大：在中试生产设备中放大验证\n5. 质量检测：产品质量分析检测\n6. 批量生产：正式规模化生产\n\nTOPEMS 系统可以支持全流程数字化管理！".to_string()
-    } else {
-        format!(
-            "您好！这是模拟 AI 响应（因为没有配置真实的 AI API Key）。\n\n您的问题：{}\n\n请配置 OPENAI_API_KEY 来启用真实 AI。\n\n示例配置：\n- OpenAI: 设置 OPENAI_API_KEY=sk-xxx\n- 阿里云通义千问: 设置 OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1 和 OPENAI_API_KEY=sk-xxx",
-            query
-        )
     }
 }
 
@@ -636,53 +722,7 @@ async fn main() {
         use_ollama,
     }).unwrap();
 
-    let mock_connectors = vec![
-        DataConnector {
-            id: "connector-1".to_string(),
-            name: "TOPEMS数据库".to_string(),
-            connector_type: ConnectorType::Database,
-            database_type: Some(DatabaseType::Postgres),
-            config: ConnectorConfig {
-                host: Some("localhost".to_string()),
-                port: Some(5432),
-                database: Some("topems".to_string()),
-                username: Some("admin".to_string()),
-                password: Some("password".to_string()),
-                url: None,
-                api_key: None,
-                endpoint: None,
-                bucket: None,
-                region: None,
-            },
-            description: Some("TOPEMS平台主数据库".to_string()),
-            is_active: true,
-            created_at: "1704067200".to_string(),
-            updated_at: "1704067200".to_string(),
-        },
-        DataConnector {
-            id: "connector-2".to_string(),
-            name: "外部API数据源".to_string(),
-            connector_type: ConnectorType::Api,
-            database_type: None,
-            config: ConnectorConfig {
-                host: None,
-                port: None,
-                database: None,
-                username: None,
-                password: None,
-                url: None,
-                api_key: Some("api-key-xxx".to_string()),
-                endpoint: Some("https://api.example.com/v1".to_string()),
-                bucket: None,
-                region: None,
-            },
-            description: Some("外部系统API接口".to_string()),
-            is_active: true,
-            created_at: "1704067201".to_string(),
-            updated_at: "1704067201".to_string(),
-        },
-    ];
-    CONNECTORS.set(Arc::new(Mutex::new(mock_connectors))).unwrap();
+    CONNECTORS.set(Arc::new(Mutex::new(Vec::new()))).unwrap();
     tracing::info!("✅ 数据连接器框架已初始化");
 
     let app_state = AppState {
@@ -701,6 +741,7 @@ async fn main() {
         .route("/api/v1/documents", get(list_documents))
         .route("/api/v1/documents/reload", post(reload_documents))
         .route("/api/v1/documents/upload", post(upload_document))
+        .route("/api/v1/documents/delete", get(delete_document))
         .route("/api/v1/connectors", get(list_connectors))
         .route("/api/v1/connectors/get", get(get_connector))
         .route("/api/v1/connectors/create", post(create_connector))
@@ -721,9 +762,9 @@ async fn main() {
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8022".to_string())
+        .unwrap_or_else(|_| "8013".to_string())
         .parse()
-        .unwrap_or(8022);
+        .unwrap_or(8013);
     
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ TOPEMS-AI 服务运行在 http://{}", addr);
@@ -734,7 +775,7 @@ async fn main() {
     } else if api_key.is_some() {
         tracing::info!("✅ 使用云端 AI 服务 (模型: {}, 超时: 120 秒)", model);
     } else {
-        tracing::info!("⚠️ AI API 未配置，将使用模拟响应");
+        tracing::warn!("⚠️ AI API 未配置，请设置 OPENAI_API_KEY 或配置 Ollama");
     }
     
     axum::serve(

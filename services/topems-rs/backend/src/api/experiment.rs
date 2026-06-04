@@ -1,12 +1,11 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -24,8 +23,8 @@ pub struct PaginationParams {
     pub experiment_type: Option<String>,
 }
 
-pub async fn create_routes() -> topems_shared::Result<Router> {
-    let app = Router::new()
+pub fn create_routes() -> Router<Arc<super::ApiState>> {
+    Router::new()
         .route(
             "/api/v1/experiments",
             get(list_experiments).post(create_experiment),
@@ -53,9 +52,7 @@ pub async fn create_routes() -> topems_shared::Result<Router> {
             "/api/v1/experiments/{id}/advance-phase",
             post(advance_phase),
         )
-        .route("/api/v1/batch-trace/{batch_number}", get(trace_batch));
-
-    Ok(app)
+        .route("/api/v1/batch-trace/{batch_number}", get(trace_batch))
 }
 
 async fn list_experiments(

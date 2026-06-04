@@ -11,9 +11,9 @@ pub struct Sample {
     pub description: Option<String>,
     pub status: String,
     pub project_id: Option<Uuid>,
-    pub received_date: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub received_date: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

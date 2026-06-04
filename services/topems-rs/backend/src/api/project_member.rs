@@ -13,16 +13,15 @@ use crate::models::project_member::{
 };
 use topems_shared::response::ApiResponse;
 
-pub async fn create_routes() -> topems_shared::Result<Router> {
-    let router = Router::new()
+pub fn create_routes() -> Router<Arc<super::ApiState>> {
+    Router::new()
         .route("/api/v1/members", post(create_member))
         .route(
             "/api/v1/members/project/{project_id}",
             get(get_project_members),
         )
         .route("/api/v1/members/{id}", put(update_member))
-        .route("/api/v1/members/{id}", delete(delete_member));
-    Ok(router)
+        .route("/api/v1/members/{id}", delete(delete_member))
 }
 
 pub async fn create_member(

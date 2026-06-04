@@ -107,6 +107,7 @@ impl Drop for RequestTimer {
     }
 }
 
+#[allow(dead_code)]
 pub struct ApiCallMetrics {
     endpoint: String,
     duration_ms: u64,

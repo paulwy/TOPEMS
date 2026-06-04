@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use chrono::Utc;
@@ -36,7 +36,7 @@ pub struct MaterialTest {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateMaterialTestRequest {
     pub project_id: Option<Uuid>,
     pub experiment_id: Option<Uuid>,
@@ -48,7 +48,7 @@ pub struct CreateMaterialTestRequest {
     pub tested_by: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateMaterialTestRequest {
     pub material_name: Option<String>,
     pub supplier: Option<String>,
@@ -57,8 +57,8 @@ pub struct UpdateMaterialTestRequest {
     pub conclusion: Option<String>,
 }
 
-pub async fn create_routes() -> topems_shared::Result<Router> {
-    let app = Router::new()
+pub fn create_routes() -> Router<Arc<super::ApiState>> {
+    Router::new()
         .route(
             "/api/v1/material-tests",
             get(list_material_tests).post(create_material_test),
@@ -76,9 +76,7 @@ pub async fn create_routes() -> topems_shared::Result<Router> {
         .route(
             "/api/v1/material-tests/experiment/{experiment_id}",
             get(list_by_experiment),
-        );
-
-    Ok(app)
+        )
 }
 
 async fn list_material_tests(
@@ -212,6 +210,9 @@ async fn create_material_test(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // Clone req for audit log before moving req into the query
+    let request_data = serde_json::to_value(&req).ok();
+
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
         INSERT INTO rs.material_tests (
@@ -236,46 +237,46 @@ async fn create_material_test(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
-        Ok(record) => (
-            Json(ApiResponse::success(record.clone(), "原料试验记录创建成功")),
-            "success".to_string(),
-            None,
-        ),
+    match result {
+        Ok(record) => {
+            let response_data = serde_json::to_value(&record).ok();
+            log_audit_event(
+                &state.db,
+                "create".to_string(),
+                "material_test".to_string(),
+                Some(id),
+                None,
+                None,
+                None,
+                request_data,
+                response_data,
+                "success".to_string(),
+                None,
+                &headers,
+            )
+            .await;
+            Json(ApiResponse::success(record, "原料试验记录创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建原料试验记录失败: {}", e);
-            (
-                Json(ApiResponse::error(500, "原料试验记录创建失败")),
+            log_audit_event(
+                &state.db,
+                "create".to_string(),
+                "material_test".to_string(),
+                Some(id),
+                None,
+                None,
+                None,
+                request_data,
+                None,
                 "error".to_string(),
                 Some(e.to_string()),
+                &headers,
             )
+            .await;
+            Json(ApiResponse::error(500, "原料试验记录创建失败"))
         }
-    };
-
-    let request_data = serde_json::to_value(&req).ok();
-    let response_data = if let Ok(record) = &result {
-        serde_json::to_value(record).ok()
-    } else {
-        None
-    };
-
-    log_audit_event(
-        &state.db,
-        "create".to_string(),
-        "material_test".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
-        &headers,
-    )
-    .await;
-
-    response
+    }
 }
 
 async fn get_material_test(
@@ -354,45 +355,46 @@ async fn update_material_test(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
-        Ok(record) => (
-            Json(ApiResponse::success(record.clone(), "原料试验记录更新成功")),
-            "success".to_string(),
-            None,
-        ),
+    match result {
+        Ok(record) => {
+            let response_data = serde_json::to_value(&record).ok();
+            log_audit_event(
+                &state.db,
+                "update".to_string(),
+                "material_test".to_string(),
+                Some(id),
+                None,
+                None,
+                None,
+                request_data,
+                response_data,
+                "success".to_string(),
+                None,
+                &headers,
+            )
+            .await;
+            Json(ApiResponse::success(record, "原料试验记录更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新原料试验记录失败: {}", e);
-            (
-                Json(ApiResponse::error(500, "原料试验记录更新失败")),
+            log_audit_event(
+                &state.db,
+                "update".to_string(),
+                "material_test".to_string(),
+                Some(id),
+                None,
+                None,
+                None,
+                request_data,
+                None,
                 "error".to_string(),
                 Some(e.to_string()),
+                &headers,
             )
+            .await;
+            Json(ApiResponse::error(500, "原料试验记录更新失败"))
         }
-    };
-
-    let response_data = if let Ok(record) = &result {
-        serde_json::to_value(record).ok()
-    } else {
-        None
-    };
-
-    log_audit_event(
-        &state.db,
-        "update".to_string(),
-        "material_test".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
-        &headers,
-    )
-    .await;
-
-    response
+    }
 }
 
 async fn delete_material_test(

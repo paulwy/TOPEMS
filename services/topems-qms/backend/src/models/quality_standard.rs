@@ -16,7 +16,7 @@ pub struct QualityStandard {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateQualityStandardRequest {
     pub code: String,
     pub name: String,
@@ -25,7 +25,7 @@ pub struct CreateQualityStandardRequest {
     pub version: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateQualityStandardRequest {
     pub name: Option<String>,
     pub description: Option<String>,

@@ -7,7 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use std::env;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -60,8 +60,8 @@ struct ListQueryParams {
     page_size: Option<i32>,
 }
 
-pub async fn create_routes() -> topems_shared::Result<axum::Router> {
-    let router = axum::Router::new()
+pub fn create_routes() -> axum::Router<Arc<super::ApiState>> {
+    axum::Router::new()
         .route("/api/v1/ai/analyses", axum::routing::get(list_analyses))
         .route("/api/v1/ai/analyses", axum::routing::post(create_analysis))
         .route("/api/v1/ai/analyses/{id}", axum::routing::get(get_analysis))
@@ -69,8 +69,7 @@ pub async fn create_routes() -> topems_shared::Result<axum::Router> {
         .route(
             "/api/v1/entities/{entity_type}/{entity_id}/analyses",
             axum::routing::get(get_entity_analyses),
-        );
-    Ok(router)
+        )
 }
 
 async fn list_analyses(

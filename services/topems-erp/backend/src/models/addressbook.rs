@@ -46,6 +46,7 @@ pub struct DepartmentNode {
     pub children: Vec<DepartmentNode>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct AddressbookQueryParams {
     #[serde(default)]
@@ -68,6 +69,7 @@ fn default_page_size() -> i64 {
     20
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct AddressbookSearchParams {
     #[serde(rename = "type")]
@@ -82,6 +84,7 @@ fn default_limit() -> i64 {
     10
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct ExportParams {
     #[serde(rename = "type")]

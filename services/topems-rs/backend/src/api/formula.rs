@@ -1,12 +1,11 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -26,8 +25,8 @@ pub struct PaginationParams {
     pub project_id: Option<Uuid>,
 }
 
-pub async fn create_routes() -> topems_shared::Result<Router> {
-    let app = Router::new()
+pub fn create_routes() -> Router<Arc<super::ApiState>> {
+    Router::new()
         .route("/api/v1/formulas", get(list_formulas).post(create_formula))
         .route(
             "/api/v1/formulas/{id}",
@@ -37,9 +36,7 @@ pub async fn create_routes() -> topems_shared::Result<Router> {
             "/api/v1/formulas/{id}/versions",
             get(get_formula_versions).post(create_formula_version),
         )
-        .route("/api/v1/formulas/{id}/approve", post(approve_formula));
-
-    Ok(app)
+        .route("/api/v1/formulas/{id}/approve", post(approve_formula))
 }
 
 async fn list_formulas(
@@ -123,6 +120,14 @@ async fn create_formula(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // Clone necessary fields before moving req into the query
+    let req_name = req.name.clone();
+    let req_code = req.code.clone();
+    let req_category = req.category.clone();
+    let req_description = req.description.clone();
+    let req_process_steps = req.process_steps.clone();
+    let req_clone = req.clone(); // Clone for audit log
+
     let result = sqlx::query_as::<_, Formula>(
         r#"
         INSERT INTO rs.formulas (
@@ -138,21 +143,21 @@ async fn create_formula(
         "#,
     )
     .bind(id)
-    .bind(&req.name)
-    .bind(&req.code)
+    .bind(&req_name)
+    .bind(&req_code)
     .bind(req.version.unwrap_or_else(|| "v1.0".to_string()))
-    .bind(&req.category)
-    .bind(&req.description)
+    .bind(&req_category)
+    .bind(&req_description)
     .bind(req.project_id)
     .bind(req.status.unwrap_or_else(|| "草稿".to_string()))
     .bind::<Option<String>>(None)
     .bind(req.effective_date)
     .bind(req.expiration_date)
     .bind(serde_json::to_value(req.ingredients.unwrap_or(vec![])).unwrap_or(serde_json::json!([])))
-    .bind(&req.process_steps)
+    .bind(&req_process_steps)
     .bind(serde_json::json!({}))
     .bind(req.properties.unwrap_or(serde_json::json!({})))
-    .bind(&req.name)
+    .bind(&req_name)
     .bind(now)
     .bind(now)
     .fetch_one(&state.db)
@@ -174,7 +179,7 @@ async fn create_formula(
         }
     };
 
-    let request_data = serde_json::to_value(&req).ok();
+    let request_data = serde_json::to_value(&req_clone).ok();
     let response_data = if let Ok(formula) = &result {
         serde_json::to_value(formula).ok()
     } else {

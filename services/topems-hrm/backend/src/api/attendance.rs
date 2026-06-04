@@ -1,8 +1,7 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;
@@ -41,7 +40,7 @@ async fn list_attendance(
         r#"
         SELECT id, employee_id, date, check_in, check_out, 
                status, work_hours, notes, created_at, updated_at
-        FROM attendance_records
+        FROM hrm.attendance_records
         WHERE ($1::uuid IS NULL OR employee_id = $1)
         ORDER BY date DESC
         LIMIT $2 OFFSET $3
@@ -57,7 +56,7 @@ async fn list_attendance(
         Ok(records) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM attendance_records
+                SELECT COUNT(*) FROM hrm.attendance_records
                 WHERE ($1::uuid IS NULL OR employee_id = $1)
                 "#,
             )
@@ -98,7 +97,7 @@ async fn create_attendance(
 
     let result = sqlx::query_as::<_, AttendanceRecord>(
         r#"
-        INSERT INTO attendance_records (
+        INSERT INTO hrm.attendance_records (
             id, employee_id, date, check_in, check_out, 
             status, work_hours, notes, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -169,7 +168,7 @@ async fn get_attendance(
         r#"
         SELECT id, employee_id, date, check_in, check_out, 
                status, work_hours, notes, created_at, updated_at
-        FROM attendance_records WHERE id = $1
+        FROM hrm.attendance_records WHERE id = $1
         "#,
     )
     .bind(id)
@@ -194,7 +193,7 @@ async fn update_attendance(
     let existing = sqlx::query_as::<_, AttendanceRecord>(
         r#"
         SELECT id, employee_id, date, check_in, check_out, 
-               status, work_hours, notes, created_at, updated_at FROM attendance_records WHERE id = $1
+               status, work_hours, notes, created_at, updated_at FROM hrm.attendance_records WHERE id = $1
         "#,
     )
     .bind(id)
@@ -204,7 +203,7 @@ async fn update_attendance(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => return Json(ApiResponse::<AttendanceRecord>::error(404, "考勤记录不存在")),
-        Err(e) => return Json(ApiResponse::<AttendanceRecord>::error(500, "查询考勤记录失败")),
+        Err(_e) => return Json(ApiResponse::<AttendanceRecord>::error(500, "查询考勤记录失败")),
     };
 
     let check_in = req.check_in.or(existing.check_in);
@@ -216,7 +215,7 @@ async fn update_attendance(
 
     let result = sqlx::query_as::<_, AttendanceRecord>(
         r#"
-        UPDATE attendance_records SET
+        UPDATE hrm.attendance_records SET
             check_in = $2, check_out = $3, status = $4, 
             work_hours = $5, notes = $6, updated_at = $7
         WHERE id = $1
@@ -248,7 +247,7 @@ async fn delete_attendance(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM attendance_records WHERE id = $1")
+    let result = sqlx::query("DELETE FROM hrm.attendance_records WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

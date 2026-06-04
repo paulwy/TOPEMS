@@ -4,16 +4,19 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct CacheEntry<T> {
     value: T,
     expires_at: Instant,
 }
 
+#[allow(dead_code)]
 pub struct InMemoryCache<T: Clone + Send + Sync + 'static> {
     cache: Arc<DashMap<String, CacheEntry<T>>>,
     default_ttl: Duration,
 }
 
+#[allow(dead_code)]
 impl<T: Clone + Send + Sync + 'static> InMemoryCache<T> {
     pub fn new(default_ttl: Duration) -> Self {
         Self {

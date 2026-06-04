@@ -121,6 +121,7 @@ async fn health_check(
     Json(ApiResponse::success(status_str, "健康检查"))
 }
 
+#[allow(dead_code)]
 #[derive(Serialize, Clone)]
 struct ErpHealthSummary {
     service_name: String,

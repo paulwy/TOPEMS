@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, User, Mail, Phone, Calendar, MapPin,
   AlertCircle, Briefcase, Building2, Edit2, Save, X,
-  Heart, FileText
+  Heart, FileText, Plus
 } from 'lucide-react';
 import { employeeApi, departmentApi, type Employee, type Department } from '../api/hrm';
 import { useNotification } from '../hooks/useNotification';
@@ -224,20 +224,21 @@ const HrmEmployeeDetailPage: React.FC = () => {
                     <div>
                       <Label className="text-sm text-gray-500">性别</Label>
                       {isEditing ? (
-                        <Select
-                          value={editData.gender || ''}
-                          onValueChange={(value) => setEditData({ ...editData, gender: value })}
-                          className="mt-1"
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="请选择" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">未设置</SelectItem>
-                            <SelectItem value="male">男</SelectItem>
-                            <SelectItem value="female">女</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="mt-1">
+                          <Select
+                            value={editData.gender || ''}
+                            onValueChange={(value) => setEditData({ ...editData, gender: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="请选择" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">未设置</SelectItem>
+                              <SelectItem value="male">男</SelectItem>
+                              <SelectItem value="female">女</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       ) : (
                         <p className="mt-1 font-medium">
                           {employee.gender === 'male' ? '男' : employee.gender === 'female' ? '女' : '-'}
@@ -277,23 +278,24 @@ const HrmEmployeeDetailPage: React.FC = () => {
                     <div>
                       <Label className="text-sm text-gray-500">部门</Label>
                       {isEditing ? (
-                        <Select
-                          value={editData.department_id || ''}
-                          onValueChange={(value) => setEditData({ ...editData, department_id: value || undefined })}
-                          className="mt-1"
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="请选择部门" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">未设置</SelectItem>
-                            {departments.map(dept => (
-                              <SelectItem key={dept.id} value={dept.id}>
-                                {dept.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="mt-1">
+                          <Select
+                            value={editData.department_id || ''}
+                            onValueChange={(value) => setEditData({ ...editData, department_id: value || undefined })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="请选择部门" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">未设置</SelectItem>
+                              {departments.map(dept => (
+                                <SelectItem key={dept.id} value={dept.id}>
+                                  {dept.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       ) : (
                         <p className="mt-1 font-medium">{getDepartmentName(employee.department_id)}</p>
                       )}

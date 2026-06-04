@@ -1,8 +1,7 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use bigdecimal::BigDecimal;
@@ -11,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;
-use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult, api_error};
+use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -31,7 +30,7 @@ pub struct LeaveRequest {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateLeaveRequest {
     pub employee_id: Uuid,
     pub leave_type: String,
@@ -41,7 +40,7 @@ pub struct CreateLeaveRequest {
     pub reason: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateLeaveRequest {
     pub leave_type: Option<String>,
     pub start_date: Option<chrono::DateTime<chrono::Utc>>,
@@ -50,12 +49,12 @@ pub struct UpdateLeaveRequest {
     pub reason: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ApproveLeaveRequest {
     pub approver_id: Uuid,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RejectLeaveRequest {
     pub approver_id: Uuid,
     pub reason: String,
@@ -91,7 +90,7 @@ async fn list_leaves(
     let result = sqlx::query_as::<_, LeaveRequest>(
         r#"
         SELECT id, employee_id, leave_type, start_date, end_date, days, reason, status, approver_id, approved_at, rejection_reason, created_at, updated_at
-        FROM leave_requests
+        FROM hrm.leave_requests
         WHERE ($1::uuid IS NULL OR employee_id = $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC

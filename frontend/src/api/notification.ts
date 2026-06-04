@@ -104,41 +104,20 @@ export const createNotification = async (
   );
 };
 
-// 批量操作辅助函数
-export const bulkMarkAsRead = async (ids: string[]): Promise<ApiResponse<number>> => {
-  let count = 0;
-  for (const id of ids) {
-    try {
-      await markAsRead(id);
-      count++;
-    } catch (e) {
-      console.error(`Failed to mark notification ${id} as read:`, e);
-    }
-  }
-  return {
-    code: 200,
-    success: true,
-    data: count,
-    message: `成功标记 ${count} 条通知为已读`,
-    timestamp: new Date().toISOString()
-  };
+export const bulkMarkAsRead = async (
+  ids: string[]
+): Promise<ApiResponse<number>> => {
+  return await apiClient.notification.put<number>(
+    '/api/v1/notifications/bulk/read',
+    { ids }
+  );
 };
 
-export const bulkDeleteNotifications = async (ids: string[]): Promise<ApiResponse<number>> => {
-  let count = 0;
-  for (const id of ids) {
-    try {
-      await deleteNotification(id);
-      count++;
-    } catch (e) {
-      console.error(`Failed to delete notification ${id}:`, e);
-    }
-  }
-  return {
-    code: 200,
-    success: true,
-    data: count,
-    message: `成功删除 ${count} 条通知`,
-    timestamp: new Date().toISOString()
-  };
+export const bulkDeleteNotifications = async (
+  ids: string[]
+): Promise<ApiResponse<number>> => {
+  return await apiClient.notification.post<number>(
+    '/api/v1/notifications/bulk/delete',
+    { ids }
+  );
 };

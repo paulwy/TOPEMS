@@ -4,6 +4,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 use utoipa::ToSchema;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ContractType {
@@ -30,6 +31,7 @@ impl std::fmt::Display for ContractType {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ContractStatus {

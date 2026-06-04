@@ -59,18 +59,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (credentials: { username: string; password: string }) => {
-    const mockUser: User = {
-      id: '1',
-      name: credentials.username,
-      roles: ['manager'],
-      permissions: rolePermissions['manager'],
-    };
-    
-    if (credentials.password === 'password') {
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-    } else {
-      throw new Error('用户名或密码错误');
+    try {
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+      
+      if (!response.ok) {
+        throw new Error('用户名或密码错误');
+      }
+      
+      const data = await response.json();
+      if (data.success && data.data) {
+        setUser(data.data);
+        localStorage.setItem('user', JSON.stringify(data.data));
+      } else {
+        throw new Error(data.message || '登录失败');
+      }
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : '网络错误');
     }
   };
 

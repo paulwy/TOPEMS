@@ -6,7 +6,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -55,8 +55,8 @@ struct ListQueryParams {
     page_size: Option<i32>,
 }
 
-pub async fn create_routes() -> topems_shared::Result<axum::Router> {
-    let router = axum::Router::new()
+pub fn create_routes() -> axum::Router<Arc<super::ApiState>> {
+    axum::Router::new()
         .route("/api/v1/documents", axum::routing::get(list_documents))
         .route(
             "/api/v1/documents",
@@ -73,8 +73,7 @@ pub async fn create_routes() -> topems_shared::Result<axum::Router> {
         .route(
             "/api/v1/entities/{entity_type}/{entity_id}/documents",
             axum::routing::get(get_entity_documents),
-        );
-    Ok(router)
+        )
 }
 
 async fn list_documents(

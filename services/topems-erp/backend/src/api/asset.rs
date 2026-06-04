@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::*,
     Json, Router,
 };
 use chrono::Utc;
@@ -44,7 +44,7 @@ async fn list_assets(
     let result = sqlx::query_as::<_, Asset>(
         r#"
         SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at
-        FROM assets
+        FROM erp.assets
         WHERE ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -62,7 +62,7 @@ async fn list_assets(
         Ok(assets) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM assets
+                SELECT COUNT(*) FROM erp.assets
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -104,7 +104,7 @@ async fn create_asset(
 
     let result = sqlx::query_as::<_, Asset>(
         r#"
-        INSERT INTO assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at)
+        INSERT INTO erp.assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'in_use', $11, $12)
         RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at
         "#,
@@ -173,7 +173,7 @@ async fn get_asset(
     let result = sqlx::query_as::<_, Asset>(
         r#"
         SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at
-        FROM assets WHERE id = $1
+        FROM erp.assets WHERE id = $1
         "#,
     )
     .bind(id)
@@ -197,7 +197,7 @@ async fn update_asset(
     Json(req): Json<UpdateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
     let existing = sqlx::query_as::<_, Asset>(
-        "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at FROM assets WHERE id = $1",
+        "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at FROM erp.assets WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -224,7 +224,7 @@ async fn update_asset(
 
     let result = sqlx::query_as::<_, Asset>(
         r#"
-        UPDATE assets SET
+        UPDATE erp.assets SET
             name = $2, category = $3, brand = $4, model = $5, purchase_date = $6, purchase_amount = $7, location = $8, responsible_id = $9, status = $10, updated_at = $11
         WHERE id = $1
         RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at
@@ -290,7 +290,7 @@ async fn delete_asset(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM assets WHERE id = $1")
+    let result = sqlx::query("DELETE FROM erp.assets WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -21,6 +21,49 @@ const Rspage: React.FC = () => {
   const [experiments, setExperiments] = useState<ExperimentRecord[]>([]);
   const [formulas, setFormulas] = useState<Formula[]>([]);
   const [loading, setLoading] = useState(true);
+  const [serviceStatuses, setServiceStatuses] = useState<{[key: string]: boolean}>({
+    rs: false,
+  });
+
+  // Check if a specific service is up
+  const isServiceUp = (serviceName: string): boolean => {
+    return serviceStatuses[serviceName] || false;
+  };
+
+  // Check service status
+  const checkServiceStatus = async (
+    serviceName: string, 
+    port: number, 
+    setStatus: (up: boolean) => void
+  ) => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      
+      const response = await fetch(`http://localhost:${port}/health`, {
+        signal: controller.signal,
+        method: 'GET',
+      });
+      clearTimeout(timeoutId);
+      setStatus(response.ok);
+    } catch {
+      setStatus(false);
+    }
+  };
+
+  // Check all services on mount and periodically
+  useEffect(() => {
+    const checkAllServices = () => {
+      checkServiceStatus('rs', 8020, (up) => 
+        setServiceStatuses(prev => ({ ...prev, rs: up }))
+      );
+    };
+
+    checkAllServices();
+    const intervalId = setInterval(checkAllServices, 10000);
+
+    return () => clearInterval(intervalId);
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -219,9 +262,13 @@ const Rspage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadProjects();
-    loadExperiments();
-  }, []);
+    if (isServiceUp('rs')) {
+      loadProjects();
+      loadExperiments();
+    } else {
+      setLoading(false);
+    }
+  }, [serviceStatuses.rs]);
 
   // 数据适配函数：处理后端返回的数据字段与前端期望不匹配的问题
   const adaptProject = (p: any): Project => {
@@ -1117,6 +1164,28 @@ const Rspage: React.FC = () => {
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-slate-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isServiceUp('rs')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FlaskConical className="w-8 h-8 text-orange-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">科研研发服务未启动</h2>
+          <p className="text-slate-600 mb-6">
+            RS服务正在启动中，请稍后刷新页面，或者联系管理员启动服务。
+          </p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            返回首页
+          </button>
         </div>
       </div>
     );
