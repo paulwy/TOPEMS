@@ -34,6 +34,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectCountRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const callbacksRef = useRef({ onMessage, onOpen, onClose, onError });
+  callbacksRef.current = { onMessage, onOpen, onClose, onError };
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -45,7 +48,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     
     if (wsUrl.startsWith('/')) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
+      const hostname = window.location.hostname;
+      const port = window.location.port ? `:${window.location.port}` : '';
+      const host = hostname === 'localhost' ? '127.0.0.1' + port : window.location.host;
       wsUrl = `${protocol}//${host}${wsUrl}`;
     } else {
       wsUrl = wsUrl.replace('http://', 'ws://').replace('https://', 'wss://');
@@ -60,13 +65,13 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       setIsConnected(true);
       setError(null);
       reconnectCountRef.current = 0;
-      onOpen?.();
+      callbacksRef.current.onOpen?.();
     };
 
     ws.onmessage = (event) => {
       try {
         const message: WsMessage = JSON.parse(event.data);
-        onMessage?.(message);
+        callbacksRef.current.onMessage?.(message);
       } catch (err) {
         console.error('Failed to parse WebSocket message:', err);
       }
@@ -75,7 +80,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     ws.onclose = (event) => {
       console.log('[useWebSocket] Connection closed:', event.code, event.reason);
       setIsConnected(false);
-      onClose?.();
+      callbacksRef.current.onClose?.();
 
       if (reconnectCountRef.current < reconnectAttempts) {
         reconnectCountRef.current++;
@@ -89,11 +94,11 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     ws.onerror = (event) => {
       console.error('[useWebSocket] Connection error:', event);
       setError(event);
-      onError?.(event);
+      callbacksRef.current.onError?.(event);
     };
 
     wsRef.current = ws;
-  }, [onMessage, onOpen, onClose, onError, reconnectAttempts, reconnectInterval]);
+  }, [reconnectAttempts, reconnectInterval]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

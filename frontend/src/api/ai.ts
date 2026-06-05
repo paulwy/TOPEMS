@@ -1,5 +1,14 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
+import type {
+  ValidateRequest,
+  ValidateResponse,
+  CompleteRequest,
+  CompleteResponse,
+  SummarizeRequest,
+  SummarizeResponse,
+  AITemplate,
+} from '../types/ai';
 
 export interface Document {
   id: string;
@@ -142,5 +151,21 @@ export const aiApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.ai.get<string>('/health');
+  },
+
+  validate: async (data: ValidateRequest): Promise<ApiResponse<ValidateResponse>> => {
+    return apiClient.ai.post<ValidateResponse>('/api/v1/ai/validate', data);
+  },
+
+  complete: async (data: CompleteRequest): Promise<ApiResponse<CompleteResponse>> => {
+    return apiClient.ai.post<CompleteResponse>('/api/v1/ai/complete', data);
+  },
+
+  summarize: async (data: SummarizeRequest): Promise<ApiResponse<SummarizeResponse>> => {
+    return apiClient.ai.post<SummarizeResponse>('/api/v1/ai/summarize', data);
+  },
+
+  listTemplates: async (): Promise<ApiResponse<AITemplate[]>> => {
+    return apiClient.ai.get<AITemplate[]>('/api/v1/ai/templates');
   },
 };

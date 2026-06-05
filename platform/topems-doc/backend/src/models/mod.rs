@@ -463,7 +463,7 @@ pub struct ListArchivesQuery {
     pub source_module: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ArchiveResponse {
     pub id: Uuid,
     pub archive_no: String,
@@ -497,7 +497,7 @@ pub struct ListArchivesResponse {
     pub page_size: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ArchiveCategoryResponse {
     pub id: Uuid,
     pub code: String,

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use uuid::Uuid;
 use sqlx::FromRow;
 
@@ -11,9 +11,9 @@ pub struct ChatRoom {
     pub members: serde_json::Value,
     pub created_by: String,
     pub last_message: Option<String>,
-    pub last_message_time: Option<DateTime<Utc>>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub last_message_time: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,7 +41,7 @@ pub struct ChatMessage {
     pub content: String,
     pub file_url: Option<String>,
     pub file_name: Option<String>,
-    pub created_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
     pub is_read: bool,
 }
 
@@ -64,8 +64,8 @@ pub struct ProjectGroup {
     pub project_id: Option<Uuid>,
     pub members: serde_json::Value,
     pub created_by: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,10 +84,8 @@ pub struct Notification {
   pub title: String,
   pub content: String,
   pub notification_type: String,
-  pub related_id: Option<Uuid>,
-  pub related_type: Option<String>,
   pub is_read: bool,
-  pub created_at: DateTime<Utc>,
+  pub created_at: NaiveDateTime,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -104,7 +102,7 @@ pub struct CreateNotification {
 pub struct UserOnlineStatus {
     pub user_id: String,
     pub is_online: bool,
-    pub last_seen: DateTime<Utc>,
+    pub last_seen: NaiveDateTime,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,6 +112,37 @@ pub struct UploadedFile {
     pub file_path: String,
     pub content_type: String,
     pub size: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Friend {
+    pub id: Uuid,
+    pub user_id: String,
+    pub friend_id: String,
+    pub friend_name: String,
+    pub status: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateFriendRequest {
+    pub friend_id: String,
+    pub friend_name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct ContactGroup {
+    pub id: Uuid,
+    pub user_id: String,
+    pub name: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateContactGroup {
+    pub name: String,
 }
 
 #[cfg(test)]

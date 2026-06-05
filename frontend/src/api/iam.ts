@@ -167,7 +167,7 @@ export const authApi = {
   },
 
   refreshToken: async (token: string): Promise<ApiResponse<any>> => {
-    const response = await apiClient.iam.post<any>('/api/v1/auth/refresh', { token });
+    const response = await apiClient.iam.post<any>('/api/v1/auth/refresh', { refresh_token: token });
 
     if (response.success && response.data) {
       apiClient.setAuthToken(response.data.access_token);

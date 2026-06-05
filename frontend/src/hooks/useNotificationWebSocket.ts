@@ -156,7 +156,9 @@ export const useNotificationWebSocket = ({
         if (ws.readyState === WebSocket.CONNECTING) {
           logger.warn('WebSocket connection timeout');
           try {
-            ws.close(1006, 'Connection timeout');
+            if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+              ws.close(1006, 'Connection timeout');
+            }
           } catch (e) {
             logger.error('Failed to close WebSocket on timeout:', e);
           }

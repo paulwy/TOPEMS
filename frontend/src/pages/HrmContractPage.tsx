@@ -85,7 +85,7 @@ interface RenewFormState {
   renewal_reason: string;
 }
 
-export default function HrmContractPage() {
+export default function ContractManagementPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PaginatedResult<Contract>>({ items: [], total: 0, page: 1, page_size: 20 });
   const [employees, setEmployees] = useState<Employee[]>([]);

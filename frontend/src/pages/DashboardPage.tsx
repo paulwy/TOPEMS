@@ -145,6 +145,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     wms: 'wms',
     im: 'im',
     report: 'report',
+    contract: 'hrm',
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<
@@ -401,7 +402,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         path: '/system',
         color: 'bg-slate-600',
         status: 'online' as const,
-        permission: 'iam:admin',
+        permission: 'system:admin',
         module: 'iam',
         adminOnly: true,
       },
@@ -412,8 +413,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         path: '/integration',
         color: 'bg-blue-500',
         status: 'online' as const,
-        permission: null,
+        permission: 'system:admin',
         module: 'integration',
+        adminOnly: true,
       },
       {
         title: '报表中心',
@@ -422,7 +424,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         path: '/reports',
         color: 'bg-emerald-500',
         status: 'online' as const,
-        permission: 'iam:admin',
+        permission: 'system:admin',
         module: 'iam',
         adminOnly: true,
       },
@@ -444,8 +446,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         path: '/help',
         color: 'bg-amber-500',
         status: 'online' as const,
+        permission: null,
       },
-    ],
+    ].filter((module) => shouldShowModule(module)),
     [shouldShowModule]
   );
 
@@ -506,6 +509,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           status: 'online' as const,
           permission: 'erp:admin',
           module: 'erp',
+          adminOnly: true,
+        },
+        {
+          title: '合同管理',
+          icon: FileCheck,
+          description: '员工合同、续签流程、到期提醒',
+          path: '/contracts',
+          color: 'bg-violet-500',
+          status: 'online' as const,
+          permission: 'contract:read',
+          module: 'contract',
           adminOnly: true,
         },
         {
@@ -650,16 +664,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           permission: 'mail:read',
           module: 'mail',
         },
-        {
-          title: '人力资源',
-          icon: Briefcase,
-          description: '员工管理、考勤、薪资、绩效、招聘',
-          path: '/hrm/positions',
-          color: 'bg-indigo-500',
-          status: 'online' as const,
-          permission: 'hrm:read',
-          module: 'hrm',
-        },
       ].filter((module) => shouldShowModule(module)),
     [shouldShowModule]
   );
@@ -673,7 +677,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         path: '/system',
         color: 'bg-slate-600',
         status: 'online' as const,
-        permission: 'iam:admin',
+        permission: 'system:admin',
         module: 'iam',
         adminOnly: true,
       },
@@ -684,8 +688,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         path: '/integration',
         color: 'bg-blue-500',
         status: 'online' as const,
-        permission: null,
+        permission: 'system:admin',
         module: 'integration',
+        adminOnly: true,
       },
       {
         title: '报表中心',
@@ -694,7 +699,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         path: '/reports',
         color: 'bg-emerald-500',
         status: 'online' as const,
-        permission: 'iam:admin',
+        permission: 'system:admin',
         module: 'iam',
         adminOnly: true,
       },
@@ -716,6 +721,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         path: '/help',
         color: 'bg-amber-500',
         status: 'online' as const,
+        permission: null,
       },
     ].filter((module) => shouldShowModule(module)),
     [shouldShowModule]
@@ -726,7 +732,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       { label: '上传文件', icon: FileText, path: '/documents', color: 'text-blue-500', service: 'doc' },
       { label: 'AI 问答', icon: Brain, path: '/ai', color: 'text-purple-500', service: 'ai' },
       { label: '发起流程', icon: GitBranch, path: '/workflows', color: 'text-green-500', service: 'flow' },
-      { label: '我的待办', icon: Clock, path: '/workflows', color: 'text-orange-500', service: 'flow' },
+      { label: '我的待办', icon: Clock, path: '/flow/approvals', color: 'text-orange-500', service: 'flow' },
       { label: '通知中心', icon: Bell, path: '/notifications', color: 'text-yellow-500', service: 'notification' },
       { label: '个人中心', icon: User, path: '/profile', color: 'text-indigo-500', service: null },
     ],

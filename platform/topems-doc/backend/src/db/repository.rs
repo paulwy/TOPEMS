@@ -896,8 +896,8 @@ impl ArchiveCategoryRepository {
             children_map: &std::collections::HashMap<Uuid, Vec<ArchiveCategoryResponse>>,
         ) {
             if let Some(children) = children_map.get(&parent.id) {
-                let mut children_clone = children.clone();
-                for child in &mut children_clone {
+                let mut children_clone = children.to_vec();
+                for child in children_clone.iter_mut() {
                     add_children(child, children_map);
                 }
                 parent.children = children_clone;

@@ -49,7 +49,7 @@ const HelpCenterPage = lazy(() => import('./pages/HelpCenterPage'));
 const TemplateManagementPage = lazy(() => import('./pages/TemplateManagementPage'));
 const HrmPositionPage = lazy(() => import('./pages/HrmPositionPage'));
 const HrmLeavePage = lazy(() => import('./pages/HrmLeavePage'));
-const HrmContractPage = lazy(() => import('./pages/HrmContractPage'));
+const ContractManagementPage = lazy(() => import('./pages/HrmContractPage'));
 const HrmRecruitmentPage = lazy(() => import('./pages/HrmRecruitmentPage'));
 const HrmPayrollPage = lazy(() => import('./pages/HrmPayrollPage'));
 const HrmPerformancePage = lazy(() => import('./pages/HrmPerformancePage'));
@@ -86,6 +86,7 @@ const PmProjectDetailPage = lazy(() => import('./pages/PmProjectDetailPage'));
 const PmProjectCreatePage = lazy(() => import('./pages/PmProjectCreatePage'));
 const PmContractListPage = lazy(() => import('./pages/PmContractListPage'));
 const PmContractDetailPage = lazy(() => import('./pages/PmContractDetailPage'));
+const PmContractCreatePage = lazy(() => import('./pages/PmContractCreatePage'));
 const OfficeSuppliesManagementPage = lazy(() => import('./pages/OfficeSuppliesManagementPage'));
 const MeetingRoomManagementPage = lazy(() => import('./pages/MeetingRoomManagementPage'));
 const VehicleManagementPage = lazy(() => import('./pages/VehicleManagementPage'));
@@ -593,11 +594,11 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path='/hrm/contracts'
+            path='/contracts'
             element={
-              <ProtectedRoute requiredPermissions={['hrm:read']}>
-                <ModuleGate module='hrm' action='read'>
-                  <HrmContractPage />
+              <ProtectedRoute requiredPermissions={['contract:read']}>
+                <ModuleGate module='contract' action='read'>
+                  <ContractManagementPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
@@ -797,6 +798,10 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
+            path='/config-debug'
+            element={<Navigate to='/debug' replace />}
+          />
+          <Route
             path='/mail'
             element={
               <ProtectedRoute requiredPermissions={['mail:read']}>
@@ -931,6 +936,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <PmContractListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/pm/contracts/create'
+            element={
+              <ProtectedRoute>
+                <PmContractCreatePage />
               </ProtectedRoute>
             }
           />

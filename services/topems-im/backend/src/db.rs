@@ -22,6 +22,8 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
             created_by VARCHAR(100) NOT NULL,
             last_message TEXT,
             last_message_time TIMESTAMP,
+            is_muted BOOLEAN NOT NULL DEFAULT FALSE,
+            is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL
         )
@@ -115,6 +117,66 @@ pub async fn run_migrations(pool: &PgPool) -> Result<()> {
     sqlx::query!(
         r#"
         CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read)
+        "#
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        CREATE TABLE IF NOT EXISTS friends (
+            id UUID PRIMARY KEY,
+            user_id VARCHAR(100) NOT NULL,
+            friend_id VARCHAR(100) NOT NULL,
+            friend_name VARCHAR(100) NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP NOT NULL,
+            UNIQUE(user_id, friend_id)
+        )
+        "#
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        CREATE TABLE IF NOT EXISTS contact_groups (
+            id UUID PRIMARY KEY,
+            user_id VARCHAR(100) NOT NULL,
+            name VARCHAR(100) NOT NULL,
+            created_at TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP NOT NULL
+        )
+        "#
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        CREATE TABLE IF NOT EXISTS contact_group_members (
+            id UUID PRIMARY KEY,
+            group_id UUID NOT NULL REFERENCES contact_groups(id) ON DELETE CASCADE,
+            user_id VARCHAR(100) NOT NULL,
+            created_at TIMESTAMP NOT NULL
+        )
+        "#
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        CREATE INDEX IF NOT EXISTS idx_friends_user_id ON friends(user_id)
+        "#
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        CREATE INDEX IF NOT EXISTS idx_contact_groups_user_id ON contact_groups(user_id)
         "#
     )
     .execute(pool)

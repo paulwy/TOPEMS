@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ArrowLeft, Save, Calendar, Users, DollarSign, Tag, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pmApi } from '../api/pm';
+import { AIHelperButton, AICodeGenerator, AITextOptimizer, AIFormValidator, AIDataCompleter } from '../components/ai';
+import type { CompletionItem, ValidateRequest } from '../types/ai';
 
 type ProjectType = 'RESEARCH' | 'PRODUCTION' | 'CONSTRUCTION' | 'DESIGN' | 'SERVICE';
 
@@ -28,6 +30,11 @@ const PmProjectCreatePage: React.FC = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  
+  const [showAICodeGenerator, setShowAICodeGenerator] = useState(false);
+  const [showAITextOptimizer, setShowAITextOptimizer] = useState(false);
+  const [showAIFormValidator, setShowAIFormValidator] = useState(false);
+  const [showAIDataCompleter, setShowAIDataCompleter] = useState(false);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -74,6 +81,33 @@ const PmProjectCreatePage: React.FC = () => {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));
     }
+  };
+  
+  const handleSelectAICode = (code: string) => {
+    setFormData((prev) => ({ ...prev, code }));
+  };
+  
+  const handleOptimizedText = (text: string) => {
+    setFormData((prev) => ({ ...prev, description: text }));
+    setShowAITextOptimizer(false);
+  };
+  
+  const handleApplyCompletion = (completions: Record<string, CompletionItem>) => {
+    const updates: Record<string, any> = {};
+    Object.entries(completions).forEach(([field, item]) => {
+      updates[field] = item.value;
+    });
+    setFormData((prev) => ({ ...prev, ...updates }));
+    setShowAIDataCompleter(false);
+  };
+  
+  const handleApplyValidationSuggestions = (suggestions: any[]) => {
+    const updates: Record<string, any> = {};
+    suggestions.forEach((s) => {
+      updates[s.field] = s.value;
+    });
+    setFormData((prev) => ({ ...prev, ...updates }));
+    setShowAIFormValidator(false);
   };
 
   return (
@@ -155,10 +189,19 @@ const PmProjectCreatePage: React.FC = () => {
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                <FileText className='w-4 h-4 inline mr-1' />
-                项目描述
-              </label>
+              <div className='flex items-center justify-between mb-1'>
+                <label className='block text-sm font-medium text-gray-700 flex items-center gap-1'>
+                  <FileText className='w-4 h-4' />
+                  项目描述
+                </label>
+                <AIHelperButton
+                  type='optimize'
+                  onClick={() => setShowAITextOptimizer(true)}
+                  size='sm'
+                  variant='secondary'
+                  label='AI 优化'
+                />
+              </div>
               <textarea
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
@@ -252,26 +295,100 @@ const PmProjectCreatePage: React.FC = () => {
               />
             </div>
 
-            <div className='flex justify-end gap-4 pt-4 border-t border-gray-200'>
-              <button
-                type='button'
-                onClick={() => navigate('/pm/projects')}
-                className='px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors'
-              >
-                取消
-              </button>
-              <button
-                type='submit'
-                disabled={submitting}
-                className='flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-              >
-                <Save className='w-4 h-4' />
-                {submitting ? '提交中...' : '保存项目'}
-              </button>
+            <div className='flex justify-between items-center pt-4 border-t border-gray-200'>
+              <div className='flex gap-2'>
+                <AIHelperButton
+                  type='generate'
+                  onClick={() => setShowAICodeGenerator(true)}
+                  size='sm'
+                  variant='secondary'
+                  label='生成编号'
+                />
+                <AIHelperButton
+                  type='complete'
+                  onClick={() => setShowAIDataCompleter(true)}
+                  size='sm'
+                  variant='secondary'
+                  label='智能补全'
+                />
+                <AIHelperButton
+                  type='validate'
+                  onClick={() => setShowAIFormValidator(true)}
+                  size='sm'
+                  variant='secondary'
+                  label='AI 校验'
+                />
+              </div>
+              <div className='flex gap-4'>
+                <button
+                  type='button'
+                  onClick={() => navigate('/pm/projects')}
+                  className='px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors'
+                >
+                  取消
+                </button>
+                <button
+                  type='submit'
+                  disabled={submitting}
+                  className='flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                  <Save className='w-4 h-4' />
+                  {submitting ? '提交中...' : '保存项目'}
+                </button>
+              </div>
             </div>
           </form>
         </div>
       </div>
+      
+      <AICodeGenerator
+        isOpen={showAICodeGenerator}
+        onClose={() => setShowAICodeGenerator(false)}
+        context={{
+          entityType: 'project',
+          name: formData.name,
+        }}
+        onSelect={handleSelectAICode}
+        existingCodes={[]}
+      />
+      
+      <AITextOptimizer
+        isOpen={showAITextOptimizer}
+        onClose={() => setShowAITextOptimizer(false)}
+        context={{
+          textType: 'description',
+          name: formData.name,
+        }}
+        originalText={formData.description}
+        onOptimized={handleOptimizedText}
+      />
+      
+      <AIDataCompleter
+        isOpen={showAIDataCompleter}
+        onClose={() => setShowAIDataCompleter(false)}
+        completeRequest={{
+          partialData: formData,
+          context: {
+            module: 'pm',
+            entityType: 'project',
+          },
+        }}
+        onApplyCompletion={handleApplyCompletion}
+      />
+      
+      <AIFormValidator
+        isOpen={showAIFormValidator}
+        onClose={() => setShowAIFormValidator(false)}
+        validateRequest={{
+          data: formData,
+          context: {
+            module: 'pm',
+            entityType: 'project',
+          },
+        }}
+        onApplySuggestions={handleApplyValidationSuggestions}
+        onFixIssue={() => {}}
+      />
     </div>
   );
 };

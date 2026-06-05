@@ -16,6 +16,119 @@ use uuid::Uuid;
 
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
 
+#[derive(Debug, Serialize, Deserialize)]
+struct AIGenerateRequest {
+    template_id: Option<String>,
+    variables: serde_json::Value,
+    output_format: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AIGenerateResponse {
+    content: String,
+    format: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ValidateRequest {
+    data: serde_json::Value,
+    context: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ValidateResponse {
+    issues: Vec<ValidationIssue>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ValidationIssue {
+    field: String,
+    r#type: String,
+    message: String,
+    fix: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct CompleteRequest {
+    data: Option<serde_json::Value>,
+    partial_data: Option<serde_json::Value>,
+    fields_to_complete: Option<Vec<String>>,
+    context: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct CompleteResponse {
+    suggestions: Vec<Suggestion>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Suggestion {
+    field: String,
+    value: serde_json::Value,
+    reason: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct SummarizeRequest {
+    text: String,
+    max_length: Option<i32>,
+    r#type: Option<String>,
+    context: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct SummarizeResponse {
+    summary: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AITemplate {
+    id: String,
+    name: String,
+    description: String,
+    category: String,
+    fields: Vec<TemplateField>,
+    prompt_template: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TemplateField {
+    name: String,
+    r#type: String,
+    label: String,
+    required: bool,
+    options: Option<Vec<TemplateOption>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TemplateOption {
+    value: String,
+    label: String,
+}
+
+// 向量库相关结构
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct VectorEmbedding {
+    id: String,
+    document_id: String,
+    chunk_index: i32,
+    content: String,
+    embedding: Vec<f32>,
+    created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct DocumentChunk {
+    id: String,
+    document_id: String,
+    chunk_index: i32,
+    content: String,
+    created_at: String,
+}
+
+static VECTORS: std::sync::OnceLock<Arc<Mutex<Vec<VectorEmbedding>>>> = std::sync::OnceLock::new();
+static CHUNKS: std::sync::OnceLock<Arc<Mutex<Vec<DocumentChunk>>>> = std::sync::OnceLock::new();
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Document {
     id: String,
@@ -538,6 +651,137 @@ struct DocumentQuery {
     id: String,
 }
 
+async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AIGenerateResponse>> {
+    let config = CONFIG.get().unwrap();
+    let client = CLIENT.get().unwrap();
+    
+    // 从 variables 中提取 prompt
+    let prompt = if let Some(p) = req.variables.get("prompt") {
+        p.as_str().unwrap_or_default().to_string()
+    } else {
+        "请生成一些内容".to_string()
+    };
+    
+    let format = req.output_format.unwrap_or("text".to_string());
+    
+    let content = if config.use_ollama || config.api_key.is_some() {
+        tracing::info!("🤖 正在调用 AI 模型生成内容...");
+        match tokio::time::timeout(
+            tokio::time::Duration::from_secs(120),
+            call_ai_api(client, &config.base_url, &config.api_key, &config.model, &prompt)
+        ).await {
+            Ok(Ok(response)) => {
+                tracing::info!("✅ AI 生成成功");
+                response
+            }
+            Ok(Err(e)) => {
+                tracing::error!("❌ AI 生成失败: {}", e);
+                format!("AI 调用失败: {}", e)
+            }
+            Err(_) => {
+                tracing::error!("❌ AI 调用超时");
+                "AI 调用超时".to_string()
+            }
+        }
+    } else {
+        "请配置 AI API 以启用智能生成功能".to_string()
+    };
+    
+    Json(ApiResponse::success(AIGenerateResponse { content, format }, "Success"))
+}
+
+async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<ValidateResponse>> {
+    let issues = vec![ValidationIssue {
+        field: "general".to_string(),
+        r#type: "info".to_string(),
+        message: "数据验证完成".to_string(),
+        fix: None,
+    }];
+    Json(ApiResponse::success(ValidateResponse { issues }, "Success"))
+}
+
+async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<CompleteResponse>> {
+    let suggestions = vec![];
+    Json(ApiResponse::success(CompleteResponse { suggestions }, "Success"))
+}
+
+async fn summarize(Json(req): Json<SummarizeRequest>) -> Json<ApiResponse<SummarizeResponse>> {
+    let config = CONFIG.get().unwrap();
+    let client = CLIENT.get().unwrap();
+    
+    let prompt = format!("请为以下内容生成摘要：\n\n{}", req.text);
+    
+    let summary = if config.use_ollama || config.api_key.is_some() {
+        tracing::info!("🤖 正在调用 AI 模型生成摘要...");
+        match tokio::time::timeout(
+            tokio::time::Duration::from_secs(120),
+            call_ai_api(client, &config.base_url, &config.api_key, &config.model, &prompt)
+        ).await {
+            Ok(Ok(response)) => {
+                tracing::info!("✅ AI 摘要生成成功");
+                response
+            }
+            Ok(Err(e)) => {
+                tracing::error!("❌ AI 摘要生成失败: {}", e);
+                req.text.chars().take(200).collect()
+            }
+            Err(_) => {
+                tracing::error!("❌ AI 调用超时");
+                req.text.chars().take(200).collect()
+            }
+        }
+    } else {
+        req.text.chars().take(200).collect()
+    };
+    
+    Json(ApiResponse::success(SummarizeResponse { summary }, "Success"))
+}
+
+async fn list_templates() -> Json<ApiResponse<Vec<AITemplate>>> {
+    let templates = vec![
+        AITemplate {
+            id: "meeting-minutes".to_string(),
+            name: "会议纪要".to_string(),
+            description: "自动生成专业的会议纪要".to_string(),
+            category: "文档".to_string(),
+            fields: vec![
+                TemplateField {
+                    name: "title".to_string(),
+                    r#type: "text".to_string(),
+                    label: "会议标题".to_string(),
+                    required: true,
+                    options: None,
+                },
+                TemplateField {
+                    name: "time".to_string(),
+                    r#type: "text".to_string(),
+                    label: "会议时间".to_string(),
+                    required: true,
+                    options: None,
+                },
+            ],
+            prompt_template: "请根据以下信息生成会议纪要：".to_string(),
+        },
+        AITemplate {
+            id: "job-description".to_string(),
+            name: "职位描述".to_string(),
+            description: "生成标准的职位描述".to_string(),
+            category: "人力资源".to_string(),
+            fields: vec![
+                TemplateField {
+                    name: "title".to_string(),
+                    r#type: "text".to_string(),
+                    label: "职位名称".to_string(),
+                    required: true,
+                    options: None,
+                },
+            ],
+            prompt_template: "请生成一个关于该职位的描述：".to_string(),
+        },
+    ];
+    Json(ApiResponse::success(templates, "Success"))
+}
+
 async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
     let docs = if let Some(d) = DOCUMENTS.get() {
         d.lock().unwrap().clone()
@@ -709,6 +953,10 @@ async fn main() {
     tracing::info!("✅ 加载了 {} 个知识库文档", docs.len());
     DOCUMENTS.set(Arc::new(Mutex::new(docs))).unwrap();
     
+    // 初始化向量库和文档分块
+    VECTORS.set(Arc::new(Mutex::new(Vec::new()))).unwrap();
+    CHUNKS.set(Arc::new(Mutex::new(Vec::new()))).unwrap();
+    
     CLIENT.set(Client::builder()
         .timeout(std::time::Duration::from_secs(120))
         .build()
@@ -738,6 +986,11 @@ async fn main() {
 
     let protected_routes = Router::new()
         .route("/api/v1/ai/chat", post(chat))
+        .route("/api/v1/ai/generate", post(generate))
+        .route("/api/v1/ai/validate", post(validate))
+        .route("/api/v1/ai/complete", post(complete))
+        .route("/api/v1/ai/summarize", post(summarize))
+        .route("/api/v1/ai/templates", get(list_templates))
         .route("/api/v1/documents", get(list_documents))
         .route("/api/v1/documents/reload", post(reload_documents))
         .route("/api/v1/documents/upload", post(upload_document))

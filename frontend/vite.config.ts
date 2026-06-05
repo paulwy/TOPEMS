@@ -136,7 +136,7 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true,
+    host: '0.0.0.0',
     strictPort: true,
     hmr: {
       port: 3000,
@@ -175,11 +175,11 @@ export default defineConfig({
         },
       },
       '/im/ws': {
-        target: 'http://localhost:8051',
+        target: 'http://127.0.0.1:8051',
         changeOrigin: true,
         ws: true,
         secure: false,
-        rewrite: (path: string) => path.replace(/^\/im/, ''),
+        rewrite: (path) => path.replace(/^\/im/, ''),
         configure: (proxy) => {
           proxy.on('error', (err, req, res) => {
             console.warn('[Vite Proxy] IM WS service unavailable:', err.message);
