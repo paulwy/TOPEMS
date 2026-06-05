@@ -20,9 +20,9 @@ use super::ApiState;
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/project-budgets", post(create_project_budget))
-        .route("/api/v1/project-budgets/:project_id", get(get_project_budget).put(update_project_budget))
-        .route("/api/v1/project-budgets/:budget_id/items", post(create_budget_item).get(get_budget_items))
-        .route("/api/v1/project-budgets/items/:id", put(update_budget_item).delete(delete_budget_item))
+        .route("/api/v1/project-budgets/{project_id}", get(get_project_budget).put(update_project_budget))
+        .route("/api/v1/project-budgets/{budget_id}/items", post(create_budget_item).get(get_budget_items))
+        .route("/api/v1/project-budgets/items/{id}", put(update_budget_item).delete(delete_budget_item))
 }
 
 pub async fn create_project_budget(

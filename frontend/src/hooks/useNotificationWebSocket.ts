@@ -119,12 +119,11 @@ export const useNotificationWebSocket = ({
     }
 
     try {
-      const notificationUrl = config.services.notification;
-      const wsProtocol = notificationUrl.startsWith('https') ? 'wss' : 'ws';
-      const wsHost = notificationUrl.replace(/^https?:\/\//, '');
-      const wsUrl = `${wsProtocol}://${wsHost}/ws/notifications`;
-      logger.info('Attempting to connect to notification service:', wsUrl);
-      const ws = new WebSocket(wsUrl);
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsHost = window.location.host;
+        const wsUrl = `${wsProtocol}://${wsHost}/notification/ws/notifications`;
+        logger.info('Attempting to connect to notification service:', wsUrl);
+        const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         logger.info('WebSocket connected');
@@ -166,6 +165,9 @@ export const useNotificationWebSocket = ({
                 onUnreadCountChangeRef.current(message.payload);
               }
               break;
+            case 'ping':
+              ws.send(JSON.stringify({ type: 'pong' }));
+              break;
             case 'pong':
               break;
             default:
@@ -178,11 +180,12 @@ export const useNotificationWebSocket = ({
 
       ws.onerror = (err) => {
         logger.error('WebSocket error:', err);
+        logger.error('WebSocket error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
         setError('WebSocket connection error');
       };
 
-      ws.onclose = () => {
-        logger.info('WebSocket disconnected');
+      ws.onclose = (event) => {
+        logger.info(`WebSocket disconnected. Code: ${event.code}, Reason: ${event.reason}`);
         setIsConnected(false);
 
         if (pingIntervalRef.current) {

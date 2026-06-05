@@ -14,8 +14,8 @@ use super::ApiState;
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/contracts", get(list_contracts).post(create_contract))
-        .route("/api/v1/contracts/:id", get(get_contract).put(update_contract).delete(delete_contract))
-        .route("/api/v1/contracts/project/:project_id", get(get_project_contracts))
+        .route("/api/v1/contracts/{id}", get(get_contract).put(update_contract).delete(delete_contract))
+        .route("/api/v1/contracts/project/{project_id}", get(get_project_contracts))
 }
 
 async fn create_contract(

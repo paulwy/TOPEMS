@@ -754,3 +754,489 @@ impl TemplateCategoryRepository {
         Ok(row.get("count"))
     }
 }
+
+// ==================== 档案管理 Repository ====================
+
+use crate::models::{
+    Archive, ArchiveCategory, ArchiveCategoryResponse, ArchiveResponse, ArchiveBorrow,
+    ArchiveDestruction, ArchiveMetadata, CreateArchiveCategoryRequest, CreateArchiveRequest,
+    UpdateArchiveCategoryRequest, UpdateArchiveRequest, ListArchivesQuery,
+};
+
+#[derive(Debug, Error)]
+pub enum ArchiveRepositoryError {
+    #[error("Database error: {0}")]
+    Database(#[from] sqlx::Error),
+    #[error("Archive not found")]
+    ArchiveNotFound,
+    #[error("Archive category not found")]
+    CategoryNotFound,
+}
+
+#[derive(Clone)]
+pub struct ArchiveCategoryRepository {
+    pool: PgPool,
+}
+
+impl ArchiveCategoryRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
+    pub async fn create(
+        &self,
+        req: CreateArchiveCategoryRequest,
+        created_by: String,
+    ) -> Result<ArchiveCategory, ArchiveRepositoryError> {
+        let id = Uuid::new_v4();
+        let now = chrono::Utc::now();
+        let sort_order = req.sort_order.unwrap_or(0);
+
+        let category = sqlx::query_as::<_, ArchiveCategory>(
+            r#"
+            INSERT INTO doc_service.archive_categories 
+            (id, code, name, parent_id, description, retention_period, sort_order, is_active, created_at, updated_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10)
+            RETURNING id, code, name, parent_id, description, retention_period, sort_order, is_active, created_at, updated_at, created_by
+            "#,
+        )
+        .bind(id)
+        .bind(&req.code)
+        .bind(&req.name)
+        .bind(req.parent_id)
+        .bind(&req.description)
+        .bind(req.retention_period)
+        .bind(sort_order)
+        .bind(now)
+        .bind(now)
+        .bind(&created_by)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(category)
+    }
+
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<ArchiveCategory>, ArchiveRepositoryError> {
+        let category = sqlx::query_as::<_, ArchiveCategory>(
+            r#"
+            SELECT id, code, name, parent_id, description, retention_period, sort_order, is_active, created_at, updated_at, created_by
+            FROM doc_service.archive_categories
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(category)
+    }
+
+    pub async fn find_by_code(&self, code: &str) -> Result<Option<ArchiveCategory>, ArchiveRepositoryError> {
+        let category = sqlx::query_as::<_, ArchiveCategory>(
+            r#"
+            SELECT id, code, name, parent_id, description, retention_period, sort_order, is_active, created_at, updated_at, created_by
+            FROM doc_service.archive_categories
+            WHERE code = $1
+            "#,
+        )
+        .bind(code)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(category)
+    }
+
+    pub async fn list_all(&self) -> Result<Vec<ArchiveCategory>, ArchiveRepositoryError> {
+        let categories = sqlx::query_as::<_, ArchiveCategory>(
+            r#"
+            SELECT id, code, name, parent_id, description, retention_period, sort_order, is_active, created_at, updated_at, created_by
+            FROM doc_service.archive_categories
+            WHERE is_active = true
+            ORDER BY sort_order ASC, name ASC
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(categories)
+    }
+
+    pub async fn list_tree(&self) -> Result<Vec<ArchiveCategoryResponse>, ArchiveRepositoryError> {
+        let categories = self.list_all().await?;
+        
+        // 构建树形结构
+        let mut root_categories = vec![];
+        let mut children_map = std::collections::HashMap::new();
+        
+        for category in &categories {
+            let count = self.get_archive_count(category.id).await.unwrap_or(0);
+            let response = ArchiveCategoryResponse {
+                id: category.id,
+                code: category.code.clone(),
+                name: category.name.clone(),
+                parent_id: category.parent_id,
+                description: category.description.clone(),
+                retention_period: category.retention_period,
+                sort_order: category.sort_order,
+                is_active: category.is_active,
+                archive_count: count,
+                children: vec![],
+            };
+            
+            if let Some(parent_id) = category.parent_id {
+                children_map.entry(parent_id).or_insert_with(Vec::new).push(response);
+            } else {
+                root_categories.push(response);
+            }
+        }
+        
+        // 递归添加子节点
+        fn add_children(
+            parent: &mut ArchiveCategoryResponse,
+            children_map: &std::collections::HashMap<Uuid, Vec<ArchiveCategoryResponse>>,
+        ) {
+            if let Some(children) = children_map.get(&parent.id) {
+                let mut children_clone = children.clone();
+                for child in &mut children_clone {
+                    add_children(child, children_map);
+                }
+                parent.children = children_clone;
+            }
+        }
+        
+        for root in &mut root_categories {
+            add_children(root, &children_map);
+        }
+
+        Ok(root_categories)
+    }
+
+    pub async fn update(
+        &self,
+        id: Uuid,
+        req: UpdateArchiveCategoryRequest,
+    ) -> Result<Option<ArchiveCategory>, ArchiveRepositoryError> {
+        let now = chrono::Utc::now();
+        
+        let category = sqlx::query_as::<_, ArchiveCategory>(
+            r#"
+            UPDATE doc_service.archive_categories
+            SET 
+                code = COALESCE($2, code),
+                name = COALESCE($3, name),
+                parent_id = $4,
+                description = COALESCE($5, description),
+                retention_period = $6,
+                sort_order = COALESCE($7, sort_order),
+                is_active = COALESCE($8, is_active),
+                updated_at = $9
+            WHERE id = $1
+            RETURNING id, code, name, parent_id, description, retention_period, sort_order, is_active, created_at, updated_at, created_by
+            "#,
+        )
+        .bind(id)
+        .bind(req.code)
+        .bind(req.name)
+        .bind(req.parent_id)
+        .bind(req.description)
+        .bind(req.retention_period)
+        .bind(req.sort_order)
+        .bind(req.is_active)
+        .bind(now)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(category)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<bool, ArchiveRepositoryError> {
+        let result = sqlx::query(r#"DELETE FROM doc_service.archive_categories WHERE id = $1"#)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn get_archive_count(&self, category_id: Uuid) -> Result<i64, ArchiveRepositoryError> {
+        let row = sqlx::query(
+            r#"
+            SELECT COUNT(*) as count
+            FROM doc_service.archives
+            WHERE category_id = $1
+            "#,
+        )
+        .bind(category_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row.get("count"))
+    }
+}
+
+#[derive(Clone)]
+pub struct ArchiveRepository {
+    pool: PgPool,
+}
+
+impl ArchiveRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
+    pub async fn create(
+        &self,
+        req: CreateArchiveRequest,
+        created_by: String,
+    ) -> Result<Archive, ArchiveRepositoryError> {
+        let id = Uuid::new_v4();
+        let now = chrono::Utc::now();
+
+        let archive = sqlx::query_as::<_, Archive>(
+            r#"
+            INSERT INTO doc_service.archives 
+            (id, archive_no, title, category_id, file_id, summary, keywords, creator, created_date, 
+             retention_period, status, security_level, department_id, source_module, source_id, created_at, updated_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', $11, $12, $13, $14, $15, $16, $17)
+            RETURNING id, archive_no, title, category_id, file_id, summary, keywords, creator, created_date, 
+                      retention_period, status, security_level, department_id, source_module, source_id, 
+                      archived_at, archived_by, created_at, updated_at, created_by
+            "#,
+        )
+        .bind(id)
+        .bind(&req.archive_no)
+        .bind(&req.title)
+        .bind(req.category_id)
+        .bind(req.file_id)
+        .bind(&req.summary)
+        .bind(req.keywords.as_deref())
+        .bind(&req.creator)
+        .bind(req.created_date)
+        .bind(req.retention_period)
+        .bind(req.security_level.unwrap_or(crate::models::SecurityLevel::Internal))
+        .bind(req.department_id)
+        .bind(&req.source_module)
+        .bind(req.source_id)
+        .bind(now)
+        .bind(now)
+        .bind(&created_by)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(archive)
+    }
+
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<ArchiveResponse>, ArchiveRepositoryError> {
+        let archive = sqlx::query_as::<_, ArchiveResponse>(
+            r#"
+            SELECT 
+                a.id, a.archive_no, a.title, a.category_id, ac.name as category_name,
+                a.file_id, f.name as file_name, a.summary, a.keywords, a.creator, a.created_date,
+                a.retention_period, a.status, a.security_level, a.department_id,
+                a.source_module, a.source_id, a.archived_at, a.archived_by,
+                a.created_at, a.updated_at, a.created_by
+            FROM doc_service.archives a
+            LEFT JOIN doc_service.archive_categories ac ON a.category_id = ac.id
+            LEFT JOIN doc_service.files f ON a.file_id = f.id
+            WHERE a.id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(archive)
+    }
+
+    pub async fn find_by_archive_no(&self, archive_no: &str) -> Result<Option<ArchiveResponse>, ArchiveRepositoryError> {
+        let archive = sqlx::query_as::<_, ArchiveResponse>(
+            r#"
+            SELECT 
+                a.id, a.archive_no, a.title, a.category_id, ac.name as category_name,
+                a.file_id, f.name as file_name, a.summary, a.keywords, a.creator, a.created_date,
+                a.retention_period, a.status, a.security_level, a.department_id,
+                a.source_module, a.source_id, a.archived_at, a.archived_by,
+                a.created_at, a.updated_at, a.created_by
+            FROM doc_service.archives a
+            LEFT JOIN doc_service.archive_categories ac ON a.category_id = ac.id
+            LEFT JOIN doc_service.files f ON a.file_id = f.id
+            WHERE a.archive_no = $1
+            "#,
+        )
+        .bind(archive_no)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(archive)
+    }
+
+    pub async fn list(
+        &self,
+        query: ListArchivesQuery,
+    ) -> Result<(Vec<ArchiveResponse>, i64), ArchiveRepositoryError> {
+        let page = query.page.unwrap_or(1);
+        let page_size = query.page_size.unwrap_or(20);
+        let offset = (page - 1) as i64 * page_size as i64;
+        let limit = page_size as i64;
+
+        let mut where_clauses = vec!["1=1".to_string()];
+        let mut params: Vec<String> = vec![];
+        let mut param_idx = 1;
+
+        if let Some(search) = &query.search {
+            where_clauses.push(format!(
+                "(a.title ILIKE ${} OR a.archive_no ILIKE ${} OR a.summary ILIKE ${})",
+                param_idx, param_idx + 1, param_idx + 2
+            ));
+            params.push(format!("%{}%", search));
+            params.push(format!("%{}%", search));
+            params.push(format!("%{}%", search));
+            param_idx += 3;
+        }
+
+        if let Some(category_id) = query.category_id {
+            where_clauses.push(format!("a.category_id = ${}", param_idx));
+            params.push(category_id.to_string());
+            param_idx += 1;
+        }
+
+        if let Some(status) = &query.status {
+            where_clauses.push(format!("a.status = ${}", param_idx));
+            params.push(serde_json::to_string(status).unwrap().replace('"', ""));
+            param_idx += 1;
+        }
+
+        if let Some(source_module) = &query.source_module {
+            where_clauses.push(format!("a.source_module = ${}", param_idx));
+            params.push(source_module.clone());
+            param_idx += 1;
+        }
+
+        let where_str = where_clauses.join(" AND ");
+
+        // Count query
+        let count_query = format!(
+            r#"SELECT COUNT(*) as count FROM doc_service.archives a WHERE {}"#,
+            where_str
+        );
+
+        let mut count_q = sqlx::query(&count_query);
+        for param in &params {
+            count_q = count_q.bind(param);
+        }
+        let count_row = count_q.fetch_one(&self.pool).await?;
+        let total: i64 = count_row.get("count");
+
+        // Main query
+        let main_query = format!(
+            r#"
+            SELECT 
+                a.id, a.archive_no, a.title, a.category_id, ac.name as category_name,
+                a.file_id, f.name as file_name, a.summary, a.keywords, a.creator, a.created_date,
+                a.retention_period, a.status, a.security_level, a.department_id,
+                a.source_module, a.source_id, a.archived_at, a.archived_by,
+                a.created_at, a.updated_at, a.created_by
+            FROM doc_service.archives a
+            LEFT JOIN doc_service.archive_categories ac ON a.category_id = ac.id
+            LEFT JOIN doc_service.files f ON a.file_id = f.id
+            WHERE {}
+            ORDER BY a.created_at DESC
+            LIMIT ${} OFFSET ${}
+            "#,
+            where_str,
+            param_idx,
+            param_idx + 1
+        );
+
+        let mut main_q = sqlx::query_as::<_, ArchiveResponse>(&main_query);
+        for param in &params {
+            main_q = main_q.bind(param);
+        }
+        main_q = main_q.bind(limit).bind(offset);
+        
+        let archives = main_q.fetch_all(&self.pool).await?;
+
+        Ok((archives, total))
+    }
+
+    pub async fn update(
+        &self,
+        id: Uuid,
+        req: UpdateArchiveRequest,
+    ) -> Result<Option<Archive>, ArchiveRepositoryError> {
+        let now = chrono::Utc::now();
+        
+        let archive = sqlx::query_as::<_, Archive>(
+            r#"
+            UPDATE doc_service.archives
+            SET 
+                archive_no = COALESCE($2, archive_no),
+                title = COALESCE($3, title),
+                category_id = COALESCE($4, category_id),
+                file_id = $5,
+                summary = COALESCE($6, summary),
+                keywords = $7,
+                creator = COALESCE($8, creator),
+                created_date = $9,
+                retention_period = $10,
+                security_level = COALESCE($11, security_level),
+                department_id = $12,
+                updated_at = $13
+            WHERE id = $1
+            RETURNING id, archive_no, title, category_id, file_id, summary, keywords, creator, created_date, 
+                      retention_period, status, security_level, department_id, source_module, source_id, 
+                      archived_at, archived_by, created_at, updated_at, created_by
+            "#,
+        )
+        .bind(id)
+        .bind(req.archive_no)
+        .bind(req.title)
+        .bind(req.category_id)
+        .bind(req.file_id)
+        .bind(req.summary)
+        .bind(req.keywords.as_deref())
+        .bind(req.creator)
+        .bind(req.created_date)
+        .bind(req.retention_period)
+        .bind(req.security_level)
+        .bind(req.department_id)
+        .bind(now)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(archive)
+    }
+
+    pub async fn archive(&self, id: Uuid, archived_by: String) -> Result<Option<Archive>, ArchiveRepositoryError> {
+        let now = chrono::Utc::now();
+        
+        let archive = sqlx::query_as::<_, Archive>(
+            r#"
+            UPDATE doc_service.archives
+            SET status = 'archived', archived_at = $2, archived_by = $3, updated_at = $4
+            WHERE id = $1
+            RETURNING id, archive_no, title, category_id, file_id, summary, keywords, creator, created_date, 
+                      retention_period, status, security_level, department_id, source_module, source_id, 
+                      archived_at, archived_by, created_at, updated_at, created_by
+            "#,
+        )
+        .bind(id)
+        .bind(now)
+        .bind(&archived_by)
+        .bind(now)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(archive)
+    }
+
+    pub async fn delete(&self, id: Uuid) -> Result<bool, ArchiveRepositoryError> {
+        let result = sqlx::query(r#"DELETE FROM doc_service.archives WHERE id = $1"#)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+}
+

@@ -5,7 +5,7 @@ use axum::{
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::{AuthState, SystemMetrics};
+use topems_shared::{AuthState, SystemMetrics, NotificationServiceClient};
 use crate::utils::InMemoryCache;
 use crate::models;
 
@@ -38,6 +38,7 @@ pub struct ApiState {
     pub department_cache: Arc<InMemoryCache<Vec<models::department::Department>>>,
     pub employee_cache: Arc<InMemoryCache<Vec<models::employee::Employee>>>,
     pub dict_cache: Arc<InMemoryCache<Vec<models::dict::DictType>>>,
+    pub notification_client: Arc<NotificationServiceClient>,
 }
 
 impl FromRef<ApiState> for AuthState {

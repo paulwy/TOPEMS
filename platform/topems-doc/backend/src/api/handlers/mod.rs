@@ -1,3 +1,5 @@
+pub mod archive;
+
 use axum::{extract::{Path, Query, Multipart}, Json, http::StatusCode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

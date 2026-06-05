@@ -565,14 +565,14 @@ const PmProjectDetailPage: React.FC = () => {
                         <div key={index} className='flex items-start gap-3'>
                           <span
                             className={`px-2 py-1 text-xs rounded-full ${
-                              risk.level === 'high' || risk.level === 'critical'
+                              (risk.level || risk.impact) === 'high' || (risk.level || risk.impact) === 'critical'
                                 ? 'bg-red-200 text-red-800'
                                 : 'bg-yellow-200 text-yellow-800'
                             }`}
                           >
-                            {risk.level}
+                            {risk.level || risk.impact}
                           </span>
-                          <span className='text-gray-700'>{risk.description}</span>
+                          <span className='text-gray-700'>{risk.risk_description || risk.description || risk.risk_name}</span>
                         </div>
                       ))}
                     </div>

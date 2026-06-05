@@ -18,7 +18,7 @@ import { ModeToggle } from '@/components/ModeToggle';
 const loginFormSchema = z.object({
   username: z
     .string()
-    .min(1, { message: '用户名不能为空' })
+    .min(2, { message: '用户名长度至少为2位' })
     .max(20, { message: '用户名不能超过20个字符' })
     .regex(/^[a-zA-Z0-9]+$/, { message: '用户名只能包含字母和数字' }),
   password: z.string().min(6, { message: '密码至少需要6个字符' }),

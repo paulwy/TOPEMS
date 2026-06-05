@@ -80,13 +80,15 @@ impl AuthState {
     
     pub fn from_env() -> Self {
         let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET environment variable must be set for security");
-        let refresh_secret = std::env::var("REFRESH_SECRET").expect("REFRESH_SECRET environment variable must be set for security");
+        let refresh_secret = std::env::var("JWT_REFRESH_SECRET")
+            .or_else(|_| std::env::var("REFRESH_SECRET"))
+            .expect("JWT_REFRESH_SECRET or REFRESH_SECRET environment variable must be set for security");
         
         if jwt_secret.len() < 32 {
             panic!("JWT_SECRET must be at least 32 characters long for security");
         }
         if refresh_secret.len() < 32 {
-            panic!("REFRESH_SECRET must be at least 32 characters long for security");
+            panic!("JWT_REFRESH_SECRET or REFRESH_SECRET must be at least 32 characters long for security");
         }
         
         Self {

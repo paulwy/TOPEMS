@@ -4,6 +4,11 @@ import DepartmentList from './pages/DepartmentList';
 import EmployeeList from './pages/EmployeeList';
 import AssetList from './pages/AssetList';
 import AddressbookPage from './pages/AddressbookPage';
+import OfficeSuppliesPage from './pages/OfficeSuppliesPage';
+import MeetingRoomsPage from './pages/MeetingRoomsPage';
+import VehiclesPage from './pages/VehiclesPage';
+import AnnouncementsPage from './pages/AnnouncementsPage';
+import FinancePage from './pages/FinancePage';
 import './index.css';
 
 function App() {
@@ -21,6 +26,16 @@ function App() {
         return <AssetList />;
       case 'addressbook':
         return <AddressbookPage />;
+      case 'office-supplies':
+        return <OfficeSuppliesPage />;
+      case 'meeting-rooms':
+        return <MeetingRoomsPage />;
+      case 'vehicles':
+        return <VehiclesPage />;
+      case 'announcements':
+        return <AnnouncementsPage />;
+      case 'finance':
+        return <FinancePage />;
       default:
         return <CompanyList />;
     }
@@ -37,7 +52,7 @@ function App() {
                   TOPEMS-ERP 企业资源计划
                 </h1>
               </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-6 flex-wrap">
                 <button
                   onClick={() => setActiveTab('companies')}
                   className={`${
@@ -77,6 +92,56 @@ function App() {
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
                   资产管理
+                </button>
+                <button
+                  onClick={() => setActiveTab('office-supplies')}
+                  className={`${
+                    activeTab === 'office-supplies'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  办公用品
+                </button>
+                <button
+                  onClick={() => setActiveTab('meeting-rooms')}
+                  className={`${
+                    activeTab === 'meeting-rooms'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  会议室
+                </button>
+                <button
+                  onClick={() => setActiveTab('vehicles')}
+                  className={`${
+                    activeTab === 'vehicles'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  车辆管理
+                </button>
+                <button
+                  onClick={() => setActiveTab('announcements')}
+                  className={`${
+                    activeTab === 'announcements'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  公告通知
+                </button>
+                <button
+                  onClick={() => setActiveTab('finance')}
+                  className={`${
+                    activeTab === 'finance'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  财务管理
                 </button>
                 <button
                   onClick={() => setActiveTab('addressbook')}

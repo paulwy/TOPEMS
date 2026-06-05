@@ -361,14 +361,14 @@ fn validate_username(username: &str) -> Result<(), String> {
     if username.len() < 2 {
         return Err("用户名长度至少为2位".to_string());
     }
-    if username.len() > 50 {
-        return Err("用户名长度不能超过50位".to_string());
+    if username.len() > 20 {
+        return Err("用户名不能超过20个字符".to_string());
     }
     
-    // 只禁止控制字符和空格，允许其他字符
+    // 只允许字母和数字
     for c in username.chars() {
-        if c.is_control() || c.is_whitespace() {
-            return Err("用户名不能包含控制字符或空格".to_string());
+        if !c.is_ascii_alphanumeric() {
+            return Err("用户名只能包含字母和数字".to_string());
         }
     }
     

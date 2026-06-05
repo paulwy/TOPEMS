@@ -25,7 +25,7 @@ pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/assets", get(list_assets).post(create_asset))
         .route(
-            "/api/v1/assets/:id",
+            "/api/v1/assets/{id}",
             get(get_asset).put(update_asset).delete(delete_asset),
         )
 }

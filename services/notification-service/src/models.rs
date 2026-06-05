@@ -126,3 +126,136 @@ pub struct NotificationListResponse {
     pub page_size: usize,
     pub unread_count: usize,
 }
+
+// ==================== 通知模板系统 ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum TemplateStatus {
+    #[serde(rename = "active")]
+    Active,
+    #[serde(rename = "inactive")]
+    Inactive,
+    #[serde(rename = "deprecated")]
+    Deprecated,
+}
+
+impl std::fmt::Display for TemplateStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TemplateStatus::Active => write!(f, "active"),
+            TemplateStatus::Inactive => write!(f, "inactive"),
+            TemplateStatus::Deprecated => write!(f, "deprecated"),
+        }
+    }
+}
+
+impl TemplateStatus {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "active" => Some(TemplateStatus::Active),
+            "inactive" => Some(TemplateStatus::Inactive),
+            "deprecated" => Some(TemplateStatus::Deprecated),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NotificationTemplate {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub notification_type: NotificationType,
+    pub title_template: String,
+    pub content_template: String,
+    pub data_schema: Option<serde_json::Value>,
+    pub default_priority: i16,
+    pub status: TemplateStatus,
+    pub is_archived: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateTemplateRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub notification_type: NotificationType,
+    pub title_template: String,
+    pub content_template: String,
+    pub data_schema: Option<serde_json::Value>,
+    pub default_priority: Option<i16>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateTemplateRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub title_template: Option<String>,
+    pub content_template: Option<String>,
+    pub data_schema: Option<serde_json::Value>,
+    pub default_priority: Option<i16>,
+    pub status: Option<TemplateStatus>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RenderTemplateRequest {
+    pub template_id: Uuid,
+    pub user_id: String,
+    pub variables: serde_json::Value,
+    pub priority: Option<i16>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TemplateListResponse {
+    pub templates: Vec<NotificationTemplate>,
+    pub total: usize,
+    pub page: usize,
+    pub page_size: usize,
+}
+
+// ==================== 通知归档系统 ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArchivedNotification {
+    pub id: Uuid,
+    pub original_notification_id: Uuid,
+    pub user_id: String,
+    pub notification_type: NotificationType,
+    pub title: String,
+    pub content: String,
+    pub data: Option<serde_json::Value>,
+    pub priority: i16,
+    pub created_at: DateTime<Utc>,
+    pub read_at: Option<DateTime<Utc>>,
+    pub archived_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArchiveConfig {
+    pub auto_archive_days: i32,
+    pub retention_days: i32,
+    pub enabled: bool,
+}
+
+// ==================== 通知统计系统 ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NotificationStats {
+    pub total_notifications: i64,
+    pub unread_notifications: i64,
+    pub read_notifications: i64,
+    pub archived_notifications: i64,
+    pub notifications_by_type: serde_json::Value,
+    pub notifications_by_day: serde_json::Value,
+    pub generated_at: DateTime<Utc>,
+}

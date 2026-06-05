@@ -15,6 +15,8 @@
 | `init-hrm-data.py` | 初始化HRM数据 | ⭐⭐⭐ |
 | `cleanup.sh` | 全面清理（端口/进程/缓存） | ⭐⭐⭐⭐⭐ |
 | `quick-start.sh` | 快速启动项目 | ⭐⭐⭐⭐ |
+| `run-clippy.sh` | 运行 Clippy 代码检查 | ⭐⭐⭐⭐ |
+| `run_ci_tests.sh` | 运行 CI 测试 | ⭐⭐⭐ |
 
 ---
 
@@ -181,7 +183,28 @@ cd /Users/air/TOPEMS
 
 ---
 
-## 🔧 常见问题
+## � 脚本详细说明
+
+### `run-clippy.sh`
+运行 Clippy 静态代码分析工具，检查所有 Rust 项目的代码质量问题。
+
+**使用方法：**
+```bash
+./scripts/run-clippy.sh
+```
+
+**功能说明：**
+- 遍历所有 Rust 项目
+- 运行 Clippy 检查
+- 捕获错误和警告计数
+- 输出详细的检查报告
+
+### `run_ci_tests.sh`
+运行持续集成测试脚本。
+
+---
+
+## �🔧 常见问题
 
 ### 端口被占用 `Address already in use`
 
