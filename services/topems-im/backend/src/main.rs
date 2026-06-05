@@ -211,6 +211,98 @@ async fn delete_chat_room(
     }
 }
 
+async fn add_chat_room_member(
+    State(state): State<AppState>,
+    Path(chat_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<ApiResponse<models::ChatRoom>> {
+    let user_id = payload.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
+    
+    if user_id.is_empty() {
+        return Json(ApiResponse::error(400, "用户ID不能为空"));
+    }
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE chat_rooms
+        SET members = members || $1::jsonb,
+            updated_at = $2
+        WHERE id = $3
+        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
+        "#,
+        json!([user_id]),
+        Utc::now(),
+        chat_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(room)) => Json(ApiResponse::success(room, "添加成员成功")),
+        Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
+        Err(e) => {
+            tracing::error!("Failed to add member: {}", e);
+            Json(ApiResponse::error(500, "添加成员失败"))
+        }
+    }
+}
+
+async fn remove_chat_room_member(
+    State(state): State<AppState>,
+    Path((chat_id, user_id)): Path<(Uuid, String)>,
+) -> Json<ApiResponse<models::ChatRoom>> {
+    let result = sqlx::query!(
+        r#"
+        UPDATE chat_rooms
+        SET members = members - $1,
+            updated_at = $2
+        WHERE id = $3
+        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
+        "#,
+        user_id,
+        Utc::now(),
+        chat_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(room)) => Json(ApiResponse::success(room, "移除成员成功")),
+        Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
+        Err(e) => {
+            tracing::error!("Failed to remove member: {}", e);
+            Json(ApiResponse::error(500, "移除成员失败"))
+        }
+    }
+}
+
+async fn get_chat_room_members(
+    State(state): State<AppState>,
+    Path(chat_id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query!(
+        r#"
+        SELECT members
+        FROM chat_rooms
+        WHERE id = $1
+        "#,
+        chat_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(record)) => Json(ApiResponse::success(json!({
+            "members": record.members
+        }), "获取成员列表成功")),
+        Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get members: {}", e);
+            Json(ApiResponse::error(500, "获取成员列表失败"))
+        }
+    }
+}
+
 async fn list_chat_messages(
     State(state): State<AppState>,
     Path(chat_id): Path<Uuid>,
@@ -836,6 +928,9 @@ async fn main() -> Result<()> {
         .route("/api/v1/chat-rooms", axum::routing::post(create_chat_room))
         .route("/api/v1/chat-rooms/{chat_id}", axum::routing::put(update_chat_room))
         .route("/api/v1/chat-rooms/{chat_id}", axum::routing::delete(delete_chat_room))
+        .route("/api/v1/chat-rooms/{chat_id}/members", axum::routing::get(get_chat_room_members))
+        .route("/api/v1/chat-rooms/{chat_id}/members", axum::routing::post(add_chat_room_member))
+        .route("/api/v1/chat-rooms/{chat_id}/members/{user_id}", axum::routing::delete(remove_chat_room_member))
         .route("/api/v1/chat-rooms/{chat_id}/messages", axum::routing::post(create_chat_message))
         .route("/api/v1/chat-rooms/{chat_id}/messages/search", axum::routing::get(search_chat_messages))
         .route("/api/v1/chat-messages/{message_id}", axum::routing::delete(delete_chat_message))

@@ -22,8 +22,10 @@ export const ChatInterface: React.FC = () => {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [filteredMessages, setFilteredMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [messageSearchQuery, setMessageSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -62,10 +64,11 @@ export const ChatInterface: React.FC = () => {
     };
   }, [connect, disconnect]);
 
-  // 加载选中聊天室的消息
+  // 加载选中聊天室的消息并标记为已读
   useEffect(() => {
     if (selectedRoom) {
       loadMessages(selectedRoom.id);
+      markAllMessagesRead(selectedRoom.id);
     }
   }, [selectedRoom]);
 
@@ -101,6 +104,35 @@ export const ChatInterface: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load messages:', error);
+    }
+  };
+
+  const markAllMessagesRead = async (chatRoomId: string) => {
+    try {
+      const unreadMessages = messages.filter(m => !m.is_read && m.sender_id !== 'current-user');
+      for (const message of unreadMessages) {
+        await imApi.markMessageRead(message.id);
+      }
+      setMessages(prev => prev.map(m => ({ ...m, is_read: true })));
+    } catch (error) {
+      console.error('Failed to mark messages as read:', error);
+    }
+  };
+
+  const searchMessages = async (keyword: string) => {
+    if (!selectedRoom || !keyword.trim()) {
+      setFilteredMessages([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/im/api/v1/chat-rooms/${selectedRoom.id}/messages/search?keyword=${encodeURIComponent(keyword)}`);
+      const data = await response.json();
+      if (data.success && data.data) {
+        setFilteredMessages(data.data.messages || []);
+      }
+    } catch (error) {
+      console.error('Failed to search messages:', error);
     }
   };
 
@@ -275,13 +307,30 @@ export const ChatInterface: React.FC = () => {
         {selectedRoom && activeTab !== 'notifications' ? (
           <>
             {/* Chat Header */}
-            <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold text-gray-900">{selectedRoom.name || '未命名会话'}</h2>
-                <p className="text-sm text-gray-500">
-                  {selectedRoom.room_type === 'direct' ? '私聊' : '群聊'}
-                  {!isConnected && ' · 连接断开'}
-                </p>
+            <div className="bg-white border-b border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h2 className="font-semibold text-gray-900">{selectedRoom.name || '未命名会话'}</h2>
+                  <p className="text-sm text-gray-500">
+                    {selectedRoom.room_type === 'direct' ? '私聊' : '群聊'}
+                    {!isConnected && ' · 连接断开'}
+                  </p>
+                </div>
+              </div>
+              {/* Message Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="搜索消息..."
+                  value={messageSearchQuery}
+                  onChange={(e) => {
+                    setMessageSearchQuery(e.target.value);
+                    searchMessages(e.target.value);
+                  }}
+                  className="pl-10"
+                  size="sm"
+                />
               </div>
             </div>
 
@@ -294,9 +343,23 @@ export const ChatInterface: React.FC = () => {
                     <p className="text-gray-500">暂无消息，开始聊天吧</p>
                   </div>
                 </div>
+              ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">未找到匹配的消息</p>
+                  </div>
+                </div>
               ) : (
                 <>
-                  {messages.map((message) => (
+                  {messageSearchQuery.trim() && filteredMessages.length > 0 && (
+                    <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <span className="text-sm text-yellow-800">
+                        找到 {filteredMessages.length} 条匹配消息
+                      </span>
+                    </div>
+                  )}
+                  {(messageSearchQuery.trim() && filteredMessages.length > 0 ? filteredMessages : messages).map((message) => (
                     <MessageBubble key={message.id} message={message} isSent={message.sender_id === 'current-user'} />
                   ))}
                   <div ref={messagesEndRef} />

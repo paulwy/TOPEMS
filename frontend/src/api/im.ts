@@ -104,6 +104,18 @@ export const imApi = {
     return apiClient.im.put<ChatMessage>(`/api/v1/chat-messages/${id}/read`);
   },
 
+  getChatRoomMembers: async (chatRoomId: string): Promise<ApiResponse<any>> => {
+    return apiClient.im.get<any>(`/api/v1/chat-rooms/${chatRoomId}/members`);
+  },
+
+  addChatRoomMember: async (chatRoomId: string, userId: string): Promise<ApiResponse<ChatRoom>> => {
+    return apiClient.im.post<ChatRoom>(`/api/v1/chat-rooms/${chatRoomId}/members`, { user_id: userId });
+  },
+
+  removeChatRoomMember: async (chatRoomId: string, userId: string): Promise<ApiResponse<ChatRoom>> => {
+    return apiClient.im.delete<ChatRoom>(`/api/v1/chat-rooms/${chatRoomId}/members/${userId}`);
+  },
+
   listProjectGroups: async (): Promise<ApiResponse<any>> => {
     return apiClient.im.get<any>('/api/v1/project-groups');
   },
