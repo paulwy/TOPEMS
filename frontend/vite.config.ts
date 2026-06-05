@@ -141,9 +141,12 @@ export default defineConfig({
     hmr: {
       port: 3000,
       host: 'localhost',
+      clientPort: 3000,
+      protocol: 'ws',
     },
     proxy: {
       '/api/v1/files': createServiceProxyConfig('doc', 'http://localhost:8001', true),
+      '/mail': createServiceProxyConfig('mail', 'http://localhost:8054'),
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -171,6 +174,18 @@ export default defineConfig({
           });
         },
       },
+      '/im/ws': {
+        target: 'http://localhost:8051',
+        changeOrigin: true,
+        ws: true,
+        secure: false,
+        rewrite: (path: string) => path.replace(/^\/im/, ''),
+        configure: (proxy) => {
+          proxy.on('error', (err, req, res) => {
+            console.warn('[Vite Proxy] IM WS service unavailable:', err.message);
+          });
+        },
+      },
       '/notification': createServiceProxyConfig('notification', 'http://localhost:8003'),
       '/integration': createServiceProxyConfig('integration', 'http://localhost:8004'),
       '/portal': createServiceProxyConfig('portal', 'http://localhost:8005'),
@@ -192,8 +207,6 @@ export default defineConfig({
       '/im': createServiceProxyConfig('im', 'http://localhost:8051'),
       '/bi': createServiceProxyConfig('bi', 'http://localhost:8052'),
       '/report': createServiceProxyConfig('report', 'http://localhost:8053'),
-      '/mail': createServiceProxyConfig('mail', 'http://localhost:8054'),
-      '/mobile': createServiceProxyConfig('mobile', 'http://localhost:8055'),
-    },
+      },
   },
 })

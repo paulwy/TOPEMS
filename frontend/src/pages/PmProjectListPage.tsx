@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pmApi, Project } from '../api/pm';
+import OrganizationFilter, { type OrganizationFilterValue } from '../components/ui/OrganizationFilter';
 
 const PROJECT_TYPES = [
   { value: '', label: '全部类型' },
@@ -41,6 +42,7 @@ const PmProjectListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
 
   useEffect(() => {
     loadProjects();
@@ -190,6 +192,15 @@ const PmProjectListPage: React.FC = () => {
               创建项目
             </button>
           </div>
+        </div>
+        <div className='mt-4 pt-4 border-t border-gray-200'>
+          <OrganizationFilter
+            value={organizationFilter}
+            onChange={setOrganizationFilter}
+            showCompany={true}
+            showDepartment={true}
+            showEmployee={false}
+          />
         </div>
       </div>
 

@@ -664,6 +664,63 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     [shouldShowModule]
   );
 
+  const systemManagementModules = useMemo(
+    () => [
+      {
+        title: '系统管理',
+        icon: Settings,
+        description: '用户、角色、权限、系统设置管理',
+        path: '/system',
+        color: 'bg-slate-600',
+        status: 'online' as const,
+        permission: 'iam:admin',
+        module: 'iam',
+        adminOnly: true,
+      },
+      {
+        title: '系统集成',
+        icon: Link,
+        description: 'LIMS-QMS/MES-ERP/WMS-SCM 等系统间数据同步',
+        path: '/integration',
+        color: 'bg-blue-500',
+        status: 'online' as const,
+        permission: null,
+        module: 'integration',
+      },
+      {
+        title: '报表中心',
+        icon: BarChart3,
+        description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
+        path: '/reports',
+        color: 'bg-emerald-500',
+        status: 'online' as const,
+        permission: 'iam:admin',
+        module: 'iam',
+        adminOnly: true,
+      },
+      {
+        title: '模板管理',
+        icon: FileTemplate,
+        description: '文档模板、流程模板管理',
+        path: '/templates',
+        color: 'bg-violet-500',
+        status: 'online' as const,
+        permission: 'doc:admin',
+        module: 'doc',
+        adminOnly: true,
+      },
+      {
+        title: '帮助中心',
+        icon: HelpCircle,
+        description: '使用指南、视频教程、常见问题',
+        path: '/help',
+        color: 'bg-amber-500',
+        status: 'online' as const,
+      },
+    ].filter((module) => shouldShowModule(module)),
+    [shouldShowModule]
+  );
+
   const quickActions = useMemo(
     () => [
       { label: '上传文件', icon: FileText, path: '/documents', color: 'text-blue-500', service: 'doc' },

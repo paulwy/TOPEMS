@@ -60,6 +60,7 @@ const HrmTrainingPage = lazy(() => import('./pages/HrmTrainingPage'));
 const HrmReportsPage = lazy(() => import('./pages/HrmReportsPage'));
 const HrmCompanyPage = lazy(() => import('./pages/HrmCompanyPage'));
 const HrmDepartmentPage = lazy(() => import('./pages/HrmDepartmentPage'));
+const HrmOrganizationPage = lazy(() => import('./pages/HrmOrganizationPage'));
 const PerformanceMonitorPage = lazy(() => import('./pages/PerformanceMonitorPage'));
 const FlowInstanceListPage = lazy(() => import('./pages/FlowInstanceListPage'));
 const FlowInstanceDetailPage = lazy(() => import('./pages/FlowInstanceDetailPage'));
@@ -547,6 +548,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['hrm:read']}>
                 <ModuleGate module='hrm' action='read'>
                   <HrmDepartmentPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/hrm/organization'
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module='hrm' action='read'>
+                  <HrmOrganizationPage />
                 </ModuleGate>
               </ProtectedRoute>
             }

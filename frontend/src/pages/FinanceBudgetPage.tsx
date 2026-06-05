@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import OrganizationFilter, { type OrganizationFilterValue } from '../components/ui/OrganizationFilter';
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ const FinanceBudgetPage: React.FC = () => {
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
+  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
 
   const [formData, setFormData] = useState({
     department_id: '',
@@ -287,6 +289,16 @@ const FinanceBudgetPage: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className='bg-slate-100 rounded-lg p-4 mb-6'>
+        <OrganizationFilter
+          value={organizationFilter}
+          onChange={setOrganizationFilter}
+          showCompany={true}
+          showDepartment={true}
+          showEmployee={false}
+        />
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
