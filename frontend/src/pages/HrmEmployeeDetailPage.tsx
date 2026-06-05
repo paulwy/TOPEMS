@@ -245,7 +245,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
                               <SelectValue placeholder='请选择' />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value=''>未设置</SelectItem>
+                              <SelectItem value='none'>未设置</SelectItem>
                               <SelectItem value='male'>男</SelectItem>
                               <SelectItem value='female'>女</SelectItem>
                             </SelectContent>
@@ -299,7 +299,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
                               <SelectValue placeholder='请选择部门' />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value=''>未设置</SelectItem>
+                              <SelectItem value='none'>未设置</SelectItem>
                               {departments.map((dept) => (
                                 <SelectItem key={dept.id} value={dept.id}>
                                   {dept.name}

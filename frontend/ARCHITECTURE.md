@@ -268,32 +268,34 @@ interface PaginatedResult<T> {
 
 ### 服务端口映射
 
-| 服务 | 环境变量 | 默认端口 | 说明 |
-|------|----------|----------|------|
-| IAM | `VITE_IAM_SERVICE_URL` | `http://localhost:8001` | 身份认证服务 |
-| RS | `VITE_RS_SERVICE_URL` | `http://localhost:8002` | 研发管理服务 |
-| LIMS | `VITE_LIMS_SERVICE_URL` | `http://localhost:8003` | 实验室系统 |
-| QMS | `VITE_QMS_SERVICE_URL` | `http://localhost:8004` | 质量管理系统 |
-| MES | `VITE_MES_SERVICE_URL` | `http://localhost:8005` | 生产执行系统 |
-| ERP | `VITE_ERP_SERVICE_URL` | `http://localhost:8006` | 企业资源计划 |
-| SCM | `VITE_SCM_SERVICE_URL` | `http://localhost:8007` | 供应链系统 |
-| WMS | `VITE_WMS_SERVICE_URL` | `http://localhost:8008` | 仓库管理系统 |
-| CRM | `VITE_CRM_SERVICE_URL` | `http://localhost:8009` | 客户关系管理 |
-| HRM | `VITE_HRM_SERVICE_URL` | `http://localhost:8010` | 人力资源管理 |
-| GIS | `VITE_GIS_SERVICE_URL` | `http://localhost:8011` | 地理信息系统 |
-| BI | `VITE_BI_SERVICE_URL` | `http://localhost:8012` | 商业智能 |
-| EHS | `VITE_EHS_SERVICE_URL` | `http://localhost:8013` | 安全管理系统 |
-| PDM | `VITE_PDM_SERVICE_URL` | `http://localhost:8014` | 产品数据管理 |
-| SRM | `VITE_SRM_SERVICE_URL` | `http://localhost:8015` | 供应商管理 |
-| IM | `VITE_IM_SERVICE_URL` | `http://localhost:8016` | 即时通讯 |
-| AI | `VITE_AI_SERVICE_URL` | `http://localhost:8017` | AI 知识库 |
-| Mobile | `VITE_MOBILE_SERVICE_URL` | `http://localhost:8018` | 移动端服务 |
-| Integration | `VITE_INTEGRATION_SERVICE_URL` | `http://localhost:8019` | 集成服务 |
-| Portal | `VITE_PORTAL_SERVICE_URL` | `http://localhost:8020` | 企业门户 |
-| Doc | `VITE_DOC_SERVICE_URL` | `http://localhost:8021` | 文档服务 |
-| Flow | `VITE_FLOW_SERVICE_URL` | `http://localhost:8022` | 工作流服务 |
-| Notification | `VITE_NOTIFICATION_SERVICE_URL` | `http://localhost:8023` | 通知服务 |
-| Report | `VITE_REPORT_SERVICE_URL` | `http://localhost:8024` | 报表服务 |
+| 服务类别 | 服务 | 环境变量 | 默认端口 | 说明 |
+|---------|------|----------|----------|------|
+| **核心平台** | IAM | `VITE_IAM_SERVICE_URL` | `http://localhost:8000` | 身份认证服务 |
+| | DOC | `VITE_DOC_SERVICE_URL` | `http://localhost:8001` | 文档服务 |
+| | PM | `VITE_PM_SERVICE_URL` | `http://localhost:8002` | 项目管理服务 |
+| | NOTIFICATION | `VITE_NOTIFICATION_SERVICE_URL` | `http://localhost:8003` | 通知服务 |
+| | INTEGRATION | `VITE_INTEGRATION_SERVICE_URL` | `http://localhost:8004` | 集成服务 |
+| | PORTAL | `VITE_PORTAL_SERVICE_URL` | `http://localhost:8005` | 企业门户 |
+| | FLOW | `VITE_FLOW_SERVICE_URL` | `http://localhost:8006` | 工作流服务 |
+| **业务服务** | ERP | `VITE_ERP_SERVICE_URL` | `http://localhost:8010` | 企业资源计划 |
+| | HRM | `VITE_HRM_SERVICE_URL` | `http://localhost:8011` | 人力资源管理 |
+| | CRM | `VITE_CRM_SERVICE_URL` | `http://localhost:8012` | 客户关系管理 |
+| | AI | `VITE_AI_SERVICE_URL` | `http://localhost:8013` | AI 知识库 |
+| **研发创新** | RS | `VITE_RS_SERVICE_URL` | `http://localhost:8020` | 研发管理服务 |
+| | LIMS | `VITE_LIMS_SERVICE_URL` | `http://localhost:8022` | 实验室系统 |
+| | PDM | `VITE_PDM_SERVICE_URL` | `http://localhost:8023` | 产品数据管理 |
+| **制造质量** | MES | `VITE_MES_SERVICE_URL` | `http://localhost:8030` | 生产执行系统 |
+| | QMS | `VITE_QMS_SERVICE_URL` | `http://localhost:8031` | 质量管理系统 |
+| | EHS | `VITE_EHS_SERVICE_URL` | `http://localhost:8032` | 安全管理系统 |
+| **供应链** | SCM | `VITE_SCM_SERVICE_URL` | `http://localhost:8040` | 供应链系统 |
+| | SRM | `VITE_SRM_SERVICE_URL` | `http://localhost:8041` | 供应商管理 |
+| | WMS | `VITE_WMS_SERVICE_URL` | `http://localhost:8042` | 仓库管理系统 |
+| **专业服务** | GIS | `VITE_GIS_SERVICE_URL` | `http://localhost:8050` | 地理信息系统 |
+| | IM | `VITE_IM_SERVICE_URL` | `http://localhost:8051` | 即时通讯 |
+| | BI | `VITE_BI_SERVICE_URL` | `http://localhost:8052` | 商业智能 |
+| | REPORT | `VITE_REPORT_SERVICE_URL` | `http://localhost:8053` | 报表服务 |
+| | MAIL | `VITE_MAIL_SERVICE_URL` | `http://localhost:8054` | 邮件服务 |
+| | MOBILE | `VITE_MOBILE_SERVICE_URL` | `http://localhost:8055` | 移动端服务 |
 
 ### 环境变量文件
 

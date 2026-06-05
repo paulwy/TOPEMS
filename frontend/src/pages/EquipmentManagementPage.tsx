@@ -804,7 +804,7 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({ onNav
                       <SelectValue placeholder='请选择负责人' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=''>无</SelectItem>
+                      <SelectItem value='none'>无</SelectItem>
                       {employees.map((emp) => (
                         <SelectItem key={emp.id} value={emp.id}>
                           {emp.name}
@@ -1035,7 +1035,7 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({ onNav
                         <SelectValue placeholder='请选择负责人' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value=''>无</SelectItem>
+                        <SelectItem value='none'>无</SelectItem>
                         {employees.map((emp) => (
                           <SelectItem key={emp.id} value={emp.id}>
                             {emp.name}

@@ -285,7 +285,7 @@ const HrmDepartmentPage: React.FC = () => {
                     <SelectValue placeholder='全部状态' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value=''>全部状态</SelectItem>
+                    <SelectItem value='all'>全部状态</SelectItem>
                     <SelectItem value='active'>启用</SelectItem>
                     <SelectItem value='inactive'>禁用</SelectItem>
                   </SelectContent>
@@ -364,7 +364,7 @@ const HrmDepartmentPage: React.FC = () => {
                       <SelectValue placeholder='请选择' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=''>无</SelectItem>
+                      <SelectItem value='none'>无</SelectItem>
                       {departmentsList
                         .filter((d) => !selectedDepartment || d.id !== selectedDepartment.id)
                         .map((d) => (
@@ -448,7 +448,7 @@ const HrmDepartmentPage: React.FC = () => {
                         <SelectValue placeholder='请选择' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value=''>无</SelectItem>
+                        <SelectItem value='none'>无</SelectItem>
                         {departmentsList
                           .filter((d) => d.id !== selectedDepartment.id)
                           .map((d) => (

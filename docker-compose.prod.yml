@@ -54,30 +54,10 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # 核心平台服务
   iam-service:
     image: topems-iam-service:latest
     container_name: topems-iam-prod
-    environment:
-      APP_ENV: production
-      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET}
-      PORT: 8002
-      RUST_LOG: info
-    networks:
-      - topems-network
-    expose:
-      - "8002"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  rs-service:
-    image: topems-rs-service:latest
-    container_name: topems-rs-prod
     environment:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
@@ -92,49 +72,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      iam-service:
-        condition: service_started
-    restart: unless-stopped
-
-  mail-service:
-    image: topems-mail-service:latest
-    container_name: topems-mail-prod
-    environment:
-      APP_ENV: production
-      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
-      IAM_SERVICE_URL: http://iam-service:8002
-      PORT: 8027
-      RUST_LOG: info
-    networks:
-      - topems-network
-    expose:
-      - "8027"
-    depends_on:
-      postgres:
+      redis:
         condition: service_healthy
-      iam-service:
-        condition: service_started
-    restart: unless-stopped
-
-  lims-service:
-    image: topems-lims-service:latest
-    container_name: topems-lims-prod
-    environment:
-      APP_ENV: production
-      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET}
-      PORT: 8003
-      RUST_LOG: info
-    networks:
-      - topems-network
-    expose:
-      - "8003"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      iam-service:
-        condition: service_started
     restart: unless-stopped
 
   doc-service:
@@ -158,9 +97,51 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  flow-service:
-    image: topems-flow-service:latest
-    container_name: topems-flow-prod
+  pm-service:
+    image: topems-pm-service:latest
+    container_name: topems-pm-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8002
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  notification-service:
+    image: topems-notification-service:latest
+    container_name: topems-notification-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8003
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  integration-service:
+    image: topems-integration-service:latest
+    container_name: topems-integration-prod
     environment:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
@@ -179,9 +160,9 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  qms-service:
-    image: topems-qms-service:latest
-    container_name: topems-qms-prod
+  portal-service:
+    image: topems-portal-service:latest
+    container_name: topems-portal-prod
     environment:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
@@ -200,9 +181,9 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  ehs-service:
-    image: topems-ehs-service:latest
-    container_name: topems-ehs-prod
+  flow-service:
+    image: topems-flow-service:latest
+    container_name: topems-flow-prod
     environment:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
@@ -221,72 +202,10 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  srm-service:
-    image: topems-srm-service:latest
-    container_name: topems-srm-prod
-    environment:
-      APP_ENV: production
-      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET}
-      PORT: 8007
-      RUST_LOG: info
-    networks:
-      - topems-network
-    expose:
-      - "8007"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      iam-service:
-        condition: service_started
-    restart: unless-stopped
-
-  pdm-service:
-    image: topems-pdm-service:latest
-    container_name: topems-pdm-prod
-    environment:
-      APP_ENV: production
-      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET}
-      PORT: 8008
-      RUST_LOG: info
-    networks:
-      - topems-network
-    expose:
-      - "8008"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      iam-service:
-        condition: service_started
-    restart: unless-stopped
-
-  bi-service:
-    image: topems-bi-service:latest
-    container_name: topems-bi-prod
-    environment:
-      APP_ENV: production
-      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: ${JWT_SECRET}
-      PORT: 8009
-      RUST_LOG: info
-    networks:
-      - topems-network
-    expose:
-      - "8009"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      iam-service:
-        condition: service_started
-    restart: unless-stopped
-
-  ai-service:
-    image: topems-ai-service:latest
-    container_name: topems-ai-prod
+  # 业务服务
+  erp-service:
+    image: topems-erp-service:latest
+    container_name: topems-erp-prod
     environment:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
@@ -305,9 +224,9 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  im-service:
-    image: topems-im-service:latest
-    container_name: topems-im-prod
+  hrm-service:
+    image: topems-hrm-service:latest
+    container_name: topems-hrm-prod
     environment:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
@@ -326,9 +245,9 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  hrm-service:
-    image: topems-hrm-service:latest
-    container_name: topems-hrm-prod
+  crm-service:
+    image: topems-crm-service:latest
+    container_name: topems-crm-prod
     environment:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
@@ -347,9 +266,9 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  erp-service:
-    image: topems-erp-service:latest
-    container_name: topems-erp-prod
+  ai-service:
+    image: topems-ai-service:latest
+    container_name: topems-ai-prod
     environment:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
@@ -368,6 +287,71 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  # 研发创新服务
+  rs-service:
+    image: topems-rs-service:latest
+    container_name: topems-rs-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8020
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8020"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  lims-service:
+    image: topems-lims-service:latest
+    container_name: topems-lims-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8022
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8022"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  pdm-service:
+    image: topems-pdm-service:latest
+    container_name: topems-pdm-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8023
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8023"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  # 制造与质量服务
   mes-service:
     image: topems-mes-service:latest
     container_name: topems-mes-prod
@@ -376,12 +360,12 @@ services:
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
-      PORT: 8014
+      PORT: 8030
       RUST_LOG: info
     networks:
       - topems-network
     expose:
-      - "8014"
+      - "8030"
     depends_on:
       postgres:
         condition: service_healthy
@@ -389,20 +373,84 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  crm-service:
-    image: topems-crm-service:latest
-    container_name: topems-crm-prod
+  qms-service:
+    image: topems-qms-service:latest
+    container_name: topems-qms-prod
     environment:
       APP_ENV: production
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
-      PORT: 8015
+      PORT: 8031
       RUST_LOG: info
     networks:
       - topems-network
     expose:
-      - "8015"
+      - "8031"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  ehs-service:
+    image: topems-ehs-service:latest
+    container_name: topems-ehs-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8032
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8032"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  # 供应链服务
+  scm-service:
+    image: topems-scm-service:latest
+    container_name: topems-scm-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8040
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8040"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  srm-service:
+    image: topems-srm-service:latest
+    container_name: topems-srm-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8041
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8041"
     depends_on:
       postgres:
         condition: service_healthy
@@ -418,12 +466,138 @@ services:
       DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
-      PORT: 8016
+      PORT: 8042
       RUST_LOG: info
     networks:
       - topems-network
     expose:
-      - "8016"
+      - "8042"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  # 专业服务
+  gis-service:
+    image: topems-gis-service:latest
+    container_name: topems-gis-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8050
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  im-service:
+    image: topems-im-service:latest
+    container_name: topems-im-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8051
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  bi-service:
+    image: topems-bi-service:latest
+    container_name: topems-bi-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8052
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8052"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  report-service:
+    image: topems-report-service:latest
+    container_name: topems-report-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8053
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8053"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  mail-service:
+    image: topems-mail-service:latest
+    container_name: topems-mail-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      IAM_SERVICE_URL: http://iam-service:8000
+      PORT: 8054
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8054"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      iam-service:
+        condition: service_started
+    restart: unless-stopped
+
+  mobile-service:
+    image: topems-mobile-service:latest
+    container_name: topems-mobile-prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-topems}:${DB_PASSWORD:-topems_secret}@postgres:5432/${DB_NAME:-topems}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8055
+      RUST_LOG: info
+    networks:
+      - topems-network
+    expose:
+      - "8055"
     depends_on:
       postgres:
         condition: service_healthy

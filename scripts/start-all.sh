@@ -65,14 +65,28 @@ cleanup_port() {
 check_executable() {
     local service_path=$1
     local service_name=$2
+    
     local executable="$PROJECT_ROOT/$service_path/target/release/topems-$service_name"
     
-    if [ ! -f "$executable" ]; then
-        log_warn "$service_name 服务的可执行文件不存在"
-        log_detail "路径: $executable"
-        return 1
+    if [ -f "$executable" ]; then
+        return 0
     fi
-    return 0
+    
+    local executable_alt="$PROJECT_ROOT/$service_path/target/release/$service_name-service"
+    
+    if [ -f "$executable_alt" ]; then
+        return 0
+    fi
+    
+    local executable_simple="$PROJECT_ROOT/$service_path/target/release/$service_name"
+    
+    if [ -f "$executable_simple" ]; then
+        return 0
+    fi
+    
+    log_warn "$service_name 服务的可执行文件不存在"
+    log_detail "尝试路径: $executable, $executable_alt, $executable_simple"
+    return 1
 }
 
 # 编译服务
@@ -189,44 +203,54 @@ export CORS_ORIGINS="http://localhost:3000,http://localhost:5173"
 
 # 4. 清理所有服务端口
 log_info "清理所有服务端口..."
+cleanup_port 8000 || true
 cleanup_port 8001 || true
 cleanup_port 8002 || true
 cleanup_port 8003 || true
 cleanup_port 8004 || true
 cleanup_port 8005 || true
 cleanup_port 8006 || true
-cleanup_port 8009 || true
 cleanup_port 8010 || true
 cleanup_port 8011 || true
 cleanup_port 8012 || true
-cleanup_port 8015 || true
-cleanup_port 8016 || true
 cleanup_port 8013 || true
-cleanup_port 8018 || true
-cleanup_port 8055 || true
+cleanup_port 8020 || true
+cleanup_port 8022 || true
 cleanup_port 8023 || true
+cleanup_port 8030 || true
+cleanup_port 8031 || true
+cleanup_port 8032 || true
+cleanup_port 8040 || true
+cleanup_port 8041 || true
+cleanup_port 8042 || true
+cleanup_port 8050 || true
+cleanup_port 8051 || true
+cleanup_port 8052 || true
+cleanup_port 8053 || true
+cleanup_port 8054 || true
+cleanup_port 8055 || true
 cleanup_port 3000 || true
 
 # 5. 依次启动各个服务
 log_info "检查并启动后端服务..."
 echo ""
 
-# IAM服务
+# IAM服务 (端口: 8000)
 echo "----------------------------------------"
-log_info "处理服务: iam (端口 8002)"
+log_info "处理服务: iam (端口 8000)"
 IAM_PID=""
 if check_executable "platform/topems-iam/backend" "iam"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/platform/topems-iam/backend"
-    SERVER_PORT=8002 ./target/release/topems-iam &
+    SERVER_PORT=8000 ./target/release/topems-iam &
     IAM_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "iam 服务已启动 (PID: $IAM_PID, 端口: 8002)"
+    log_success "iam 服务已启动 (PID: $IAM_PID, 端口: 8000)"
 else
     log_warn "跳过 iam 服务"
 fi
 
-# DOC服务
+# DOC服务 (端口: 8001)
 echo "----------------------------------------"
 log_info "处理服务: doc (端口 8001)"
 DOC_PID=""
@@ -241,197 +265,362 @@ else
     log_warn "跳过 doc 服务"
 fi
 
-# AI服务
+# PM服务 (端口: 8002)
 echo "----------------------------------------"
-log_info "处理服务: ai (端口 8003)"
-AI_PID=""
-if check_executable "services/topems-ai/backend" "ai"; then
+log_info "处理服务: pm (端口 8002)"
+PM_PID=""
+if check_executable "services/topems-pm/backend" "pm"; then
     log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/topems-ai/backend"
-    SERVER_PORT=8003 ./target/release/topems-ai &
-    AI_PID=$!
+    cd "$PROJECT_ROOT/services/topems-pm/backend"
+    SERVER_PORT=8002 ./target/release/topems-pm &
+    PM_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "ai 服务已启动 (PID: $AI_PID, 端口: 8003)"
+    log_success "pm 服务已启动 (PID: $PM_PID, 端口: 8002)"
 else
-    log_warn "跳过 ai 服务"
+    log_warn "跳过 pm 服务"
 fi
 
-# FLOW服务 (特殊处理，可能需要编译)
+# NOTIFICATION服务 (端口: 8003)
 echo "----------------------------------------"
-log_info "处理服务: flow (端口 8004)"
+log_info "处理服务: notification (端口 8003)"
+NOTIFICATION_PID=""
+if check_executable "services/notification-service" "notification"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/notification-service"
+    SERVER_PORT=8003 ./target/release/notification-service &
+    NOTIFICATION_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "notification 服务已启动 (PID: $NOTIFICATION_PID, 端口: 8003)"
+else
+    log_warn "跳过 notification 服务"
+fi
+
+# INTEGRATION服务 (端口: 8004)
+echo "----------------------------------------"
+log_info "处理服务: integration (端口 8004)"
+INTEGRATION_PID=""
+if check_executable "services/topems-integration/backend" "integration"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-integration/backend"
+    SERVER_PORT=8004 ./target/release/topems-integration &
+    INTEGRATION_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "integration 服务已启动 (PID: $INTEGRATION_PID, 端口: 8004)"
+else
+    log_warn "跳过 integration 服务"
+fi
+
+# PORTAL服务 (端口: 8005)
+echo "----------------------------------------"
+log_info "处理服务: portal (端口 8005)"
+PORTAL_PID=""
+if check_executable "services/topems-portal/backend" "portal"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-portal/backend"
+    SERVER_PORT=8005 ./target/release/topems-portal &
+    PORTAL_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "portal 服务已启动 (PID: $PORTAL_PID, 端口: 8005)"
+else
+    log_warn "跳过 portal 服务"
+fi
+
+# FLOW服务 (端口: 8006)
+echo "----------------------------------------"
+log_info "处理服务: flow (端口 8006)"
 FLOW_PID=""
 if ! check_executable "platform/topems-flow/backend" "flow"; then
     log_warn "flow 服务需要编译，正在编译..."
     if build_service "platform/topems-flow/backend" "flow"; then
         log_detail "正在启动..."
         cd "$PROJECT_ROOT/platform/topems-flow/backend"
-        SERVER_PORT=8004 ./target/release/topems-flow &
+        SERVER_PORT=8006 ./target/release/topems-flow &
         FLOW_PID=$!
         cd "$PROJECT_ROOT"
-        log_success "flow 服务已启动 (PID: $FLOW_PID, 端口: 8004)"
+        log_success "flow 服务已启动 (PID: $FLOW_PID, 端口: 8006)"
     else
         log_warn "跳过 flow 服务"
     fi
 else
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/platform/topems-flow/backend"
-    SERVER_PORT=8004 ./target/release/topems-flow &
+    SERVER_PORT=8006 ./target/release/topems-flow &
     FLOW_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "flow 服务已启动 (PID: $FLOW_PID, 端口: 8004)"
+    log_success "flow 服务已启动 (PID: $FLOW_PID, 端口: 8006)"
 fi
 
-# RS服务
+# ERP服务 (端口: 8010)
 echo "----------------------------------------"
-log_info "处理服务: rs (端口 8005)"
-RS_PID=""
-if check_executable "services/topems-rs/backend" "rs"; then
-    log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/topems-rs/backend"
-    SERVER_PORT=8005 ./target/release/topems-rs &
-    RS_PID=$!
-    cd "$PROJECT_ROOT"
-    log_success "rs 服务已启动 (PID: $RS_PID, 端口: 8005)"
-else
-    log_warn "跳过 rs 服务"
-fi
-
-# LIMS服务
-echo "----------------------------------------"
-log_info "处理服务: lims (端口 8006)"
-LIMS_PID=""
-if check_executable "services/topems-lims/backend" "lims"; then
-    log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/topems-lims/backend"
-    SERVER_PORT=8006 ./target/release/topems-lims &
-    LIMS_PID=$!
-    cd "$PROJECT_ROOT"
-    log_success "lims 服务已启动 (PID: $LIMS_PID, 端口: 8006)"
-else
-    log_warn "跳过 lims 服务"
-fi
-
-# QMS服务
-echo "----------------------------------------"
-log_info "处理服务: qms (端口 8012)"
-QMS_PID=""
-if check_executable "services/topems-qms/backend" "qms"; then
-    log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/topems-qms/backend"
-    SERVER_PORT=8012 ./target/release/topems-qms &
-    QMS_PID=$!
-    cd "$PROJECT_ROOT"
-    log_success "qms 服务已启动 (PID: $QMS_PID, 端口: 8012)"
-else
-    log_warn "跳过 qms 服务"
-fi
-
-# EHS服务
-echo "----------------------------------------"
-log_info "处理服务: ehs (端口 8013)"
-EHS_PID=""
-if check_executable "services/topems-ehs/backend" "ehs"; then
-    log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/topems-ehs/backend"
-    SERVER_PORT=8013 ./target/release/topems-ehs &
-    EHS_PID=$!
-    cd "$PROJECT_ROOT"
-    log_success "ehs 服务已启动 (PID: $EHS_PID, 端口: 8013)"
-else
-    log_warn "跳过 ehs 服务"
-fi
-
-# ERP服务
-echo "----------------------------------------"
-log_info "处理服务: erp (端口 8009)"
+log_info "处理服务: erp (端口 8010)"
 ERP_PID=""
 if check_executable "services/topems-erp/backend" "erp"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-erp/backend"
-    SERVER_PORT=8009 ./target/release/topems-erp &
+    SERVER_PORT=8010 ./target/release/topems-erp &
     ERP_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "erp 服务已启动 (PID: $ERP_PID, 端口: 8009)"
+    log_success "erp 服务已启动 (PID: $ERP_PID, 端口: 8010)"
 else
     log_warn "跳过 erp 服务"
 fi
 
-# HRM服务
+# HRM服务 (端口: 8011)
 echo "----------------------------------------"
-log_info "处理服务: hrm (端口 8010)"
+log_info "处理服务: hrm (端口 8011)"
 HRM_PID=""
 if check_executable "services/topems-hrm/backend" "hrm"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-hrm/backend"
-    SERVER_PORT=8010 ./target/release/topems-hrm &
+    SERVER_PORT=8011 ./target/release/topems-hrm &
     HRM_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "hrm 服务已启动 (PID: $HRM_PID, 端口: 8010)"
+    log_success "hrm 服务已启动 (PID: $HRM_PID, 端口: 8011)"
 else
     log_warn "跳过 hrm 服务"
 fi
 
-# GIS服务
+# CRM服务 (端口: 8012)
 echo "----------------------------------------"
-log_info "处理服务: gis (端口 8011)"
-GIS_PID=""
-if check_executable "services/topems-gis/backend" "gis"; then
+log_info "处理服务: crm (端口 8012)"
+CRM_PID=""
+if check_executable "services/topems-crm/backend" "crm"; then
     log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/topems-gis/backend"
-    SERVER_PORT=8011 ./target/release/topems-gis &
-    GIS_PID=$!
+    cd "$PROJECT_ROOT/services/topems-crm/backend"
+    SERVER_PORT=8012 ./target/release/topems-crm &
+    CRM_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "gis 服务已启动 (PID: $GIS_PID, 端口: 8011)"
+    log_success "crm 服务已启动 (PID: $CRM_PID, 端口: 8012)"
 else
-    log_warn "跳过 gis 服务"
+    log_warn "跳过 crm 服务"
 fi
 
-# PDM服务
+# AI服务 (端口: 8013)
 echo "----------------------------------------"
-log_info "处理服务: pdm (端口 8015)"
+log_info "处理服务: ai (端口 8013)"
+AI_PID=""
+if check_executable "services/topems-ai/backend" "ai"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-ai/backend"
+    SERVER_PORT=8013 ./target/release/topems-ai &
+    AI_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "ai 服务已启动 (PID: $AI_PID, 端口: 8013)"
+else
+    log_warn "跳过 ai 服务"
+fi
+
+# RS服务 (端口: 8020)
+echo "----------------------------------------"
+log_info "处理服务: rs (端口 8020)"
+RS_PID=""
+if check_executable "services/topems-rs/backend" "rs"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-rs/backend"
+    SERVER_PORT=8020 ./target/release/topems-rs &
+    RS_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "rs 服务已启动 (PID: $RS_PID, 端口: 8020)"
+else
+    log_warn "跳过 rs 服务"
+fi
+
+# LIMS服务 (端口: 8022)
+echo "----------------------------------------"
+log_info "处理服务: lims (端口 8022)"
+LIMS_PID=""
+if check_executable "services/topems-lims/backend" "lims"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-lims/backend"
+    SERVER_PORT=8022 ./target/release/topems-lims &
+    LIMS_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "lims 服务已启动 (PID: $LIMS_PID, 端口: 8022)"
+else
+    log_warn "跳过 lims 服务"
+fi
+
+# PDM服务 (端口: 8023)
+echo "----------------------------------------"
+log_info "处理服务: pdm (端口 8023)"
 PDM_PID=""
 if check_executable "services/topems-pdm/backend" "pdm"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-pdm/backend"
-    SERVER_PORT=8015 ./target/release/topems-pdm &
+    SERVER_PORT=8023 ./target/release/topems-pdm &
     PDM_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "pdm 服务已启动 (PID: $PDM_PID, 端口: 8015)"
+    log_success "pdm 服务已启动 (PID: $PDM_PID, 端口: 8023)"
 else
     log_warn "跳过 pdm 服务"
 fi
 
-# SRM服务
+# MES服务 (端口: 8030)
 echo "----------------------------------------"
-log_info "处理服务: srm (端口 8018)"
+log_info "处理服务: mes (端口 8030)"
+MES_PID=""
+if check_executable "services/topems-mes/backend" "mes"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-mes/backend"
+    SERVER_PORT=8030 ./target/release/topems-mes &
+    MES_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "mes 服务已启动 (PID: $MES_PID, 端口: 8030)"
+else
+    log_warn "跳过 mes 服务"
+fi
+
+# QMS服务 (端口: 8031)
+echo "----------------------------------------"
+log_info "处理服务: qms (端口 8031)"
+QMS_PID=""
+if check_executable "services/topems-qms/backend" "qms"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-qms/backend"
+    SERVER_PORT=8031 ./target/release/topems-qms &
+    QMS_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "qms 服务已启动 (PID: $QMS_PID, 端口: 8031)"
+else
+    log_warn "跳过 qms 服务"
+fi
+
+# EHS服务 (端口: 8032)
+echo "----------------------------------------"
+log_info "处理服务: ehs (端口 8032)"
+EHS_PID=""
+if check_executable "services/topems-ehs/backend" "ehs"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-ehs/backend"
+    SERVER_PORT=8032 ./target/release/topems-ehs &
+    EHS_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "ehs 服务已启动 (PID: $EHS_PID, 端口: 8032)"
+else
+    log_warn "跳过 ehs 服务"
+fi
+
+# SCM服务 (端口: 8040)
+echo "----------------------------------------"
+log_info "处理服务: scm (端口 8040)"
+SCM_PID=""
+if check_executable "services/topems-scm/backend" "scm"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-scm/backend"
+    SERVER_PORT=8040 ./target/release/topems-scm &
+    SCM_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "scm 服务已启动 (PID: $SCM_PID, 端口: 8040)"
+else
+    log_warn "跳过 scm 服务"
+fi
+
+# SRM服务 (端口: 8041)
+echo "----------------------------------------"
+log_info "处理服务: srm (端口 8041)"
 SRM_PID=""
 if check_executable "services/topems-srm/backend" "srm"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-srm/backend"
-    SERVER_PORT=8018 ./target/release/topems-srm &
+    SERVER_PORT=8041 ./target/release/topems-srm &
     SRM_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "srm 服务已启动 (PID: $SRM_PID, 端口: 8018)"
+    log_success "srm 服务已启动 (PID: $SRM_PID, 端口: 8041)"
 else
     log_warn "跳过 srm 服务"
 fi
 
-# IM服务
+# WMS服务 (端口: 8042)
 echo "----------------------------------------"
-log_info "处理服务: im (端口 8016)"
+log_info "处理服务: wms (端口 8042)"
+WMS_PID=""
+if check_executable "services/topems-wms/backend" "wms"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-wms/backend"
+    SERVER_PORT=8042 ./target/release/topems-wms &
+    WMS_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "wms 服务已启动 (PID: $WMS_PID, 端口: 8042)"
+else
+    log_warn "跳过 wms 服务"
+fi
+
+# GIS服务 (端口: 8050)
+echo "----------------------------------------"
+log_info "处理服务: gis (端口 8050)"
+GIS_PID=""
+if check_executable "services/topems-gis/backend" "gis"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-gis/backend"
+    SERVER_PORT=8050 ./target/release/topems-gis &
+    GIS_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "gis 服务已启动 (PID: $GIS_PID, 端口: 8050)"
+else
+    log_warn "跳过 gis 服务"
+fi
+
+# IM服务 (端口: 8051)
+echo "----------------------------------------"
+log_info "处理服务: im (端口 8051)"
 IM_PID=""
 if check_executable "services/topems-im/backend" "im"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-im/backend"
-    SERVER_PORT=8016 ./target/release/topems-im &
+    SERVER_PORT=8051 ./target/release/topems-im &
     IM_PID=$!
     cd "$PROJECT_ROOT"
-    log_success "im 服务已启动 (PID: $IM_PID, 端口: 8016)"
+    log_success "im 服务已启动 (PID: $IM_PID, 端口: 8051)"
 else
     log_warn "跳过 im 服务"
 fi
 
-# MOBILE服务
+# BI服务 (端口: 8052)
+echo "----------------------------------------"
+log_info "处理服务: bi (端口 8052)"
+BI_PID=""
+if check_executable "services/topems-bi/backend" "bi"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-bi/backend"
+    SERVER_PORT=8052 ./target/release/topems-bi &
+    BI_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "bi 服务已启动 (PID: $BI_PID, 端口: 8052)"
+else
+    log_warn "跳过 bi 服务"
+fi
+
+# REPORT服务 (端口: 8053)
+echo "----------------------------------------"
+log_info "处理服务: report (端口 8053)"
+REPORT_PID=""
+if check_executable "services/report-service/backend" "report"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/report-service/backend"
+    SERVER_PORT=8053 ./target/release/topems-report &
+    REPORT_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "report 服务已启动 (PID: $REPORT_PID, 端口: 8053)"
+else
+    log_warn "跳过 report 服务"
+fi
+
+# MAIL服务 (端口: 8054)
+echo "----------------------------------------"
+log_info "处理服务: mail (端口 8054)"
+MAIL_PID=""
+if check_executable "services/topems-mail/backend" "mail"; then
+    log_detail "正在启动..."
+    cd "$PROJECT_ROOT/services/topems-mail/backend"
+    SERVER_PORT=8054 ./target/release/topems-mail &
+    MAIL_PID=$!
+    cd "$PROJECT_ROOT"
+    log_success "mail 服务已启动 (PID: $MAIL_PID, 端口: 8054)"
+else
+    log_warn "跳过 mail 服务"
+fi
+
+# MOBILE服务 (端口: 8055)
 echo "----------------------------------------"
 log_info "处理服务: mobile (端口 8055)"
 MOBILE_PID=""
@@ -444,21 +633,6 @@ if check_executable "services/topems-mobile/backend" "mobile"; then
     log_success "mobile 服务已启动 (PID: $MOBILE_PID, 端口: 8055)"
 else
     log_warn "跳过 mobile 服务"
-fi
-
-# NOTIFICATION服务
-echo "----------------------------------------"
-log_info "处理服务: notification (端口 8023)"
-NOTIFICATION_PID=""
-if check_executable "services/notification-service" "notification"; then
-    log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/notification-service"
-    SERVER_PORT=8023 ./target/release/notification-service &
-    NOTIFICATION_PID=$!
-    cd "$PROJECT_ROOT"
-    log_success "notification 服务已启动 (PID: $NOTIFICATION_PID, 端口: 8023)"
-else
-    log_warn "跳过 notification 服务"
 fi
 
 # 6. 启动前端
@@ -501,14 +675,14 @@ total_count=0
 # IAM检查
 total_count=$((total_count + 1))
 if [ -n "$IAM_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8002/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} IAM (8002) - 运行正常"
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} IAM (8000) - 运行正常"
         success_count=$((success_count + 1))
     else
-        echo -e "${YELLOW}⏳${NC} IAM (8002) - 启动中/检查失败"
+        echo -e "${YELLOW}⏳${NC} IAM (8000) - 启动中/检查失败"
     fi
 else
-    echo -e "${RED}❌${NC} IAM (8002) - 未启动"
+    echo -e "${RED}❌${NC} IAM (8000) - 未启动"
 fi
 
 # DOC检查
@@ -524,283 +698,76 @@ else
     echo -e "${RED}❌${NC} DOC (8001) - 未启动"
 fi
 
-# AI检查
+# PM检查
 total_count=$((total_count + 1))
-if [ -n "$AI_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8003/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} AI (8003) - 运行正常"
+if [ -n "$PM_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8002/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} PM (8002) - 运行正常"
         success_count=$((success_count + 1))
     else
-        echo -e "${YELLOW}⏳${NC} AI (8003) - 启动中/检查失败"
+        echo -e "${YELLOW}⏳${NC} PM (8002) - 启动中/检查失败"
     fi
 else
-    echo -e "${RED}❌${NC} AI (8003) - 未启动"
-fi
-
-# FLOW检查
-total_count=$((total_count + 1))
-if [ -n "$FLOW_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8004/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} FLOW (8004) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} FLOW (8004) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} FLOW (8004) - 未启动"
-fi
-
-# RS检查
-total_count=$((total_count + 1))
-if [ -n "$RS_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8005/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} RS (8005) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} RS (8005) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} RS (8005) - 未启动"
-fi
-
-# LIMS检查
-total_count=$((total_count + 1))
-if [ -n "$LIMS_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8006/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} LIMS (8006) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} LIMS (8006) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} LIMS (8006) - 未启动"
-fi
-
-# QMS检查
-total_count=$((total_count + 1))
-if [ -n "$QMS_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8012/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} QMS (8012) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} QMS (8012) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} QMS (8012) - 未启动"
-fi
-
-# EHS检查
-total_count=$((total_count + 1))
-if [ -n "$EHS_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8013/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} EHS (8013) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} EHS (8013) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} EHS (8013) - 未启动"
-fi
-
-# ERP检查
-total_count=$((total_count + 1))
-if [ -n "$ERP_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8009/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} ERP (8009) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} ERP (8009) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} ERP (8009) - 未启动"
-fi
-
-# HRM检查
-total_count=$((total_count + 1))
-if [ -n "$HRM_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8010/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} HRM (8010) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} HRM (8010) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} HRM (8010) - 未启动"
-fi
-
-# GIS检查
-total_count=$((total_count + 1))
-if [ -n "$GIS_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8011/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} GIS (8011) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} GIS (8011) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} GIS (8011) - 未启动"
-fi
-
-# PDM检查
-total_count=$((total_count + 1))
-if [ -n "$PDM_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8015/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} PDM (8015) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} PDM (8015) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} PDM (8015) - 未启动"
-fi
-
-# SRM检查
-total_count=$((total_count + 1))
-if [ -n "$SRM_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8018/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} SRM (8018) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} SRM (8018) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} SRM (8018) - 未启动"
-fi
-
-# IM检查
-total_count=$((total_count + 1))
-if [ -n "$IM_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8016/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} IM (8016) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} IM (8016) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} IM (8016) - 未启动"
-fi
-
-# MOBILE检查
-total_count=$((total_count + 1))
-if [ -n "$MOBILE_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8055/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} MOBILE (8055) - 运行正常"
-        success_count=$((success_count + 1))
-    else
-        echo -e "${YELLOW}⏳${NC} MOBILE (8055) - 启动中/检查失败"
-    fi
-else
-    echo -e "${RED}❌${NC} MOBILE (8055) - 未启动"
+    echo -e "${RED}❌${NC} PM (8002) - 未启动"
 fi
 
 # NOTIFICATION检查
 total_count=$((total_count + 1))
 if [ -n "$NOTIFICATION_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8023/health 2>/dev/null | grep -q "200"; then
-        echo -e "${GREEN}✅${NC} NOTIFICATION (8023) - 运行正常"
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8003/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} NOTIFICATION (8003) - 运行正常"
         success_count=$((success_count + 1))
     else
-        echo -e "${YELLOW}⏳${NC} NOTIFICATION (8023) - 启动中/检查失败"
+        echo -e "${YELLOW}⏳${NC} NOTIFICATION (8003) - 启动中/检查失败"
     fi
 else
-    echo -e "${RED}❌${NC} NOTIFICATION (8023) - 未启动"
+    echo -e "${RED}❌${NC} NOTIFICATION (8003) - 未启动"
 fi
 
-# 前端检查
+# INTEGRATION检查
 total_count=$((total_count + 1))
-if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null | grep -q "200\|304"; then
-    echo -e "${GREEN}✅${NC} Frontend (3000) - 运行正常"
-    success_count=$((success_count + 1))
+if [ -n "$INTEGRATION_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8004/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} INTEGRATION (8004) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} INTEGRATION (8004) - 启动中/检查失败"
+    fi
 else
-    echo -e "${YELLOW}⏳${NC} Frontend (3000) - 启动中"
+    echo -e "${RED}❌${NC} INTEGRATION (8004) - 未启动"
 fi
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-log_success "启动检查完成：$success_count/$total_count 服务正常"
-echo ""
+# PORTAL检查
+total_count=$((total_count + 1))
+if [ -n "$PORTAL_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8005/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} PORTAL (8005) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} PORTAL (8005) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} PORTAL (8005) - 未启动"
+fi
 
-# 9. 显示访问信息
-log_info "系统启动完成"
-echo ""
-echo "🌐 访问地址:"
-echo "   前端门户: http://localhost:3000"
-echo "   IAM: http://localhost:8002"
-echo "   DOC: http://localhost:8001"
-echo "   AI: http://localhost:8003"
-echo "   FLOW: http://localhost:8004"
-echo "   RS: http://localhost:8005"
-echo "   LIMS: http://localhost:8006"
-echo "   ERP: http://localhost:8009"
-echo "   HRM: http://localhost:8010"
-echo "   QMS: http://localhost:8012"
-echo "   EHS: http://localhost:8016"
-echo "   GIS: http://localhost:8011"
-echo "   PDM: http://localhost:8015"
-echo "   SRM: http://localhost:8018"
-echo "   IM: http://localhost:8016"
-echo "   MOBILE: http://localhost:8055"
-echo ""
-echo "📄 文档管理页面: http://localhost:3000/documents"
-echo ""
-echo "🔑 测试账号:"
-echo "   admin / admin123 (系统管理员)"
-echo "   user / user123 (普通用户)"
-echo "   guest / guest123 (访客)"
-echo ""
-echo "📊 运行的服务进程:"
-if [ -n "$IAM_PID" ]; then echo "   IAM: $IAM_PID"; fi
-if [ -n "$DOC_PID" ]; then echo "   DOC: $DOC_PID"; fi
-if [ -n "$AI_PID" ]; then echo "   AI: $AI_PID"; fi
-if [ -n "$FLOW_PID" ]; then echo "   FLOW: $FLOW_PID"; fi
-if [ -n "$RS_PID" ]; then echo "   RS: $RS_PID"; fi
-if [ -n "$LIMS_PID" ]; then echo "   LIMS: $LIMS_PID"; fi
-if [ -n "$QMS_PID" ]; then echo "   QMS: $QMS_PID"; fi
-if [ -n "$EHS_PID" ]; then echo "   EHS: $EHS_PID"; fi
-if [ -n "$ERP_PID" ]; then echo "   ERP: $ERP_PID"; fi
-if [ -n "$HRM_PID" ]; then echo "   HRM: $HRM_PID"; fi
-if [ -n "$GIS_PID" ]; then echo "   GIS: $GIS_PID"; fi
-if [ -n "$PDM_PID" ]; then echo "   PDM: $PDM_PID"; fi
-if [ -n "$SRM_PID" ]; then echo "   SRM: $SRM_PID"; fi
-if [ -n "$IM_PID" ]; then echo "   IM: $IM_PID"; fi
-if [ -n "$MOBILE_PID" ]; then echo "   MOBILE: $MOBILE_PID"; fi
-echo "   Frontend: $FRONTEND_PID"
-echo ""
-echo "按 Ctrl+C 停止所有服务"
-echo ""
+# FLOW检查
+total_count=$((total_count + 1))
+if [ -n "$FLOW_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8006/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} FLOW (8006) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} FLOW (8006) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} FLOW (8006) - 未启动"
+fi
 
-# 清理函数
-cleanup() {
-    echo ""
-    log_info "正在停止所有服务..."
-    
-    # 停止后端服务
-    [ -n "$IAM_PID" ] && kill $IAM_PID 2>/dev/null || true
-    [ -n "$DOC_PID" ] && kill $DOC_PID 2>/dev/null || true
-    [ -n "$AI_PID" ] && kill $AI_PID 2>/dev/null || true
-    [ -n "$FLOW_PID" ] && kill $FLOW_PID 2>/dev/null || true
-    [ -n "$RS_PID" ] && kill $RS_PID 2>/dev/null || true
-    [ -n "$LIMS_PID" ] && kill $LIMS_PID 2>/dev/null || true
-    [ -n "$QMS_PID" ] && kill $QMS_PID 2>/dev/null || true
-    [ -n "$EHS_PID" ] && kill $EHS_PID 2>/dev/null || true
-    [ -n "$ERP_PID" ] && kill $ERP_PID 2>/dev/null || true
-    [ -n "$HRM_PID" ] && kill $HRM_PID 2>/dev/null || true
-    [ -n "$GIS_PID" ] && kill $GIS_PID 2>/dev/null || true
-    [ -n "$PDM_PID" ] && kill $PDM_PID 2>/dev/null || true
-    [ -n "$SRM_PID" ] && kill $SRM_PID 2>/dev/null || true
-    [ -n "$IM_PID" ] && kill $IM_PID 2>/dev/null || true
-    [ -n "$MOBILE_PID" ] && kill $MOBILE_PID 2>/dev/null || true
-    [ -n "$NOTIFICATION_PID" ] && kill $NOTIFICATION_PID 2>/dev/null || true
-    
-    # 停止前端
-    [ -n "$FRONTEND_PID" ] && kill $FRONTEND_PID 2>/dev/null || true
-    
-    log_success "所有服务已停止"
-    exit 0
-}
-
-# 注册清理函数
-trap cleanup INT TERM
-
-# 保持脚本运行
-wait
+# ERP检查
+total_count=$((total_count + 1))
+if [ -n "$ERP_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8010/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} ERP (8010) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} ERP (8010) - 启动中

@@ -1,7 +1,7 @@
 # TOPEMS 认证和授权 API
 
 **服务**: topems-iam
-**端口**: 8002
+**端口**: 8000
 **版本**: v1
 
 ---
@@ -108,7 +108,7 @@ Content-Type: application/json
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8002/api/v1/auth/register \
+curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "newuser",
@@ -184,7 +184,7 @@ Content-Type: application/json
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8002/api/v1/auth/login \
+curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
@@ -246,7 +246,7 @@ curl -X POST http://localhost:8002/api/v1/auth/login \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8002/api/v1/auth/logout \
+curl -X POST http://localhost:8000/api/v1/auth/logout \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -280,7 +280,7 @@ curl -X POST http://localhost:8002/api/v1/auth/logout \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8002/api/v1/auth/refresh \
+curl -X POST http://localhost:8000/api/v1/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"token": "refresh_token_here"}'
 ```
@@ -319,7 +319,7 @@ curl -X POST http://localhost:8002/api/v1/auth/refresh \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8002/api/v1/users/me \
+curl -X GET http://localhost:8000/api/v1/users/me \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -360,7 +360,7 @@ curl -X GET http://localhost:8002/api/v1/users/me \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8002/api/v1/users/me/permissions \
+curl -X GET http://localhost:8000/api/v1/users/me/permissions \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -437,7 +437,7 @@ curl -X GET http://localhost:8002/api/v1/users/me/permissions \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8002/api/v1/users/me/permissions/check \
+curl -X POST http://localhost:8000/api/v1/users/me/permissions/check \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{"permission": "rs:project:create"}'
@@ -475,7 +475,7 @@ curl -X POST http://localhost:8002/api/v1/users/me/permissions/check \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8002/api/v1/roles \
+curl -X GET http://localhost:8000/api/v1/roles \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -520,7 +520,7 @@ curl -X GET http://localhost:8002/api/v1/roles \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8002/api/v1/roles/role-001 \
+curl -X GET http://localhost:8000/api/v1/roles/role-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -565,7 +565,7 @@ curl -X GET http://localhost:8002/api/v1/roles/role-001 \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8002/api/v1/roles \
+curl -X POST http://localhost:8000/api/v1/roles \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -602,7 +602,7 @@ curl -X POST http://localhost:8002/api/v1/roles \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8002/api/v1/roles/role-003 \
+curl -X DELETE http://localhost:8000/api/v1/roles/role-003 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -629,7 +629,7 @@ curl -X DELETE http://localhost:8002/api/v1/roles/role-003 \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8002/api/v1/roles/role-001/permissions \
+curl -X GET http://localhost:8000/api/v1/roles/role-001/permissions \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -664,7 +664,7 @@ curl -X GET http://localhost:8002/api/v1/roles/role-001/permissions \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8002/api/v1/roles/role-001/permissions/perm-002 \
+curl -X POST http://localhost:8000/api/v1/roles/role-001/permissions/perm-002 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -691,7 +691,7 @@ curl -X POST http://localhost:8002/api/v1/roles/role-001/permissions/perm-002 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8002/api/v1/roles/role-001/permissions/perm-002 \
+curl -X DELETE http://localhost:8000/api/v1/roles/role-001/permissions/perm-002 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -720,7 +720,7 @@ curl -X DELETE http://localhost:8002/api/v1/roles/role-001/permissions/perm-002 
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8002/api/v1/permissions \
+curl -X GET http://localhost:8000/api/v1/permissions \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -764,7 +764,7 @@ curl -X GET http://localhost:8002/api/v1/permissions \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8002/api/v1/users/user-001/permissions \
+curl -X GET http://localhost:8000/api/v1/users/user-001/permissions \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -781,7 +781,7 @@ curl -X GET http://localhost:8002/api/v1/users/user-001/permissions \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8002/api/v1/users/user-001/roles \
+curl -X GET http://localhost:8000/api/v1/users/user-001/roles \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -798,7 +798,7 @@ curl -X GET http://localhost:8002/api/v1/users/user-001/roles \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8002/api/v1/users/user-001/roles/role-002 \
+curl -X POST http://localhost:8000/api/v1/users/user-001/roles/role-002 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -825,7 +825,7 @@ curl -X POST http://localhost:8002/api/v1/users/user-001/roles/role-002 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8002/api/v1/users/user-001/roles/role-002 \
+curl -X DELETE http://localhost:8000/api/v1/users/user-001/roles/role-002 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -850,7 +850,7 @@ curl -X DELETE http://localhost:8002/api/v1/users/user-001/roles/role-002 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8002/api/v1/access-logs?limit=20&offset=0" \
+curl -X GET "http://localhost:8000/api/v1/access-logs?limit=20&offset=0" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -889,7 +889,7 @@ curl -X GET "http://localhost:8002/api/v1/access-logs?limit=20&offset=0" \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8002/api/v1/access-logs/user/user-001?limit=20" \
+curl -X GET "http://localhost:8000/api/v1/access-logs/user/user-001?limit=20" \
   -H "Authorization: Bearer {token}"
 ```
 

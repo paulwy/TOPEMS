@@ -477,7 +477,7 @@ export default function HrmContractPage() {
                     <SelectValue placeholder='全部状态' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value=''>全部状态</SelectItem>
+                    <SelectItem value='all'>全部状态</SelectItem>
                     <SelectItem value='active'>生效中</SelectItem>
                     <SelectItem value='expired'>已到期</SelectItem>
                     <SelectItem value='terminated'>已终止</SelectItem>
@@ -651,7 +651,7 @@ export default function HrmContractPage() {
                       <SelectValue placeholder='请选择员工' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=''>请选择员工</SelectItem>
+                      <SelectItem value='none'>请选择员工</SelectItem>
                       {employees.map((e) => (
                         <SelectItem key={e.id} value={e.id}>
                           {e.name}
@@ -683,7 +683,7 @@ export default function HrmContractPage() {
                       <SelectValue placeholder='请选择合同类型' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=''>请选择合同类型</SelectItem>
+                      <SelectItem value='none'>请选择合同类型</SelectItem>
                       {contractTypes.map((t) => (
                         <SelectItem key={t.value} value={t.value}>
                           {t.label}
@@ -1020,7 +1020,7 @@ export default function HrmContractPage() {
                   <SelectValue placeholder='请选择续签类型' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value=''>请选择续签类型</SelectItem>
+                  <SelectItem value='none'>请选择续签类型</SelectItem>
                   {renewalTypes.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}

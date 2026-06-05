@@ -19,6 +19,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15"
 anyhow = "1"
 thiserror = "2"
+chrono = { version = "0.4", features = ["serde"] }
 topems-shared = { path = "../../../shared/lib" }
 
 [dev-dependencies]

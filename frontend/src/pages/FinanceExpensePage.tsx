@@ -409,7 +409,7 @@ const FinanceExpensePage: React.FC = () => {
               <SelectValue placeholder='全部状态' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value=''>全部状态</SelectItem>
+              <SelectItem value='all'>全部状态</SelectItem>
               <SelectItem value='pending'>待审批</SelectItem>
               <SelectItem value='approved'>已审批</SelectItem>
               <SelectItem value='reimbursed'>已报销</SelectItem>

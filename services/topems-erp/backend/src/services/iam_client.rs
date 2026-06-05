@@ -61,7 +61,7 @@ pub struct IamClient {
 impl IamClient {
     pub fn new() -> Self {
         let base_url = env::var("IAM_SERVICE_URL")
-            .unwrap_or_else(|_| "http://localhost:8002".to_string());
+            .unwrap_or_else(|_| "http://localhost:8000".to_string());
         let admin_username = env::var("IAM_ADMIN_USERNAME")
             .unwrap_or_else(|_| "admin".to_string());
         let admin_password = env::var("IAM_ADMIN_PASSWORD")

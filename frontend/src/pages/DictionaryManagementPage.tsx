@@ -937,7 +937,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                     <SelectValue placeholder='选择上级（可选）' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value=''>无（顶级）</SelectItem>
+                    <SelectItem value='none'>无（顶级）</SelectItem>
                     {parentItems
                       .filter((item) => item.id !== editingItem?.id)
                       .map((item) => (

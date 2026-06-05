@@ -6,6 +6,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use sqlx::Row;
 use utoipa::{ToSchema, IntoParams};
 
 use crate::models::{Sample, InspectionRecord};
@@ -128,45 +129,36 @@ async fn get_project_samples(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let sample_count: i64 = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) as "count!" FROM samples WHERE project_id = $1"#,
-        project_id
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let sample_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM samples WHERE project_id = $1"#)
+        .bind(project_id)
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
 
-    let completed_count: i64 = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) as "count!" FROM samples WHERE project_id = $1 AND status = 'completed'"#,
-        project_id
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let completed_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM samples WHERE project_id = $1 AND status = 'completed'"#)
+        .bind(project_id)
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
 
-    let pending_count: i64 = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) as "count!" FROM samples WHERE project_id = $1 AND status != 'completed'"#,
-        project_id
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let pending_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM samples WHERE project_id = $1 AND status != 'completed'"#)
+        .bind(project_id)
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
 
-    let samples = sqlx::query_as!(
-        Sample,
-        r#"
+    let samples = sqlx::query_as::<_, Sample>(r#"
         SELECT id, name, description, status, project_id, received_date, created_at, updated_at
         FROM samples
         WHERE project_id = $1
         ORDER BY received_date DESC
         LIMIT $2 OFFSET $3
-        "#,
-        project_id,
-        page_size,
-        offset
-    )
-    .fetch_all(&state.db)
-    .await;
+        "#)
+        .bind(project_id)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&state.db)
+        .await;
 
     match samples {
         Ok(samples) => {
@@ -210,13 +202,10 @@ async fn get_sample_project(
     State(state): State<ApiState>,
     Path(sample_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let sample = sqlx::query_as!(
-        Sample,
-        r#"SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM samples WHERE id = $1"#,
-        sample_id
-    )
-    .fetch_optional(&state.db)
-    .await;
+    let sample = sqlx::query_as::<_, Sample>(r#"SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM samples WHERE id = $1"#)
+        .bind(sample_id)
+        .fetch_optional(&state.db)
+        .await;
 
     match sample {
         Ok(Some(sample)) => {
@@ -261,48 +250,32 @@ async fn get_sample_inspections(
     State(state): State<ApiState>,
     Path(sample_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let sample = sqlx::query_as!(
-        Sample,
-        r#"SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM samples WHERE id = $1"#,
-        sample_id
-    )
-    .fetch_optional(&state.db)
-    .await;
+    let sample = sqlx::query_as::<_, Sample>(r#"SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM samples WHERE id = $1"#)
+        .bind(sample_id)
+        .fetch_optional(&state.db)
+        .await;
 
     match sample {
         Ok(Some(sample)) => {
-            let inspection_count: i64 = sqlx::query_scalar!(
-                r#"SELECT COUNT(*) as "count!" FROM inspection_records r 
-                   JOIN inspection_tasks t ON r.task_id = t.id 
-                   WHERE t.sample_id = $1"#,
-                sample_id
-            )
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+            let inspection_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM inspection_records r JOIN inspection_tasks t ON r.task_id = t.id WHERE t.sample_id = $1"#)
+                .bind(sample_id)
+                .fetch_one(&state.db)
+                .await
+                .unwrap_or(0);
 
-            let latest_inspection_result = sqlx::query!(
-                r#"
-                SELECT r.id, r.result, r.conclusion, r.inspector, r.recorded_at, r.created_at
-                FROM inspection_records r
-                JOIN inspection_tasks t ON r.task_id = t.id
-                WHERE t.sample_id = $1
-                ORDER BY r.recorded_at DESC
-                LIMIT 1
-                "#,
-                sample_id
-            )
-            .fetch_optional(&state.db)
-            .await;
+            let latest_inspection_result = sqlx::query(r#"SELECT r.id, r.result, r.conclusion, r.inspector, r.recorded_at, r.created_at FROM inspection_records r JOIN inspection_tasks t ON r.task_id = t.id WHERE t.sample_id = $1 ORDER BY r.recorded_at DESC LIMIT 1"#)
+                .bind(sample_id)
+                .fetch_optional(&state.db)
+                .await;
 
             let latest_inspection = match latest_inspection_result {
                 Ok(Some(record)) => Some(serde_json::json!({
-                    "id": record.id,
-                    "result": record.result,
-                    "conclusion": record.conclusion,
-                    "inspector": record.inspector,
-                    "recorded_at": record.recorded_at,
-                    "created_at": record.created_at
+                    "id": record.get::<Uuid, _>("id"),
+                    "result": record.get::<String, _>("result"),
+                    "conclusion": record.get::<Option<String>, _>("conclusion"),
+                    "inspector": record.get::<String, _>("inspector"),
+                    "recorded_at": record.get::<chrono::DateTime<chrono::Utc>, _>("recorded_at"),
+                    "created_at": record.get::<chrono::DateTime<chrono::Utc>, _>("created_at")
                 })),
                 _ => None
             };
@@ -342,20 +315,12 @@ async fn link_sample_to_project(
     State(state): State<ApiState>,
     Json(req): Json<LinkSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
-    let result = sqlx::query_as!(
-        Sample,
-        r#"
-        UPDATE samples
-        SET project_id = $2, updated_at = $3
-        WHERE id = $1
-        RETURNING id, name, description, status, project_id, received_date, created_at, updated_at
-        "#,
-        req.sample_id,
-        req.project_id,
-        Utc::now()
-    )
-    .fetch_optional(&state.db)
-    .await;
+    let result = sqlx::query_as::<_, Sample>(r#"UPDATE samples SET project_id = $2, updated_at = $3 WHERE id = $1 RETURNING id, name, description, status, project_id, received_date, created_at, updated_at"#)
+        .bind(req.sample_id)
+        .bind(req.project_id)
+        .bind(Utc::now())
+        .fetch_optional(&state.db)
+        .await;
 
     match result {
         Ok(Some(sample)) => Json(ApiResponse::success(sample, "样品关联项目成功")),
@@ -388,14 +353,12 @@ async fn batch_link_samples(
         return Json(ApiResponse::error(400, "未提供样品ID"));
     }
 
-    let result = sqlx::query!(
-        r#"UPDATE samples SET project_id = $1, updated_at = $2 WHERE id = ANY($3)"#,
-        req.project_id,
-        Utc::now(),
-        &req.sample_ids
-    )
-    .execute(&state.db)
-    .await;
+    let result = sqlx::query(r#"UPDATE samples SET project_id = $1, updated_at = $2 WHERE id = ANY($3)"#)
+        .bind(req.project_id)
+        .bind(Utc::now())
+        .bind(&req.sample_ids)
+        .execute(&state.db)
+        .await;
 
     match result {
         Ok(r) => {

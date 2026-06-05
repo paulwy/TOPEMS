@@ -415,7 +415,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({ onN
                     <SelectValue placeholder='无（顶级部门）' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value=''>无（顶级部门）</SelectItem>
+                    <SelectItem value='none'>无（顶级部门）</SelectItem>
                     {departments.map((dept) => (
                       <SelectItem key={dept.id} value={dept.id}>
                         {dept.name}
@@ -489,7 +489,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({ onN
                       <SelectValue placeholder='无（顶级部门）' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=''>无（顶级部门）</SelectItem>
+                      <SelectItem value='none'>无（顶级部门）</SelectItem>
                       {departments
                         .filter((d) => d.id !== selectedDepartment.id)
                         .map((dept) => (

@@ -4,12 +4,11 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
-use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+use crate::models::AuditLog;
 use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {

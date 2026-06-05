@@ -563,7 +563,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 <SelectValue placeholder='状态筛选' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>全部</SelectItem>
+                <SelectItem value='all'>全部</SelectItem>
                 <SelectItem value='pending'>待收</SelectItem>
                 <SelectItem value='partial'>部分收</SelectItem>
                 <SelectItem value='paid'>已结清</SelectItem>
@@ -680,7 +680,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 <SelectValue placeholder='状态筛选' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>全部</SelectItem>
+                <SelectItem value='all'>全部</SelectItem>
                 <SelectItem value='pending'>待付</SelectItem>
                 <SelectItem value='partial'>部分付</SelectItem>
                 <SelectItem value='paid'>已结清</SelectItem>

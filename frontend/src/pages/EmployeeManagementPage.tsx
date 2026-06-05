@@ -378,7 +378,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
                       <SelectValue placeholder='请选择' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=''>请选择</SelectItem>
+                      <SelectItem value='none'>请选择</SelectItem>
                       <SelectItem value='male'>男</SelectItem>
                       <SelectItem value='female'>女</SelectItem>
                     </SelectContent>
@@ -512,7 +512,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
                         <SelectValue placeholder='请选择' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value=''>请选择</SelectItem>
+                        <SelectItem value='none'>请选择</SelectItem>
                         <SelectItem value='male'>男</SelectItem>
                         <SelectItem value='female'>女</SelectItem>
                       </SelectContent>

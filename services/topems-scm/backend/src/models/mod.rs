@@ -8,4 +8,4 @@ pub use supplier::{Supplier, CreateSupplierRequest, UpdateSupplierRequest};
 pub use purchase_order::{PurchaseOrder, CreatePurchaseOrderRequest, UpdatePurchaseOrderRequest};
 pub use purchase_item::{PurchaseItem, CreatePurchaseItemRequest, UpdatePurchaseItemRequest};
 pub use supplier_evaluation::{SupplierEvaluation, CreateSupplierEvaluationRequest, UpdateSupplierEvaluationRequest};
-pub use audit_log::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+pub use audit_log::AuditLog;

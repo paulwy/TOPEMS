@@ -63,13 +63,13 @@ const HrmCompanyPage: React.FC = () => {
     fetchCompanies({
       page: 1,
       search: searchText || undefined,
-      status: statusFilter || undefined,
+      status: statusFilter === 'all' ? undefined : statusFilter || undefined,
     });
   };
 
   const handleReset = () => {
     setSearchText('');
-    setStatusFilter('');
+    setStatusFilter('all');
     fetchCompanies({ page: 1 });
   };
 
@@ -276,7 +276,7 @@ const HrmCompanyPage: React.FC = () => {
                     <SelectValue placeholder='全部状态' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value=''>全部状态</SelectItem>
+                    <SelectItem value='all'>全部状态</SelectItem>
                     <SelectItem value='active'>启用</SelectItem>
                     <SelectItem value='inactive'>禁用</SelectItem>
                     <SelectItem value='archived'>归档</SelectItem>

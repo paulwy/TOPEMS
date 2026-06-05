@@ -6,6 +6,8 @@ import { useWebSocket, WsMessage } from '../../hooks/useWebSocket';
 import { ChatRoomItem } from './ChatRoomItem';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
+import { CreateRoomModal } from './CreateRoomModal';
+import { NotificationList } from './NotificationList';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '../../store';
@@ -22,6 +24,7 @@ export const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // WebSocket 连接
@@ -183,41 +186,41 @@ export const ChatInterface: React.FC = () => {
   ];
 
   return (
-    <div className='flex h-screen bg-gray-50'>
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className='w-80 bg-white border-r border-gray-200 flex flex-col'>
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
         {/* Header */}
-        <div className='p-4 border-b border-gray-200'>
-          <div className='flex items-center justify-between mb-4'>
-            <div className='flex items-center gap-2'>
-              <Button variant='ghost' size='sm' onClick={() => navigate('/dashboard')}>
-                <ChevronLeft className='w-5 h-5' />
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
+                <ChevronLeft className="w-5 h-5" />
               </Button>
-              <h1 className='text-xl font-bold text-gray-900'>消息</h1>
+              <h1 className="text-xl font-bold text-gray-900">消息</h1>
             </div>
-            <div className='flex items-center gap-2'>
+            <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-              <Button variant='ghost' size='sm'>
-                <Plus className='w-5 h-5' />
+              <Button variant="ghost" size="sm" onClick={() => setIsCreateModalOpen(true)}>
+                <Plus className="w-5 h-5" />
               </Button>
             </div>
           </div>
 
           {/* Search */}
-          <div className='relative'>
-            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400' />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
-              type='text'
-              placeholder='搜索聊天...'
+              type="text"
+              placeholder="搜索聊天..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className='pl-10'
+              className="pl-10"
             />
           </div>
         </div>
 
         {/* Tabs */}
-        <div className='flex border-b border-gray-200'>
+        <div className="flex border-b border-gray-200">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -230,46 +233,52 @@ export const ChatInterface: React.FC = () => {
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <Icon className='w-4 h-4' />
-                <span className='text-xs font-medium'>{tab.label}</span>
+                <Icon className="w-4 h-4" />
+                <span className="text-xs font-medium">{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Chat Rooms List */}
-        <div className='flex-1 overflow-y-auto p-2'>
-          {loading ? (
-            <div className='flex justify-center items-center py-8'>
-              <div className='animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent'></div>
-            </div>
-          ) : filteredRooms.length === 0 ? (
-            <div className='text-center py-8'>
-              <MessageSquare className='w-12 h-12 text-gray-300 mx-auto mb-3' />
-              <p className='text-gray-500'>暂无聊天记录</p>
-            </div>
-          ) : (
-            filteredRooms.map((room) => (
-              <ChatRoomItem
-                key={room.id}
-                chatRoom={room}
-                isActive={selectedRoom?.id === room.id}
-                onClick={() => setSelectedRoom(room)}
-              />
-            ))
-          )}
-        </div>
+        {/* Chat Rooms List or Notifications */}
+        {activeTab === 'notifications' ? (
+          <div className="flex-1 overflow-y-auto">
+            <NotificationList />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-2">
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
+              </div>
+            ) : filteredRooms.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">暂无聊天记录</p>
+              </div>
+            ) : (
+              filteredRooms.map((room) => (
+                <ChatRoomItem
+                  key={room.id}
+                  chatRoom={room}
+                  isActive={selectedRoom?.id === room.id}
+                  onClick={() => setSelectedRoom(room)}
+                />
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Chat Area */}
-      <div className='flex-1 flex flex-col'>
-        {selectedRoom ? (
+      <div className="flex-1 flex flex-col">
+        {selectedRoom && activeTab !== 'notifications' ? (
           <>
             {/* Chat Header */}
-            <div className='bg-white border-b border-gray-200 p-4 flex items-center justify-between'>
+            <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
               <div>
-                <h2 className='font-semibold text-gray-900'>{selectedRoom.name || '未命名会话'}</h2>
-                <p className='text-sm text-gray-500'>
+                <h2 className="font-semibold text-gray-900">{selectedRoom.name || '未命名会话'}</h2>
+                <p className="text-sm text-gray-500">
                   {selectedRoom.room_type === 'direct' ? '私聊' : '群聊'}
                   {!isConnected && ' · 连接断开'}
                 </p>
@@ -277,12 +286,12 @@ export const ChatInterface: React.FC = () => {
             </div>
 
             {/* Messages */}
-            <div className='flex-1 overflow-y-auto p-4 bg-gray-50'>
+            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
               {messages.length === 0 ? (
-                <div className='flex items-center justify-center h-full'>
-                  <div className='text-center'>
-                    <MessageSquare className='w-12 h-12 text-gray-300 mx-auto mb-3' />
-                    <p className='text-gray-500'>暂无消息，开始聊天吧</p>
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">暂无消息，开始聊天吧</p>
                   </div>
                 </div>
               ) : (
@@ -299,16 +308,29 @@ export const ChatInterface: React.FC = () => {
             <ChatInput onSendMessage={handleSendMessage} onUploadFile={handleUploadFile} disabled={!isConnected} />
           </>
         ) : (
-          <div className='flex-1 flex items-center justify-center bg-gray-50'>
-            <div className='text-center'>
-              <MessageSquare className='w-16 h-16 text-gray-300 mx-auto mb-4' />
-              <h2 className='text-xl font-semibold text-gray-900 mb-2'>欢迎使用 TOPEMS IM</h2>
-              <p className='text-gray-500 mb-4'>选择一个聊天室开始聊天</p>
-              <Button onClick={() => setSearchQuery('')}>查看聊天列表</Button>
+          <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">欢迎使用 TOPEMS IM</h2>
+              <p className="text-gray-500 mb-4">
+                {activeTab === 'notifications' ? '查看通知中心' : '选择一个聊天室开始聊天'}
+              </p>
+              {activeTab !== 'notifications' && (
+                <Button onClick={() => setIsCreateModalOpen(true)}>
+                  创建聊天室
+                </Button>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {/* Create Room Modal */}
+      <CreateRoomModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreated={loadChatRooms}
+      />
     </div>
   );
 };

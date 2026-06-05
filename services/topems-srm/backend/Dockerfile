@@ -17,10 +17,10 @@ RUN cargo build --release
 
 RUN mkdir -p /app/logs
 
-EXPOSE 8016
+EXPOSE 8041
 
 ENV RUST_LOG=info
-ENV SERVICE_PORT=8016
+ENV SERVICE_PORT=8041
 
 ENTRYPOINT ["/app/services/backend/backend/target/release/backend"]
-CMD ["--host", "0.0.0.0", "--port", "8016"]
+CMD ["--host", "0.0.0.0", "--port", "8041"]

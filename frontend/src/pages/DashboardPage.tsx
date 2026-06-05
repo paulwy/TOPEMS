@@ -50,7 +50,7 @@ import { flowApi } from '../api/flow';
 import { erpApi } from '../api/erp';
 import { hrmApi } from '../api/hrm';
 import { mobileApi } from '../api/mobile';
-import { notificationServiceApi } from '../api/notificationService';
+import { notificationServiceApi } from '../api/notification';
 import { rsApi } from '../api/rs';
 import MobileNav from '../components/MobileNav';
 import MobileHeader from '../components/MobileHeader';
@@ -164,26 +164,30 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     const services = [
       { key: 'iam', port: 8000 },
       { key: 'doc', port: 8001 },
+      { key: 'pm', port: 8002 },
+      { key: 'notification', port: 8003 },
+      { key: 'integration', port: 8004 },
+      { key: 'portal', port: 8005 },
       { key: 'flow', port: 8006 },
-      { key: 'erp', port: 8009 },
+      { key: 'erp', port: 8010 },
       { key: 'hrm', port: 8011 },
       { key: 'crm', port: 8012 },
       { key: 'ai', port: 8013 },
       { key: 'rs', port: 8020 },
       { key: 'lims', port: 8022 },
       { key: 'pdm', port: 8023 },
-      { key: 'notification', port: 8027 },
+      { key: 'mes', port: 8030 },
       { key: 'qms', port: 8031 },
       { key: 'ehs', port: 8032 },
-      { key: 'mes', port: 8030 },
+      { key: 'scm', port: 8040 },
       { key: 'srm', port: 8041 },
-      { key: 'gis', port: 8051 },
-      { key: 'im', port: 8052 },
-      { key: 'bi', port: 8053 },
-      { key: 'mail', port: 8055 },
-      { key: 'mobile', port: 8056 },
-      { key: 'report', port: 8054 },
-      { key: 'pm', port: 8050 },
+      { key: 'wms', port: 8042 },
+      { key: 'gis', port: 8050 },
+      { key: 'im', port: 8051 },
+      { key: 'bi', port: 8052 },
+      { key: 'report', port: 8053 },
+      { key: 'mail', port: 8054 },
+      { key: 'mobile', port: 8055 },
     ];
 
     const statusPromises = services.map(async (service) => {
@@ -1088,7 +1092,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               {[
                 { name: '身份认证', service: 'IAM', port: 8000, key: 'iam', icon: Shield },
                 { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
-                { name: '流程引擎', service: 'FLOW', port: 8002, key: 'flow', icon: GitBranch },
+                { name: '项目管理', service: 'PM', port: 8002, key: 'pm', icon: FolderKanban },
                 { name: '通知服务', service: 'NOTIFICATION', port: 8003, key: 'notification', icon: Bell },
               ].map((service) => (
                 <ServiceStatusCard
@@ -1130,7 +1134,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             <h4 className='text-sm font-medium text-slate-500 mb-3'>专业服务</h4>
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
               {[
-                { name: '项目管理', service: 'PM', port: 8050, key: 'pm', icon: FolderKanban },
                 { name: 'AI 服务', service: 'AI', port: 8013, key: 'ai', icon: Bot },
                 { name: '报表服务', service: 'REPORT', port: 8053, key: 'report', icon: BarChart3 },
                 { name: '移动服务', service: 'MOBILE', port: 8055, key: 'mobile', icon: Smartphone },

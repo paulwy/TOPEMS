@@ -17,6 +17,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/release/topems-pm /usr/local/bin/
 
-EXPOSE 8024
+EXPOSE 8002
 
 CMD ["topems-pm"]

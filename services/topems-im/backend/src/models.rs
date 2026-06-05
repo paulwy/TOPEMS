@@ -79,21 +79,25 @@ pub struct CreateProjectGroup {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Notification {
-    pub id: Uuid,
-    pub user_id: String,
-    pub title: String,
-    pub content: String,
-    pub notification_type: String,
-    pub is_read: bool,
-    pub created_at: DateTime<Utc>,
+  pub id: Uuid,
+  pub user_id: String,
+  pub title: String,
+  pub content: String,
+  pub notification_type: String,
+  pub related_id: Option<Uuid>,
+  pub related_type: Option<String>,
+  pub is_read: bool,
+  pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateNotification {
-    pub user_id: String,
-    pub title: String,
-    pub content: String,
-    pub notification_type: String,
+  pub user_id: String,
+  pub title: String,
+  pub content: String,
+  pub notification_type: String,
+  pub related_id: Option<String>,
+  pub related_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

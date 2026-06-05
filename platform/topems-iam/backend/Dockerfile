@@ -17,10 +17,10 @@ RUN cargo build --release
 
 RUN mkdir -p /app/logs
 
-EXPOSE 8002
+EXPOSE 8000
 
 ENV RUST_LOG=info
-ENV SERVICE_PORT=8002
+ENV SERVICE_PORT=8000
 
 ENTRYPOINT ["/app/platform/topems-iam/backend/target/release/topems-iam"]
-CMD ["--host", "0.0.0.0", "--port", "8002"]
+CMD ["--host", "0.0.0.0", "--port", "8000"]
