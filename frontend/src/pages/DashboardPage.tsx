@@ -42,6 +42,15 @@ import {
   Mail,
   FolderKanban,
   FileCheck,
+  Link,
+  Factory,
+  AlertTriangle,
+  Truck,
+  ShoppingCart,
+  Warehouse,
+  Map,
+  MessageCircle,
+  BarChart2,
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
@@ -105,29 +114,37 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     report: false,
     pm: false,
     bi: false,
+    integration: false,
   });
 
   // 模块到服务的映射
   const moduleToService: Record<string, keyof typeof serviceStatuses> = {
     rs: 'rs',
-    lims: 'lims', // LIMS 独立服务
+    lims: 'lims',
     doc: 'doc',
     ai: 'ai',
     workflow: 'flow',
     iam: 'iam',
-    qms: 'doc',
-    ehs: 'doc',
-    srm: 'doc',
-    pdm: 'doc',
-    crm: 'doc',
-    mes: 'doc',
+    qms: 'qms',
+    ehs: 'ehs',
+    srm: 'srm',
+    pdm: 'pdm',
+    crm: 'crm',
+    mes: 'mes',
     mail: 'mail',
     mobile: 'mobile',
     hrm: 'hrm',
     erp: 'erp',
-    gis: 'doc',
-    pm: 'pm', // 项目管理服务
-    bi: 'bi', // BI服务
+    gis: 'gis',
+    pm: 'pm',
+    bi: 'bi',
+    integration: 'integration',
+    notification: 'notification',
+    portal: 'portal',
+    scm: 'scm',
+    wms: 'wms',
+    im: 'im',
+    report: 'report',
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<
@@ -360,12 +377,22 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           permission: null,
           module: null,
         },
+        {
+          title: '项目管理',
+          icon: FolderKanban,
+          description: '项目全生命周期、合同、预算、风险管理',
+          path: '/pm/projects',
+          color: 'bg-rose-500',
+          status: 'online' as const,
+          permission: null,
+          module: 'pm',
+        },
       ].filter((module) => shouldShowModule(module)),
     [shouldShowModule]
   );
 
-  // 系统管理模块 - 包含所有管理功能
-  const systemManagementModules = useMemo(
+  // 系统服务模块 - 包含系统管理、集成、报表、模板、帮助等综合服务
+  const systemServicesModules = useMemo(
     () => [
       {
         title: '系统管理',
@@ -378,34 +405,54 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         module: 'iam',
         adminOnly: true,
       },
+      {
+        title: '系统集成',
+        icon: Link,
+        description: 'LIMS-QMS/MES-ERP/WMS-SCM 等系统间数据同步',
+        path: '/integration',
+        color: 'bg-blue-500',
+        status: 'online' as const,
+        permission: null,
+        module: 'integration',
+      },
+      {
+        title: '报表中心',
+        icon: BarChart3,
+        description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
+        path: '/reports',
+        color: 'bg-emerald-500',
+        status: 'online' as const,
+        permission: 'iam:admin',
+        module: 'iam',
+        adminOnly: true,
+      },
+      {
+        title: '模板管理',
+        icon: FileTemplate,
+        description: '文档模板、流程模板管理',
+        path: '/templates',
+        color: 'bg-violet-500',
+        status: 'online' as const,
+        permission: 'doc:admin',
+        module: 'doc',
+        adminOnly: true,
+      },
+      {
+        title: '帮助中心',
+        icon: HelpCircle,
+        description: '使用指南、视频教程、常见问题',
+        path: '/help',
+        color: 'bg-amber-500',
+        status: 'online' as const,
+      },
     ],
     [shouldShowModule]
   );
 
-  // 业务模块
+  // 业务模块 - 按企业管理自然流程排序
   const businessModules = useMemo(
     () =>
       [
-        {
-      title: '商业智能',
-      icon: BarChart3,
-      description: '数据大屏、概览分析、各模块数据统计',
-      path: '/bi/dashboard',
-      color: 'bg-emerald-500',
-      status: 'new' as const,
-      permission: null,
-      module: 'bi',
-    },
-        {
-      title: '项目管理',
-      icon: FolderKanban,
-      description: '项目全生命周期、合同、预算、风险管理',
-      path: '/pm/projects',
-      color: 'bg-rose-500',
-      status: 'online' as const,
-      permission: null,
-      module: 'pm',
-    },
         {
           title: '公司管理',
           icon: Building,
@@ -451,6 +498,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           adminOnly: true,
         },
         {
+          title: '行政综合管理',
+          icon: Briefcase,
+          description: '资产、会议室、车辆统一管理',
+          path: '/administration',
+          color: 'bg-sky-500',
+          status: 'online' as const,
+          permission: 'erp:admin',
+          module: 'erp',
+          adminOnly: true,
+        },
+        {
           title: '预算管理',
           icon: TrendingUp,
           description: '部门预算、使用进度、预警',
@@ -473,28 +531,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           adminOnly: true,
         },
         {
-          title: '行政综合管理',
-          icon: Briefcase,
-          description: '资产、会议室、车辆统一管理',
-          path: '/administration',
-          color: 'bg-sky-500',
-          status: 'online' as const,
-          permission: 'erp:admin',
-          module: 'erp',
-          adminOnly: true,
-        },
-        {
-          title: '报表中心',
-          icon: BarChart3,
-          description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
-          path: '/reports',
-          color: 'bg-emerald-500',
-          status: 'online' as const,
-          permission: 'iam:admin',
-          module: 'iam',
-          adminOnly: true,
-        },
-        {
           title: '文档中心',
           icon: BookOpen,
           description: '企业文档管理、知识共享',
@@ -505,23 +541,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           module: 'doc',
         },
         {
-          title: '帮助中心',
-          icon: HelpCircle,
-          description: '使用指南、视频教程、常见问题',
-          path: '/help',
-          color: 'bg-amber-500',
-          status: 'online' as const,
-        },
-        {
-          title: '模板管理',
-          icon: FileTemplate,
-          description: '文档模板、流程模板管理',
-          path: '/templates',
-          color: 'bg-violet-500',
-          status: 'online' as const,
-          permission: 'doc:admin',
-          module: 'doc',
-          adminOnly: true,
+          title: '商业智能',
+          icon: BarChart3,
+          description: '数据大屏、概览分析、各模块数据统计',
+          path: '/bi/dashboard',
+          color: 'bg-emerald-500',
+          status: 'new' as const,
+          permission: null,
+          module: 'bi',
         },
         {
           title: '科研研发',
@@ -1024,36 +1051,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             </div>
           </div>
 
-          {/* System Management Section - Only show for admin */}
-          {systemManagementModules.length > 0 && (
-            <div className='mb-8'>
-              <h3 className='text-xl font-semibold text-slate-900 mb-4'>⚙️ 系统管理</h3>
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-                {systemManagementModules.map((item) => (
-                  <div
-                    key={item.title}
-                    className='bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer group'
-                    onClick={() => navigate(item.path)}
-                  >
-                    <div className='p-6'>
-                      <div className='flex items-start justify-between mb-4'>
-                        <div className='w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform'>
-                          <item.icon className='w-7 h-7 text-white' />
-                        </div>
-                        <StatusBadge status={item.status} />
-                      </div>
-                      <h4 className='text-xl font-semibold text-white mb-2'>{item.title}</h4>
-                      <p className='text-slate-200 text-sm mb-4'>{item.description}</p>
-                      <div className='flex items-center text-white/80 text-sm font-medium group-hover:text-white'>
-                        进入管理 →
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Business Modules */}
           <div className='mb-8'>
             <h3 className='text-xl font-semibold text-slate-900 mb-4'>📊 业务模块</h3>
@@ -1081,12 +1078,42 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             </div>
           </div>
 
+          {/* System Services Section */}
+          {systemServicesModules.length > 0 && (
+            <div className='mb-8'>
+              <h3 className='text-xl font-semibold text-slate-900 mb-4'>⚙️ 系统服务</h3>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+                {systemServicesModules.map((item) => (
+                  <div
+                    key={item.title}
+                    className='bg-white rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer group border border-slate-100'
+                    onClick={() => navigate(item.path)}
+                  >
+                    <div className='p-6'>
+                      <div className='flex items-start justify-between mb-4'>
+                        <div className='w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform'>
+                          <item.icon className='w-7 h-7 text-blue-600' />
+                        </div>
+                        <StatusBadge status={item.status} />
+                      </div>
+                      <h4 className='text-xl font-semibold text-slate-900 mb-2'>{item.title}</h4>
+                      <p className='text-slate-600 text-sm mb-4'>{item.description}</p>
+                      <div className='flex items-center text-blue-600 text-sm font-medium group-hover:text-blue-700'>
+                        进入管理 →
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Service Status */}
           <div className='bg-white rounded-xl shadow-sm p-6'>
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-lg font-semibold text-slate-900 flex items-center'>
                 <Activity className='w-5 h-5 mr-2 text-green-500' />
-                服务状态监控
+                服务端口监控
               </h3>
               <button
                 onClick={checkAllServicesStatus}
@@ -1106,6 +1133,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
                 { name: '项目管理', service: 'PM', port: 8002, key: 'pm', icon: FolderKanban },
                 { name: '通知服务', service: 'NOTIFICATION', port: 8003, key: 'notification', icon: Bell },
+                { name: '系统集成', service: 'INTEGRATION', port: 8004, key: 'integration', icon: Link },
+                { name: '统一门户', service: 'PORTAL', port: 8005, key: 'portal', icon: Building },
+                { name: '流程引擎', service: 'FLOW', port: 8006, key: 'flow', icon: GitBranch },
               ].map((service) => (
                 <ServiceStatusCard
                   key={service.key}
@@ -1119,15 +1149,78 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             </div>
           </div>
 
-          {/* 业务服务 */}
+          {/* 业务运营 */}
           <div className='mb-6'>
-            <h4 className='text-sm font-medium text-slate-500 mb-3'>业务服务</h4>
+            <h4 className='text-sm font-medium text-slate-500 mb-3'>业务运营</h4>
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
               {[
-                { name: '研发管理', service: 'RS', port: 8020, key: 'rs', icon: FlaskConical },
-                { name: '实验室管理', service: 'LIMS', port: 8022, key: 'lims', icon: ClipboardList },
                 { name: '企业资源', service: 'ERP', port: 8010, key: 'erp', icon: Building },
                 { name: '人力资源', service: 'HRM', port: 8011, key: 'hrm', icon: Users },
+                { name: '客户关系', service: 'CRM', port: 8012, key: 'crm', icon: Users },
+              ].map((service) => (
+                <ServiceStatusCard
+                  key={service.key}
+                  name={service.name}
+                  service={service.service}
+                  port={service.port}
+                  status={serviceStatuses[service.key]}
+                  icon={service.icon}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 研发管理 */}
+          <div className='mb-6'>
+            <h4 className='text-sm font-medium text-slate-500 mb-3'>研发管理</h4>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+              {[
+                { name: 'AI 服务', service: 'AI', port: 8013, key: 'ai', icon: Bot },
+                { name: '研发管理', service: 'RS', port: 8020, key: 'rs', icon: FlaskConical },
+                { name: '实验室管理', service: 'LIMS', port: 8022, key: 'lims', icon: ClipboardList },
+                { name: '产品数据管理', service: 'PDM', port: 8023, key: 'pdm', icon: FileText },
+              ].map((service) => (
+                <ServiceStatusCard
+                  key={service.key}
+                  name={service.name}
+                  service={service.service}
+                  port={service.port}
+                  status={serviceStatuses[service.key]}
+                  icon={service.icon}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 生产管理 */}
+          <div className='mb-6'>
+            <h4 className='text-sm font-medium text-slate-500 mb-3'>生产管理</h4>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+              {[
+                { name: '制造执行', service: 'MES', port: 8030, key: 'mes', icon: Factory },
+                { name: '质量管理', service: 'QMS', port: 8031, key: 'qms', icon: ClipboardList },
+                { name: '环境安全', service: 'EHS', port: 8032, key: 'ehs', icon: AlertTriangle },
+              ].map((service) => (
+                <ServiceStatusCard
+                  key={service.key}
+                  name={service.name}
+                  service={service.service}
+                  port={service.port}
+                  status={serviceStatuses[service.key]}
+                  icon={service.icon}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 供应链 */}
+          <div className='mb-6'>
+            <h4 className='text-sm font-medium text-slate-500 mb-3'>供应链</h4>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+              {[
+                { name: '供应链管理', service: 'SCM', port: 8040, key: 'scm', icon: Truck },
+                { name: '供应商管理', service: 'SRM', port: 8041, key: 'srm', icon: ShoppingCart },
+                { name: '仓库管理', service: 'WMS', port: 8042, key: 'wms', icon: Warehouse },
               ].map((service) => (
                 <ServiceStatusCard
                   key={service.key}
@@ -1146,8 +1239,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             <h4 className='text-sm font-medium text-slate-500 mb-3'>专业服务</h4>
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
               {[
-                { name: 'AI 服务', service: 'AI', port: 8013, key: 'ai', icon: Bot },
+                { name: '地理信息', service: 'GIS', port: 8050, key: 'gis', icon: Map },
+                { name: '即时通讯', service: 'IM', port: 8051, key: 'im', icon: MessageCircle },
+                { name: '数据分析', service: 'BI', port: 8052, key: 'bi', icon: BarChart2 },
                 { name: '报表服务', service: 'REPORT', port: 8053, key: 'report', icon: BarChart3 },
+                { name: '邮件服务', service: 'MAIL', port: 8054, key: 'mail', icon: Mail },
                 { name: '移动服务', service: 'MOBILE', port: 8055, key: 'mobile', icon: Smartphone },
               ].map((service) => (
                 <ServiceStatusCard

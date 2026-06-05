@@ -321,7 +321,7 @@ PORTAL_PID=""
 if check_executable "services/topems-portal/backend" "portal"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-portal/backend"
-    SERVER_PORT=8005 ./target/release/topems-portal &
+    SERVER_PORT=8005 PORT=8005 ./target/release/topems-portal &
     PORTAL_PID=$!
     cd "$PROJECT_ROOT"
     log_success "portal 服务已启动 (PID: $PORTAL_PID, 端口: 8005)"

@@ -95,6 +95,11 @@ const NotificationStatsPage = lazy(() => import('./pages/NotificationStatsPage')
 const NotificationDetailPage = lazy(() => import('./pages/NotificationDetailPage'));
 const BIDashboardPage = lazy(() => import('./pages/BIDashboardPage'));
 const BIAnalyticsPage = lazy(() => import('./pages/BIAnalyticsPage'));
+const IntegrationPage = lazy(() => import('./pages/IntegrationPage'));
+const CRMCustomerScoringPage = lazy(() => import('./pages/CRMCustomerScoringPage'));
+const CRMSalesForecastPage = lazy(() => import('./pages/CRMSalesForecastPage'));
+const FinanceBudgetPage = lazy(() => import('./pages/FinanceBudgetPage'));
+const ProjectDashboardPage = lazy(() => import('./pages/ProjectDashboardPage'));
 
 const PageLoader: React.FC = () => (
   <div className='min-h-screen flex items-center justify-center bg-gray-50'>
@@ -404,6 +409,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['erp:admin']}>
                 <ModuleGate module='erp' action='admin'>
                   <FinanceReportsPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/finance/budget'
+            element={
+              <ProtectedRoute requiredPermissions={['erp:admin']}>
+                <ModuleGate module='erp' action='admin'>
+                  <FinanceBudgetPage />
                 </ModuleGate>
               </ProtectedRoute>
             }
@@ -841,6 +856,26 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
+            path='/crm/scoring'
+            element={
+              <ProtectedRoute requiredPermissions={['crm:read']}>
+                <ModuleGate module='crm' action='read'>
+                  <CRMCustomerScoringPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/crm/forecast'
+            element={
+              <ProtectedRoute requiredPermissions={['crm:read']}>
+                <ModuleGate module='crm' action='read'>
+                  <CRMSalesForecastPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path='/pm'
             element={
               <ProtectedRoute>
@@ -897,6 +932,14 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
+            path='/pm/dashboard'
+            element={
+              <ProtectedRoute>
+                <ProjectDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path='/bi/dashboard'
             element={
               <ProtectedRoute>
@@ -909,6 +952,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <BIAnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/integration'
+            element={
+              <ProtectedRoute>
+                <IntegrationPage />
               </ProtectedRoute>
             }
           />
