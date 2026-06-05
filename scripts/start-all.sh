@@ -770,4 +770,273 @@ if [ -n "$ERP_PID" ]; then
         echo -e "${GREEN}✅${NC} ERP (8010) - 运行正常"
         success_count=$((success_count + 1))
     else
-        echo -e "${YELLOW}⏳${NC} ERP (8010) - 启动中
+        echo -e "${YELLOW}⏳${NC} ERP (8010) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} ERP (8010) - 未启动"
+fi
+
+# HRM检查
+total_count=$((total_count + 1))
+if [ -n "$HRM_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8011/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} HRM (8011) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} HRM (8011) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} HRM (8011) - 未启动"
+fi
+
+# CRM检查
+total_count=$((total_count + 1))
+if [ -n "$CRM_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8012/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} CRM (8012) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} CRM (8012) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} CRM (8012) - 未启动"
+fi
+
+# AI检查
+total_count=$((total_count + 1))
+if [ -n "$AI_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8013/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} AI (8013) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} AI (8013) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} AI (8013) - 未启动"
+fi
+
+# RS检查
+total_count=$((total_count + 1))
+if [ -n "$RS_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8020/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} RS (8020) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} RS (8020) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} RS (8020) - 未启动"
+fi
+
+# LIMS检查
+total_count=$((total_count + 1))
+if [ -n "$LIMS_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8022/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} LIMS (8022) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} LIMS (8022) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} LIMS (8022) - 未启动"
+fi
+
+# PDM检查
+total_count=$((total_count + 1))
+if [ -n "$PDM_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8023/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} PDM (8023) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} PDM (8023) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} PDM (8023) - 未启动"
+fi
+
+# MES检查
+total_count=$((total_count + 1))
+if [ -n "$MES_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8030/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} MES (8030) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} MES (8030) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} MES (8030) - 未启动"
+fi
+
+# QMS检查
+total_count=$((total_count + 1))
+if [ -n "$QMS_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8031/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} QMS (8031) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} QMS (8031) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} QMS (8031) - 未启动"
+fi
+
+# EHS检查
+total_count=$((total_count + 1))
+if [ -n "$EHS_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8032/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} EHS (8032) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} EHS (8032) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} EHS (8032) - 未启动"
+fi
+
+# SCM检查
+total_count=$((total_count + 1))
+if [ -n "$SCM_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8040/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} SCM (8040) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} SCM (8040) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} SCM (8040) - 未启动"
+fi
+
+# SRM检查
+total_count=$((total_count + 1))
+if [ -n "$SRM_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8041/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} SRM (8041) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} SRM (8041) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} SRM (8041) - 未启动"
+fi
+
+# WMS检查
+total_count=$((total_count + 1))
+if [ -n "$WMS_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8042/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} WMS (8042) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} WMS (8042) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} WMS (8042) - 未启动"
+fi
+
+# GIS检查
+total_count=$((total_count + 1))
+if [ -n "$GIS_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8050/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} GIS (8050) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} GIS (8050) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} GIS (8050) - 未启动"
+fi
+
+# IM检查
+total_count=$((total_count + 1))
+if [ -n "$IM_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8051/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} IM (8051) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} IM (8051) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} IM (8051) - 未启动"
+fi
+
+# BI检查
+total_count=$((total_count + 1))
+if [ -n "$BI_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8052/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} BI (8052) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} BI (8052) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} BI (8052) - 未启动"
+fi
+
+# REPORT检查
+total_count=$((total_count + 1))
+if [ -n "$REPORT_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8053/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} REPORT (8053) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} REPORT (8053) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} REPORT (8053) - 未启动"
+fi
+
+# MAIL检查
+total_count=$((total_count + 1))
+if [ -n "$MAIL_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8054/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} MAIL (8054) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} MAIL (8054) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} MAIL (8054) - 未启动"
+fi
+
+# MOBILE检查
+total_count=$((total_count + 1))
+if [ -n "$MOBILE_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8055/health 2>/dev/null | grep -q "200"; then
+        echo -e "${GREEN}✅${NC} MOBILE (8055) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} MOBILE (8055) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} MOBILE (8055) - 未启动"
+fi
+
+# FRONTEND检查
+total_count=$((total_count + 1))
+if [ -n "$FRONTEND_PID" ]; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null | grep -q "html"; then
+        echo -e "${GREEN}✅${NC} FRONTEND (3000) - 运行正常"
+        success_count=$((success_count + 1))
+    else
+        echo -e "${YELLOW}⏳${NC} FRONTEND (3000) - 启动中/检查失败"
+    fi
+else
+    echo -e "${RED}❌${NC} FRONTEND (3000) - 未启动"
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+if [ $success_count -eq $total_count ]; then
+    log_success "🎉 所有服务启动成功！"
+elif [ $success_count -gt 0 ]; then
+    log_warn "部分服务启动成功 ($success_count/$total_count)"
+else
+    log_error "所有服务均未成功启动"
+fi
+
+echo ""
+log_info "启动完成！"
+log_info "前端访问地址: http://localhost:3000"
+log_info "各服务API基础路径: http://localhost:<端口>"
+echo ""
+log_info "按 Ctrl+C 停止所有服务"

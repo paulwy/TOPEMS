@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, Users, User, Clock } from 'lucide-react';
 import type { ChatRoom } from '../../api/im';
 
@@ -9,6 +9,30 @@ interface ChatRoomItemProps {
 }
 
 export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, onClick }) => {
+  const [onlineStatus, setOnlineStatus] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const fetchOnlineStatus = async () => {
+      const status: Record<string, boolean> = {};
+      const members = Array.isArray(chatRoom.members) ? chatRoom.members : [];
+      for (const memberId of members.slice(0, 5)) {
+        try {
+          const response = await fetch(`/im/api/v1/users/${memberId}/online-status`);
+          const data = await response.json();
+          status[memberId] = data.data?.is_online || false;
+        } catch {
+          status[memberId] = false;
+        }
+      }
+      setOnlineStatus(status);
+    };
+
+    fetchOnlineStatus();
+    const interval = setInterval(fetchOnlineStatus, 30000);
+
+    return () => clearInterval(interval);
+  }, [chatRoom.members]);
+
   const getRoomIcon = () => {
     switch (chatRoom.room_type) {
       case 'direct':
@@ -45,6 +69,14 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
     return 0;
   };
 
+  const getOnlineCount = () => {
+    const members = Array.isArray(chatRoom.members) ? chatRoom.members : [];
+    return members.filter(m => onlineStatus[m]).length;
+  };
+
+  const members = Array.isArray(chatRoom.members) ? chatRoom.members : [];
+  const isOnline = chatRoom.room_type === 'direct' && members.length > 0 && onlineStatus[members[0]];
+
   return (
     <div
       onClick={onClick}
@@ -53,12 +85,17 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
       }`}
     >
       <div className='flex items-start gap-3'>
-        <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
-          }`}
-        >
-          {getRoomIcon()}
+        <div className='relative'>
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+            }`}
+          >
+            {getRoomIcon()}
+          </div>
+          {isOnline && (
+            <div className='absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white' />
+          )}
         </div>
         <div className='flex-1 min-w-0'>
           <div className='flex items-center justify-between'>
@@ -71,9 +108,19 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
             )}
           </div>
           <div className='flex items-center justify-between mt-1'>
-            <p className='text-sm text-gray-500 truncate'>{chatRoom.last_message || '暂无消息'}</p>
+            <p className='text-sm text-gray-500 truncate flex-1'>{chatRoom.last_message || '暂无消息'}</p>
             {chatRoom.room_type !== 'direct' && (
-              <span className='text-xs text-gray-400 ml-2'>{getMemberCount()}人</span>
+              <span className='text-xs text-gray-400 ml-2 flex items-center gap-1'>
+                {getOnlineCount() > 0 && (
+                  <span className='w-1.5 h-1.5 bg-green-500 rounded-full' />
+                )}
+                {getMemberCount()}人
+              </span>
+            )}
+            {chatRoom.room_type === 'direct' && (
+              <span className={`text-xs ml-2 ${isOnline ? 'text-green-600' : 'text-gray-400'}`}>
+                {isOnline ? '在线' : '离线'}
+              </span>
             )}
           </div>
         </div>

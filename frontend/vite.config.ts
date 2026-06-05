@@ -155,7 +155,7 @@ export default defineConfig({
       },
       '/doc/': createServiceProxyConfig('doc', 'http://localhost:8001'),
       '/flow': createServiceProxyConfig('flow', 'http://localhost:8006'),
-      '/notification': {
+      '/notification/ws': {
         target: 'http://localhost:8003',
         changeOrigin: true,
         ws: true,
@@ -163,10 +163,11 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/notification/, ''),
         configure: (proxy) => {
           proxy.on('error', (err, req, res) => {
-            console.warn('[Vite Proxy] Notification service unavailable:', err.message);
+            console.warn('[Vite Proxy] Notification WS service unavailable:', err.message);
           });
         },
       },
+      '/notification': createServiceProxyConfig('notification', 'http://localhost:8003'),
       '/integration': createServiceProxyConfig('integration', 'http://localhost:8004'),
       '/portal': createServiceProxyConfig('portal', 'http://localhost:8005'),
       '/erp': createServiceProxyConfig('erp', 'http://localhost:8010'),

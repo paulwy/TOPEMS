@@ -87,6 +87,22 @@ impl DatabaseSchema {
         "CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC)"
     }
 
+    pub fn migrate_add_is_read_column() -> &'static str {
+        "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN NOT NULL DEFAULT FALSE"
+    }
+
+    pub fn migrate_add_read_at_column() -> &'static str {
+        "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ"
+    }
+
+    pub fn migrate_add_priority_column() -> &'static str {
+        "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS priority SMALLINT NOT NULL DEFAULT 2"
+    }
+
+    pub fn migrate_add_data_column() -> &'static str {
+        "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS data JSONB"
+    }
+
     pub fn create_all_indexes() -> &'static str {
         r#"
         -- 通知表索引

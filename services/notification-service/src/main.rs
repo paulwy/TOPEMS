@@ -54,6 +54,7 @@ impl FromRef<AppState> for AuthState {
 }
 
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
+    // 创建表
     sqlx::query(DatabaseSchema::create_notifications_table())
         .execute(pool)
         .await?;
@@ -74,6 +75,25 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
     
+    // 迁移：添加可能缺失的列
+    // 注意：这些操作会静默失败如果列已存在，但 PostgreSQL 的 ADD COLUMN IF NOT EXISTS 会处理
+    let _ = sqlx::query(DatabaseSchema::migrate_add_is_read_column())
+        .execute(pool)
+        .await;
+    
+    let _ = sqlx::query(DatabaseSchema::migrate_add_read_at_column())
+        .execute(pool)
+        .await;
+    
+    let _ = sqlx::query(DatabaseSchema::migrate_add_priority_column())
+        .execute(pool)
+        .await;
+    
+    let _ = sqlx::query(DatabaseSchema::migrate_add_data_column())
+        .execute(pool)
+        .await;
+    
+    // 创建索引
     sqlx::query(DatabaseSchema::create_index_user_id())
         .execute(pool)
         .await?;
