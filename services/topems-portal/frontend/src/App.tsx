@@ -8,6 +8,7 @@ import NotificationPanel from './components/NotificationPanel';
 import { Service, Todo, UserInfo, Notification, portalApi } from './api/portal';
 
 type PageView = 'dashboard' | 'monitoring';
+type ErrorType = null | 'network' | 'auth' | 'server';
 
 const App: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
@@ -15,6 +16,8 @@ const App: React.FC = () => {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ErrorType>(null);
+  const [errorMessage, setErrorMessage] = useState('');
   const [activeView, setActiveView] = useState<PageView>('dashboard');
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -25,18 +28,37 @@ const App: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
+      setErrorMessage('');
+      
       const [servicesData, todosData, userData, notificationsData] = await Promise.all([
         portalApi.getServices(),
         portalApi.getTodos(),
         portalApi.getUserInfo(),
         portalApi.getNotifications(),
       ]);
+      
       setServices(servicesData);
       setTodos(todosData);
       setUser(userData);
       setNotifications(notificationsData);
     } catch (err) {
       console.error('Failed to fetch data:', err);
+      if (err instanceof Error) {
+        if (err.message.includes('Network Error') || err.message.includes('ETIMEDOUT')) {
+          setError('network');
+          setErrorMessage('网络连接失败，请检查网络设置');
+        } else if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+          setError('auth');
+          setErrorMessage('登录已过期，请重新登录');
+        } else {
+          setError('server');
+          setErrorMessage('服务器错误，请稍后重试');
+        }
+      } else {
+        setError('server');
+        setErrorMessage('未知错误，请稍后重试');
+      }
     } finally {
       setLoading(false);
     }
@@ -66,12 +88,47 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRefresh = () => {
+    fetchData();
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">加载中...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <p className="text-gray-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full mx-4">
+          <div className="flex flex-col items-center text-center">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+              error === 'network' ? 'bg-red-100' : error === 'auth' ? 'bg-yellow-100' : 'bg-blue-100'
+            }`}>
+              <span className="text-3xl">
+                {error === 'network' ? '🔌' : error === 'auth' ? '🔐' : '🛠️'}
+              </span>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {error === 'network' ? '网络连接失败' : error === 'auth' ? '登录已过期' : '服务器错误'}
+            </h3>
+            <p className="text-gray-600 mb-6">{errorMessage}</p>
+            <button
+              onClick={handleRefresh}
+              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              重试
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -99,8 +156,21 @@ const App: React.FC = () => {
         {activeView === 'dashboard' && (
           <>
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">欢迎回来，{user?.name}</h1>
-              <p className="text-gray-600">以下是您的系统概览和待办事项</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">欢迎回来，{user?.name}</h1>
+                  <p className="text-gray-600">以下是您的系统概览和待办事项</p>
+                </div>
+                <button
+                  onClick={handleRefresh}
+                  className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  刷新数据
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

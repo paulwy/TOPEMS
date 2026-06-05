@@ -7,7 +7,11 @@ export default defineConfig({
     port: 8080,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8005',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://localhost:8005',
         changeOrigin: true,
       },
     },
