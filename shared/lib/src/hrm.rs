@@ -55,3 +55,63 @@ impl<T> PaginatedResult<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pagination_query_defaults() {
+        let query = PaginationQuery {
+            page: None,
+            page_size: None,
+        };
+
+        assert_eq!(query.page(), 1);
+        assert_eq!(query.page_size(), 10);
+        assert_eq!(query.offset(), 0);
+    }
+
+    #[test]
+    fn test_pagination_query_with_values() {
+        let query = PaginationQuery {
+            page: Some(2),
+            page_size: Some(20),
+        };
+
+        assert_eq!(query.page(), 2);
+        assert_eq!(query.page_size(), 20);
+        assert_eq!(query.offset(), 20);
+    }
+
+    #[test]
+    fn test_pagination_query_page_min_page() {
+        let query = PaginationQuery {
+            page: Some(0),
+            page_size: Some(5),
+        };
+
+        assert_eq!(query.page(), 1);
+    }
+
+    #[test]
+    fn test_pagination_query_max_page_size() {
+        let query = PaginationQuery {
+            page: Some(1),
+            page_size: Some(200),
+        };
+
+        assert_eq!(query.page_size(), 100);
+    }
+
+    #[test]
+    fn test_paginated_result_new() {
+        let items = vec![1, 2, 3];
+        let result = PaginatedResult::new(items.clone(), 100, 2, 10);
+
+        assert_eq!(result.items, items);
+        assert_eq!(result.total, 100);
+        assert_eq!(result.page, 2);
+        assert_eq!(result.page_size, 10);
+    }
+}

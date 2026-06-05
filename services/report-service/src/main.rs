@@ -68,7 +68,11 @@ async fn main() -> Result<()> {
         .layer(cors)
         .with_state(app_state);
 
-    let port = 8053;
+    let port = std::env::var("SERVER_PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .or_else(|| std::env::var("PORT").ok().and_then(|p| p.parse().ok()))
+        .unwrap_or(8053);
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ TOPEMS Report Service listening on http://{}", addr);
 

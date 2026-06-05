@@ -1,6 +1,21 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
 
+export interface Company {
+  id: string;
+  name: string;
+  short_name?: string;
+  registration_number?: string;
+  tax_number?: string;
+  address?: string;
+  contact_phone?: string;
+  email?: string;
+  website?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Department {
   id: string;
   name: string;
@@ -348,6 +363,8 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
   };
 }
 
+export const companyApi: CrudOperations<Company> = createCrudApi<Company>('/api/v1/companies');
+
 export const departmentApi: CrudOperations<Department> = createCrudApi<Department>('/api/v1/departments');
 
 export const employeeApi: CrudOperations<Employee> = createCrudApi<Employee>('/api/v1/employees');
@@ -681,6 +698,7 @@ export const trainingRecordApi = {
 };
 
 export const hrmApi = {
+  companies: companyApi,
   departments: departmentApi,
   employees: employeeApi,
   positions: positionApi,

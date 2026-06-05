@@ -69,10 +69,18 @@ CREATE TABLE IF NOT EXISTS notifications (
     content TEXT NOT NULL,
     data JSONB,
     is_read BOOLEAN DEFAULT FALSE,
-    priority SMALLINT NOT NULL,
+    priority SMALLINT DEFAULT 2,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     read_at TIMESTAMP
 );
+
+-- Create indexes for notifications
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(notification_type);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
 
 -- =============================================================
 -- Mobile Module Tables

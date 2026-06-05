@@ -18,7 +18,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer,
     ServiceHealth, HealthStatus, DependencyHealth,
-    SystemMetrics, check_http_health,
+    SystemMetrics, check_http_health, NotificationServiceClient,
 };
 use api::ApiState;
 
@@ -50,6 +50,11 @@ async fn main() -> Result<()> {
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
+    // 初始化通知服务客户端
+    let notification_service_url = env::var("NOTIFICATION_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8003".to_string());
+    let notification_client = Arc::new(NotificationServiceClient::with_base_url(notification_service_url));
+
     let api_state = ApiState {
         db: pool.clone(),
         auth_state: AuthState::from_env(),
@@ -59,6 +64,7 @@ async fn main() -> Result<()> {
         department_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
         employee_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
         dict_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(600))),
+        notification_client,
     };
 
     let cors = create_cors_layer();
@@ -81,7 +87,7 @@ async fn main() -> Result<()> {
         .merge(protected_routes)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8010".to_string());
+    let port = env::var("SERVER_PORT").or_else(|_| env::var("PORT")).unwrap_or_else(|_| "8009".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-ERP 企业资源计划系统启动中...");

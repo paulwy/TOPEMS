@@ -15,25 +15,28 @@ NC='\033[0m'
 
 # 服务配置 (使用空格分隔，格式: 服务名 路径 端口)
 SERVICES_CONFIG="
-iam platform/topems-iam/backend 8002
+iam platform/topems-iam/backend 8000
 doc platform/topems-doc/backend 8001
-ai services/topems-ai/backend 8003
-flow platform/topems-flow/backend 8004
-rs services/topems-rs/backend 8005
-lims services/topems-lims/backend 8006
-qms services/topems-qms/backend 8012
-ehs services/topems-ehs/backend 8013
+ai services/topems-ai/backend 8013
+flow platform/topems-flow/backend 8006
+rs services/topems-rs/backend 8020
+lims services/topems-lims/backend 8022
+qms services/topems-qms/backend 8031
+ehs services/topems-ehs/backend 8032
 erp services/topems-erp/backend 8009
-hrm services/topems-hrm/backend 8010
-gis services/topems-gis/backend 8011
-pdm services/topems-pdm/backend 8015
-srm services/topems-srm/backend 8018
-im services/topems-im/backend 8016
-bi services/topems-bi/backend 8022
-crm services/topems-crm/backend 8014
-mes services/topems-mes/backend 8014
-mobile services/topems-mobile/backend 8019
-notification services/notification-service 8023
+hrm services/topems-hrm/backend 8011
+gis services/topems-gis/backend 8051
+pdm services/topems-pdm/backend 8023
+srm services/topems-srm/backend 8041
+im services/topems-im/backend 8052
+bi services/topems-bi/backend 8053
+crm services/topems-crm/backend 8012
+mes services/topems-mes/backend 8030
+mobile services/topems-mobile/backend 8056
+mail services/topems-mail/backend 8055
+notification services/notification-service 8027
+report services/report-service 8054
+pm services/topems-pm/backend 8050
 "
 
 # 获取服务路径

@@ -1789,9 +1789,9 @@ async fn main() -> Result<()> {
 
     let protected_routes = Router::new()
         .route("/api/v1/dashboards", get(list_dashboards).post(create_dashboard))
-        .route("/api/v1/dashboards/:id", get(get_dashboard).put(update_dashboard).delete(delete_dashboard))
+        .route("/api/v1/dashboards/{id}", get(get_dashboard).put(update_dashboard).delete(delete_dashboard))
         .route("/api/v1/reports", get(list_reports).post(create_report))
-        .route("/api/v1/reports/:id", get(get_report).put(update_report).delete(delete_report))
+        .route("/api/v1/reports/{id}", get(get_report).put(update_report).delete(delete_report))
         .route("/api/v1/analytics/summary", get(get_analytics_summary))
         .route("/api/v1/analytics/overview", get(get_analytics_overview))
         .route("/api/v1/analytics/development", get(get_development_analytics))

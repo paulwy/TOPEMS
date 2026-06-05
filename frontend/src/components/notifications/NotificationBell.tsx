@@ -3,6 +3,7 @@ import { Bell } from 'lucide-react';
 import NotificationPanel from './NotificationPanel';
 import { useNotificationWebSocket } from '../../hooks/useNotificationWebSocket';
 import { useNotificationState } from '../../hooks/useNotificationState';
+import { useAuth } from '../../hooks/useAuth';
 import { Notification } from '../../api/notification';
 
 interface NotificationBellProps {
@@ -12,7 +13,7 @@ interface NotificationBellProps {
 const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick }) => {
   const [showPanel, setShowPanel] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false); // Disable by default
+  const { user } = useAuth();
 
   const {
     notifications,
@@ -35,27 +36,24 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
     [addNotification]
   );
 
-  // Always initialize the hook, but connection is disabled internally
+  const userId = user?.id || 'user_001';
+
   const {
     isConnected,
     error: wsError,
     reconnect,
   } = useNotificationWebSocket({
-    userId: 'user_001',
+    userId,
     onNotification: handleNewNotification,
     onUnreadCountChange: fetchUnreadCount,
-    maxReconnectAttempts: 0, // No auto-reconnect
+    maxReconnectAttempts: 5,
+    autoConnect: true,
   });
 
-  // Disable auto-reconnect
-  // useEffect(() => {
-  //   if (!isConnected && !wsError) {
-  //     const reconnectTimer = setTimeout(() => {
-  //       reconnect();
-  //     }, 5000);
-  //     return () => clearTimeout(reconnectTimer);
-  //   }
-  // }, [isConnected, wsError, reconnect]);
+  // Fetch initial data when component mounts
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
 
   const handleBellClick = () => {
     setShowPanel(!showPanel);

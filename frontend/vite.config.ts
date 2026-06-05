@@ -137,6 +137,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    strictPort: true,
     hmr: {
       port: 3000,
       host: 'localhost',
@@ -152,9 +153,15 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/iam/, ''),
       },
-      '/doc': createServiceProxyConfig('doc', 'http://localhost:8001'),
+      '/doc/': createServiceProxyConfig('doc', 'http://localhost:8001'),
       '/flow': createServiceProxyConfig('flow', 'http://localhost:8006'),
-      '/notification': createServiceProxyConfig('notification', 'http://localhost:8023'),
+      '/notification': {
+        target: 'http://localhost:8027',
+        changeOrigin: true,
+        ws: true,
+        secure: false,
+        rewrite: (path: string) => path.replace(/^\/notification/, ''),
+      },
       '/integration': createServiceProxyConfig('integration', 'http://localhost:8004'),
       '/portal': createServiceProxyConfig('portal', 'http://localhost:8005'),
       '/erp': createServiceProxyConfig('erp', 'http://localhost:8009'),

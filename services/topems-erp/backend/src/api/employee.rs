@@ -11,7 +11,10 @@ use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use crate::services::iam_client::{CreateUserRequest, IamClient};
 use crate::services::permission::{check_employee_permission, check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
+use topems_shared::{
+    api_error, ApiResponse, PaginatedResponse, PaginationParams,
+    NotificationType, CreateNotificationRequest,
+};
 use crate::api::audit::log_audit_event;
 use crate::utils::{validate_required_field, validate_email, validate_phone};
 use super::ApiState;
@@ -180,6 +183,32 @@ async fn create_employee(
     let (response, status, error_msg) = match &result {
         Ok(employee) => {
             state.employee_cache.remove("all_employees");
+            
+            // 发送通知给新员工
+            let user_id_str = employee.user_id.map(|u| u.to_string()).unwrap_or_else(|| "user_001".to_string());
+            
+            // 发送欢迎通知
+            let notification_req = CreateNotificationRequest {
+                user_id: user_id_str.clone(),
+                notification_type: NotificationType::System,
+                title: "欢迎加入公司".to_string(),
+                content: format!("{}，欢迎加入我们的团队！您的工号是 {}，祝您工作顺利！", employee.name, employee.employee_number),
+                data: Some(serde_json::json!({
+                    "employee_id": employee.id,
+                    "employee_number": employee.employee_number,
+                    "department_id": employee.department_id
+                })),
+                priority: Some(2),
+            };
+            
+            // 异步发送通知，不阻塞响应结果，但错误不影响主流程
+            let nc = state.notification_client.clone();
+            tokio::spawn(async move {
+                if let Err(e) = nc.create_notification(notification_req).await {
+                    tracing::warn!("发送欢迎通知失败: {}", e);
+                }
+            });
+
             (
                 Json(ApiResponse::success(employee.clone(), "员工创建成功")),
                 "success".to_string(),

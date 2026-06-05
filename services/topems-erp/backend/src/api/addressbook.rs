@@ -17,7 +17,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/v1/addressbook/search", get(search_addressbook))
         .route("/api/v1/addressbook/export", get(export_addressbook))
         .route("/api/v1/addressbook/departments/tree", get(get_department_tree))
-        .route("/api/v1/addressbook/:id", get(get_contact_detail))
+        .route("/api/v1/addressbook/{id}", get(get_contact_detail))
 }
 
 async fn list_addressbook(

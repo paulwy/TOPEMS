@@ -34,3 +34,61 @@ pub struct UpdateDepartmentRequest {
     pub description: Option<String>,
     pub status: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_department_struct() {
+        let id = Uuid::new_v4();
+        let created_at = Utc::now();
+        let updated_at = Utc::now();
+        
+        let department = Department {
+            id,
+            name: "Engineering".to_string(),
+            code: Some("ENG".to_string()),
+            parent_id: None,
+            manager_id: None,
+            description: Some("Engineering Department".to_string()),
+            status: "active".to_string(),
+            created_at,
+            updated_at,
+        };
+
+        assert_eq!(department.id, id);
+        assert_eq!(department.name, "Engineering");
+        assert_eq!(department.code, Some("ENG".to_string()));
+        assert_eq!(department.status, "active");
+    }
+
+    #[test]
+    fn test_create_department_request() {
+        let request = CreateDepartmentRequest {
+            name: "HR Department".to_string(),
+            code: Some("HR".to_string()),
+            parent_id: None,
+            manager_id: None,
+            description: Some("Human Resources".to_string()),
+        };
+
+        assert_eq!(request.name, "HR Department");
+        assert_eq!(request.code, Some("HR".to_string()));
+    }
+
+    #[test]
+    fn test_update_department_request() {
+        let request = UpdateDepartmentRequest {
+            name: Some("Updated HR Department".to_string()),
+            code: None,
+            parent_id: None,
+            manager_id: None,
+            description: Some("Updated description".to_string()),
+            status: Some("inactive".to_string()),
+        };
+
+        assert_eq!(request.name, Some("Updated HR Department".to_string()));
+        assert_eq!(request.status, Some("inactive".to_string()));
+    }
+}

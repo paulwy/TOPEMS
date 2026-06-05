@@ -24,7 +24,12 @@ topems-shared = { path = "../../shared/lib" }
 
 [dev-dependencies]
 tokio-test = "0.4"
+reqwest = { version = "0.12", features = ["json"] }
 
 [[bin]]
 name = "notification-service"
 path = "src/main.rs"
+
+[[example]]
+name = "create_test_notification"
+path = "examples/create_test_notification.rs"

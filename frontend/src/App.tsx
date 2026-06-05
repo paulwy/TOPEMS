@@ -58,6 +58,8 @@ const HrmEmployeeDetailPage = lazy(() => import('./pages/HrmEmployeeDetailPage')
 const HrmEmployeePage = lazy(() => import('./pages/HrmEmployeePage'));
 const HrmTrainingPage = lazy(() => import('./pages/HrmTrainingPage'));
 const HrmReportsPage = lazy(() => import('./pages/HrmReportsPage'));
+const HrmCompanyPage = lazy(() => import('./pages/HrmCompanyPage'));
+const HrmDepartmentPage = lazy(() => import('./pages/HrmDepartmentPage'));
 const PerformanceMonitorPage = lazy(() => import('./pages/PerformanceMonitorPage'));
 const FlowInstanceListPage = lazy(() => import('./pages/FlowInstanceListPage'));
 const FlowInstanceDetailPage = lazy(() => import('./pages/FlowInstanceDetailPage'));
@@ -292,23 +294,11 @@ const AppContent: React.FC = () => {
           />
           <Route
             path='/companies'
-            element={
-              <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module='erp' action='admin'>
-                  <CompanyManagementPage />
-                </ModuleGate>
-              </ProtectedRoute>
-            }
+            element={<Navigate to='/hrm/companies' replace />}
           />
           <Route
             path='/departments'
-            element={
-              <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module='erp' action='admin'>
-                  <DepartmentManagementPage />
-                </ModuleGate>
-              </ProtectedRoute>
-            }
+            element={<Navigate to='/hrm/departments' replace />}
           />
           <Route
             path='/employees'
@@ -484,6 +474,26 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['doc:admin']}>
                 <ModuleGate module='doc' action='admin'>
                   <TemplateManagementPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/hrm/companies'
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module='hrm' action='read'>
+                  <HrmCompanyPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/hrm/departments'
+            element={
+              <ProtectedRoute requiredPermissions={['hrm:read']}>
+                <ModuleGate module='hrm' action='read'>
+                  <HrmDepartmentPage />
                 </ModuleGate>
               </ProtectedRoute>
             }

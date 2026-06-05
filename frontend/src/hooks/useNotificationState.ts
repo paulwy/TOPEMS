@@ -84,11 +84,11 @@ export const useNotificationState = () => {
     });
   }, []);
 
-  // Don't auto-fetch notifications by default
+  // Auto-fetch notifications and unread count when hook initializes
   useEffect(() => {
-    // fetchNotifications();
-    // fetchUnreadCount();
-  }, [fetchNotifications, fetchUnreadCount]);
+    fetchNotifications();
+    fetchUnreadCount();
+  }, []); // Only run once on mount
 
   return {
     ...state,

@@ -5,6 +5,7 @@ import {
   Calendar,
   DollarSign,
   User,
+  Building,
   Building2,
   BookOpen,
   FileText,
@@ -20,13 +21,15 @@ interface HrmLayoutProps {
 }
 
 const hrmMenuItems = [
+  { path: '/hrm/companies', label: '公司管理', icon: Building },
+  { path: '/hrm/departments', label: '部门管理', icon: Building2 },
   { path: '/hrm/positions', label: '岗位管理', icon: Briefcase },
   { path: '/hrm/employees', label: '员工管理', icon: Users },
   { path: '/hrm/attendance', label: '考勤管理', icon: Calendar },
   { path: '/hrm/leave', label: '请假管理', icon: Calendar },
   { path: '/hrm/payroll', label: '薪酬管理', icon: DollarSign },
   { path: '/hrm/performance', label: '绩效管理', icon: User },
-  { path: '/hrm/recruitment', label: '招聘管理', icon: Building2 },
+  { path: '/hrm/recruitment', label: '招聘管理', icon: FileText },
   { path: '/hrm/contracts', label: '合同管理', icon: FileText },
   { path: '/hrm/training', label: '培训管理', icon: BookOpen },
   { path: '/hrm/reports', label: '报表统计', icon: BarChart3 },

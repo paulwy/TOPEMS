@@ -386,10 +386,12 @@ export interface ProjectRisk {
   risk_code?: string;
   risk_name: string;
   risk_description?: string;
+  description?: string;
   risk_category?: string;
   risk_subcategory?: string;
   likelihood: string;
   impact: string;
+  level?: string;
   risk_score: number;
   status?: string;
   mitigation_strategy?: string;

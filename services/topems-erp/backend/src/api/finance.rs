@@ -29,13 +29,13 @@ pub struct PaginationParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/expenses", get(list_expenses).post(create_expense))
-        .route("/api/v1/expenses/:id", get(get_expense).put(update_expense).delete(delete_expense))
+        .route("/api/v1/expenses/{id}", get(get_expense).put(update_expense).delete(delete_expense))
         .route("/api/v1/budgets", get(list_budgets).post(create_budget))
-        .route("/api/v1/budgets/:id", get(get_budget).put(update_budget).delete(delete_budget))
+        .route("/api/v1/budgets/{id}", get(get_budget).put(update_budget).delete(delete_budget))
         .route("/api/v1/receivables", get(list_receivables).post(create_receivable))
-        .route("/api/v1/receivables/:id", get(get_receivable).put(update_receivable).delete(delete_receivable))
+        .route("/api/v1/receivables/{id}", get(get_receivable).put(update_receivable).delete(delete_receivable))
         .route("/api/v1/payables", get(list_payables).post(create_payable))
-        .route("/api/v1/payables/:id", get(get_payable).put(update_payable).delete(delete_payable))
+        .route("/api/v1/payables/{id}", get(get_payable).put(update_payable).delete(delete_payable))
 }
 
 async fn list_expenses(

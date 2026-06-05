@@ -20,6 +20,7 @@ pub mod storage;
 pub mod validation;
 pub mod permission;
 pub mod audit;
+pub mod notification;
 
 pub use config::{Config, AppConfig, ServiceConfig, ServiceRegistry, get_default_port};
 pub use error::{TopemsError, Result};
@@ -43,3 +44,16 @@ pub use storage::{StorageConfig, FileMetadata, StorageService, LocalStorage};
 pub use validation::{ValidationError, ValidationResult, Validator};
 pub use permission::{ModulePermission, check_module_permission, check_resource_permission, check_any_module_permission};
 pub use audit::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+pub use notification::{
+    NotificationType,
+    Notification,
+    CreateNotificationRequest,
+    NotificationTemplate,
+    CreateTemplateRequest,
+    RenderTemplateRequest,
+    TemplateStatus,
+    ArchiveConfig,
+    NotificationStats,
+    NotificationServiceClient,
+    NotificationServiceState,
+};

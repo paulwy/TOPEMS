@@ -2,6 +2,9 @@
 
 # 这个脚本会遍历所有包含 Cargo.toml 的目录并运行 clippy
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
 echo "开始检查所有 Rust 项目..."
 
 PROJECTS=(
@@ -38,13 +41,14 @@ TOTAL_ERRORS=0
 TOTAL_PROJECTS=0
 
 for project in "${PROJECTS[@]}"; do
-    if [ -d "$project" ] && [ -f "$project/Cargo.toml" ]; then
+    PROJECT_PATH="$PROJECT_ROOT/$project"
+    if [ -d "$PROJECT_PATH" ] && [ -f "$PROJECT_PATH/Cargo.toml" ]; then
         echo "========================================="
         echo "检查项目: $project"
         echo "========================================="
         TOTAL_PROJECTS=$((TOTAL_PROJECTS + 1))
         
-        cd "$project" || continue
+        cd "$PROJECT_PATH" || continue
         cargo clippy --all-targets --all-features -- -D warnings 2>&1 | tee /tmp/clippy_output.txt
         
         if [ ${PIPESTATUS[0]} -ne 0 ]; then
@@ -56,7 +60,7 @@ for project in "${PROJECTS[@]}"; do
             echo "✅ $project 检查通过！"
         fi
         
-        cd /Users/air/TOPEMS || exit 1
+        cd "$PROJECT_ROOT" || exit 1
         echo ""
     fi
 done

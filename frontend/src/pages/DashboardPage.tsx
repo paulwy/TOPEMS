@@ -147,7 +147,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-      const response = await fetch(`http://localhost:${port}/health`, {
+      // 通过代理路径访问服务，而不是直接访问端口
+      const response = await fetch(`/${serviceKey}/health`, {
         signal: controller.signal,
         method: 'GET',
       });
@@ -163,16 +164,26 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     const services = [
       { key: 'iam', port: 8000 },
       { key: 'doc', port: 8001 },
-      { key: 'flow', port: 8002 },
-      { key: 'notification', port: 8003 },
-      { key: 'erp', port: 8010 },
+      { key: 'flow', port: 8006 },
+      { key: 'erp', port: 8009 },
       { key: 'hrm', port: 8011 },
+      { key: 'crm', port: 8012 },
       { key: 'ai', port: 8013 },
       { key: 'rs', port: 8020 },
       { key: 'lims', port: 8022 },
+      { key: 'pdm', port: 8023 },
+      { key: 'notification', port: 8027 },
+      { key: 'qms', port: 8031 },
+      { key: 'ehs', port: 8032 },
+      { key: 'mes', port: 8030 },
+      { key: 'srm', port: 8041 },
+      { key: 'gis', port: 8051 },
+      { key: 'im', port: 8052 },
+      { key: 'bi', port: 8053 },
+      { key: 'mail', port: 8055 },
+      { key: 'mobile', port: 8056 },
+      { key: 'report', port: 8054 },
       { key: 'pm', port: 8050 },
-      { key: 'report', port: 8053 },
-      { key: 'mobile', port: 8055 },
     ];
 
     const statusPromises = services.map(async (service) => {
@@ -383,33 +394,33 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           title: '公司管理',
           icon: Building,
           description: '企业信息、组织架构',
-          path: '/companies',
+          path: '/hrm/companies',
           color: 'bg-blue-500',
           status: 'online' as const,
-          permission: 'erp:admin',
-          module: 'erp',
+          permission: 'hrm:read',
+          module: 'hrm',
           adminOnly: true,
         },
         {
           title: '部门管理',
           icon: Folder,
           description: '部门结构、层级关系',
-          path: '/departments',
+          path: '/hrm/departments',
           color: 'bg-teal-500',
           status: 'online' as const,
-          permission: 'erp:admin',
-          module: 'erp',
+          permission: 'hrm:read',
+          module: 'hrm',
           adminOnly: true,
         },
         {
           title: '员工管理',
           icon: Users,
           description: '员工信息、任职管理',
-          path: '/employees',
+          path: '/hrm/employees',
           color: 'bg-emerald-500',
           status: 'online' as const,
-          permission: 'erp:admin',
-          module: 'erp',
+          permission: 'hrm:read',
+          module: 'hrm',
           adminOnly: true,
         },
         {
@@ -448,7 +459,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         {
           title: '行政综合管理',
           icon: Briefcase,
-          description: '公司、部门、员工、资产、会议室、车辆统一管理',
+          description: '资产、会议室、车辆统一管理',
           path: '/administration',
           color: 'bg-sky-500',
           status: 'online' as const,
@@ -691,9 +702,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                               ai: '/ai',
                               workflows: '/workflows',
                               system: '/system',
-                              companies: '/companies',
-                              departments: '/departments',
-                              employees: '/employees',
+                              companies: '/hrm/companies',
+                              departments: '/hrm/departments',
+                              employees: '/hrm/employees',
                               help: '/help',
                             };
                             navigate(pathMap[item.id] || `/${item.id}`);
