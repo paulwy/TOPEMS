@@ -40,21 +40,21 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       return;
     }
 
-    // 使用 IM 服务的 URL 作为 WebSocket 基础 URL
     const imServiceUrl = config.services.im;
     let wsUrl = imServiceUrl;
     
-    // 如果是相对路径（以 / 开头），添加协议和主机
     if (wsUrl.startsWith('/')) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       wsUrl = `${protocol}//${host}${wsUrl}`;
     } else {
-      // 绝对路径，替换 http/https -> ws/wss
       wsUrl = wsUrl.replace('http://', 'ws://').replace('https://', 'wss://');
     }
     
-    const ws = new WebSocket(`${wsUrl}/ws`);
+    const fullWsUrl = `${wsUrl}/ws`;
+    console.log('[useWebSocket] Attempting to connect to:', fullWsUrl);
+    
+    const ws = new WebSocket(fullWsUrl);
 
     ws.onopen = () => {
       setIsConnected(true);
@@ -72,13 +72,14 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.log('[useWebSocket] Connection closed:', event.code, event.reason);
       setIsConnected(false);
       onClose?.();
 
-      // 尝试重连
       if (reconnectCountRef.current < reconnectAttempts) {
         reconnectCountRef.current++;
+        console.log('[useWebSocket] Reconnecting attempt:', reconnectCountRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
           connect();
         }, reconnectInterval);
@@ -86,6 +87,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     };
 
     ws.onerror = (event) => {
+      console.error('[useWebSocket] Connection error:', event);
       setError(event);
       onError?.(event);
     };

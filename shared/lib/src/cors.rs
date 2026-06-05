@@ -28,6 +28,12 @@ CorsLayer::new()
             axum::http::header::CONTENT_TYPE,
             axum::http::header::AUTHORIZATION,
             axum::http::header::ACCEPT,
+            axum::http::header::UPGRADE,
+            axum::http::header::CONNECTION,
+            axum::http::header::SEC_WEBSOCKET_KEY,
+            axum::http::header::SEC_WEBSOCKET_VERSION,
+            axum::http::header::ORIGIN,
         ])
         .allow_credentials(true)
+        .allow_private_network(true)
 }

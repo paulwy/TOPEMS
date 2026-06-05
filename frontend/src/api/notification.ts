@@ -238,9 +238,22 @@ export const getUnreadNotifications = async (): Promise<ApiResponse<Notification
 };
 
 export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
-  const response = await apiClient.notification.get<number>('/api/v1/notifications/unread-count');
-
-  return response;
+  try {
+    const response = await apiClient.notification.get<number>('/api/v1/notifications/unread-count');
+    return response;
+  } catch (error: any) {
+    if (error.code === 'ERR_CANCELED') {
+      console.debug('Notification count request was canceled');
+      return {
+        code: 0,
+        success: true,
+        data: 0,
+        message: 'Request canceled',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    throw error;
+  }
 };
 
 export const markAsRead = async (id: string): Promise<ApiResponse<Notification>> => {

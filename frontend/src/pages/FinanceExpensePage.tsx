@@ -15,9 +15,11 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { expenseApi, employeeApi, departmentApi, type Expense, type Employee, type Department } from '../api/erp';
+import { companyApi, type Company } from '../api/hrm';
 import { useAppStore } from '../store';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
+import OrganizationFilter, { OrganizationFilterValue } from '@/components/ui/OrganizationFilter';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,10 +38,16 @@ const FinanceExpensePage: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [filterStatus, setFilterStatus] = useState('');
+  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({
+    companyId: undefined,
+    departmentId: undefined,
+    employeeId: undefined,
+  });
 
   const [newExpense, setNewExpense] = useState({
     expense_number: '',
@@ -54,15 +62,27 @@ const FinanceExpensePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [organizationFilter]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [expenseRes, empRes, deptRes] = await Promise.all([
-        expenseApi.list(),
+      const params: Record<string, string> = {};
+      if (organizationFilter.companyId) {
+        params.company_id = organizationFilter.companyId;
+      }
+      if (organizationFilter.departmentId) {
+        params.department_id = organizationFilter.departmentId;
+      }
+      if (organizationFilter.employeeId) {
+        params.employee_id = organizationFilter.employeeId;
+      }
+
+      const [expenseRes, empRes, deptRes, companyRes] = await Promise.all([
+        expenseApi.list(params),
         employeeApi.list(),
         departmentApi.list(),
+        companyApi.list(),
       ]);
 
       if (expenseRes.success && expenseRes.data) {
@@ -73,6 +93,9 @@ const FinanceExpensePage: React.FC = () => {
       }
       if (deptRes.success && deptRes.data) {
         setDepartments(deptRes.data.items || []);
+      }
+      if (companyRes.code === 200 && companyRes.data) {
+        setCompanies(companyRes.data.items || []);
       }
     } catch (err: any) {
       addNotification({ title: '加载失败', message: err.message || '加载数据失败', type: 'error' });
@@ -403,7 +426,14 @@ const FinanceExpensePage: React.FC = () => {
           </Card>
         </div>
 
-        <div className='flex items-center justify-between mb-4'>
+        <div className='flex flex-wrap items-center justify-between gap-4 mb-4'>
+          <OrganizationFilter
+            value={organizationFilter}
+            onChange={setOrganizationFilter}
+            showCompany={true}
+            showDepartment={true}
+            showEmployee={true}
+          />
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className='w-32'>
               <SelectValue placeholder='全部状态' />

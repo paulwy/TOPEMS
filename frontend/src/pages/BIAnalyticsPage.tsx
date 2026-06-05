@@ -20,6 +20,7 @@ import {
   fetchModuleAnalytics 
 } from '../api/bi';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import OrganizationFilter, { type OrganizationFilterValue } from '../components/ui/OrganizationFilter';
 
 const ChartCard = ({ title, children, height = 300 
 }: { 
@@ -74,6 +75,7 @@ const ModuleCard = ({
 const BIAnalyticsPage = () => {
   const [overview, setOverview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
 
   useEffect(() => {
     const loadOverview = async () => {
@@ -144,6 +146,15 @@ const BIAnalyticsPage = () => {
           <h2 className="text-2xl font-bold text-gray-800">概览分析</h2>
           <p className="text-sm text-gray-500 mt-1">各业务模块数据总览</p>
         </div>
+      </div>
+      <div className="bg-gray-50 rounded-lg p-4">
+        <OrganizationFilter
+          value={organizationFilter}
+          onChange={setOrganizationFilter}
+          showCompany={true}
+          showDepartment={true}
+          showEmployee={true}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

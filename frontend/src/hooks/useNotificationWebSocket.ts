@@ -32,14 +32,16 @@ export const useNotificationWebSocket = ({
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const onNotificationRef = useRef(onNotification);
   const onUnreadCountChangeRef = useRef(onUnreadCountChange);
   const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
 
   const { shouldShowNotification, shouldPlaySound, shouldShowDesktopNotification } = useNotificationSettings();
 
-  // 更新 refs 中的回调，避免 connect 函数依赖变化
   useEffect(() => {
     onNotificationRef.current = onNotification;
     onUnreadCountChangeRef.current = onUnreadCountChange;
@@ -78,7 +80,6 @@ export const useNotificationWebSocket = ({
     if (!shouldPlaySound()) return;
 
     try {
-      // 尝试使用 Web Audio API 生成简单提示音（避免依赖外部文件）
       const playBeep = () => {
         try {
           const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -101,7 +102,6 @@ export const useNotificationWebSocket = ({
         }
       };
 
-      // 先尝试播放文件，如果失败则用 Beep
       const audio = new Audio('/notification-sound.mp3');
       audio.volume = 0.5;
       audio.play().catch((err) => {
@@ -113,21 +113,66 @@ export const useNotificationWebSocket = ({
     }
   }, [shouldPlaySound]);
 
+  const resetState = useCallback(() => {
+    if (pingIntervalRef.current) {
+      clearInterval(pingIntervalRef.current);
+      pingIntervalRef.current = null;
+    }
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
+    setIsConnected(false);
+    setIsConnecting(false);
+    setConnectionStatus('disconnected');
+    wsRef.current = null;
+  }, []);
+
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
 
+    if (isConnecting) {
+      return;
+    }
+
+    resetState();
+    
     try {
       const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
       const notificationServicePath = config.services.notification;
       const wsUrl = `${wsProtocol}://${window.location.host}${notificationServicePath}/ws/notifications`;
+      
       logger.info('Attempting to connect to notification service:', wsUrl);
+      
+      setIsConnecting(true);
+      setConnectionStatus('connecting');
+      setError(null);
+
       const ws = new WebSocket(wsUrl);
 
+      connectionTimeoutRef.current = setTimeout(() => {
+        if (ws.readyState === WebSocket.CONNECTING) {
+          logger.warn('WebSocket connection timeout');
+          try {
+            ws.close(1006, 'Connection timeout');
+          } catch (e) {
+            logger.error('Failed to close WebSocket on timeout:', e);
+          }
+        }
+      }, 10000);
+
       ws.onopen = () => {
+        if (connectionTimeoutRef.current) {
+          clearTimeout(connectionTimeoutRef.current);
+          connectionTimeoutRef.current = null;
+        }
+        
         logger.info('WebSocket connected');
         setIsConnected(true);
+        setIsConnecting(false);
+        setConnectionStatus('connected');
         setError(null);
         reconnectAttemptsRef.current = 0;
 
@@ -181,24 +226,30 @@ export const useNotificationWebSocket = ({
       ws.onerror = (err) => {
         logger.error('WebSocket error:', err);
         logger.error('WebSocket error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-        setError('WebSocket connection error');
+        
+        if (ws.readyState === WebSocket.CONNECTING) {
+          setConnectionStatus('error');
+          setIsConnecting(false);
+        }
       };
 
       ws.onclose = (event) => {
         logger.info(`WebSocket disconnected. Code: ${event.code}, Reason: ${event.reason}`);
-        setIsConnected(false);
+        
+        resetState();
 
-        if (pingIntervalRef.current) {
-          clearInterval(pingIntervalRef.current);
-        }
-
-        if (reconnectAttemptsRef.current < maxReconnectAttempts) {
-          const timeout = reconnectInterval * Math.pow(2, reconnectAttemptsRef.current);
-          reconnectTimeoutRef.current = setTimeout(() => {
-            reconnectAttemptsRef.current += 1;
-            logger.info(`Reconnecting... Attempt ${reconnectAttemptsRef.current}`);
-            connect();
-          }, timeout);
+        if (event.code !== 1000 && event.code !== 1001) {
+          if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+            const timeout = reconnectInterval * Math.pow(2, reconnectAttemptsRef.current);
+            reconnectTimeoutRef.current = setTimeout(() => {
+              reconnectAttemptsRef.current += 1;
+              logger.info(`Reconnecting... Attempt ${reconnectAttemptsRef.current}`);
+              connect();
+            }, timeout);
+          } else {
+            logger.warn('Max reconnect attempts reached, stopping reconnection');
+            setError('Notification service unavailable, please refresh the page');
+          }
         }
       };
 
@@ -206,6 +257,8 @@ export const useNotificationWebSocket = ({
     } catch (err) {
       logger.error('Failed to create WebSocket:', err);
       setError('Failed to create WebSocket connection');
+      setIsConnecting(false);
+      setConnectionStatus('error');
     }
   }, [
     userId,
@@ -214,6 +267,8 @@ export const useNotificationWebSocket = ({
     shouldShowNotification,
     showDesktopNotification,
     playNotificationSound,
+    resetState,
+    isConnecting,
   ]);
 
   const disconnect = useCallback(() => {
@@ -225,10 +280,18 @@ export const useNotificationWebSocket = ({
       clearInterval(pingIntervalRef.current);
     }
 
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+    }
+
     if (wsRef.current) {
-      wsRef.current.close();
+      wsRef.current.close(1000, 'Client disconnect');
       wsRef.current = null;
     }
+
+    setIsConnected(false);
+    setIsConnecting(false);
+    setConnectionStatus('disconnected');
   }, []);
 
   const sendMessage = useCallback((message: WsMessage) => {
@@ -237,19 +300,24 @@ export const useNotificationWebSocket = ({
     }
   }, []);
 
-  // Control auto-connect with option
   useEffect(() => {
-    if (autoConnect) {
-      connect();
+    if (autoConnect && userId) {
+      const timer = setTimeout(() => {
+        connect();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
     }
 
     return () => {
       disconnect();
     };
-  }, [connect, disconnect, autoConnect]);
+  }, [connect, disconnect, autoConnect, userId]);
 
   return {
     isConnected,
+    isConnecting,
+    connectionStatus,
     error,
     reconnect: connect,
     disconnect,

@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { ModeToggle } from '@/components/ModeToggle';
 import { Badge } from '@/components/ui/badge';
+import OrganizationFilter, { type OrganizationFilterValue } from '../components/ui/OrganizationFilter';
 
 const BudgetManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const BudgetManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
   const [newBudget, setNewBudget] = useState({
     department_id: '',
     budget_type: '',
@@ -275,6 +277,17 @@ const BudgetManagementPage: React.FC = () => {
       </div>
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
+        {/* 组织筛选 */}
+        <div className='bg-slate-100 dark:bg-slate-800 rounded-lg p-4 mb-6'>
+          <OrganizationFilter
+            value={organizationFilter}
+            onChange={setOrganizationFilter}
+            showCompany={true}
+            showDepartment={true}
+            showEmployee={false}
+          />
+        </div>
+
         {/* 统计卡片 */}
         <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-6'>
           <Card>

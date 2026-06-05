@@ -43,24 +43,18 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
 import {
-  companyApi,
-  departmentApi,
-  employeeApi,
   officeSupplyApi,
   meetingRoomApi,
   meetingBookingApi,
   vehicleApi,
   announcementApi,
-  type Company,
-  type Department,
-  type Employee,
   type OfficeSupply,
   type MeetingRoom,
   type MeetingBooking,
   type Vehicle,
   type Announcement,
 } from '../api/erp';
-import { leaveApi, attendanceApi, type LeaveRequest, type AttendanceRecord } from '../api/hrm';
+import { leaveApi, attendanceApi, type LeaveRequest, type AttendanceRecord, employeeApi, type Employee } from '../api/hrm';
 import MobileHeader from '../components/MobileHeader';
 import MobileNav from '../components/MobileNav';
 
@@ -76,9 +70,6 @@ interface ExpenseClaim {
 
 type TabType =
   | 'overview'
-  | 'company'
-  | 'department'
-  | 'employee'
   | 'supplies'
   | 'meetings'
   | 'vehicles'
@@ -98,8 +89,6 @@ const AdministrationPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
@@ -217,8 +206,6 @@ const AdministrationPage: React.FC = () => {
     setLoading(true);
     try {
       const promises = [
-        companyApi.list(),
-        departmentApi.list(),
         employeeApi.list(),
         leaveApi.list(),
         attendanceApi.list(),
@@ -231,44 +218,44 @@ const AdministrationPage: React.FC = () => {
 
       const results = await Promise.allSettled(promises);
 
-      if (results[0].status === 'fulfilled' && results[0].value.success && results[0].value.data) {
-        setCompanies((results[0].value.data as any).items || []);
+      if (results[0].status === 'fulfilled' && results[0].value.code === 200 && results[0].value.data) {
+        const data = results[0].value.data as any;
+        setEmployees(data.items || []);
       }
 
-      if (results[1].status === 'fulfilled' && results[1].value.success && results[1].value.data) {
-        setDepartments((results[1].value.data as any).items || []);
+      if (results[1].status === 'fulfilled' && results[1].value.code === 200 && results[1].value.data) {
+        const data = results[1].value.data as any;
+        setLeaveRequests(data.items || []);
       }
 
-      if (results[2].status === 'fulfilled' && results[2].value.success && results[2].value.data) {
-        setEmployees((results[2].value.data as any).items || []);
+      if (results[2].status === 'fulfilled' && results[2].value.code === 200 && results[2].value.data) {
+        const data = results[2].value.data as any;
+        setAttendanceRecords(data.items || []);
       }
 
-      if (results[3].status === 'fulfilled' && results[3].value.success && results[3].value.data) {
-        setLeaveRequests((results[3].value.data as any).items || []);
+      if (results[3].status === 'fulfilled' && results[3].value.code === 200 && results[3].value.data) {
+        const data = results[3].value.data as any;
+        setOfficeSupplies(data.items || []);
       }
 
-      if (results[4].status === 'fulfilled' && results[4].value.success && results[4].value.data) {
-        setAttendanceRecords((results[4].value.data as any).items || []);
+      if (results[4].status === 'fulfilled' && results[4].value.code === 200 && results[4].value.data) {
+        const data = results[4].value.data as any;
+        setMeetingRooms(data.items || []);
       }
 
-      if (results[5].status === 'fulfilled' && results[5].value.success && results[5].value.data) {
-        setOfficeSupplies((results[5].value.data as any).items || []);
+      if (results[5].status === 'fulfilled' && results[5].value.code === 200 && results[5].value.data) {
+        const data = results[5].value.data as any;
+        setMeetingBookings(data.items || []);
       }
 
-      if (results[6].status === 'fulfilled' && results[6].value.success && results[6].value.data) {
-        setMeetingRooms((results[6].value.data as any).items || []);
+      if (results[6].status === 'fulfilled' && results[6].value.code === 200 && results[6].value.data) {
+        const data = results[6].value.data as any;
+        setVehicles(data.items || []);
       }
 
-      if (results[7].status === 'fulfilled' && results[7].value.success && results[7].value.data) {
-        setMeetingBookings((results[7].value.data as any).items || []);
-      }
-
-      if (results[8].status === 'fulfilled' && results[8].value.success && results[8].value.data) {
-        setVehicles((results[8].value.data as any).items || []);
-      }
-
-      if (results[9].status === 'fulfilled' && results[9].value.success && results[9].value.data) {
-        setAnnouncements((results[9].value.data as any).items || []);
+      if (results[7].status === 'fulfilled' && results[7].value.code === 200 && results[7].value.data) {
+        const data = results[7].value.data as any;
+        setAnnouncements(data.items || []);
       }
     } catch (err: any) {
       console.error('加载数据失败:', err);
@@ -351,8 +338,6 @@ const AdministrationPage: React.FC = () => {
     const pendingExpenses = expenseClaims.filter((e) => e.status === 'pending').length;
 
     return {
-      companies: companies.length,
-      departments: departments.length,
       employees: employees.length,
       vehicles: vehicles.length,
       meetingRooms: meetingRooms.length,
@@ -361,33 +346,11 @@ const AdministrationPage: React.FC = () => {
       todayAttendance,
       pendingExpenses,
     };
-  }, [companies, departments, employees, leaveRequests, attendanceRecords]);
+  }, [employees, leaveRequests, attendanceRecords]);
 
   const renderOverview = () => (
     <div className='space-y-6'>
       <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'>
-        <div className='bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <p className='text-sm text-slate-500 mb-1'>公司数量</p>
-              <p className='text-2xl font-bold text-slate-900'>{stats.companies}</p>
-            </div>
-            <div className='w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center'>
-              <Building2 className='w-6 h-6 text-blue-600' />
-            </div>
-          </div>
-        </div>
-        <div className='bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <p className='text-sm text-slate-500 mb-1'>部门数量</p>
-              <p className='text-2xl font-bold text-slate-900'>{stats.departments}</p>
-            </div>
-            <div className='w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center'>
-              <Users2 className='w-6 h-6 text-green-600' />
-            </div>
-          </div>
-        </div>
         <div className='bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200'>
           <div className='flex items-center justify-between'>
             <div>
@@ -429,6 +392,28 @@ const AdministrationPage: React.FC = () => {
             </div>
             <div className='w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center'>
               <CircleDollarSign className='w-6 h-6 text-indigo-600' />
+            </div>
+          </div>
+        </div>
+        <div className='bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <p className='text-sm text-slate-500 mb-1'>会议室</p>
+              <p className='text-2xl font-bold text-slate-900'>{stats.meetingRooms}</p>
+            </div>
+            <div className='w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center'>
+              <Calendar className='w-6 h-6 text-blue-600' />
+            </div>
+          </div>
+        </div>
+        <div className='bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <p className='text-sm text-slate-500 mb-1'>车辆</p>
+              <p className='text-2xl font-bold text-slate-900'>{stats.vehicles}</p>
+            </div>
+            <div className='w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center'>
+              <Car className='w-6 h-6 text-red-600' />
             </div>
           </div>
         </div>
@@ -496,471 +481,6 @@ const AdministrationPage: React.FC = () => {
       </div>
     </div>
   );
-
-  const renderCompany = () => (
-    <div className='space-y-4'>
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
-        <div className='flex items-center space-x-3'>
-          <h2 className='text-xl font-bold text-slate-900'>公司管理</h2>
-          <button className='p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors'>
-            <Filter className='w-5 h-5' />
-          </button>
-        </div>
-        <button
-          onClick={() => handleOpenModal('create')}
-          className='flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'
-        >
-          <Plus className='w-5 h-5' />
-          <span className='font-medium'>新增公司</span>
-        </button>
-      </div>
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-        {companies.length > 0 ? (
-          companies.map((company) => (
-            <div
-              key={company.id}
-              className='bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-all duration-200 group'
-            >
-              <div className='flex items-start justify-between mb-4'>
-                <h3 className='text-lg font-semibold text-slate-900'>{company.name}</h3>
-                {getStatusBadge(company.status)}
-              </div>
-              <div className='space-y-2 text-sm text-slate-600'>
-                {company.short_name && (
-                  <div className='flex justify-between'>
-                    <span className='text-slate-500'>简称:</span>
-                    <span className='font-medium'>{company.short_name}</span>
-                  </div>
-                )}
-                {company.registration_number && (
-                  <div className='flex justify-between'>
-                    <span className='text-slate-500'>注册号:</span>
-                    <span>{company.registration_number}</span>
-                  </div>
-                )}
-                {company.contact_phone && (
-                  <div className='flex justify-between'>
-                    <span className='text-slate-500'>电话:</span>
-                    <span>{company.contact_phone}</span>
-                  </div>
-                )}
-              </div>
-              <div className='flex justify-end space-x-2 mt-4 pt-4 border-t border-slate-100'>
-                <button
-                  onClick={() => handleOpenModal('view', company)}
-                  className='p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors'
-                >
-                  <Eye className='w-4 h-4' />
-                </button>
-                <button
-                  onClick={() => handleOpenModal('edit', company)}
-                  className='p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors'
-                >
-                  <Edit className='w-4 h-4' />
-                </button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className='col-span-full text-center py-16'>
-            <div className='w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-              <Building2 className='w-10 h-10 text-slate-400' />
-            </div>
-            <p className='text-slate-500 mb-4'>暂无公司数据</p>
-            <button
-              onClick={() => handleOpenModal('create')}
-              className='flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors mx-auto'
-            >
-              <Plus className='w-5 h-5' />
-              <span>新增公司</span>
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderDepartment = () => {
-    const filteredData = filterAndSortData(departments);
-    const paginatedData = paginateData(filteredData);
-    const totalPages = getTotalPages(filteredData);
-
-    return (
-      <div className='space-y-4'>
-        <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
-          <div className='flex items-center space-x-3'>
-            <h2 className='text-xl font-bold text-slate-900'>部门管理</h2>
-            <div className='relative'>
-              <select
-                value={filterStatus}
-                onChange={(e) => {
-                  setFilterStatus(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className='appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-8 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-              >
-                <option value='all'>全部状态</option>
-                <option value='active'>活跃</option>
-                <option value='inactive'>停用</option>
-              </select>
-              <ChevronRight className='absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none' />
-            </div>
-          </div>
-          <div className='flex items-center space-x-3'>
-            <button
-              onClick={() => handleExport(filteredData, 'departments')}
-              className='flex items-center space-x-2 text-slate-600 hover:text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors'
-            >
-              <Download className='w-4 h-4' />
-              <span>导出</span>
-            </button>
-            <button
-              onClick={() => handleOpenModal('create')}
-              className='flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'
-            >
-              <Plus className='w-5 h-5' />
-              <span className='font-medium'>新增部门</span>
-            </button>
-          </div>
-        </div>
-
-        {selectedIds.length > 0 && (
-          <div className='bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between'>
-            <span className='text-blue-800'>已选择 {selectedIds.length} 条记录</span>
-            <button
-              onClick={handleBatchDelete}
-              className='flex items-center space-x-1 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors'
-            >
-              <Trash2 className='w-4 h-4' />
-              <span>批量删除</span>
-            </button>
-          </div>
-        )}
-
-        <div className='bg-white rounded-xl shadow-sm overflow-hidden'>
-          <div className='overflow-x-auto'>
-            <table className='min-w-full'>
-              <thead className='bg-slate-50'>
-                <tr>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    <input
-                      type='checkbox'
-                      checked={selectedIds.length === filteredData.length && filteredData.length > 0}
-                      onChange={() => handleSelectAll(filteredData)}
-                      className='w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500'
-                    />
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    部门名称
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    部门代码
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    上级部门
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    状态
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-slate-100'>
-                {paginatedData.length > 0 ? (
-                  paginatedData.map((dept) => (
-                    <tr
-                      key={dept.id}
-                      className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(dept.id) ? 'bg-blue-50' : ''}`}
-                    >
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <input
-                          type='checkbox'
-                          checked={selectedIds.includes(dept.id)}
-                          onChange={() => handleSelectItem(dept.id)}
-                          className='w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500'
-                        />
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <span className='font-medium text-slate-900'>{dept.name}</span>
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap text-sm text-slate-600'>{dept.code || '-'}</td>
-                      <td className='px-6 py-4 whitespace-nowrap text-sm text-slate-600'>
-                        {dept.parent_id ? '有' : '无'}
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap'>{getStatusBadge(dept.status)}</td>
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <div className='flex items-center space-x-1'>
-                          <button
-                            onClick={() => handleOpenModal('view', dept)}
-                            className='p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors'
-                            title='查看'
-                          >
-                            <Eye className='w-4 h-4' />
-                          </button>
-                          <button
-                            onClick={() => handleOpenModal('edit', dept)}
-                            className='p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors'
-                            title='编辑'
-                          >
-                            <Edit className='w-4 h-4' />
-                          </button>
-                          <button
-                            className='p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors'
-                            title='删除'
-                          >
-                            <Trash2 className='w-4 h-4' />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className='px-6 py-16 text-center'>
-                      <div className='w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                        <Users2 className='w-8 h-8 text-slate-400' />
-                      </div>
-                      <p className='text-slate-500'>暂无部门数据</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className='flex items-center justify-between px-6 py-3 border-t border-slate-100'>
-              <span className='text-sm text-slate-500'>
-                显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredData.length)} 条，共{' '}
-                {filteredData.length} 条
-              </span>
-              <div className='flex items-center space-x-2'>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className='px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50'
-                >
-                  上一页
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${currentPage === page ? 'bg-blue-600 text-white' : 'border hover:bg-slate-50'}`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className='px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50'
-                >
-                  下一页
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderEmployee = () => {
-    const filteredData = filterAndSortData(employees);
-    const paginatedData = paginateData(filteredData);
-    const totalPages = getTotalPages(filteredData);
-
-    return (
-      <div className='space-y-4'>
-        <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
-          <div className='flex items-center space-x-3'>
-            <h2 className='text-xl font-bold text-slate-900'>员工管理</h2>
-            <div className='relative'>
-              <select
-                value={filterStatus}
-                onChange={(e) => {
-                  setFilterStatus(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className='appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-8 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-              >
-                <option value='all'>全部状态</option>
-                <option value='active'>在职</option>
-                <option value='inactive'>离职</option>
-              </select>
-              <ChevronRight className='absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none' />
-            </div>
-          </div>
-          <div className='flex items-center space-x-3'>
-            <button
-              onClick={() => handleExport(filteredData, 'employees')}
-              className='flex items-center space-x-2 text-slate-600 hover:text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors'
-            >
-              <Download className='w-4 h-4' />
-              <span>导出</span>
-            </button>
-            <button
-              onClick={() => handleOpenModal('create')}
-              className='flex items-center space-x-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'
-            >
-              <Plus className='w-5 h-5' />
-              <span className='font-medium'>新增员工</span>
-            </button>
-          </div>
-        </div>
-
-        {selectedIds.length > 0 && (
-          <div className='bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between'>
-            <span className='text-blue-800'>已选择 {selectedIds.length} 条记录</span>
-            <button
-              onClick={handleBatchDelete}
-              className='flex items-center space-x-1 text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors'
-            >
-              <Trash2 className='w-4 h-4' />
-              <span>批量删除</span>
-            </button>
-          </div>
-        )}
-
-        <div className='bg-white rounded-xl shadow-sm overflow-hidden'>
-          <div className='overflow-x-auto'>
-            <table className='min-w-full'>
-              <thead className='bg-slate-50'>
-                <tr>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    <input
-                      type='checkbox'
-                      checked={selectedIds.length === filteredData.length && filteredData.length > 0}
-                      onChange={() => handleSelectAll(filteredData)}
-                      className='w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500'
-                    />
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    工号
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    姓名
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    部门
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    职位
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    入职日期
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    状态
-                  </th>
-                  <th className='px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase tracking-wider'>
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-slate-100'>
-                {paginatedData.length > 0 ? (
-                  paginatedData.map((emp) => (
-                    <tr
-                      key={emp.id}
-                      className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(emp.id) ? 'bg-blue-50' : ''}`}
-                    >
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <input
-                          type='checkbox'
-                          checked={selectedIds.includes(emp.id)}
-                          onChange={() => handleSelectItem(emp.id)}
-                          className='w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500'
-                        />
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <span className='font-medium text-slate-900'>{emp.employee_number}</span>
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap text-sm text-slate-900'>{emp.name}</td>
-                      <td className='px-6 py-4 whitespace-nowrap text-sm text-slate-600'>{emp.department_id || '-'}</td>
-                      <td className='px-6 py-4 whitespace-nowrap text-sm text-slate-600'>{emp.position || '-'}</td>
-                      <td className='px-6 py-4 whitespace-nowrap text-sm text-slate-600'>{emp.hire_date || '-'}</td>
-                      <td className='px-6 py-4 whitespace-nowrap'>{getStatusBadge(emp.status)}</td>
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <div className='flex items-center space-x-1'>
-                          <button
-                            onClick={() => handleOpenModal('view', emp)}
-                            className='p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors'
-                            title='查看'
-                          >
-                            <Eye className='w-4 h-4' />
-                          </button>
-                          <button
-                            onClick={() => handleOpenModal('edit', emp)}
-                            className='p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors'
-                            title='编辑'
-                          >
-                            <Edit className='w-4 h-4' />
-                          </button>
-                          <button
-                            className='p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors'
-                            title='删除'
-                          >
-                            <Trash2 className='w-4 h-4' />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={8} className='px-6 py-16 text-center'>
-                      <div className='w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                        <Users className='w-8 h-8 text-slate-400' />
-                      </div>
-                      <p className='text-slate-500'>暂无员工数据</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className='flex items-center justify-between px-6 py-3 border-t border-slate-100'>
-              <span className='text-sm text-slate-500'>
-                显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredData.length)} 条，共{' '}
-                {filteredData.length} 条
-              </span>
-              <div className='flex items-center space-x-2'>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className='px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50'
-                >
-                  上一页
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${currentPage === page ? 'bg-blue-600 text-white' : 'border hover:bg-slate-50'}`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className='px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50'
-                >
-                  下一页
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   const renderSupplies = () => {
     const filteredData = filterAndSortData(officeSupplies);
@@ -1754,9 +1274,6 @@ const AdministrationPage: React.FC = () => {
 
   const tabs = [
     { key: 'overview', label: '概览', icon: BriefcaseBusiness },
-    { key: 'company', label: '公司', icon: Building2 },
-    { key: 'department', label: '部门', icon: Users2 },
-    { key: 'employee', label: '员工', icon: Users },
     { key: 'supplies', label: '办公用品', icon: Package },
     { key: 'meetings', label: '会议室', icon: Calendar },
     { key: 'vehicles', label: '车辆', icon: Car },
@@ -1794,10 +1311,9 @@ const AdministrationPage: React.FC = () => {
                         setMobileMenuOpen(false);
                       }}
                       className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                        activeTab === item.key ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-100 text-slate-700'
-                      }`}
+                        activeTab === item.key ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
                     >
-                      <Icon size={20} />
+                      <Icon className='w-5 h-5' />
                       <span>{item.label}</span>
                     </button>
                   );
@@ -1808,165 +1324,118 @@ const AdministrationPage: React.FC = () => {
         </div>
       )}
 
-      <header className='bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10 desktop-only'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-between items-center h-16'>
-            <div className='flex items-center space-x-4'>
-              <button
-                onClick={() => navigate('/dashboard')}
-                className='p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors'
-              >
-                <ChevronLeft className='w-5 h-5' />
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 to-slate-100'>
+        <div className='max-w-7xl mx-auto px-4 py-6'>
+          <div className='flex items-center justify-between mb-6'>
+            <div className='flex items-center space-x-3'>
+              <button onClick={() => navigate(-1)} className='p-2 hover:bg-white/50 rounded-lg transition-colors'>
+                <ChevronLeft className='w-6 h-6 text-slate-600' />
               </button>
-              <div className='flex items-center space-x-3'>
-                <div className='w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg'>
-                  <Settings className='w-6 h-6 text-white' />
-                </div>
-                <div>
-                  <h1 className='text-xl font-bold text-slate-900'>行政综合管理</h1>
-                  <p className='text-xs text-slate-500'>企业行政管理一体化平台</p>
-                </div>
-              </div>
-            </div>
-            <div className='flex items-center space-x-4'>
-              <div className='relative'>
-                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400' />
-                <input
-                  type='text'
-                  placeholder='搜索...'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className='pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm w-64'
-                />
-              </div>
+              <h1 className='text-2xl font-bold text-slate-900'>行政管理</h1>
             </div>
           </div>
-        </div>
-      </header>
 
-      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 desktop-only'>
-        <div className='mobile-content mobile-only'>
-          <div className='flex items-center justify-between mb-4'>
-            <h2 className='text-lg font-bold text-slate-900'>{tabs.find((t) => t.key === activeTab)?.label}</h2>
+          <div className='flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2'>
+            {tabs.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveTab(item.key)}
+                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                    activeTab === item.key
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 shadow-sm'
+                  }`}
+                >
+                  <Icon className='w-4 h-4' />
+                  <span className='hidden sm:inline'>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
+
+          {loading ? (
+            <div className='flex items-center justify-center h-64'>
+              <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'overview' && renderOverview()}
+              {activeTab === 'supplies' && renderSupplies()}
+              {activeTab === 'meetings' && renderMeetings()}
+              {activeTab === 'vehicles' && renderVehicles()}
+              {activeTab === 'attendance' && renderAttendance()}
+              {activeTab === 'leave' && renderLeave()}
+              {activeTab === 'announcements' && renderAnnouncements()}
+              {activeTab === 'expenses' && renderExpenses()}
+            </>
+          )}
         </div>
-
-        <div className='mb-6 bg-white rounded-xl shadow-sm p-2 flex flex-wrap gap-2 overflow-x-auto scrollbar-hide'>
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap ${
-                  activeTab === tab.key
-                    ? 'bg-blue-600 text-white shadow-md scale-[1.02]'
-                    : 'text-slate-600 hover:bg-slate-100 hover:scale-[1.01]'
-                }`}
-              >
-                <Icon className='w-4 h-4' />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {loading ? (
-          <div className='bg-white rounded-xl shadow-sm p-12 text-center'>
-            <div className='inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent'></div>
-            <p className='mt-3 text-slate-500'>加载中...</p>
-          </div>
-        ) : (
-          <div className='space-y-4'>
-            {activeTab === 'overview' && renderOverview()}
-            {activeTab === 'company' && renderCompany()}
-            {activeTab === 'department' && renderDepartment()}
-            {activeTab === 'employee' && renderEmployee()}
-            {activeTab === 'supplies' && renderSupplies()}
-            {activeTab === 'meetings' && renderMeetings()}
-            {activeTab === 'vehicles' && renderVehicles()}
-            {activeTab === 'attendance' && renderAttendance()}
-            {activeTab === 'leave' && renderLeave()}
-            {activeTab === 'announcements' && renderAnnouncements()}
-            {activeTab === 'expenses' && renderExpenses()}
-          </div>
-        )}
-      </main>
-
-      <MobileNav currentPage='administration' onNavigate={navigate} />
+      </div>
 
       {showModal && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in'>
-          <div className='bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 animate-scale-in'>
-            <div className='flex items-center justify-between p-4 border-b border-slate-100'>
-              <h2 className='text-lg font-semibold text-slate-900'>
-                {currentModalType === 'create' ? '新增' : currentModalType === 'edit' ? '编辑' : '查看'}
-                {selectedItem?.name || selectedItem?.title || '数据'}
-              </h2>
-              <button
-                onClick={handleCloseModal}
-                className='p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors'
-              >
+        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
+          <div className='bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto'>
+            <div className='flex items-center justify-between p-4 border-b'>
+              <h3 className='text-lg font-semibold'>
+                {currentModalType === 'create' ? '创建' : currentModalType === 'edit' ? '编辑' : '查看'}
+              </h3>
+              <button onClick={handleCloseModal} className='p-2 hover:bg-slate-100 rounded-lg'>
                 <X className='w-5 h-5' />
               </button>
             </div>
             <div className='p-4'>
-              {currentModalType !== 'view' ? (
-                <div className='space-y-4'>
-                  <div>
-                    <label className='block text-sm font-medium text-slate-700 mb-1.5'>名称</label>
-                    <input
-                      type='text'
-                      value={formData.name || ''}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className='mt-1 block w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                      placeholder='请输入名称'
-                    />
-                  </div>
-                  <div>
-                    <label className='block text-sm font-medium text-slate-700 mb-1.5'>描述</label>
-                    <textarea
-                      value={formData.description || ''}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className='mt-1 block w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                      rows={3}
-                      placeholder='请输入描述'
-                    />
-                  </div>
+              <div className='space-y-4'>
+                <div>
+                  <label className='block text-sm font-medium text-slate-700 mb-1'>名称</label>
+                  <input
+                    type='text'
+                    value={formData.name || ''}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    disabled={currentModalType === 'view'}
+                    className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100'
+                    placeholder='请输入名称'
+                  />
                 </div>
-              ) : (
-                <div className='space-y-4 text-slate-600'>
-                  <div className='flex justify-between py-2 border-b border-slate-100'>
-                    <span className='text-slate-500'>名称:</span>
-                    <span className='font-medium'>{selectedItem?.name || '-'}</span>
-                  </div>
-                  <div className='flex justify-between py-2 border-b border-slate-100'>
-                    <span className='text-slate-500'>状态:</span>
-                    <span>{getStatusBadge(selectedItem?.status || '')}</span>
-                  </div>
-                  <div className='flex justify-between py-2'>
-                    <span className='text-slate-500'>创建时间:</span>
-                    <span>{selectedItem?.created_at || '-'}</span>
-                  </div>
+                <div>
+                  <label className='block text-sm font-medium text-slate-700 mb-1'>描述</label>
+                  <textarea
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    disabled={currentModalType === 'view'}
+                    className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100'
+                    rows={3}
+                    placeholder='请输入描述'
+                  />
                 </div>
-              )}
+              </div>
             </div>
-            <div className='flex justify-end space-x-3 p-4 border-t border-slate-100'>
+            <div className='flex justify-end space-x-2 p-4 border-t'>
               {currentModalType !== 'view' && (
+                <>
+                  <button
+                    onClick={handleCloseModal}
+                    className='px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors'
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className='px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors'
+                  >
+                    保存
+                  </button>
+                </>
+              )}
+              {currentModalType === 'view' && (
                 <button
-                  onClick={handleSave}
-                  className='flex items-center space-x-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium'
+                  onClick={handleCloseModal}
+                  className='px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors'
                 >
-                  <Save className='w-4 h-4' />
-                  <span>保存</span>
+                  关闭
                 </button>
               )}
-              <button
-                onClick={handleCloseModal}
-                className='px-5 py-2.5 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors font-medium'
-              >
-                取消
-              </button>
             </div>
           </div>
         </div>

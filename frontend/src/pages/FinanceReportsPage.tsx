@@ -46,6 +46,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import OrganizationFilter, { type OrganizationFilterValue } from '../components/ui/OrganizationFilter';
 
 const FinanceReportsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -53,6 +54,7 @@ const FinanceReportsPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [period, setPeriod] = useState<string>('');
+  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
 
   const [businessOverview, setBusinessOverview] = useState<BusinessOverview | null>(null);
   const [balanceSheet, setBalanceSheet] = useState<BalanceSheet | null>(null);
@@ -265,7 +267,7 @@ const FinanceReportsPage: React.FC = () => {
     <div className='min-h-screen bg-slate-50 dark:bg-slate-900'>
       <div className='bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-          <div className='flex items-center justify-between'>
+          <div className='flex items-center justify-between mb-4'>
             <div className='flex items-center space-x-4'>
               <Button variant='ghost' onClick={() => navigate('/dashboard')} className='p-2'>
                 <ChevronLeft className='w-5 h-5' />
@@ -297,6 +299,15 @@ const FinanceReportsPage: React.FC = () => {
                 </Select>
               </div>
             </div>
+          </div>
+          <div className='bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4'>
+            <OrganizationFilter
+              value={organizationFilter}
+              onChange={setOrganizationFilter}
+              showCompany={true}
+              showDepartment={true}
+              showEmployee={false}
+            />
           </div>
         </div>
       </div>

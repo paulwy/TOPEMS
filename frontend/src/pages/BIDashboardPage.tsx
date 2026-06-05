@@ -44,11 +44,17 @@ const MetricCard = ({
   change_type: 'increase' | 'decrease';
   icon: any;
 }) => {
+  const isIconComponent = typeof Icon === 'function' || (Icon && typeof Icon === 'object' && Icon.$$typeof);
+  
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
       <div className="flex items-center justify-between mb-4">
         <div className="p-2 bg-blue-50 rounded-lg">
-          <Icon className="w-6 h-6 text-blue-600" />
+          {isIconComponent ? (
+            <Icon className="w-6 h-6 text-blue-600" />
+          ) : (
+            <span className="text-xl text-blue-600">{Icon}</span>
+          )}
         </div>
         <div className={`flex items-center gap-1 ${change_type === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
           {change_type === 'increase' ? (
