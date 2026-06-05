@@ -136,6 +136,35 @@ export const ChatInterface: React.FC = () => {
     }
   };
 
+  const handleEditMessage = async (updatedMessage: ChatMessage) => {
+    try {
+      const response = await imApi.updateChatMessage(updatedMessage.id, updatedMessage.content);
+      if (response.success) {
+        setMessages(prev => prev.map(m => 
+          m.id === updatedMessage.id ? { ...m, content: updatedMessage.content } : m
+        ));
+      }
+    } catch (error) {
+      console.error('Failed to edit message:', error);
+      addNotification({ title: '编辑失败', message: '无法编辑消息', type: 'error' });
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!confirm('确定要删除这条消息吗？')) return;
+
+    try {
+      const response = await imApi.deleteChatMessage(messageId);
+      if (response.success) {
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+        addNotification({ title: '删除成功', message: '消息已删除', type: 'success' });
+      }
+    } catch (error) {
+      console.error('Failed to delete message:', error);
+      addNotification({ title: '删除失败', message: '无法删除消息', type: 'error' });
+    }
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -329,7 +358,6 @@ export const ChatInterface: React.FC = () => {
                     searchMessages(e.target.value);
                   }}
                   className="pl-10"
-                  size="sm"
                 />
               </div>
             </div>
@@ -360,7 +388,13 @@ export const ChatInterface: React.FC = () => {
                     </div>
                   )}
                   {(messageSearchQuery.trim() && filteredMessages.length > 0 ? filteredMessages : messages).map((message) => (
-                    <MessageBubble key={message.id} message={message} isSent={message.sender_id === 'current-user'} />
+                    <MessageBubble 
+                      key={message.id} 
+                      message={message} 
+                      isSent={message.sender_id === 'current-user'}
+                      onEdit={handleEditMessage}
+                      onDelete={handleDeleteMessage}
+                    />
                   ))}
                   <div ref={messagesEndRef} />
                 </>

@@ -17,12 +17,11 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { flowApi, Notification } from '../api/flow';
-import { useNotification } from '../hooks/useNotification';
-import { NotificationContainer } from '../components/NotificationContainer';
+import { useAppStore } from '../store';
 
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
-  const { success, error: showError } = useNotification();
+  const addNotification = useAppStore((state) => state.addNotification);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -58,7 +57,7 @@ const FlowNotificationCenter: React.FC = () => {
       }
     } catch (err) {
       console.error('加载通知失败:', err);
-      showError('加载通知失败');
+      addNotification({ title: '错误', message: '加载通知失败', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -69,11 +68,11 @@ const FlowNotificationCenter: React.FC = () => {
       const userId = 'current-user-id'; // TODO: Get from auth context
       const response = await flowApi.markNotificationsAsRead(userId);
       if (response.success) {
-        success('所有通知已标记为已读');
+        addNotification({ title: '成功', message: '所有通知已标记为已读', type: 'success' });
         loadNotifications();
       }
     } catch (err) {
-      showError('标记失败');
+      addNotification({ title: '错误', message: '标记失败', type: 'error' });
       console.error('标记失败:', err);
     }
   };
@@ -125,8 +124,6 @@ const FlowNotificationCenter: React.FC = () => {
 
   return (
     <div className='min-h-screen bg-gray-50 p-6'>
-      <NotificationContainer notifications={[]} onClose={() => {}} />
-
       {/* Header */}
       <div className='bg-white rounded-lg shadow-sm p-6 mb-6'>
         <div className='flex items-center justify-between'>

@@ -104,6 +104,14 @@ export const imApi = {
     return apiClient.im.put<ChatMessage>(`/api/v1/chat-messages/${id}/read`);
   },
 
+  updateChatMessage: async (id: string, content: string): Promise<ApiResponse<ChatMessage>> => {
+    return apiClient.im.put<ChatMessage>(`/api/v1/chat-messages/${id}`, { content });
+  },
+
+  deleteChatMessage: async (id: string): Promise<ApiResponse<any>> => {
+    return apiClient.im.delete<any>(`/api/v1/chat-messages/${id}`);
+  },
+
   getChatRoomMembers: async (chatRoomId: string): Promise<ApiResponse<any>> => {
     return apiClient.im.get<any>(`/api/v1/chat-rooms/${chatRoomId}/members`);
   },

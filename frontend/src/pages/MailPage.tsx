@@ -133,10 +133,9 @@ const MailPage: React.FC = () => {
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
-  const [previewContent, setEyeContent] = useState<{ subject: string; body: string } | null>(null);
+  const [previewContent, setPreviewContent] = useState<{ subject: string; body: string } | null>(null);
   const [showEyeModal, setShowEyeModal] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [renderedTemplate, setRenderedTemplate] = useState<{ subject: string; body: string } | null>(null);
   const [stats, setStats] = useState<EmailStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
@@ -490,7 +489,7 @@ const MailPage: React.FC = () => {
 
       const res = await templateApi.render(template.code, sampleData);
       if (res.success && res.data) {
-        setEyeContent({
+        setPreviewContent({
           subject: res.data.subject,
           body: res.data.body,
         });
