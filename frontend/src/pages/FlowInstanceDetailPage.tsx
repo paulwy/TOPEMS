@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { flowApi, WorkflowInstance, Approval, ApprovalRecord } from '../api/flow';
-import { useNotification } from '../hooks/useNotification';
-import { NotificationContainer } from '../components/NotificationContainer';
+import { useAppStore } from '../store';
+import { Button } from '@/components/ui/button';
 
 interface InstanceDetails {
   instance: WorkflowInstance;
@@ -29,7 +29,7 @@ interface InstanceDetails {
 const FlowInstanceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { success, error: showError } = useNotification();
+  const addNotification = useAppStore((state) => state.addNotification);
   const [details, setDetails] = useState<InstanceDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -49,11 +49,11 @@ const FlowInstanceDetailPage: React.FC = () => {
         const data = response.data as any;
         setDetails(data);
       } else {
-        showError('加载实例详情失败');
+        addNotification({ title: '错误', message: '加载实例详情失败', type: 'error' });
       }
     } catch (err) {
       console.error('加载实例详情失败:', err);
-      showError('加载实例详情失败');
+      addNotification({ title: '错误', message: '加载实例详情失败', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -113,16 +113,12 @@ const FlowInstanceDetailPage: React.FC = () => {
   if (!details) {
     return (
       <div className='min-h-screen bg-gray-50 p-6'>
-        <NotificationContainer notifications={[]} onClose={() => {}} />
         <div className='text-center py-12'>
           <AlertCircle className='w-16 h-16 mx-auto text-gray-300 mb-4' />
           <p className='text-gray-500'>实例不存在</p>
-          <button
-            onClick={() => navigate('/flow/instances')}
-            className='mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
-          >
+          <Button onClick={() => navigate('/flow/instances')} className='mt-4'>
             返回列表
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -132,15 +128,13 @@ const FlowInstanceDetailPage: React.FC = () => {
 
   return (
     <div className='min-h-screen bg-gray-50 p-6'>
-      <NotificationContainer notifications={[]} onClose={() => {}} />
-
       {/* Header */}
       <div className='bg-white rounded-lg shadow-sm p-6 mb-6'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-3'>
-            <button onClick={() => navigate('/flow/instances')} className='p-2 hover:bg-gray-100 rounded-lg'>
-              <ArrowLeft className='w-5 h-5 text-gray-600' />
-            </button>
+            <Button variant='ghost' onClick={() => navigate('/flow/instances')}>
+              <ArrowLeft className='w-5 h-5' />
+            </Button>
             <div className='w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center'>
               <GitBranch className='w-6 h-6 text-blue-600' />
             </div>

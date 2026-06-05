@@ -104,6 +104,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     notification: false,
     report: false,
     pm: false,
+    bi: false,
   });
 
   // 模块到服务的映射
@@ -120,12 +121,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     pdm: 'doc',
     crm: 'doc',
     mes: 'doc',
-    mail: 'doc',
+    mail: 'mail',
     mobile: 'mobile',
     hrm: 'hrm',
     erp: 'erp',
     gis: 'doc',
     pm: 'pm', // 项目管理服务
+    bi: 'bi', // BI服务
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<
@@ -384,6 +386,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const businessModules = useMemo(
     () =>
       [
+        {
+      title: '商业智能',
+      icon: BarChart3,
+      description: '数据大屏、概览分析、各模块数据统计',
+      path: '/bi/dashboard',
+      color: 'bg-emerald-500',
+      status: 'new' as const,
+      permission: null,
+      module: 'bi',
+    },
         {
       title: '项目管理',
       icon: FolderKanban,

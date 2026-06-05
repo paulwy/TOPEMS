@@ -15,13 +15,23 @@ import {
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { flowApi, Approval, ApprovalRecord } from '../api/flow';
-import { useNotification } from '../hooks/useNotification';
-import { NotificationContainer } from '../components/NotificationContainer';
+import { useAppStore } from '../store';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const FlowApprovalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { success, error: showError } = useNotification();
+  const addNotification = useAppStore((state) => state.addNotification);
   const [approval, setApproval] = useState<Approval | null>(null);
   const [records, setRecords] = useState<ApprovalRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,11 +66,11 @@ const FlowApprovalDetailPage: React.FC = () => {
           setRecords(recordsList);
         }
       } else {
-        showError('加载审批详情失败');
+        addNotification({ title: '错误', message: '加载审批详情失败', type: 'error' });
       }
     } catch (err) {
       console.error('加载审批详情失败:', err);
-      showError('加载审批详情失败');
+      addNotification({ title: '错误', message: '加载审批详情失败', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -69,7 +79,7 @@ const FlowApprovalDetailPage: React.FC = () => {
   const handleProcessApproval = async () => {
     if (!approval) return;
     if (!comment.trim() && approvalAction === 'reject') {
-      showError('请输入拒绝原因');
+      addNotification({ title: '提示', message: '请输入拒绝原因', type: 'info' });
       return;
     }
 
@@ -83,15 +93,19 @@ const FlowApprovalDetailPage: React.FC = () => {
       });
 
       if (response.success) {
-        success(`审批${approvalAction === 'approve' ? '通过' : '拒绝'}成功`);
+        addNotification({
+          title: '成功',
+          message: `审批${approvalAction === 'approve' ? '通过' : '拒绝'}成功`,
+          type: 'success',
+        });
         setShowApprovalModal(false);
         setComment('');
         loadApprovalDetails();
       } else {
-        showError(response.message || '操作失败');
+        addNotification({ title: '失败', message: response.message || '操作失败', type: 'error' });
       }
     } catch (err) {
-      showError('处理审批失败');
+      addNotification({ title: '错误', message: '处理审批失败', type: 'error' });
       console.error('处理审批失败:', err);
     } finally {
       setProcessing(false);
@@ -144,16 +158,12 @@ const FlowApprovalDetailPage: React.FC = () => {
   if (!approval) {
     return (
       <div className='min-h-screen bg-gray-50 p-6'>
-        <NotificationContainer notifications={[]} onClose={() => {}} />
         <div className='text-center py-12'>
           <AlertCircle className='w-16 h-16 mx-auto text-gray-300 mb-4' />
           <p className='text-gray-500'>审批不存在</p>
-          <button
-            onClick={() => navigate('/flow/approvals')}
-            className='mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700'
-          >
+          <Button onClick={() => navigate('/flow/approvals')} className='mt-4 bg-indigo-600 hover:bg-indigo-700'>
             返回列表
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -161,15 +171,13 @@ const FlowApprovalDetailPage: React.FC = () => {
 
   return (
     <div className='min-h-screen bg-gray-50 p-6'>
-      <NotificationContainer notifications={[]} onClose={() => {}} />
-
       {/* Header */}
       <div className='bg-white rounded-lg shadow-sm p-6 mb-6'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-3'>
-            <button onClick={() => navigate('/flow/approvals')} className='p-2 hover:bg-gray-100 rounded-lg'>
-              <ArrowLeft className='w-5 h-5 text-gray-600' />
-            </button>
+            <Button variant='ghost' onClick={() => navigate('/flow/approvals')}>
+              <ArrowLeft className='w-5 h-5' />
+            </Button>
             <div className='w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center'>
               <CheckCircle className='w-6 h-6 text-indigo-600' />
             </div>
@@ -185,28 +193,22 @@ const FlowApprovalDetailPage: React.FC = () => {
             </span>
             {approval.status === 'pending' && (
               <div className='flex items-center space-x-2'>
-                <button
-                  onClick={() => {
+                <Button onClick={() => {
                     setApprovalAction('approve');
                     setComment('');
                     setShowApprovalModal(true);
-                  }}
-                  className='flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
-                >
+                  }} className='bg-green-600 hover:bg-green-700'>
                   <CheckCircle className='w-5 h-5 mr-2' />
                   通过
-                </button>
-                <button
-                  onClick={() => {
+                </Button>
+                <Button onClick={() => {
                     setApprovalAction('reject');
                     setComment('');
                     setShowApprovalModal(true);
-                  }}
-                  className='flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
-                >
+                  }} className='bg-red-600 hover:bg-red-700'>
                   <XCircle className='w-5 h-5 mr-2' />
                   拒绝
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -354,49 +356,47 @@ const FlowApprovalDetailPage: React.FC = () => {
       </div>
 
       {/* Approval Modal */}
-      {showApprovalModal && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-lg p-6 w-full max-w-md'>
-            <h2 className='text-xl font-bold mb-4'>{approvalAction === 'approve' ? '通过审批' : '拒绝审批'}</h2>
-            <div className='mb-4'>
-              <p className='text-gray-600 mb-2'>任务: {approval.task_name}</p>
-              {approval.node_id && <p className='text-gray-600 mb-2'>节点: {approval.node_id}</p>}
-            </div>
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                {approvalAction === 'reject' ? '拒绝原因 *' : '备注'}
-              </label>
-              <textarea
+      <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{approvalAction === 'approve' ? '通过审批' : '拒绝审批'}</DialogTitle>
+            <DialogDescription>
+              {approvalAction === 'approve' ? '确认通过该审批任务' : '确认拒绝该审批任务'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            {approval && (
+              <>
+                <p className='text-gray-600'>任务: {approval.task_name}</p>
+                {approval.node_id && <p className='text-gray-600'>节点: {approval.node_id}</p>}
+              </>
+            )}
+            <div className='space-y-2'>
+              <Label htmlFor='comment'>{approvalAction === 'reject' ? '拒绝原因 *' : '备注'}</Label>
+              <Textarea
+                id='comment'
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
                 rows={4}
                 placeholder={approvalAction === 'reject' ? '请输入拒绝原因' : '可选备注'}
               />
             </div>
-            <div className='flex justify-end space-x-3'>
-              <button
-                onClick={() => {
-                  setShowApprovalModal(false);
-                }}
-                className='px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50'
-              >
-                取消
-              </button>
-              <button
-                onClick={handleProcessApproval}
-                disabled={processing || (approvalAction === 'reject' && !comment.trim())}
-                className={`px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${
-                  approvalAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-                }`}
-              >
-                {processing && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
-                {approvalAction === 'approve' ? '确认通过' : '确认拒绝'}
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant='secondary' onClick={() => setShowApprovalModal(false)}>
+              取消
+            </Button>
+            <Button
+              onClick={handleProcessApproval}
+              disabled={processing || (approvalAction === 'reject' && !comment.trim())}
+              className={approvalAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+            >
+              {processing && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
+              {approvalAction === 'approve' ? '确认通过' : '确认拒绝'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

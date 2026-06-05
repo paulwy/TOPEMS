@@ -425,7 +425,7 @@ async fn delete_chat_message(
         r#"
         DELETE FROM chat_messages
         WHERE id = $1
-        RETURNING id
+        RETURNING id, chat_id, content
         "#,
         message_id
     )
@@ -433,11 +433,76 @@ async fn delete_chat_message(
     .await;
 
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(json!({ "deleted": true }), "删除消息成功")),
+        Ok(Some(record)) => {
+            let _ = sqlx::query!(
+                r#"
+                UPDATE chat_rooms
+                SET last_message = NULL, last_message_time = NULL, updated_at = $1
+                WHERE id = $2 AND last_message = $3
+                "#,
+                Utc::now(),
+                record.chat_id,
+                record.content
+            )
+            .execute(&state.pool)
+            .await;
+            
+            Json(ApiResponse::success(json!({ "deleted": true }), "删除消息成功"))
+        }
         Ok(None) => Json(ApiResponse::error(404, "消息不存在")),
         Err(e) => {
             tracing::error!("Failed to delete chat message: {}", e);
             Json(ApiResponse::error(500, "删除消息失败"))
+        }
+    }
+}
+
+async fn update_chat_message(
+    State(state): State<AppState>,
+    Path(message_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<ApiResponse<models::ChatMessage>> {
+    let content = payload.get("content").and_then(|v| v.as_str()).unwrap_or("");
+    
+    if content.is_empty() {
+        return Json(ApiResponse::error(400, "消息内容不能为空"));
+    }
+
+    let result = sqlx::query_as!(
+        models::ChatMessage,
+        r#"
+        UPDATE chat_messages
+        SET content = $1
+        WHERE id = $2
+        RETURNING id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
+        "#,
+        content,
+        message_id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(message)) => {
+            let _ = sqlx::query!(
+                r#"
+                UPDATE chat_rooms
+                SET last_message = $1, updated_at = $2
+                WHERE id = $3
+                "#,
+                content,
+                Utc::now(),
+                message.chat_id
+            )
+            .execute(&state.pool)
+            .await;
+            
+            Json(ApiResponse::success(message, "更新消息成功"))
+        }
+        Ok(None) => Json(ApiResponse::error(404, "消息不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update chat message: {}", e);
+            Json(ApiResponse::error(500, "更新消息失败"))
         }
     }
 }
@@ -934,6 +999,7 @@ async fn main() -> Result<()> {
         .route("/api/v1/chat-rooms/{chat_id}/messages", axum::routing::post(create_chat_message))
         .route("/api/v1/chat-rooms/{chat_id}/messages/search", axum::routing::get(search_chat_messages))
         .route("/api/v1/chat-messages/{message_id}", axum::routing::delete(delete_chat_message))
+        .route("/api/v1/chat-messages/{message_id}", axum::routing::put(update_chat_message))
         .route("/api/v1/chat-messages/{message_id}/read", axum::routing::put(mark_message_read))
         .route("/api/v1/project-groups", axum::routing::post(create_project_group))
         .route("/api/v1/notifications/{user_id}", axum::routing::post(create_notification))

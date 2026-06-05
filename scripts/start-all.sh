@@ -166,7 +166,11 @@ log_info "配置环境变量..."
 # 从 .env 文件加载环境变量
 if [ -f "$PROJECT_ROOT/.env" ]; then
     log_detail "从 .env 文件加载配置..."
-    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+    while IFS='=' read -r key value; do
+        if [[ ! "$key" =~ ^# && -n "$key" ]]; then
+            export "$key=$value"
+        fi
+    done < "$PROJECT_ROOT/.env"
 fi
 
 # 安全检查：确保 JWT_SECRET 和 REFRESH_SECRET 已设置
@@ -387,7 +391,7 @@ CRM_PID=""
 if check_executable "services/topems-crm/backend" "crm"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-crm/backend"
-    SERVER_PORT=8012 ./target/release/topems-crm &
+    SERVER_PORT=8012 PORT=8012 ./target/release/topems-crm &
     CRM_PID=$!
     cd "$PROJECT_ROOT"
     log_success "crm 服务已启动 (PID: $CRM_PID, 端口: 8012)"
@@ -462,7 +466,7 @@ MES_PID=""
 if check_executable "services/topems-mes/backend" "mes"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-mes/backend"
-    SERVER_PORT=8030 ./target/release/topems-mes &
+    SERVER_PORT=8030 PORT=8030 ./target/release/topems-mes &
     MES_PID=$!
     cd "$PROJECT_ROOT"
     log_success "mes 服务已启动 (PID: $MES_PID, 端口: 8030)"
@@ -507,7 +511,7 @@ SCM_PID=""
 if check_executable "services/topems-scm/backend" "scm"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-scm/backend"
-    SERVER_PORT=8040 ./target/release/topems-scm &
+    SERVER_PORT=8040 PORT=8040 ./target/release/topems-scm &
     SCM_PID=$!
     cd "$PROJECT_ROOT"
     log_success "scm 服务已启动 (PID: $SCM_PID, 端口: 8040)"
@@ -537,7 +541,7 @@ WMS_PID=""
 if check_executable "services/topems-wms/backend" "wms"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-wms/backend"
-    SERVER_PORT=8042 ./target/release/topems-wms &
+    SERVER_PORT=8042 PORT=8042 ./target/release/topems-wms &
     WMS_PID=$!
     cd "$PROJECT_ROOT"
     log_success "wms 服务已启动 (PID: $WMS_PID, 端口: 8042)"
@@ -552,7 +556,7 @@ GIS_PID=""
 if check_executable "services/topems-gis/backend" "gis"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-gis/backend"
-    SERVER_PORT=8050 ./target/release/topems-gis &
+    SERVER_PORT=8050 PORT=8050 ./target/release/topems-gis &
     GIS_PID=$!
     cd "$PROJECT_ROOT"
     log_success "gis 服务已启动 (PID: $GIS_PID, 端口: 8050)"
@@ -582,7 +586,7 @@ BI_PID=""
 if check_executable "services/topems-bi/backend" "bi"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-bi/backend"
-    SERVER_PORT=8052 ./target/release/topems-bi &
+    SERVER_PORT=8052 PORT=8052 ./target/release/topems-bi &
     BI_PID=$!
     cd "$PROJECT_ROOT"
     log_success "bi 服务已启动 (PID: $BI_PID, 端口: 8052)"
@@ -594,9 +598,9 @@ fi
 echo "----------------------------------------"
 log_info "处理服务: report (端口 8053)"
 REPORT_PID=""
-if check_executable "services/report-service/backend" "report"; then
+if check_executable "services/report-service" "report"; then
     log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/report-service/backend"
+    cd "$PROJECT_ROOT/services/report-service"
     SERVER_PORT=8053 ./target/release/topems-report &
     REPORT_PID=$!
     cd "$PROJECT_ROOT"
@@ -609,15 +613,25 @@ fi
 echo "----------------------------------------"
 log_info "处理服务: mail (端口 8054)"
 MAIL_PID=""
-if check_executable "services/topems-mail/backend" "mail"; then
+if ! check_executable "services/topems-mail/backend" "mail"; then
+    log_warn "mail 服务需要编译，正在编译..."
+    if build_service "services/topems-mail/backend" "mail"; then
+        log_detail "正在启动..."
+        cd "$PROJECT_ROOT/services/topems-mail/backend"
+        SERVER_PORT=8054 PORT=8054 ./target/release/topems-mail &
+        MAIL_PID=$!
+        cd "$PROJECT_ROOT"
+        log_success "mail 服务已启动 (PID: $MAIL_PID, 端口: 8054)"
+    else
+        log_warn "跳过 mail 服务"
+    fi
+else
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-mail/backend"
-    SERVER_PORT=8054 ./target/release/topems-mail &
+    SERVER_PORT=8054 PORT=8054 ./target/release/topems-mail &
     MAIL_PID=$!
     cd "$PROJECT_ROOT"
     log_success "mail 服务已启动 (PID: $MAIL_PID, 端口: 8054)"
-else
-    log_warn "跳过 mail 服务"
 fi
 
 # MOBILE服务 (端口: 8055)
@@ -627,7 +641,7 @@ MOBILE_PID=""
 if check_executable "services/topems-mobile/backend" "mobile"; then
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-mobile/backend"
-    PORT=8055 ./target/release/topems-mobile &
+    SERVER_PORT=8055 PORT=8055 ./target/release/topems-mobile &
     MOBILE_PID=$!
     cd "$PROJECT_ROOT"
     log_success "mobile 服务已启动 (PID: $MOBILE_PID, 端口: 8055)"
@@ -1013,7 +1027,7 @@ fi
 # FRONTEND检查
 total_count=$((total_count + 1))
 if [ -n "$FRONTEND_PID" ]; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null | grep -q "html"; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null | grep -q "200"; then
         echo -e "${GREEN}✅${NC} FRONTEND (3000) - 运行正常"
         success_count=$((success_count + 1))
     else

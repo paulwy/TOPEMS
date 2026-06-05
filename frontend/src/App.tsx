@@ -93,6 +93,8 @@ const NotificationTemplatesPage = lazy(() => import('./pages/NotificationTemplat
 const NotificationArchivePage = lazy(() => import('./pages/NotificationArchivePage'));
 const NotificationStatsPage = lazy(() => import('./pages/NotificationStatsPage'));
 const NotificationDetailPage = lazy(() => import('./pages/NotificationDetailPage'));
+const BIDashboardPage = lazy(() => import('./pages/BIDashboardPage'));
+const BIAnalyticsPage = lazy(() => import('./pages/BIAnalyticsPage'));
 
 const PageLoader: React.FC = () => (
   <div className='min-h-screen flex items-center justify-center bg-gray-50'>
@@ -891,6 +893,22 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <PmContractDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/bi/dashboard'
+            element={
+              <ProtectedRoute>
+                <BIDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/bi/analytics'
+            element={
+              <ProtectedRoute>
+                <BIAnalyticsPage />
               </ProtectedRoute>
             }
           />

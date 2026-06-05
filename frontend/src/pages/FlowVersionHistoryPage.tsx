@@ -17,13 +17,24 @@ import {
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { flowApi, Workflow, WorkflowVersion } from '../api/flow';
-import { useNotification } from '../hooks/useNotification';
-import { NotificationContainer } from '../components/NotificationContainer';
+import { useAppStore } from '../store';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 const FlowVersionHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { success, error: showError } = useNotification();
+  const addNotification = useAppStore((state) => state.addNotification);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [versions, setVersions] = useState<WorkflowVersion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +74,7 @@ const FlowVersionHistoryPage: React.FC = () => {
       }
     } catch (err) {
       console.error('加载数据失败:', err);
-      showError('加载数据失败');
+      addNotification({ title: '错误', message: '加载数据失败', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -71,7 +82,7 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   const handleCreateVersion = async () => {
     if (!id || !createForm.version.trim()) {
-      showError('请输入版本号');
+      addNotification({ title: '提示', message: '请输入版本号', type: 'info' });
       return;
     }
 
@@ -80,7 +91,7 @@ const FlowVersionHistoryPage: React.FC = () => {
 
       const workflow = await flowApi.getWorkflow(id);
       if (!workflow.success || !workflow.data) {
-        showError('获取工作流失败');
+        addNotification({ title: '错误', message: '获取工作流失败', type: 'error' });
         return;
       }
 
@@ -93,16 +104,16 @@ const FlowVersionHistoryPage: React.FC = () => {
       });
 
       if (response.success) {
-        success('版本创建成功');
+        addNotification({ title: '成功', message: '版本创建成功', type: 'success' });
         setShowCreateModal(false);
         setCreateForm({ version: '', change_description: '' });
         loadData();
       } else {
-        showError(response.message || '创建失败');
+        addNotification({ title: '失败', message: response.message || '创建失败', type: 'error' });
       }
     } catch (err) {
       console.error('创建版本失败:', err);
-      showError('创建版本失败');
+      addNotification({ title: '错误', message: '创建版本失败', type: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -116,14 +127,14 @@ const FlowVersionHistoryPage: React.FC = () => {
 
       const response = await flowApi.activateVersion(id, version.id);
       if (response.success) {
-        success('版本激活成功');
+        addNotification({ title: '成功', message: '版本激活成功', type: 'success' });
         loadData();
       } else {
-        showError(response.message || '激活失败');
+        addNotification({ title: '失败', message: response.message || '激活失败', type: 'error' });
       }
     } catch (err) {
       console.error('激活版本失败:', err);
-      showError('激活版本失败');
+      addNotification({ title: '错误', message: '激活版本失败', type: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -142,17 +153,17 @@ const FlowVersionHistoryPage: React.FC = () => {
       });
 
       if (response.success) {
-        success('回滚成功');
+        addNotification({ title: '成功', message: '回滚成功', type: 'success' });
         setShowRollbackModal(false);
         setSelectedVersion(null);
         setRollbackForm({ reason: '' });
         loadData();
       } else {
-        showError(response.message || '回滚失败');
+        addNotification({ title: '失败', message: response.message || '回滚失败', type: 'error' });
       }
     } catch (err) {
       console.error('回滚失败:', err);
-      showError('回滚失败');
+      addNotification({ title: '错误', message: '回滚失败', type: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -160,7 +171,7 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   const handleDeleteVersion = async (version: WorkflowVersion) => {
     if (!id || version.is_active) {
-      showError('无法删除当前激活的版本');
+      addNotification({ title: '提示', message: '无法删除当前激活的版本', type: 'info' });
       return;
     }
 
@@ -171,14 +182,14 @@ const FlowVersionHistoryPage: React.FC = () => {
 
       const response = await flowApi.deleteVersion(id, version.id);
       if (response.success) {
-        success('版本删除成功');
+        addNotification({ title: '成功', message: '版本删除成功', type: 'success' });
         loadData();
       } else {
-        showError(response.message || '删除失败');
+        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
       }
     } catch (err) {
       console.error('删除版本失败:', err);
-      showError('删除版本失败');
+      addNotification({ title: '错误', message: '删除版本失败', type: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -198,15 +209,13 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   return (
     <div className='min-h-screen bg-gray-50 p-6'>
-      <NotificationContainer notifications={[]} onClose={() => {}} />
-
       {/* Header */}
       <div className='bg-white rounded-lg shadow-sm p-6 mb-6'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-3'>
-            <button onClick={() => navigate(`/flow/workflows`)} className='p-2 hover:bg-gray-100 rounded-lg'>
-              <ArrowLeft className='w-5 h-5 text-gray-600' />
-            </button>
+            <Button variant='ghost' onClick={() => navigate(`/flow/workflows`)}>
+              <ArrowLeft className='w-5 h-5' />
+            </Button>
             <div className='w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center'>
               <GitBranch className='w-6 h-6 text-purple-600' />
             </div>
@@ -215,13 +224,10 @@ const FlowVersionHistoryPage: React.FC = () => {
               <p className='text-sm text-gray-500'>{workflow?.name}</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className='flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors'
-          >
+          <Button onClick={() => setShowCreateModal(true)} className='bg-purple-600 hover:bg-purple-700'>
             <Plus className='w-5 h-5 mr-2' />
             创建版本
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -287,36 +293,25 @@ const FlowVersionHistoryPage: React.FC = () => {
                   <div className='flex items-center space-x-2'>
                     {!version.is_active && (
                       <>
-                        <button
-                          onClick={() => {
+                        <Button variant='ghost' size='sm' onClick={() => {
                             setSelectedVersion(version);
                             setShowRollbackModal(true);
-                          }}
-                          className='p-2 rounded-lg text-orange-600 hover:bg-orange-50'
-                          title='回滚到此版本'
-                        >
-                          <RotateCcw className='w-5 h-5' />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteVersion(version)}
-                          className='p-2 rounded-lg text-red-600 hover:bg-red-50'
-                          title='删除版本'
-                        >
-                          <Trash2 className='w-5 h-5' />
-                        </button>
+                          }} className='text-orange-600 hover:text-orange-700 hover:bg-orange-50' title='回滚到此版本'>
+                          <RotateCcw className='w-4 h-4' />
+                        </Button>
+                        <Button variant='ghost' size='sm' onClick={() => handleDeleteVersion(version)} className='text-red-600 hover:text-red-700 hover:bg-red-50' title='删除版本'>
+                          <Trash2 className='w-4 h-4' />
+                        </Button>
                       </>
                     )}
-                    <button
+                    <Button 
+                      size='sm' 
                       onClick={() => handleActivateVersion(version)}
                       disabled={version.is_active}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                        version.is_active
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-purple-600 text-white hover:bg-purple-700'
-                      }`}
+                      className={version.is_active ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}
                     >
                       {version.is_active ? '已激活' : '激活'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -326,96 +321,84 @@ const FlowVersionHistoryPage: React.FC = () => {
       </div>
 
       {/* Create Version Modal */}
-      {showCreateModal && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-lg p-6 w-full max-w-md'>
-            <h2 className='text-xl font-bold mb-4'>创建新版本</h2>
-            <div className='space-y-4'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>版本号 *</label>
-                <input
-                  type='text'
-                  value={createForm.version}
-                  onChange={(e) => setCreateForm({ ...createForm, version: e.target.value })}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent'
-                  placeholder='例如: 1.0.1'
-                />
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>变更说明</label>
-                <textarea
-                  value={createForm.change_description}
-                  onChange={(e) => setCreateForm({ ...createForm, change_description: e.target.value })}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent'
-                  rows={4}
-                  placeholder='描述本次变更内容'
-                />
-              </div>
-            </div>
-            <div className='flex justify-end space-x-3 mt-6'>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className='px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50'
-              >
-                取消
-              </button>
-              <button
-                onClick={handleCreateVersion}
-                disabled={actionLoading || !createForm.version.trim()}
-                className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center'
-              >
-                {actionLoading && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
-                创建
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Rollback Modal */}
-      {showRollbackModal && selectedVersion && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-lg p-6 w-full max-w-md'>
-            <h2 className='text-xl font-bold mb-4'>回滚到 v{selectedVersion.version}</h2>
-            <div className='mb-4'>
-              <p className='text-gray-600 mb-2'>
-                确定要回滚到版本 <strong>v{selectedVersion.version}</strong> 吗？
-              </p>
-              <p className='text-sm text-gray-500'>当前工作流将被更新为该版本的内容。</p>
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>回滚原因</label>
-              <textarea
-                value={rollbackForm.reason}
-                onChange={(e) => setRollbackForm({ ...rollbackForm, reason: e.target.value })}
-                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent'
-                rows={3}
-                placeholder='可选：输入回滚原因'
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>创建新版本</DialogTitle>
+            <DialogDescription>创建一个新的工作流版本</DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='version'>版本号 *</Label>
+              <Input
+                id='version'
+                value={createForm.version}
+                onChange={(e) => setCreateForm({ ...createForm, version: e.target.value })}
+                placeholder='例如: 1.0.1'
               />
             </div>
-            <div className='flex justify-end space-x-3 mt-6'>
-              <button
-                onClick={() => {
+            <div className='space-y-2'>
+              <Label htmlFor='change_description'>变更说明</Label>
+              <Textarea
+                id='change_description'
+                value={createForm.change_description}
+                onChange={(e) => setCreateForm({ ...createForm, change_description: e.target.value })}
+                rows={4}
+                placeholder='描述本次变更内容'
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant='secondary' onClick={() => setShowCreateModal(false)}>
+              取消
+            </Button>
+            <Button onClick={handleCreateVersion} disabled={actionLoading || !createForm.version.trim()} className='bg-purple-600 hover:bg-purple-700'>
+              {actionLoading && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
+              创建
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rollback Modal */}
+      <Dialog open={showRollbackModal} onOpenChange={setShowRollbackModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>回滚到 v{selectedVersion?.version}</DialogTitle>
+            <DialogDescription>
+              {selectedVersion && (
+                <>
+                  <p>确定要回滚到版本 <strong>v{selectedVersion.version}</strong> 吗？</p>
+                  <p className='text-sm text-gray-500'>当前工作流将被更新为该版本的内容。</p>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-2'>
+            <Label htmlFor='rollback_reason'>回滚原因</Label>
+            <Textarea
+              id='rollback_reason'
+              value={rollbackForm.reason}
+              onChange={(e) => setRollbackForm({ ...rollbackForm, reason: e.target.value })}
+              rows={3}
+              placeholder='可选：输入回滚原因'
+            />
+          </div>
+          <DialogFooter>
+            <Button variant='secondary' onClick={() => {
                   setShowRollbackModal(false);
                   setSelectedVersion(null);
                   setRollbackForm({ reason: '' });
-                }}
-                className='px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50'
-              >
-                取消
-              </button>
-              <button
-                onClick={handleRollback}
-                disabled={actionLoading}
-                className='px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center'
-              >
-                {actionLoading && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
-                确认回滚
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                }}>
+              取消
+            </Button>
+            <Button onClick={handleRollback} disabled={actionLoading} className='bg-orange-600 hover:bg-orange-700'>
+              {actionLoading && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
+              确认回滚
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
