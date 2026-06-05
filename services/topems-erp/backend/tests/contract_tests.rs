@@ -3,14 +3,14 @@ mod tests {
     use serde_json::json;
 
     async fn test_project_contract_crud() {
-        let rs_base_url = "http://localhost:8005";
-        let erp_base_url = "http://localhost:8003";
+        let rs_base_url = "http://localhost:8020";
+        let erp_base_url = "http://localhost:8010";
         let client = reqwest::Client::new();
 
         println!("Testing Project Contract CRUD...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -140,14 +140,14 @@ mod tests {
     }
 
     async fn test_project_budget_crud() {
-        let rs_base_url = "http://localhost:8005";
-        let erp_base_url = "http://localhost:8003";
+        let rs_base_url = "http://localhost:8020";
+        let erp_base_url = "http://localhost:8010";
         let client = reqwest::Client::new();
 
         println!("\nTesting Project Budget CRUD...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -281,14 +281,14 @@ mod tests {
     }
 
     async fn test_payment_schedule_crud() {
-        let rs_base_url = "http://localhost:8005";
-        let erp_base_url = "http://localhost:8003";
+        let rs_base_url = "http://localhost:8020";
+        let erp_base_url = "http://localhost:8010";
         let client = reqwest::Client::new();
 
         println!("\nTesting Payment Schedule CRUD...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"

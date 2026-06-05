@@ -202,12 +202,12 @@ test:integration:
     
     - echo "Starting IAM service..."
     # JWT_SECRET: 测试密钥,仅用于CI环境,不用于生产环境
-    - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems_test REDIS_URL=redis://redis:6379 JWT_SECRET=test_jwt_secret_key_for_ci_testing PORT=8002 ./target/release/topems-iam &
+    - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems_test REDIS_URL=redis://redis:6379 JWT_SECRET=test_jwt_secret_key_for_ci_testing PORT=8000 ./target/release/topems-iam &
     - sleep 15
-    - curl -s http://localhost:8002/api/v1/health || (sleep 10 && curl -s http://localhost:8002/api/v1/health)
+    - curl -s http://localhost:8000/api/v1/health || (sleep 10 && curl -s http://localhost:8000/api/v1/health)
     
     - echo "Starting RS service..."
-    - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems_test REDIS_URL=redis://redis:6379 IAM_URL=http://localhost:8002 PORT=8000 ./target/release/topems-rs &
+    - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems_test REDIS_URL=redis://redis:6379 IAM_URL=http://localhost:8000 PORT=8020 ./target/release/topems-rs &
     - sleep 15
     - curl -s http://localhost:8000/api/v1/health || (sleep 10 && curl -s http://localhost:8000/api/v1/health)
     

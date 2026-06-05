@@ -81,7 +81,7 @@ cd /Users/xingzhai/TOPEMS/services/notification-service
 cargo run
 ```
 
-服务将在 http://localhost:8023 启动
+服务将在 http://localhost:8003 启动
 
 ### 2. 启动前端开发服务器
 
@@ -95,7 +95,7 @@ npm run dev
 ### 环境变量 (.env)
 
 ```
-SERVER_PORT=8006              # 服务端口
+SERVER_PORT=8003              # 服务端口
 CURRENT_USER_ID=user_001      # 当前用户ID（用于演示）
 RUST_LOG=notification_service=debug  # 日志级别
 ```
@@ -105,7 +105,7 @@ RUST_LOG=notification_service=debug  # 日志级别
 前端通知 API 地址通过 Vite 代理配置在 `/frontend/vite.config.ts`:
 
 ```typescript
-'/notification': createServiceProxyConfig('notification', 'http://localhost:8023'),
+'/notification': createServiceProxyConfig('notification', 'http://localhost:8003'),
 ```
 
 ## 使用示例
@@ -229,7 +229,7 @@ frontend/src/
 
 ## 注意事项
 
-1. 确保后端服务在 http://localhost:8006 运行
+1. 确保后端服务在 http://localhost:8003 运行
 2. 前端会自动重连 WebSocket 连接
 3. 桌面通知需要用户授权
 4. 通知声音可以在设置中关闭

@@ -4,7 +4,6 @@ mod services;
 
 use anyhow::Result;
 use axum::{
-    extract::FromRef,
     routing::get,
     Json, Router,
 };

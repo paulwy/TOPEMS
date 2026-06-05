@@ -12,7 +12,10 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  BarChart3,
+  FileText,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   Notification,
   getNotifications,
@@ -30,6 +33,7 @@ import useNotificationSettings from '../hooks/useNotificationSettings';
 type NotificationFilterType = 'all' | NotificationTypeEnum;
 
 const NotificationCenter: React.FC = () => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState<NotificationFilterType>('all');
@@ -198,6 +202,27 @@ const NotificationCenter: React.FC = () => {
                 </div>
               </div>
               <div className='flex items-center gap-2'>
+                <button
+                  onClick={() => navigate('/notifications/stats')}
+                  className='p-2 rounded-lg transition-colors bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  title='统计'
+                >
+                  <BarChart3 className='w-5 h-5' />
+                </button>
+                <button
+                  onClick={() => navigate('/notifications/templates')}
+                  className='p-2 rounded-lg transition-colors bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  title='模板管理'
+                >
+                  <FileText className='w-5 h-5' />
+                </button>
+                <button
+                  onClick={() => navigate('/notifications/archive')}
+                  className='p-2 rounded-lg transition-colors bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  title='归档管理'
+                >
+                  <Archive className='w-5 h-5' />
+                </button>
                 <button
                   onClick={() => toggleSetting('enableSound')}
                   className={`p-2 rounded-lg transition-colors ${

@@ -98,7 +98,7 @@ export const imApi = {
     return apiClient.im.get<any>(`/api/v1/chat-rooms/${chatId}/messages`);
   },
   createChatMessage: async (data: CreateChatMessageRequest): Promise<ApiResponse<ChatMessage>> => {
-    return apiClient.im.post<ChatMessage>('/api/v1/chat-rooms', data);
+    return apiClient.im.post<ChatMessage>(`/api/v1/chat-rooms/${data.chat_id}/messages`, data);
   },
   markMessageRead: async (id: string): Promise<ApiResponse<ChatMessage>> => {
     return apiClient.im.put<ChatMessage>(`/api/v1/chat-messages/${id}/read`);

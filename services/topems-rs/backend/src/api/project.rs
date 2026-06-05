@@ -13,6 +13,7 @@ use std::time::Duration;
 use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
+use sqlx::Row;
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use crate::services::project_permission::{check_project_permission, check_project_owner, ProjectPermission};
@@ -1180,20 +1181,16 @@ async fn get_project_dashboard(
         }
     };
 
-    let phases_result = sqlx::query!(
-        r#"
-        SELECT status, progress FROM rs.project_phases WHERE project_id = $1
-        "#,
-        id
-    )
-    .fetch_all(&state.db)
-    .await;
+    let phases_result = sqlx::query(r#"SELECT status, progress FROM rs.project_phases WHERE project_id = $1"#)
+        .bind(id)
+        .fetch_all(&state.db)
+        .await;
 
     let phases = phases_result.unwrap_or_default();
-    let completed_phases = phases.iter().filter(|p| p.status == "COMPLETED").count();
+    let completed_phases = phases.iter().filter(|p| p.get::<String, _>("status") == "COMPLETED").count();
     let total_phases = phases.len();
     let avg_progress = if total_phases > 0 {
-        phases.iter().map(|p| p.progress).sum::<i32>() / total_phases as i32
+        phases.iter().map(|p| p.get::<i32, _>("progress")).sum::<i32>() / total_phases as i32
     } else {
         0
     };
@@ -1213,35 +1210,27 @@ async fn get_project_dashboard(
         "utilization_rate": 0.0
     });
 
-    let members_result = sqlx::query!(
-        r#"
-        SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1
-        "#,
-        id
-    )
-    .fetch_all(&state.db)
-    .await;
+    let members_result = sqlx::query(r#"SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1"#)
+        .bind(id)
+        .fetch_all(&state.db)
+        .await;
 
     let members: Vec<serde_json::Value> = members_result
         .unwrap_or_default()
         .into_iter()
         .map(|m| serde_json::json!({
-            "user_id": m.user_id,
-            "role": m.role
+            "user_id": m.get::<Uuid, _>("user_id"),
+            "role": m.get::<String, _>("role")
         }))
         .collect();
 
-    let milestones_result = sqlx::query!(
-        r#"
-        SELECT status FROM rs.project_milestones WHERE project_id = $1
-        "#,
-        id
-    )
-    .fetch_all(&state.db)
-    .await;
+    let milestones_result = sqlx::query(r#"SELECT status FROM rs.project_milestones WHERE project_id = $1"#)
+        .bind(id)
+        .fetch_all(&state.db)
+        .await;
 
     let milestones = milestones_result.unwrap_or_default();
-    let achieved_milestones = milestones.iter().filter(|m| m.status == "ACHIEVED").count();
+    let achieved_milestones = milestones.iter().filter(|m| m.get::<String, _>("status") == "ACHIEVED").count();
     let total_milestones = milestones.len();
 
     let risks = vec![
@@ -1406,23 +1395,19 @@ async fn get_project_gantt(
         })
         .collect();
 
-    let members_result = sqlx::query!(
-        r#"
-        SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1
-        "#,
-        id
-    )
-    .fetch_all(&state.db)
-    .await;
+    let members_result = sqlx::query(r#"SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1"#)
+        .bind(id)
+        .fetch_all(&state.db)
+        .await;
 
     let gantt_resources: Vec<GanttResource> = members_result
         .unwrap_or_default()
         .into_iter()
         .filter_map(|m| {
-            Uuid::parse_str(&m.user_id).ok().map(|uid| GanttResource {
-                id: uid,
+            Some(GanttResource {
+                id: m.get::<Uuid, _>("user_id"),
                 resource_type: "person".to_string(),
-                name: m.role,
+                name: m.get::<String, _>("role"),
                 assignments: vec![],
             })
         })

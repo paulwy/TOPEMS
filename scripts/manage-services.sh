@@ -17,26 +17,30 @@ NC='\033[0m'
 SERVICES_CONFIG="
 iam platform/topems-iam/backend 8000
 doc platform/topems-doc/backend 8001
-ai services/topems-ai/backend 8013
+pm services/topems-pm/backend 8002
+notification services/notification-service 8003
+integration services/topems-integration/backend 8004
+portal services/topems-portal/backend 8005
 flow platform/topems-flow/backend 8006
+erp services/topems-erp/backend 8010
+hrm services/topems-hrm/backend 8011
+crm services/topems-crm/backend 8012
+ai services/topems-ai/backend 8013
 rs services/topems-rs/backend 8020
 lims services/topems-lims/backend 8022
+pdm services/topems-pdm/backend 8023
+mes services/topems-mes/backend 8030
 qms services/topems-qms/backend 8031
 ehs services/topems-ehs/backend 8032
-erp services/topems-erp/backend 8009
-hrm services/topems-hrm/backend 8011
-gis services/topems-gis/backend 8051
-pdm services/topems-pdm/backend 8023
+scm services/topems-scm/backend 8040
 srm services/topems-srm/backend 8041
-im services/topems-im/backend 8052
-bi services/topems-bi/backend 8053
-crm services/topems-crm/backend 8012
-mes services/topems-mes/backend 8030
-mobile services/topems-mobile/backend 8056
-mail services/topems-mail/backend 8055
-notification services/notification-service 8027
-report services/report-service 8054
-pm services/topems-pm/backend 8050
+wms services/topems-wms/backend 8042
+gis services/topems-gis/backend 8050
+im services/topems-im/backend 8051
+bi services/topems-bi/backend 8052
+report services/report-service 8053
+mail services/topems-mail/backend 8054
+mobile services/topems-mobile/backend 8055
 "
 
 # 获取服务路径

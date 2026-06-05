@@ -213,7 +213,7 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
 
 async fn check_iam_health() -> DependencyHealth {
     let iam_url = env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8002".to_string());
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {

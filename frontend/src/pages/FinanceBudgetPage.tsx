@@ -374,7 +374,7 @@ const FinanceBudgetPage: React.FC = () => {
                   <SelectValue placeholder='类型' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value=''>全部</SelectItem>
+                  <SelectItem value='all'>全部</SelectItem>
                   <SelectItem value='operating'>运营预算</SelectItem>
                   <SelectItem value='capital'>资本预算</SelectItem>
                   <SelectItem value='project'>项目预算</SelectItem>
@@ -387,7 +387,7 @@ const FinanceBudgetPage: React.FC = () => {
                   <SelectValue placeholder='状态' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value=''>全部</SelectItem>
+                  <SelectItem value='all'>全部</SelectItem>
                   <SelectItem value='active'>执行中</SelectItem>
                   <SelectItem value='completed'>已完成</SelectItem>
                   <SelectItem value='frozen'>已冻结</SelectItem>

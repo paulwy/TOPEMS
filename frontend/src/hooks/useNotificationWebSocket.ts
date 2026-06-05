@@ -119,11 +119,11 @@ export const useNotificationWebSocket = ({
     }
 
     try {
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const wsHost = window.location.host;
-        const wsUrl = `${wsProtocol}://${wsHost}/notification/ws/notifications`;
-        logger.info('Attempting to connect to notification service:', wsUrl);
-        const ws = new WebSocket(wsUrl);
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const notificationServicePath = config.services.notification;
+      const wsUrl = `${wsProtocol}://${window.location.host}${notificationServicePath}/ws/notifications`;
+      logger.info('Attempting to connect to notification service:', wsUrl);
+      const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         logger.info('WebSocket connected');

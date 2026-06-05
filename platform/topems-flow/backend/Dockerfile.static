@@ -41,10 +41,10 @@ COPY --from=builder /build/target/x86_64-unknown-linux-musl/release/topems-flow 
 # 创建日志目录
 RUN mkdir -p /app/logs
 
-EXPOSE 8004
+EXPOSE 8006
 
 ENV RUST_LOG=info \
-    SERVICE_PORT=8004
+    SERVICE_PORT=8006
 
 ENTRYPOINT ["/app/topems-flow"]
-CMD ["--host", "0.0.0.0", "--port", "8004"]
+CMD ["--host", "0.0.0.0", "--port", "8006"]

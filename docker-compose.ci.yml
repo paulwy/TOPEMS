@@ -38,16 +38,16 @@ services:
       REDIS_URL: redis://redis:6379
       # JWT_SECRET: 测试密钥,仅用于CI环境,不用于生产环境
       JWT_SECRET: test_jwt_secret_key_for_ci_testing
-      PORT: 8002
+      PORT: 8000
     ports:
-      - "8002:8002"
+      - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -62,10 +62,10 @@ services:
     environment:
       DATABASE_URL: postgres://topems:topems_secret@postgres:5432/topems_test
       REDIS_URL: redis://redis:6379
-      IAM_URL: http://topems-iam:8002
-      PORT: 8000
+      IAM_URL: http://topems-iam:8000
+      PORT: 8020
     ports:
-      - "8000:8000"
+      - "8020:8020"
     depends_on:
       postgres:
         condition: service_healthy

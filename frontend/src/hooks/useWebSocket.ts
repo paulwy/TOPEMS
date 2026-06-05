@@ -40,7 +40,20 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       return;
     }
 
-    const wsUrl = config.ws.url.replace('http://', 'ws://').replace('https://', 'wss://');
+    // 使用 IM 服务的 URL 作为 WebSocket 基础 URL
+    const imServiceUrl = config.services.im;
+    let wsUrl = imServiceUrl;
+    
+    // 如果是相对路径（以 / 开头），添加协议和主机
+    if (wsUrl.startsWith('/')) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      wsUrl = `${protocol}//${host}${wsUrl}`;
+    } else {
+      // 绝对路径，替换 http/https -> ws/wss
+      wsUrl = wsUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+    }
+    
     const ws = new WebSocket(`${wsUrl}/ws`);
 
     ws.onopen = () => {

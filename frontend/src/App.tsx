@@ -89,6 +89,10 @@ const OfficeSuppliesManagementPage = lazy(() => import('./pages/OfficeSuppliesMa
 const MeetingRoomManagementPage = lazy(() => import('./pages/MeetingRoomManagementPage'));
 const VehicleManagementPage = lazy(() => import('./pages/VehicleManagementPage'));
 const AnnouncementManagementPage = lazy(() => import('./pages/AnnouncementManagementPage'));
+const NotificationTemplatesPage = lazy(() => import('./pages/NotificationTemplatesPage'));
+const NotificationArchivePage = lazy(() => import('./pages/NotificationArchivePage'));
+const NotificationStatsPage = lazy(() => import('./pages/NotificationStatsPage'));
+const NotificationDetailPage = lazy(() => import('./pages/NotificationDetailPage'));
 
 const PageLoader: React.FC = () => (
   <div className='min-h-screen flex items-center justify-center bg-gray-50'>
@@ -251,6 +255,38 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <NotificationCenter />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/notifications/templates'
+            element={
+              <ProtectedRoute>
+                <NotificationTemplatesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/notifications/archive'
+            element={
+              <ProtectedRoute>
+                <NotificationArchivePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/notifications/stats'
+            element={
+              <ProtectedRoute>
+                <NotificationStatsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/notifications/:id'
+            element={
+              <ProtectedRoute>
+                <NotificationDetailPage />
               </ProtectedRoute>
             }
           />

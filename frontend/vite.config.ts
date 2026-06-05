@@ -156,15 +156,20 @@ export default defineConfig({
       '/doc/': createServiceProxyConfig('doc', 'http://localhost:8001'),
       '/flow': createServiceProxyConfig('flow', 'http://localhost:8006'),
       '/notification': {
-        target: 'http://localhost:8027',
+        target: 'http://localhost:8003',
         changeOrigin: true,
         ws: true,
         secure: false,
         rewrite: (path: string) => path.replace(/^\/notification/, ''),
+        configure: (proxy) => {
+          proxy.on('error', (err, req, res) => {
+            console.warn('[Vite Proxy] Notification service unavailable:', err.message);
+          });
+        },
       },
       '/integration': createServiceProxyConfig('integration', 'http://localhost:8004'),
       '/portal': createServiceProxyConfig('portal', 'http://localhost:8005'),
-      '/erp': createServiceProxyConfig('erp', 'http://localhost:8009'),
+      '/erp': createServiceProxyConfig('erp', 'http://localhost:8010'),
       '/hrm': createServiceProxyConfig('hrm', 'http://localhost:8011'),
       '/crm': createServiceProxyConfig('crm', 'http://localhost:8012'),
       '/ai': createServiceProxyConfig('ai', 'http://localhost:8013'),
@@ -177,13 +182,13 @@ export default defineConfig({
       '/scm': createServiceProxyConfig('scm', 'http://localhost:8040'),
       '/srm': createServiceProxyConfig('srm', 'http://localhost:8041'),
       '/wms': createServiceProxyConfig('wms', 'http://localhost:8042'),
-      '/pm': createServiceProxyConfig('pm', 'http://localhost:8050'),
-      '/gis': createServiceProxyConfig('gis', 'http://localhost:8051'),
-      '/im': createServiceProxyConfig('im', 'http://localhost:8052'),
-      '/bi': createServiceProxyConfig('bi', 'http://localhost:8053'),
-      '/report': createServiceProxyConfig('report', 'http://localhost:8054'),
-      '/mail': createServiceProxyConfig('mail', 'http://localhost:8055'),
-      '/mobile': createServiceProxyConfig('mobile', 'http://localhost:8056'),
+      '/pm': createServiceProxyConfig('pm', 'http://localhost:8002'),
+      '/gis': createServiceProxyConfig('gis', 'http://localhost:8050'),
+      '/im': createServiceProxyConfig('im', 'http://localhost:8051'),
+      '/bi': createServiceProxyConfig('bi', 'http://localhost:8052'),
+      '/report': createServiceProxyConfig('report', 'http://localhost:8053'),
+      '/mail': createServiceProxyConfig('mail', 'http://localhost:8054'),
+      '/mobile': createServiceProxyConfig('mobile', 'http://localhost:8055'),
     },
   },
 })

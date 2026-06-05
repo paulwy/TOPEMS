@@ -71,29 +71,79 @@ export interface HealthCheckResult {
   response_time?: number;
 }
 
+export interface MonitoringService {
+  service_name: string;
+  status: string;
+  response_time_ms: number;
+  last_check: string;
+  message?: string;
+}
+
+export interface MonitoringMetrics {
+  requests_total: number;
+  requests_success: number;
+  requests_failed: number;
+  avg_response_time_ms: number;
+  active_connections: number;
+  memory_usage_mb: number;
+  cpu_usage_percent: number;
+}
+
+export interface Alert {
+  id: string;
+  rule_name: string;
+  severity: 'critical' | 'warning' | 'info';
+  message: string;
+  triggered_at: number;
+  acknowledged: boolean;
+}
+
+export interface LogEntry {
+  timestamp: number;
+  level: string;
+  service: string;
+  message: string;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  content: string;
+  service: string;
+  service_name: string;
+  notification_type: 'approval' | 'system' | 'info' | 'warning';
+  read: boolean;
+  created_at: number;
+  link_url?: string;
+}
+
 export const portalApi = {
   async getServices(): Promise<Service[]> {
     const response = await apiClient.get('/services');
-    return response.data;
+    return response.data.data;
   },
 
   async getTodos(): Promise<Todo[]> {
     const response = await apiClient.get('/todos');
-    return response.data;
+    return response.data.data;
   },
 
   async addTodo(title: string, service: string, due_date: string, priority: string): Promise<Todo> {
     const response = await apiClient.post('/todos', { title, service, due_date, priority });
-    return response.data;
+    return response.data.data;
   },
 
   async completeTodo(id: string): Promise<void> {
     await apiClient.post(`/todos/${id}`);
   },
 
+  async deleteTodo(id: string): Promise<void> {
+    await apiClient.delete(`/todos/${id}`);
+  },
+
   async getUserInfo(): Promise<UserInfo> {
     const response = await apiClient.get('/user');
-    return response.data;
+    return response.data.data;
   },
 
   async getServiceHealth(serviceName: string, healthUrl: string): Promise<HealthCheckResult> {
@@ -135,5 +185,42 @@ export const portalApi = {
     });
     
     return Promise.all(healthChecks);
+  },
+
+  async getMonitoringServices(): Promise<MonitoringService[]> {
+    const response = await apiClient.get('/monitoring/services');
+    return response.data.data;
+  },
+
+  async getMonitoringMetrics(): Promise<MonitoringMetrics> {
+    const response = await apiClient.get('/monitoring/metrics');
+    return response.data.data;
+  },
+
+  async getMonitoringAlerts(): Promise<Alert[]> {
+    const response = await apiClient.get('/monitoring/alerts');
+    return response.data.data;
+  },
+
+  async acknowledgeAlert(id: string): Promise<void> {
+    await apiClient.post(`/monitoring/alerts/${id}`);
+  },
+
+  async getMonitoringLogs(): Promise<LogEntry[]> {
+    const response = await apiClient.get('/monitoring/logs');
+    return response.data.data;
+  },
+
+  async getNotifications(): Promise<Notification[]> {
+    const response = await apiClient.get('/notifications');
+    return response.data.data;
+  },
+
+  async markNotificationRead(id: string): Promise<void> {
+    await apiClient.post(`/notifications/${id}`);
+  },
+
+  async markAllNotificationsRead(): Promise<void> {
+    await apiClient.post('/notifications/mark-all-read');
   },
 };

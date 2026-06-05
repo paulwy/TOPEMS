@@ -128,6 +128,7 @@ cd /Users/air/TOPEMS
 |--------|------|------|------|
 | `iam` | 8000 | 身份认证服务 | platform/topems-iam |
 | `doc` | 8001 | 文档管理服务 | platform/topems-doc |
+| `pm` | 8002 | 项目管理服务 | services/topems-pm |
 | `flow` | 8006 | 工作流服务 | platform/topems-flow |
 
 **业务应用服务：**
@@ -229,6 +230,7 @@ cd /Users/air/TOPEMS
 |---------|------|------|------|
 | **核心平台** | IAM | 8000 | platform/topems-iam |
 | | DOC | 8001 | platform/topems-doc |
+| | PM | 8002 | services/topems-pm |
 | | FLOW | 8006 | platform/topems-flow |
 | **业务服务** | Notification | 8003 | services/notification-service |
 | | Integration | 8004 | services/topems-integration |

@@ -26,7 +26,7 @@ cargo run
 
 ## API 文档
 
-访问 http://localhost:8002/swagger-ui
+访问 http://localhost:8000/swagger-ui
 
 ## 版本
 

@@ -286,7 +286,7 @@ const FinanceReportsPage: React.FC = () => {
                     <SelectValue placeholder='选择期间' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value=''>全部期间</SelectItem>
+                    <SelectItem value='all'>全部期间</SelectItem>
                     <SelectItem value='2024-01'>2024年01月</SelectItem>
                     <SelectItem value='2024-02'>2024年02月</SelectItem>
                     <SelectItem value='2024-03'>2024年03月</SelectItem>

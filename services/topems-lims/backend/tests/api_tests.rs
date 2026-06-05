@@ -4,13 +4,13 @@ mod tests {
     use serde_json::json;
 
     async fn test_sample_crud() {
-        let base_url = "http://localhost:8006";
+        let base_url = "http://localhost:8022";
         let client = reqwest::Client::new();
 
         println!("Testing LIMS Sample CRUD...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -100,13 +100,13 @@ mod tests {
     }
 
     async fn test_sample_batch_operations() {
-        let base_url = "http://localhost:8006";
+        let base_url = "http://localhost:8022";
         let client = reqwest::Client::new();
 
         println!("\nTesting LIMS Sample Batch Operations...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -162,7 +162,6 @@ mod tests {
         let created_count = batch_create_data["data"]["success"].as_i64().unwrap();
         println!("   Batch created {} samples", created_count);
 
-        // 获取刚创建的样品的 ID
         println!("\n2. Fetching created samples to get IDs...");
         let list_after_create = client
             .get(&format!("{}/api/v1/samples", base_url))
@@ -207,13 +206,13 @@ mod tests {
     }
 
     async fn test_sample_export_import() {
-        let base_url = "http://localhost:8006";
+        let base_url = "http://localhost:8022";
         let client = reqwest::Client::new();
 
         println!("\nTesting LIMS Sample Export/Import...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -232,7 +231,6 @@ mod tests {
             .unwrap()
             .to_string();
 
-        // 首先创建几个测试样品
         println!("\n1. Creating test samples for export...");
         for i in 1..=2 {
             client
@@ -248,7 +246,6 @@ mod tests {
                 .expect("Create test sample failed");
         }
 
-        // 测试导出
         println!("\n2. Testing export samples...");
         let export_response = client
             .get(&format!("{}/api/v1/samples/export", base_url))
@@ -266,7 +263,6 @@ mod tests {
         println!("   Export response length: {} bytes", export_content.len());
         assert!(export_content.len() > 0);
 
-        // 先删除刚创建的样品，然后测试导入
         println!("\n3. Deleting test samples to prepare for import...");
         let list_before_delete = client
             .get(&format!("{}/api/v1/samples", base_url))
@@ -294,9 +290,7 @@ mod tests {
             .await
             .expect("Delete test samples failed");
 
-        // 测试导入
         println!("\n4. Testing import samples...");
-        // 创建一个简单的 CSV 内容进行导入测试
         let import_csv_content = "\
 id,name,description,status,project_id,received_date,created_at,updated_at
 ,Import Test Sample 1,Imported from CSV,received,,2024-01-01T00:00:00+00:00,2024-01-01T00:00:00+00:00,2024-01-01T00:00:00+00:00
@@ -322,7 +316,6 @@ id,name,description,status,project_id,received_date,created_at,updated_at
         let imported_count = import_data["data"]["success"].as_i64().unwrap();
         println!("   Imported {} samples", imported_count);
 
-        // 清理导入的样品
         println!("\n5. Cleaning up imported samples...");
         let list_after_import = client
             .get(&format!("{}/api/v1/samples", base_url))
@@ -354,13 +347,13 @@ id,name,description,status,project_id,received_date,created_at,updated_at
     }
 
     async fn test_audit_logs() {
-        let base_url = "http://localhost:8006";
+        let base_url = "http://localhost:8022";
         let client = reqwest::Client::new();
 
         println!("\nTesting LIMS Audit Logs...");
 
         let login_response = client
-            .post("http://localhost:8002/api/v1/auth/login")
+            .post("http://localhost:8000/api/v1/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -379,10 +372,8 @@ id,name,description,status,project_id,received_date,created_at,updated_at
             .unwrap()
             .to_string();
 
-        // 先执行一些操作，生成审计日志
         println!("\n1. Performing some operations to generate audit logs...");
         
-        // 创建一个样品
         let create_response = client
             .post(&format!("{}/api/v1/samples", base_url))
             .bearer_auth(&token)
@@ -401,7 +392,6 @@ id,name,description,status,project_id,received_date,created_at,updated_at
             .unwrap();
         let audit_sample_id = created_data["data"]["id"].as_str().unwrap();
 
-        // 删除这个样品
         client
             .delete(&format!("{}/api/v1/samples/{}", base_url, audit_sample_id))
             .bearer_auth(&token)
@@ -409,7 +399,6 @@ id,name,description,status,project_id,received_date,created_at,updated_at
             .await
             .expect("Delete audit test sample failed");
 
-        // 测试获取审计日志列表
         println!("\n2. Testing list audit logs...");
         let list_logs_response = client
             .get(&format!("{}/api/v1/audit-logs", base_url))
@@ -425,11 +414,9 @@ id,name,description,status,project_id,received_date,created_at,updated_at
             .await
             .unwrap();
 
-        // 检查返回的数据结构
         assert!(logs_data["data"]["audit_logs"].is_array());
         println!("   Got {} audit logs", logs_data["data"]["audit_logs"].as_array().unwrap().len());
 
-        // 如果有日志，获取第一个日志的详情
         if let Some(logs_array) = logs_data["data"]["audit_logs"].as_array() {
             if let Some(first_log) = logs_array.first() {
                 if let Some(log_id) = first_log["id"].as_str() {

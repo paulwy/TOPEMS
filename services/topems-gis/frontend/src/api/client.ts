@@ -1,6 +1,6 @@
 import type { FactoryMap, DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto, ApiResponse } from '../types';
 
-const API_BASE = 'http://localhost:8011/api/v1';
+const API_BASE = 'http://localhost:8050/api/v1';
 
 export async function fetchFactoryMaps(): Promise<ApiResponse<{ factory_maps: FactoryMap[]; total: number }>> {
   const response = await fetch(`${API_BASE}/factory-maps`);

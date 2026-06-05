@@ -394,7 +394,7 @@ const EmailManagementPage: React.FC = () => {
                       <SelectValue placeholder='全部状态' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=''>全部状态</SelectItem>
+                      <SelectItem value='all'>全部状态</SelectItem>
                       <SelectItem value='sent'>已发送</SelectItem>
                       <SelectItem value='pending'>待发送</SelectItem>
                       <SelectItem value='failed'>发送失败</SelectItem>

@@ -444,21 +444,21 @@ async fn create_project_group(
 }
 
 async fn list_notifications(
-    State(state): State<AppState>,
-    Path(user_id): Path<String>,
+  State(state): State<AppState>,
+  Path(user_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query_as!(
-        models::Notification,
-        r#"
-        SELECT id, user_id, title, content, notification_type, is_read, created_at
-        FROM notifications
-        WHERE user_id = $1
-        ORDER BY created_at DESC
-        "#,
-        user_id
-    )
-    .fetch_all(&state.pool)
-    .await;
+  let result = sqlx::query_as!(
+    models::Notification,
+    r#"
+    SELECT id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+    FROM notifications
+    WHERE user_id = $1
+    ORDER BY created_at DESC
+    "#,
+    user_id
+  )
+  .fetch_all(&state.pool)
+  .await;
 
     match result {
         Ok(notifications) => Json(ApiResponse::success(json!({
@@ -473,28 +473,31 @@ async fn list_notifications(
 }
 
 async fn create_notification(
-    State(state): State<AppState>,
-    Json(payload): Json<models::CreateNotification>,
+  State(state): State<AppState>,
+  Json(payload): Json<models::CreateNotification>,
 ) -> Json<ApiResponse<models::Notification>> {
-    let id = Uuid::new_v4();
-    let now = Utc::now();
+  let id = Uuid::new_v4();
+  let now = Utc::now();
+  let related_id = payload.related_id.and_then(|r| Uuid::parse_str(&r).ok());
 
-    let result = sqlx::query_as!(
-        models::Notification,
-        r#"
-        INSERT INTO notifications (id, user_id, title, content, notification_type, is_read, created_at)
-        VALUES ($1, $2, $3, $4, $5, false, $6)
-        RETURNING id, user_id, title, content, notification_type, is_read, created_at
-        "#,
-        id,
-        payload.user_id,
-        payload.title,
-        payload.content,
-        payload.notification_type,
-        now
-    )
-    .fetch_one(&state.pool)
-    .await;
+  let result = sqlx::query_as!(
+    models::Notification,
+    r#"
+    INSERT INTO notifications (id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, false, $8)
+    RETURNING id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+    "#,
+    id,
+    payload.user_id,
+    payload.title,
+    payload.content,
+    payload.notification_type,
+    related_id,
+    payload.related_type,
+    now
+  )
+  .fetch_one(&state.pool)
+  .await;
 
     match result {
         Ok(notification) => Json(ApiResponse::success(notification, "创建通知成功")),
@@ -506,21 +509,21 @@ async fn create_notification(
 }
 
 async fn mark_notification_read(
-    State(state): State<AppState>,
-    Path(notification_id): Path<Uuid>,
+  State(state): State<AppState>,
+  Path(notification_id): Path<Uuid>,
 ) -> Json<ApiResponse<models::Notification>> {
-    let result = sqlx::query_as!(
-        models::Notification,
-        r#"
-        UPDATE notifications
-        SET is_read = true
-        WHERE id = $1
-        RETURNING id, user_id, title, content, notification_type, is_read, created_at
-        "#,
-        notification_id
-    )
-    .fetch_optional(&state.pool)
-    .await;
+  let result = sqlx::query_as!(
+    models::Notification,
+    r#"
+    UPDATE notifications
+    SET is_read = true
+    WHERE id = $1
+    RETURNING id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+    "#,
+    notification_id
+  )
+  .fetch_optional(&state.pool)
+  .await;
 
     match result {
         Ok(Some(notification)) => Json(ApiResponse::success(notification, "标记通知已读成功")),
