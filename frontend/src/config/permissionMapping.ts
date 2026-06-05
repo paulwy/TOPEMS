@@ -70,6 +70,35 @@ export const PERMISSION_MAPPING: Record<string, { name: string; resource: string
   '00000009-0000-0000-0000-000000000002': { name: 'ai:write', resource: 'ai', action: 'write' },
   '00000009-0000-0000-0000-000000000003': { name: 'ai:delete', resource: 'ai', action: 'delete' },
   '00000009-0000-0000-0000-000000000004': { name: 'ai:admin', resource: 'ai', action: 'admin' },
+
+  // IM (Instant Messaging)
+  '00000010-0000-0000-0000-000000000001': { name: 'im:read', resource: 'im', action: 'read' },
+  '00000010-0000-0000-0000-000000000002': { name: 'im:write', resource: 'im', action: 'write' },
+  '00000010-0000-0000-0000-000000000003': { name: 'im:admin', resource: 'im', action: 'admin' },
+
+  // Mail
+  '00000011-0000-0000-0000-000000000001': { name: 'mail:read', resource: 'mail', action: 'read' },
+  '00000011-0000-0000-0000-000000000002': { name: 'mail:write', resource: 'mail', action: 'write' },
+  '00000011-0000-0000-0000-000000000003': { name: 'mail:admin', resource: 'mail', action: 'admin' },
+
+  // GIS
+  '00000012-0000-0000-0000-000000000001': { name: 'gis:read', resource: 'gis', action: 'read' },
+  '00000012-0000-0000-0000-000000000002': { name: 'gis:write', resource: 'gis', action: 'write' },
+  '00000012-0000-0000-0000-000000000003': { name: 'gis:admin', resource: 'gis', action: 'admin' },
+
+  // Notification
+  '00000013-0000-0000-0000-000000000001': { name: 'notification:read', resource: 'notification', action: 'read' },
+  '00000013-0000-0000-0000-000000000002': { name: 'notification:write', resource: 'notification', action: 'write' },
+
+  // PM (Project Management)
+  '00000014-0000-0000-0000-000000000001': { name: 'pm:read', resource: 'pm', action: 'read' },
+  '00000014-0000-0000-0000-000000000002': { name: 'pm:write', resource: 'pm', action: 'write' },
+  '00000014-0000-0000-0000-000000000003': { name: 'pm:admin', resource: 'pm', action: 'admin' },
+
+  // Integration
+  '00000015-0000-0000-0000-000000000001': { name: 'integration:read', resource: 'integration', action: 'read' },
+  '00000015-0000-0000-0000-000000000002': { name: 'integration:write', resource: 'integration', action: 'write' },
+  '00000015-0000-0000-0000-000000000003': { name: 'integration:admin', resource: 'integration', action: 'admin' },
 };
 
 export const mapPermissionIdToName = (permissionId: string): string | null => {

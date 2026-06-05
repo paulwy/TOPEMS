@@ -6,6 +6,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '../components/DataTable';
 import { HrmLayout } from '../components/HrmLayout';
 import TreeView, { TreeNode } from '../components/TreeView';
+import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } from '../components/ai';
+import type { CompletionItem, ValidateRequest } from '../types/ai';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +34,13 @@ const HrmEmployeePage: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+
+  const [showAICodeGenerator, setShowAICodeGenerator] = useState(false);
+  const [showAIDataCompleter, setShowAIDataCompleter] = useState(false);
+  const [showAIFormValidator, setShowAIFormValidator] = useState(false);
+  const [aiGeneratorMode, setAiGeneratorMode] = useState<'create' | 'edit'>('create');
+  const [aiDataCompleterMode, setAiDataCompleterMode] = useState<'create' | 'edit'>('create');
+  const [aiFormValidatorMode, setAiFormValidatorMode] = useState<'create' | 'edit'>('create');
 
   const [formData, setFormData] = useState<Partial<Employee>>({});
 
@@ -171,6 +180,43 @@ const HrmEmployeePage: React.FC = () => {
     setSelectedEmployee(record);
     setFormData(record);
     setShowEditModal(true);
+  };
+
+  const handleOpenAICodeGenerator = (mode: 'create' | 'edit') => {
+    setAiGeneratorMode(mode);
+    setShowAICodeGenerator(true);
+  };
+
+  const handleSelectAICode = (code: string) => {
+    setFormData((prev) => ({ ...prev, employee_number: code }));
+  };
+
+  const handleOpenAIDataCompleter = (mode: 'create' | 'edit') => {
+    setAiDataCompleterMode(mode);
+    setShowAIDataCompleter(true);
+  };
+
+  const handleApplyCompletion = (completions: Record<string, CompletionItem>) => {
+    const updates: Record<string, any> = {};
+    Object.entries(completions).forEach(([field, item]) => {
+      updates[field] = item.value;
+    });
+    setFormData((prev) => ({ ...prev, ...updates }));
+    setShowAIDataCompleter(false);
+  };
+
+  const handleOpenAIFormValidator = (mode: 'create' | 'edit') => {
+    setAiFormValidatorMode(mode);
+    setShowAIFormValidator(true);
+  };
+
+  const handleApplyValidationSuggestions = (suggestions: any[]) => {
+    const updates: Record<string, any> = {};
+    suggestions.forEach(s => {
+      updates[s.field] = s.value;
+    });
+    setFormData((prev) => ({ ...prev, ...updates }));
+    setShowAIFormValidator(false);
   };
 
   const handleView = (record: Employee) => {
@@ -698,11 +744,34 @@ const HrmEmployeePage: React.FC = () => {
                   </Select>
                 </div>
               </div>
-              <DialogFooter className='mt-6'>
+              <DialogFooter className='mt-6 flex items-center justify-between'>
                 <Button type='button' variant='secondary' onClick={() => setShowCreateModal(false)}>
                   取消
                 </Button>
-                <Button type='submit'>创建</Button>
+                <div className='flex items-center gap-2'>
+                  <AIHelperButton
+                    type='generate'
+                    onClick={() => handleOpenAICodeGenerator('create')}
+                    size='sm'
+                    variant='secondary'
+                    label='生成工号'
+                  />
+                  <AIHelperButton
+                    type='complete'
+                    onClick={() => handleOpenAIDataCompleter('create')}
+                    size='sm'
+                    variant='secondary'
+                    label='智能补全'
+                  />
+                  <AIHelperButton
+                    type='validate'
+                    onClick={() => handleOpenAIFormValidator('create')}
+                    size='sm'
+                    variant='secondary'
+                    label='AI 校验'
+                  />
+                  <Button type='submit'>创建</Button>
+                </div>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -801,7 +870,7 @@ const HrmEmployeePage: React.FC = () => {
                     </Select>
                   </div>
                 </div>
-                <DialogFooter className='mt-6'>
+                <DialogFooter className='mt-6 flex items-center justify-between'>
                   <Button
                     type='button'
                     variant='secondary'
@@ -812,7 +881,30 @@ const HrmEmployeePage: React.FC = () => {
                   >
                     取消
                   </Button>
-                  <Button type='submit'>保存</Button>
+                  <div className='flex items-center gap-2'>
+                    <AIHelperButton
+                      type='generate'
+                      onClick={() => handleOpenAICodeGenerator('edit')}
+                      size='sm'
+                      variant='secondary'
+                      label='生成工号'
+                    />
+                    <AIHelperButton
+                      type='complete'
+                      onClick={() => handleOpenAIDataCompleter('edit')}
+                      size='sm'
+                      variant='secondary'
+                      label='智能补全'
+                    />
+                    <AIHelperButton
+                      type='validate'
+                      onClick={() => handleOpenAIFormValidator('edit')}
+                      size='sm'
+                      variant='secondary'
+                      label='AI 校验'
+                    />
+                    <Button type='submit'>保存</Button>
+                  </div>
                 </DialogFooter>
               </form>
             )}
@@ -879,6 +971,44 @@ const HrmEmployeePage: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AICodeGenerator
+          isOpen={showAICodeGenerator}
+          onClose={() => setShowAICodeGenerator(false)}
+          context={{
+            entityType: 'employee',
+            name: (formData as Employee)?.name,
+          }}
+          onSelect={handleSelectAICode}
+          existingCodes={data.items.map(e => e.employee_number).filter(Boolean) as string[]}
+        />
+
+        <AIDataCompleter
+          isOpen={showAIDataCompleter}
+          onClose={() => setShowAIDataCompleter(false)}
+          completeRequest={{
+            partialData: formData,
+            context: {
+              module: 'hrm',
+              entityType: 'employee',
+            },
+          }}
+          onApplyCompletion={handleApplyCompletion}
+        />
+
+        <AIFormValidator
+          isOpen={showAIFormValidator}
+          onClose={() => setShowAIFormValidator(false)}
+          validateRequest={{
+            data: formData,
+            context: {
+              module: 'hrm',
+              entityType: 'employee',
+            },
+          }}
+          onApplySuggestions={handleApplyValidationSuggestions}
+          onFixIssue={() => {}}
+        />
       </div>
     </HrmLayout>
   );

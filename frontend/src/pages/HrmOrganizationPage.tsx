@@ -3,6 +3,7 @@ import { Building, Building2, Search, Plus, Edit, Trash2, Eye, X, Users, Chevron
 import { companyApi, departmentApi, employeeApi, type Company, type Department, type Employee } from '../api/hrm';
 import { useAppStore } from '../store';
 import { HrmLayout } from '../components/HrmLayout';
+import { AIHelperButton, AICodeGenerator } from '../components/ai';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,10 +39,15 @@ const HrmOrganizationPage: React.FC = () => {
 
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [showDeptModal, setShowDeptModal] = useState(false);
+  const [showAICodeGenerator, setShowAICodeGenerator] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
   
   const [companyFormData, setCompanyFormData] = useState<Partial<Company>>({});
   const [deptFormData, setDeptFormData] = useState<Partial<Department>>({});
+
+  const handleSelectAICode = (code: string) => {
+    setDeptFormData(prev => ({ ...prev, code }));
+  };
 
   const toggleExpand = (id: string) => {
     const newExpanded = new Set(expandedIds);
@@ -607,17 +613,35 @@ const HrmOrganizationPage: React.FC = () => {
               />
             </div>
             <div>
+              <Label>部门编码</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={deptFormData.code || ''}
+                  onChange={(e) => setDeptFormData({ ...deptFormData, code: e.target.value })}
+                  disabled={modalMode === 'view'}
+                  placeholder="请输入部门编码"
+                />
+                <AIHelperButton
+                  type="generate"
+                  onClick={() => setShowAICodeGenerator(true)}
+                  size="sm"
+                  label="AI生成"
+                  variant="secondary"
+                />
+              </div>
+            </div>
+            <div>
               <Label>上级部门</Label>
               <Select
-                value={deptFormData.parent_id || ''}
-                onValueChange={(value) => setDeptFormData({ ...deptFormData, parent_id: value || undefined })}
+                value={deptFormData.parent_id || 'none'}
+                onValueChange={(value) => setDeptFormData({ ...deptFormData, parent_id: value === 'none' ? undefined : value })}
                 disabled={modalMode === 'view'}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="请选择上级部门（可选）" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">无上级部门</SelectItem>
+                  <SelectItem value="none">无上级部门</SelectItem>
                   {availableParentDepts.map(dept => (
                     <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                   ))}
@@ -662,6 +686,17 @@ const HrmOrganizationPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AICodeGenerator
+        isOpen={showAICodeGenerator}
+        onClose={() => setShowAICodeGenerator(false)}
+        context={{
+          entityType: 'department',
+          name: deptFormData.name,
+        }}
+        onSelect={handleSelectAICode}
+        existingCodes={departments.map(d => d.code).filter(Boolean) as string[]}
+      />
     </HrmLayout>
   );
 };

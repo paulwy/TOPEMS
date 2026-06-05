@@ -73,9 +73,9 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
         <div className="flex items-center space-x-2">
           <Building2 className="w-4 h-4 text-slate-400" />
           <Select
-            value={value.companyId || ''}
+            value={value.companyId || 'all'}
             onValueChange={(companyId) =>
-              onChange({ companyId: companyId || undefined, departmentId: undefined, employeeId: undefined })
+              onChange({ companyId: companyId === 'all' ? undefined : companyId, departmentId: undefined, employeeId: undefined })
             }
             disabled={disabled}
           >
@@ -83,7 +83,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
               <SelectValue placeholder="选择公司" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全部公司</SelectItem>
+              <SelectItem value="all">全部公司</SelectItem>
               {companies.map((company) => (
                 <SelectItem key={company.id} value={company.id}>
                   {company.name}
@@ -98,9 +98,9 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
         <div className="flex items-center space-x-2">
           <Users className="w-4 h-4 text-slate-400" />
           <Select
-            value={value.departmentId || ''}
+            value={value.departmentId || 'all'}
             onValueChange={(departmentId) =>
-              onChange({ ...value, departmentId: departmentId || undefined, employeeId: undefined })
+              onChange({ ...value, departmentId: departmentId === 'all' ? undefined : departmentId, employeeId: undefined })
             }
             disabled={disabled || (!value.companyId && companies.length > 0)}
           >
@@ -108,7 +108,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
               <SelectValue placeholder="选择部门" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全部部门</SelectItem>
+              <SelectItem value="all">全部部门</SelectItem>
               {filteredDepartments.map((department) => (
                 <SelectItem key={department.id} value={department.id}>
                   {department.name}
@@ -123,15 +123,15 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
         <div className="flex items-center space-x-2">
           <User className="w-4 h-4 text-slate-400" />
           <Select
-            value={value.employeeId || ''}
-            onValueChange={(employeeId) => onChange({ ...value, employeeId: employeeId || undefined })}
+            value={value.employeeId || 'all'}
+            onValueChange={(employeeId) => onChange({ ...value, employeeId: employeeId === 'all' ? undefined : employeeId })}
             disabled={disabled || (!value.departmentId && departments.length > 0)}
           >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="选择员工" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全部员工</SelectItem>
+              <SelectItem value="all">全部员工</SelectItem>
               {filteredEmployees.map((employee) => (
                 <SelectItem key={employee.id} value={employee.id}>
                   {employee.name}

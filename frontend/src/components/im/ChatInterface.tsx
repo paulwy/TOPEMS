@@ -1,18 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Users, Bell, Search, Plus, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MessageSquare, Users, Bell, Search, Plus, ChevronLeft, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { imApi, ChatRoom, ChatMessage } from '../../api/im';
+import { imApi, ChatRoom, ChatMessage, Friend } from '../../api/im';
 import { useWebSocket, WsMessage } from '../../hooks/useWebSocket';
 import { ChatRoomItem } from './ChatRoomItem';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
 import { CreateRoomModal } from './CreateRoomModal';
 import { NotificationList } from './NotificationList';
+import { ContactList } from './ContactList';
+import { ChatSettingsModal } from './ChatSettingsModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '../../store';
 
-type TabType = 'all' | 'direct' | 'group' | 'notifications';
+type TabType = 'all' | 'direct' | 'group' | 'notifications' | 'contacts';
 
 export const ChatInterface: React.FC = () => {
   const navigate = useNavigate();
@@ -27,31 +29,39 @@ export const ChatInterface: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [messageSearchQuery, setMessageSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // WebSocket 回调函数
+  const handleWsMessage = useCallback((message: WsMessage) => {
+    if (selectedRoom && message.chat_id === selectedRoom.id) {
+      const newMessage: ChatMessage = {
+        id: Date.now().toString(),
+        chat_id: message.chat_id!,
+        sender_id: message.sender_id,
+        sender_name: message.sender_name,
+        message_type: 'text',
+        content: message.content,
+        created_at: message.timestamp,
+        is_read: false,
+      };
+      setMessages((prev) => [...prev, newMessage]);
+    }
+  }, [selectedRoom]);
+
+  const handleWsOpen = useCallback(() => {
+    addNotification({ title: '连接成功', message: 'WebSocket 连接已建立', type: 'success' });
+  }, [addNotification]);
+
+  const handleWsClose = useCallback(() => {
+    addNotification({ title: '连接断开', message: 'WebSocket 连接已断开', type: 'warning' });
+  }, [addNotification]);
 
   // WebSocket 连接
   const { isConnected, connect, disconnect, send } = useWebSocket({
-    onMessage: (message: WsMessage) => {
-      if (selectedRoom && message.chat_id === selectedRoom.id) {
-        const newMessage: ChatMessage = {
-          id: Date.now().toString(),
-          chat_id: message.chat_id!,
-          sender_id: message.sender_id,
-          sender_name: message.sender_name,
-          message_type: 'text',
-          content: message.content,
-          created_at: message.timestamp,
-          is_read: false,
-        };
-        setMessages((prev) => [...prev, newMessage]);
-      }
-    },
-    onOpen: () => {
-      addNotification({ title: '连接成功', message: 'WebSocket 连接已建立', type: 'success' });
-    },
-    onClose: () => {
-      addNotification({ title: '连接断开', message: 'WebSocket 连接已断开', type: 'warning' });
-    },
+    onMessage: handleWsMessage,
+    onOpen: handleWsOpen,
+    onClose: handleWsClose,
   });
 
   // 加载聊天室列表
@@ -91,6 +101,37 @@ export const ChatInterface: React.FC = () => {
       addNotification({ title: '加载失败', message: '无法加载聊天室列表', type: 'error' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSelectContact = async (friend: Friend) => {
+    try {
+      const existingRoom = chatRooms.find(
+        (room) => room.room_type === 'direct' && room.members.includes(friend.friend_id)
+      );
+
+      if (existingRoom) {
+        setSelectedRoom(existingRoom);
+        loadMessages(existingRoom.id);
+      } else {
+        const response = await imApi.createChatRoom({
+          name: friend.friend_name,
+          room_type: 'direct',
+          members: ['current-user', friend.friend_id],
+          created_by: 'current-user',
+        });
+
+        if (response.success && response.data) {
+          const newRoom = response.data;
+          setChatRooms((prev) => [newRoom, ...prev]);
+          setSelectedRoom(newRoom);
+          setMessages([]);
+        }
+      }
+      setActiveTab('direct');
+    } catch (error) {
+      console.error('Failed to create chat room:', error);
+      addNotification({ title: '创建失败', message: '无法创建聊天会话', type: 'error' });
     }
   };
 
@@ -169,6 +210,79 @@ export const ChatInterface: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleMuteRoom = async () => {
+    if (!selectedRoom) return;
+    try {
+      const response = await imApi.muteChatRoom(selectedRoom.id);
+      if (response.success) {
+        setChatRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, is_muted: true } : r));
+        setSelectedRoom(prev => prev ? { ...prev, is_muted: true } : null);
+        addNotification({ title: '成功', message: '已开启免打扰', type: 'success' });
+      }
+    } catch (error) {
+      console.error('Failed to mute room:', error);
+    }
+  };
+
+  const handleUnmuteRoom = async () => {
+    if (!selectedRoom) return;
+    try {
+      const response = await imApi.unmuteChatRoom(selectedRoom.id);
+      if (response.success) {
+        setChatRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, is_muted: false } : r));
+        setSelectedRoom(prev => prev ? { ...prev, is_muted: false } : null);
+        addNotification({ title: '成功', message: '已关闭免打扰', type: 'success' });
+      }
+    } catch (error) {
+      console.error('Failed to unmute room:', error);
+    }
+  };
+
+  const handlePinRoom = async () => {
+    if (!selectedRoom) return;
+    try {
+      const response = await imApi.pinChatRoom(selectedRoom.id);
+      if (response.success) {
+        setChatRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, is_pinned: true } : r));
+        setSelectedRoom(prev => prev ? { ...prev, is_pinned: true } : null);
+        addNotification({ title: '成功', message: '已置顶会话', type: 'success' });
+      }
+    } catch (error) {
+      console.error('Failed to pin room:', error);
+    }
+  };
+
+  const handleUnpinRoom = async () => {
+    if (!selectedRoom) return;
+    try {
+      const response = await imApi.unpinChatRoom(selectedRoom.id);
+      if (response.success) {
+        setChatRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, is_pinned: false } : r));
+        setSelectedRoom(prev => prev ? { ...prev, is_pinned: false } : null);
+        addNotification({ title: '成功', message: '已取消置顶', type: 'success' });
+      }
+    } catch (error) {
+      console.error('Failed to unpin room:', error);
+    }
+  };
+
+  const handleDeleteRoom = async () => {
+    if (!selectedRoom || !confirm('确定要删除这个会话吗？')) return;
+    try {
+      const response = await imApi.deleteChatRoom(selectedRoom.id);
+      if (response.success) {
+        setChatRooms(prev => prev.filter(r => r.id !== selectedRoom.id));
+        setSelectedRoom(null);
+        setMessages([]);
+        setIsSettingsModalOpen(false);
+        addNotification({ title: '成功', message: '会话已删除', type: 'success' });
+      }
+    } catch (error) {
+      console.error('Failed to delete room:', error);
+      addNotification({ title: '失败', message: '删除会话失败', type: 'error' });
+    }
+  };
+
   const handleSendMessage = async (
     content: string,
     type: 'text' | 'image' | 'file',
@@ -243,6 +357,7 @@ export const ChatInterface: React.FC = () => {
     { id: 'all' as TabType, label: '全部', icon: MessageSquare },
     { id: 'direct' as TabType, label: '私聊', icon: MessageSquare },
     { id: 'group' as TabType, label: '群聊', icon: Users },
+    { id: 'contacts' as TabType, label: '通讯录', icon: User },
     { id: 'notifications' as TabType, label: '通知', icon: Bell },
   ];
 
@@ -301,10 +416,14 @@ export const ChatInterface: React.FC = () => {
           })}
         </div>
 
-        {/* Chat Rooms List or Notifications */}
+        {/* Chat Rooms List, Contacts or Notifications */}
         {activeTab === 'notifications' ? (
           <div className="flex-1 overflow-y-auto">
             <NotificationList />
+          </div>
+        ) : activeTab === 'contacts' ? (
+          <div className="flex-1 overflow-y-auto">
+            <ContactList onSelectContact={(friend) => handleSelectContact(friend)} />
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-2">
@@ -324,6 +443,11 @@ export const ChatInterface: React.FC = () => {
                   chatRoom={room}
                   isActive={selectedRoom?.id === room.id}
                   onClick={() => setSelectedRoom(room)}
+                  onSettings={(e) => {
+                    e.stopPropagation();
+                    setSelectedRoom(room);
+                    setIsSettingsModalOpen(true);
+                  }}
                 />
               ))
             )}
@@ -333,7 +457,7 @@ export const ChatInterface: React.FC = () => {
 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
-        {selectedRoom && activeTab !== 'notifications' ? (
+        {selectedRoom && activeTab !== 'notifications' && activeTab !== 'contacts' ? (
           <>
             {/* Chat Header */}
             <div className="bg-white border-b border-gray-200 p-4">
@@ -428,6 +552,20 @@ export const ChatInterface: React.FC = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onCreated={loadChatRooms}
       />
+
+      {/* Chat Settings Modal */}
+      {selectedRoom && (
+        <ChatSettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          chatRoom={selectedRoom}
+          onMute={handleMuteRoom}
+          onUnmute={handleUnmuteRoom}
+          onPin={handlePinRoom}
+          onUnpin={handleUnpinRoom}
+          onDelete={handleDeleteRoom}
+        />
+      )}
     </div>
   );
 };

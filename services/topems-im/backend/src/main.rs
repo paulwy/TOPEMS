@@ -17,7 +17,7 @@ use serde_json::json;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tokio::sync::broadcast;
 use futures_util::{SinkExt, StreamExt};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use tower_http::services::ServeDir;
 
 use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
@@ -94,7 +94,7 @@ async fn create_chat_room(
     Json(payload): Json<models::CreateChatRoom>,
 ) -> Json<ApiResponse<models::ChatRoom>> {
     let id = Uuid::new_v4();
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
 
     let result = sqlx::query_as!(
         models::ChatRoom,
@@ -154,7 +154,7 @@ async fn update_chat_room(
     Path(chat_id): Path<Uuid>,
     Json(payload): Json<models::UpdateChatRoom>,
 ) -> Json<ApiResponse<models::ChatRoom>> {
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
 
     let result = sqlx::query_as!(
         models::ChatRoom,
@@ -215,14 +215,15 @@ async fn add_chat_room_member(
     State(state): State<AppState>,
     Path(chat_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<models::ChatRoom>> {
+) -> Json<ApiResponse<serde_json::Value>> {
     let user_id = payload.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
     
     if user_id.is_empty() {
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as!(
+        models::ChatRoom,
         r#"
         UPDATE chat_rooms
         SET members = members || $1::jsonb,
@@ -231,14 +232,14 @@ async fn add_chat_room_member(
         RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
         "#,
         json!([user_id]),
-        Utc::now(),
+        Utc::now().naive_utc(),
         chat_id
     )
     .fetch_optional(&state.pool)
     .await;
 
     match result {
-        Ok(Some(room)) => Json(ApiResponse::success(room, "添加成员成功")),
+        Ok(Some(room)) => Json(ApiResponse::success(json!(room), "添加成员成功")),
         Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
         Err(e) => {
             tracing::error!("Failed to add member: {}", e);
@@ -250,8 +251,9 @@ async fn add_chat_room_member(
 async fn remove_chat_room_member(
     State(state): State<AppState>,
     Path((chat_id, user_id)): Path<(Uuid, String)>,
-) -> Json<ApiResponse<models::ChatRoom>> {
-    let result = sqlx::query!(
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query_as!(
+        models::ChatRoom,
         r#"
         UPDATE chat_rooms
         SET members = members - $1,
@@ -260,14 +262,14 @@ async fn remove_chat_room_member(
         RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
         "#,
         user_id,
-        Utc::now(),
+        Utc::now().naive_utc(),
         chat_id
     )
     .fetch_optional(&state.pool)
     .await;
 
     match result {
-        Ok(Some(room)) => Json(ApiResponse::success(room, "移除成员成功")),
+        Ok(Some(room)) => Json(ApiResponse::success(json!(room), "移除成员成功")),
         Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
         Err(e) => {
             tracing::error!("Failed to remove member: {}", e);
@@ -342,7 +344,7 @@ async fn create_chat_message(
     };
 
     let id = Uuid::new_v4();
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
 
     let result = sqlx::query_as!(
         models::ChatMessage,
@@ -440,7 +442,7 @@ async fn delete_chat_message(
                 SET last_message = NULL, last_message_time = NULL, updated_at = $1
                 WHERE id = $2 AND last_message = $3
                 "#,
-                Utc::now(),
+                Utc::now().naive_utc(),
                 record.chat_id,
                 record.content
             )
@@ -491,7 +493,7 @@ async fn update_chat_message(
                 WHERE id = $3
                 "#,
                 content,
-                Utc::now(),
+                Utc::now().naive_utc(),
                 message.chat_id
             )
             .execute(&state.pool)
@@ -569,7 +571,7 @@ async fn create_project_group(
     Json(payload): Json<models::CreateProjectGroup>,
 ) -> Json<ApiResponse<models::ProjectGroup>> {
     let id = Uuid::new_v4();
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
     let project_id = payload.project_id.and_then(|p| Uuid::parse_str(&p).ok());
 
     let result = sqlx::query_as!(
@@ -604,24 +606,36 @@ async fn list_notifications(
   State(state): State<AppState>,
   Path(user_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-  let result = sqlx::query_as!(
-    models::Notification,
+  let result = sqlx::query(
     r#"
-    SELECT id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
+    SELECT id, user_id, title, content, notification_type, is_read, created_at
     FROM notifications
     WHERE user_id = $1
     ORDER BY created_at DESC
-    "#,
-    user_id
+    "#
   )
+  .bind(&user_id)
   .fetch_all(&state.pool)
   .await;
 
     match result {
-        Ok(notifications) => Json(ApiResponse::success(json!({
-            "notifications": notifications,
-            "total": notifications.len()
-        }), "获取通知列表成功")),
+        Ok(rows) => {
+            let notifications: Vec<models::Notification> = rows.iter()
+                .map(|row| models::Notification {
+                    id: row.get("id"),
+                    user_id: row.get("user_id"),
+                    title: row.get("title"),
+                    content: row.get("content"),
+                    notification_type: row.get("notification_type"),
+                    is_read: row.get("is_read"),
+                    created_at: row.get("created_at"),
+                })
+                .collect();
+            Json(ApiResponse::success(json!({
+                "notifications": notifications,
+                "total": notifications.len()
+            }), "获取通知列表成功"))
+        },
         Err(e) => {
             tracing::error!("Failed to list notifications: {}", e);
             Json(ApiResponse::error(500, "获取通知列表失败"))
@@ -634,30 +648,37 @@ async fn create_notification(
   Json(payload): Json<models::CreateNotification>,
 ) -> Json<ApiResponse<models::Notification>> {
   let id = Uuid::new_v4();
-  let now = Utc::now();
-  let related_id = payload.related_id.and_then(|r| Uuid::parse_str(&r).ok());
+  let now = Utc::now().naive_utc();
 
-  let result = sqlx::query_as!(
-    models::Notification,
+  let result = sqlx::query(
     r#"
-    INSERT INTO notifications (id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, false, $8)
-    RETURNING id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
-    "#,
-    id,
-    payload.user_id,
-    payload.title,
-    payload.content,
-    payload.notification_type,
-    related_id,
-    payload.related_type,
-    now
+    INSERT INTO notifications (id, user_id, title, content, notification_type, is_read, created_at)
+    VALUES ($1, $2, $3, $4, $5, false, $6)
+    RETURNING id, user_id, title, content, notification_type, is_read, created_at
+    "#
   )
+  .bind(id)
+  .bind(&payload.user_id)
+  .bind(&payload.title)
+  .bind(&payload.content)
+  .bind(&payload.notification_type)
+  .bind(now)
   .fetch_one(&state.pool)
   .await;
 
     match result {
-        Ok(notification) => Json(ApiResponse::success(notification, "创建通知成功")),
+        Ok(row) => {
+            let notification = models::Notification {
+                id: row.get("id"),
+                user_id: row.get("user_id"),
+                title: row.get("title"),
+                content: row.get("content"),
+                notification_type: row.get("notification_type"),
+                is_read: row.get("is_read"),
+                created_at: row.get("created_at"),
+            };
+            Json(ApiResponse::success(notification, "创建通知成功"))
+        },
         Err(e) => {
             tracing::error!("Failed to create notification: {}", e);
             Json(ApiResponse::error(500, "创建通知失败"))
@@ -669,21 +690,31 @@ async fn mark_notification_read(
   State(state): State<AppState>,
   Path(notification_id): Path<Uuid>,
 ) -> Json<ApiResponse<models::Notification>> {
-  let result = sqlx::query_as!(
-    models::Notification,
+  let result = sqlx::query(
     r#"
     UPDATE notifications
     SET is_read = true
     WHERE id = $1
-    RETURNING id, user_id, title, content, notification_type, related_id, related_type, is_read, created_at
-    "#,
-    notification_id
+    RETURNING id, user_id, title, content, notification_type, is_read, created_at
+    "#
   )
+  .bind(notification_id)
   .fetch_optional(&state.pool)
   .await;
 
     match result {
-        Ok(Some(notification)) => Json(ApiResponse::success(notification, "标记通知已读成功")),
+        Ok(Some(row)) => {
+            let notification = models::Notification {
+                id: row.get("id"),
+                user_id: row.get("user_id"),
+                title: row.get("title"),
+                content: row.get("content"),
+                notification_type: row.get("notification_type"),
+                is_read: row.get("is_read"),
+                created_at: row.get("created_at"),
+            };
+            Json(ApiResponse::success(notification, "标记通知已读成功"))
+        },
         Ok(None) => Json(ApiResponse::error(404, "通知不存在")),
         Err(e) => {
             tracing::error!("Failed to mark notification read: {}", e);
@@ -696,14 +727,14 @@ async fn mark_all_notifications_read(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE notifications
         SET is_read = true
         WHERE user_id = $1
-        "#,
-        user_id
+        "#
     )
+    .bind(&user_id)
     .execute(&state.pool)
     .await;
 
@@ -797,7 +828,7 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
                         
                         if let Some(cid) = chat_id {
                             let id = Uuid::new_v4();
-                            let now = Utc::now();
+                            let now = Utc::now().naive_utc();
 
                             // 保存消息到数据库
                             let result = sqlx::query!(
@@ -860,7 +891,7 @@ async fn ws_connect(
     }
 
     // 更新用户在线状态
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
     sqlx::query!(
         r#"
         INSERT INTO user_online_status (user_id, is_online, last_seen)
@@ -891,7 +922,7 @@ async fn ws_disconnect(
     }
 
     // 更新用户离线状态
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
     sqlx::query!(
         r#"
         UPDATE user_online_status
@@ -940,6 +971,465 @@ async fn get_user_online_status(
         Err(e) => {
             tracing::error!("Failed to get user online status: {}", e);
             Json(ApiResponse::error(500, "获取用户在线状态失败"))
+        }
+    }
+}
+
+async fn list_friends(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query!(
+        r#"
+        SELECT f.id, f.friend_id, f.friend_name, f.status, f.created_at, u.is_online, u.last_seen
+        FROM friends f
+        LEFT JOIN user_online_status u ON f.friend_id = u.user_id
+        WHERE f.user_id = $1
+        ORDER BY f.status, f.updated_at DESC
+        "#,
+        user_id
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let friends: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|row| json!({
+                    "id": row.id,
+                    "friend_id": row.friend_id,
+                    "friend_name": row.friend_name,
+                    "status": row.status,
+                    "created_at": row.created_at,
+                    "is_online": row.is_online.unwrap_or(false),
+                    "last_seen": row.last_seen
+                }))
+                .collect();
+            Json(ApiResponse::success(json!({ "friends": friends }), "获取好友列表成功"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to get friends: {}", e);
+            Json(ApiResponse::error(500, "获取好友列表失败"))
+        }
+    }
+}
+
+async fn send_friend_request(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+    Json(body): Json<CreateFriendRequest>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let now = Utc::now().naive_utc();
+    let id = Uuid::new_v4();
+
+    let result = sqlx::query!(
+        r#"
+        INSERT INTO friends (id, user_id, friend_id, friend_name, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, 'pending', $5, $6)
+        ON CONFLICT (user_id, friend_id) DO NOTHING
+        "#,
+        id,
+        user_id,
+        body.friend_id,
+        body.friend_name,
+        now,
+        now
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            Ok(Json(ApiResponse::success(json!({ "request_sent": true }), "好友请求已发送")))
+        }
+        Err(e) => {
+            tracing::error!("Failed to send friend request: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn accept_friend_request(
+    State(state): State<AppState>,
+    Path((user_id, friend_id)): Path<(String, String)>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let now = Utc::now().naive_utc();
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE friends
+        SET status = 'accepted', updated_at = $1
+        WHERE user_id = $2 AND friend_id = $3 AND status = 'pending'
+        "#,
+        now,
+        user_id,
+        friend_id
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            Ok(Json(ApiResponse::success(json!({ "accepted": true }), "好友请求已接受")))
+        }
+        Err(e) => {
+            tracing::error!("Failed to accept friend request: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn reject_friend_request(
+    State(state): State<AppState>,
+    Path((user_id, friend_id)): Path<(String, String)>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM friends
+        WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'
+        "#,
+        user_id,
+        friend_id
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            Ok(Json(ApiResponse::success(json!({ "rejected": true }), "好友请求已拒绝")))
+        }
+        Err(e) => {
+            tracing::error!("Failed to reject friend request: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn remove_friend(
+    State(state): State<AppState>,
+    Path((user_id, friend_id)): Path<(String, String)>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM friends
+        WHERE user_id = $1 AND friend_id = $2
+        "#,
+        user_id,
+        friend_id
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            Ok(Json(ApiResponse::success(json!({ "removed": true }), "好友已删除")))
+        }
+        Err(e) => {
+            tracing::error!("Failed to remove friend: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn list_contact_groups(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query!(
+        r#"
+        SELECT * FROM contact_groups WHERE user_id = $1 ORDER BY updated_at DESC
+        "#,
+        user_id
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(groups) => {
+            let groups_json: Vec<serde_json::Value> = groups
+                .into_iter()
+                .map(|g| json!({
+                    "id": g.id,
+                    "name": g.name,
+                    "created_at": g.created_at,
+                    "updated_at": g.updated_at
+                }))
+                .collect();
+            Json(ApiResponse::success(json!({ "groups": groups_json }), "获取联系人分组成功"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to get contact groups: {}", e);
+            Json(ApiResponse::error(500, "获取联系人分组失败"))
+        }
+    }
+}
+
+async fn create_contact_group(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+    Json(body): Json<CreateContactGroup>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let now = Utc::now().naive_utc();
+    let id = Uuid::new_v4();
+
+    let result = sqlx::query!(
+        r#"
+        INSERT INTO contact_groups (id, user_id, name, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5)
+        "#,
+        id,
+        user_id,
+        body.name,
+        now,
+        now
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            Ok(Json(ApiResponse::success(json!({ "group_id": id }), "联系人分组创建成功")))
+        }
+        Err(e) => {
+            tracing::error!("Failed to create contact group: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn update_contact_group(
+    State(state): State<AppState>,
+    Path((user_id, group_id)): Path<(String, String)>,
+    Json(body): Json<CreateContactGroup>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let now = Utc::now().naive_utc();
+    let group_uuid = Uuid::parse_str(&group_id).map_err(|_| StatusCode::BAD_REQUEST)?;
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE contact_groups
+        SET name = $1, updated_at = $2
+        WHERE id = $3 AND user_id = $4
+        "#,
+        body.name,
+        now,
+        group_uuid,
+        user_id
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            Ok(Json(ApiResponse::success(json!({ "updated": true }), "联系人分组更新成功")))
+        }
+        Err(e) => {
+            tracing::error!("Failed to update contact group: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn delete_contact_group(
+    State(state): State<AppState>,
+    Path((user_id, group_id)): Path<(String, String)>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let group_uuid = Uuid::parse_str(&group_id).map_err(|_| StatusCode::BAD_REQUEST)?;
+
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM contact_groups
+        WHERE id = $1 AND user_id = $2
+        "#,
+        group_uuid,
+        user_id
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            Ok(Json(ApiResponse::success(json!({ "deleted": true }), "联系人分组已删除")))
+        }
+        Err(e) => {
+            tracing::error!("Failed to delete contact group: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn add_contact_group_member(
+    State(state): State<AppState>,
+    Path((user_id, group_id)): Path<(String, String)>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let member_user_id = body["user_id"].as_str().ok_or(StatusCode::BAD_REQUEST)?;
+    let group_uuid = Uuid::parse_str(&group_id).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let id = Uuid::new_v4();
+    let now = Utc::now().naive_utc();
+
+    let result = sqlx::query!(
+        r#"
+        INSERT INTO contact_group_members (id, group_id, user_id, created_at)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (group_id, user_id) DO NOTHING
+        "#,
+        id,
+        group_uuid,
+        member_user_id,
+        now
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            Ok(Json(ApiResponse::success(json!({ "added": true }), "成员已添加到分组")))
+        }
+        Err(e) => {
+            tracing::error!("Failed to add contact group member: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn remove_contact_group_member(
+    State(state): State<AppState>,
+    Path((user_id, group_id, member_user_id)): Path<(String, String, String)>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let group_uuid = Uuid::parse_str(&group_id).map_err(|_| StatusCode::BAD_REQUEST)?;
+
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM contact_group_members
+        WHERE group_id = $1 AND user_id = $2
+        "#,
+        group_uuid,
+        member_user_id
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            Ok(Json(ApiResponse::success(json!({ "removed": true }), "成员已从分组移除")))
+        }
+        Err(e) => {
+            tracing::error!("Failed to remove contact group member: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn mute_chat_room(
+    State(state): State<AppState>,
+    Path(chat_id): Path<String>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let chat_uuid = Uuid::parse_str(&chat_id).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let now = Utc::now().naive_utc();
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE chat_rooms
+        SET is_muted = true, updated_at = $1
+        WHERE id = $2
+        "#,
+        now,
+        chat_uuid
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Ok(Json(ApiResponse::success(json!({ "muted": true }), "已开启免打扰"))),
+        Err(e) => {
+            tracing::error!("Failed to mute chat room: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn unmute_chat_room(
+    State(state): State<AppState>,
+    Path(chat_id): Path<String>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let chat_uuid = Uuid::parse_str(&chat_id).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let now = Utc::now().naive_utc();
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE chat_rooms
+        SET is_muted = false, updated_at = $1
+        WHERE id = $2
+        "#,
+        now,
+        chat_uuid
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Ok(Json(ApiResponse::success(json!({ "muted": false }), "已关闭免打扰"))),
+        Err(e) => {
+            tracing::error!("Failed to unmute chat room: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn pin_chat_room(
+    State(state): State<AppState>,
+    Path(chat_id): Path<String>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let chat_uuid = Uuid::parse_str(&chat_id).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let now = Utc::now().naive_utc();
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE chat_rooms
+        SET is_pinned = true, updated_at = $1
+        WHERE id = $2
+        "#,
+        now,
+        chat_uuid
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Ok(Json(ApiResponse::success(json!({ "pinned": true }), "已置顶会话"))),
+        Err(e) => {
+            tracing::error!("Failed to pin chat room: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+async fn unpin_chat_room(
+    State(state): State<AppState>,
+    Path(chat_id): Path<String>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
+    let chat_uuid = Uuid::parse_str(&chat_id).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let now = Utc::now().naive_utc();
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE chat_rooms
+        SET is_pinned = false, updated_at = $1
+        WHERE id = $2
+        "#,
+        now,
+        chat_uuid
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Ok(Json(ApiResponse::success(json!({ "pinned": false }), "已取消置顶"))),
+        Err(e) => {
+            tracing::error!("Failed to unpin chat room: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
 }
@@ -1008,6 +1498,21 @@ async fn main() -> Result<()> {
         .route("/api/v1/ws/connect/{user_id}", axum::routing::post(ws_connect))
         .route("/api/v1/ws/disconnect/{user_id}", axum::routing::post(ws_disconnect))
         .route("/api/v1/files/upload", axum::routing::post(upload_file))
+        .route("/api/v1/friends", axum::routing::get(list_friends))
+        .route("/api/v1/friends", axum::routing::post(send_friend_request))
+        .route("/api/v1/friends/{friend_id}/accept", axum::routing::put(accept_friend_request))
+        .route("/api/v1/friends/{friend_id}/reject", axum::routing::put(reject_friend_request))
+        .route("/api/v1/friends/{friend_id}", axum::routing::delete(remove_friend))
+        .route("/api/v1/contact-groups", axum::routing::get(list_contact_groups))
+        .route("/api/v1/contact-groups", axum::routing::post(create_contact_group))
+        .route("/api/v1/contact-groups/{group_id}", axum::routing::put(update_contact_group))
+        .route("/api/v1/contact-groups/{group_id}", axum::routing::delete(delete_contact_group))
+        .route("/api/v1/contact-groups/{group_id}/members", axum::routing::post(add_contact_group_member))
+        .route("/api/v1/contact-groups/{group_id}/members/{user_id}", axum::routing::delete(remove_contact_group_member))
+        .route("/api/v1/chat-rooms/{chat_id}/mute", axum::routing::put(mute_chat_room))
+        .route("/api/v1/chat-rooms/{chat_id}/unmute", axum::routing::put(unmute_chat_room))
+        .route("/api/v1/chat-rooms/{chat_id}/pin", axum::routing::put(pin_chat_room))
+        .route("/api/v1/chat-rooms/{chat_id}/unpin", axum::routing::put(unpin_chat_room))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

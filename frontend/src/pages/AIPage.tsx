@@ -18,6 +18,7 @@ import {
   FileSearch,
   Copy,
   Check,
+  Wand2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -27,6 +28,7 @@ import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { aiApi } from '../api/ai';
 import { useAppStore } from '../store';
 import AISettingsModal from '../components/AISettingsModal';
+import { AIDocumentGenerator } from '../components/ai';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +40,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Message {
   id: string;
@@ -104,6 +107,7 @@ const AIPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
+  const [activeTab, setActiveTab] = useState<'chat' | 'documents'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -116,6 +120,7 @@ const AIPage: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [currentRole, setCurrentRole] = useState<AssistantRole>('general');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [showDocumentGenerator, setShowDocumentGenerator] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 从本地存储加载对话历史
@@ -486,12 +491,17 @@ const AIPage: React.FC = () => {
     return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const handleDocumentGenerated = (content: string) => {
+    addNotification({ title: '文档生成成功', message: '文档已成功生成', type: 'success' });
+    setShowDocumentGenerator(false);
+  };
+
   return (
     <div className='flex h-screen bg-gray-50 dark:bg-gray-900'>
       <div className='w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col'>
         <div className='p-4 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex items-center justify-between mb-4'>
-            <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100'>AI 知识库</h2>
+            <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100'>AI 智能助手</h2>
             <div className='flex items-center space-x-2'>
               <Button variant='ghost' onClick={() => navigate('/dashboard')}>
                 <ChevronLeft className='w-5 h-5' />
@@ -499,104 +509,148 @@ const AIPage: React.FC = () => {
               <ModeToggle />
             </div>
           </div>
-          <Button onClick={handleNewConversation} className='w-full'>
-            <Plus className='w-4 h-4 mr-2' />
-            新对话
-          </Button>
+          <Tabs defaultValue={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'documents')} className='w-full mb-4'>
+            <TabsList className='w-full grid grid-cols-2'>
+              <TabsTrigger value='chat' className='flex items-center gap-1'>
+                <MessageSquare className='w-4 h-4' />
+                <span>AI 聊天</span>
+              </TabsTrigger>
+              <TabsTrigger value='documents' className='flex items-center gap-1'>
+                <Wand2 className='w-4 h-4' />
+                <span>文档生成</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {activeTab === 'chat' && (
+            <Button onClick={handleNewConversation} className='w-full'>
+              <Plus className='w-4 h-4 mr-2' />
+              新对话
+            </Button>
+          )}
         </div>
 
-        <div className='p-3 border-b border-gray-200 dark:border-gray-700'>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant='ghost' className='w-full justify-start'>
-                <div className='flex items-center space-x-2'>
-                  {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.icon}
-                  <span className='text-sm'>{ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}</span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className='w-56'>
-              {ASSISTANT_ROLES.map((role) => (
-                <DropdownMenuItem key={role.id} onClick={() => handleRoleChange(role.id)} className='cursor-pointer'>
+        {activeTab === 'chat' && (
+          <div className='p-3 border-b border-gray-200 dark:border-gray-700'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' className='w-full justify-start'>
                   <div className='flex items-center space-x-2'>
-                    {role.icon}
-                    <div>
-                      <p className='text-sm font-medium'>{role.name}</p>
-                      <p className='text-xs text-gray-500'>{role.description}</p>
-                    </div>
+                    {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.icon}
+                    <span className='text-sm'>{ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}</span>
                   </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <div className='flex-1 overflow-y-auto p-4'>
-          <h3 className='text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3'>最近对话</h3>
-          <div className='space-y-2'>
-            {conversations.map((conv) => (
-              <div key={conv.id} className='group'>
-                <div
-                  onClick={() => handleSelectConversation(conv.id)}
-                  className={`p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                    currentConversationId === conv.id
-                      ? 'bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800'
-                      : ''
-                  }`}
-                >
-                  <div className='flex items-start justify-between'>
-                    <div className='flex items-start space-x-3 flex-1 min-w-0'>
-                      <div className='flex items-center'>
-                        {conv.assistantRole && ASSISTANT_ROLES.find((r) => r.id === conv.assistantRole)?.icon}
-                        {!conv.assistantRole && (
-                          <MessageSquare
-                            className={`w-5 h-5 ${currentConversationId === conv.id ? 'text-purple-500' : 'text-gray-400'}`}
-                          />
-                        )}
-                      </div>
-                      <div className='flex-1 min-w-0'>
-                        <p
-                          className={`text-sm font-medium line-clamp-1 ${currentConversationId === conv.id ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-gray-100'}`}
-                        >
-                          {conv.title}
-                        </p>
-                        <p className='text-xs text-gray-500 dark:text-gray-400 line-clamp-1'>{conv.lastMessage}</p>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className='w-56'>
+                {ASSISTANT_ROLES.map((role) => (
+                  <DropdownMenuItem key={role.id} onClick={() => handleRoleChange(role.id)} className='cursor-pointer'>
+                    <div className='flex items-center space-x-2'>
+                      {role.icon}
+                      <div>
+                        <p className='text-sm font-medium'>{role.name}</p>
+                        <p className='text-xs text-gray-500'>{role.description}</p>
                       </div>
                     </div>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteConversation(conv.id);
-                      }}
-                      className='opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
-                    >
-                      <Trash2 className='w-4 h-4' />
-                    </Button>
-                  </div>
-                  <p className='text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center'>
-                    <Clock className='w-3 h-3 mr-1' />
-                    {formatTime(conv.updatedAt)}
-                  </p>
-                </div>
-              </div>
-            ))}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </div>
+        )}
+
+        {activeTab === 'chat' && (
+          <div className='flex-1 overflow-y-auto p-4'>
+            <h3 className='text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3'>最近对话</h3>
+            <div className='space-y-2'>
+              {conversations.map((conv) => (
+                <div key={conv.id} className='group'>
+                  <div
+                    onClick={() => handleSelectConversation(conv.id)}
+                    className={`p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+                      currentConversationId === conv.id
+                        ? 'bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800'
+                        : ''
+                    }`}
+                  >
+                    <div className='flex items-start justify-between'>
+                      <div className='flex items-start space-x-3 flex-1 min-w-0'>
+                        <div className='flex items-center'>
+                          {conv.assistantRole && ASSISTANT_ROLES.find((r) => r.id === conv.assistantRole)?.icon}
+                          {!conv.assistantRole && (
+                            <MessageSquare
+                              className={`w-5 h-5 ${currentConversationId === conv.id ? 'text-purple-500' : 'text-gray-400'}`}
+                            />
+                          )}
+                        </div>
+                        <div className='flex-1 min-w-0'>
+                          <p
+                            className={`text-sm font-medium line-clamp-1 ${currentConversationId === conv.id ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-gray-100'}`}
+                          >
+                            {conv.title}
+                          </p>
+                          <p className='text-xs text-gray-500 dark:text-gray-400 line-clamp-1'>{conv.lastMessage}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteConversation(conv.id);
+                        }}
+                        className='opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      >
+                        <Trash2 className='w-4 h-4' />
+                      </Button>
+                    </div>
+                    <p className='text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center'>
+                      <Clock className='w-3 h-3 mr-1' />
+                      {formatTime(conv.updatedAt)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'documents' && (
+          <div className='flex-1 overflow-y-auto p-4'>
+            <h3 className='text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3'>快速开始</h3>
+            <div className='space-y-3'>
+              <Card 
+                className='cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors' 
+                onClick={() => setShowDocumentGenerator(true)}
+              >
+                <CardContent className='p-4'>
+                  <div className='flex items-center gap-3'>
+                    <div className='p-2 bg-purple-100 rounded-lg'>
+                      <Wand2 className='w-5 h-5 text-purple-600' />
+                    </div>
+                    <div>
+                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>新建文档</p>
+                      <p className='text-xs text-gray-500 dark:text-gray-400'>选择模板，AI 自动生成</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
 
         <div className='p-4 border-t border-gray-200 dark:border-gray-700'>
           <div className='space-y-2'>
-            <Button variant='ghost' onClick={handleToggleDocuments} className='w-full justify-start'>
-              <BookOpen className='w-4 h-4 mr-3' />
-              文档库 ({documents.length})
-            </Button>
+            {activeTab === 'chat' && (
+              <Button variant='ghost' onClick={handleToggleDocuments} className='w-full justify-start'>
+                <BookOpen className='w-4 h-4 mr-3' />
+                文档库 ({documents.length})
+              </Button>
+            )}
             <Button variant='ghost' onClick={handleSettings} className='w-full justify-start'>
               <Settings className='w-4 h-4 mr-3' />
               设置
             </Button>
           </div>
-          {showDocuments && (
+          {showDocuments && activeTab === 'chat' && (
             <div className='mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg max-h-40 overflow-y-auto'>
               <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>知识库文档列表：</p>
               {documents.map((doc) => (
@@ -613,124 +667,163 @@ const AIPage: React.FC = () => {
       </div>
 
       <div className='flex-1 flex flex-col'>
-        <header className='bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-3'>
-              <div className='w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center'>
-                <Brain className='w-6 h-6 text-white' />
-              </div>
-              <div>
-                <h3 className='font-semibold text-gray-900 dark:text-gray-100'>
-                  TOPEMS {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}
-                </h3>
-                <p className='text-sm text-green-600 dark:text-green-400'>在线</p>
-              </div>
-            </div>
-            <div className='flex items-center space-x-3'>
-              <div className='relative'>
-                <Input
-                  type='text'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder='搜索对话...'
-                />
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={handleSearch}
-                  className='absolute right-2 top-1/2 -translate-y-1/2'
-                >
-                  <Search className='w-4 h-4' />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className='flex-1 overflow-y-auto p-6 space-y-6'>
-          {messages.map((message) => (
-            <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className='max-w-3xl w-full'>
-                <div
-                  className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
-                    }`}
-                  >
-                    {message.role === 'user' ? <span className='text-sm'>U</span> : <Bot className='w-5 h-5' />}
+        {activeTab === 'chat' && (
+          <>
+            <header className='bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center space-x-3'>
+                  <div className='w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center'>
+                    <Brain className='w-6 h-6 text-white' />
                   </div>
-                  <div
-                    className={`rounded-lg p-4 max-w-2xl ${
-                      message.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700'
-                    }`}
-                  >
-                    {message.role === 'user' ? (
-                      <p className='text-white whitespace-pre-wrap'>{message.content}</p>
-                    ) : (
-                      <MarkdownRenderer content={message.content} isDark={false} />
-                    )}
-                    <p
-                      className={`text-xs mt-2 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500'}`}
+                  <div>
+                    <h3 className='font-semibold text-gray-900 dark:text-gray-100'>
+                      TOPEMS {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}
+                    </h3>
+                    <p className='text-sm text-green-600 dark:text-green-400'>在线</p>
+                  </div>
+                </div>
+                <div className='flex items-center space-x-3'>
+                  <div className='relative'>
+                    <Input
+                      type='text'
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                      placeholder='搜索对话...'
+                    />
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={handleSearch}
+                      className='absolute right-2 top-1/2 -translate-y-1/2'
                     >
-                      {formatTime(message.timestamp)}
-                    </p>
+                      <Search className='w-4 h-4' />
+                    </Button>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            </header>
 
-          {isTyping && (
-            <div className='flex justify-start'>
-              <div className='flex items-start space-x-3'>
-                <div className='w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center'>
-                  <Bot className='w-5 h-5 text-white' />
+            <div className='flex-1 overflow-y-auto p-6 space-y-6'>
+              {messages.map((message) => (
+                <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className='max-w-3xl w-full'>
+                    <div
+                      className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          message.role === 'user'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
+                        }`}
+                      >
+                        {message.role === 'user' ? <span className='text-sm'>U</span> : <Bot className='w-5 h-5' />}
+                      </div>
+                      <div
+                        className={`rounded-lg p-4 max-w-2xl ${
+                          message.role === 'user'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700'
+                        }`}
+                      >
+                        {message.role === 'user' ? (
+                          <p className='text-white whitespace-pre-wrap'>{message.content}</p>
+                        ) : (
+                          <MarkdownRenderer content={message.content} isDark={false} />
+                        )}
+                        <p
+                          className={`text-xs mt-2 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500'}`}
+                        >
+                          {formatTime(message.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className='bg-white dark:bg-gray-800 rounded-lg px-4 py-3 shadow-sm flex items-center space-x-2'>
-                  <Loader2 className='w-4 h-4 text-purple-500 animate-spin' />
-                  <span className='text-gray-600 dark:text-gray-300 text-sm'>正在思考...</span>
+              ))}
+
+              {isTyping && (
+                <div className='flex justify-start'>
+                  <div className='flex items-start space-x-3'>
+                    <div className='w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center'>
+                      <Bot className='w-5 h-5 text-white' />
+                    </div>
+                    <div className='bg-white dark:bg-gray-800 rounded-lg px-4 py-3 shadow-sm flex items-center space-x-2'>
+                      <Loader2 className='w-4 h-4 text-purple-500 animate-spin' />
+                      <span className='text-gray-600 dark:text-gray-300 text-sm'>正在思考...</span>
+                    </div>
+                  </div>
                 </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className='p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700'>
+              <div className='max-w-4xl mx-auto'>
+                <div className='flex items-center space-x-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600'>
+                  <Button variant='ghost' size='sm'>
+                    <Plus className='w-5 h-5' />
+                  </Button>
+                  <Button variant='ghost' size='sm'>
+                    <FileText className='w-5 h-5' />
+                  </Button>
+                  <Input
+                    type='text'
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                    placeholder='输入你的问题...'
+                    className='flex-1 bg-transparent border-none'
+                  />
+                  <Button onClick={handleSend} disabled={!inputText.trim() || isTyping}>
+                    {loading ? <Loader2 className='w-5 h-5 animate-spin mr-2' /> : <Send className='w-5 h-5 mr-2' />}
+                    发送
+                  </Button>
+                </div>
+                <p className='text-xs text-gray-500 dark:text-gray-400 text-center mt-2'>AI 基于知识库回答，建议仅作参考</p>
               </div>
             </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+          </>
+        )}
 
-        <div className='p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700'>
-          <div className='max-w-4xl mx-auto'>
-            <div className='flex items-center space-x-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600'>
-              <Button variant='ghost' size='sm'>
-                <Plus className='w-5 h-5' />
-              </Button>
-              <Button variant='ghost' size='sm'>
-                <FileText className='w-5 h-5' />
-              </Button>
-              <Input
-                type='text'
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                placeholder='输入你的问题...'
-                className='flex-1 bg-transparent border-none'
-              />
-              <Button onClick={handleSend} disabled={!inputText.trim() || isTyping}>
-                {loading ? <Loader2 className='w-5 h-5 animate-spin mr-2' /> : <Send className='w-5 h-5 mr-2' />}
-                发送
-              </Button>
-            </div>
-            <p className='text-xs text-gray-500 dark:text-gray-400 text-center mt-2'>AI 基于知识库回答，建议仅作参考</p>
+        {activeTab === 'documents' && (
+          <div className='flex-1 p-6'>
+            <Card className='h-full'>
+              <CardHeader>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-3'>
+                    <div className='p-2 bg-purple-100 rounded-lg'>
+                      <Wand2 className='w-6 h-6 text-purple-600' />
+                    </div>
+                    <div>
+                      <CardTitle className='text-xl'>AI 文档生成</CardTitle>
+                      <p className='text-sm text-gray-500'>选择模板，填写信息，AI 帮你生成专业文档</p>
+                    </div>
+                  </div>
+                  <Button onClick={() => setShowDocumentGenerator(true)}>
+                    <Plus className='w-4 h-4 mr-2' />
+                    开始创建
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className='text-center py-12 text-gray-500'>
+                  <Wand2 className='w-16 h-16 mx-auto mb-4 opacity-50' />
+                  <p>点击"开始创建"选择模板并生成文档</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
+        )}
       </div>
 
       <AISettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <AIDocumentGenerator 
+        isOpen={showDocumentGenerator}
+        onClose={() => setShowDocumentGenerator(false)}
+        onDocumentGenerated={handleDocumentGenerated}
+      />
     </div>
   );
 };

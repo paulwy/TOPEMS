@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Users, User, Clock } from 'lucide-react';
+import { MessageSquare, Users, User, Clock, BellOff, Pin, MoreVertical } from 'lucide-react';
 import type { ChatRoom } from '../../api/im';
 
 interface ChatRoomItemProps {
   chatRoom: ChatRoom;
   isActive: boolean;
   onClick: () => void;
+  onSettings?: (e: React.MouseEvent) => void;
 }
 
-export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, onClick }) => {
+export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, onClick, onSettings }) => {
   const [onlineStatus, setOnlineStatus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -80,10 +81,20 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
   return (
     <div
       onClick={onClick}
-      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+      className={`p-3 rounded-lg cursor-pointer transition-colors relative ${
         isActive ? 'bg-indigo-50 border-l-4 border-indigo-600' : 'hover:bg-gray-50'
-      }`}
+      } ${chatRoom.is_pinned ? 'bg-amber-50/50' : ''}`}
     >
+      {/* Pinned & Muted Indicators */}
+      <div className="absolute top-2 right-2 flex gap-1">
+        {chatRoom.is_pinned && (
+          <Pin className="w-3 h-3 text-amber-500" />
+        )}
+        {chatRoom.is_muted && (
+          <BellOff className="w-3 h-3 text-gray-400" />
+        )}
+      </div>
+
       <div className='flex items-start gap-3'>
         <div className='relative'>
           <div
@@ -99,7 +110,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
         </div>
         <div className='flex-1 min-w-0'>
           <div className='flex items-center justify-between'>
-            <h3 className='font-medium text-gray-900 truncate'>{chatRoom.name || '未命名会话'}</h3>
+            <h3 className='font-medium text-gray-900 truncate pr-8'>{chatRoom.name || '未命名会话'}</h3>
             {chatRoom.last_message_time && (
               <span className='text-xs text-gray-500 flex items-center gap-1'>
                 <Clock className='w-3 h-3' />
@@ -109,19 +120,29 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
           </div>
           <div className='flex items-center justify-between mt-1'>
             <p className='text-sm text-gray-500 truncate flex-1'>{chatRoom.last_message || '暂无消息'}</p>
-            {chatRoom.room_type !== 'direct' && (
-              <span className='text-xs text-gray-400 ml-2 flex items-center gap-1'>
-                {getOnlineCount() > 0 && (
-                  <span className='w-1.5 h-1.5 bg-green-500 rounded-full' />
-                )}
-                {getMemberCount()}人
-              </span>
-            )}
-            {chatRoom.room_type === 'direct' && (
-              <span className={`text-xs ml-2 ${isOnline ? 'text-green-600' : 'text-gray-400'}`}>
-                {isOnline ? '在线' : '离线'}
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {chatRoom.room_type !== 'direct' && (
+                <span className='text-xs text-gray-400 flex items-center gap-1'>
+                  {getOnlineCount() > 0 && (
+                    <span className='w-1.5 h-1.5 bg-green-500 rounded-full' />
+                  )}
+                  {getMemberCount()}人
+                </span>
+              )}
+              {chatRoom.room_type === 'direct' && (
+                <span className={`text-xs ${isOnline ? 'text-green-600' : 'text-gray-400'}`}>
+                  {isOnline ? '在线' : '离线'}
+                </span>
+              )}
+              {onSettings && (
+                <button
+                  onClick={onSettings}
+                  className="p-1 rounded hover:bg-gray-200 transition-colors"
+                >
+                  <MoreVertical className="w-4 h-4 text-gray-400" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
