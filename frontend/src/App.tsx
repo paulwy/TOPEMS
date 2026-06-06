@@ -31,7 +31,6 @@ const NotificationCenter = lazy(() => import('./pages/NotificationCenter'));
 const UserManagementPage = lazy(() => import('./pages/UserManagementPage'));
 const RoleManagementPage = lazy(() => import('./pages/RoleManagementPage'));
 const PermissionManagementPage = lazy(() => import('./pages/PermissionManagementPage'));
-const CompanyManagementPage = lazy(() => import('./pages/CompanyManagementPage'));
 const DepartmentManagementPage = lazy(() => import('./pages/DepartmentManagementPage'));
 const EmployeeManagementPage = lazy(() => import('./pages/EmployeeManagementPage'));
 const AssetManagementPage = lazy(() => import('./pages/AssetManagementPage'));
@@ -347,10 +346,6 @@ const AppContent: React.FC = () => {
                 </ModuleGate>
               </ProtectedRoute>
             }
-          />
-          <Route
-            path='/companies'
-            element={<Navigate to='/hrm/companies' replace />}
           />
           <Route
             path='/departments'

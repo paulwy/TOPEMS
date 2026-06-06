@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -598,9 +598,10 @@ const HrmCompanyPage: React.FC = () => {
       )}
 
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg">新增公司</DialogTitle>
+            <DialogDescription>请填写公司信息</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4 mt-4">
             <div className="space-y-2">
@@ -722,9 +723,10 @@ const HrmCompanyPage: React.FC = () => {
       </Dialog>
 
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg">编辑公司</DialogTitle>
+            <DialogDescription>修改公司信息</DialogDescription>
           </DialogHeader>
           {selectedCompany && (
             <form onSubmit={handleUpdate} className="space-y-4 mt-4">
@@ -847,9 +849,10 @@ const HrmCompanyPage: React.FC = () => {
       </Dialog>
 
       <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg">公司详情</DialogTitle>
+            <DialogDescription>查看公司详细信息</DialogDescription>
           </DialogHeader>
           {selectedCompany && (
             <div className="space-y-4 mt-4">

@@ -63,7 +63,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
     <div className='bg-white rounded-xl shadow-sm p-6'>
       <h3 className='text-lg font-semibold text-slate-900 mb-4'>{title}</h3>
       <div className='h-64'>
-        <ResponsiveContainer width='100%' height='100%'>
+        <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={0}>
           {type === 'pie' ? (
             <PieChart>
               <Pie

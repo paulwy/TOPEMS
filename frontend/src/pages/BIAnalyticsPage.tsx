@@ -160,7 +160,7 @@ const BIAnalyticsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <ChartCard title="各业务模块数据统计">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={finalChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
@@ -177,7 +177,7 @@ const BIAnalyticsPage = () => {
         </div>
         <div>
           <ChartCard title="业务模块占比">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <RechartsPieChart>
                 <Pie
                   data={finalChartData}
