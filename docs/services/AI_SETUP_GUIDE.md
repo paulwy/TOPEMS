@@ -1,5 +1,8 @@
 ## TOPEMS-AI 配置指南
 
+**版本**: 1.2.0  
+**最后更新**: 2026-06-06
+
 ## 功能介绍
 
 TOPEMS-AI 现在支持真实 AI 服务！包括：
@@ -9,6 +12,13 @@ TOPEMS-AI 现在支持真实 AI 服务！包括：
 - 阿里云通义千问
 - 任何兼容 OpenAI API 格式的服务
 - 内置模拟模式（无需 API Key）
+
+### 新增功能 (v1.2.0)
+
+- **AI 智能表单校验** - 自动检查数据完整性、格式和逻辑
+- **AI 数据智能补全** - 根据已有信息推测并补全相关字段
+- **AI 文本优化增强** - 支持关键词输入、多种优化风格、历史版本管理
+- **自动重试机制** - 网络波动时自动重试，提高稳定性
 
 ## 配置步骤
 
@@ -163,3 +173,89 @@ TOPEMS-AI 会自动从知识库中提取内容作为上下文。当前包含：
 - "TOPEMS 是什么？"
 - "化工新材料研发流程是怎样的？"
 - "如何启动 TOPEMS 系统？"
+
+## API 端点
+
+TOPEMS-AI 提供以下 API 端点：
+
+### 1. 内容生成 `/api/v1/ai/generate`
+
+```bash
+curl -X POST http://localhost:8013/api/v1/ai/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "variables": {
+      "prompt": "写一段关于项目管理的介绍"
+    },
+    "output_format": "text"
+  }'
+```
+
+### 2. 智能表单校验 `/api/v1/ai/validate`
+
+```bash
+curl -X POST http://localhost:8013/api/v1/ai/validate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": {
+      "name": "研发部",
+      "manager": "张三",
+      "employee_count": 50
+    },
+    "context": {
+      "module": "HRM",
+      "entityType": "department"
+    }
+  }'
+```
+
+### 3. 数据智能补全 `/api/v1/ai/complete`
+
+```bash
+curl -X POST http://localhost:8013/api/v1/ai/complete \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": {
+      "name": "李四",
+      "department": "研发部"
+    },
+    "fields_to_complete": ["position", "email"],
+    "context": {
+      "module": "HRM",
+      "entityType": "employee"
+    }
+  }'
+```
+
+### 4. 智能摘要 `/api/v1/ai/summarize`
+
+```bash
+curl -X POST http://localhost:8013/api/v1/ai/summarize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "会议讨论了项目进度和问题...",
+    "max_length": 200
+  }'
+```
+
+## 常见问题
+
+### Q: AI 校验和补全功能返回空结果？
+
+A: 确保 Ollama 服务正在运行，或配置了有效的 API Key。检查后端日志查看详细错误信息。
+
+### Q: 如何调整 AI 重试次数？
+
+A: 在前端代码中配置 `useAIHelper` hook 的 `maxRetries` 参数：
+
+```typescript
+const { generate } = useAIHelper({
+  featureType: 'validate',
+  maxRetries: 3,  // 默认2次
+  retryDelay: 2000  // 默认1000ms
+});
+```
+
+### Q: 如何查看 AI 操作的详细日志？
+
+A: 打开浏览器开发者工具的 Console 面板，或查看后端服务的日志输出。

@@ -16,6 +16,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const DocumentsPage = lazy(() => import('./pages/DocumentsPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AIPage = lazy(() => import('./pages/AIPage'));
+const KnowledgeBasePage = lazy(() => import('./pages/KnowledgeBasePage'));
 const FlowWorkflowPage = lazy(() => import('./pages/FlowWorkflowPage'));
 const WorkflowDesignerPage = lazy(() => import('./pages/WorkflowDesignerPage'));
 const Rspage = lazy(() => import('./pages/Rspage'));
@@ -159,6 +160,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['ai:read']}>
                 <ModuleGate module='ai' action='read'>
                   <AIPage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/knowledge-base'
+            element={
+              <ProtectedRoute requiredPermissions={['ai:read']}>
+                <ModuleGate module='ai' action='read'>
+                  <KnowledgeBasePage />
                 </ModuleGate>
               </ProtectedRoute>
             }

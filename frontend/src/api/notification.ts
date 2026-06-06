@@ -242,8 +242,9 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
     const response = await apiClient.notification.get<number>('/api/v1/notifications/unread-count');
     return response;
   } catch (error: any) {
-    if (error.code === 'ERR_CANCELED') {
-      console.debug('Notification count request was canceled');
+    // 处理请求被取消或中止的情况
+    if (error.code === 'ERR_CANCELED' || error.code === 'ECONNABORTED' || error.name === 'AbortError') {
+      console.debug('Notification count request was canceled or aborted');
       return {
         code: 0,
         success: true,
@@ -252,6 +253,7 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
         timestamp: new Date().toISOString(),
       };
     }
+    console.error('Failed to fetch unread count:', error);
     throw error;
   }
 };

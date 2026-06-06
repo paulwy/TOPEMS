@@ -24,3 +24,10 @@ tower-http = { version = "0.6", features = ["cors"] }
 mime = "0.3"
 once_cell = "1.19"
 topems-shared = { path = "../../../shared/lib" }
+
+# PDF 解析
+lopdf = "0.34"
+pdf-extract = "0.7"
+
+# 异步 trait
+async-trait = "0.1"

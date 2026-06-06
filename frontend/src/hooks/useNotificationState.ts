@@ -46,8 +46,11 @@ export const useNotificationState = () => {
           unreadCount: response.data!,
         }));
       }
-    } catch (error) {
-      console.error('Failed to fetch unread count:', error);
+    } catch (error: any) {
+      // 不记录请求取消或中止的错误，因为这是正常行为
+      if (error.code !== 'ERR_CANCELED' && error.code !== 'ECONNABORTED' && error.name !== 'AbortError') {
+        console.error('Failed to fetch unread count:', error);
+      }
     }
   }, []);
 

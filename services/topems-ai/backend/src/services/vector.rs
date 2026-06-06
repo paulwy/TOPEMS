@@ -1,0 +1,359 @@
+use crate::services::db::Database;
+use serde::{Deserialize, Serialize};
+use sqlx::Row;
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Document {
+    pub id: Uuid,
+    pub title: String,
+    pub filename: String,
+    pub file_path: Option<String>,
+    pub file_size: Option<i64>,
+    pub mime_type: Option<String>,
+    pub content_hash: Option<String>,
+    pub category: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub description: Option<String>,
+    pub status: String,
+    pub error_message: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DocumentChunk {
+    pub id: Uuid,
+    pub document_id: Uuid,
+    pub chunk_index: i32,
+    pub content: String,
+    pub metadata: serde_json::Value,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VectorEmbedding {
+    pub id: Uuid,
+    pub document_id: Uuid,
+    pub chunk_id: Uuid,
+    pub chunk_index: i32,
+    pub content: String,
+    pub embedding: Vec<f32>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchResult {
+    pub document_id: Uuid,
+    pub chunk_id: Uuid,
+    pub content: String,
+    pub similarity: f64,
+    pub document_title: Option<String>,
+}
+
+#[derive(Clone)]
+pub struct VectorService {
+    db: Database,
+}
+
+impl VectorService {
+    pub fn new(db: Database) -> Self {
+        Self { db }
+    }
+
+    /// 创建文档记录
+    pub async fn create_document(&self, doc: &CreateDocumentRequest) -> Result<Uuid, sqlx::Error> {
+        let id: Uuid = sqlx::query_scalar(
+            r#"
+            INSERT INTO kb_documents (title, filename, file_path, file_size, mime_type, category, tags, description, status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id
+            "#,
+        )
+        .bind(&doc.title)
+        .bind(&doc.filename)
+        .bind(&doc.file_path)
+        .bind(doc.file_size)
+        .bind(&doc.mime_type)
+        .bind(&doc.category)
+        .bind(&doc.tags)
+        .bind(&doc.description)
+        .bind("pending")
+        .fetch_one(self.db.pool())
+        .await?;
+
+        Ok(id)
+    }
+
+    /// 更新文档状态
+    pub async fn update_document_status(
+        &self,
+        id: Uuid,
+        status: &str,
+        error_message: Option<&str>,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            r#"
+            UPDATE kb_documents
+            SET status = $1, error_message = $2
+            WHERE id = $3
+            "#,
+        )
+        .bind(status)
+        .bind(error_message)
+        .bind(id)
+        .execute(self.db.pool())
+        .await?;
+
+        Ok(())
+    }
+
+    /// 获取文档
+    pub async fn get_document(&self, id: Uuid) -> Result<Option<Document>, sqlx::Error> {
+        let doc = sqlx::query_as::<_, DocumentRow>(
+            r#"
+            SELECT id, title, filename, file_path, file_size, mime_type,
+                   content_hash, category, tags, description, status,
+                   error_message, created_at, updated_at
+            FROM kb_documents WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(self.db.pool())
+        .await?;
+
+        Ok(doc.map(|r| r.into()))
+    }
+
+    /// 获取所有文档
+    pub async fn list_documents(&self) -> Result<Vec<Document>, sqlx::Error> {
+        let docs = sqlx::query_as::<_, DocumentRow>(
+            r#"
+            SELECT id, title, filename, file_path, file_size, mime_type,
+                   content_hash, category, tags, description, status,
+                   error_message, created_at, updated_at
+            FROM kb_documents
+            ORDER BY created_at DESC
+            "#,
+        )
+        .fetch_all(self.db.pool())
+        .await?;
+
+        Ok(docs.into_iter().map(|r| r.into()).collect())
+    }
+
+    /// 删除文档（级联删除向量）
+    pub async fn delete_document(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM kb_documents WHERE id = $1")
+            .bind(id)
+            .execute(self.db.pool())
+            .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// 保存文档分块
+    pub async fn save_chunk(&self, chunk: &SaveChunkRequest) -> Result<Uuid, sqlx::Error> {
+        let id: Uuid = sqlx::query_scalar(
+            r#"
+            INSERT INTO kb_document_chunks (document_id, chunk_index, content, metadata)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id
+            "#,
+        )
+        .bind(chunk.document_id)
+        .bind(chunk.chunk_index)
+        .bind(&chunk.content)
+        .bind(&chunk.metadata)
+        .fetch_one(self.db.pool())
+        .await?;
+
+        Ok(id)
+    }
+
+    /// 批量保存向量
+    pub async fn save_vectors(&self, vectors: &[SaveVectorRequest]) -> Result<(), sqlx::Error> {
+        for vector in vectors {
+            sqlx::query(
+                r#"
+                INSERT INTO kb_vector_embeddings (document_id, chunk_id, chunk_index, content, embedding)
+                VALUES ($1, $2, $3, $4, $5)
+                "#,
+            )
+            .bind(vector.document_id)
+            .bind(vector.chunk_id)
+            .bind(vector.chunk_index)
+            .bind(&vector.content)
+            .bind(&vector.embedding)
+            .execute(self.db.pool())
+            .await?;
+        }
+        Ok(())
+    }
+
+    /// 向量相似度搜索
+    pub async fn search_similar(
+        &self,
+        query_embedding: &[f32],
+        top_k: usize,
+    ) -> Result<Vec<SearchResult>, sqlx::Error> {
+        // 构建查询向量字符串
+        let embedding_str = format!(
+            "[{}]",
+            query_embedding
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join(",")
+        );
+
+        let rows = sqlx::query(
+            r#"
+            SELECT
+                v.document_id,
+                v.chunk_id,
+                v.content,
+                1 - (v.embedding <=> $1::vector) AS similarity,
+                d.title AS document_title
+            FROM kb_vector_embeddings v
+            JOIN kb_documents d ON v.document_id = d.id
+            WHERE v.embedding <=> $1::vector < 0.5
+            ORDER BY v.embedding <=> $1::vector
+            LIMIT $2
+            "#,
+        )
+        .bind(&embedding_str)
+        .bind(top_k as i64)
+        .fetch_all(self.db.pool())
+        .await?;
+
+        let results = rows
+            .iter()
+            .map(|row| SearchResult {
+                document_id: row.get("document_id"),
+                chunk_id: row.get("chunk_id"),
+                content: row.get("content"),
+                similarity: row.get("similarity"),
+                document_title: row.get("document_title"),
+            })
+            .collect();
+
+        Ok(results)
+    }
+
+    /// 获取统计信息
+    pub async fn get_stats(&self) -> Result<VectorStats, sqlx::Error> {
+        let doc_count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM kb_documents")
+                .fetch_one(self.db.pool())
+                .await?;
+
+        let chunk_count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM kb_document_chunks")
+                .fetch_one(self.db.pool())
+                .await?;
+
+        let vector_count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM kb_vector_embeddings")
+                .fetch_one(self.db.pool())
+                .await?;
+
+        let dimension: Option<i64> = sqlx::query_scalar(
+            "SELECT vector_dim FROM kb_vector_embeddings LIMIT 1"
+        )
+        .fetch_optional(self.db.pool())
+        .await?;
+
+        Ok(VectorStats {
+            total_documents: doc_count as usize,
+            total_chunks: chunk_count as usize,
+            total_vectors: vector_count as usize,
+            vector_dimension: dimension.unwrap_or(768) as usize,
+        })
+    }
+
+    /// 清空所有向量数据
+    pub async fn clear_all(&self) -> Result<(), sqlx::Error> {
+        sqlx::query("TRUNCATE kb_vector_embeddings, kb_document_chunks, kb_documents CASCADE")
+            .execute(self.db.pool())
+            .await?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDocumentRequest {
+    pub title: String,
+    pub filename: String,
+    pub file_path: Option<String>,
+    pub file_size: Option<i64>,
+    pub mime_type: Option<String>,
+    pub category: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SaveChunkRequest {
+    pub document_id: Uuid,
+    pub chunk_index: i32,
+    pub content: String,
+    pub metadata: serde_json::Value,
+}
+
+#[derive(Debug, Clone)]
+pub struct SaveVectorRequest {
+    pub document_id: Uuid,
+    pub chunk_id: Uuid,
+    pub chunk_index: i32,
+    pub content: String,
+    pub embedding: Vec<f32>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct VectorStats {
+    pub total_documents: usize,
+    pub total_chunks: usize,
+    pub total_vectors: usize,
+    pub vector_dimension: usize,
+}
+
+// 数据库行映射
+#[derive(Debug, sqlx::FromRow)]
+struct DocumentRow {
+    id: Uuid,
+    title: String,
+    filename: String,
+    file_path: Option<String>,
+    file_size: Option<i64>,
+    mime_type: Option<String>,
+    content_hash: Option<String>,
+    category: Option<String>,
+    tags: Option<Vec<String>>,
+    description: Option<String>,
+    status: String,
+    error_message: Option<String>,
+    created_at: chrono::DateTime<chrono::Utc>,
+    updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<DocumentRow> for Document {
+    fn from(r: DocumentRow) -> Self {
+        Document {
+            id: r.id,
+            title: r.title,
+            filename: r.filename,
+            file_path: r.file_path,
+            file_size: r.file_size,
+            mime_type: r.mime_type,
+            content_hash: r.content_hash,
+            category: r.category,
+            tags: r.tags,
+            description: r.description,
+            status: r.status,
+            error_message: r.error_message,
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+        }
+    }
+}

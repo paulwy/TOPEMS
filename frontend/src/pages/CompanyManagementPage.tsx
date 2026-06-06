@@ -287,9 +287,11 @@ const CompanyManagementPage: React.FC<CompanyManagementPageProps> = ({ onNavigat
 
       {showCreateModal && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto'>
-            <div className='p-6'>
-              <h3 className='text-lg font-semibold text-gray-900 mb-4'>新增公司</h3>
+          <div className='bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col'>
+            <div className='p-6 border-b border-gray-200'>
+              <h3 className='text-lg font-semibold text-gray-900'>新增公司</h3>
+            </div>
+            <div className='flex-1 overflow-y-auto p-6'>
               <form onSubmit={handleCreateCompany}>
                 <div className='space-y-4'>
                   <div className='grid grid-cols-2 gap-4'>
@@ -405,9 +407,11 @@ const CompanyManagementPage: React.FC<CompanyManagementPageProps> = ({ onNavigat
 
       {showEditModal && selectedCompany && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto'>
-            <div className='p-6'>
-              <h3 className='text-lg font-semibold text-gray-900 mb-4'>编辑公司</h3>
+          <div className='bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col'>
+            <div className='p-6 border-b border-gray-200'>
+              <h3 className='text-lg font-semibold text-gray-900'>编辑公司</h3>
+            </div>
+            <div className='flex-1 overflow-y-auto p-6'>
               <form onSubmit={handleEditCompany}>
                 <div className='space-y-4'>
                   <div className='grid grid-cols-2 gap-4'>
