@@ -3,6 +3,7 @@ import QualityStandardList from './pages/QualityStandardList';
 import QualityInspectionList from './pages/QualityInspectionList';
 import QualityIssueList from './pages/QualityIssueList';
 import CorrectiveActionList from './pages/CorrectiveActionList';
+import QmsDashboard from './pages/QmsDashboard';
 import './index.css';
 
 function App() {
@@ -18,6 +19,8 @@ function App() {
         return <QualityIssueList />;
       case 'actions':
         return <CorrectiveActionList />;
+      case 'dashboard':
+        return <QmsDashboard />;
       default:
         return <QualityStandardList />;
     }
@@ -35,6 +38,16 @@ function App() {
                 </h1>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className={`${
+                    activeTab === 'dashboard'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  看板
+                </button>
                 <button
                   onClick={() => setActiveTab('standards')}
                   className={`${
