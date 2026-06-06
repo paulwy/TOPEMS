@@ -6,14 +6,16 @@ import {
   fetchPipelines,
   fetchWarehouseLocations,
   fetchLocationPhotos,
+  fetchBusinessLocations,
 } from './api/client';
-import type { DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto } from './types';
+import type { DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto, BusinessLocation } from './types';
 
 function App() {
   const [deviceLocations, setDeviceLocations] = useState<DeviceLocation[]>([]);
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [warehouseLocations, setWarehouseLocations] = useState<WarehouseLocation[]>([]);
   const [locationPhotos, setLocationPhotos] = useState<LocationPhoto[]>([]);
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [selectedLayer, setSelectedLayer] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,11 +24,12 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const [devicesRes, pipelinesRes, warehousesRes, photosRes] = await Promise.all([
+      const [devicesRes, pipelinesRes, warehousesRes, photosRes, businessRes] = await Promise.all([
         fetchDeviceLocations(),
         fetchPipelines(),
         fetchWarehouseLocations(),
         fetchLocationPhotos(),
+        fetchBusinessLocations(),
       ]);
 
       if (devicesRes.success && devicesRes.data) {
@@ -40,6 +43,9 @@ function App() {
       }
       if (photosRes.success && photosRes.data) {
         setLocationPhotos(photosRes.data.location_photos || []);
+      }
+      if (businessRes.success && businessRes.data) {
+        setBusinessLocations(businessRes.data.business_locations || []);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -71,13 +77,14 @@ function App() {
         warehouseLocations={warehouseLocations}
         pipelines={pipelines}
         locationPhotos={locationPhotos}
+        businessLocations={businessLocations}
         selectedLayer={selectedLayer}
         onLayerChange={setSelectedLayer}
         onRefresh={loadData}
       />
       <div className="flex-1 flex flex-col">
         <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800">TOPEMS GIS - 厂区空间数字化系统</h1>
+          <h1 className="text-xl font-bold text-gray-800">TOPEMS GIS - 空间数字化系统</h1>
           <button
             onClick={loadData}
             className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
@@ -99,6 +106,7 @@ function App() {
             pipelines={pipelines}
             warehouseLocations={warehouseLocations}
             locationPhotos={locationPhotos}
+            businessLocations={businessLocations}
             selectedLayer={selectedLayer}
           />
         </div>

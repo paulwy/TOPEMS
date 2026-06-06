@@ -12,6 +12,8 @@ pub struct ChatRoom {
     pub created_by: String,
     pub last_message: Option<String>,
     pub last_message_time: Option<NaiveDateTime>,
+    pub is_muted: bool,
+    pub is_pinned: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -161,6 +163,8 @@ mod tests {
             created_by: "admin".to_string(),
             last_message: None,
             last_message_time: None,
+            is_muted: false,
+            is_pinned: false,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };

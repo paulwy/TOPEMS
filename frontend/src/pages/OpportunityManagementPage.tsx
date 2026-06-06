@@ -534,7 +534,7 @@ const OpportunityManagementPage: React.FC = () => {
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>阶段</Label>
-                  <p>{getStageBadge(selectedOpportunity.stage)}</p>
+                  <div>{getStageBadge(selectedOpportunity.stage)}</div>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>成交概率</Label>

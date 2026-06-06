@@ -38,7 +38,7 @@ function getEnvNumber(key: string, defaultValue: number): number {
 const config: RuntimeConfig = {
   api: {
     baseUrl: getEnv('VITE_API_BASE_URL', '/api'),
-    timeout: getEnvNumber('VITE_API_TIMEOUT', 30000),
+    timeout: getEnvNumber('VITE_API_TIMEOUT', 60000), // 增加到 60 秒
   },
   ws: {
     url: getEnv('VITE_WS_URL', 'ws://localhost:8080'),

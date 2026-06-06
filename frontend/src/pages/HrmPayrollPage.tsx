@@ -62,10 +62,11 @@ const HrmPayrollPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [payrollRes, employeeRes, adjustmentRes] = await Promise.all([
+      // 暂时只调用存在的 API
+      const [payrollRes, employeeRes] = await Promise.all([
         payrollApi.list(),
         employeeApi.list(),
-        salaryAdjustmentApi.list(),
+        // 暂时禁用 salaryAdjustmentApi 因为后端没有实现
       ]);
 
       let empList: Employee[] = [];
@@ -79,17 +80,8 @@ const HrmPayrollPage: React.FC = () => {
         setEmployees(empList);
       }
 
-      if (adjustmentRes.success && adjustmentRes.data) {
-        const adjustedData = adjustmentRes.data.items.map((adj) => {
-          const emp = empList.find((e) => e.id === adj.employee_id);
-          return {
-            ...adj,
-            employee_name: emp?.name || adj.employee_name || '未知员工',
-            department: '',
-          };
-        });
-        setAdjustments(adjustedData);
-      }
+      // 暂时使用空数组
+      setAdjustments([]);
     } catch (err) {
       error('加载数据失败');
       console.error(err);

@@ -20,6 +20,7 @@ pub struct PaginationParams {
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,
+    pub company_id: Option<String>,
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -41,17 +42,7 @@ async fn list_departments(
 
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-
-    if search_pattern.is_none() && status_filter.is_none() && page == 1 && page_size >= 100 {
-        if let Some(cached) = state.department_cache.get("all_departments") {
-            let total = cached.len() as i64;
-            let departments = cached.into_iter().take(page_size as usize).collect();
-            return Json(ApiResponse::success(
-                PaginatedResponse::new(departments, total, page, page_size),
-                "获取部门列表成功(缓存)",
-            ));
-        }
-    }
+    let company_id_filter: Option<Uuid> = params.company_id.clone().and_then(|id| Uuid::parse_str(&id).ok());
 
     let result = sqlx::query_as::<_, Department>(
         r#"
@@ -59,12 +50,14 @@ async fn list_departments(
         FROM erp.departments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR company_id = $3)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
     .bind(&search_pattern)
     .bind(&status_filter)
+    .bind(&company_id_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -77,10 +70,12 @@ async fn list_departments(
                 SELECT COUNT(*) FROM erp.departments
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR company_id = $3)
                 "#,
             )
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(&company_id_filter)
             .fetch_one(&state.db)
             .await;
 

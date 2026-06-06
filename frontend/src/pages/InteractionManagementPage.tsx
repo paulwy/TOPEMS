@@ -488,7 +488,7 @@ const InteractionManagementPage: React.FC = () => {
               <div className='grid grid-cols-2 gap-4'>
                 <div>
                   <Label className='text-muted-foreground'>类型</Label>
-                  <p>{getTypeBadge(selectedInteraction.type)}</p>
+                  <div>{getTypeBadge(selectedInteraction.type)}</div>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>主题</Label>
@@ -516,7 +516,7 @@ const InteractionManagementPage: React.FC = () => {
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>状态</Label>
-                  <p>{getStatusBadge(selectedInteraction.status)}</p>
+                  <div>{getStatusBadge(selectedInteraction.status)}</div>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>创建时间</Label>

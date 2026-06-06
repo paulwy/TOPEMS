@@ -200,12 +200,13 @@ start_service() {
         build_service "$service_name" || return 1
     fi
 
-    # 设置环境变量
-    export DATABASE_URL="postgres://topems:topems_secret@localhost:5432/topems"
-    export REDIS_URL="redis://localhost:6379"
-    export RUST_LOG="info"
+    # 加载项目根目录的 .env 文件（包含统一的 JWT_SECRET 等配置）
+    if [ -f "$PROJECT_ROOT/.env" ]; then
+        log_info "加载根目录配置: $PROJECT_ROOT/.env"
+        export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+    fi
     
-    # 加载服务特定的.env文件
+    # 加载服务特定的 .env 文件（优先级更高）
     if [ -f "$PROJECT_ROOT/$service_path/.env" ]; then
         log_info "加载服务配置: $PROJECT_ROOT/$service_path/.env"
         export $(grep -v '^#' "$PROJECT_ROOT/$service_path/.env" | xargs)

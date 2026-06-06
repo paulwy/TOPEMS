@@ -66,10 +66,9 @@ async fn health_check() -> Json<ApiResponse<&'static str>> {
 }
 
 async fn list_chat_rooms(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query_as!(
-        models::ChatRoom,
+    let result = sqlx::query_as::<_, models::ChatRoom>(
         r#"
-        SELECT id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
+        SELECT id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
         FROM chat_rooms
         ORDER BY updated_at DESC
         "#
@@ -96,21 +95,20 @@ async fn create_chat_room(
     let id = Uuid::new_v4();
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query_as!(
-        models::ChatRoom,
+    let result = sqlx::query_as::<_, models::ChatRoom>(
         r#"
-        INSERT INTO chat_rooms (id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, NULL, NULL, $6, $7)
-        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
-        "#,
-        id,
-        payload.name,
-        payload.room_type,
-        json!(payload.members),
-        payload.created_by,
-        now,
-        now
+        INSERT INTO chat_rooms (id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NULL, NULL, FALSE, FALSE, $6, $7)
+        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
+        "#
     )
+    .bind(id)
+    .bind(payload.name)
+    .bind(payload.room_type)
+    .bind(json!(payload.members))
+    .bind(payload.created_by)
+    .bind(now)
+    .bind(now)
     .fetch_one(&state.pool)
     .await;
 
@@ -127,15 +125,14 @@ async fn get_chat_room(
     State(state): State<AppState>,
     Path(chat_id): Path<Uuid>,
 ) -> Json<ApiResponse<models::ChatRoom>> {
-    let result = sqlx::query_as!(
-        models::ChatRoom,
+    let result = sqlx::query_as::<_, models::ChatRoom>(
         r#"
-        SELECT id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
+        SELECT id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
         FROM chat_rooms
         WHERE id = $1
-        "#,
-        chat_id
+        "#
     )
+    .bind(chat_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -156,8 +153,7 @@ async fn update_chat_room(
 ) -> Json<ApiResponse<models::ChatRoom>> {
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query_as!(
-        models::ChatRoom,
+    let result = sqlx::query_as::<_, models::ChatRoom>(
         r#"
         UPDATE chat_rooms
         SET name = COALESCE($1, name),
@@ -165,14 +161,14 @@ async fn update_chat_room(
             members = COALESCE($3, members),
             updated_at = $4
         WHERE id = $5
-        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
-        "#,
-        payload.name,
-        payload.room_type,
-        payload.members.map(|m| json!(m)),
-        now,
-        chat_id
+        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
+        "#
     )
+    .bind(payload.name)
+    .bind(payload.room_type)
+    .bind(payload.members.map(|m| json!(m)))
+    .bind(now)
+    .bind(chat_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -190,14 +186,14 @@ async fn delete_chat_room(
     State(state): State<AppState>,
     Path(chat_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         DELETE FROM chat_rooms
         WHERE id = $1
         RETURNING id
-        "#,
-        chat_id
+        "#
     )
+    .bind(chat_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -222,19 +218,18 @@ async fn add_chat_room_member(
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
 
-    let result = sqlx::query_as!(
-        models::ChatRoom,
+    let result = sqlx::query_as::<_, models::ChatRoom>(
         r#"
         UPDATE chat_rooms
         SET members = members || $1::jsonb,
             updated_at = $2
         WHERE id = $3
-        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
-        "#,
-        json!([user_id]),
-        Utc::now().naive_utc(),
-        chat_id
+        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
+        "#
     )
+    .bind(json!([user_id]))
+    .bind(Utc::now().naive_utc())
+    .bind(chat_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -252,19 +247,18 @@ async fn remove_chat_room_member(
     State(state): State<AppState>,
     Path((chat_id, user_id)): Path<(Uuid, String)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query_as!(
-        models::ChatRoom,
+    let result = sqlx::query_as::<_, models::ChatRoom>(
         r#"
         UPDATE chat_rooms
         SET members = members - $1,
             updated_at = $2
         WHERE id = $3
-        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, created_at, updated_at
-        "#,
-        user_id,
-        Utc::now().naive_utc(),
-        chat_id
+        RETURNING id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
+        "#
     )
+    .bind(user_id)
+    .bind(Utc::now().naive_utc())
+    .bind(chat_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -282,20 +276,20 @@ async fn get_chat_room_members(
     State(state): State<AppState>,
     Path(chat_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         SELECT members
         FROM chat_rooms
         WHERE id = $1
-        "#,
-        chat_id
+        "#
     )
+    .bind(chat_id)
     .fetch_optional(&state.pool)
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(json!({
-            "members": record.members
+        Ok(Some(row)) => Json(ApiResponse::success(json!({
+            "members": row.get::<serde_json::Value, _>("members")
         }), "获取成员列表成功")),
         Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
         Err(e) => {
@@ -309,16 +303,15 @@ async fn list_chat_messages(
     State(state): State<AppState>,
     Path(chat_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query_as!(
-        models::ChatMessage,
+    let result = sqlx::query_as::<_, models::ChatMessage>(
         r#"
         SELECT id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
         FROM chat_messages
         WHERE chat_id = $1
         ORDER BY created_at ASC
-        "#,
-        chat_id
+        "#
     )
+    .bind(chat_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -346,39 +339,38 @@ async fn create_chat_message(
     let id = Uuid::new_v4();
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query_as!(
-        models::ChatMessage,
+    let result = sqlx::query_as::<_, models::ChatMessage>(
         r#"
         INSERT INTO chat_messages (id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false)
         RETURNING id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
-        "#,
-        id,
-        chat_id,
-        payload.sender_id,
-        payload.sender_name,
-        payload.message_type,
-        payload.content.clone(),
-        payload.file_url,
-        payload.file_name,
-        now
+        "#
     )
+    .bind(id)
+    .bind(chat_id)
+    .bind(payload.sender_id)
+    .bind(payload.sender_name)
+    .bind(payload.message_type)
+    .bind(payload.content.clone())
+    .bind(payload.file_url)
+    .bind(payload.file_name)
+    .bind(now)
     .fetch_one(&state.pool)
     .await;
 
     if let Ok(ref message) = result {
         // 更新聊天室的最后消息
-        let _ = sqlx::query!(
+        let _ = sqlx::query(
             r#"
             UPDATE chat_rooms
             SET last_message = $1, last_message_time = $2, updated_at = $3
             WHERE id = $4
-            "#,
-            payload.content,
-            now,
-            now,
-            chat_id
+            "#
         )
+        .bind(payload.content)
+        .bind(now)
+        .bind(now)
+        .bind(chat_id)
         .execute(&state.pool)
         .await;
     }
@@ -396,16 +388,15 @@ async fn mark_message_read(
     State(state): State<AppState>,
     Path(message_id): Path<Uuid>,
 ) -> Json<ApiResponse<models::ChatMessage>> {
-    let result = sqlx::query_as!(
-        models::ChatMessage,
+    let result = sqlx::query_as::<_, models::ChatMessage>(
         r#"
         UPDATE chat_messages
         SET is_read = true
         WHERE id = $1
         RETURNING id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
-        "#,
-        message_id
+        "#
     )
+    .bind(message_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -423,29 +414,31 @@ async fn delete_chat_message(
     State(state): State<AppState>,
     Path(message_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         DELETE FROM chat_messages
         WHERE id = $1
         RETURNING id, chat_id, content
-        "#,
-        message_id
+        "#
     )
+    .bind(message_id)
     .fetch_optional(&state.pool)
     .await;
 
     match result {
-        Ok(Some(record)) => {
-            let _ = sqlx::query!(
+        Ok(Some(row)) => {
+            let chat_id: Uuid = row.get("chat_id");
+            let content: String = row.get("content");
+            let _ = sqlx::query(
                 r#"
                 UPDATE chat_rooms
                 SET last_message = NULL, last_message_time = NULL, updated_at = $1
                 WHERE id = $2 AND last_message = $3
-                "#,
-                Utc::now().naive_utc(),
-                record.chat_id,
-                record.content
+                "#
             )
+            .bind(Utc::now().naive_utc())
+            .bind(chat_id)
+            .bind(content)
             .execute(&state.pool)
             .await;
             
@@ -470,32 +463,31 @@ async fn update_chat_message(
         return Json(ApiResponse::error(400, "消息内容不能为空"));
     }
 
-    let result = sqlx::query_as!(
-        models::ChatMessage,
+    let result = sqlx::query_as::<_, models::ChatMessage>(
         r#"
         UPDATE chat_messages
         SET content = $1
         WHERE id = $2
         RETURNING id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
-        "#,
-        content,
-        message_id
+        "#
     )
+    .bind(content)
+    .bind(message_id)
     .fetch_optional(&state.pool)
     .await;
 
     match result {
         Ok(Some(message)) => {
-            let _ = sqlx::query!(
+            let _ = sqlx::query(
                 r#"
                 UPDATE chat_rooms
                 SET last_message = $1, updated_at = $2
                 WHERE id = $3
-                "#,
-                content,
-                Utc::now().naive_utc(),
-                message.chat_id
+                "#
             )
+            .bind(content)
+            .bind(Utc::now().naive_utc())
+            .bind(message.chat_id)
             .execute(&state.pool)
             .await;
             
@@ -516,17 +508,16 @@ async fn search_chat_messages(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let keyword = query.get("keyword").and_then(|k| k.as_str()).unwrap_or("");
     
-    let result = sqlx::query_as!(
-        models::ChatMessage,
+    let result = sqlx::query_as::<_, models::ChatMessage>(
         r#"
         SELECT id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read
         FROM chat_messages
         WHERE chat_id = $1 AND content ILIKE $2
         ORDER BY created_at DESC
-        "#,
-        chat_id,
-        format!("%{}%", keyword)
+        "#
     )
+    .bind(chat_id)
+    .bind(format!("%{}%", keyword))
     .fetch_all(&state.pool)
     .await;
 
@@ -543,8 +534,7 @@ async fn search_chat_messages(
 }
 
 async fn list_project_groups(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query_as!(
-        models::ProjectGroup,
+    let result = sqlx::query_as::<_, models::ProjectGroup>(
         r#"
         SELECT id, name, description, project_id, members, created_by, created_at, updated_at
         FROM project_groups
@@ -574,22 +564,21 @@ async fn create_project_group(
     let now = Utc::now().naive_utc();
     let project_id = payload.project_id.and_then(|p| Uuid::parse_str(&p).ok());
 
-    let result = sqlx::query_as!(
-        models::ProjectGroup,
+    let result = sqlx::query_as::<_, models::ProjectGroup>(
         r#"
         INSERT INTO project_groups (id, name, description, project_id, members, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, name, description, project_id, members, created_by, created_at, updated_at
-        "#,
-        id,
-        payload.name,
-        payload.description,
-        project_id,
-        json!(payload.members),
-        payload.created_by,
-        now,
-        now
+        "#
     )
+    .bind(id)
+    .bind(payload.name)
+    .bind(payload.description)
+    .bind(project_id)
+    .bind(json!(payload.members))
+    .bind(payload.created_by)
+    .bind(now)
+    .bind(now)
     .fetch_one(&state.pool)
     .await;
 
@@ -831,34 +820,34 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
                             let now = Utc::now().naive_utc();
 
                             // 保存消息到数据库
-                            let result = sqlx::query!(
+                            let result = sqlx::query(
                                 r#"
                                 INSERT INTO chat_messages (id, chat_id, sender_id, sender_name, message_type, content, file_url, file_name, created_at, is_read)
                                 VALUES ($1, $2, $3, $4, 'text', $5, NULL, NULL, $6, false)
-                                "#,
-                                id,
-                                cid,
-                                ws_msg.sender_id.clone(),
-                                ws_msg.sender_name.clone(),
-                                ws_msg.content.clone(),
-                                now
+                                "#
                             )
+                            .bind(id)
+                            .bind(cid)
+                            .bind(ws_msg.sender_id.clone())
+                            .bind(ws_msg.sender_name.clone())
+                            .bind(ws_msg.content.clone())
+                            .bind(now)
                             .execute(&state_for_recv.pool)
                             .await;
 
                             if result.is_ok() {
                                 // 更新聊天室的最后消息
-                                let _ = sqlx::query!(
+                                let _ = sqlx::query(
                                     r#"
                                     UPDATE chat_rooms
                                     SET last_message = $1, last_message_time = $2, updated_at = $3
                                     WHERE id = $4
-                                    "#,
-                                    ws_msg.content.clone(),
-                                    now,
-                                    now,
-                                    cid
+                                    "#
                                 )
+                                .bind(ws_msg.content.clone())
+                                .bind(now)
+                                .bind(now)
+                                .bind(cid)
                                 .execute(&state_for_recv.pool)
                                 .await;
 
@@ -892,16 +881,16 @@ async fn ws_connect(
 
     // 更新用户在线状态
     let now = Utc::now().naive_utc();
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO user_online_status (user_id, is_online, last_seen)
         VALUES ($1, true, $2)
         ON CONFLICT (user_id)
         DO UPDATE SET is_online = true, last_seen = $2
-        "#,
-        user_id,
-        now
+        "#
     )
+    .bind(user_id)
+    .bind(now)
     .execute(&state.pool)
     .await
     .map_err(|e| {
@@ -923,15 +912,15 @@ async fn ws_disconnect(
 
     // 更新用户离线状态
     let now = Utc::now().naive_utc();
-    sqlx::query!(
+    sqlx::query(
         r#"
         UPDATE user_online_status
         SET is_online = false, last_seen = $1
         WHERE user_id = $2
-        "#,
-        now,
-        user_id
+        "#
     )
+    .bind(now)
+    .bind(user_id)
     .execute(&state.pool)
     .await
     .map_err(|e| {
@@ -946,22 +935,22 @@ async fn get_user_online_status(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         SELECT is_online, last_seen
         FROM user_online_status
         WHERE user_id = $1
-        "#,
-        user_id
+        "#
     )
+    .bind(&user_id)
     .fetch_optional(&state.pool)
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(json!({
+        Ok(Some(row)) => Json(ApiResponse::success(json!({
             "user_id": user_id,
-            "is_online": record.is_online,
-            "last_seen": record.last_seen
+            "is_online": row.get::<bool, _>("is_online"),
+            "last_seen": row.get::<Option<chrono::NaiveDateTime>, _>("last_seen")
         }), "获取用户在线状态成功")),
         Ok(None) => Json(ApiResponse::success(json!({
             "user_id": user_id,
@@ -979,16 +968,16 @@ async fn list_friends(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         SELECT f.id, f.friend_id, f.friend_name, f.status, f.created_at, u.is_online, u.last_seen
         FROM friends f
         LEFT JOIN user_online_status u ON f.friend_id = u.user_id
         WHERE f.user_id = $1
         ORDER BY f.status, f.updated_at DESC
-        "#,
-        user_id
+        "#
     )
+    .bind(user_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -997,13 +986,13 @@ async fn list_friends(
             let friends: Vec<serde_json::Value> = rows
                 .into_iter()
                 .map(|row| json!({
-                    "id": row.id,
-                    "friend_id": row.friend_id,
-                    "friend_name": row.friend_name,
-                    "status": row.status,
-                    "created_at": row.created_at,
-                    "is_online": row.is_online.unwrap_or(false),
-                    "last_seen": row.last_seen
+                    "id": row.get::<Uuid, _>("id"),
+                    "friend_id": row.get::<String, _>("friend_id"),
+                    "friend_name": row.get::<String, _>("friend_name"),
+                    "status": row.get::<String, _>("status"),
+                    "created_at": row.get::<chrono::NaiveDateTime, _>("created_at"),
+                    "is_online": row.get::<Option<bool>, _>("is_online").unwrap_or(false),
+                    "last_seen": row.get::<Option<chrono::NaiveDateTime>, _>("last_seen")
                 }))
                 .collect();
             Json(ApiResponse::success(json!({ "friends": friends }), "获取好友列表成功"))
@@ -1018,24 +1007,24 @@ async fn list_friends(
 async fn send_friend_request(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
-    Json(body): Json<CreateFriendRequest>,
+    Json(body): Json<models::CreateFriendRequest>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
     let now = Utc::now().naive_utc();
     let id = Uuid::new_v4();
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         INSERT INTO friends (id, user_id, friend_id, friend_name, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, 'pending', $5, $6)
         ON CONFLICT (user_id, friend_id) DO NOTHING
-        "#,
-        id,
-        user_id,
-        body.friend_id,
-        body.friend_name,
-        now,
-        now
+        "#
     )
+    .bind(id)
+    .bind(user_id)
+    .bind(body.friend_id)
+    .bind(body.friend_name)
+    .bind(now)
+    .bind(now)
     .execute(&state.pool)
     .await;
 
@@ -1056,16 +1045,16 @@ async fn accept_friend_request(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE friends
         SET status = 'accepted', updated_at = $1
         WHERE user_id = $2 AND friend_id = $3 AND status = 'pending'
-        "#,
-        now,
-        user_id,
-        friend_id
+        "#
     )
+    .bind(now)
+    .bind(user_id)
+    .bind(friend_id)
     .execute(&state.pool)
     .await;
 
@@ -1084,14 +1073,14 @@ async fn reject_friend_request(
     State(state): State<AppState>,
     Path((user_id, friend_id)): Path<(String, String)>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         DELETE FROM friends
         WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'
-        "#,
-        user_id,
-        friend_id
+        "#
     )
+    .bind(user_id)
+    .bind(friend_id)
     .execute(&state.pool)
     .await;
 
@@ -1110,14 +1099,14 @@ async fn remove_friend(
     State(state): State<AppState>,
     Path((user_id, friend_id)): Path<(String, String)>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         DELETE FROM friends
         WHERE user_id = $1 AND friend_id = $2
-        "#,
-        user_id,
-        friend_id
+        "#
     )
+    .bind(user_id)
+    .bind(friend_id)
     .execute(&state.pool)
     .await;
 
@@ -1136,24 +1125,24 @@ async fn list_contact_groups(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
-        SELECT * FROM contact_groups WHERE user_id = $1 ORDER BY updated_at DESC
-        "#,
-        user_id
+        SELECT id, name, created_at, updated_at FROM contact_groups WHERE user_id = $1 ORDER BY updated_at DESC
+        "#
     )
+    .bind(user_id)
     .fetch_all(&state.pool)
     .await;
 
     match result {
-        Ok(groups) => {
-            let groups_json: Vec<serde_json::Value> = groups
+        Ok(rows) => {
+            let groups_json: Vec<serde_json::Value> = rows
                 .into_iter()
-                .map(|g| json!({
-                    "id": g.id,
-                    "name": g.name,
-                    "created_at": g.created_at,
-                    "updated_at": g.updated_at
+                .map(|row| json!({
+                    "id": row.get::<Uuid, _>("id"),
+                    "name": row.get::<String, _>("name"),
+                    "created_at": row.get::<chrono::NaiveDateTime, _>("created_at"),
+                    "updated_at": row.get::<chrono::NaiveDateTime, _>("updated_at")
                 }))
                 .collect();
             Json(ApiResponse::success(json!({ "groups": groups_json }), "获取联系人分组成功"))
@@ -1168,22 +1157,22 @@ async fn list_contact_groups(
 async fn create_contact_group(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
-    Json(body): Json<CreateContactGroup>,
+    Json(body): Json<models::CreateContactGroup>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
     let now = Utc::now().naive_utc();
     let id = Uuid::new_v4();
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         INSERT INTO contact_groups (id, user_id, name, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5)
-        "#,
-        id,
-        user_id,
-        body.name,
-        now,
-        now
+        "#
     )
+    .bind(id)
+    .bind(user_id)
+    .bind(body.name)
+    .bind(now)
+    .bind(now)
     .execute(&state.pool)
     .await;
 
@@ -1201,22 +1190,22 @@ async fn create_contact_group(
 async fn update_contact_group(
     State(state): State<AppState>,
     Path((user_id, group_id)): Path<(String, String)>,
-    Json(body): Json<CreateContactGroup>,
+    Json(body): Json<models::CreateContactGroup>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
     let now = Utc::now().naive_utc();
     let group_uuid = Uuid::parse_str(&group_id).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE contact_groups
         SET name = $1, updated_at = $2
         WHERE id = $3 AND user_id = $4
-        "#,
-        body.name,
-        now,
-        group_uuid,
-        user_id
+        "#
     )
+    .bind(body.name)
+    .bind(now)
+    .bind(group_uuid)
+    .bind(user_id)
     .execute(&state.pool)
     .await;
 
@@ -1237,14 +1226,14 @@ async fn delete_contact_group(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
     let group_uuid = Uuid::parse_str(&group_id).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         DELETE FROM contact_groups
         WHERE id = $1 AND user_id = $2
-        "#,
-        group_uuid,
-        user_id
+        "#
     )
+    .bind(group_uuid)
+    .bind(user_id)
     .execute(&state.pool)
     .await;
 
@@ -1269,17 +1258,17 @@ async fn add_contact_group_member(
     let id = Uuid::new_v4();
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         INSERT INTO contact_group_members (id, group_id, user_id, created_at)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (group_id, user_id) DO NOTHING
-        "#,
-        id,
-        group_uuid,
-        member_user_id,
-        now
+        "#
     )
+    .bind(id)
+    .bind(group_uuid)
+    .bind(member_user_id)
+    .bind(now)
     .execute(&state.pool)
     .await;
 
@@ -1300,14 +1289,14 @@ async fn remove_contact_group_member(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
     let group_uuid = Uuid::parse_str(&group_id).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         DELETE FROM contact_group_members
         WHERE group_id = $1 AND user_id = $2
-        "#,
-        group_uuid,
-        member_user_id
+        "#
     )
+    .bind(group_uuid)
+    .bind(member_user_id)
     .execute(&state.pool)
     .await;
 
@@ -1329,15 +1318,15 @@ async fn mute_chat_room(
     let chat_uuid = Uuid::parse_str(&chat_id).map_err(|_| StatusCode::BAD_REQUEST)?;
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE chat_rooms
         SET is_muted = true, updated_at = $1
         WHERE id = $2
-        "#,
-        now,
-        chat_uuid
+        "#
     )
+    .bind(now)
+    .bind(chat_uuid)
     .execute(&state.pool)
     .await;
 
@@ -1357,15 +1346,15 @@ async fn unmute_chat_room(
     let chat_uuid = Uuid::parse_str(&chat_id).map_err(|_| StatusCode::BAD_REQUEST)?;
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE chat_rooms
         SET is_muted = false, updated_at = $1
         WHERE id = $2
-        "#,
-        now,
-        chat_uuid
+        "#
     )
+    .bind(now)
+    .bind(chat_uuid)
     .execute(&state.pool)
     .await;
 
@@ -1385,15 +1374,15 @@ async fn pin_chat_room(
     let chat_uuid = Uuid::parse_str(&chat_id).map_err(|_| StatusCode::BAD_REQUEST)?;
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE chat_rooms
         SET is_pinned = true, updated_at = $1
         WHERE id = $2
-        "#,
-        now,
-        chat_uuid
+        "#
     )
+    .bind(now)
+    .bind(chat_uuid)
     .execute(&state.pool)
     .await;
 
@@ -1413,15 +1402,15 @@ async fn unpin_chat_room(
     let chat_uuid = Uuid::parse_str(&chat_id).map_err(|_| StatusCode::BAD_REQUEST)?;
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE chat_rooms
         SET is_pinned = false, updated_at = $1
         WHERE id = $2
-        "#,
-        now,
-        chat_uuid
+        "#
     )
+    .bind(now)
+    .bind(chat_uuid)
     .execute(&state.pool)
     .await;
 

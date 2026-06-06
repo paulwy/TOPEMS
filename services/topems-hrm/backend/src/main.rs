@@ -680,34 +680,6 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .execute(pool)
         .await?;
 
-    sqlx::query(
-        r#"
-        INSERT INTO hrm.departments (id, name, code, description, status)
-        VALUES 
-            (gen_random_uuid(), '技术部', 'TECH', '技术研发部门', 'active'),
-            (gen_random_uuid(), '人力资源部', 'HR', '人事管理部门', 'active'),
-            (gen_random_uuid(), '财务部', 'FINANCE', '财务管理部门', 'active'),
-            (gen_random_uuid(), '市场部', 'MARKET', '市场营销部门', 'active')
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        INSERT INTO hrm.employees (id, employee_number, name, gender, hire_date, department_id, position, email, phone, status)
-        VALUES 
-            (gen_random_uuid(), 'HRM001', '张三', 'male', '2020-01-15', (SELECT id FROM hrm.departments WHERE code = 'TECH' LIMIT 1), '高级软件工程师', 'zhangsan@topems.com', '13800138001', 'active'),
-            (gen_random_uuid(), 'HRM002', '李四', 'female', '2021-03-20', (SELECT id FROM hrm.departments WHERE code = 'TECH' LIMIT 1), 'UI设计师', 'lisi@topems.com', '13800138002', 'active'),
-            (gen_random_uuid(), 'HRM003', '王五', 'male', '2019-08-10', (SELECT id FROM hrm.departments WHERE code = 'HR' LIMIT 1), 'HR经理', 'wangwu@topems.com', '13800138003', 'active'),
-            (gen_random_uuid(), 'HRM004', '赵六', 'female', '2022-06-01', (SELECT id FROM hrm.departments WHERE code = 'HR' LIMIT 1), '人事专员', 'zhaoliu@topems.com', '13800138004', 'active')
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
     tracing::info!("✅ 数据库表初始化完成");
 
     Ok(())

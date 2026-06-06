@@ -74,7 +74,7 @@ async fn list_departments(
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "departments": departments,
+                    "items": departments,
                     "total": total,
                     "page": page,
                     "page_size": page_size

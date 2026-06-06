@@ -559,7 +559,7 @@ const CustomerManagementPage: React.FC = () => {
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>状态</Label>
-                  <p>{getStatusBadge(selectedCustomer.status)}</p>
+                  <div>{getStatusBadge(selectedCustomer.status)}</div>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>创建时间</Label>

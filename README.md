@@ -248,7 +248,6 @@ TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
 ## 🛠️ 脚本工具
 
 - `scripts/init-database.sh` - 初始化数据库
-- `scripts/init-hrm-data.py` - 初始化 HRM 数据
 - `scripts/manage-services.sh` - 管理所有服务（启动、停止、编译）
 - `scripts/start-all.sh` - 一键启动所有服务
 - `scripts/stop-all.sh` - 一键停止所有服务

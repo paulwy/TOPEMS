@@ -20,7 +20,7 @@ mod db;
 mod models;
 mod services;
 use db::schema::init_tables;
-use models::{FactoryMap, DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto};
+use models::{FactoryMap, DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto, BusinessLocation, MapMarker};
 use services::permission::{check_permission, GisPermission};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,6 +74,41 @@ struct CreateLocationPhoto {
     pub description: Option<String>,
     pub taken_by: String,
     pub taken_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct CreateBusinessLocation {
+    pub business_type: String,
+    pub business_name: String,
+    pub business_code: Option<String>,
+    pub category: Option<String>,
+    pub position: serde_json::Value,
+    pub address: Option<String>,
+    pub contact_person: Option<String>,
+    pub contact_phone: Option<String>,
+    pub capacity: Option<i32>,
+    pub current_usage: Option<i32>,
+    pub status: Option<String>,
+    pub properties: Option<serde_json::Value>,
+    pub description: Option<String>,
+    pub external_id: Option<Uuid>,
+    pub external_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct CreateMapMarker {
+    pub marker_type: String,
+    pub name: String,
+    pub marker_style: Option<String>,
+    pub position: serde_json::Value,
+    pub icon_svg: Option<String>,
+    pub color: Option<String>,
+    pub size: Option<i32>,
+    pub popup_content: Option<String>,
+    pub click_action: Option<String>,
+    pub action_data: Option<serde_json::Value>,
+    pub visible: Option<bool>,
+    pub z_index: Option<i32>,
 }
 
 #[derive(Clone)]
@@ -1064,6 +1099,521 @@ fn get_field(record: &csv::StringRecord, headers: &csv::StringRecord, name: &str
         .filter(|s| !s.is_empty())
 }
 
+// ==================== Business Locations API ====================
+
+async fn list_business_locations(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+    match sqlx::query_as::<_, BusinessLocation>("SELECT * FROM business_locations ORDER BY created_at DESC")
+        .fetch_all(&state.pool)
+        .await
+    {
+        Ok(locations) => Json(ApiResponse::success(
+            serde_json::json!({
+                "business_locations": locations,
+                "total": locations.len()
+            }),
+            "获取业务位置列表成功",
+        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+    }
+}
+
+async fn get_business_location(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<BusinessLocation>> {
+    match sqlx::query_as::<_, BusinessLocation>("SELECT * FROM business_locations WHERE id = $1")
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(location) => Json(ApiResponse::success(location, "获取业务位置成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "业务位置未找到")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+    }
+}
+
+async fn list_business_locations_by_type(
+    State(state): State<AppState>,
+    Path(business_type): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match sqlx::query_as::<_, BusinessLocation>("SELECT * FROM business_locations WHERE business_type = $1 ORDER BY created_at DESC")
+        .bind(business_type)
+        .fetch_all(&state.pool)
+        .await
+    {
+        Ok(locations) => Json(ApiResponse::success(
+            serde_json::json!({
+                "business_locations": locations,
+                "total": locations.len()
+            }),
+            "获取业务位置列表成功",
+        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+    }
+}
+
+async fn create_business_location(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<CreateBusinessLocation>,
+) -> Json<ApiResponse<BusinessLocation>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+        return e;
+    }
+    match sqlx::query_as::<_, BusinessLocation>(
+        r#"
+        INSERT INTO business_locations (business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        RETURNING *
+        "#,
+    )
+    .bind(&payload.business_type)
+    .bind(&payload.business_name)
+    .bind(&payload.business_code)
+    .bind(&payload.category)
+    .bind(&payload.position)
+    .bind(&payload.address)
+    .bind(&payload.contact_person)
+    .bind(&payload.contact_phone)
+    .bind(&payload.capacity)
+    .bind(&payload.current_usage)
+    .bind(&payload.status.unwrap_or_else(|| "active".to_string()))
+    .bind(&payload.properties)
+    .bind(&payload.description)
+    .bind(&payload.external_id)
+    .bind(&payload.external_type)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(location) => Json(ApiResponse::success(location, "创建业务位置成功")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
+    }
+}
+
+async fn update_business_location(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<CreateBusinessLocation>,
+) -> Json<ApiResponse<BusinessLocation>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+        return e;
+    }
+    match sqlx::query_as::<_, BusinessLocation>(
+        r#"
+        UPDATE business_locations 
+        SET business_type = $1, business_name = $2, business_code = $3, category = $4, position = $5, address = $6, contact_person = $7, contact_phone = $8, capacity = $9, current_usage = $10, status = $11, properties = $12, description = $13, external_id = $14, external_type = $15, updated_at = NOW()
+        WHERE id = $16
+        RETURNING *
+        "#,
+    )
+    .bind(&payload.business_type)
+    .bind(&payload.business_name)
+    .bind(&payload.business_code)
+    .bind(&payload.category)
+    .bind(&payload.position)
+    .bind(&payload.address)
+    .bind(&payload.contact_person)
+    .bind(&payload.contact_phone)
+    .bind(&payload.capacity)
+    .bind(&payload.current_usage)
+    .bind(&payload.status.unwrap_or_else(|| "active".to_string()))
+    .bind(&payload.properties)
+    .bind(&payload.description)
+    .bind(&payload.external_id)
+    .bind(&payload.external_type)
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(location) => Json(ApiResponse::success(location, "更新业务位置成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "业务位置未找到")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库更新失败: {}", e))),
+    }
+}
+
+async fn delete_business_location(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<bool>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+        return e;
+    }
+    match sqlx::query("DELETE FROM business_locations WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() > 0 {
+                Json(ApiResponse::success(true, "删除业务位置成功"))
+            } else {
+                Json(ApiResponse::error(404, "业务位置未找到"))
+            }
+        }
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
+    }
+}
+
+// ==================== Map Markers API ====================
+
+async fn list_map_markers(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+    match sqlx::query_as::<_, MapMarker>("SELECT * FROM map_markers ORDER BY z_index DESC, created_at DESC")
+        .fetch_all(&state.pool)
+        .await
+    {
+        Ok(markers) => Json(ApiResponse::success(
+            serde_json::json!({
+                "map_markers": markers,
+                "total": markers.len()
+            }),
+            "获取地图标记列表成功",
+        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+    }
+}
+
+async fn create_map_marker(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<CreateMapMarker>,
+) -> Json<ApiResponse<MapMarker>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+        return e;
+    }
+    match sqlx::query_as::<_, MapMarker>(
+        r#"
+        INSERT INTO map_markers (marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING *
+        "#,
+    )
+    .bind(&payload.marker_type)
+    .bind(&payload.name)
+    .bind(&payload.marker_style)
+    .bind(&payload.position)
+    .bind(&payload.icon_svg)
+    .bind(&payload.color)
+    .bind(&payload.size)
+    .bind(&payload.popup_content)
+    .bind(&payload.click_action)
+    .bind(&payload.action_data)
+    .bind(&payload.visible.unwrap_or(true))
+    .bind(&payload.z_index.unwrap_or(0))
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(marker) => Json(ApiResponse::success(marker, "创建地图标记成功")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
+    }
+}
+
+async fn update_map_marker(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<CreateMapMarker>,
+) -> Json<ApiResponse<MapMarker>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+        return e;
+    }
+    match sqlx::query_as::<_, MapMarker>(
+        r#"
+        UPDATE map_markers 
+        SET marker_type = $1, name = $2, marker_style = $3, position = $4, icon_svg = $5, color = $6, size = $7, popup_content = $8, click_action = $9, action_data = $10, visible = $11, z_index = $12, updated_at = NOW()
+        WHERE id = $13
+        RETURNING *
+        "#,
+    )
+    .bind(&payload.marker_type)
+    .bind(&payload.name)
+    .bind(&payload.marker_style)
+    .bind(&payload.position)
+    .bind(&payload.icon_svg)
+    .bind(&payload.color)
+    .bind(&payload.size)
+    .bind(&payload.popup_content)
+    .bind(&payload.click_action)
+    .bind(&payload.action_data)
+    .bind(&payload.visible.unwrap_or(true))
+    .bind(&payload.z_index.unwrap_or(0))
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(marker) => Json(ApiResponse::success(marker, "更新地图标记成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地图标记未找到")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库更新失败: {}", e))),
+    }
+}
+
+async fn delete_map_marker(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<bool>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+        return e;
+    }
+    match sqlx::query("DELETE FROM map_markers WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() > 0 {
+                Json(ApiResponse::success(true, "删除地图标记成功"))
+            } else {
+                Json(ApiResponse::error(404, "地图标记未找到"))
+            }
+        }
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
+    }
+}
+
+// ==================== GeoJSON Export API ====================
+
+async fn export_geojson(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+    let mut features: Vec<serde_json::Value> = Vec::new();
+
+    // Export device locations
+    if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>("SELECT * FROM device_locations")
+        .fetch_all(&state.pool)
+        .await
+    {
+        for device in devices {
+            if let Some(pos) = device.position.as_object() {
+                if let (Some(lat), Some(lng)) = (pos.get("lat"), pos.get("lng")) {
+                    features.push(serde_json::json!({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [lng, lat]
+                        },
+                        "properties": {
+                            "id": device.id,
+                            "name": device.device_name,
+                            "code": device.device_code,
+                            "type": "device",
+                            "device_type": device.device_type,
+                            "status": device.status
+                        }
+                    }));
+                }
+            }
+        }
+    }
+
+    // Export pipelines
+    if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>("SELECT * FROM pipelines")
+        .fetch_all(&state.pool)
+        .await
+    {
+        for pipeline in pipelines {
+            if let Some(path_array) = pipeline.path.as_array() {
+                let coordinates: Vec<[f64; 2]> = path_array.iter()
+                    .filter_map(|p| {
+                        if let (Some(lat), Some(lng)) = (p.get("lat"), p.get("lng")) {
+                            if let (Some(lat_f), Some(lng_f)) = (lat.as_f64(), lng.as_f64()) {
+                                return Some([lng_f, lat_f]);
+                            }
+                        }
+                        None
+                    })
+                    .collect();
+                if !coordinates.is_empty() {
+                    features.push(serde_json::json!({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": coordinates
+                        },
+                        "properties": {
+                            "id": pipeline.id,
+                            "name": pipeline.name,
+                            "code": pipeline.code,
+                            "type": "pipeline",
+                            "pipeline_type": pipeline.pipeline_type,
+                            "status": pipeline.status
+                        }
+                    }));
+                }
+            }
+        }
+    }
+
+    // Export warehouse locations
+    if let Ok(warehouses) = sqlx::query_as::<_, WarehouseLocation>("SELECT * FROM warehouse_locations")
+        .fetch_all(&state.pool)
+        .await
+    {
+        for warehouse in warehouses {
+            if let Some(pos) = warehouse.position.as_object() {
+                if let (Some(lat), Some(lng)) = (pos.get("lat"), pos.get("lng")) {
+                    features.push(serde_json::json!({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [lng, lat]
+                        },
+                        "properties": {
+                            "id": warehouse.id,
+                            "name": warehouse.warehouse_name,
+                            "type": "warehouse",
+                            "zone": warehouse.zone,
+                            "capacity": warehouse.capacity,
+                            "status": warehouse.status
+                        }
+                    }));
+                }
+            }
+        }
+    }
+
+    // Export business locations
+    if let Ok(business_locations) = sqlx::query_as::<_, BusinessLocation>("SELECT * FROM business_locations")
+        .fetch_all(&state.pool)
+        .await
+    {
+        for location in business_locations {
+            if let Some(pos) = location.position.as_object() {
+                if let (Some(lat), Some(lng)) = (pos.get("lat"), pos.get("lng")) {
+                    features.push(serde_json::json!({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [lng, lat]
+                        },
+                        "properties": {
+                            "id": location.id,
+                            "name": location.business_name,
+                            "code": location.business_code,
+                            "type": "business",
+                            "business_type": location.business_type,
+                            "category": location.category,
+                            "status": location.status
+                        }
+                    }));
+                }
+            }
+        }
+    }
+
+    let geojson = serde_json::json!({
+        "type": "FeatureCollection",
+        "features": features
+    });
+
+    Json(ApiResponse::success(geojson, "导出GeoJSON成功"))
+}
+
+// ==================== Search API ====================
+
+async fn search_locations(
+    State(state): State<AppState>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let query = params.get("q").cloned().unwrap_or_default();
+    let location_type = params.get("type").cloned();
+
+    let mut results: Vec<serde_json::Value> = Vec::new();
+    let search_pattern = format!("%{}%", query);
+
+    if location_type.is_none() || location_type.as_deref() == Some("device") {
+        if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>(
+            "SELECT * FROM device_locations WHERE device_name ILIKE $1 OR device_code ILIKE $1"
+        )
+        .bind(&search_pattern)
+        .fetch_all(&state.pool)
+        .await
+        {
+            for device in devices {
+                results.push(serde_json::json!({
+                    "type": "device",
+                    "id": device.id,
+                    "name": device.device_name,
+                    "code": device.device_code,
+                    "position": device.position,
+                    "status": device.status
+                }));
+            }
+        }
+    }
+
+    if location_type.is_none() || location_type.as_deref() == Some("pipeline") {
+        if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>(
+            "SELECT * FROM pipelines WHERE name ILIKE $1 OR code ILIKE $1"
+        )
+        .bind(&search_pattern)
+        .fetch_all(&state.pool)
+        .await
+        {
+            for pipeline in pipelines {
+                results.push(serde_json::json!({
+                    "type": "pipeline",
+                    "id": pipeline.id,
+                    "name": pipeline.name,
+                    "code": pipeline.code,
+                    "status": pipeline.status
+                }));
+            }
+        }
+    }
+
+    if location_type.is_none() || location_type.as_deref() == Some("warehouse") {
+        if let Ok(warehouses) = sqlx::query_as::<_, WarehouseLocation>(
+            "SELECT * FROM warehouse_locations WHERE warehouse_name ILIKE $1"
+        )
+        .bind(&search_pattern)
+        .fetch_all(&state.pool)
+        .await
+        {
+            for warehouse in warehouses {
+                results.push(serde_json::json!({
+                    "type": "warehouse",
+                    "id": warehouse.id,
+                    "name": warehouse.warehouse_name,
+                    "zone": warehouse.zone,
+                    "position": warehouse.position,
+                    "status": warehouse.status
+                }));
+            }
+        }
+    }
+
+    if location_type.is_none() || location_type.as_deref() == Some("business") {
+        if let Ok(business_locations) = sqlx::query_as::<_, BusinessLocation>(
+            "SELECT * FROM business_locations WHERE business_name ILIKE $1 OR business_code ILIKE $1"
+        )
+        .bind(&search_pattern)
+        .fetch_all(&state.pool)
+        .await
+        {
+            for location in business_locations {
+                results.push(serde_json::json!({
+                    "type": "business",
+                    "id": location.id,
+                    "name": location.business_name,
+                    "code": location.business_code,
+                    "business_type": location.business_type,
+                    "position": location.position,
+                    "status": location.status
+                }));
+            }
+        }
+    }
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "results": results,
+            "total": results.len(),
+            "query": query
+        }),
+        "搜索完成",
+    ))
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
@@ -1107,7 +1657,13 @@ async fn main() -> Result<()> {
         .route("/api/v1/warehouse-locations/map/{map_id}", axum::routing::get(list_warehouse_locations_by_map))
         .route("/api/v1/location-photos", axum::routing::get(list_location_photos))
         .route("/api/v1/location-photos/{id}", axum::routing::get(get_location_photo))
-        .route("/api/v1/location-photos/map/{map_id}", axum::routing::get(list_location_photos_by_map));
+        .route("/api/v1/location-photos/map/{map_id}", axum::routing::get(list_location_photos_by_map))
+        .route("/api/v1/business-locations", axum::routing::get(list_business_locations))
+        .route("/api/v1/business-locations/{id}", axum::routing::get(get_business_location))
+        .route("/api/v1/business-locations/type/{business_type}", axum::routing::get(list_business_locations_by_type))
+        .route("/api/v1/map-markers", axum::routing::get(list_map_markers))
+        .route("/api/v1/geojson/export", axum::routing::get(export_geojson))
+        .route("/api/v1/search", axum::routing::get(search_locations));
 
     let protected_api = Router::new()
         .route("/api/v1/factory-maps", axum::routing::post(create_factory_map))
@@ -1124,6 +1680,12 @@ async fn main() -> Result<()> {
         .route("/api/v1/warehouse-locations/{id}", axum::routing::delete(delete_warehouse_location))
         .route("/api/v1/location-photos", axum::routing::post(create_location_photo))
         .route("/api/v1/location-photos/{id}", axum::routing::delete(delete_location_photo))
+        .route("/api/v1/business-locations", axum::routing::post(create_business_location))
+        .route("/api/v1/business-locations/{id}", axum::routing::put(update_business_location))
+        .route("/api/v1/business-locations/{id}", axum::routing::delete(delete_business_location))
+        .route("/api/v1/map-markers", axum::routing::post(create_map_marker))
+        .route("/api/v1/map-markers/{id}", axum::routing::put(update_map_marker))
+        .route("/api/v1/map-markers/{id}", axum::routing::delete(delete_map_marker))
         .route("/api/v1/import", axum::routing::post(import_data))
         .layer(axum::middleware::from_fn_with_state(
             auth_state,

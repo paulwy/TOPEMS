@@ -19,6 +19,10 @@ import {
   Download,
   Upload,
   AlertCircle,
+  Map,
+  Building2,
+  PieChart,
+  BarChart3,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -31,11 +35,18 @@ import {
   CreatePipelineRequest,
   CreateStorageLocationRequest,
   CreateEvidenceRecordRequest,
+  FactoryMap,
+  BusinessLocation,
+  CreateFactoryMapRequest,
+  CreateBusinessLocationRequest,
+  GisStatistics,
 } from '../api/gis';
 import { DataTable } from '../components/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
+import MetricCard from '../components/MetricCard';
+import StatsChart from '../components/StatsChart';
 
-type TabType = 'devicePoints' | 'pipelines' | 'storageLocations' | 'evidenceRecords';
+type TabType = 'devicePoints' | 'pipelines' | 'storageLocations' | 'evidenceRecords' | 'factoryMaps' | 'businessLocations';
 
 type ModalType = 'create' | 'edit' | null;
 
@@ -46,11 +57,14 @@ const Gispage: React.FC = () => {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [storageLocations, setStorageLocations] = useState<StorageLocation[]>([]);
   const [evidenceRecords, setEvidenceRecords] = useState<EvidenceRecord[]>([]);
+  const [factoryMaps, setFactoryMaps] = useState<FactoryMap[]>([]);
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
+  const [statistics, setStatistics] = useState<GisStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<{ [key: string]: string }>({});
+  const [formData, setFormData] = useState<{ [key: string]: any }>({});
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
@@ -58,8 +72,34 @@ const Gispage: React.FC = () => {
   const [importPreview, setImportPreview] = useState<string[][] | null>(null);
 
   useEffect(() => {
+    loadAllData();
+  }, []);
+
+  useEffect(() => {
     loadData();
   }, [activeTab]);
+
+  const loadAllData = async () => {
+    try {
+      setLoading(true);
+      const statsResponse = await gisApi.getStatistics();
+      if (statsResponse.success && statsResponse.data) {
+        setStatistics(statsResponse.data);
+      }
+      await Promise.all([
+        loadDevicePoints(),
+        loadPipelines(),
+        loadStorageLocations(),
+        loadEvidenceRecords(),
+        loadFactoryMaps(),
+        loadBusinessLocations(),
+      ]);
+    } catch (err) {
+      console.error('加载数据失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const mapStatusToChinese = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -148,75 +188,201 @@ const Gispage: React.FC = () => {
     };
   };
 
+  const adaptFactoryMap = (item: any): any => {
+    return {
+      id: item.id,
+      name: item.name,
+      code: item.code,
+      map_type: item.map_type,
+      file_url: item.file_url,
+      bounds: item.bounds,
+      description: item.description,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    };
+  };
+
+  const adaptBusinessLocation = (item: any): any => {
+    return {
+      id: item.id,
+      business_type: item.business_type,
+      business_name: item.business_name,
+      business_code: item.business_code,
+      category: item.category,
+      position: item.position,
+      address: item.address,
+      contact_person: item.contact_person,
+      contact_phone: item.contact_phone,
+      capacity: item.capacity,
+      current_usage: item.current_usage,
+      status: mapStatusToChinese(item.status),
+      properties: item.properties,
+      description: item.description,
+      external_id: item.external_id,
+      external_type: item.external_type,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    };
+  };
+
+  const loadDevicePoints = async () => {
+    try {
+      const response = await gisApi.listDevicePoints();
+      if (response.success && response.data) {
+        let data: any = response.data;
+        let rawItems: any[] = [];
+        if (Array.isArray(data)) {
+          rawItems = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          rawItems = data.data;
+        } else if (data.device_points && Array.isArray(data.device_points)) {
+          rawItems = data.device_points;
+        } else if (data.devicePoints && Array.isArray(data.devicePoints)) {
+          rawItems = data.devicePoints;
+        }
+        const adapted = rawItems.map((item) => adaptDevicePoint(item));
+        setDevicePoints(adapted);
+      }
+    } catch (err) {
+      console.error('加载设备点位失败:', err);
+    }
+  };
+
+  const loadPipelines = async () => {
+    try {
+      const response = await gisApi.listPipelines();
+      if (response.success && response.data) {
+        let data: any = response.data;
+        let rawItems: any[] = [];
+        if (Array.isArray(data)) {
+          rawItems = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          rawItems = data.data;
+        } else if (data.pipelines && Array.isArray(data.pipelines)) {
+          rawItems = data.pipelines;
+        }
+        const adapted = rawItems.map((item) => adaptPipeline(item));
+        setPipelines(adapted);
+      }
+    } catch (err) {
+      console.error('加载管线失败:', err);
+    }
+  };
+
+  const loadStorageLocations = async () => {
+    try {
+      const response = await gisApi.listStorageLocations();
+      if (response.success && response.data) {
+        let data: any = response.data;
+        let rawItems: any[] = [];
+        if (Array.isArray(data)) {
+          rawItems = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          rawItems = data.data;
+        } else if (data.storage_locations && Array.isArray(data.storage_locations)) {
+          rawItems = data.storage_locations;
+        } else if (data.storageLocations && Array.isArray(data.storageLocations)) {
+          rawItems = data.storageLocations;
+        }
+        const adapted = rawItems.map((item) => adaptStorageLocation(item));
+        setStorageLocations(adapted);
+      }
+    } catch (err) {
+      console.error('加载仓储位置失败:', err);
+    }
+  };
+
+  const loadEvidenceRecords = async () => {
+    try {
+      const response = await gisApi.listEvidenceRecords();
+      if (response.success && response.data) {
+        let data: any = response.data;
+        let rawItems: any[] = [];
+        if (Array.isArray(data)) {
+          rawItems = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          rawItems = data.data;
+        } else if (data.evidence_records && Array.isArray(data.evidence_records)) {
+          rawItems = data.evidence_records;
+        } else if (data.evidenceRecords && Array.isArray(data.evidenceRecords)) {
+          rawItems = data.evidenceRecords;
+        }
+        const adapted = rawItems.map((item) => adaptEvidenceRecord(item));
+        setEvidenceRecords(adapted);
+      }
+    } catch (err) {
+      console.error('加载现场取证失败:', err);
+    }
+  };
+
+  const loadFactoryMaps = async () => {
+    try {
+      const response = await gisApi.listFactoryMaps();
+      if (response.success && response.data) {
+        let data: any = response.data;
+        let rawItems: any[] = [];
+        if (Array.isArray(data)) {
+          rawItems = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          rawItems = data.data;
+        } else if (data.factory_maps && Array.isArray(data.factory_maps)) {
+          rawItems = data.factory_maps;
+        } else if (data.factoryMaps && Array.isArray(data.factoryMaps)) {
+          rawItems = data.factoryMaps;
+        }
+        const adapted = rawItems.map((item) => adaptFactoryMap(item));
+        setFactoryMaps(adapted);
+      }
+    } catch (err) {
+      console.error('加载工厂地图失败:', err);
+    }
+  };
+
+  const loadBusinessLocations = async () => {
+    try {
+      const response = await gisApi.listBusinessLocations();
+      if (response.success && response.data) {
+        let data: any = response.data;
+        let rawItems: any[] = [];
+        if (Array.isArray(data)) {
+          rawItems = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          rawItems = data.data;
+        } else if (data.business_locations && Array.isArray(data.business_locations)) {
+          rawItems = data.business_locations;
+        } else if (data.businessLocations && Array.isArray(data.businessLocations)) {
+          rawItems = data.businessLocations;
+        }
+        const adapted = rawItems.map((item) => adaptBusinessLocation(item));
+        setBusinessLocations(adapted);
+      }
+    } catch (err) {
+      console.error('加载业务位置失败:', err);
+    }
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
-      if (activeTab === 'devicePoints') {
-        const response = await gisApi.listDevicePoints();
-        if (response.success && response.data) {
-          let data: any = response.data;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.device_points && Array.isArray(data.device_points)) {
-            rawItems = data.device_points;
-          } else if (data.devicePoints && Array.isArray(data.devicePoints)) {
-            rawItems = data.devicePoints;
-          }
-          const adapted = rawItems.map((item) => adaptDevicePoint(item));
-          setDevicePoints(adapted);
-        } else {
-          setDevicePoints([]);
-        }
-      } else if (activeTab === 'pipelines') {
-        const response = await gisApi.listPipelines();
-        if (response.success && response.data) {
-          let data: any = response.data;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.pipelines && Array.isArray(data.pipelines)) {
-            rawItems = data.pipelines;
-          }
-          const adapted = rawItems.map((item) => adaptPipeline(item));
-          setPipelines(adapted);
-        } else {
-          setPipelines([]);
-        }
-      } else if (activeTab === 'storageLocations') {
-        const response = await gisApi.listStorageLocations();
-        if (response.success && response.data) {
-          let data: any = response.data;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.storage_locations && Array.isArray(data.storage_locations)) {
-            rawItems = data.storage_locations;
-          } else if (data.storageLocations && Array.isArray(data.storageLocations)) {
-            rawItems = data.storageLocations;
-          }
-          const adapted = rawItems.map((item) => adaptStorageLocation(item));
-          setStorageLocations(adapted);
-        } else {
-          setStorageLocations([]);
-        }
-      } else if (activeTab === 'evidenceRecords') {
-        const response = await gisApi.listEvidenceRecords();
-        if (response.success && response.data) {
-          let data: any = response.data;
-          let rawItems: any[] = [];
-          if (Array.isArray(data)) {
-            rawItems = data;
-          } else if (data.evidence_records && Array.isArray(data.evidence_records)) {
-            rawItems = data.evidence_records;
-          } else if (data.evidenceRecords && Array.isArray(data.evidenceRecords)) {
-            rawItems = data.evidenceRecords;
-          }
-          const adapted = rawItems.map((item) => adaptEvidenceRecord(item));
-          setEvidenceRecords(adapted);
-        } else {
-          setEvidenceRecords([]);
-        }
+      switch (activeTab) {
+        case 'devicePoints':
+          await loadDevicePoints();
+          break;
+        case 'pipelines':
+          await loadPipelines();
+          break;
+        case 'storageLocations':
+          await loadStorageLocations();
+          break;
+        case 'evidenceRecords':
+          await loadEvidenceRecords();
+          break;
+        case 'factoryMaps':
+          await loadFactoryMaps();
+          break;
+        case 'businessLocations':
+          await loadBusinessLocations();
+          break;
       }
     } catch (err) {
       console.error('加载数据失败:', err);
@@ -239,52 +405,87 @@ const Gispage: React.FC = () => {
 
   const handleCreate = async () => {
     try {
-      if (activeTab === 'devicePoints') {
-        const req: CreateDevicePointRequest = {
-          name: formData.name || '',
-          description: formData.description,
-          device_type: formData.device_type || '',
-          latitude: parseFloat(formData.latitude || '0'),
-          longitude: parseFloat(formData.longitude || '0'),
-          status: formData.status || 'active',
-        };
-        await gisApi.createDevicePoint(req);
-      } else if (activeTab === 'pipelines') {
-        const req: CreatePipelineRequest = {
-          name: formData.name || '',
-          description: formData.description,
-          pipeline_type: formData.pipeline_type || '',
-          start_point: [parseFloat(formData.start_lat || '0'), parseFloat(formData.start_lng || '0')],
-          end_point: [parseFloat(formData.end_lat || '0'), parseFloat(formData.end_lng || '0')],
-          status: formData.status || 'active',
-        };
-        await gisApi.createPipeline(req);
-      } else if (activeTab === 'storageLocations') {
-        const req: CreateStorageLocationRequest = {
-          name: formData.name || '',
-          description: formData.description,
-          location_type: formData.location_type || '',
-          latitude: parseFloat(formData.latitude || '0'),
-          longitude: parseFloat(formData.longitude || '0'),
-          capacity: formData.capacity ? parseFloat(formData.capacity) : undefined,
-          current_usage: formData.current_usage ? parseFloat(formData.current_usage) : undefined,
-        };
-        await gisApi.createStorageLocation(req);
-      } else if (activeTab === 'evidenceRecords') {
-        const req: CreateEvidenceRecordRequest = {
-          title: formData.title || '',
-          description: formData.description,
-          evidence_type: formData.evidence_type || '',
-          latitude: parseFloat(formData.latitude || '0'),
-          longitude: parseFloat(formData.longitude || '0'),
-          file_url: formData.file_url,
-          recorded_by: formData.recorded_by || '',
-        };
-        await gisApi.createEvidenceRecord(req);
+      switch (activeTab) {
+        case 'devicePoints':
+          const devicePointReq: CreateDevicePointRequest = {
+            name: formData.name || '',
+            description: formData.description,
+            device_type: formData.device_type || '',
+            latitude: parseFloat(formData.latitude || '0'),
+            longitude: parseFloat(formData.longitude || '0'),
+            status: formData.status || 'active',
+          };
+          await gisApi.createDevicePoint(devicePointReq);
+          break;
+        case 'pipelines':
+          const pipelineReq: CreatePipelineRequest = {
+            name: formData.name || '',
+            description: formData.description,
+            pipeline_type: formData.pipeline_type || '',
+            start_point: [parseFloat(formData.start_lat || '0'), parseFloat(formData.start_lng || '0')],
+            end_point: [parseFloat(formData.end_lat || '0'), parseFloat(formData.end_lng || '0')],
+            status: formData.status || 'active',
+          };
+          await gisApi.createPipeline(pipelineReq);
+          break;
+        case 'storageLocations':
+          const storageReq: CreateStorageLocationRequest = {
+            name: formData.name || '',
+            description: formData.description,
+            location_type: formData.location_type || '',
+            latitude: parseFloat(formData.latitude || '0'),
+            longitude: parseFloat(formData.longitude || '0'),
+            capacity: formData.capacity ? parseFloat(formData.capacity) : undefined,
+            current_usage: formData.current_usage ? parseFloat(formData.current_usage) : undefined,
+          };
+          await gisApi.createStorageLocation(storageReq);
+          break;
+        case 'evidenceRecords':
+          const evidenceReq: CreateEvidenceRecordRequest = {
+            title: formData.title || '',
+            description: formData.description,
+            evidence_type: formData.evidence_type || '',
+            latitude: parseFloat(formData.latitude || '0'),
+            longitude: parseFloat(formData.longitude || '0'),
+            file_url: formData.file_url,
+            recorded_by: formData.recorded_by || '',
+          };
+          await gisApi.createEvidenceRecord(evidenceReq);
+          break;
+        case 'factoryMaps':
+          const factoryMapReq: CreateFactoryMapRequest = {
+            name: formData.name || '',
+            code: formData.code || '',
+            map_type: formData.map_type || '',
+            file_url: formData.file_url || '',
+            description: formData.description,
+          };
+          await gisApi.createFactoryMap(factoryMapReq);
+          break;
+        case 'businessLocations':
+          const businessReq: CreateBusinessLocationRequest = {
+            business_type: formData.business_type || '',
+            business_name: formData.business_name || '',
+            business_code: formData.business_code,
+            category: formData.category,
+            position: { lat: parseFloat(formData.lat || '0'), lng: parseFloat(formData.lng || '0') },
+            address: formData.address,
+            contact_person: formData.contact_person,
+            contact_phone: formData.contact_phone,
+            capacity: formData.capacity ? parseFloat(formData.capacity) : undefined,
+            current_usage: formData.current_usage ? parseFloat(formData.current_usage) : undefined,
+            status: formData.status || 'active',
+            properties: formData.properties ? JSON.parse(formData.properties) : undefined,
+            description: formData.description,
+            external_id: formData.external_id,
+            external_type: formData.external_type,
+          };
+          await gisApi.createBusinessLocation(businessReq);
+          break;
       }
       showNotification('success', '创建成功');
       resetModal();
-      loadData();
+      loadAllData();
     } catch (err) {
       showNotification('error', '创建失败');
       console.error('创建失败:', err);
@@ -295,20 +496,81 @@ const Gispage: React.FC = () => {
     try {
       if (!editingItem) return;
 
-      if (activeTab === 'devicePoints') {
-        const req: CreateDevicePointRequest = {
-          name: formData.name || editingItem.name,
-          description: formData.description || editingItem.description,
-          device_type: formData.device_type || editingItem.device_type,
-          latitude: parseFloat(formData.latitude || editingItem.latitude?.toString() || '0'),
-          longitude: parseFloat(formData.longitude || editingItem.longitude?.toString() || '0'),
-          status: formData.status || editingItem.status,
-        };
-        await gisApi.updateDevicePoint(editingItem.id, req);
+      switch (activeTab) {
+        case 'devicePoints':
+          const devicePointReq: Partial<CreateDevicePointRequest> = {
+            name: formData.name || editingItem.name,
+            description: formData.description || editingItem.description,
+            device_type: formData.device_type || editingItem.device_type,
+            latitude: parseFloat(formData.latitude || editingItem.latitude?.toString() || '0'),
+            longitude: parseFloat(formData.longitude || editingItem.longitude?.toString() || '0'),
+            status: formData.status || editingItem.status,
+          };
+          await gisApi.updateDevicePoint(editingItem.id, devicePointReq);
+          break;
+        case 'pipelines':
+          const pipelineReq: Partial<CreatePipelineRequest> = {
+            name: formData.name || editingItem.name,
+            description: formData.description || editingItem.description,
+            pipeline_type: formData.pipeline_type || editingItem.pipeline_type,
+            start_point: formData.start_lat && formData.start_lng
+              ? [parseFloat(formData.start_lat), parseFloat(formData.start_lng)]
+              : editingItem.start_point,
+            end_point: formData.end_lat && formData.end_lng
+              ? [parseFloat(formData.end_lat), parseFloat(formData.end_lng)]
+              : editingItem.end_point,
+            status: formData.status || editingItem.status,
+          };
+          await gisApi.updatePipeline(editingItem.id, pipelineReq);
+          break;
+        case 'storageLocations':
+          const storageReq: Partial<CreateStorageLocationRequest> = {
+            name: formData.name || editingItem.name,
+            description: formData.description || editingItem.description,
+            location_type: formData.location_type || editingItem.location_type,
+            latitude: parseFloat(formData.latitude || editingItem.latitude?.toString() || '0'),
+            longitude: parseFloat(formData.longitude || editingItem.longitude?.toString() || '0'),
+            capacity: formData.capacity ? parseFloat(formData.capacity) : editingItem.capacity,
+            current_usage: formData.current_usage ? parseFloat(formData.current_usage) : editingItem.current_usage,
+          };
+          await gisApi.updateStorageLocation(editingItem.id, storageReq);
+          break;
+        case 'factoryMaps':
+          const factoryMapReq: Partial<CreateFactoryMapRequest> = {
+            name: formData.name || editingItem.name,
+            code: formData.code || editingItem.code,
+            map_type: formData.map_type || editingItem.map_type,
+            file_url: formData.file_url || editingItem.file_url,
+            description: formData.description || editingItem.description,
+          };
+          await gisApi.updateFactoryMap(editingItem.id, factoryMapReq);
+          break;
+        case 'businessLocations':
+          const businessReq: Partial<CreateBusinessLocationRequest> = {
+            business_type: formData.business_type || editingItem.business_type,
+            business_name: formData.business_name || editingItem.business_name,
+            business_code: formData.business_code || editingItem.business_code,
+            category: formData.category || editingItem.category,
+            position: formData.lat && formData.lng
+              ? { lat: parseFloat(formData.lat), lng: parseFloat(formData.lng) }
+              : editingItem.position,
+            address: formData.address || editingItem.address,
+            contact_person: formData.contact_person || editingItem.contact_person,
+            contact_phone: formData.contact_phone || editingItem.contact_phone,
+            capacity: formData.capacity ? parseFloat(formData.capacity) : editingItem.capacity,
+            current_usage: formData.current_usage ? parseFloat(formData.current_usage) : editingItem.current_usage,
+            status: formData.status || editingItem.status,
+            properties: formData.properties ? JSON.parse(formData.properties) : editingItem.properties,
+            description: formData.description || editingItem.description,
+            external_id: formData.external_id || editingItem.external_id,
+            external_type: formData.external_type || editingItem.external_type,
+          };
+          await gisApi.updateBusinessLocation(editingItem.id, businessReq);
+          break;
       }
       showNotification('success', '更新成功');
       resetModal();
-      loadData();
+      loadAllData();
     } catch (err) {
       showNotification('error', '更新失败');
       console.error('更新失败:', err);
@@ -317,17 +579,28 @@ const Gispage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      if (activeTab === 'devicePoints') {
-        await gisApi.deleteDevicePoint(id);
-      } else if (activeTab === 'pipelines') {
-        await gisApi.deletePipeline(id);
-      } else if (activeTab === 'storageLocations') {
-        await gisApi.deleteStorageLocation(id);
-      } else if (activeTab === 'evidenceRecords') {
-        await gisApi.deleteEvidenceRecord(id);
+      switch (activeTab) {
+        case 'devicePoints':
+          await gisApi.deleteDevicePoint(id);
+          break;
+        case 'pipelines':
+          await gisApi.deletePipeline(id);
+          break;
+        case 'storageLocations':
+          await gisApi.deleteStorageLocation(id);
+          break;
+        case 'evidenceRecords':
+          await gisApi.deleteEvidenceRecord(id);
+          break;
+        case 'factoryMaps':
+          await gisApi.deleteFactoryMap(id);
+          break;
+        case 'businessLocations':
+          await gisApi.deleteBusinessLocation(id);
+          break;
       }
       showNotification('success', '删除成功');
-      loadData();
+      loadAllData();
     } catch (err) {
       showNotification('error', '删除失败');
       console.error('删除失败:', err);
@@ -338,6 +611,8 @@ const Gispage: React.FC = () => {
   const safePipelines = Array.isArray(pipelines) ? pipelines : [];
   const safeStorageLocations = Array.isArray(storageLocations) ? storageLocations : [];
   const safeEvidenceRecords = Array.isArray(evidenceRecords) ? evidenceRecords : [];
+  const safeFactoryMaps = Array.isArray(factoryMaps) ? factoryMaps : [];
+  const safeBusinessLocations = Array.isArray(businessLocations) ? businessLocations : [];
 
   const openCreateModal = () => {
     setModalType('create');
