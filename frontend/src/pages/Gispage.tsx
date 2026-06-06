@@ -623,9 +623,23 @@ const Gispage: React.FC = () => {
   const openEditModal = (item: any) => {
     setModalType('edit');
     setEditingItem(item);
-    setFormData({
-      ...item,
-    });
+    const initialFormData: any = { ...item };
+    if (item.position?.lat !== undefined) {
+      initialFormData.lat = item.position.lat;
+      initialFormData.lng = item.position.lng;
+    }
+    if (item.start_point) {
+      initialFormData.start_lat = item.start_point[0];
+      initialFormData.start_lng = item.start_point[1];
+    }
+    if (item.end_point) {
+      initialFormData.end_lat = item.end_point[0];
+      initialFormData.end_lng = item.end_point[1];
+    }
+    if (item.properties) {
+      initialFormData.properties = JSON.stringify(item.properties);
+    }
+    setFormData(initialFormData);
     setShowModal(true);
   };
 
@@ -634,6 +648,8 @@ const Gispage: React.FC = () => {
     { id: 'pipelines', label: '管线管理', icon: ArrowRight },
     { id: 'storageLocations', label: '仓储位置', icon: Warehouse },
     { id: 'evidenceRecords', label: '现场取证', icon: Camera },
+    { id: 'factoryMaps', label: '厂区地图', icon: Map },
+    { id: 'businessLocations', label: '业务位置', icon: Building2 },
   ];
 
   const getStatusColor = (status: string) => {
@@ -805,6 +821,78 @@ const Gispage: React.FC = () => {
     },
   ];
 
+  const factoryMapColumns: ColumnDef<FactoryMap>[] = [
+    { accessorKey: 'name', header: '地图名称' },
+    { accessorKey: 'code', header: '编号' },
+    { accessorKey: 'map_type', header: '地图类型' },
+    { accessorKey: 'file_url', header: '文件URL' },
+    {
+      accessorKey: 'created_at',
+      header: '创建时间',
+      cell: ({ row }) => (
+        <span>{row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : ''}</span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-2'>
+          <button onClick={() => openEditModal(row.original)} className='p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg'>
+            <Edit className='w-4 h-4' />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className='p-2 text-red-600 hover:bg-red-50 rounded-lg'
+          >
+            <Trash2 className='w-4 h-4' />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const businessLocationColumns: ColumnDef<BusinessLocation>[] = [
+    { accessorKey: 'business_name', header: '业务名称' },
+    { accessorKey: 'business_type', header: '业务类型' },
+    { accessorKey: 'address', header: '地址' },
+    { accessorKey: 'contact_person', header: '联系人' },
+    {
+      accessorKey: 'status',
+      header: '状态',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}>
+          {row.original.status}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-2'>
+          <button onClick={() => openEditModal(row.original)} className='p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg'>
+            <Edit className='w-4 h-4' />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm('确定要删除此项吗？')) {
+                handleDelete(row.original.id);
+              }
+            }}
+            className='p-2 text-red-600 hover:bg-red-50 rounded-lg'
+          >
+            <Trash2 className='w-4 h-4' />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   const downloadTemplate = () => {
     let headers: string[];
     let sampleRow: string[];
@@ -825,6 +913,14 @@ const Gispage: React.FC = () => {
       case 'evidenceRecords':
         headers = ['title', 'evidence_type', 'latitude', 'longitude', 'recorded_by', 'file_url', 'description'];
         sampleRow = ['现场照片1', '照片', '31.2304', '121.4737', '张三', '', '证据描述'];
+        break;
+      case 'factoryMaps':
+        headers = ['name', 'code', 'map_type', 'file_url', 'description'];
+        sampleRow = ['厂区平面图', 'F001', '平面图', '', '地图描述'];
+        break;
+      case 'businessLocations':
+        headers = ['business_name', 'business_type', 'business_code', 'category', 'lat', 'lng', 'address', 'contact_person', 'contact_phone', 'capacity', 'current_usage', 'status', 'description'];
+        sampleRow = ['门店A', '零售', 'B001', '零售', '31.2304', '121.4737', '地址', '张三', '13800138000', '100', '50', 'active', '描述'];
         break;
       default:
         headers = ['name'];
@@ -872,7 +968,7 @@ const Gispage: React.FC = () => {
         setShowImportModal(false);
         setImportFile(null);
         setImportPreview(null);
-        loadData();
+        loadAllData();
       } else {
         showNotification('error', response.message || '导入失败');
       }
@@ -892,7 +988,7 @@ const Gispage: React.FC = () => {
             </button>
             <div>
               <h1 className='text-3xl font-bold text-gray-900'>厂区空间数字化</h1>
-              <p className='text-gray-500'>管理设备点位、管线、仓储位置和现场取证</p>
+              <p className='text-gray-500'>管理设备点位、管线、仓储位置、现场取证、厂区地图和业务位置</p>
             </div>
           </div>
           <div className='flex items-center gap-3'>
@@ -911,6 +1007,90 @@ const Gispage: React.FC = () => {
               新建
             </button>
           </div>
+        </div>
+
+        {/* 统计仪表板 */}
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8'>
+          <MetricCard
+            title='设备点位'
+            value={stats.device_points}
+            icon={<MapPin className='w-6 h-6' />}
+            gradient={['#00C897', '#00A878']}
+            subtitle={`启用: ${stats.active_devices}`}
+            trend={stats.active_devices > 0 ? 'up' : 'neutral'}
+          />
+          <MetricCard
+            title='管线管理'
+            value={stats.pipelines}
+            icon={<ArrowRight className='w-6 h-6' />}
+            gradient={['#6366F1', '#4F46E5']}
+            subtitle={`启用: ${stats.active_pipelines}`}
+            trend={stats.active_pipelines > 0 ? 'up' : 'neutral'}
+          />
+          <MetricCard
+            title='仓储位置'
+            value={stats.storage_locations}
+            icon={<Warehouse className='w-6 h-6' />}
+            gradient={['#F59E0B', '#D97706']}
+            trend='neutral'
+          />
+          <MetricCard
+            title='现场取证'
+            value={stats.evidence_records}
+            icon={<Camera className='w-6 h-6' />}
+            gradient={['#EC4899', '#DB2777']}
+            trend='neutral'
+          />
+          <MetricCard
+            title='厂区地图'
+            value={stats.factory_maps}
+            icon={<Map className='w-6 h-6' />}
+            gradient={['#8B5CF6', '#7C3AED']}
+            trend='neutral'
+          />
+          <MetricCard
+            title='业务位置'
+            value={stats.business_locations}
+            icon={<Building2 className='w-6 h-6' />}
+            gradient={['#14B8A6', '#0D9488']}
+            trend='neutral'
+          />
+        </div>
+
+        {/* 数据可视化 */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
+          <StatsChart
+            title='业务类型分布'
+            type='pie'
+            data={[
+              { name: '设备点位', value: stats.device_points, color: '#00C897' },
+              { name: '管线', value: stats.pipelines, color: '#6366F1' },
+              { name: '仓储位置', value: stats.storage_locations, color: '#F59E0B' },
+              { name: '厂区地图', value: stats.factory_maps, color: '#8B5CF6' },
+              { name: '业务位置', value: stats.business_locations, color: '#14B8A6' },
+            ].filter(d => d.value > 0)}
+            dataKey='value'
+            nameKey='name'
+          />
+          <StatsChart
+            title='启用状态对比'
+            type='bar'
+            data={[
+              {
+                name: '设备点位',
+                启用: stats.active_devices,
+                总数: stats.device_points,
+              },
+              {
+                name: '管线',
+                启用: stats.active_pipelines,
+                总数: stats.pipelines,
+              },
+            ]}
+            dataKey='name'
+            yKeys={['启用', '总数']}
+            colors={['#00C897', '#6366F1']}
+          />
         </div>
 
         <div className='flex gap-2 mb-6 border-b border-gray-200'>
@@ -987,6 +1167,26 @@ const Gispage: React.FC = () => {
                 searchPlaceholder='搜索记录标题...'
                 loading={loading}
                 exportFileName='gis-evidence-records'
+              />
+            )}
+            {activeTab === 'factoryMaps' && (
+              <DataTable
+                columns={factoryMapColumns}
+                data={safeFactoryMaps}
+                searchKey='name'
+                searchPlaceholder='搜索地图名称...'
+                loading={loading}
+                exportFileName='gis-factory-maps'
+              />
+            )}
+            {activeTab === 'businessLocations' && (
+              <DataTable
+                columns={businessLocationColumns}
+                data={safeBusinessLocations}
+                searchKey='business_name'
+                searchPlaceholder='搜索业务名称...'
+                loading={loading}
+                exportFileName='gis-business-locations'
               />
             )}
           </div>
@@ -1295,6 +1495,216 @@ const Gispage: React.FC = () => {
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         className='w-full px-3 py-2 border border-gray-300 rounded-lg'
                         rows={2}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {activeTab === 'factoryMaps' && (
+                  <>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>地图名称</label>
+                      <input
+                        type='text'
+                        value={formData.name || ''}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>编号</label>
+                      <input
+                        type='text'
+                        value={formData.code || ''}
+                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>地图类型</label>
+                      <input
+                        type='text'
+                        value={formData.map_type || ''}
+                        onChange={(e) => setFormData({ ...formData, map_type: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>文件 URL</label>
+                      <input
+                        type='text'
+                        value={formData.file_url || ''}
+                        onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>描述</label>
+                      <textarea
+                        value={formData.description || ''}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                        rows={2}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {activeTab === 'businessLocations' && (
+                  <>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>业务类型</label>
+                      <input
+                        type='text'
+                        value={formData.business_type || ''}
+                        onChange={(e) => setFormData({ ...formData, business_type: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>业务名称</label>
+                      <input
+                        type='text'
+                        value={formData.business_name || ''}
+                        onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>业务编码</label>
+                      <input
+                        type='text'
+                        value={formData.business_code || ''}
+                        onChange={(e) => setFormData({ ...formData, business_code: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>分类</label>
+                      <input
+                        type='text'
+                        value={formData.category || ''}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>纬度</label>
+                        <input
+                          type='number'
+                          value={formData.lat || ''}
+                          onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                          className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                          step='0.000001'
+                        />
+                      </div>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>经度</label>
+                        <input
+                          type='number'
+                          value={formData.lng || ''}
+                          onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
+                          className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                          step='0.000001'
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>地址</label>
+                      <input
+                        type='text'
+                        value={formData.address || ''}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>联系人</label>
+                        <input
+                          type='text'
+                          value={formData.contact_person || ''}
+                          onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
+                          className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                        />
+                      </div>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>联系电话</label>
+                        <input
+                          type='text'
+                          value={formData.contact_phone || ''}
+                          onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                          className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                        />
+                      </div>
+                    </div>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>容量</label>
+                        <input
+                          type='number'
+                          value={formData.capacity || ''}
+                          onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                          className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                        />
+                      </div>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>当前用量</label>
+                        <input
+                          type='number'
+                          value={formData.current_usage || ''}
+                          onChange={(e) => setFormData({ ...formData, current_usage: e.target.value })}
+                          className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>状态</label>
+                      <select
+                        value={formData.status || ''}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      >
+                        <option value='active'>启用</option>
+                        <option value='inactive'>禁用</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>属性（JSON格式）</label>
+                      <textarea
+                        value={formData.properties || ''}
+                        onChange={(e) => setFormData({ ...formData, properties: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                        rows={2}
+                        placeholder='{"key": "value"}'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>描述</label>
+                      <textarea
+                        value={formData.description || ''}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                        rows={2}
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>外部ID</label>
+                      <input
+                        type='text'
+                        value={formData.external_id || ''}
+                        onChange={(e) => setFormData({ ...formData, external_id: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>外部类型</label>
+                      <input
+                        type='text'
+                        value={formData.external_type || ''}
+                        onChange={(e) => setFormData({ ...formData, external_type: e.target.value })}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg'
                       />
                     </div>
                   </>
