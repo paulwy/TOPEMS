@@ -225,7 +225,7 @@ const BIDashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <ChartCard title="月度新增项目">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={development?.monthly_new_projects || [
                 { month: '1月', count: 25 },
                 { month: '2月', count: 30 },
@@ -245,7 +245,7 @@ const BIDashboardPage = () => {
         </div>
         <div>
           <ChartCard title="检验类型分布">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <RechartsPieChart>
                 <Pie
                   data={testTypeData}
@@ -271,7 +271,7 @@ const BIDashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div>
           <ChartCard title="质量合格率趋势">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <RechartsLineChart data={quality?.quality_trend || [
                 { month: '1月', pass_rate: 96.5 },
                 { month: '2月', pass_rate: 97.2 },
@@ -291,7 +291,7 @@ const BIDashboardPage = () => {
         </div>
         <div>
           <ChartCard title="日产量统计">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={production?.daily_output || [
                 { date: '1日', output: 1850 },
                 { date: '2日', output: 2100 },
