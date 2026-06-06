@@ -118,3 +118,43 @@ export const inspectionApi = {
     return response.data;
   },
 };
+
+export interface CorrectiveAction {
+  id: string;
+  issue_id?: string;
+  title: string;
+  description?: string;
+  action_type: 'corrective' | 'preventive' | 'improvement';
+  assigned_to?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'verified';
+  target_date?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export const correctiveActionApi = {
+  list: async (params?: { page?: number; pageSize?: number; search?: string; action_type?: string; status?: string }) => {
+    const response = await apiClient.get('/api/v1/corrective-actions', { params });
+    return response.data;
+  },
+
+  get: async (id: string) => {
+    const response = await apiClient.get(`/api/v1/corrective-actions/${id}`);
+    return response.data;
+  },
+
+  create: async (data: { title: string; action_type?: string; assigned_to?: string; status?: string; description?: string; target_date?: string; issue_id?: string }) => {
+    const response = await apiClient.post('/api/v1/corrective-actions', data);
+    return response.data;
+  },
+
+  update: async (id: string, data: Partial<CorrectiveAction>) => {
+    const response = await apiClient.put(`/api/v1/corrective-actions/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await apiClient.delete(`/api/v1/corrective-actions/${id}`);
+    return response.data;
+  },
+};
