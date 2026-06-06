@@ -1,9 +1,9 @@
 # TOPEMS AI辅助功能详细设计文档
 
-**版本**: 1.0.0  
+**版本**: 1.2.0  
 **创建日期**: 2026-06-06  
 **最后更新**: 2026-06-06  
-**状态**: 设计阶段
+**状态**: 已实现（核心功能）
 
 ---
 
@@ -17,6 +17,7 @@
 - [6. API扩展设计](#6-api扩展设计)
 - [7. 实施计划](#7-实施计划)
 - [8. 成功指标](#8-成功指标)
+- [9. 近期更新](#9-近期更新)
 
 ---
 
@@ -918,6 +919,105 @@ cat services/topems-ai/backend/.env
 2. **向量检索优化** - 提升知识库检索效果
 3. **Fine-tuning** - 基于业务数据微调模型
 4. **Agent架构** - 更复杂的多步AI任务处理
+
+---
+
+## 9. 近期更新
+
+### 9.1 v1.2.0 更新 (2026-06-06)
+
+#### 核心 Hook 增强 - useAIHelper
+
+**新增功能**:
+- **自动重试机制** - 支持配置最大重试次数（默认2次）和重试延迟（默认1秒）
+- **chat 方法** - 新增对话功能，支持 AI 对话交互
+- **reset 方法** - 重置所有状态和操作历史
+- **retry 方法** - 手动重试上一次失败的操作
+- **retryCount** - 追踪当前重试次数
+
+**错误处理增强**:
+```typescript
+interface UseAIHelperReturn<T = any> {
+  isLoading: boolean;
+  error: Error | null;
+  result: T | null;
+  retryCount: number;
+  generate: (prompt: string, options?: any) => Promise<string | null>;
+  validate: (data: ValidateRequest) => Promise<ValidateResponse | null>;
+  complete: (data: CompleteRequest) => Promise<CompleteResponse | null>;
+  summarize: (data: SummarizeRequest) => Promise<SummarizeResponse | null>;
+  chat: (query: string, conversationId?: string) => Promise<string | null>;
+  clearError: () => void;
+  reset: () => void;
+  retry: () => Promise<void>;
+}
+```
+
+#### AI 文本优化组件增强 - AITextOptimizer
+
+**新增功能**:
+- **关键词管理** - 支持添加、删除关键词，用于指导 AI 生成更精准的内容
+- **优化风格选择** - 支持4种优化风格：
+  - 专业正式 - 使用专业术语，正式表达
+  - 简洁明了 - 精简内容，突出重点
+  - 详尽完整 - 详细展开，全面覆盖
+  - 亲切友好 - 语气柔和，易于理解
+- **历史版本管理** - 可查看和切换之前生成的所有版本
+- **折叠/展开关键词面板** - 优化界面布局
+- **增强的错误处理** - 显示错误信息并提供重试按钮
+
+**使用示例**:
+```typescript
+<AITextOptimizer
+  isOpen={isOpen}
+  onClose={onClose}
+  context={{
+    textType: 'duty',
+    name: '研发部',
+    keywords: ['技术创新', '产品研发']
+  }}
+  originalText="负责产品开发"
+  onOptimized={(text) => console.log('优化后:', text)}
+/>
+```
+
+#### 后端 AI 服务增强
+
+**validate API 增强**:
+- 集成 AI 智能验证，支持检测：
+  - 数据完整性问题
+  - 格式错误
+  - 逻辑不一致
+- 提供详细的修复建议
+- 当 AI 服务不可用时，回退到本地基础验证逻辑
+- 支持上下文感知（模块信息、实体类型）
+
+**complete API 增强**:
+- 集成 AI 智能补全
+- 根据已有数据推断并补全相关字段
+- 提供置信度评分（0-1）
+- 支持指定需要补全的字段列表
+
+**技术改进**:
+- 添加 JSON 解析和清理（处理 AI 返回的格式问题）
+- 添加超时处理（60秒）
+- 添加详细的日志记录
+- 改进错误处理和降级策略
+
+### 9.2 已集成的业务页面
+
+| 模块 | 页面 | AI 功能 | 状态 |
+|------|------|---------|------|
+| HRM | HrmDepartmentPage | 编码生成、文本优化、表单校验 | ✅ 已实现 |
+| HRM | HrmEmployeePage | 工号生成、智能补全、AI校验 | ✅ 已实现 |
+
+### 9.3 后续计划
+
+- [ ] 在 PM 项目管理模块集成 AI 功能
+- [ ] 在 CRM 客户管理模块集成 AI 功能
+- [ ] 添加更多 AI 组件（AISummarizer、AIDocumentGenerator）
+- [ ] 优化 AI 响应性能
+- [ ] 添加 AI 使用统计和反馈功能
 
 ---
 

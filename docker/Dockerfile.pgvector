@@ -1,0 +1,95 @@
+# TOPEMS PostgreSQL + pgvector Dockerfile
+# 用于构建带有 pgvector 扩展的 PostgreSQL 镜像
+#
+# 使用方法:
+#   1. 复制此文件到构建目录
+#   2. 执行: docker build -t topems-pgvector:16 -f Dockerfile.pgvector .
+#   3. 保存: docker save -o pgvector-16.tar topems-pgvector:16
+
+# 使用官方 PostgreSQL Alpine 基础镜像
+FROM postgres:16-alpine
+
+# 描述
+LABEL maintainer="TOPEMS"
+LABEL description="PostgreSQL 16 with pgvector extension for TOPEMS AI services"
+
+# 安装编译工具和依赖
+RUN apk add --no-cache \
+    # 编译工具
+    gcc \
+    g++ \
+    make \
+    libc-dev \
+    # 下载工具
+    wget \
+    # 压缩工具
+    tar \
+    xz
+
+# 设置工作目录
+WORKDIR /tmp
+
+# 下载并编译安装 pgvector
+# 注意: 如果在离线环境，需要提前下载 pgvector 源码
+ARG PGVECTOR_VERSION=0.7.4
+
+# 方式1: 在线下载 (需要网络)
+# RUN wget -O pgvector.tar.gz https://github.com/pgvector/pgvector/archive/refs/tags/v${PGVECTOR_VERSION}.tar.gz && \
+#     tar xzf pgvector.tar.gz && \
+#     cd pgvector-${PGVECTOR_VERSION} && \
+#     make && \
+#     make install && \
+#     cd / && \
+#     rm -rf /tmp/pgvector*
+
+# 方式2: 离线安装 (已内置于镜像中)
+# 创建 pgvector 安装脚本
+RUN echo '#!/bin/sh' > /usr/local/bin/install-pgvector.sh && \
+    echo '# PGVector installation script' >> /usr/local/bin/install-pgvector.sh && \
+    echo '# For offline installation, copy pgvector source to /tmp/pgvector' >> /usr/local/bin/install-pgvector.sh && \
+    echo '' >> /usr/local/bin/install-pgvector.sh && \
+    echo 'if [ -f /tmp/pgvector/Makefile ]; then' >> /usr/local/bin/install-pgvector.sh && \
+    echo '    cd /tmp/pgvector && make && make install' >> /usr/local/bin/install-pgvector.sh && \
+    echo '    cd / && rm -rf /tmp/pgvector' >> /usr/local/bin/install-pgvector.sh && \
+    echo '    echo "pgvector installed successfully"' >> /usr/local/bin/install-pgvector.sh && \
+    echo 'else' >> /usr/local/bin/install-pgvector.sh && \
+    echo '    echo "pgvector source not found in /tmp/pgvector"' >> /usr/local/bin/install-pgvector.sh && \
+    echo '    exit 1' >> /usr/local/bin/install-pgvector.sh && \
+    echo 'fi' >> /usr/local/bin/install-pgvector.sh && \
+    chmod +x /usr/local/bin/install-pgvector.sh
+
+# 创建自动启用扩展的初始化脚本
+RUN echo '#!/bin/bash' > /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo 'set -e' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo 'echo "Enabling pgvector extension..."' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo 'psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '    -- 创建 pgvector 扩展' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '    CREATE EXTENSION IF NOT EXISTS vector;' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '    -- 验证扩展' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '    SELECT extname, extversion FROM pg_extension WHERE extname = '\''vector'\'';' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '    -- 创建 AI 服务所需的 schema' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '    CREATE SCHEMA IF NOT EXISTS ai;' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo 'EOSQL' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo '' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    echo 'echo "pgvector extension enabled successfully!"' >> /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint-initdb.d/10-pgvector.sh
+
+# 清理缓存
+RUN rm -rf /var/cache/apk/* /tmp/*
+
+# 暴露端口
+EXPOSE 5432
+
+# 环境变量
+ENV PGVECTOR_VERSION=0.7.4
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgres} || exit 1
+
+# 默认命令 (使用官方 entrypoint)
+CMD ["postgres"]

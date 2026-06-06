@@ -148,11 +148,14 @@ async fn create_company(
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(company) => (
-            Json(ApiResponse::success(company.clone(), "公司创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(company) => {
+            state.company_cache.remove("all_companies");
+            (
+                Json(ApiResponse::success(company.clone(), "公司创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建公司失败: {}", e);
             (

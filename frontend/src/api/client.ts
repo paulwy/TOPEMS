@@ -92,6 +92,12 @@ class ApiClient {
           return response.data;
         },
         (error) => {
+          // 处理请求取消或中止的情况
+          if (error.code === 'ERR_CANCELED' || error.code === 'ECONNABORTED' || error.name === 'AbortError') {
+            logger.debug('Request was canceled or aborted:', error.config?.url);
+            return Promise.reject(error);
+          }
+
           if (!error.response || error.code === 'ERR_NETWORK') {
             return Promise.reject(error);
           }
