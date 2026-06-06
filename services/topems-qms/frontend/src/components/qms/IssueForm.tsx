@@ -1,5 +1,5 @@
 import React from 'react';
-import { QualityIssue } from '../api/qualityStandard';
+import { QualityIssue } from '../../api/qualityStandard';
 
 interface IssueFormProps {
   initialData?: Partial<QualityIssue>;

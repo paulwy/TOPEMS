@@ -37,7 +37,11 @@ interface DataTableProps<TData, TValue> {
   exportFileName?: string;
   enablePagination?: boolean;
   pageCount?: number;
+  totalPages?: number;
+  totalItems?: number;
+  pageSize?: number;
   onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
   currentPage?: number;
 }
 
@@ -51,7 +55,11 @@ export function DataTable<TData, TValue>({
   exportFileName = 'export',
   enablePagination = false,
   pageCount = 1,
+  totalPages,
+  totalItems,
+  pageSize = 10,
   onPageChange,
+  onPageSizeChange,
   currentPage = 0,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -228,36 +236,55 @@ export function DataTable<TData, TValue>({
 
       {/* 分页控制 */}
       <div className='flex items-center justify-between py-4'>
-        <div className='text-sm text-gray-500'>共 {table.getFilteredRowModel().rows.length} 条记录</div>
+        <div className='flex items-center gap-4'>
+          <div className='text-sm text-gray-500'>
+            {totalItems !== undefined ? `共 ${totalItems} 条记录` : `共 ${table.getFilteredRowModel().rows.length} 条记录`}
+          </div>
+          {onPageSizeChange && (
+            <div className='flex items-center gap-2'>
+              <span className='text-sm text-gray-500'>每页</span>
+              <select
+                value={pageSize}
+                onChange={(e) => onPageSizeChange(Number(e.target.value))}
+                className='border border-gray-300 rounded px-2 py-1 text-sm'
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          )}
+        </div>
         <div className='flex items-center space-x-2'>
           <Button
             variant='outline'
             size='sm'
             onClick={() => {
               if (enablePagination && onPageChange) {
-                onPageChange(pagination.pageIndex - 1);
+                onPageChange(currentPage - 1);
               } else {
                 table.previousPage();
               }
             }}
-            disabled={!table.getCanPreviousPage()}
+            disabled={currentPage <= 0 && !table.getCanPreviousPage()}
           >
             上一页
           </Button>
           <span className='text-sm text-gray-500'>
-            第 {pagination.pageIndex + 1} 页，共 {enablePagination && pageCount ? pageCount : table.getPageCount()} 页
+            第 {currentPage + 1} 页，共 {totalPages || pageCount || table.getPageCount()} 页
           </span>
           <Button
             variant='outline'
             size='sm'
             onClick={() => {
               if (enablePagination && onPageChange) {
-                onPageChange(pagination.pageIndex + 1);
+                onPageChange(currentPage + 1);
               } else {
                 table.nextPage();
               }
             }}
-            disabled={!table.getCanNextPage()}
+            disabled={currentPage >= (totalPages || 1) - 1 && !table.getCanNextPage()}
           >
             下一页
           </Button>

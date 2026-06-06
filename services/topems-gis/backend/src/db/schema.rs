@@ -121,5 +121,71 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
+    // Create business_locations table for expanded business scope
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS business_locations (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            business_type VARCHAR(50) NOT NULL,
+            business_name VARCHAR(255) NOT NULL,
+            business_code VARCHAR(100),
+            category VARCHAR(100),
+            position JSONB NOT NULL,
+            address TEXT,
+            contact_person VARCHAR(255),
+            contact_phone VARCHAR(50),
+            capacity INTEGER,
+            current_usage INTEGER,
+            status VARCHAR(50) DEFAULT 'active',
+            properties JSONB,
+            description TEXT,
+            external_id UUID,
+            external_type VARCHAR(50),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create spatial_index for business_locations
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_business_locations_type ON business_locations(business_type);")
+        .execute(pool)
+        .await?;
+    
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_business_locations_position ON business_locations USING GIN(position);")
+        .execute(pool)
+        .await?;
+
+    // Create map_markers table for custom markers on maps
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS map_markers (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            marker_type VARCHAR(50) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            marker_style VARCHAR(50),
+            position JSONB NOT NULL,
+            icon_svg TEXT,
+            color VARCHAR(20),
+            size INTEGER DEFAULT 32,
+            popup_content TEXT,
+            click_action VARCHAR(50),
+            action_data JSONB,
+            visible BOOLEAN DEFAULT true,
+            z_index INTEGER DEFAULT 0,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_map_markers_type ON map_markers(marker_type);")
+        .execute(pool)
+        .await?;
+
     Ok(())
 }

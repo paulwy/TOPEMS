@@ -6,7 +6,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
@@ -21,11 +20,15 @@ interface StatsChartProps {
   data: any[];
   xKey?: string;
   yKey?: string;
+  yKeys?: string[];
   colorKey?: string;
   colors?: string[];
 }
 
 const defaultColors = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
+
+const CHART_WIDTH = 400;
+const CHART_HEIGHT = 200;
 
 export const StatsChart: React.FC<StatsChartProps> = ({
   type,
@@ -33,6 +36,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   data,
   xKey = 'name',
   yKey = 'value',
+  yKeys,
   colorKey = 'color',
   colors = defaultColors,
 }) => {
@@ -62,50 +66,57 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   return (
     <div className='bg-white rounded-xl shadow-sm p-6'>
       <h3 className='text-lg font-semibold text-slate-900 mb-4'>{title}</h3>
-      <div className='h-64'>
-        <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={0}>
-          {type === 'pie' ? (
-            <PieChart>
-              <Pie
-                data={data}
-                cx='50%'
-                cy='50%'
-                innerRadius={40}
-                outerRadius={80}
-                paddingAngle={2}
-                dataKey={yKey}
-                nameKey={xKey}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry[colorKey] || colors[index % colors.length]} />
+      <div style={{ width: CHART_WIDTH, height: CHART_HEIGHT }}>
+        {type === 'pie' ? (
+          <PieChart width={CHART_WIDTH} height={CHART_HEIGHT}>
+            <Pie
+              data={data}
+              cx='50%'
+              cy='50%'
+              innerRadius={40}
+              outerRadius={80}
+              paddingAngle={2}
+              dataKey={yKey}
+              nameKey={xKey}
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry[colorKey] || colors[index % colors.length]} />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+          </PieChart>
+        ) : type === 'line' ? (
+          <LineChart width={CHART_WIDTH} height={CHART_HEIGHT} data={data}>
+            <CartesianGrid strokeDasharray='3 3' />
+            <XAxis dataKey={xKey} />
+            <YAxis />
+            <Tooltip content={<CustomTooltip />} />
+            <Line type='monotone' dataKey={yKey} stroke='#6366f1' strokeWidth={2} />
+          </LineChart>
+        ) : (
+          <BarChart width={CHART_WIDTH} height={CHART_HEIGHT} data={data}>
+            <CartesianGrid strokeDasharray='3 3' />
+            <XAxis dataKey={xKey} />
+            <YAxis />
+            <Tooltip content={<CustomTooltip />} />
+            {yKeys && yKeys.length > 0 ? (
+              <>
+                {yKeys.map((key, index) => (
+                  <Bar key={key} dataKey={key} fill={colors[index % colors.length]} radius={[4, 4, 0, 0]} />
                 ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-            </PieChart>
-          ) : type === 'line' ? (
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey={xKey} />
-              <YAxis />
-              <Tooltip content={<CustomTooltip />} />
-              <Line type='monotone' dataKey={yKey} stroke='#6366f1' strokeWidth={2} />
-            </LineChart>
-          ) : (
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey={xKey} />
-              <YAxis />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey={yKey} fill='#6366f1' radius={[4, 4, 0, 0]}>
+              </>
+            ) : (
+              <Bar dataKey={yKey} fill={colors[0]} radius={[4, 4, 0, 0]}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry[colorKey] || colors[index % colors.length]} />
                 ))}
               </Bar>
-            </BarChart>
-          )}
-        </ResponsiveContainer>
+            )}
+            <Legend />
+          </BarChart>
+        )}
       </div>
     </div>
   );

@@ -99,8 +99,8 @@ const HrmRecruitmentPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // 并行加载所有数据
-      const [openingsRes, candidatesRes, interviewsRes, departmentsRes, positionsRes] = await Promise.all([
+      // 并行加载所有数据，但添加错误处理
+      const results = await Promise.allSettled([
         jobOpeningApi.list({ page_size: 100 }),
         candidateApi.list({ page_size: 100 }),
         interviewApi.list({ page_size: 100 }),
@@ -108,21 +108,30 @@ const HrmRecruitmentPage: React.FC = () => {
         positionApi.list({ page_size: 100 }),
       ]);
 
+      // 处理每个结果
+      const [openingsResult, candidatesResult, interviewsResult, departmentsResult, positionsResult] = results;
+
       // 创建部门映射
       const deptMap: Record<string, Department> = {};
-      departmentsRes.data?.items?.forEach((dept) => {
-        deptMap[dept.id] = dept;
-      });
+      if (departmentsResult.status === 'fulfilled' && departmentsResult.value.data?.items) {
+        departmentsResult.value.data.items.forEach((dept) => {
+          deptMap[dept.id] = dept;
+        });
+      }
       setDepartments(deptMap);
 
       // 创建职位映射
       const positionMap: Record<string, any> = {};
-      positionsRes.data?.items?.forEach((pos) => {
-        positionMap[pos.id] = pos;
-      });
+      if (positionsResult.status === 'fulfilled' && positionsResult.value.data?.items) {
+        positionsResult.value.data.items.forEach((pos) => {
+          positionMap[pos.id] = pos;
+        });
+      }
 
       // 转换职位数据
-      const transformedPositions: JobPosition[] = (openingsRes.data?.items || []).map((opening) => {
+      const openings = openingsResult.status === 'fulfilled' ? 
+        (openingsResult.value.data?.items || []) : [];
+      const transformedPositions: JobPosition[] = openings.map((opening) => {
         const dept = deptMap[opening.department_id || ''];
         const pos = positionMap[opening.position_id || ''];
         return {
@@ -142,7 +151,9 @@ const HrmRecruitmentPage: React.FC = () => {
       setPositions(transformedPositions);
 
       // 转换候选人数据
-      const transformedCandidates: Candidate[] = (candidatesRes.data?.items || []).map((candidate) => {
+      const candidates = candidatesResult.status === 'fulfilled' ? 
+        (candidatesResult.value.data?.items || []) : [];
+      const transformedCandidates: Candidate[] = candidates.map((candidate) => {
         const pos = positionMap[candidate.position_id || ''];
         const opening = transformedPositions.find((o) => o.id === candidate.job_opening_id);
         return {
@@ -165,7 +176,9 @@ const HrmRecruitmentPage: React.FC = () => {
       setCandidates(transformedCandidates);
 
       // 转换面试数据
-      const transformedInterviews: InterviewRecord[] = (interviewsRes.data?.items || []).map((interview) => {
+      const interviews = interviewsResult.status === 'fulfilled' ? 
+        (interviewsResult.value.data?.items || []) : [];
+      const transformedInterviews: InterviewRecord[] = interviews.map((interview) => {
         const candidate = transformedCandidates.find((c) => c.id === interview.candidate_id);
         return {
           id: interview.id,

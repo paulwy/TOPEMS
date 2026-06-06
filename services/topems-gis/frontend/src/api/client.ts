@@ -1,4 +1,4 @@
-import type { FactoryMap, DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto, ApiResponse } from '../types';
+import type { FactoryMap, DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto, BusinessLocation, MapMarker, ApiResponse } from '../types';
 
 const API_BASE = 'http://localhost:8050/api/v1';
 
@@ -71,5 +71,54 @@ export async function createLocationPhoto(data: Omit<LocationPhoto, 'id' | 'crea
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  return response.json();
+}
+
+// 业务位置 API
+export async function fetchBusinessLocations(): Promise<ApiResponse<{ business_locations: BusinessLocation[]; total: number }>> {
+  const response = await fetch(`${API_BASE}/business-locations`);
+  return response.json();
+}
+
+export async function fetchBusinessLocationsByType(type: string): Promise<ApiResponse<{ business_locations: BusinessLocation[]; total: number }>> {
+  const response = await fetch(`${API_BASE}/business-locations/type/${type}`);
+  return response.json();
+}
+
+export async function createBusinessLocation(data: Omit<BusinessLocation, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<BusinessLocation>> {
+  const response = await fetch(`${API_BASE}/business-locations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+// 地图标记 API
+export async function fetchMapMarkers(): Promise<ApiResponse<{ map_markers: MapMarker[]; total: number }>> {
+  const response = await fetch(`${API_BASE}/map-markers`);
+  return response.json();
+}
+
+export async function createMapMarker(data: Omit<MapMarker, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<MapMarker>> {
+  const response = await fetch(`${API_BASE}/map-markers`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+// 搜索 API
+export async function searchLocations(query: string, type?: string): Promise<ApiResponse<{ results: any[]; total: number; query: string }>> {
+  const params = new URLSearchParams({ q: query });
+  if (type) params.append('type', type);
+  const response = await fetch(`${API_BASE}/search?${params.toString()}`);
+  return response.json();
+}
+
+// GeoJSON 导出
+export async function exportGeoJSON(): Promise<ApiResponse<any>> {
+  const response = await fetch(`${API_BASE}/geojson/export`);
   return response.json();
 }

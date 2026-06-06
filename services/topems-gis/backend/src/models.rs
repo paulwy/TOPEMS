@@ -98,3 +98,46 @@ pub struct EvidenceRecord {
     pub recorded_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
 }
+
+/// 业务位置 - 支持更广泛的业务范围
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct BusinessLocation {
+    pub id: Uuid,
+    pub business_type: String,
+    pub business_name: String,
+    pub business_code: Option<String>,
+    pub category: Option<String>,
+    pub position: serde_json::Value,
+    pub address: Option<String>,
+    pub contact_person: Option<String>,
+    pub contact_phone: Option<String>,
+    pub capacity: Option<i32>,
+    pub current_usage: Option<i32>,
+    pub status: String,
+    pub properties: Option<serde_json::Value>,
+    pub description: Option<String>,
+    pub external_id: Option<Uuid>,
+    pub external_type: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// 地图标记 - 用于在地图上显示自定义标记
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct MapMarker {
+    pub id: Uuid,
+    pub marker_type: String,
+    pub name: String,
+    pub marker_style: Option<String>,
+    pub position: serde_json::Value,
+    pub icon_svg: Option<String>,
+    pub color: Option<String>,
+    pub size: Option<i32>,
+    pub popup_content: Option<String>,
+    pub click_action: Option<String>,
+    pub action_data: Option<serde_json::Value>,
+    pub visible: Option<bool>,
+    pub z_index: Option<i32>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}

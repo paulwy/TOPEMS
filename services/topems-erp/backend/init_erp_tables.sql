@@ -17,13 +17,6 @@ CREATE TABLE IF NOT EXISTS erp.companies (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 插入示例数据
-INSERT INTO erp.companies (id, name, short_name, registration_number, tax_number, address, contact_phone, email, status)
-VALUES
-    (gen_random_uuid(), '北京天地科技有限公司', '天地科技', '1101010000001', '110000000000', '北京市海淀区中关村大街1号', '010-12345678', 'contact@tdtech.com', 'active'),
-    (gen_random_uuid(), '上海创新电子集团', '创新电子', '3101010000001', '310000000000', '上海市浦东新区张江高科技园区', '021-87654321', 'info@innov-e.com', 'active')
-ON CONFLICT DO NOTHING;
-
 -- 创建 departments 表
 CREATE TABLE IF NOT EXISTS erp.departments (
     id UUID PRIMARY KEY,

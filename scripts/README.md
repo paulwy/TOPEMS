@@ -12,7 +12,6 @@
 | `stop-all.sh` | 一键停止所有服务 | ⭐⭐⭐⭐⭐ |
 | `manage-services.sh` | 单个服务管理（启动/停止/编译） | ⭐⭐⭐⭐⭐ |
 | `init-database.sh` | 初始化数据库 | ⭐⭐⭐⭐ |
-| `init-hrm-data.py` | 初始化HRM数据 | ⭐⭐⭐ |
 | `cleanup.sh` | 全面清理（端口/进程/缓存） | ⭐⭐⭐⭐⭐ |
 | `quick-start.sh` | 快速启动项目 | ⭐⭐⭐⭐ |
 | `run-clippy.sh` | 运行 Clippy 代码检查 | ⭐⭐⭐⭐ |

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Building2, Search, Plus, Edit, Trash2, Eye, Users, RefreshCw, ChevronRight, ChevronDown, Folder, Phone, Mail, User } from 'lucide-react';
-import { departmentApi, employeeApi, type Department, type Employee, type PaginatedResult, type ListParams } from '../api/hrm';
+import { Building2, Search, Plus, Edit, Trash2, Eye, Users, RefreshCw, ChevronRight, ChevronDown, Folder, Phone, Mail, User, Building } from 'lucide-react';
+import { departmentApi, employeeApi, companyApi, type Department, type Employee, type Company, type PaginatedResult, type ListParams } from '../api/hrm';
 import { useAppStore } from '../store';
 import { HrmLayout } from '../components/HrmLayout';
 import { AIHelperButton, AICodeGenerator, AITextOptimizer, AIFormValidator } from '../components/ai';
@@ -22,7 +22,9 @@ const HrmDepartmentPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [totalDepartments, setTotalDepartments] = useState<number>(0);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -49,15 +51,18 @@ const HrmDepartmentPage: React.FC = () => {
         const data = response.data as PaginatedResult<Department>;
         const depts = data.items || [];
         setDepartments(depts);
+        setTotalDepartments(data.total || depts.length);
         
         const rootDepts = depts.filter(d => !d.parent_id);
         rootDepts.forEach(d => expandAllChildren(d, depts));
       } else {
         setDepartments([]);
+        setTotalDepartments(0);
       }
     } catch (error: any) {
       addNotification({ title: '加载失败', message: error.message || '获取部门列表失败', type: 'error' });
       setDepartments([]);
+      setTotalDepartments(0);
     } finally {
       setLoading(false);
     }
@@ -144,8 +149,21 @@ const HrmDepartmentPage: React.FC = () => {
     return buildTree.map(filterNode).filter((n): n is TreeNode => n !== null);
   }, [buildTree, searchText]);
 
+  const fetchCompanies = async () => {
+    try {
+      const response = await companyApi.list({ page_size: 100 });
+      if (response.code === 200 && response.data) {
+        const data = response.data as PaginatedResult<Company>;
+        setCompanies(data.items || []);
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch companies:', error);
+    }
+  };
+
   useEffect(() => {
-    fetchDepartments();
+    fetchDepartments({ page_size: 1000 });
+    fetchCompanies();
   }, []);
 
   useEffect(() => {
@@ -381,7 +399,7 @@ const HrmDepartmentPage: React.FC = () => {
             </div>
             <div>
               <CardTitle className="text-lg font-semibold">部门管理</CardTitle>
-              <CardDescription className="text-emerald-600">{departments.length} 个部门</CardDescription>
+              <CardDescription className="text-emerald-600">{totalDepartments} 个部门</CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -514,8 +532,24 @@ const HrmDepartmentPage: React.FC = () => {
                       <div className="bg-slate-50 rounded-lg p-4">
                         <div className="flex items-center justify-between">
                           <div>
+                            <p className="text-xs text-slate-500">所属公司</p>
+                            <p className="text-sm font-bold text-slate-900 mt-1">
+                              {selectedDept.company_id 
+                                ? companies.find(c => c.id === selectedDept.company_id)?.name || '-'
+                                : '无'
+                              }
+                            </p>
+                          </div>
+                          <div className="p-2 bg-amber-100 rounded-lg">
+                            <Building className="w-5 h-5 text-amber-600" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-slate-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
                             <p className="text-xs text-slate-500">上级部门</p>
-                            <p className="text-xl font-bold text-slate-900 mt-1">
+                            <p className="text-sm font-bold text-slate-900 mt-1">
                               {selectedDept.parent_id 
                                 ? departments.find(d => d.id === selectedDept.parent_id)?.name || '-'
                                 : '无'
@@ -541,9 +575,9 @@ const HrmDepartmentPage: React.FC = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-xs text-slate-500">状态</p>
-                            <p className="text-sm font-medium mt-1">
+                            <div className="text-sm font-medium mt-1">
                               {getStatusBadge(selectedDept.status)}
-                            </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -671,6 +705,25 @@ const HrmDepartmentPage: React.FC = () => {
               </div>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="create-company" className="text-sm font-medium">所属公司</Label>
+              <Select
+                value={(formData as Department)?.company_id || ''}
+                onValueChange={(value) => handleInputChange('company_id', value === 'none' ? undefined : value)}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="请选择公司" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">无</SelectItem>
+                  {companies.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="create-parent" className="text-sm font-medium">上级部门</Label>
               <Select
                 value={(formData as Department)?.parent_id || ''}
@@ -777,6 +830,25 @@ const HrmDepartmentPage: React.FC = () => {
                     label="AI生成"
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-company" className="text-sm font-medium">所属公司</Label>
+                <Select
+                  value={(formData as Department)?.company_id || ''}
+                  onValueChange={(value) => handleInputChange('company_id', value === 'none' ? undefined : value)}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="请选择公司" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">无</SelectItem>
+                    {companies.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-parent" className="text-sm font-medium">上级部门</Label>

@@ -11,6 +11,7 @@ export interface Company {
   contact_phone?: string;
   email?: string;
   website?: string;
+  description?: string;
   status: string;
   created_at: string;
   updated_at: string;
@@ -21,6 +22,7 @@ export interface Department {
   name: string;
   code?: string;
   parent_id?: string;
+  company_id?: string;
   description?: string;
   status: string;
   created_at: string;
@@ -42,6 +44,7 @@ export interface Employee {
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
   status: string;
+  user_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -386,9 +389,51 @@ export const companyApi: CrudOperations<Company> = {
   },
 };
 
-export const departmentApi: CrudOperations<Department> = createCrudApi<Department>('/api/v1/departments');
+export const departmentApi: CrudOperations<Department> = {
+  list: async (params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return await apiClient.erp.get(`/api/v1/departments${queryString}`);
+  },
 
-export const employeeApi: CrudOperations<Employee> = createCrudApi<Employee>('/api/v1/employees');
+  get: (id: string) => {
+    return apiClient.erp.get(`/api/v1/departments/${id}`);
+  },
+
+  create: (data: Partial<Department>) => {
+    return apiClient.erp.post('/api/v1/departments', data);
+  },
+
+  update: (id: string, data: Partial<Department>) => {
+    return apiClient.erp.put(`/api/v1/departments/${id}`, data);
+  },
+
+  delete: (id: string) => {
+    return apiClient.erp.delete(`/api/v1/departments/${id}`);
+  },
+};
+
+export const employeeApi: CrudOperations<Employee> = {
+  list: async (params?: ListParams) => {
+    const queryString = buildQueryString(params);
+    return await apiClient.erp.get(`/api/v1/employees${queryString}`);
+  },
+
+  get: (id: string) => {
+    return apiClient.erp.get(`/api/v1/employees/${id}`);
+  },
+
+  create: (data: Partial<Employee>) => {
+    return apiClient.erp.post('/api/v1/employees', data);
+  },
+
+  update: (id: string, data: Partial<Employee>) => {
+    return apiClient.erp.put(`/api/v1/employees/${id}`, data);
+  },
+
+  delete: (id: string) => {
+    return apiClient.erp.delete(`/api/v1/employees/${id}`);
+  },
+};
 
 export const roleApi: CrudOperations<Role> = createCrudApi<Role>('/api/v1/roles');
 

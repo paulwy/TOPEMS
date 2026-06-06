@@ -61,7 +61,7 @@ const QualityStandardList: React.FC = () => {
   const handleFilterChange = (filters: Record<string, string>) => { setStatusFilter(filters.status || ''); setCurrentPage(1); };
   const handlePageChange = (page: number, size?: number) => { setCurrentPage(page); if (size) setPageSize(size); };
 
-  const handleCreate = () => { setSelected(undefined); setIsFormOpen(true); };
+  const handleCreate = () => { setSelected(null); setIsFormOpen(true); };
   const handleEdit = (item: QualityStandard) => { setSelected(item); setIsFormOpen(true); };
   const handleDetail = (item: QualityStandard) => { setSelected(item); setIsDetailOpen(true); };
   const handleDeletePrompt = (item: QualityStandard) => { setSelected(item); setIsDeleteOpen(true); };
