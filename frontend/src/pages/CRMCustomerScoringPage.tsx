@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { customerApi, Customer } from '@/api/crm';
+import { crmApi, Customer } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Star, TrendingUp, TrendingDown, Minus, Award, Target, DollarSign, Users } from 'lucide-react';
@@ -56,15 +56,15 @@ const CRMCustomerScoringPage: React.FC = () => {
   const calculateScore = (customer: Customer, opportunities: any[], interactions: any[]): CustomerScore => {
     const now = new Date();
     const totalRevenue = opportunities
-      .filter((o) => o.customerId === customer.id && o.stage === 'closed_won')
+      .filter((o: any) => o.customer_id === customer.id && o.stage === 'closed_won')
       .reduce((sum, o) => sum + (o.value || 0), 0);
 
-    const customerInteractions = interactions.filter((i) => i.customerId === customer.id);
+    const customerInteractions = interactions.filter((i: any) => i.customer_id === customer.id);
     const interactionFrequency = customerInteractions.length;
 
     const lastInteractionDate =
       customerInteractions.length > 0
-        ? new Date(Math.max(...customerInteractions.map((i) => new Date(i.createdAt).getTime())))
+        ? new Date(Math.max(...customerInteractions.map((i: any) => new Date(i.created_at).getTime())))
         : new Date(0);
     const daysSinceLastInteraction = Math.floor(
       (now.getTime() - lastInteractionDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -146,14 +146,14 @@ const CRMCustomerScoringPage: React.FC = () => {
     try {
       setLoading(true);
       const [customerRes, opportunityRes, interactionRes] = await Promise.all([
-        customerApi.getCustomers({ page: 1, pageSize: 1000 }),
-        customerApi.getCustomers({ page: 1, pageSize: 1000 }),
-        customerApi.getCustomers({ page: 1, pageSize: 1000 }),
+        crmApi.customers.list({ page: 1, pageSize: 1000 }),
+        crmApi.opportunities.list({ page: 1, pageSize: 1000 }),
+        crmApi.interactions.list({ page: 1, pageSize: 1000 }),
       ]);
 
-      const customerList = customerRes.data.data?.items || [];
-      const opportunities: any[] = opportunityRes.data.data?.items || [];
-      const interactions: any[] = interactionRes.data.data?.items || [];
+      const customerList = customerRes.data?.items || [];
+      const opportunities: any[] = opportunityRes.data?.items || [];
+      const interactions: any[] = interactionRes.data?.items || [];
 
       const scores = customerList.map((customer) => calculateScore(customer, opportunities, interactions));
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { customerApi, opportunityApi, interactionApi } from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { TrendingUp, Users, Target, DollarSign, Activity, Calendar, BarChart3, PieChart } from 'lucide-react';
@@ -57,14 +57,14 @@ const CRMDashboardPage: React.FC = () => {
       setLoading(true);
 
       const [customerRes, opportunityRes, interactionRes] = await Promise.all([
-        customerApi.getCustomers({ page: 1, pageSize: 1000 }),
-        opportunityApi.getOpportunities({ page: 1, pageSize: 1000 }),
-        interactionApi.getInteractions({ page: 1, pageSize: 20 }),
+        crmApi.customers.list({ page: 1, pageSize: 1000 }),
+        crmApi.opportunities.list({ page: 1, pageSize: 1000 }),
+        crmApi.interactions.list({ page: 1, pageSize: 20 }),
       ]);
 
-      const customers = customerRes.data.data?.items || [];
-      const opportunities = opportunityRes.data.data?.items || [];
-      const interactions = interactionRes.data.data?.items || [];
+      const customers = customerRes.data?.items || [];
+      const opportunities = opportunityRes.data?.items || [];
+      const interactions = interactionRes.data?.items || [];
 
       const totalCustomers = customers.length;
       const activeCustomers = customers.filter((c) => c.status === 'active').length;
@@ -93,7 +93,7 @@ const CRMDashboardPage: React.FC = () => {
         const monthIndex = (currentMonth - i + 12) % 12;
         const monthName = months[monthIndex];
         const monthOpportunities = opportunities.filter((o) => {
-          const createdMonth = new Date(o.createdAt).getMonth();
+          const createdMonth = new Date(o.created_at).getMonth();
           return createdMonth === monthIndex;
         });
         trendData.push({
@@ -147,8 +147,8 @@ const CRMDashboardPage: React.FC = () => {
         interactions.slice(0, 5).map((i) => ({
           type: i.type === 'call' ? '电话' : i.type === 'email' ? '邮件' : i.type === 'meeting' ? '会议' : '备注',
           title: i.subject || '无主题',
-          time: new Date(i.createdAt).toLocaleDateString('zh-CN'),
-          customer: customers.find((c) => c.id === i.customerId)?.name,
+          time: new Date(i.created_at).toLocaleDateString('zh-CN'),
+          customer: customers.find((c) => c.id === i.customer_id)?.name,
         }))
       );
     } catch (error) {

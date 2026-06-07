@@ -15,6 +15,10 @@ import {
   BarChart3,
   AlertTriangle,
   CheckCircle,
+  Building2,
+  Award,
+  DollarSign,
+  ScrollText,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -24,12 +28,15 @@ import {
   PurchaseOrder,
   SupplierContract,
   SrmStatistics,
+  SrmDetailedStatistics,
   CreateSupplierRequest,
   CreateSupplierEvaluationRequest,
   CreatePurchaseOrderRequest,
   CreateSupplierContractRequest,
 } from '../api/srm';
 import { DataTable } from '../components/DataTable';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 import { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'dashboard' | 'suppliers' | 'evaluations' | 'orders' | 'contracts';
@@ -42,7 +49,7 @@ const Srmpage: React.FC = () => {
   const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [contracts, setContracts] = useState<SupplierContract[]>([]);
-  const [statistics, setStatistics] = useState<SrmStatistics | null>(null);
+  const [statistics, setStatistics] = useState<SrmDetailedStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -119,7 +126,7 @@ const Srmpage: React.FC = () => {
       setLoading(true);
 
       if (activeTab === 'dashboard') {
-        const response = await srmApi.getStatistics();
+        const response = await srmApi.getDetailedStatistics();
         if (response.success && response.data) {
           setStatistics(response.data);
         }
@@ -728,66 +735,114 @@ const Srmpage: React.FC = () => {
         </div>
 
         {activeTab === 'dashboard' && statistics && (
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
-            <div className='bg-white rounded-xl shadow-sm p-6 border border-slate-200'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-slate-500'>供应商总数</p>
-                  <p className='text-3xl font-bold text-slate-900'>{statistics.total_suppliers}</p>
-                </div>
-                <div className='w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center'>
-                  <Users className='w-6 h-6 text-blue-600' />
-                </div>
-              </div>
-              <p className='text-sm text-green-600 mt-2'>
-                <CheckCircle className='w-4 h-4 inline mr-1' />
-                {statistics.active_suppliers} 个启用中
-              </p>
+          <div>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8'>
+              <MetricCard
+                title='供应商总数'
+                value={statistics.basic.total_suppliers}
+                icon={<Users />}
+                gradient={['#6366F1', '#8B5CF6']}
+                subtitle={`${statistics.basic.active_suppliers} 个启用中`}
+              />
+              <MetricCard
+                title='平均评分'
+                value={statistics.basic.avg_score.toFixed(1)}
+                icon={<Award />}
+                gradient={['#F59E0B', '#D97706']}
+                subtitle={`${statistics.basic.total_evaluations} 次评估`}
+              />
+              <MetricCard
+                title='采购订单'
+                value={statistics.basic.total_orders}
+                icon={<ClipboardList />}
+                gradient={['#10B981', '#059669']}
+                subtitle={`${statistics.basic.pending_orders} 个待处理`}
+              />
+              <MetricCard
+                title='订单总额'
+                value={`¥${statistics.basic.total_order_amount.toLocaleString()}`}
+                icon={<DollarSign />}
+                gradient={['#14B8A6', '#0D9488']}
+                subtitle={`${statistics.basic.completed_orders} 个已完成`}
+              />
+              <MetricCard
+                title='合同总数'
+                value={statistics.basic.total_contracts}
+                icon={<ScrollText />}
+                gradient={['#EC4899', '#DB2777']}
+                subtitle={`${statistics.basic.active_contracts} 个有效`}
+              />
+              <MetricCard
+                title='供应商分类'
+                value={statistics.supplier_by_category.length}
+                icon={<Building2 />}
+                gradient={['#8B5CF6', '#7C3AED']}
+                subtitle='类别数量'
+              />
             </div>
 
-            <div className='bg-white rounded-xl shadow-sm p-6 border border-slate-200'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-slate-500'>平均评分</p>
-                  <p className='text-3xl font-bold text-slate-900'>{statistics.avg_score.toFixed(1)}</p>
-                </div>
-                <div className='w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center'>
-                  <Star className='w-6 h-6 text-yellow-600' />
-                </div>
-              </div>
-              <p className='text-sm text-slate-500 mt-2'>{statistics.total_evaluations} 次评估记录</p>
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
+              <StatsChart
+                title='供应商状态分布'
+                type='pie'
+                data={statistics.supplier_by_status.map(s => ({
+                  name: mapStatusToChinese(s.status),
+                  value: s.count,
+                  color: s.status === 'active' ? '#10B981' : '#6B7280'
+                }))}
+                yKey='value'
+                xKey='name'
+              />
+              <StatsChart
+                title='订单状态分布'
+                type='pie'
+                data={statistics.order_by_status.map(s => ({
+                  name: mapStatusToChinese(s.status),
+                  value: s.count
+                }))}
+                yKey='value'
+                xKey='name'
+              />
             </div>
 
-            <div className='bg-white rounded-xl shadow-sm p-6 border border-slate-200'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-slate-500'>采购订单总额</p>
-                  <p className='text-3xl font-bold text-slate-900'>¥{statistics.total_order_amount.toFixed(0)}</p>
-                </div>
-                <div className='w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center'>
-                  <TrendingUp className='w-6 h-6 text-green-600' />
-                </div>
-              </div>
-              <p className='text-sm text-slate-500 mt-2'>
-                {statistics.pending_orders} 个待处理 / {statistics.completed_orders} 个已完成
-              </p>
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
+              <StatsChart
+                title='评估分数分布'
+                type='bar'
+                data={statistics.evaluation_score_distribution.map(s => ({
+                  name: s.range,
+                  value: s.count
+                }))}
+                yKey='value'
+                xKey='name'
+              />
+              <StatsChart
+                title='月度订单趋势'
+                type='line'
+                data={statistics.monthly_order_trend.map(t => ({
+                  name: t.month,
+                  value: t.order_count,
+                  amount: t.total_amount
+                }))}
+                yKey='value'
+                xKey='name'
+              />
             </div>
 
-            <div className='bg-white rounded-xl shadow-sm p-6 border border-slate-200'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-slate-500'>合同总数</p>
-                  <p className='text-3xl font-bold text-slate-900'>{statistics.total_contracts}</p>
-                </div>
-                <div className='w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center'>
-                  <FileText className='w-6 h-6 text-purple-600' />
-                </div>
+            {statistics.contract_by_status.length > 0 && (
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                <StatsChart
+                  title='合同状态分布'
+                  type='pie'
+                  data={statistics.contract_by_status.map(s => ({
+                    name: mapStatusToChinese(s.status),
+                    value: s.count
+                  }))}
+                  yKey='value'
+                  xKey='name'
+                />
               </div>
-              <p className='text-sm text-green-600 mt-2'>
-                <CheckCircle className='w-4 h-4 inline mr-1' />
-                {statistics.active_contracts} 个有效合同
-              </p>
-            </div>
+            )}
           </div>
         )}
 

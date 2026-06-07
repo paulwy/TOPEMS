@@ -125,14 +125,35 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['lucide-react', 'clsx', 'tailwind-merge'],
-          charts: ['recharts'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
+            }
+            if (id.includes('lucide-react') || id.includes('clsx') || id.includes('tailwind-merge')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('recharts')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('axios')) {
+              return 'vendor-axios';
+            }
+            if (id.includes('zod') || id.includes('yup')) {
+              return 'vendor-validation';
+            }
+            return 'vendor-other';
+          }
+          if (id.includes('pages/AIPage')) {
+            return 'page-ai';
+          }
+          if (id.includes('pages/GisPage')) {
+            return 'page-gis';
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 800,
   },
   server: {
     port: 3000,

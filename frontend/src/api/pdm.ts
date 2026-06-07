@@ -117,6 +117,22 @@ export interface ProductionStatistics {
   created_at: string;
 }
 
+export interface PdmStatistics {
+  total_processes: number;
+  active_processes: number;
+  total_formulas: number;
+  active_formulas: number;
+  total_batches: number;
+  planning_batches: number;
+  in_progress_batches: number;
+  completed_batches: number;
+  cancelled_batches: number;
+  total_steps: number;
+  total_output_quantity: number;
+  total_reject_quantity: number;
+  average_pass_rate: number;
+}
+
 export const pdmApi = {
   // Production Processes
   listProcesses: async (): Promise<ApiResponse<ProductionProcess[]>> => {
@@ -189,6 +205,10 @@ export const pdmApi = {
   // Production Statistics
   listStatistics: async (): Promise<ApiResponse<ProductionStatistics[]>> => {
     return apiClient.pdm.get<ProductionStatistics[]>('/api/v1/production-statistics');
+  },
+
+  getStatistics: async (): Promise<ApiResponse<PdmStatistics>> => {
+    return apiClient.pdm.get<PdmStatistics>('/api/v1/statistics');
   },
 
   health: async (): Promise<ApiResponse<string>> => {

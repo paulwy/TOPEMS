@@ -4,41 +4,78 @@ import {
   FileCheck,
   TrendingUp,
   AlertTriangle,
-  Users,
   Calendar,
   DollarSign,
-  BarChart3,
   Plus,
   ArrowRight,
+  ChevronRight,
+  BarChart3,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { pmApi, Project, Contract } from '../api/pm';
+import { pmApi, Project, Contract, PmStatistics } from '../api/pm';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 
 const PmDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<PmStatistics>({
+    total_projects: 0,
+    draft_projects: 0,
+    pending_projects: 0,
+    active_projects: 0,
+    completed_projects: 0,
+    cancelled_projects: 0,
+    total_contracts: 0,
+    pending_contracts: 0,
+    active_contracts: 0,
+    completed_contracts: 0,
+    total_budget: 0,
+    spent_budget: 0,
+    budget_usage_rate: 0,
+    on_time_projects: 0,
+    delayed_projects: 0,
+    average_progress: 0,
+    high_risk_projects: 0,
+    medium_risk_projects: 0,
+    low_risk_projects: 0,
+  });
 
   useEffect(() => {
     loadDashboardData();
   }, []);
 
+  const loadStatistics = async () => {
+    try {
+      const response = await pmApi.getStatistics();
+      if (response.success && response.data) {
+        setStats(response.data);
+      }
+    } catch (err) {
+      console.error('加载统计数据失败:', err);
+    }
+  };
+
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [projectsRes, contractsRes] = await Promise.allSettled([
-        pmApi.projects.list(),
-        pmApi.contracts.list(),
+      await Promise.all([
+        pmApi.projects.list().then(res => {
+          if (res.success && res.data) {
+            setProjects(res.data.projects || []);
+          }
+        }),
+        pmApi.contracts.list().then(res => {
+          if (res.success && res.data) {
+            setContracts(res.data.contracts || []);
+          }
+        }),
+        loadStatistics(),
       ]);
-
-      if (projectsRes.status === 'fulfilled' && projectsRes.value.success && projectsRes.value.data) {
-        setProjects(projectsRes.value.data.projects || []);
-      }
-
-      if (contractsRes.status === 'fulfilled' && contractsRes.value.success && contractsRes.value.data) {
-        setContracts(contractsRes.value.data.contracts || []);
-      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
@@ -81,33 +118,6 @@ const PmDashboardPage: React.FC = () => {
     return new Date(dateStr).toLocaleDateString('zh-CN');
   };
 
-  const stats = [
-    {
-      title: '总项目数',
-      value: projects.length,
-      icon: FolderKanban,
-      color: 'bg-blue-100 text-blue-600',
-    },
-    {
-      title: '进行中',
-      value: projects.filter((p) => p.status === 'active').length,
-      icon: TrendingUp,
-      color: 'bg-green-100 text-green-600',
-    },
-    {
-      title: '待审批',
-      value: projects.filter((p) => p.status === 'pending').length,
-      icon: AlertTriangle,
-      color: 'bg-yellow-100 text-yellow-600',
-    },
-    {
-      title: '合同数',
-      value: contracts.length,
-      icon: FileCheck,
-      color: 'bg-purple-100 text-purple-600',
-    },
-  ];
-
   const quickActions = [
     {
       title: '项目管理',
@@ -146,23 +156,84 @@ const PmDashboardPage: React.FC = () => {
         <p className='text-gray-500 mt-1'>统一管理所有项目、合同和相关资源</p>
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6'>
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className='bg-white rounded-lg shadow p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-gray-500'>{stat.title}</p>
-                  <p className='text-2xl font-bold text-gray-900'>{stat.value}</p>
-                </div>
-                <div className={`p-3 ${stat.color.replace('text-', 'bg-').replace('600', '100')} rounded-full`}>
-                  <Icon className={`w-6 h-6 ${stat.color.split(' ')[1]}`} />
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      {/* 统计卡片区域 */}
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8'>
+        <MetricCard
+          title='项目总数'
+          value={stats.total_projects}
+          icon={<FolderKanban className='w-6 h-6' />}
+          gradient={['#8B5CF6', '#7C3AED']}
+          subtitle={`进行中: ${stats.active_projects}`}
+          trend={stats.active_projects > 0 ? 'up' : 'neutral'}
+        />
+        <MetricCard
+          title='已完成项目'
+          value={stats.completed_projects}
+          icon={<CheckCircle2 className='w-6 h-6' />}
+          gradient={['#00C897', '#00A878']}
+          trend='up'
+        />
+        <MetricCard
+          title='合同总数'
+          value={stats.total_contracts}
+          icon={<FileCheck className='w-6 h-6' />}
+          gradient={['#6366F1', '#4F46E5']}
+          subtitle={`进行中: ${stats.active_contracts}`}
+          trend={stats.active_contracts > 0 ? 'up' : 'neutral'}
+        />
+        <MetricCard
+          title='预算使用'
+          value={stats.budget_usage_rate}
+          icon={<DollarSign className='w-6 h-6' />}
+          gradient={['#F59E0B', '#D97706']}
+          subtitle={`已用: ${(stats.spent_budget / 10000).toFixed(1)}万 / ${(stats.total_budget / 10000).toFixed(1)}万`}
+          trend='neutral'
+          suffix='%'
+        />
+        <MetricCard
+          title='项目进度'
+          value={stats.average_progress}
+          icon={<TrendingUp className='w-6 h-6' />}
+          gradient={['#14B8A6', '#0D9488']}
+          subtitle={`准时: ${stats.on_time_projects} 个`}
+          trend='up'
+          suffix='%'
+        />
+        <MetricCard
+          title='高风险项目'
+          value={stats.high_risk_projects}
+          icon={<AlertTriangle className='w-6 h-6' />}
+          gradient={['#EF4444', '#DC2626']}
+          subtitle={`中: ${stats.medium_risk_projects} 低: ${stats.low_risk_projects}`}
+          trend={stats.high_risk_projects > 0 ? 'down' : 'neutral'}
+        />
+      </div>
+
+      {/* 数据可视化图表区域 */}
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
+        <StatsChart
+          title='项目状态分布'
+          type='pie'
+          data={[
+            { name: '草稿', value: stats.draft_projects, color: '#6B7280' },
+            { name: '待审批', value: stats.pending_projects, color: '#F59E0B' },
+            { name: '进行中', value: stats.active_projects, color: '#3B82F6' },
+            { name: '已完成', value: stats.completed_projects, color: '#10B981' },
+            { name: '已取消', value: stats.cancelled_projects, color: '#EF4444' },
+          ].filter(d => d.value > 0)}
+          dataKey='value'
+          nameKey='name'
+        />
+        <StatsChart
+          title='项目进度对比'
+          type='pie'
+          data={[
+            { name: '准时', value: stats.on_time_projects, color: '#10B981' },
+            { name: '延迟', value: stats.delayed_projects, color: '#EF4444' },
+          ].filter(d => d.value > 0)}
+          dataKey='value'
+          nameKey='name'
+        />
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>

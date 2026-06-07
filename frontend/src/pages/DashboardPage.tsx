@@ -490,6 +490,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           adminOnly: true,
         },
         {
+          title: '薪酬管理',
+          icon: DollarSign,
+          description: '薪资计算、奖金社保、个税管理',
+          path: '/hrm/payroll',
+          color: 'bg-yellow-500',
+          status: 'online' as const,
+          permission: 'hrm:read',
+          module: 'hrm',
+          adminOnly: true,
+        },
+        {
           title: '资产管理',
           icon: Box,
           description: '企业资产、设备台账、点巡检、维护维修',

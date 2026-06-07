@@ -16,13 +16,16 @@ import {
 
 interface StatsChartProps {
   type: 'bar' | 'pie' | 'line';
-  title: string;
+  title?: string;
   data: any[];
   xKey?: string;
   yKey?: string;
   yKeys?: string[];
   colorKey?: string;
   colors?: string[];
+  dataKey?: string;
+  nameKey?: string;
+  height?: number;
 }
 
 const defaultColors = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
@@ -39,7 +42,11 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   yKeys,
   colorKey = 'color',
   colors = defaultColors,
+  dataKey,
+  nameKey,
+  height,
 }) => {
+  const chartHeight = height || CHART_HEIGHT;
   if (!data || data.length === 0) {
     return (
       <div className='bg-white rounded-xl shadow-sm p-6'>
@@ -66,9 +73,9 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   return (
     <div className='bg-white rounded-xl shadow-sm p-6'>
       <h3 className='text-lg font-semibold text-slate-900 mb-4'>{title}</h3>
-      <div style={{ width: CHART_WIDTH, height: CHART_HEIGHT }}>
+      <div style={{ width: CHART_WIDTH, height: chartHeight }}>
         {type === 'pie' ? (
-          <PieChart width={CHART_WIDTH} height={CHART_HEIGHT}>
+          <PieChart width={CHART_WIDTH} height={chartHeight}>
             <Pie
               data={data}
               cx='50%'
@@ -76,8 +83,8 @@ export const StatsChart: React.FC<StatsChartProps> = ({
               innerRadius={40}
               outerRadius={80}
               paddingAngle={2}
-              dataKey={yKey}
-              nameKey={xKey}
+              dataKey={dataKey || yKey}
+              nameKey={nameKey || xKey}
               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
             >
               {data.map((entry, index) => (
@@ -88,7 +95,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
             <Legend />
           </PieChart>
         ) : type === 'line' ? (
-          <LineChart width={CHART_WIDTH} height={CHART_HEIGHT} data={data}>
+          <LineChart width={CHART_WIDTH} height={chartHeight} data={data}>
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis dataKey={xKey} />
             <YAxis />
@@ -96,7 +103,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
             <Line type='monotone' dataKey={yKey} stroke='#6366f1' strokeWidth={2} />
           </LineChart>
         ) : (
-          <BarChart width={CHART_WIDTH} height={CHART_HEIGHT} data={data}>
+          <BarChart width={CHART_WIDTH} height={chartHeight} data={data}>
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis dataKey={xKey} />
             <YAxis />

@@ -1,55 +1,56 @@
-# TOPEMS 本地开发数据库配置
+# TOPEMS Docker Infrastructure
 
-本目录包含用于本地开发的数据库配置。
+This directory contains the Docker configuration for running the TOPEMS infrastructure services.
 
-## 目录结构
+## Services
 
-```
-docker/
-├── README.md                # 本文档
-├── .env.example            # 环境变量示例
-├── docker-compose.yml      # Docker Compose 配置
-└── init-scripts/
-    └── 01-init-database.sql # 数据库初始化脚本
-```
+- **PostgreSQL**: Primary database (port 5432)
+- **Redis**: Cache and message broker (port 6379)
 
-## 使用方式
-
-### 启动数据库
+## Quick Start
 
 ```bash
-# 进入 docker 目录
 cd docker
 
-# 复制环境变量文件
+# Copy environment example
 cp .env.example .env
 
-# 启动数据库
+# Start services
 docker-compose up -d
 
-# 查看状态
-docker-compose ps
-```
+# Check logs
+docker-compose logs -f
 
-### 停止服务
-
-```bash
-# 停止但保留数据
+# Stop services
 docker-compose down
 
-# 停止并删除所有数据（谨慎使用！）
+# Stop and remove volumes
 docker-compose down -v
 ```
 
-## 服务端口说明
+## Environment Variables
 
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| PostgreSQL | 5432 | 数据库 |
-| Redis | 6379 | 缓存 |
+Copy `.env.example` to `.env` and modify as needed:
 
-## 注意事项
+- `POSTGRES_USER`: Database username (default: topems)
+- `POSTGRES_PASSWORD`: Database password (default: topems_secret)
+- `POSTGRES_DB`: Database name (default: topems)
+- `POSTGRES_PORT`: Host port for PostgreSQL (default: 5432)
+- `REDIS_PORT`: Host port for Redis (default: 6379)
 
-1. 此配置仅使用本地已有的 Docker 镜像，不会从网络拉取任何镜像
-2. 确保本地已有 postgres:latest 和 redis:latest 镜像
-3. 请妥善保管数据库密码
+## Volumes
+
+- `postgres_data`: Persistent PostgreSQL data
+- `redis_data`: Persistent Redis data
+
+## Building Service Images
+
+Use the root `Dockerfile` to build individual service images:
+
+```bash
+# Build IAM service
+docker build --build-arg SERVICE_PATH=platform/topems-iam/backend --build-arg SERVICE_PORT=8000 --build-arg SERVICE_NAME=topems-iam -t topems-iam:latest .
+
+# Build ERP service
+docker build --build-arg SERVICE_PATH=services/topems-erp/backend --build-arg SERVICE_PORT=8010 --build-arg SERVICE_NAME=topems-erp -t topems-erp:latest .
+```

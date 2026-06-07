@@ -242,17 +242,19 @@ TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
 - [API概览](./docs/api/API_DOCUMENTATION.md) - API 文档总览
 - [架构设计](./docs/architecture/overview.md) - 系统架构设计
 - [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md) - 部署指南
-- [用户指南](./docs/guides/USER_GUIDE.md) - 用户使用指南
+- [用户手册](./docs/user/UserManual.md) - 用户使用手册
 - [服务文档](./docs/services/) - 各个服务详细文档
 
 ## 🛠️ 脚本工具
 
 - `scripts/init-database.sh` - 初始化数据库
 - `scripts/manage-services.sh` - 管理所有服务（启动、停止、编译）
-- `scripts/start-all.sh` - 一键启动所有服务
+- `scripts/start-all.sh` - 一键启动所有服务（推荐）
 - `scripts/stop-all.sh` - 一键停止所有服务
 - `scripts/cleanup.sh` - 全面清理（端口、进程、缓存）
-- `scripts/quick-start.sh` - 快速启动项目
+- `scripts/deploy.sh` - 离线部署脚本
+- `scripts/download-images.sh` - 下载 Docker 镜像
+- `scripts/build-all-services.sh` - 构建所有服务镜像
 - `scripts/run-clippy.sh` - 运行 Clippy 代码检查
 - `scripts/run_ci_tests.sh` - 运行 CI 测试
 

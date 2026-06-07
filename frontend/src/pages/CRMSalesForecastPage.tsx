@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { opportunityApi } from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { TrendingUp, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
@@ -95,8 +95,8 @@ const CRMSalesForecastPage: React.FC = () => {
   const loadForecastData = async () => {
     try {
       setLoading(true);
-      const response = await opportunityApi.getOpportunities({ page: 1, pageSize: 1000 });
-      const opportunities = response.data.data?.items || [];
+      const response = await crmApi.opportunities.list({ page: 1, pageSize: 1000 });
+      const opportunities = response.data?.items || [];
 
       const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
       const currentMonth = new Date().getMonth();
@@ -106,8 +106,8 @@ const CRMSalesForecastPage: React.FC = () => {
         const monthIndex = (currentMonth - i + 12) % 12;
         const monthName = months[monthIndex];
 
-        const monthOpportunities = opportunities.filter((o) => {
-          const createdMonth = new Date(o.createdAt).getMonth();
+        const monthOpportunities = opportunities.filter((o: any) => {
+          const createdMonth = new Date(o.created_at).getMonth();
           return createdMonth === monthIndex;
         });
 

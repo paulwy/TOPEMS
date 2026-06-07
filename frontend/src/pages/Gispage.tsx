@@ -1013,44 +1013,44 @@ const Gispage: React.FC = () => {
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8'>
           <MetricCard
             title='设备点位'
-            value={stats.device_points}
+            value={statistics?.device_points || 0}
             icon={<MapPin className='w-6 h-6' />}
             gradient={['#00C897', '#00A878']}
-            subtitle={`启用: ${stats.active_devices}`}
-            trend={stats.active_devices > 0 ? 'up' : 'neutral'}
+            subtitle={`启用: ${statistics?.active_devices || 0}`}
+            trend={(statistics?.active_devices || 0) > 0 ? 'up' : 'neutral'}
           />
           <MetricCard
             title='管线管理'
-            value={stats.pipelines}
+            value={statistics?.pipelines || 0}
             icon={<ArrowRight className='w-6 h-6' />}
             gradient={['#6366F1', '#4F46E5']}
-            subtitle={`启用: ${stats.active_pipelines}`}
-            trend={stats.active_pipelines > 0 ? 'up' : 'neutral'}
+            subtitle={`启用: ${statistics?.active_pipelines || 0}`}
+            trend={(statistics?.active_pipelines || 0) > 0 ? 'up' : 'neutral'}
           />
           <MetricCard
             title='仓储位置'
-            value={stats.storage_locations}
+            value={statistics?.storage_locations || 0}
             icon={<Warehouse className='w-6 h-6' />}
             gradient={['#F59E0B', '#D97706']}
             trend='neutral'
           />
           <MetricCard
             title='现场取证'
-            value={stats.evidence_records}
+            value={statistics?.evidence_records || 0}
             icon={<Camera className='w-6 h-6' />}
             gradient={['#EC4899', '#DB2777']}
             trend='neutral'
           />
           <MetricCard
             title='厂区地图'
-            value={stats.factory_maps}
+            value={statistics?.factory_maps || 0}
             icon={<Map className='w-6 h-6' />}
             gradient={['#8B5CF6', '#7C3AED']}
             trend='neutral'
           />
           <MetricCard
             title='业务位置'
-            value={stats.business_locations}
+            value={statistics?.business_locations || 0}
             icon={<Building2 className='w-6 h-6' />}
             gradient={['#14B8A6', '#0D9488']}
             trend='neutral'
@@ -1063,11 +1063,11 @@ const Gispage: React.FC = () => {
             title='业务类型分布'
             type='pie'
             data={[
-              { name: '设备点位', value: stats.device_points, color: '#00C897' },
-              { name: '管线', value: stats.pipelines, color: '#6366F1' },
-              { name: '仓储位置', value: stats.storage_locations, color: '#F59E0B' },
-              { name: '厂区地图', value: stats.factory_maps, color: '#8B5CF6' },
-              { name: '业务位置', value: stats.business_locations, color: '#14B8A6' },
+              { name: '设备点位', value: statistics?.device_points || 0, color: '#00C897' },
+              { name: '管线', value: statistics?.pipelines || 0, color: '#6366F1' },
+              { name: '仓储位置', value: statistics?.storage_locations || 0, color: '#F59E0B' },
+              { name: '厂区地图', value: statistics?.factory_maps || 0, color: '#8B5CF6' },
+              { name: '业务位置', value: statistics?.business_locations || 0, color: '#14B8A6' },
             ].filter(d => d.value > 0)}
             dataKey='value'
             nameKey='name'
@@ -1078,13 +1078,13 @@ const Gispage: React.FC = () => {
             data={[
               {
                 name: '设备点位',
-                启用: stats.active_devices,
-                总数: stats.device_points,
+                启用: statistics?.active_devices || 0,
+                总数: statistics?.device_points || 0,
               },
               {
                 name: '管线',
-                启用: stats.active_pipelines,
-                总数: stats.pipelines,
+                启用: statistics?.active_pipelines || 0,
+                总数: statistics?.pipelines || 0,
               },
             ]}
             dataKey='name'

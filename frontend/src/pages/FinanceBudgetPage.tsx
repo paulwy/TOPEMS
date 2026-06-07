@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus,
   Search,
@@ -30,6 +30,8 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import OrganizationFilter, { type OrganizationFilterValue } from '../components/ui/OrganizationFilter';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();
@@ -171,6 +173,35 @@ const FinanceBudgetPage: React.FC = () => {
   const avgUsageRate =
     budgets.length > 0 ? budgets.reduce((sum, b) => sum + (b.usage_rate || 0), 0) / budgets.length : 0;
 
+  // 预算统计数据
+  const budgetStats = useMemo(() => ({
+    totalBudget,
+    totalUsed,
+    totalRemaining,
+    avgUsageRate,
+    activeBudgets: budgets.filter(b => b.status === 'active').length,
+    completedBudgets: budgets.filter(b => b.status === 'completed').length,
+    frozenBudgets: budgets.filter(b => b.status === 'frozen').length,
+    expiredBudgets: budgets.filter(b => b.status === 'expired').length,
+  }), [budgets, totalBudget, totalUsed, totalRemaining, avgUsageRate]);
+
+  // 预算类型分布数据
+  const budgetTypeData = useMemo(() => [
+    { name: '运营预算', value: budgets.filter(b => b.budget_type === 'operating').reduce((sum, b) => sum + b.total_budget, 0), color: '#3b82f6' },
+    { name: '资本预算', value: budgets.filter(b => b.budget_type === 'capital').reduce((sum, b) => sum + b.total_budget, 0), color: '#22c55e' },
+    { name: '项目预算', value: budgets.filter(b => b.budget_type === 'project').reduce((sum, b) => sum + b.total_budget, 0), color: '#f59e0b' },
+    { name: '市场预算', value: budgets.filter(b => b.budget_type === 'marketing').reduce((sum, b) => sum + b.total_budget, 0), color: '#ef4444' },
+    { name: '人事预算', value: budgets.filter(b => b.budget_type === 'personnel').reduce((sum, b) => sum + b.total_budget, 0), color: '#8b5cf6' },
+  ], [budgets]);
+
+  // 预算状态分布数据
+  const budgetStatusData = useMemo(() => [
+    { name: '执行中', value: budgets.filter(b => b.status === 'active').length, color: '#22c55e' },
+    { name: '已完成', value: budgets.filter(b => b.status === 'completed').length, color: '#3b82f6' },
+    { name: '已冻结', value: budgets.filter(b => b.status === 'frozen').length, color: '#94a3b8' },
+    { name: '已过期', value: budgets.filter(b => b.status === 'expired').length, color: '#ef4444' },
+  ], [budgets]);
+
   const getStatusBadge = (status: string) => {
     const variants = {
       active: 'bg-green-100 text-green-700',
@@ -302,61 +333,86 @@ const FinanceBudgetPage: React.FC = () => {
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-        <Card className='bg-gradient-to-br from-blue-500 to-indigo-500 text-white'>
-          <CardContent className='p-6'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm opacity-80'>总预算</p>
-                <p className='text-3xl font-bold mt-2'>{formatCurrency(totalBudget)}</p>
-              </div>
-              <div className='p-3 bg-white/20 rounded-full'>
-                <DollarSign className='w-6 h-6' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title='总预算'
+          value={formatCurrency(budgetStats.totalBudget)}
+          icon={<DollarSign className='w-5 h-5' />}
+          trend={null}
+          color='blue'
+        />
+        <MetricCard
+          title='已使用'
+          value={formatCurrency(budgetStats.totalUsed)}
+          icon={<PieChart className='w-5 h-5' />}
+          trend={null}
+          color='orange'
+        />
+        <MetricCard
+          title='剩余预算'
+          value={formatCurrency(budgetStats.totalRemaining)}
+          icon={<CheckCircle2 className='w-5 h-5' />}
+          trend={null}
+          color='green'
+        />
+        <MetricCard
+          title='平均使用率'
+          value={formatPercent(budgetStats.avgUsageRate)}
+          icon={<Calendar className='w-5 h-5' />}
+          trend={null}
+          color='purple'
+        />
+      </div>
 
-        <Card className='bg-gradient-to-br from-orange-500 to-red-500 text-white'>
-          <CardContent className='p-6'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm opacity-80'>已使用</p>
-                <p className='text-3xl font-bold mt-2'>{formatCurrency(totalUsed)}</p>
-              </div>
-              <div className='p-3 bg-white/20 rounded-full'>
-                <PieChart className='w-6 h-6' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+        <MetricCard
+          title='执行中预算'
+          value={budgetStats.activeBudgets}
+          icon={<CheckCircle2 className='w-5 h-5' />}
+          trend={null}
+          color='green'
+        />
+        <MetricCard
+          title='已完成预算'
+          value={budgetStats.completedBudgets}
+          icon={<CheckCircle2 className='w-5 h-5' />}
+          trend={null}
+          color='blue'
+        />
+        <MetricCard
+          title='已冻结预算'
+          value={budgetStats.frozenBudgets}
+          icon={<XCircle className='w-5 h-5' />}
+          trend={null}
+          color='gray'
+        />
+        <MetricCard
+          title='已过期预算'
+          value={budgetStats.expiredBudgets}
+          icon={<AlertCircle className='w-5 h-5' />}
+          trend={null}
+          color='red'
+        />
+      </div>
 
-        <Card className='bg-gradient-to-br from-green-500 to-emerald-500 text-white'>
-          <CardContent className='p-6'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm opacity-80'>剩余预算</p>
-                <p className='text-3xl font-bold mt-2'>{formatCurrency(totalRemaining)}</p>
-              </div>
-              <div className='p-3 bg-white/20 rounded-full'>
-                <CheckCircle2 className='w-6 h-6' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* 图表区域 */}
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+        <div className='bg-white rounded-lg shadow-sm p-6'>
+          <h3 className='text-lg font-semibold text-gray-900 mb-4'>预算类型分布</h3>
+          <StatsChart
+            type='pie'
+            data={budgetTypeData}
+            height={250}
+          />
+        </div>
 
-        <Card className='bg-gradient-to-br from-purple-500 to-violet-500 text-white'>
-          <CardContent className='p-6'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm opacity-80'>平均使用率</p>
-                <p className='text-3xl font-bold mt-2'>{formatPercent(avgUsageRate)}</p>
-              </div>
-              <div className='p-3 bg-white/20 rounded-full'>
-                <Calendar className='w-6 h-6' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className='bg-white rounded-lg shadow-sm p-6'>
+          <h3 className='text-lg font-semibold text-gray-900 mb-4'>预算状态分布</h3>
+          <StatsChart
+            type='pie'
+            data={budgetStatusData}
+            height={250}
+          />
+        </div>
       </div>
 
       <Card>

@@ -8,13 +8,15 @@
 
 | 脚本 | 说明 | 推荐度 |
 |------|------|--------|
-| `start-all.sh` | 一键启动所有服务 | ⭐⭐⭐⭐⭐ |
+| `start-all.sh` | 一键启动所有服务（推荐） | ⭐⭐⭐⭐⭐ |
 | `stop-all.sh` | 一键停止所有服务 | ⭐⭐⭐⭐⭐ |
 | `manage-services.sh` | 单个服务管理（启动/停止/编译） | ⭐⭐⭐⭐⭐ |
 | `init-database.sh` | 初始化数据库 | ⭐⭐⭐⭐ |
 | `cleanup.sh` | 全面清理（端口/进程/缓存） | ⭐⭐⭐⭐⭐ |
-| `quick-start.sh` | 快速启动项目 | ⭐⭐⭐⭐ |
-| `run-clippy.sh` | 运行 Clippy 代码检查 | ⭐⭐⭐⭐ |
+| `deploy.sh` | 离线部署脚本 | ⭐⭐⭐⭐ |
+| `download-images.sh` | 下载 Docker 镜像 | ⭐⭐⭐⭐ |
+| `build-all-services.sh` | 构建所有服务镜像 | ⭐⭐⭐ |
+| `run-clippy.sh` | 运行 Clippy 代码检查 | ⭐⭐⭐ |
 | `run_ci_tests.sh` | 运行 CI 测试 | ⭐⭐⭐ |
 
 ---

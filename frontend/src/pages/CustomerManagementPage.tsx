@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { customerApi, Customer, CreateCustomerRequest, UpdateCustomerRequest } from '@/api/crm';
+import { crmApi, Customer, CreateCustomerRequest, UpdateCustomerRequest } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/EmptyState';
@@ -42,7 +42,7 @@ const customerColumns: ExportColumn<Customer>[] = [
   { key: 'address', label: '地址' },
   { key: 'status', label: '状态' },
   { key: 'notes', label: '备注' },
-  { key: 'createdAt', label: '创建时间' },
+  { key: 'created_at', label: '创建时间' },
 ];
 
 const CustomerManagementPage: React.FC = () => {
@@ -85,10 +85,10 @@ const CustomerManagementPage: React.FC = () => {
       if (searchTerm) params.search = searchTerm;
       if (statusFilter !== 'all') params.status = statusFilter;
 
-      const response = await customerApi.getCustomers(params);
-      if (response.data.success && response.data.data) {
-        setCustomers(response.data.data.items || []);
-        setTotal(response.data.data.total || 0);
+      const response = await crmApi.customers.list(params);
+      if (response.success && response.data) {
+        setCustomers(response.data.items || []);
+        setTotal(response.data.total || 0);
       }
     } catch (error) {
       console.error('加载客户列表失败:', error);
@@ -106,14 +106,14 @@ const CustomerManagementPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedCustomer) {
-        await customerApi.updateCustomer(selectedCustomer.id, formData as UpdateCustomerRequest);
+        await crmApi.customers.update(selectedCustomer.id, formData as UpdateCustomerRequest);
         addNotification({
           type: 'success',
           title: '更新成功',
           message: '客户信息已更新',
         });
       } else {
-        await customerApi.createCustomer(formData);
+        await crmApi.customers.create(formData);
         addNotification({
           type: 'success',
           title: '创建成功',
@@ -136,7 +136,7 @@ const CustomerManagementPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个客户吗?')) return;
     try {
-      await customerApi.deleteCustomer(id);
+      await crmApi.customers.delete(id);
       addNotification({
         type: 'success',
         title: '删除成功',
@@ -157,7 +157,7 @@ const CustomerManagementPage: React.FC = () => {
     if (selectedIds.length === 0) return;
     if (!window.confirm(`确定要删除选中的 ${selectedIds.length} 个客户吗?`)) return;
     try {
-      await customerApi.batchDelete(selectedIds);
+      await crmApi.customers.batchDelete(selectedIds);
       addNotification({
         type: 'success',
         title: '删除成功',
@@ -178,7 +178,7 @@ const CustomerManagementPage: React.FC = () => {
   const handleImportSuccess = async (data: Customer[]) => {
     for (const item of data) {
       try {
-        await customerApi.createCustomer({
+        await crmApi.customers.create({
           name: item.name,
           code: item.code,
           industry: item.industry,
@@ -563,7 +563,7 @@ const CustomerManagementPage: React.FC = () => {
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>创建时间</Label>
-                  <p>{new Date(selectedCustomer.createdAt).toLocaleString('zh-CN')}</p>
+                  <p>{new Date(selectedCustomer.created_at).toLocaleString('zh-CN')}</p>
                 </div>
                 <div className='col-span-2'>
                   <Label className='text-muted-foreground'>备注</Label>

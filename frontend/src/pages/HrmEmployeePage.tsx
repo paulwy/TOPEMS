@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Search, Plus, Edit, Trash2, Eye, Mail, Phone, Briefcase, Building2, LayoutGrid, List } from 'lucide-react';
+import { Users, Search, Plus, Edit, Trash2, Eye, Mail, Phone, Briefcase, Building2, LayoutGrid, List, UserCheck, UserX, TrendingUp } from 'lucide-react';
 import { employeeApi, departmentApi, type Employee, type Department, type PaginatedResult, type ListParams } from '../api/hrm';
 import { useAppStore } from '../store';
 import { ColumnDef } from '@tanstack/react-table';
@@ -8,6 +8,8 @@ import { HrmLayout } from '../components/HrmLayout';
 import TreeView, { TreeNode } from '../components/TreeView';
 import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } from '../components/ai';
 import type { CompletionItem, ValidateRequest } from '../types/ai';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -403,8 +405,93 @@ const HrmEmployeePage: React.FC = () => {
 
   const selectedDept = departments.find(d => d.id === selectedDeptId);
 
+  // 员工统计数据
+  const employeeStats = useMemo(() => {
+    const allEmployees = data.items;
+    const totalEmployees = allEmployees.length;
+    const activeEmployees = allEmployees.filter(e => e.status === 'active').length;
+    const inactiveEmployees = allEmployees.filter(e => e.status === 'inactive').length;
+    const maleEmployees = allEmployees.filter(e => e.gender === 'male').length;
+    const femaleEmployees = allEmployees.filter(e => e.gender === 'female').length;
+
+    return {
+      totalEmployees,
+      activeEmployees,
+      inactiveEmployees,
+      maleEmployees,
+      femaleEmployees,
+      activeRate: totalEmployees > 0 ? Math.round((activeEmployees / totalEmployees) * 100) : 0,
+    };
+  }, [data.items]);
+
+  // 部门员工分布数据
+  const departmentDistributionData = useMemo(() => {
+    return departments.map((d, index) => ({
+      name: d.name,
+      value: data.items.filter(e => e.department_id === d.id).length,
+      color: ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#94a3b8', '#ec4899'][index % 8],
+    }));
+  }, [departments, data.items]);
+
+  // 员工状态分布数据
+  const employeeStatusData = useMemo(() => [
+    { name: '在职', value: employeeStats.activeEmployees, color: '#22c55e' },
+    { name: '离职', value: employeeStats.inactiveEmployees, color: '#ef4444' },
+  ], [employeeStats]);
+
   return (
     <HrmLayout title='员工管理' subtitle='管理企业员工信息'>
+      {/* 统计卡片 */}
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+        <MetricCard
+          title='员工总数'
+          value={employeeStats.totalEmployees}
+          icon={<Users className='w-5 h-5' />}
+          trend={null}
+          color='blue'
+        />
+        <MetricCard
+          title='在职员工'
+          value={employeeStats.activeEmployees}
+          icon={<UserCheck className='w-5 h-5' />}
+          trend={null}
+          color='green'
+        />
+        <MetricCard
+          title='离职员工'
+          value={employeeStats.inactiveEmployees}
+          icon={<UserX className='w-5 h-5' />}
+          trend={null}
+          color='red'
+        />
+        <MetricCard
+          title='在职率'
+          value={`${employeeStats.activeRate}%`}
+          icon={<TrendingUp className='w-5 h-5' />}
+          trend={null}
+          color='purple'
+        />
+      </div>
+
+      {/* 图表区域 */}
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
+        <div className='bg-white rounded-lg shadow-sm p-6'>
+          <StatsChart
+            type='pie'
+            title=''
+            data={departmentDistributionData}
+          />
+        </div>
+
+        <div className='bg-white rounded-lg shadow-sm p-6'>
+          <StatsChart
+            type='pie'
+            title=''
+            data={employeeStatusData}
+          />
+        </div>
+      </div>
+
       <div className='bg-white rounded-lg shadow p-6'>
         <div className='flex items-center justify-between mb-6'>
           <div className='flex items-center space-x-4'>

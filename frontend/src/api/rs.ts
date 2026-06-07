@@ -461,6 +461,11 @@ export const rsApi = {
     return apiClient.rs.post(`/api/v1/experiments/${experimentId}/records`, data);
   },
 
+  // 统计相关
+  getStatistics: async (): Promise<ApiResponse<RsStatistics>> => {
+    return apiClient.rs.get('/api/v1/statistics');
+  },
+
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.rs.get('/health');
   },
@@ -541,6 +546,25 @@ export interface AuditLogQueryParams {
   page_size?: number;
 }
 
+export interface RsStatistics {
+  total_projects: number;
+  pending_projects: number;
+  in_progress_projects: number;
+  completed_projects: number;
+  cancelled_projects: number;
+  
+  total_experiments: number;
+  pending_experiments: number;
+  in_progress_experiments: number;
+  completed_experiments: number;
+  
+  total_formulas: number;
+  draft_formulas: number;
+  approved_formulas: number;
+  
+  total_tasks: number;
+}
+
 export const auditRsApi = {
   listAuditLogs: async (
     params?: AuditLogQueryParams
@@ -563,6 +587,12 @@ export const auditRsApi = {
 
   getAuditLog: async (id: string): Promise<ApiResponse<AuditLog>> => {
     return apiClient.rs.get(`/api/v1/audit-logs/${id}`);
+  },
+};
+
+export const rsStatisticsApi = {
+  getStatistics: async (): Promise<ApiResponse<RsStatistics>> => {
+    return apiClient.rs.get('/api/v1/statistics');
   },
 };
 

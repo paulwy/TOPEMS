@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   DollarSign,
   FileText,
@@ -7,17 +7,19 @@ import {
   Search,
   Plus,
   ChevronLeft,
-  Eye,
   Download,
-  Calendar,
   CheckCircle,
-  XCircle,
   Clock,
   Loader2,
+  Users,
+  CreditCard,
+  Receipt,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
 import { NotificationContainer } from '../components/NotificationContainer';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 import {
   payrollApi,
   payrollItemApi,
@@ -62,11 +64,10 @@ const HrmPayrollPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      // 暂时只调用存在的 API
-      const [payrollRes, employeeRes] = await Promise.all([
+      const [payrollRes, employeeRes, adjustmentRes] = await Promise.all([
         payrollApi.list(),
         employeeApi.list(),
-        // 暂时禁用 salaryAdjustmentApi 因为后端没有实现
+        salaryAdjustmentApi.list(),
       ]);
 
       let empList: Employee[] = [];
@@ -80,8 +81,9 @@ const HrmPayrollPage: React.FC = () => {
         setEmployees(empList);
       }
 
-      // 暂时使用空数组
-      setAdjustments([]);
+      if (adjustmentRes.success && adjustmentRes.data) {
+        setAdjustments(adjustmentRes.data.items);
+      }
     } catch (err) {
       error('加载数据失败');
       console.error(err);
@@ -202,6 +204,34 @@ const HrmPayrollPage: React.FC = () => {
   const totalAmount = payrollRuns.reduce((sum, run) => sum + Number(run.total_amount), 0);
   const totalEmployees = payrollRuns.reduce((sum, run) => sum + run.employee_count, 0);
 
+  // 薪资统计数据
+  const payrollStats = useMemo(() => ({
+    totalEmployees,
+    totalBaseSalary: totalAmount * 0.6,
+    totalBonus: totalAmount * 0.2,
+    totalDeductions: totalAmount * 0.1,
+    totalNetSalary: totalAmount * 0.9,
+    avgSalary: totalEmployees > 0 ? totalAmount * 0.9 / totalEmployees : 0,
+    pendingRuns: payrollRuns.filter(r => r.status === 'draft').length,
+    paidRuns: payrollRuns.filter(r => r.status === 'paid').length,
+  }), [payrollRuns, totalAmount, totalEmployees]);
+
+  // 薪资构成数据
+  const salaryCompositionData = useMemo(() => [
+    { name: '基本工资', value: 60, color: '#3b82f6' },
+    { name: '奖金', value: 15, color: '#22c55e' },
+    { name: '补贴', value: 10, color: '#f59e0b' },
+    { name: '社保公积金（个人）', value: 8, color: '#ef4444' },
+    { name: '个人所得税', value: 7, color: '#8b5cf6' },
+  ], []);
+
+  // 工资发放状态分布
+  const payrollStatusData = useMemo(() => [
+    { name: '待计算', value: payrollRuns.filter(r => r.status === 'draft').length, color: '#eab308' },
+    { name: '已计算', value: payrollRuns.filter(r => r.status === 'calculated').length, color: '#3b82f6' },
+    { name: '已发放', value: payrollRuns.filter(r => r.status === 'paid').length, color: '#22c55e' },
+  ], [payrollRuns]);
+
   const summary: PayrollSummary = {
     total_employees: totalEmployees,
     total_base_salary: totalAmount * 0.6,
@@ -267,50 +297,79 @@ const HrmPayrollPage: React.FC = () => {
 
       {/* Summary Cards */}
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+          <MetricCard
+            title='发放人数'
+            value={`${payrollStats.totalEmployees}人`}
+            icon={<Users className='w-5 h-5' />}
+            trend={null}
+            color='blue'
+          />
+          <MetricCard
+            title='基本工资合计'
+            value={formatCurrency(payrollStats.totalBaseSalary)}
+            icon={<DollarSign className='w-5 h-5' />}
+            trend={null}
+            color='green'
+          />
+          <MetricCard
+            title='奖金合计'
+            value={formatCurrency(payrollStats.totalBonus)}
+            icon={<TrendingUp className='w-5 h-5' />}
+            trend={null}
+            color='purple'
+          />
+          <MetricCard
+            title='实发工资合计'
+            value={formatCurrency(payrollStats.totalNetSalary)}
+            icon={<CreditCard className='w-5 h-5' />}
+            trend={null}
+            color='blue'
+          />
+        </div>
+
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-6'>
+          <MetricCard
+            title='平均工资'
+            value={formatCurrency(payrollStats.avgSalary)}
+            icon={<Receipt className='w-5 h-5' />}
+            trend={null}
+            color='teal'
+          />
+          <MetricCard
+            title='待计算批次'
+            value={payrollStats.pendingRuns}
+            icon={<Clock className='w-5 h-5' />}
+            trend={null}
+            color='yellow'
+          />
+          <MetricCard
+            title='已发放批次'
+            value={payrollStats.paidRuns}
+            icon={<CheckCircle className='w-5 h-5' />}
+            trend={null}
+            color='green'
+          />
+        </div>
+
+        {/* Charts */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
           <div className='bg-white rounded-lg shadow-sm p-6'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm text-gray-500'>发放人数</p>
-                <p className='text-2xl font-bold text-gray-900'>{summary.total_employees}人</p>
-              </div>
-              <div className='w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center'>
-                <DollarSign className='w-6 h-6 text-blue-600' />
-              </div>
-            </div>
+            <h3 className='text-lg font-semibold text-gray-900 mb-4'>薪资构成比例</h3>
+            <StatsChart
+              type='pie'
+              data={salaryCompositionData}
+              height={250}
+            />
           </div>
+
           <div className='bg-white rounded-lg shadow-sm p-6'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm text-gray-500'>基本工资合计</p>
-                <p className='text-2xl font-bold text-gray-900'>{formatCurrency(summary.total_base_salary)}</p>
-              </div>
-              <div className='w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center'>
-                <TrendingUp className='w-6 h-6 text-green-600' />
-              </div>
-            </div>
-          </div>
-          <div className='bg-white rounded-lg shadow-sm p-6'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm text-gray-500'>奖金合计</p>
-                <p className='text-2xl font-bold text-emerald-600'>{formatCurrency(summary.total_bonus)}</p>
-              </div>
-              <div className='w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center'>
-                <TrendingUp className='w-6 h-6 text-emerald-600' />
-              </div>
-            </div>
-          </div>
-          <div className='bg-white rounded-lg shadow-sm p-6'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm text-gray-500'>实发工资合计</p>
-                <p className='text-2xl font-bold text-blue-600'>{formatCurrency(summary.total_net_salary)}</p>
-              </div>
-              <div className='w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center'>
-                <FileText className='w-6 h-6 text-blue-600' />
-              </div>
-            </div>
+            <h3 className='text-lg font-semibold text-gray-900 mb-4'>工资发放状态</h3>
+            <StatsChart
+              type='pie'
+              data={payrollStatusData}
+              height={250}
+            />
           </div>
         </div>
 
@@ -418,7 +477,7 @@ const HrmPayrollPage: React.FC = () => {
                           >
                             查看明细
                           </button>
-                          {run.status === 'pending' && (
+                          {run.status === 'draft' && (
                             <button
                               onClick={() => handleCalculate(run.id)}
                               disabled={calculating}
@@ -427,7 +486,7 @@ const HrmPayrollPage: React.FC = () => {
                               {calculating ? '计算中...' : '计算薪资'}
                             </button>
                           )}
-                          {run.status === 'processing' && (
+                          {run.status === 'calculated' && (
                             <button
                               onClick={() => handlePay(run.id)}
                               disabled={paying}

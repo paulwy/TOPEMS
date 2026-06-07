@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { contactApi, Contact, CreateContactRequest, UpdateContactRequest } from '@/api/crm';
+import { crmApi, Contact, CreateContactRequest, UpdateContactRequest } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/EmptyState';
@@ -43,8 +43,8 @@ const ContactManagementPage: React.FC = () => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [formData, setFormData] = useState<CreateContactRequest>({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     email: '',
     phone: '',
     position: '',
@@ -67,10 +67,10 @@ const ContactManagementPage: React.FC = () => {
       if (searchTerm) params.search = searchTerm;
       if (statusFilter !== 'all') params.status = statusFilter;
 
-      const response = await contactApi.getContacts(params);
-      if (response.data.success && response.data.data) {
-        setContacts(response.data.data.items || []);
-        setTotal(response.data.data.total || 0);
+      const response = await crmApi.contacts.list(params);
+      if (response.success && response.data) {
+        setContacts(response.data.items || []);
+        setTotal(response.data.total || 0);
       }
     } catch (error) {
       console.error('加载联系人列表失败:', error);
@@ -88,14 +88,14 @@ const ContactManagementPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedContact) {
-        await contactApi.updateContact(selectedContact.id, formData as UpdateContactRequest);
+        await crmApi.contacts.update(selectedContact.id, formData as UpdateContactRequest);
         addNotification({
           type: 'success',
           title: '更新成功',
           message: '联系人信息已更新',
         });
       } else {
-        await contactApi.createContact(formData);
+        await crmApi.contacts.create(formData);
         addNotification({
           type: 'success',
           title: '创建成功',
@@ -118,7 +118,7 @@ const ContactManagementPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个联系人吗?')) return;
     try {
-      await contactApi.deleteContact(id);
+      await crmApi.contacts.delete(id);
       addNotification({
         type: 'success',
         title: '删除成功',
@@ -139,7 +139,7 @@ const ContactManagementPage: React.FC = () => {
     if (selectedIds.length === 0) return;
     if (!window.confirm(`确定要删除选中的 ${selectedIds.length} 个联系人吗?`)) return;
     try {
-      await contactApi.batchDelete(selectedIds);
+      await crmApi.contacts.batchDelete(selectedIds);
       addNotification({
         type: 'success',
         title: '删除成功',
@@ -160,9 +160,9 @@ const ContactManagementPage: React.FC = () => {
   const handleEdit = (contact: Contact) => {
     setSelectedContact(contact);
     setFormData({
-      customerId: contact.customerId,
-      firstName: contact.firstName,
-      lastName: contact.lastName || '',
+      customer_id: contact.customer_id,
+      first_name: contact.first_name,
+      last_name: contact.last_name || '',
       email: contact.email || '',
       phone: contact.phone || '',
       position: contact.position || '',
@@ -179,8 +179,8 @@ const ContactManagementPage: React.FC = () => {
   const resetForm = () => {
     setSelectedContact(null);
     setFormData({
-      firstName: '',
-      lastName: '',
+      first_name: '',
+      last_name: '',
       email: '',
       phone: '',
       position: '',
@@ -297,7 +297,7 @@ const ContactManagementPage: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell className='font-medium'>
-                        {contact.firstName} {contact.lastName || ''}
+                        {contact.first_name} {contact.last_name || ''}
                       </TableCell>
                       <TableCell>{contact.email || '-'}</TableCell>
                       <TableCell>{contact.phone || '-'}</TableCell>
@@ -371,20 +371,20 @@ const ContactManagementPage: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <div className='grid grid-cols-2 gap-4 py-4'>
               <div className='space-y-2'>
-                <Label htmlFor='firstName'>名 *</Label>
+                <Label htmlFor='first_name'>名 *</Label>
                 <Input
-                  id='firstName'
+                  id='first_name'
                   required
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                 />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='lastName'>姓</Label>
+                <Label htmlFor='last_name'>姓</Label>
                 <Input
-                  id='lastName'
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  id='last_name'
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                 />
               </div>
               <div className='space-y-2'>
@@ -443,11 +443,11 @@ const ContactManagementPage: React.FC = () => {
               <div className='grid grid-cols-2 gap-4'>
                 <div>
                   <Label className='text-muted-foreground'>名</Label>
-                  <p className='font-medium'>{selectedContact.firstName}</p>
+                  <p className='font-medium'>{selectedContact.first_name}</p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>姓</Label>
-                  <p>{selectedContact.lastName || '-'}</p>
+                  <p>{selectedContact.last_name || '-'}</p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>邮箱</Label>
@@ -467,11 +467,11 @@ const ContactManagementPage: React.FC = () => {
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>创建时间</Label>
-                  <p>{new Date(selectedContact.createdAt).toLocaleString('zh-CN')}</p>
+                  <p>{new Date(selectedContact.created_at).toLocaleString('zh-CN')}</p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>更新时间</Label>
-                  <p>{new Date(selectedContact.updatedAt).toLocaleString('zh-CN')}</p>
+                  <p>{new Date(selectedContact.updated_at).toLocaleString('zh-CN')}</p>
                 </div>
                 <div className='col-span-2'>
                   <Label className='text-muted-foreground'>备注</Label>

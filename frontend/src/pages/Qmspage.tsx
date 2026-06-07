@@ -26,8 +26,11 @@ import {
   CreateQualityCheckRequest,
   CreateQualityIssueRequest,
   CreateQualityImprovementRequest,
+  QmsStatistics,
 } from '../api/qms';
 import { DataTable } from '../components/DataTable';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 import { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'standards' | 'checks' | 'issues' | 'improvements';
@@ -41,16 +44,52 @@ const Qmspage: React.FC = () => {
   const [issues, setIssues] = useState<QualityIssue[]>([]);
   const [improvements, setImprovements] = useState<QualityImprovement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<{ [key: string]: string }>({});
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statistics, setStatistics] = useState<QmsStatistics>({
+    total_standards: 0,
+    active_standards: 0,
+    inactive_standards: 0,
+    total_inspections: 0,
+    pending_inspections: 0,
+    in_progress_inspections: 0,
+    completed_inspections: 0,
+    total_issues: 0,
+    open_issues: 0,
+    resolved_issues: 0,
+    critical_issues: 0,
+    total_actions: 0,
+    pending_actions: 0,
+    in_progress_actions: 0,
+    completed_actions: 0,
+  });
 
   useEffect(() => {
     loadData();
   }, [activeTab]);
+
+  useEffect(() => {
+    loadStatistics();
+  }, []);
+
+  const loadStatistics = async () => {
+    try {
+      setStatsLoading(true);
+      const response = await qmsApi.getStatistics();
+      if (response.success && response.data) {
+        setStatistics(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load QMS statistics:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   const mapStatusToChinese = (status: string): string => {
     const statusMap: Record<string, string> = {
@@ -207,6 +246,7 @@ const Qmspage: React.FC = () => {
       showNotification('success', '创建成功');
       resetModal();
       loadData();
+      loadStatistics();
     } catch (err) {
       showNotification('error', '创建失败');
       console.error('创建失败:', err);
@@ -266,6 +306,7 @@ const Qmspage: React.FC = () => {
       showNotification('success', '更新成功');
       resetModal();
       loadData();
+      loadStatistics();
     } catch (err) {
       showNotification('error', '更新失败');
       console.error('更新失败:', err);
@@ -287,6 +328,7 @@ const Qmspage: React.FC = () => {
       }
       showNotification('success', '删除成功');
       loadData();
+      loadStatistics();
     } catch (err) {
       showNotification('error', '删除失败');
       console.error('删除失败:', err);
@@ -938,6 +980,94 @@ const Qmspage: React.FC = () => {
             </button>
           ))}
         </div>
+
+        {/* 统计面板 */}
+        {!statsLoading && (
+          <>
+            {/* 统计卡片 */}
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+              <MetricCard
+                title='质量标准'
+                value={statistics.total_standards}
+                icon={<FileText className='w-6 h-6' />}
+                gradient={['#6366F1', '#8B5CF6']}
+                subtitle={`启用: ${statistics.active_standards} | 禁用: ${statistics.inactive_standards}`}
+              />
+              <MetricCard
+                title='质量检测'
+                value={statistics.total_inspections}
+                icon={<CheckCircle className='w-6 h-6' />}
+                gradient={['#10B981', '#059669']}
+                subtitle={`进行中: ${statistics.in_progress_inspections} | 已完成: ${statistics.completed_inspections}`}
+              />
+              <MetricCard
+                title='质量异常'
+                value={statistics.total_issues}
+                icon={<AlertTriangle className='w-6 h-6' />}
+                gradient={['#F59E0B', '#D97706']}
+                subtitle={`待处理: ${statistics.open_issues} | 严重: ${statistics.critical_issues}`}
+              />
+              <MetricCard
+                title='质量改进'
+                value={statistics.total_actions}
+                icon={<TrendingUp className='w-6 h-6' />}
+                gradient={['#EC4899', '#DB2777']}
+                subtitle={`实施中: ${statistics.in_progress_actions} | 已完成: ${statistics.completed_actions}`}
+              />
+            </div>
+
+            {/* 统计图表 */}
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
+              <StatsChart
+                title='质量检测状态分布'
+                type='pie'
+                data={[
+                  { name: '已完成', value: statistics.completed_inspections, color: '#10B981' },
+                  { name: '进行中', value: statistics.in_progress_inspections, color: '#3B82F6' },
+                  { name: '待处理', value: statistics.pending_inspections, color: '#F59E0B' },
+                ].filter(item => item.value > 0)}
+                dataKey='value'
+                nameKey='name'
+              />
+              <StatsChart
+                title='质量异常状态分布'
+                type='pie'
+                data={[
+                  { name: '已关闭', value: statistics.resolved_issues, color: '#10B981' },
+                  { name: '待处理', value: statistics.open_issues, color: '#F59E0B' },
+                  { name: '严重', value: statistics.critical_issues, color: '#EF4444' },
+                ].filter(item => item.value > 0)}
+                dataKey='value'
+                nameKey='name'
+              />
+            </div>
+
+            {/* 质量改进状态图表 */}
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
+              <StatsChart
+                title='质量标准状态分布'
+                type='pie'
+                data={[
+                  { name: '启用', value: statistics.active_standards, color: '#10B981' },
+                  { name: '禁用', value: statistics.inactive_standards, color: '#6B7280' },
+                ].filter(item => item.value > 0)}
+                dataKey='value'
+                nameKey='name'
+              />
+              <StatsChart
+                title='质量改进状态分布'
+                type='pie'
+                data={[
+                  { name: '已完成', value: statistics.completed_actions, color: '#10B981' },
+                  { name: '实施中', value: statistics.in_progress_actions, color: '#3B82F6' },
+                  { name: '提议', value: statistics.pending_actions, color: '#8B5CF6' },
+                ].filter(item => item.value > 0)}
+                dataKey='value'
+                nameKey='name'
+              />
+            </div>
+          </>
+        )}
 
         <div className='bg-white rounded-xl shadow-sm border border-slate-200'>
           <div className='p-4 border-b border-slate-200'>
