@@ -19,6 +19,7 @@ pub mod payroll;
 pub mod performance;
 pub mod training;
 pub mod reports;
+pub mod salary_adjustment;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -54,4 +55,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(performance::create_routes())
         .merge(training::create_routes())
         .merge(reports::create_routes())
+        .merge(salary_adjustment::create_routes())
 }

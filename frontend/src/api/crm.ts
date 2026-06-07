@@ -1,25 +1,15 @@
-import axios from 'axios';
-import { ApiResponse } from './client';
+/**
+ * CRM (Customer Relationship Management) API Client
+ * 客户关系管理 API 客户端
+ */
 
-const API_BASE_URL = import.meta.env.VITE_CRM_API_URL || 'http://localhost:8012';
+import { apiClient, ApiResponse, PaginationParams, PaginatedResponse } from './client';
 
-const crmApi = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// ==================== Types ====================
 
-// 添加请求拦截器,自动添加认证token
-crmApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// 客户相关接口
+/**
+ * 客户
+ */
 export interface Customer {
   id: string;
   name: string;
@@ -31,8 +21,8 @@ export interface Customer {
   address?: string;
   status: string;
   notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateCustomerRequest {
@@ -58,25 +48,27 @@ export interface UpdateCustomerRequest {
   notes?: string;
 }
 
-// 联系人相关接口
+/**
+ * 联系人
+ */
 export interface Contact {
   id: string;
-  customerId?: string;
-  firstName: string;
-  lastName?: string;
+  customer_id?: string;
+  first_name: string;
+  last_name?: string;
   email?: string;
   phone?: string;
   position?: string;
   status: string;
   notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateContactRequest {
-  customerId?: string;
-  firstName: string;
-  lastName?: string;
+  customer_id?: string;
+  first_name: string;
+  last_name?: string;
   email?: string;
   phone?: string;
   position?: string;
@@ -84,9 +76,9 @@ export interface CreateContactRequest {
 }
 
 export interface UpdateContactRequest {
-  customerId?: string;
-  firstName?: string;
-  lastName?: string;
+  customer_id?: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   phone?: string;
   position?: string;
@@ -94,159 +86,295 @@ export interface UpdateContactRequest {
   notes?: string;
 }
 
-// 商机相关接口
+export interface ContactQueryParams extends PaginationParams {
+  customer_id?: string;
+}
+
+/**
+ * 商机
+ */
 export interface Opportunity {
   id: string;
   name: string;
-  customerId?: string;
+  customer_id?: string;
   value?: number;
   stage: string;
   probability?: number;
-  closeDate?: string;
+  close_date?: string;
   notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateOpportunityRequest {
   name: string;
-  customerId?: string;
+  customer_id?: string;
   value?: number;
   probability?: number;
-  closeDate?: string;
+  close_date?: string;
   notes?: string;
 }
 
 export interface UpdateOpportunityRequest {
   name?: string;
-  customerId?: string;
+  customer_id?: string;
   value?: number;
   stage?: string;
   probability?: number;
-  closeDate?: string;
+  close_date?: string;
   notes?: string;
 }
 
-// 交互记录相关接口
+export interface OpportunityQueryParams extends PaginationParams {
+  stage?: string;
+  customer_id?: string;
+}
+
+/**
+ * 交互记录
+ */
 export interface Interaction {
   id: string;
-  customerId?: string;
-  contactId?: string;
+  customer_id?: string;
+  contact_id?: string;
   type: string;
   subject?: string;
   content?: string;
-  scheduledAt?: string;
-  completedAt?: string;
+  scheduled_at?: string;
+  completed_at?: string;
   status: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateInteractionRequest {
-  customerId?: string;
-  contactId?: string;
+  customer_id?: string;
+  contact_id?: string;
   type: string;
   subject?: string;
   content?: string;
-  scheduledAt?: string;
+  scheduled_at?: string;
   notes?: string;
 }
 
 export interface UpdateInteractionRequest {
-  customerId?: string;
-  contactId?: string;
+  customer_id?: string;
+  contact_id?: string;
   type?: string;
   subject?: string;
   content?: string;
-  scheduledAt?: string;
-  completedAt?: string;
+  scheduled_at?: string;
+  completed_at?: string;
   status?: string;
 }
 
-// 分页响应
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
+export interface InteractionQueryParams extends PaginationParams {
+  customer_id?: string;
+  contact_id?: string;
 }
 
-// API 方法
-export const customerApi = {
-  getCustomers: (params?: { page?: number; pageSize?: number; search?: string; status?: string }) =>
-    crmApi.get<ApiResponse<PaginatedResponse<Customer>>>('/api/v1/customers', { params }),
+// ==================== Customer API ====================
 
-  createCustomer: (data: CreateCustomerRequest) => crmApi.post<ApiResponse<Customer>>('/api/v1/customers', data),
+const customerApi = {
+  /**
+   * 获取客户列表
+   */
+  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Customer>>> => {
+    return apiClient.crm.get('/api/v1/customers', { params });
+  },
 
-  getCustomer: (id: string) => crmApi.get<ApiResponse<Customer>>(`/api/v1/customers/${id}`),
+  /**
+   * 创建客户
+   */
+  create: async (data: CreateCustomerRequest): Promise<ApiResponse<Customer>> => {
+    return apiClient.crm.post('/api/v1/customers', data);
+  },
 
-  updateCustomer: (id: string, data: UpdateCustomerRequest) =>
-    crmApi.put<ApiResponse<Customer>>(`/api/v1/customers/${id}`, data),
+  /**
+   * 获取客户详情
+   */
+  get: async (id: string): Promise<ApiResponse<Customer>> => {
+    return apiClient.crm.get(`/api/v1/customers/${id}`);
+  },
 
-  deleteCustomer: (id: string) => crmApi.delete<ApiResponse<void>>(`/api/v1/customers/${id}`),
+  /**
+   * 更新客户
+   */
+  update: async (id: string, data: UpdateCustomerRequest): Promise<ApiResponse<Customer>> => {
+    return apiClient.crm.put(`/api/v1/customers/${id}`, data);
+  },
 
-  batchDelete: (ids: string[]) => crmApi.post<ApiResponse<void>>('/api/v1/customers/batch-delete', { ids }),
+  /**
+   * 删除客户
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/v1/customers/${id}`);
+  },
+
+  /**
+   * 批量删除客户
+   */
+  batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
+    return apiClient.crm.post('/api/v1/customers/batch-delete', { ids });
+  },
 };
 
-export const contactApi = {
-  getContacts: (params?: { page?: number; pageSize?: number; search?: string; status?: string; customerId?: string }) =>
-    crmApi.get<ApiResponse<PaginatedResponse<Contact>>>('/api/v1/contacts', { params }),
+// ==================== Contact API ====================
 
-  createContact: (data: CreateContactRequest) => crmApi.post<ApiResponse<Contact>>('/api/v1/contacts', data),
+const contactApi = {
+  /**
+   * 获取联系人列表
+   */
+  list: async (params?: ContactQueryParams): Promise<ApiResponse<PaginatedResponse<Contact>>> => {
+    return apiClient.crm.get('/api/v1/contacts', { params });
+  },
 
-  getContact: (id: string) => crmApi.get<ApiResponse<Contact>>(`/api/v1/contacts/${id}`),
+  /**
+   * 创建联系人
+   */
+  create: async (data: CreateContactRequest): Promise<ApiResponse<Contact>> => {
+    return apiClient.crm.post('/api/v1/contacts', data);
+  },
 
-  updateContact: (id: string, data: UpdateContactRequest) =>
-    crmApi.put<ApiResponse<Contact>>(`/api/v1/contacts/${id}`, data),
+  /**
+   * 获取联系人详情
+   */
+  get: async (id: string): Promise<ApiResponse<Contact>> => {
+    return apiClient.crm.get(`/api/v1/contacts/${id}`);
+  },
 
-  deleteContact: (id: string) => crmApi.delete<ApiResponse<void>>(`/api/v1/contacts/${id}`),
+  /**
+   * 更新联系人
+   */
+  update: async (id: string, data: UpdateContactRequest): Promise<ApiResponse<Contact>> => {
+    return apiClient.crm.put(`/api/v1/contacts/${id}`, data);
+  },
 
-  batchDelete: (ids: string[]) => crmApi.post<ApiResponse<void>>('/api/v1/contacts/batch-delete', { ids }),
+  /**
+   * 删除联系人
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/v1/contacts/${id}`);
+  },
+
+  /**
+   * 批量删除联系人
+   */
+  batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
+    return apiClient.crm.post('/api/v1/contacts/batch-delete', { ids });
+  },
 };
 
-export const opportunityApi = {
-  getOpportunities: (params?: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    stage?: string;
-    customerId?: string;
-  }) => crmApi.get<ApiResponse<PaginatedResponse<Opportunity>>>('/api/v1/opportunities', { params }),
+// ==================== Opportunity API ====================
 
-  createOpportunity: (data: CreateOpportunityRequest) =>
-    crmApi.post<ApiResponse<Opportunity>>('/api/v1/opportunities', data),
+const opportunityApi = {
+  /**
+   * 获取商机列表
+   */
+  list: async (params?: OpportunityQueryParams): Promise<ApiResponse<PaginatedResponse<Opportunity>>> => {
+    return apiClient.crm.get('/api/v1/opportunities', { params });
+  },
 
-  getOpportunity: (id: string) => crmApi.get<ApiResponse<Opportunity>>(`/api/v1/opportunities/${id}`),
+  /**
+   * 创建商机
+   */
+  create: async (data: CreateOpportunityRequest): Promise<ApiResponse<Opportunity>> => {
+    return apiClient.crm.post('/api/v1/opportunities', data);
+  },
 
-  updateOpportunity: (id: string, data: UpdateOpportunityRequest) =>
-    crmApi.put<ApiResponse<Opportunity>>(`/api/v1/opportunities/${id}`, data),
+  /**
+   * 获取商机详情
+   */
+  get: async (id: string): Promise<ApiResponse<Opportunity>> => {
+    return apiClient.crm.get(`/api/v1/opportunities/${id}`);
+  },
 
-  deleteOpportunity: (id: string) => crmApi.delete<ApiResponse<void>>(`/api/v1/opportunities/${id}`),
+  /**
+   * 更新商机
+   */
+  update: async (id: string, data: UpdateOpportunityRequest): Promise<ApiResponse<Opportunity>> => {
+    return apiClient.crm.put(`/api/v1/opportunities/${id}`, data);
+  },
 
-  batchDelete: (ids: string[]) => crmApi.post<ApiResponse<void>>('/api/v1/opportunities/batch-delete', { ids }),
+  /**
+   * 删除商机
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/v1/opportunities/${id}`);
+  },
+
+  /**
+   * 批量删除商机
+   */
+  batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
+    return apiClient.crm.post('/api/v1/opportunities/batch-delete', { ids });
+  },
 };
 
-export const interactionApi = {
-  getInteractions: (params?: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    status?: string;
-    customerId?: string;
-    contactId?: string;
-  }) => crmApi.get<ApiResponse<PaginatedResponse<Interaction>>>('/api/v1/interactions', { params }),
+// ==================== Interaction API ====================
 
-  createInteraction: (data: CreateInteractionRequest) =>
-    crmApi.post<ApiResponse<Interaction>>('/api/v1/interactions', data),
+const interactionApi = {
+  /**
+   * 获取交互记录列表
+   */
+  list: async (params?: InteractionQueryParams): Promise<ApiResponse<PaginatedResponse<Interaction>>> => {
+    return apiClient.crm.get('/api/v1/interactions', { params });
+  },
 
-  getInteraction: (id: string) => crmApi.get<ApiResponse<Interaction>>(`/api/v1/interactions/${id}`),
+  /**
+   * 创建交互记录
+   */
+  create: async (data: CreateInteractionRequest): Promise<ApiResponse<Interaction>> => {
+    return apiClient.crm.post('/api/v1/interactions', data);
+  },
 
-  updateInteraction: (id: string, data: UpdateInteractionRequest) =>
-    crmApi.put<ApiResponse<Interaction>>(`/api/v1/interactions/${id}`, data),
+  /**
+   * 获取交互记录详情
+   */
+  get: async (id: string): Promise<ApiResponse<Interaction>> => {
+    return apiClient.crm.get(`/api/v1/interactions/${id}`);
+  },
 
-  deleteInteraction: (id: string) => crmApi.delete<ApiResponse<void>>(`/api/v1/interactions/${id}`),
+  /**
+   * 更新交互记录
+   */
+  update: async (id: string, data: UpdateInteractionRequest): Promise<ApiResponse<Interaction>> => {
+    return apiClient.crm.put(`/api/v1/interactions/${id}`, data);
+  },
 
-  batchDelete: (ids: string[]) => crmApi.post<ApiResponse<void>>('/api/v1/interactions/batch-delete', { ids }),
+  /**
+   * 删除交互记录
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/v1/interactions/${id}`);
+  },
+
+  /**
+   * 批量删除交互记录
+   */
+  batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
+    return apiClient.crm.post('/api/v1/interactions/batch-delete', { ids });
+  },
 };
 
-export default crmApi;
+// ==================== CRM API Export ====================
+
+/**
+ * CRM API 统一导出
+ */
+export const crmApi = {
+  customers: customerApi,
+  contacts: contactApi,
+  opportunities: opportunityApi,
+  interactions: interactionApi,
+  
+  /**
+   * 健康检查
+   */
+  health: async (): Promise<ApiResponse<string>> => {
+    return apiClient.crm.get('/health');
+  },
+};
+
+// 导出独立的 API 对象供直接使用
+export { customerApi, contactApi, opportunityApi, interactionApi };

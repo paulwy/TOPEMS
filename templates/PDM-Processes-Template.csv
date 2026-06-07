@@ -1,3 +1,0 @@
-process_no,name,description,version,status
-PROC-001,原料预处理工艺,原料入库后的预处理步骤,V1.0,启用
-PROC-002,混合工艺,原料混合和搅拌步骤,V1.0,启用

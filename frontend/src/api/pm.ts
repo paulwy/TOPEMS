@@ -661,6 +661,32 @@ export interface NotificationType {
   default_priority: string;
 }
 
+export interface PmStatistics {
+  total_projects: number;
+  draft_projects: number;
+  pending_projects: number;
+  active_projects: number;
+  completed_projects: number;
+  cancelled_projects: number;
+  
+  total_contracts: number;
+  pending_contracts: number;
+  active_contracts: number;
+  completed_contracts: number;
+  
+  total_budget: number;
+  spent_budget: number;
+  budget_usage_rate: number;
+  
+  on_time_projects: number;
+  delayed_projects: number;
+  average_progress: number;
+  
+  high_risk_projects: number;
+  medium_risk_projects: number;
+  low_risk_projects: number;
+}
+
 export const pmApi = {
   projects: {
     list: async (params?: { project_type?: string; status?: string; page?: number; page_size?: number }) => {
@@ -1884,5 +1910,9 @@ export const pmApi = {
         return apiClient.pm.get('/api/v1/notification-types');
       },
     },
+  },
+
+  getStatistics: async (): Promise<any> => {
+    return apiClient.pm.get('/api/v1/statistics');
   },
 };

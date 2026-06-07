@@ -528,6 +528,29 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
+        CREATE TABLE IF NOT EXISTS hrm.salary_adjustments (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            employee_id UUID REFERENCES hrm.employees(id) NOT NULL,
+            adjustment_type VARCHAR(50) NOT NULL,
+            old_salary NUMERIC(15,2),
+            new_salary NUMERIC(15,2),
+            adjustment_amount NUMERIC(15,2),
+            reason TEXT,
+            effective_date TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            approver_id UUID REFERENCES hrm.employees(id),
+            approved_at TIMESTAMPTZ,
+            rejection_reason TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
         CREATE TABLE IF NOT EXISTS hrm.performance_reviews (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             employee_id UUID NOT NULL,

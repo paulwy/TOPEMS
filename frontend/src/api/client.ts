@@ -12,6 +12,20 @@ export interface ApiResponse<T = any> {
   timestamp: string;
 }
 
+export interface PaginationParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' | 'delete'> & {
   get<T = any, R = ApiResponse<T>, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
   post<T = any, R = ApiResponse<T>, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>;
@@ -62,7 +76,8 @@ class ApiClient {
 
   constructor() {
     Object.entries(config.services).forEach(([name, baseURL]) => {
-      const timeout = name === 'ai' ? AI_TIMEOUT : DEFAULT_TIMEOUT;
+      // 使用 config 中的超时配置，而不是硬编码的 DEFAULT_TIMEOUT
+      const timeout = name === 'ai' ? AI_TIMEOUT : config.api.timeout;
       const client = axios.create({
         baseURL,
         timeout,
@@ -234,6 +249,10 @@ class ApiClient {
 
   get mail() {
     return this.clients.mail;
+  }
+
+  get scm() {
+    return this.clients.scm;
   }
 
   setAuthToken(token: string) {

@@ -16,6 +16,7 @@ import {
   Download,
   Upload,
   AlertCircle,
+  CheckCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -28,8 +29,11 @@ import {
   CreateProductionStepRequest,
   CreateProductionFormulaRequest,
   CreateProductionBatchRequest,
+  PdmStatistics,
 } from '../api/pdm';
 import { DataTable } from '../components/DataTable';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 import { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'processes' | 'steps' | 'formulas' | 'batches' | 'stats';
@@ -43,6 +47,21 @@ const Pdmpage: React.FC = () => {
   const [steps, setSteps] = useState<ProductionStep[]>([]);
   const [formulas, setFormulas] = useState<ProductionFormula[]>([]);
   const [batches, setBatches] = useState<ProductionBatch[]>([]);
+  const [stats, setStats] = useState<PdmStatistics>({
+    total_processes: 0,
+    active_processes: 0,
+    total_formulas: 0,
+    active_formulas: 0,
+    total_batches: 0,
+    planning_batches: 0,
+    in_progress_batches: 0,
+    completed_batches: 0,
+    cancelled_batches: 0,
+    total_steps: 0,
+    total_output_quantity: 0,
+    total_reject_quantity: 0,
+    average_pass_rate: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -104,6 +123,17 @@ const Pdmpage: React.FC = () => {
       start_date: item.start_date || item.created_at,
       status: mapStatusToChinese(item.status),
     };
+  };
+
+  const loadStatistics = async () => {
+    try {
+      const response = await pdmApi.getStatistics();
+      if (response.success && response.data) {
+        setStats(response.data);
+      }
+    } catch (err) {
+      console.error('加载统计数据失败:', err);
+    }
   };
 
   const loadData = async () => {
@@ -169,6 +199,46 @@ const Pdmpage: React.FC = () => {
         } else {
           setBatches([]);
         }
+      } else if (activeTab === 'stats') {
+        await Promise.all([
+          loadStatistics(),
+          pdmApi.listProcesses().then((res) => {
+            if (res.success && res.data) {
+              let data: any = res.data;
+              let rawItems: any[] = [];
+              if (Array.isArray(data)) rawItems = data;
+              else if (data.processes && Array.isArray(data.processes)) rawItems = data.processes;
+              setProcesses(rawItems.map((item) => adaptProcess(item)));
+            }
+          }),
+          pdmApi.listSteps().then((res) => {
+            if (res.success && res.data) {
+              let data: any = res.data;
+              let rawItems: any[] = [];
+              if (Array.isArray(data)) rawItems = data;
+              else if (data.steps && Array.isArray(data.steps)) rawItems = data.steps;
+              setSteps(rawItems.map((item) => adaptStep(item)));
+            }
+          }),
+          pdmApi.listFormulas().then((res) => {
+            if (res.success && res.data) {
+              let data: any = res.data;
+              let rawItems: any[] = [];
+              if (Array.isArray(data)) rawItems = data;
+              else if (data.formulas && Array.isArray(data.formulas)) rawItems = data.formulas;
+              setFormulas(rawItems.map((item) => adaptFormula(item)));
+            }
+          }),
+          pdmApi.listBatches().then((res) => {
+            if (res.success && res.data) {
+              let data: any = res.data;
+              let rawItems: any[] = [];
+              if (Array.isArray(data)) rawItems = data;
+              else if (data.batches && Array.isArray(data.batches)) rawItems = data.batches;
+              setBatches(rawItems.map((item) => adaptBatch(item)));
+            }
+          }),
+        ]);
       }
     } catch (err) {
       console.error('加载数据失败:', err);
@@ -353,56 +423,216 @@ const Pdmpage: React.FC = () => {
     return 'bg-gray-100 text-gray-800';
   };
 
-  const renderStats = () => (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-      <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-200'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <p className='text-sm text-gray-500'>总工艺数</p>
-            <p className='text-3xl font-bold text-gray-900 mt-2'>{safeProcesses.length}</p>
+  const renderStats = () => {
+    // 计算本地统计数据作为后备
+    const localTotalProcesses = safeProcesses.length;
+    const localActiveProcesses = safeProcesses.filter(
+      (p) => p.status === '启用' || p.status === 'active'
+    ).length;
+    const localTotalFormulas = safeFormulas.length;
+    const localActiveFormulas = safeFormulas.filter(
+      (f) => f.status === '启用' || f.status === 'active'
+    ).length;
+    const localTotalBatches = safeBatches.length;
+    const localPlanningBatches = safeBatches.filter(
+      (b) => b.status === '规划中' || b.status === 'planning'
+    ).length;
+    const localInProgressBatches = safeBatches.filter(
+      (b) => b.status === '进行中' || b.status === 'in_progress'
+    ).length;
+    const localCompletedBatches = safeBatches.filter(
+      (b) => b.status === '已完成' || b.status === 'completed'
+    ).length;
+    const localCancelledBatches = safeBatches.filter(
+      (b) => b.status === '已取消' || b.status === 'cancelled'
+    ).length;
+    const localTotalSteps = safeSteps.length;
+
+    // 使用 API 返回的统计数据，或本地计算的数据
+    const displayStats = {
+      total_processes: stats.total_processes || localTotalProcesses,
+      active_processes: stats.active_processes || localActiveProcesses,
+      total_formulas: stats.total_formulas || localTotalFormulas,
+      active_formulas: stats.active_formulas || localActiveFormulas,
+      total_batches: stats.total_batches || localTotalBatches,
+      planning_batches: stats.planning_batches || localPlanningBatches,
+      in_progress_batches: stats.in_progress_batches || localInProgressBatches,
+      completed_batches: stats.completed_batches || localCompletedBatches,
+      cancelled_batches: stats.cancelled_batches || localCancelledBatches,
+      total_steps: stats.total_steps || localTotalSteps,
+      total_output_quantity: stats.total_output_quantity || 0,
+      total_reject_quantity: stats.total_reject_quantity || 0,
+      average_pass_rate: stats.average_pass_rate || 0,
+    };
+
+    return (
+      <div className='space-y-8'>
+        {/* 主要统计卡片 */}
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4'>
+          <MetricCard
+            title='生产工艺'
+            value={displayStats.total_processes}
+            icon={<Factory className='w-6 h-6' />}
+            gradient={['#14B8A6', '#0D9488']}
+            subtitle={`启用 ${displayStats.active_processes}`}
+            trend='neutral'
+          />
+          <MetricCard
+            title='生产工序'
+            value={displayStats.total_steps}
+            icon={<ClipboardList className='w-6 h-6' />}
+            gradient={['#8B5CF6', '#7C3AED']}
+            trend='neutral'
+          />
+          <MetricCard
+            title='生产配方'
+            value={displayStats.total_formulas}
+            icon={<Package className='w-6 h-6' />}
+            gradient={['#F59E0B', '#D97706']}
+            subtitle={`活跃 ${displayStats.active_formulas}`}
+            trend='neutral'
+          />
+          <MetricCard
+            title='生产批次'
+            value={displayStats.total_batches}
+            icon={<Activity className='w-6 h-6' />}
+            gradient={['#6366F1', '#4F46E5']}
+            subtitle={`进行中 ${displayStats.in_progress_batches}`}
+            trend='neutral'
+          />
+          <MetricCard
+            title='已完成批次'
+            value={displayStats.completed_batches}
+            icon={<CheckCircle className='w-6 h-6' />}
+            gradient={['#00C897', '#00A878']}
+            trend='up'
+          />
+          <MetricCard
+            title='规划中批次'
+            value={displayStats.planning_batches}
+            icon={<TrendingUp className='w-6 h-6' />}
+            gradient={['#EC4899', '#DB2777']}
+            trend='neutral'
+          />
+        </div>
+
+        {/* 图表区域 */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+          <StatsChart
+            title='批次状态分布'
+            type='pie'
+            data={[
+              { name: '规划中', value: displayStats.planning_batches, color: '#F59E0B' },
+              { name: '进行中', value: displayStats.in_progress_batches, color: '#6366F1' },
+              { name: '已完成', value: displayStats.completed_batches, color: '#00C897' },
+              { name: '已取消', value: displayStats.cancelled_batches, color: '#6B7280' },
+            ].filter((d) => d.value > 0)}
+            dataKey='value'
+            nameKey='name'
+          />
+          <StatsChart
+            title='工艺与配方状态'
+            type='pie'
+            data={[
+              { name: '活跃工艺', value: displayStats.active_processes, color: '#14B8A6' },
+              { name: '活跃配方', value: displayStats.active_formulas, color: '#F59E0B' },
+              { name: '总工序', value: displayStats.total_steps, color: '#8B5CF6' },
+            ].filter((d) => d.value > 0)}
+            dataKey='value'
+            nameKey='name'
+          />
+        </div>
+
+        {/* 特定标签页的统计 */}
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
+          <div className='bg-white rounded-xl shadow-sm p-6'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <p className='text-sm text-gray-600 mb-1'>当前标签总计</p>
+                <p className='text-3xl font-bold text-gray-900'>
+                  {activeTab === 'processes'
+                    ? safeProcesses.length
+                    : activeTab === 'steps'
+                    ? safeSteps.length
+                    : activeTab === 'formulas'
+                    ? safeFormulas.length
+                    : activeTab === 'batches'
+                    ? safeBatches.length
+                    : displayStats.total_processes + displayStats.total_steps + displayStats.total_formulas + displayStats.total_batches}
+                </p>
+              </div>
+              <div className='w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center'>
+                {activeTab === 'processes' ? (
+                  <Factory className='w-6 h-6 text-teal-600' />
+                ) : activeTab === 'steps' ? (
+                  <ClipboardList className='w-6 h-6 text-teal-600' />
+                ) : activeTab === 'formulas' ? (
+                  <Package className='w-6 h-6 text-teal-600' />
+                ) : (
+                  <Activity className='w-6 h-6 text-teal-600' />
+                )}
+              </div>
+            </div>
           </div>
-          <div className='w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center'>
-            <Factory className='w-6 h-6 text-blue-600' />
-          </div>
+          {activeTab === 'batches' && (
+            <>
+              <div className='bg-white rounded-xl shadow-sm p-6'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <p className='text-sm text-gray-600 mb-1'>进行中批次</p>
+                    <p className='text-3xl font-bold text-blue-600'>
+                      {safeBatches.filter(
+                        (b) => b.status === '进行中' || b.status === 'in_progress'
+                      ).length}
+                    </p>
+                  </div>
+                  <div className='w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center'>
+                    <Activity className='w-6 h-6 text-blue-600' />
+                  </div>
+                </div>
+              </div>
+              <div className='bg-white rounded-xl shadow-sm p-6'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <p className='text-sm text-gray-600 mb-1'>已完成批次</p>
+                    <p className='text-3xl font-bold text-green-600'>
+                      {safeBatches.filter(
+                        (b) => b.status === '已完成' || b.status === 'completed'
+                      ).length}
+                    </p>
+                  </div>
+                  <div className='w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center'>
+                    <CheckCircle className='w-6 h-6 text-green-600' />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+          {(activeTab === 'processes' || activeTab === 'formulas') && (
+            <>
+              <div className='bg-white rounded-xl shadow-sm p-6'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <p className='text-sm text-gray-600 mb-1'>活跃项</p>
+                    <p className='text-3xl font-bold text-green-600'>
+                      {activeTab === 'processes'
+                        ? safeProcesses.filter((p) => p.status === '启用' || p.status === 'active')
+                            .length
+                        : safeFormulas.filter((f) => f.status === '启用' || f.status === 'active')
+                            .length}
+                    </p>
+                  </div>
+                  <div className='w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center'>
+                    <CheckCircle className='w-6 h-6 text-green-600' />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
-      <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-200'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <p className='text-sm text-gray-500'>总配方数</p>
-            <p className='text-3xl font-bold text-gray-900 mt-2'>{safeFormulas.length}</p>
-          </div>
-          <div className='w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center'>
-            <Package className='w-6 h-6 text-purple-600' />
-          </div>
-        </div>
-      </div>
-      <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-200'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <p className='text-sm text-gray-500'>总批次</p>
-            <p className='text-3xl font-bold text-gray-900 mt-2'>{safeBatches.length}</p>
-          </div>
-          <div className='w-12 h-12 bg-green-100 rounded-full flex items-center justify-center'>
-            <Activity className='w-6 h-6 text-green-600' />
-          </div>
-        </div>
-      </div>
-      <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-200'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <p className='text-sm text-gray-500'>已完成批次</p>
-            <p className='text-3xl font-bold text-gray-900 mt-2'>
-              {safeBatches.filter((b) => b.status === '已完成').length}
-            </p>
-          </div>
-          <div className='w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center'>
-            <Check className='w-6 h-6 text-orange-600' />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const processColumns: ColumnDef<ProductionProcess>[] = [
     { accessorKey: 'process_no', header: '编号' },

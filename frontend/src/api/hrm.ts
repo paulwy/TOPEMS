@@ -392,46 +392,46 @@ export const companyApi: CrudOperations<Company> = {
 export const departmentApi: CrudOperations<Department> = {
   list: async (params?: ListParams) => {
     const queryString = buildQueryString(params);
-    return await apiClient.erp.get(`/api/v1/departments${queryString}`);
+    return await apiClient.hrm.get(`/api/v1/departments${queryString}`);
   },
 
   get: (id: string) => {
-    return apiClient.erp.get(`/api/v1/departments/${id}`);
+    return apiClient.hrm.get(`/api/v1/departments/${id}`);
   },
 
   create: (data: Partial<Department>) => {
-    return apiClient.erp.post('/api/v1/departments', data);
+    return apiClient.hrm.post('/api/v1/departments', data);
   },
 
   update: (id: string, data: Partial<Department>) => {
-    return apiClient.erp.put(`/api/v1/departments/${id}`, data);
+    return apiClient.hrm.put(`/api/v1/departments/${id}`, data);
   },
 
   delete: (id: string) => {
-    return apiClient.erp.delete(`/api/v1/departments/${id}`);
+    return apiClient.hrm.delete(`/api/v1/departments/${id}`);
   },
 };
 
 export const employeeApi: CrudOperations<Employee> = {
   list: async (params?: ListParams) => {
     const queryString = buildQueryString(params);
-    return await apiClient.erp.get(`/api/v1/employees${queryString}`);
+    return await apiClient.hrm.get(`/api/v1/employees${queryString}`);
   },
 
   get: (id: string) => {
-    return apiClient.erp.get(`/api/v1/employees/${id}`);
+    return apiClient.hrm.get(`/api/v1/employees/${id}`);
   },
 
   create: (data: Partial<Employee>) => {
-    return apiClient.erp.post('/api/v1/employees', data);
+    return apiClient.hrm.post('/api/v1/employees', data);
   },
 
   update: (id: string, data: Partial<Employee>) => {
-    return apiClient.erp.put(`/api/v1/employees/${id}`, data);
+    return apiClient.hrm.put(`/api/v1/employees/${id}`, data);
   },
 
   delete: (id: string) => {
-    return apiClient.erp.delete(`/api/v1/employees/${id}`);
+    return apiClient.hrm.delete(`/api/v1/employees/${id}`);
   },
 };
 
@@ -577,13 +577,14 @@ export interface SalaryAdjustment {
   old_salary: number;
   new_salary: number;
   adjustment_amount: number;
-  reason: string;
-  effective_date: string;
+  reason?: string;
+  effective_date?: string;
   status: 'pending' | 'approved' | 'rejected';
-  applicant: string;
-  applied_at: string;
-  approved_by?: string;
+  approver_id?: string;
   approved_at?: string;
+  rejection_reason?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const salaryAdjustmentApi = {

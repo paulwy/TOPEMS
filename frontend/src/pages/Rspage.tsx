@@ -32,11 +32,14 @@ import {
   Formula,
   CreateFormulaRequest,
   FormulaVersion,
+  RsStatistics,
 } from '../api/rs';
 import { FieldError } from '../components/ValidationError';
 import { ModuleGate } from '../components/PermissionGate';
 import { MODULES } from '../config/permissions';
 import { ColumnDef } from '@tanstack/react-table';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 
 const Rspage: React.FC = () => {
   const navigate = useNavigate();
@@ -44,6 +47,21 @@ const Rspage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [formulas, setFormulas] = useState<Formula[]>([]);
+  const [stats, setStats] = useState<RsStatistics>({
+    total_projects: 0,
+    pending_projects: 0,
+    in_progress_projects: 0,
+    completed_projects: 0,
+    cancelled_projects: 0,
+    total_experiments: 0,
+    pending_experiments: 0,
+    in_progress_experiments: 0,
+    completed_experiments: 0,
+    total_formulas: 0,
+    draft_formulas: 0,
+    approved_formulas: 0,
+    total_tasks: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [serviceStatuses, setServiceStatuses] = useState<{ [key: string]: boolean }>({
     rs: false,
@@ -309,12 +327,36 @@ const Rspage: React.FC = () => {
 
   useEffect(() => {
     if (isServiceUp('rs')) {
-      loadProjects();
-      loadExperiments();
+      loadAllData();
     } else {
       setLoading(false);
     }
   }, [serviceStatuses.rs]);
+
+  const loadStatistics = async () => {
+    try {
+      const response = await rsApi.getStatistics();
+      if (response.success && response.data) {
+        setStats(response.data);
+      }
+    } catch (err) {
+      console.error('加载统计数据失败:', err);
+    }
+  };
+
+  const loadAllData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        loadProjects(),
+        loadExperiments(),
+        loadFormulas(),
+        loadStatistics()
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 数据适配函数：处理后端返回的数据字段与前端期望不匹配的问题
   const adaptProject = (p: any): Project => {
@@ -335,7 +377,6 @@ const Rspage: React.FC = () => {
 
   const loadProjects = async () => {
     try {
-      setLoading(true);
       const response = await rsApi.listProjects();
       if (response.success && response.data) {
         // 检查数据格式，兼容不同的响应结构
@@ -358,8 +399,6 @@ const Rspage: React.FC = () => {
       showNotification('error', '加载项目列表失败');
       console.error('加载项目失败:', err);
       setProjects([]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -1482,7 +1521,83 @@ const Rspage: React.FC = () => {
           </button>
         </div>
 
-        {/* Stats */}
+        {/* 主要统计卡片 */}
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8'>
+          <MetricCard
+            title='项目总数'
+            value={stats.total_projects}
+            icon={<FlaskConical className='w-6 h-6' />}
+            gradient={['#8B5CF6', '#7C3AED']}
+            subtitle={`进行中: ${stats.in_progress_projects}`}
+            trend={stats.in_progress_projects > 0 ? 'up' : 'neutral'}
+          />
+          <MetricCard
+            title='试验总数'
+            value={stats.total_experiments}
+            icon={<Beaker className='w-6 h-6' />}
+            gradient={['#6366F1', '#4F46E5']}
+            subtitle={`进行中: ${stats.in_progress_experiments}`}
+            trend={stats.in_progress_experiments > 0 ? 'up' : 'neutral'}
+          />
+          <MetricCard
+            title='配方总数'
+            value={stats.total_formulas}
+            icon={<FileCode className='w-6 h-6' />}
+            gradient={['#F59E0B', '#D97706']}
+            subtitle={`已批准: ${stats.approved_formulas}`}
+            trend='neutral'
+          />
+          <MetricCard
+            title='已完成项目'
+            value={stats.completed_projects}
+            icon={<CheckCircle className='w-6 h-6' />}
+            gradient={['#00C897', '#00A878']}
+            trend='up'
+          />
+          <MetricCard
+            title='已完成试验'
+            value={stats.completed_experiments}
+            icon={<CheckCircle2 className='w-6 h-6' />}
+            gradient={['#14B8A6', '#0D9488']}
+            trend='up'
+          />
+          <MetricCard
+            title='草稿配方'
+            value={stats.draft_formulas}
+            icon={<Clock className='w-6 h-6' />}
+            gradient={['#EC4899', '#DB2777']}
+            trend='neutral'
+          />
+        </div>
+
+        {/* 图表区域 */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
+          <StatsChart
+            title='项目状态分布'
+            type='pie'
+            data={[
+              { name: '进行中', value: stats.in_progress_projects, color: '#6366F1' },
+              { name: '已完成', value: stats.completed_projects, color: '#00C897' },
+              { name: '待开始', value: stats.pending_projects, color: '#F59E0B' },
+              { name: '已取消', value: stats.cancelled_projects, color: '#6B7280' },
+            ].filter(d => d.value > 0)}
+            dataKey='value'
+            nameKey='name'
+          />
+          <StatsChart
+            title='试验状态分布'
+            type='pie'
+            data={[
+              { name: '进行中', value: stats.in_progress_experiments, color: '#6366F1' },
+              { name: '已完成', value: stats.completed_experiments, color: '#00C897' },
+              { name: '待开始', value: stats.pending_experiments, color: '#F59E0B' },
+            ].filter(d => d.value > 0)}
+            dataKey='value'
+            nameKey='name'
+          />
+        </div>
+
+        {/* 标签页特定统计 */}
         <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-8'>
           <div className='bg-white rounded-xl shadow-sm p-6'>
             <div className='flex items-center justify-between'>

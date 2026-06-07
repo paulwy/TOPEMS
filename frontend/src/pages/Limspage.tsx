@@ -21,6 +21,8 @@ import {
   Wrench,
   AlertCircle,
   CheckCircle2,
+  MapPin,
+  Building2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -39,10 +41,13 @@ import {
   CreateInstrumentRequest,
   MaintenanceRecord,
   CreateMaintenanceRecordRequest,
+  LimsStatistics,
 } from '../api/lims';
 import { ModuleGate } from '../components/PermissionGate';
 import { MODULES } from '../config/permissions';
 import { DataTable } from '../components/DataTable';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 import { ColumnDef } from '@tanstack/react-table';
 
 const Limspage: React.FC = () => {
@@ -53,6 +58,23 @@ const Limspage: React.FC = () => {
   const [tasks, setTasks] = useState<InspectionTask[]>([]);
   const [records, setRecords] = useState<InspectionRecord[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
+  const [stats, setStats] = useState<LimsStatistics>({
+    total_samples: 0,
+    pending_samples: 0,
+    testing_samples: 0,
+    completed_samples: 0,
+    cancelled_samples: 0,
+    total_tasks: 0,
+    pending_tasks: 0,
+    in_progress_tasks: 0,
+    completed_tasks: 0,
+    total_processes: 0,
+    total_instruments: 0,
+    normal_instruments: 0,
+    calibration_instruments: 0,
+    maintenance_instruments: 0,
+    disabled_instruments: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [serviceStatuses, setServiceStatuses] = useState<{ [key: string]: boolean }>({
     lims: false,
@@ -170,10 +192,21 @@ const Limspage: React.FC = () => {
     }
   }, [serviceStatuses.lims]);
 
+  const loadStatistics = async () => {
+    try {
+      const response = await limsApi.getStatistics();
+      if (response.success && response.data) {
+        setStats(response.data);
+      }
+    } catch (err) {
+      console.error('加载统计数据失败:', err);
+    }
+  };
+
   const loadAllData = async () => {
     try {
       setLoading(true);
-      await Promise.all([loadSamples(), loadProcesses(), loadTasks(), loadInstruments()]);
+      await Promise.all([loadSamples(), loadProcesses(), loadTasks(), loadInstruments(), loadStatistics()]);
     } finally {
       setLoading(false);
     }
@@ -1296,7 +1329,84 @@ const Limspage: React.FC = () => {
           </button>
         </div>
 
-        {/* Stats */}
+        {/* Stats Dashboard */}
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8'>
+          <MetricCard
+            title='样品总数'
+            value={stats.total_samples}
+            icon={<Beaker className='w-6 h-6' />}
+            gradient={['#8B5CF6', '#7C3AED']}
+            subtitle={`待测试: ${stats.pending_samples}`}
+            trend={stats.pending_samples > 0 ? 'up' : 'neutral'}
+          />
+          <MetricCard
+            title='检验任务'
+            value={stats.total_tasks}
+            icon={<ClipboardCheck className='w-6 h-6' />}
+            gradient={['#6366F1', '#4F46E5']}
+            subtitle={`进行中: ${stats.in_progress_tasks}`}
+            trend={stats.in_progress_tasks > 0 ? 'up' : 'neutral'}
+          />
+          <MetricCard
+            title='检验流程'
+            value={stats.total_processes}
+            icon={<FileText className='w-6 h-6' />}
+            gradient={['#F59E0B', '#D97706']}
+            trend='neutral'
+          />
+          <MetricCard
+            title='仪器设备'
+            value={stats.total_instruments}
+            icon={<Settings className='w-6 h-6' />}
+            gradient={['#14B8A6', '#0D9488']}
+            subtitle={`正常: ${stats.normal_instruments}`}
+            trend='neutral'
+          />
+          <MetricCard
+            title='已完成样品'
+            value={stats.completed_samples}
+            icon={<CheckCircle className='w-6 h-6' />}
+            gradient={['#00C897', '#00A878']}
+            trend='up'
+          />
+          <MetricCard
+            title='测试中样品'
+            value={stats.testing_samples}
+            icon={<Clock className='w-6 h-6' />}
+            gradient={['#EC4899', '#DB2777']}
+            trend='neutral'
+          />
+        </div>
+
+        {/* Charts */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
+          <StatsChart
+            title='样品状态分布'
+            type='pie'
+            data={[
+              { name: '待测试', value: stats.pending_samples, color: '#F59E0B' },
+              { name: '测试中', value: stats.testing_samples, color: '#EC4899' },
+              { name: '已完成', value: stats.completed_samples, color: '#00C897' },
+              { name: '已终止', value: stats.cancelled_samples, color: '#6B7280' },
+            ].filter(d => d.value > 0)}
+            dataKey='value'
+            nameKey='name'
+          />
+          <StatsChart
+            title='仪器状态分布'
+            type='pie'
+            data={[
+              { name: '正常', value: stats.normal_instruments, color: '#00C897' },
+              { name: '校准中', value: stats.calibration_instruments, color: '#F59E0B' },
+              { name: '维修中', value: stats.maintenance_instruments, color: '#EF4444' },
+              { name: '停用', value: stats.disabled_instruments, color: '#6B7280' },
+            ].filter(d => d.value > 0)}
+            dataKey='value'
+            nameKey='name'
+          />
+        </div>
+
+        {/* Tab-specific Stats */}
         <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-8'>
           <div className='bg-white rounded-xl shadow-sm p-6'>
             <div className='flex items-center justify-between'>

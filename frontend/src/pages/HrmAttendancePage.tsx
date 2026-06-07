@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Clock,
   Calendar,
@@ -17,6 +17,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
 import { NotificationContainer } from '../components/NotificationContainer';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 
 interface AttendanceRecord {
   id: string;
@@ -232,6 +234,55 @@ const HrmAttendancePage: React.FC = () => {
       average_work_hours: 9.1,
     },
   ]);
+
+  // 统计数据
+  const attendanceStats = useMemo(() => {
+    const totalEmployees = summaries.reduce((sum, s) => sum + s.total_employees, 0);
+    const totalPresent = summaries.reduce((sum, s) => sum + s.present_count, 0);
+    const totalLate = summaries.reduce((sum, s) => sum + s.late_count, 0);
+    const totalAbsent = summaries.reduce((sum, s) => sum + s.absent_count, 0);
+    const avgOnTimeRate = totalEmployees > 0 ? (totalPresent / totalEmployees) * 100 : 0;
+    const avgWorkHours = summaries.length > 0
+      ? summaries.reduce((sum, s) => sum + s.average_work_hours, 0) / summaries.length
+      : 0;
+
+    return {
+      totalEmployees,
+      totalPresent,
+      totalLate,
+      totalAbsent,
+      avgOnTimeRate: Math.round(avgOnTimeRate * 10) / 10,
+      avgWorkHours: Math.round(avgWorkHours * 10) / 10,
+      presentRate: Math.round((totalPresent / totalEmployees) * 100),
+      leaveCount: leaves.filter(l => l.status === 'pending').length,
+      pendingLeaves: leaves.filter(l => l.status === 'pending').length,
+    };
+  }, [summaries, leaves]);
+
+  // 考勤状态分布数据
+  const attendanceStatusData = useMemo(() => [
+    { name: '正常', value: records.filter(r => r.status === 'normal').length, color: '#22c55e' },
+    { name: '迟到', value: records.filter(r => r.status === 'late').length, color: '#eab308' },
+    { name: '早退', value: records.filter(r => r.status === 'early_leave').length, color: '#f97316' },
+    { name: '缺勤', value: records.filter(r => r.status === 'absent').length, color: '#ef4444' },
+    { name: '请假', value: records.filter(r => r.status === 'leave').length, color: '#3b82f6' },
+  ], [records]);
+
+  // 部门出勤率数据
+  const departmentOnTimeData = useMemo(() =>
+    summaries.map(s => ({
+      name: s.department,
+      value: s.on_time_rate,
+      color: s.on_time_rate >= 95 ? '#22c55e' :
+             s.on_time_rate >= 85 ? '#eab308' : '#ef4444',
+    }))
+  , [summaries]);
+
+  // 部门出勤人数数据
+  const departmentAttendanceData = useMemo(() => [
+    { name: '出勤人数', value: summaries.reduce((sum, s) => sum + s.present_count, 0), color: '#22c55e' },
+    { name: '缺勤人数', value: summaries.reduce((sum, s) => sum + s.absent_count, 0), color: '#ef4444' },
+  ], [summaries]);
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, React.ReactNode> = {
@@ -513,53 +564,167 @@ const HrmAttendancePage: React.FC = () => {
         )}
 
         {activeTab === 'statistics' && (
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {summaries.map((summary) => (
-              <div key={summary.department} className='bg-white rounded-lg shadow-sm p-6'>
-                <div className='flex items-center justify-between mb-4'>
-                  <h3 className='text-lg font-semibold text-gray-900'>{summary.department}</h3>
-                  <Users className='w-5 h-5 text-gray-400' />
-                </div>
+          <div className='space-y-6'>
+            {/* 统计卡片 */}
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+              <MetricCard
+                title='总员工数'
+                value={attendanceStats.totalEmployees}
+                icon={<Users className='w-5 h-5' />}
+                trend={null}
+                color='blue'
+              />
+              <MetricCard
+                title='出勤人数'
+                value={attendanceStats.totalPresent}
+                icon={<CheckCircle className='w-5 h-5' />}
+                trend={null}
+                color='green'
+              />
+              <MetricCard
+                title='出勤率'
+                value={`${attendanceStats.presentRate}%`}
+                icon={<BarChart3 className='w-5 h-5' />}
+                trend={null}
+                color='blue'
+              />
+              <MetricCard
+                title='平均工时'
+                value={`${attendanceStats.avgWorkHours}h`}
+                icon={<Clock className='w-5 h-5' />}
+                trend={null}
+                color='purple'
+              />
+            </div>
 
-                <div className='grid grid-cols-2 gap-4 mb-4'>
-                  <div className='text-center p-3 bg-gray-50 rounded-lg'>
-                    <div className='text-2xl font-bold text-blue-600'>
-                      {summary.present_count}/{summary.total_employees}
-                    </div>
-                    <div className='text-xs text-gray-500 mt-1'>出勤人数</div>
-                  </div>
-                  <div className='text-center p-3 bg-gray-50 rounded-lg'>
-                    <div className='text-2xl font-bold text-green-600'>{summary.on_time_rate}%</div>
-                    <div className='text-xs text-gray-500 mt-1'>出勤率</div>
-                  </div>
-                </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+              <MetricCard
+                title='迟到人数'
+                value={attendanceStats.totalLate}
+                icon={<AlertCircle className='w-5 h-5' />}
+                trend={null}
+                color='yellow'
+              />
+              <MetricCard
+                title='缺勤人数'
+                value={attendanceStats.totalAbsent}
+                icon={<XCircle className='w-5 h-5' />}
+                trend={null}
+                color='red'
+              />
+              <MetricCard
+                title='待审批请假'
+                value={attendanceStats.pendingLeaves}
+                icon={<Clock className='w-5 h-5' />}
+                trend={null}
+                color='orange'
+              />
+              <MetricCard
+                title='准时率'
+                value={`${attendanceStats.avgOnTimeRate}%`}
+                icon={<CheckCircle className='w-5 h-5' />}
+                trend={null}
+                color='green'
+              />
+            </div>
 
-                <div className='space-y-2 text-sm'>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-600'>迟到人数</span>
-                    <span className='font-medium text-yellow-600'>{summary.late_count}人</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-600'>缺勤人数</span>
-                    <span className='font-medium text-red-600'>{summary.absent_count}人</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-600'>平均工时</span>
-                    <span className='font-medium text-gray-900'>{summary.average_work_hours}h</span>
-                  </div>
-                </div>
-
-                <div className='mt-4 pt-4 border-t border-gray-200'>
-                  <div className='flex justify-between text-xs text-gray-500'>
-                    <span>出勤率</span>
-                    <span>{summary.on_time_rate}%</span>
-                  </div>
-                  <div className='w-full bg-gray-200 rounded-full h-2 mt-1'>
-                    <div className='bg-green-500 h-2 rounded-full' style={{ width: `${summary.on_time_rate}%` }}></div>
-                  </div>
-                </div>
+            {/* 图表区域 */}
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+              <div className='bg-white rounded-lg shadow-sm p-6'>
+                <h3 className='text-lg font-semibold text-gray-900 mb-4'>考勤状态分布</h3>
+                <StatsChart
+                  type='pie'
+                  data={attendanceStatusData}
+                  height={250}
+                />
               </div>
-            ))}
+
+              <div className='bg-white rounded-lg shadow-sm p-6'>
+                <h3 className='text-lg font-semibold text-gray-900 mb-4'>部门出勤率对比</h3>
+                <StatsChart
+                  type='bar'
+                  data={departmentOnTimeData}
+                  height={250}
+                />
+              </div>
+            </div>
+
+            <div className='bg-white rounded-lg shadow-sm p-6'>
+              <h3 className='text-lg font-semibold text-gray-900 mb-4'>各部门出勤人数</h3>
+              <StatsChart
+                type='bar'
+                data={departmentAttendanceData}
+                height={300}
+              />
+            </div>
+
+            {/* 部门明细表格 */}
+            <div className='bg-white rounded-lg shadow-sm overflow-hidden'>
+              <div className='overflow-x-auto'>
+                <table className='min-w-full divide-y divide-gray-200'>
+                  <thead className='bg-gray-50'>
+                    <tr>
+                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        部门
+                      </th>
+                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        总人数
+                      </th>
+                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        出勤人数
+                      </th>
+                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        缺勤人数
+                      </th>
+                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        迟到人数
+                      </th>
+                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        出勤率
+                      </th>
+                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        平均工时
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className='bg-white divide-y divide-gray-200'>
+                    {summaries.map((summary) => (
+                      <tr key={summary.department} className='hover:bg-gray-50'>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
+                          {summary.department}
+                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                          {summary.total_employees}
+                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium'>
+                          {summary.present_count}
+                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium'>
+                          {summary.absent_count}
+                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-yellow-600 font-medium'>
+                          {summary.late_count}
+                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap'>
+                          <div className='flex items-center'>
+                            <span className='text-sm text-gray-900 mr-2'>{summary.on_time_rate}%</span>
+                            <div className='w-16 bg-gray-200 rounded-full h-2'>
+                              <div
+                                className='bg-green-500 h-2 rounded-full'
+                                style={{ width: `${summary.on_time_rate}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                          {summary.average_work_hours}h
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>

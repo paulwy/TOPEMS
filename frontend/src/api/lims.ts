@@ -329,6 +329,27 @@ export const recordApi = {
   },
 };
 
+export interface LimsStatistics {
+  total_samples: number;
+  pending_samples: number;
+  testing_samples: number;
+  completed_samples: number;
+  cancelled_samples: number;
+  
+  total_tasks: number;
+  pending_tasks: number;
+  in_progress_tasks: number;
+  completed_tasks: number;
+  
+  total_processes: number;
+  
+  total_instruments: number;
+  normal_instruments: number;
+  calibration_instruments: number;
+  maintenance_instruments: number;
+  disabled_instruments: number;
+}
+
 export interface AuditLog {
   id: string;
   action: string;
@@ -423,6 +444,10 @@ export const limsApi = {
   listMaintenanceByInstrument: maintenanceApi.listByInstrument,
   createMaintenance: maintenanceApi.create,
   deleteMaintenance: maintenanceApi.delete,
+
+  getStatistics: async (): Promise<ApiResponse<LimsStatistics>> => {
+    return apiClient.lims.get('/api/v1/statistics');
+  },
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.lims.get('/health');

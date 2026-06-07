@@ -13,13 +13,9 @@ docs/
 ├── architecture/           # 架构设计
 │   ├── overview.md        # 系统架构总览
 │   └── database.md        # 数据库设计
-├── design/                # 设计文档
-│   ├── PROJECT_MANAGEMENT_DESIGN.md  # 统一项目管理模块设计
-│   └── IMPLEMENTATION_PLAN.md        # 项目管理实施计划
 ├── deployment/            # 部署指南
-│   └── DEPLOYMENT_GUIDE.md
-├── guides/                # 指南文档
-│   └── USER_GUIDE.md
+│   ├── DEPLOYMENT_GUIDE.md
+│   └── DEPLOYMENT_OFFLINE.md
 ├── services/              # 服务文档
 │   ├── AI_SETUP_GUIDE.md
 │   ├── SERVICE_OPTIMIZATION_GUIDE.md
@@ -40,19 +36,14 @@ docs/
 - [服务配置表](../README.md#项目结构) - 所有服务配置
 - [共享库文档](./services/SHARED_LIBRARY_GUIDE.md) - 共享库使用
 
-### 模块设计
-- [统一项目管理模块设计](./design/PROJECT_MANAGEMENT_DESIGN.md) - 项目管理整合方案
-- [项目管理实施计划](./design/IMPLEMENTATION_PLAN.md) - 分阶段实施计划
-
 ### 用户使用
-- [用户指南](./guides/USER_GUIDE.md) - 用户操作指南
 - [用户手册](./user/UserManual.md) - 详细用户手册
 
 ## 项目资源
 
 - [主项目README](../README.md) - 项目主页
-- [工具文档](../tools/README.md) - 模拟数据工具等
-- [脚本文档](../scripts/README.md) - 管理脚本
+- [工具文档](../tools/README.md) - 开发工具说明
+- [脚本文档](../scripts/README.md) - 管理脚本使用
 
 ## 技术支持
 
@@ -62,4 +53,4 @@ docs/
 
 ---
 **版本**: 2.0.0
-**最后更新**: 2026-06-04
+**最后更新**: 2026-06-07

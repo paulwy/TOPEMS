@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { interactionApi, Interaction, CreateInteractionRequest, UpdateInteractionRequest } from '@/api/crm';
+import { crmApi, Interaction, CreateInteractionRequest, UpdateInteractionRequest } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/EmptyState';
@@ -47,7 +47,7 @@ const InteractionManagementPage: React.FC = () => {
     type: 'call',
     subject: '',
     content: '',
-    scheduledAt: '',
+    scheduled_at: '',
     notes: '',
   });
 
@@ -67,10 +67,10 @@ const InteractionManagementPage: React.FC = () => {
       if (searchTerm) params.search = searchTerm;
       if (statusFilter !== 'all') params.status = statusFilter;
 
-      const response = await interactionApi.getInteractions(params);
-      if (response.data.success && response.data.data) {
-        setInteractions(response.data.data.items || []);
-        setTotal(response.data.data.total || 0);
+      const response = await crmApi.interactions.list(params);
+      if (response.success && response.data) {
+        setInteractions(response.data.items || []);
+        setTotal(response.data.total || 0);
       }
     } catch (error) {
       console.error('加载交互记录列表失败:', error);
@@ -88,14 +88,14 @@ const InteractionManagementPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedInteraction) {
-        await interactionApi.updateInteraction(selectedInteraction.id, formData as UpdateInteractionRequest);
+        await crmApi.interactions.update(selectedInteraction.id, formData as UpdateInteractionRequest);
         addNotification({
           type: 'success',
           title: '更新成功',
           message: '交互记录已更新',
         });
       } else {
-        await interactionApi.createInteraction(formData);
+        await crmApi.interactions.create(formData);
         addNotification({
           type: 'success',
           title: '创建成功',
@@ -118,7 +118,7 @@ const InteractionManagementPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这条交互记录吗?')) return;
     try {
-      await interactionApi.deleteInteraction(id);
+      await crmApi.interactions.delete(id);
       addNotification({
         type: 'success',
         title: '删除成功',
@@ -139,7 +139,7 @@ const InteractionManagementPage: React.FC = () => {
     if (selectedIds.length === 0) return;
     if (!window.confirm(`确定要删除选中的 ${selectedIds.length} 条交互记录吗?`)) return;
     try {
-      await interactionApi.batchDelete(selectedIds);
+      await crmApi.interactions.batchDelete(selectedIds);
       addNotification({
         type: 'success',
         title: '删除成功',
@@ -160,12 +160,12 @@ const InteractionManagementPage: React.FC = () => {
   const handleEdit = (interaction: Interaction) => {
     setSelectedInteraction(interaction);
     setFormData({
-      customerId: interaction.customerId,
-      contactId: interaction.contactId,
+      customer_id: interaction.customer_id,
+      contact_id: interaction.contact_id,
       type: interaction.type,
       subject: interaction.subject || '',
       content: interaction.content || '',
-      scheduledAt: interaction.scheduledAt || '',
+      scheduled_at: interaction.scheduled_at || '',
       notes: '',
     });
     setShowDialog(true);
@@ -182,7 +182,7 @@ const InteractionManagementPage: React.FC = () => {
       type: 'call',
       subject: '',
       content: '',
-      scheduledAt: '',
+      scheduled_at: '',
       notes: '',
     });
   };
@@ -325,10 +325,10 @@ const InteractionManagementPage: React.FC = () => {
                       <TableCell className='font-medium'>{interaction.subject || '-'}</TableCell>
                       <TableCell>{getTypeBadge(interaction.type)}</TableCell>
                       <TableCell>
-                        {interaction.scheduledAt ? new Date(interaction.scheduledAt).toLocaleString('zh-CN') : '-'}
+                        {interaction.scheduled_at ? new Date(interaction.scheduled_at).toLocaleString('zh-CN') : '-'}
                       </TableCell>
                       <TableCell>
-                        {interaction.completedAt ? new Date(interaction.completedAt).toLocaleString('zh-CN') : '-'}
+                        {interaction.completed_at ? new Date(interaction.completed_at).toLocaleString('zh-CN') : '-'}
                       </TableCell>
                       <TableCell>{getStatusBadge(interaction.status)}</TableCell>
                       <TableCell className='text-right'>
@@ -435,8 +435,8 @@ const InteractionManagementPage: React.FC = () => {
                 <Input
                   id='scheduledAt'
                   type='datetime-local'
-                  value={formData.scheduledAt}
-                  onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
+                  value={formData.scheduled_at}
+                  onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
                 />
               </div>
               {selectedInteraction && (
@@ -501,16 +501,16 @@ const InteractionManagementPage: React.FC = () => {
                 <div>
                   <Label className='text-muted-foreground'>计划时间</Label>
                   <p>
-                    {selectedInteraction.scheduledAt
-                      ? new Date(selectedInteraction.scheduledAt).toLocaleString('zh-CN')
+                    {selectedInteraction.scheduled_at
+                      ? new Date(selectedInteraction.scheduled_at).toLocaleString('zh-CN')
                       : '-'}
                   </p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>完成时间</Label>
                   <p>
-                    {selectedInteraction.completedAt
-                      ? new Date(selectedInteraction.completedAt).toLocaleString('zh-CN')
+                    {selectedInteraction.completed_at
+                      ? new Date(selectedInteraction.completed_at).toLocaleString('zh-CN')
                       : '-'}
                   </p>
                 </div>
@@ -520,11 +520,11 @@ const InteractionManagementPage: React.FC = () => {
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>创建时间</Label>
-                  <p>{new Date(selectedInteraction.createdAt).toLocaleString('zh-CN')}</p>
+                  <p>{new Date(selectedInteraction.created_at).toLocaleString('zh-CN')}</p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>更新时间</Label>
-                  <p>{new Date(selectedInteraction.updatedAt).toLocaleString('zh-CN')}</p>
+                  <p>{new Date(selectedInteraction.updated_at).toLocaleString('zh-CN')}</p>
                 </div>
               </div>
             </div>

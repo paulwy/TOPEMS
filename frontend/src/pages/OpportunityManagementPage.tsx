@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { opportunityApi, Opportunity, CreateOpportunityRequest, UpdateOpportunityRequest } from '@/api/crm';
+import { crmApi, Opportunity, CreateOpportunityRequest, UpdateOpportunityRequest } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/EmptyState';
@@ -46,7 +46,7 @@ const OpportunityManagementPage: React.FC = () => {
     name: '',
     value: undefined,
     probability: undefined,
-    closeDate: '',
+    close_date: '',
     notes: '',
   });
 
@@ -66,10 +66,10 @@ const OpportunityManagementPage: React.FC = () => {
       if (searchTerm) params.search = searchTerm;
       if (stageFilter !== 'all') params.stage = stageFilter;
 
-      const response = await opportunityApi.getOpportunities(params);
-      if (response.data.success && response.data.data) {
-        setOpportunities(response.data.data.items || []);
-        setTotal(response.data.data.total || 0);
+      const response = await crmApi.opportunities.list(params);
+      if (response.success && response.data) {
+        setOpportunities(response.data.items || []);
+        setTotal(response.data.total || 0);
       }
     } catch (error) {
       console.error('加载商机列表失败:', error);
@@ -87,14 +87,14 @@ const OpportunityManagementPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedOpportunity) {
-        await opportunityApi.updateOpportunity(selectedOpportunity.id, formData as UpdateOpportunityRequest);
+        await crmApi.opportunities.update(selectedOpportunity.id, formData as UpdateOpportunityRequest);
         addNotification({
           type: 'success',
           title: '更新成功',
           message: '商机信息已更新',
         });
       } else {
-        await opportunityApi.createOpportunity(formData);
+        await crmApi.opportunities.create(formData);
         addNotification({
           type: 'success',
           title: '创建成功',
@@ -117,7 +117,7 @@ const OpportunityManagementPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个商机吗?')) return;
     try {
-      await opportunityApi.deleteOpportunity(id);
+      await crmApi.opportunities.delete(id);
       addNotification({
         type: 'success',
         title: '删除成功',
@@ -138,7 +138,7 @@ const OpportunityManagementPage: React.FC = () => {
     if (selectedIds.length === 0) return;
     if (!window.confirm(`确定要删除选中的 ${selectedIds.length} 个商机吗?`)) return;
     try {
-      await opportunityApi.batchDelete(selectedIds);
+      await crmApi.opportunities.batchDelete(selectedIds);
       addNotification({
         type: 'success',
         title: '删除成功',
@@ -160,10 +160,10 @@ const OpportunityManagementPage: React.FC = () => {
     setSelectedOpportunity(opportunity);
     setFormData({
       name: opportunity.name,
-      customerId: opportunity.customerId,
+      customer_id: opportunity.customer_id,
       value: opportunity.value,
       probability: opportunity.probability,
-      closeDate: opportunity.closeDate || '',
+      close_date: opportunity.close_date || '',
       notes: opportunity.notes || '',
     });
     setShowDialog(true);
@@ -180,7 +180,7 @@ const OpportunityManagementPage: React.FC = () => {
       name: '',
       value: undefined,
       probability: undefined,
-      closeDate: '',
+      close_date: '',
       notes: '',
     });
   };
@@ -363,7 +363,7 @@ const OpportunityManagementPage: React.FC = () => {
                       <TableCell>{getStageBadge(opportunity.stage)}</TableCell>
                       <TableCell>{opportunity.probability ? `${opportunity.probability}%` : '-'}</TableCell>
                       <TableCell>
-                        {opportunity.closeDate ? new Date(opportunity.closeDate).toLocaleDateString('zh-CN') : '-'}
+                        {opportunity.close_date ? new Date(opportunity.close_date).toLocaleDateString('zh-CN') : '-'}
                       </TableCell>
                       <TableCell className='text-right'>
                         <Button variant='ghost' size='sm' onClick={() => handleViewDetail(opportunity)}>
@@ -466,12 +466,12 @@ const OpportunityManagementPage: React.FC = () => {
                 />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='closeDate'>预计成交日期</Label>
+                <Label htmlFor='close_date'>预计成交日期</Label>
                 <Input
-                  id='closeDate'
+                  id='close_date'
                   type='date'
-                  value={formData.closeDate}
-                  onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })}
+                  value={formData.close_date}
+                  onChange={(e) => setFormData({ ...formData, close_date: e.target.value })}
                 />
               </div>
               {selectedOpportunity && (
@@ -543,18 +543,18 @@ const OpportunityManagementPage: React.FC = () => {
                 <div>
                   <Label className='text-muted-foreground'>预计成交日期</Label>
                   <p>
-                    {selectedOpportunity.closeDate
-                      ? new Date(selectedOpportunity.closeDate).toLocaleDateString('zh-CN')
+                    {selectedOpportunity.close_date
+                      ? new Date(selectedOpportunity.close_date).toLocaleDateString('zh-CN')
                       : '-'}
                   </p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>创建时间</Label>
-                  <p>{new Date(selectedOpportunity.createdAt).toLocaleString('zh-CN')}</p>
+                  <p>{new Date(selectedOpportunity.created_at).toLocaleString('zh-CN')}</p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>更新时间</Label>
-                  <p>{new Date(selectedOpportunity.updatedAt).toLocaleString('zh-CN')}</p>
+                  <p>{new Date(selectedOpportunity.updated_at).toLocaleString('zh-CN')}</p>
                 </div>
                 <div className='col-span-2'>
                   <Label className='text-muted-foreground'>备注</Label>

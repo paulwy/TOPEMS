@@ -1,15 +1,15 @@
+# TOPEMS Docker Compose 配置
+# 用于开发和生产环境的数据库基础设施
+
 version: '3.8'
 
 volumes:
   postgres_data:
   redis_data:
-  nginx_logs:
 
 services:
   postgres:
-    image: postgres:latest
-    platform: linux/amd64
-    pull_policy: never
+    image: postgres:16-alpine
     container_name: topems-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-topems}
@@ -32,9 +32,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:latest
-    platform: linux/amd64
-    pull_policy: never
+    image: redis:7-alpine
     container_name: topems-redis
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
@@ -49,32 +47,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:latest
-    platform: linux/amd64
-    pull_policy: never
-    container_name: topems-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
-      - nginx_logs:/var/log/nginx
-      - ../frontend/build:/usr/share/nginx/html:ro
-    networks:
-      - topems-network
-    depends_on:
-      - postgres
-      - redis
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
     restart: unless-stopped
 
 networks:

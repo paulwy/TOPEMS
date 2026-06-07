@@ -20,6 +20,8 @@ import { useAppStore } from '../store';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 import OrganizationFilter, { OrganizationFilterValue } from '@/components/ui/OrganizationFilter';
+import { MetricCard } from '../components/MetricCard';
+import { StatsChart } from '../components/StatsChart';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -337,7 +339,38 @@ const FinanceExpensePage: React.FC = () => {
   const pendingCount = expenses.filter((e) => e.status === 'pending').length;
   const approvedCount = expenses.filter((e) => e.status === 'approved').length;
   const reimbursedCount = expenses.filter((e) => e.status === 'reimbursed').length;
+  const rejectedCount = expenses.filter((e) => e.status === 'rejected').length;
   const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+  // 费用统计数据
+  const expenseStats = useMemo(() => ({
+    pendingCount,
+    approvedCount,
+    reimbursedCount,
+    rejectedCount,
+    totalAmount,
+    totalExpenses: expenses.length,
+    avgAmount: expenses.length > 0 ? totalAmount / expenses.length : 0,
+  }), [expenses, pendingCount, approvedCount, reimbursedCount, rejectedCount, totalAmount]);
+
+  // 费用状态分布数据
+  const expenseStatusData = useMemo(() => [
+    { name: '待审批', value: pendingCount, color: '#f59e0b' },
+    { name: '已审批', value: approvedCount, color: '#3b82f6' },
+    { name: '已报销', value: reimbursedCount, color: '#22c55e' },
+    { name: '已拒绝', value: rejectedCount, color: '#ef4444' },
+  ], [pendingCount, approvedCount, reimbursedCount, rejectedCount]);
+
+  // 费用类型分布数据
+  const expenseTypeData = useMemo(() => [
+    { name: '差旅费', value: expenses.filter(e => e.expense_type === 'travel').reduce((sum, e) => sum + e.amount, 0), color: '#3b82f6' },
+    { name: '办公费', value: expenses.filter(e => e.expense_type === 'office').reduce((sum, e) => sum + e.amount, 0), color: '#22c55e' },
+    { name: '餐费', value: expenses.filter(e => e.expense_type === 'meal').reduce((sum, e) => sum + e.amount, 0), color: '#f59e0b' },
+    { name: '交通费', value: expenses.filter(e => e.expense_type === 'transportation').reduce((sum, e) => sum + e.amount, 0), color: '#ef4444' },
+    { name: '通讯费', value: expenses.filter(e => e.expense_type === 'communication').reduce((sum, e) => sum + e.amount, 0), color: '#8b5cf6' },
+    { name: '培训费', value: expenses.filter(e => e.expense_type === 'training').reduce((sum, e) => sum + e.amount, 0), color: '#06b6d4' },
+    { name: '其他', value: expenses.filter(e => e.expense_type === 'other').reduce((sum, e) => sum + e.amount, 0), color: '#94a3b8' },
+  ], [expenses]);
 
   return (
     <div className='min-h-screen bg-slate-50 dark:bg-slate-900'>
@@ -368,62 +401,80 @@ const FinanceExpensePage: React.FC = () => {
       </div>
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-6'>
-          <Card>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-slate-600 dark:text-slate-400'>待审批</p>
-                  <p className='text-2xl font-bold text-orange-600 mt-2'>{pendingCount}</p>
-                </div>
-                <div className='p-3 bg-orange-100 dark:bg-orange-900 rounded-full'>
-                  <Clock className='w-6 h-6 text-orange-600' />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+          <MetricCard
+            title='待审批'
+            value={expenseStats.pendingCount}
+            icon={<Clock className='w-5 h-5' />}
+            trend={null}
+            color='orange'
+          />
+          <MetricCard
+            title='已审批'
+            value={expenseStats.approvedCount}
+            icon={<Check className='w-5 h-5' />}
+            trend={null}
+            color='blue'
+          />
+          <MetricCard
+            title='已报销'
+            value={expenseStats.reimbursedCount}
+            icon={<DollarSign className='w-5 h-5' />}
+            trend={null}
+            color='green'
+          />
+          <MetricCard
+            title='总金额'
+            value={`¥${expenseStats.totalAmount.toLocaleString()}`}
+            icon={<Send className='w-5 h-5' />}
+            trend={null}
+            color='purple'
+          />
+        </div>
 
-          <Card>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-slate-600 dark:text-slate-400'>已审批</p>
-                  <p className='text-2xl font-bold text-blue-600 mt-2'>{approvedCount}</p>
-                </div>
-                <div className='p-3 bg-blue-100 dark:bg-blue-900 rounded-full'>
-                  <Check className='w-6 h-6 text-blue-600' />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-6'>
+          <MetricCard
+            title='已拒绝'
+            value={expenseStats.rejectedCount}
+            icon={<AlertCircle className='w-5 h-5' />}
+            trend={null}
+            color='red'
+          />
+          <MetricCard
+            title='费用总数'
+            value={expenseStats.totalExpenses}
+            icon={<FileText className='w-5 h-5' />}
+            trend={null}
+            color='blue'
+          />
+          <MetricCard
+            title='平均金额'
+            value={`¥${Math.round(expenseStats.avgAmount).toLocaleString()}`}
+            icon={<DollarSign className='w-5 h-5' />}
+            trend={null}
+            color='teal'
+          />
+        </div>
 
-          <Card>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-slate-600 dark:text-slate-400'>已报销</p>
-                  <p className='text-2xl font-bold text-green-600 mt-2'>{reimbursedCount}</p>
-                </div>
-                <div className='p-3 bg-green-100 dark:bg-green-900 rounded-full'>
-                  <DollarSign className='w-6 h-6 text-green-600' />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* 图表区域 */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
+          <div className='bg-white rounded-lg shadow-sm p-6'>
+            <h3 className='text-lg font-semibold text-gray-900 mb-4'>费用状态分布</h3>
+            <StatsChart
+              type='pie'
+              data={expenseStatusData}
+              height={250}
+            />
+          </div>
 
-          <Card>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-slate-600 dark:text-slate-400'>总金额</p>
-                  <p className='text-2xl font-bold text-purple-600 mt-2'>¥{totalAmount.toLocaleString()}</p>
-                </div>
-                <div className='p-3 bg-purple-100 dark:bg-purple-900 rounded-full'>
-                  <Send className='w-6 h-6 text-purple-600' />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className='bg-white rounded-lg shadow-sm p-6'>
+            <h3 className='text-lg font-semibold text-gray-900 mb-4'>费用类型分布</h3>
+            <StatsChart
+              type='bar'
+              data={expenseTypeData}
+              height={250}
+            />
+          </div>
         </div>
 
         <div className='flex flex-wrap items-center justify-between gap-4 mb-4'>

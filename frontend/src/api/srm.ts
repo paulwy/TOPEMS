@@ -147,6 +147,37 @@ export interface SupplierWithStats {
   last_order_date?: string;
 }
 
+export interface CategoryCount {
+  category: string;
+  count: number;
+}
+
+export interface StatusCount {
+  status: string;
+  count: number;
+}
+
+export interface ScoreDistribution {
+  range: string;
+  count: number;
+}
+
+export interface MonthlyOrderTrend {
+  month: string;
+  order_count: number;
+  total_amount: number;
+}
+
+export interface SrmDetailedStatistics {
+  basic: SrmStatistics;
+  supplier_by_category: CategoryCount[];
+  supplier_by_status: StatusCount[];
+  order_by_status: StatusCount[];
+  evaluation_score_distribution: ScoreDistribution[];
+  monthly_order_trend: MonthlyOrderTrend[];
+  contract_by_status: StatusCount[];
+}
+
 export const srmApi = {
   // Suppliers
   listSuppliers: async (): Promise<ApiResponse<Supplier[]>> => {
@@ -222,6 +253,9 @@ export const srmApi = {
   // Statistics
   getStatistics: async (): Promise<ApiResponse<SrmStatistics>> => {
     return apiClient.srm.get<SrmStatistics>('/api/v1/statistics');
+  },
+  getDetailedStatistics: async (): Promise<ApiResponse<SrmDetailedStatistics>> => {
+    return apiClient.srm.get<SrmDetailedStatistics>('/api/v1/statistics/detailed');
   },
   getSuppliersWithStats: async (): Promise<ApiResponse<SupplierWithStats[]>> => {
     return apiClient.srm.get<SupplierWithStats[]>('/api/v1/suppliers-with-stats');

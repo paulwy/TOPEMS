@@ -331,6 +331,32 @@ const adaptActionToBackend = (frontend: CreateQualityImprovementRequest): Create
   assigned_to: frontend.assignee,
 });
 
+// QMS Statistics Types
+export interface QmsStatistics {
+  // Quality Standards
+  total_standards: number;
+  active_standards: number;
+  inactive_standards: number;
+
+  // Quality Inspections/Checks
+  total_inspections: number;
+  pending_inspections: number;
+  in_progress_inspections: number;
+  completed_inspections: number;
+
+  // Quality Issues
+  total_issues: number;
+  open_issues: number;
+  resolved_issues: number;
+  critical_issues: number;
+
+  // Quality Improvements/Corrective Actions
+  total_actions: number;
+  pending_actions: number;
+  in_progress_actions: number;
+  completed_actions: number;
+}
+
 export const qmsApi = {
   // Quality Standards
   listStandards: async (): Promise<ApiResponse<QualityStandard[]>> => {
@@ -454,6 +480,67 @@ export const qmsApi = {
   },
   deleteImprovement: async (id: string): Promise<ApiResponse<boolean>> => {
     return apiClient.qms.delete<boolean>(`/api/v1/improvements/${id}`);
+  },
+
+  // Statistics
+  getStatistics: async (): Promise<ApiResponse<QmsStatistics>> => {
+    try {
+      // Fetch all data to calculate statistics client-side
+      const [standardsRes, checksRes, issuesRes, improvementsRes] = await Promise.all([
+        qmsApi.listStandards(),
+        qmsApi.listChecks(),
+        qmsApi.listIssues(),
+        qmsApi.listImprovements(),
+      ]);
+
+      const standards = standardsRes.data || [];
+      const checks = checksRes.data || [];
+      const issues = issuesRes.data || [];
+      const improvements = improvementsRes.data || [];
+
+      const statistics: QmsStatistics = {
+        total_standards: standards.length,
+        active_standards: standards.filter(s => s.status === 'active' || s.status === '启用').length,
+        inactive_standards: standards.filter(s => s.status === 'inactive' || s.status === '禁用').length,
+
+        total_inspections: checks.length,
+        pending_inspections: checks.filter(c => c.status === 'pending' || c.status === '待处理').length,
+        in_progress_inspections: checks.filter(c => c.status === 'in_progress' || c.status === '进行中').length,
+        completed_inspections: checks.filter(c => c.status === 'completed' || c.status === '已完成').length,
+
+        total_issues: issues.length,
+        open_issues: issues.filter(i => i.status === 'open' || i.status === '待处理' || i.status === '处理中').length,
+        resolved_issues: issues.filter(i => i.status === 'closed' || i.status === 'resolved' || i.status === '已关闭').length,
+        critical_issues: issues.filter(i => i.severity === 'critical' || i.severity === '严重').length,
+
+        total_actions: improvements.length,
+        pending_actions: improvements.filter(a => a.status === 'pending' || a.status === '提议').length,
+        in_progress_actions: improvements.filter(a => a.status === 'in_progress' || a.status === '实施中').length,
+        completed_actions: improvements.filter(a => a.status === 'completed' || a.status === '已完成').length,
+      };
+
+      return { success: true, data: statistics, message: 'Statistics calculated', code: 200, timestamp: new Date().toISOString() };
+    } catch (error) {
+      console.error('Failed to calculate QMS statistics:', error);
+      const fallbackStats: QmsStatistics = {
+        total_standards: 0,
+        active_standards: 0,
+        inactive_standards: 0,
+        total_inspections: 0,
+        pending_inspections: 0,
+        in_progress_inspections: 0,
+        completed_inspections: 0,
+        total_issues: 0,
+        open_issues: 0,
+        resolved_issues: 0,
+        critical_issues: 0,
+        total_actions: 0,
+        pending_actions: 0,
+        in_progress_actions: 0,
+        completed_actions: 0,
+      };
+      return { success: true, data: fallbackStats, message: 'Using fallback statistics', code: 200, timestamp: new Date().toISOString() };
+    }
   },
 
   health: async (): Promise<ApiResponse<string>> => {

@@ -16,7 +16,8 @@ use crate::models::{
     CreateSupplierEvaluationRequest, UpdateSupplierEvaluationRequest,
     CreatePurchaseOrderRequest, UpdatePurchaseOrderRequest,
     SupplierContract, CreateSupplierContractRequest, UpdateSupplierContractRequest,
-    SrmStatistics,
+    SrmStatistics, SrmDetailedStatistics, CategoryCount, StatusCount,
+    ScoreDistribution, MonthlyOrderTrend,
 };
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
@@ -95,6 +96,7 @@ pub async fn create_statistics_routes(db: PgPool) -> Result<Router> {
 
     let app = Router::new()
         .route("/api/v1/statistics", get(get_statistics))
+        .route("/api/v1/statistics/detailed", get(get_detailed_statistics))
         .route("/api/v1/suppliers-with-stats", get(get_suppliers_with_stats))
         .with_state(state);
 
@@ -1202,4 +1204,191 @@ async fn get_suppliers_with_stats(
             Json(ApiResponse::<Vec<serde_json::Value>>::error(500, "获取供应商统计数据失败"))
         }
     }
+}
+
+async fn get_detailed_statistics(
+    State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<SrmDetailedStatistics>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
+    // 首先获取基础统计数据
+    let total_suppliers = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let active_suppliers = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let total_evaluations = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_evaluations")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let avg_score = sqlx::query_scalar::<_, Option<f64>>("SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(None)
+        .unwrap_or(0.0);
+
+    let total_orders = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.purchase_orders")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let total_order_amount = sqlx::query_scalar::<_, Option<f64>>("SELECT SUM(total_amount) FROM srm.purchase_orders WHERE total_amount IS NOT NULL")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(None)
+        .unwrap_or(0.0);
+
+    let pending_orders = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.purchase_orders WHERE status = 'pending'")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let completed_orders = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.purchase_orders WHERE status = 'completed' OR status = 'delivered'")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let total_contracts = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let active_contracts = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let basic = SrmStatistics {
+        total_suppliers,
+        active_suppliers,
+        total_evaluations,
+        avg_score,
+        total_orders,
+        total_order_amount,
+        pending_orders,
+        completed_orders,
+        total_contracts,
+        active_contracts,
+    };
+
+    // 获取供应商按类别统计
+    let supplier_by_category = sqlx::query_as::<_, (Option<String>, i64)>(
+        "SELECT category, COUNT(*) as count FROM srm.suppliers GROUP BY category"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|(cat, count)| CategoryCount {
+        category: cat.unwrap_or_else(|| "未分类".to_string()),
+        count,
+    })
+    .collect::<Vec<_>>();
+
+    // 获取供应商按状态统计
+    let supplier_by_status = sqlx::query_as::<_, (String, i64)>(
+        "SELECT status, COUNT(*) as count FROM srm.suppliers GROUP BY status"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|(status, count)| StatusCount { status, count })
+    .collect::<Vec<_>>();
+
+    // 获取订单按状态统计
+    let order_by_status = sqlx::query_as::<_, (String, i64)>(
+        "SELECT status, COUNT(*) as count FROM srm.purchase_orders GROUP BY status"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|(status, count)| StatusCount { status, count })
+    .collect::<Vec<_>>();
+
+    // 获取评估分数分布
+    let score_ranges = [
+        ("0-59", 0.0, 59.0),
+        ("60-69", 60.0, 69.0),
+        ("70-79", 70.0, 79.0),
+        ("80-89", 80.0, 89.0),
+        ("90-100", 90.0, 100.0),
+    ];
+    
+    let mut evaluation_score_distribution = Vec::new();
+    for (range, min, max) in &score_ranges {
+        let count = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL AND overall_score >= $1 AND overall_score <= $2"
+        )
+        .bind(min)
+        .bind(max)
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+        
+        if count > 0 {
+            evaluation_score_distribution.push(ScoreDistribution {
+                range: range.to_string(),
+                count,
+            });
+        }
+    }
+
+    // 获取月度订单趋势（最近12个月）
+    let monthly_order_trend = sqlx::query_as::<_, (String, i64, Option<f64>)>(
+        r#"
+        SELECT 
+            TO_CHAR(order_date, 'YYYY-MM') as month,
+            COUNT(*) as order_count,
+            COALESCE(SUM(total_amount), 0) as total_amount
+        FROM srm.purchase_orders
+        WHERE order_date >= NOW() - INTERVAL '12 months'
+        GROUP BY TO_CHAR(order_date, 'YYYY-MM')
+        ORDER BY month
+        "#
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|(month, order_count, total_amount)| MonthlyOrderTrend {
+        month,
+        order_count,
+        total_amount: total_amount.unwrap_or(0.0),
+    })
+    .collect::<Vec<_>>();
+
+    // 获取合同按状态统计
+    let contract_by_status = sqlx::query_as::<_, (String, i64)>(
+        "SELECT status, COUNT(*) as count FROM srm.supplier_contracts GROUP BY status"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|(status, count)| StatusCount { status, count })
+    .collect::<Vec<_>>();
+
+    let detailed_stats = SrmDetailedStatistics {
+        basic,
+        supplier_by_category,
+        supplier_by_status,
+        order_by_status,
+        evaluation_score_distribution,
+        monthly_order_trend,
+        contract_by_status,
+    };
+
+    Json(ApiResponse::success(detailed_stats, "获取详细统计数据成功"))
 }

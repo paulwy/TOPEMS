@@ -7,6 +7,7 @@ interface MetricCardProps {
   value: string | number;
   subtitle?: string;
   unit?: string;
+  suffix?: string;
   change?: number;
   icon?: LucideIcon | React.ReactNode;
   color?: string;
@@ -19,6 +20,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   value,
   subtitle,
   unit = '',
+  suffix,
   change,
   icon,
   color = 'from-blue-500 to-cyan-500',
@@ -65,6 +67,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               {typeof value === 'number' ? value.toLocaleString() : value}
             </span>
             {unit && <span className='text-sm text-slate-500'>{unit}</span>}
+            {suffix && <span className='text-sm text-slate-500'>{suffix}</span>}
           </div>
           {subtitle && <p className='text-xs text-slate-500 mt-1'>{subtitle}</p>}
           {renderTrend()}

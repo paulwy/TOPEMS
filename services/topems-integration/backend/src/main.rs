@@ -276,7 +276,8 @@ async fn health(State(state): State<AppState>) -> Json<ApiResponse<String>> {
 }
 
 async fn check_service_health(url: &str) -> bool {
-    match reqwest::get(format!("{}/health", url)).await {
+    let client = reqwest::Client::new();
+    match client.get(format!("{}/health", url)).timeout(std::time::Duration::from_secs(2)).send().await {
         Ok(res) => res.status().is_success(),
         Err(_) => false,
     }
