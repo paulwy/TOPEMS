@@ -5,10 +5,17 @@ use uuid::Uuid;
 
 use crate::{config::ServiceConfig, Result, TopemsError};
 
-/// Notification type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum NotificationType {
+    #[serde(rename = "info")]
+    Info,
+    #[serde(rename = "success")]
+    Success,
+    #[serde(rename = "warning")]
+    Warning,
+    #[serde(rename = "error")]
+    Error,
     #[serde(rename = "system")]
     System,
     #[serde(rename = "workflow")]
@@ -21,7 +28,45 @@ pub enum NotificationType {
     Message,
 }
 
-/// Create notification request
+impl Default for NotificationType {
+    fn default() -> Self {
+        NotificationType::Info
+    }
+}
+
+impl From<&str> for NotificationType {
+    fn from(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "info" => NotificationType::Info,
+            "success" => NotificationType::Success,
+            "warning" => NotificationType::Warning,
+            "error" => NotificationType::Error,
+            "system" => NotificationType::System,
+            "workflow" => NotificationType::Workflow,
+            "reminder" => NotificationType::Reminder,
+            "alert" => NotificationType::Alert,
+            "message" => NotificationType::Message,
+            _ => NotificationType::Info,
+        }
+    }
+}
+
+impl ToString for NotificationType {
+    fn to_string(&self) -> String {
+        match self {
+            NotificationType::Info => "info".to_string(),
+            NotificationType::Success => "success".to_string(),
+            NotificationType::Warning => "warning".to_string(),
+            NotificationType::Error => "error".to_string(),
+            NotificationType::System => "system".to_string(),
+            NotificationType::Workflow => "workflow".to_string(),
+            NotificationType::Reminder => "reminder".to_string(),
+            NotificationType::Alert => "alert".to_string(),
+            NotificationType::Message => "message".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateNotificationRequest {
     pub user_id: String,
@@ -29,25 +74,24 @@ pub struct CreateNotificationRequest {
     pub title: String,
     pub content: String,
     pub data: Option<serde_json::Value>,
-    pub priority: Option<i16>,
+    pub priority: Option<i32>,
 }
 
-/// Notification response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Notification {
     pub id: Uuid,
-    pub user_id: String,
+    pub user_id: Uuid,
     pub notification_type: NotificationType,
     pub title: String,
     pub content: String,
     pub data: Option<serde_json::Value>,
+    pub link_url: Option<String>,
     pub is_read: bool,
-    pub priority: i16,
+    pub priority: i32,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub read_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-/// Template status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum TemplateStatus {
@@ -56,7 +100,6 @@ pub enum TemplateStatus {
     Deprecated,
 }
 
-/// Notification template
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationTemplate {
     pub id: Uuid,
@@ -66,14 +109,13 @@ pub struct NotificationTemplate {
     pub title_template: String,
     pub content_template: String,
     pub data_schema: Option<serde_json::Value>,
-    pub default_priority: i16,
+    pub default_priority: i32,
     pub status: TemplateStatus,
     pub is_archived: bool,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-/// Create template request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateTemplateRequest {
     pub name: String,
@@ -82,19 +124,17 @@ pub struct CreateTemplateRequest {
     pub title_template: String,
     pub content_template: String,
     pub data_schema: Option<serde_json::Value>,
-    pub default_priority: Option<i16>,
+    pub default_priority: Option<i32>,
 }
 
-/// Render template request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderTemplateRequest {
     pub template_id: Uuid,
     pub user_id: String,
     pub variables: serde_json::Value,
-    pub priority: Option<i16>,
+    pub priority: Option<i32>,
 }
 
-/// Archive config
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchiveConfig {
     pub auto_archive_days: i32,
@@ -102,7 +142,6 @@ pub struct ArchiveConfig {
     pub enabled: bool,
 }
 
-/// Notification stats
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationStats {
     pub total_notifications: i64,
@@ -114,7 +153,6 @@ pub struct NotificationStats {
     pub generated_at: chrono::DateTime<chrono::Utc>,
 }
 
-/// Notification service client
 #[derive(Clone)]
 pub struct NotificationServiceClient {
     client: Client,
@@ -122,7 +160,6 @@ pub struct NotificationServiceClient {
 }
 
 impl NotificationServiceClient {
-    /// Create a new notification service client
     pub fn new(config: &ServiceConfig) -> Self {
         let base_url = format!("http://localhost:{}", config.port);
         Self {
@@ -131,7 +168,6 @@ impl NotificationServiceClient {
         }
     }
 
-    /// Create a new notification service client with custom base URL
     pub fn with_base_url(base_url: String) -> Self {
         Self {
             client: Client::new(),
@@ -139,7 +175,6 @@ impl NotificationServiceClient {
         }
     }
 
-    /// Create a notification
     pub async fn create_notification(&self, req: CreateNotificationRequest) -> Result<Notification> {
         let response = self
             .client
@@ -161,7 +196,6 @@ impl NotificationServiceClient {
         }
     }
 
-    /// Create notification template
     pub async fn create_template(&self, req: CreateTemplateRequest) -> Result<NotificationTemplate> {
         let response = self
             .client
@@ -183,7 +217,6 @@ impl NotificationServiceClient {
         }
     }
 
-    /// Render template and create notification
     pub async fn render_template(&self, req: RenderTemplateRequest) -> Result<Notification> {
         let response = self
             .client
@@ -205,7 +238,6 @@ impl NotificationServiceClient {
         }
     }
 
-    /// Get notification stats
     pub async fn get_stats(&self) -> Result<NotificationStats> {
         let response = self
             .client
@@ -226,7 +258,6 @@ impl NotificationServiceClient {
         }
     }
 
-    /// Get user-specific stats
     pub async fn get_my_stats(&self) -> Result<NotificationStats> {
         let response = self
             .client
@@ -247,7 +278,6 @@ impl NotificationServiceClient {
         }
     }
 
-    /// Get archive config
     pub async fn get_archive_config(&self) -> Result<ArchiveConfig> {
         let response = self
             .client
@@ -268,7 +298,6 @@ impl NotificationServiceClient {
         }
     }
 
-    /// Update archive config
     pub async fn update_archive_config(&self, config: ArchiveConfig) -> Result<ArchiveConfig> {
         let response = self
             .client
@@ -290,7 +319,6 @@ impl NotificationServiceClient {
         }
     }
 
-    /// Run auto-archive
     pub async fn run_auto_archive(&self) -> Result<serde_json::Value> {
         let response = self
             .client
@@ -312,14 +340,12 @@ impl NotificationServiceClient {
     }
 }
 
-/// Shared notification service client holder
 #[derive(Clone)]
 pub struct NotificationServiceState {
     pub client: Arc<NotificationServiceClient>,
 }
 
 impl NotificationServiceState {
-    /// Create a new notification service state from config
     pub fn from_config(config: &ServiceConfig) -> Self {
         Self {
             client: Arc::new(NotificationServiceClient::new(config)),

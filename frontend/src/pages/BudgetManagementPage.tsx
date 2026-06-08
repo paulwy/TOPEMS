@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { TrendingUp, ChevronLeft, Plus, Edit, Trash2, Eye, CheckCircle, DollarSign, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { budgetApi, departmentApi, type Budget, type Department } from '../api/erp';
+import { budgetApi, type Budget } from '../api/erp';
+import { departmentApi, type Department } from '../api/hrm';
 import { useAppStore } from '../store';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';

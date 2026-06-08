@@ -22,7 +22,7 @@ dotenv = "0.15"
 thiserror = "2"
 anyhow = "1"
 topems-shared = { path = "../../../shared/lib" }
-utoipa = { version = "3", features = ["axum_extras"] }
+utoipa = { version = "4", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "6", features = ["axum"] }
 futures = "0.3"
 prometheus = { version = "0.13", features = ["process"] }

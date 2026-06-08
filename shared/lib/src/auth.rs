@@ -14,12 +14,14 @@ use crate::{error::TopemsError, response::{ApiResponse, api_error}};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
-    pub exp: usize,
     pub username: String,
-    pub email: Option<String>,
-    pub is_superuser: bool,
+    pub role: String,
     pub roles: Vec<String>,
     pub permissions: Vec<String>,
+    pub is_superuser: bool,
+    pub exp: usize,
+    pub iat: usize,
+    pub email: Option<String>,
     pub department: Option<String>,
     pub tenant_id: Option<String>,
 }
@@ -62,7 +64,7 @@ impl Claims {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AuthState {
     pub jwt_secret: String,
     pub refresh_secret: String,

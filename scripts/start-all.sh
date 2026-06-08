@@ -288,15 +288,25 @@ fi
 echo "----------------------------------------"
 log_info "处理服务: notification (端口 8003)"
 NOTIFICATION_PID=""
-if check_executable "services/notification-service" "notification"; then
+if ! check_executable "services/notification-service" "notification"; then
+    log_warn "notification 服务需要编译，正在编译..."
+    if build_service "services/notification-service" "notification"; then
+        log_detail "正在启动..."
+        cd "$PROJECT_ROOT/services/notification-service"
+        SERVER_PORT=8003 DATABASE_URL="$DATABASE_URL" ./target/release/notification-service &
+        NOTIFICATION_PID=$!
+        cd "$PROJECT_ROOT"
+        log_success "notification 服务已启动 (PID: $NOTIFICATION_PID, 端口: 8003)"
+    else
+        log_warn "跳过 notification 服务"
+    fi
+else
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/notification-service"
-    SERVER_PORT=8003 ./target/release/notification-service &
+    SERVER_PORT=8003 DATABASE_URL="$DATABASE_URL" ./target/release/notification-service &
     NOTIFICATION_PID=$!
     cd "$PROJECT_ROOT"
     log_success "notification 服务已启动 (PID: $NOTIFICATION_PID, 端口: 8003)"
-else
-    log_warn "跳过 notification 服务"
 fi
 
 # INTEGRATION服务 (端口: 8004)
@@ -568,15 +578,25 @@ fi
 echo "----------------------------------------"
 log_info "处理服务: im (端口 8051)"
 IM_PID=""
-if check_executable "services/topems-im/backend" "im"; then
+if ! check_executable "services/topems-im/backend" "im"; then
+    log_warn "im 服务需要编译，正在编译..."
+    if build_service "services/topems-im/backend" "im"; then
+        log_detail "正在启动..."
+        cd "$PROJECT_ROOT/services/topems-im/backend"
+        SERVER_PORT=8051 DATABASE_URL="$DATABASE_URL" ./target/release/topems-im &
+        IM_PID=$!
+        cd "$PROJECT_ROOT"
+        log_success "im 服务已启动 (PID: $IM_PID, 端口: 8051)"
+    else
+        log_warn "跳过 im 服务"
+    fi
+else
     log_detail "正在启动..."
     cd "$PROJECT_ROOT/services/topems-im/backend"
-    SERVER_PORT=8051 ./target/release/topems-im &
+    SERVER_PORT=8051 DATABASE_URL="$DATABASE_URL" ./target/release/topems-im &
     IM_PID=$!
     cd "$PROJECT_ROOT"
     log_success "im 服务已启动 (PID: $IM_PID, 端口: 8051)"
-else
-    log_warn "跳过 im 服务"
 fi
 
 # BI服务 (端口: 8052)

@@ -12,7 +12,7 @@ import {
   Folder,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { departmentApi, type Department } from '../api/erp';
+import { departmentApi, type Department } from '../api/hrm';
 import { useAppStore } from '../store';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';

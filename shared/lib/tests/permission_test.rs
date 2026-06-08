@@ -36,7 +36,9 @@ fn create_claims(is_superuser: bool, permissions: Vec<&str>) -> Claims {
     Claims {
         sub: Uuid::new_v4().to_string(),
         exp: 9999999999,
+        iat: 0,
         username: "test_user".to_string(),
+        role: "test_role".to_string(),
         email: Some("test@example.com".to_string()),
         is_superuser,
         roles: vec![],
@@ -131,7 +133,9 @@ async fn test_check_resource_permission_own_resource() {
     let claims = Claims {
         sub: user_id.to_string(),
         exp: 9999999999,
+        iat: 0,
         username: "test_user".to_string(),
+        role: "test_role".to_string(),
         email: Some("test@example.com".to_string()),
         is_superuser: false,
         roles: vec![],

@@ -14,8 +14,8 @@ import {
   User,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { expenseApi, employeeApi, departmentApi, type Expense, type Employee, type Department } from '../api/erp';
-import { companyApi, type Company } from '../api/hrm';
+import { expenseApi, type Expense } from '../api/erp';
+import { employeeApi, departmentApi, companyApi, type Employee, type Department, type Company } from '../api/hrm';
 import { useAppStore } from '../store';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';

@@ -15,8 +15,8 @@ import {
   Wrench,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { assetApi, type Asset, type Employee } from '../api/erp';
-import { employeeApi } from '../api/erp';
+import { assetApi, type Asset } from '../api/erp';
+import { employeeApi, type Employee } from '../api/hrm';
 import { mesEquipmentApi, type InspectionRecord, type MaintenanceRecord } from '../api/mesEquipment';
 import { useAppStore } from '../store';
 import { ColumnDef } from '@tanstack/react-table';

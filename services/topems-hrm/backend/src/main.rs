@@ -72,7 +72,7 @@ async fn main() -> Result<()> {
         .merge(create_api_info_router("topems-hrm"))
         .layer(cors);
 
-    let port = env::var("SERVER_PORT").or_else(|_| env::var("PORT")).unwrap_or_else(|_| "8010".to_string());
+    let port = env::var("SERVER_PORT").or_else(|_| env::var("PORT")).unwrap_or_else(|_| "8011".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-HRM 人力资源管理系统启动中...");

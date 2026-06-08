@@ -122,11 +122,13 @@ async fn login(
     let claims = Claims {
         sub: user.id.to_string(),
         username: user.username.clone(),
+        role: "user".to_string(),
         email: user.email.clone(),
         roles: user.roles.clone(),
         permissions: user.permissions.clone(),
         is_superuser: user.is_superuser,
         exp: expiry.timestamp() as usize,
+        iat: now.timestamp() as usize,
         department: None,
         tenant_id: None,
     };
@@ -252,11 +254,13 @@ async fn refresh_token(
     let claims = Claims {
         sub: user.id.to_string(),
         username: user.username.clone(),
+        role: "user".to_string(),
         email: user.email.clone(),
         roles: user.roles.clone(),
         permissions: user.permissions.clone(),
         is_superuser: user.is_superuser,
         exp: expiry.timestamp() as usize,
+        iat: now.timestamp() as usize,
         department: None,
         tenant_id: None,
     };
