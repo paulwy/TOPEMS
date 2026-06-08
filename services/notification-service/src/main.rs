@@ -9,12 +9,14 @@ use axum::{
 use futures_util::{sink::SinkExt, stream::StreamExt};
 use std::net::SocketAddr;
 use tokio::sync::broadcast;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 use sqlx::PgPool;
 use dotenv;
 use serde::{Deserialize, Serialize};
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims, init_logging,
+    ServiceHealth, SimpleHealthConfig, simple_health_check, get_api_info_handler
+};
 
 mod models;
 mod db;
@@ -45,6 +47,7 @@ struct AppState {
     auth_state: AuthState,
     tx: broadcast::Sender<WsMessage>,
     pool: PgPool,
+    health_config: SimpleHealthConfig,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -112,14 +115,8 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 #[tokio::main]
 async fn main() {
     _ = dotenv::dotenv();
-    
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "notification_service=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+
+    init_logging("topems-notification");
 
     tracing::info!("🚀 TOPEMS Notification Service starting...");
 
@@ -142,13 +139,20 @@ async fn main() {
 
     let (tx, _) = broadcast::channel(1000);
     let auth_state = AuthState::from_env();
-    let state = AppState { auth_state, tx, pool };
+    
+    // 创建健康检查配置
+    let health_config = SimpleHealthConfig::new("topems-notification")
+        .with_db(pool.clone());
+    
+    let state = AppState { auth_state, tx, pool, health_config };
 
     let cors = create_cors_layer();
 
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .route("/api", get(|| get_api_info_handler("notification-service")))
+        .route("/api/info", get(|| get_api_info_handler("notification-service")))
         // WebSocket 路由 - 不需要认证，用户通过订阅消息标识自己
         .route("/ws/notifications", get(ws_handler));
 
@@ -210,12 +214,11 @@ async fn home() -> &'static str {
     "TOPEMS Notification Service API\n\nCheck out the API at /health"
 }
 
-async fn health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success(
-        "Notification Service is running!".to_string(),
-        "OK",
-    ))
+async fn health(State(state): State<AppState>) -> ServiceHealth {
+    simple_health_check(&state.health_config).await
 }
+
+
 
 fn extract_user_id(req: &Request) -> String {
     req.extensions()
@@ -442,6 +445,8 @@ async fn bulk_delete_notifications(
         }
     }
 }
+
+
 
 async fn detailed_health(
     State(state): State<AppState>,

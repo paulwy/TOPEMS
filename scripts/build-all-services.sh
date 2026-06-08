@@ -34,7 +34,7 @@ PLATFORM_SERVICES=(
 # 业务服务
 BUSINESS_SERVICES=(
     "services/topems-pm/backend:pm-service"
-    "services/topems-notification/backend:notification-service"
+    "services/notification-service:notification-service"
     "services/topems-integration/backend:integration-service"
     "services/topems-portal/backend:portal-service"
     "services/topems-erp/backend:erp-service"
@@ -53,7 +53,7 @@ BUSINESS_SERVICES=(
     "services/topems-gis/backend:gis-service"
     "services/topems-im/backend:im-service"
     "services/topems-bi/backend:bi-service"
-    "services/topems-report/backend:report-service"
+    "services/report-service:report-service"
     "services/topems-mail/backend:mail-service"
     "services/topems-mobile/backend:mobile-service"
 )

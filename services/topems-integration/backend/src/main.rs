@@ -6,11 +6,13 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use chrono::{Utc, DateTime};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    ServiceHealth, build_health_response,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct IntegrationEvent {
@@ -150,13 +152,7 @@ impl FromRef<AppState> for PgPool {
 async fn main() {
     dotenvy::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "topems_integration=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-integration");
 
     tracing::info!("🚀 TOPEMS Integration Service starting...");
 
@@ -251,28 +247,8 @@ async fn home() -> &'static str {
     "TOPEMS Integration Service API\n\nSystems: LIMS↔QMS, MES↔ERP, WMS↔SCM\n\nCheck /health for service status"
 }
 
-async fn health(State(state): State<AppState>) -> Json<ApiResponse<String>> {
-    let lims_ok = check_service_health(&state.lims_url).await;
-    let qms_ok = check_service_health(&state.qms_url).await;
-    let mes_ok = check_service_health(&state.mes_url).await;
-    let erp_ok = check_service_health(&state.erp_url).await;
-    let wms_ok = check_service_health(&state.wms_url).await;
-    let scm_ok = check_service_health(&state.scm_url).await;
-    
-    let status = format!(
-        "LIMS: {}, QMS: {}, MES: {}, ERP: {}, WMS: {}, SCM: {}",
-        if lims_ok { "✓" } else { "✗" },
-        if qms_ok { "✓" } else { "✗" },
-        if mes_ok { "✓" } else { "✗" },
-        if erp_ok { "✓" } else { "✗" },
-        if wms_ok { "✓" } else { "✗" },
-        if scm_ok { "✓" } else { "✗" },
-    );
-    
-    Json(ApiResponse::success(
-        format!("TOPEMS Integration Service is running! Services: {}", status),
-        "OK",
-    ))
+async fn health() -> ServiceHealth {
+    build_health_response("topems-integration", true)
 }
 
 async fn check_service_health(url: &str) -> bool {

@@ -9,11 +9,13 @@ use anyhow::Result;
 use axum::extract::FromRef;
 use std::env;
 use std::io::BufReader;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use sqlx::PgPool;
 use csv::ReaderBuilder;
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    ServiceHealth, build_health_response, create_api_info_router,
+};
 use topems_shared::auth::Claims;
 
 mod db;
@@ -129,14 +131,8 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-async fn health_check() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "service": "topems-gis",
-            "status": "healthy"
-        }),
-        "健康检查成功",
-    ))
+async fn health_check() -> ServiceHealth {
+    build_health_response("topems-gis", true)
 }
 
 async fn list_factory_maps(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
@@ -1618,12 +1614,7 @@ async fn search_locations(
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-gis");
 
     let database_url =
         env::var("DATABASE_URL").expect("DATABASE_URL must be set in environment variables");
@@ -1694,6 +1685,7 @@ async fn main() -> Result<()> {
 
     let app = public_routes
         .merge(protected_api)
+        .merge(create_api_info_router("topems-gis"))
         .with_state(state)
         .layer(cors);
 

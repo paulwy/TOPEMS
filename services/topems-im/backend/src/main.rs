@@ -10,17 +10,18 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use std::env;
-use std::fmt::format;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use serde_json::json;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tokio::sync::broadcast;
 use futures_util::{SinkExt, StreamExt};
 use sqlx::{PgPool, Row};
 use tower_http::services::ServeDir;
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    ServiceHealth, build_health_response, create_api_info_router,
+};
 
 mod db;
 mod models;
@@ -61,8 +62,8 @@ impl AppState {
     }
 }
 
-async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("TOPEMS-IM is running", "健康检查"))
+async fn health_check() -> ServiceHealth {
+    build_health_response("topems-im", true)
 }
 
 async fn list_chat_rooms(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
@@ -1427,12 +1428,7 @@ async fn unpin_chat_room(
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-im");
 
     let database_url = env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set");
@@ -1509,6 +1505,7 @@ async fn main() -> Result<()> {
 
     let app = public_routes
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-im"))
         .with_state(app_state)
         .layer(cors);
 

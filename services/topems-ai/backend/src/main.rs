@@ -13,13 +13,16 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use std::path::Path;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
 use walkdir::WalkDir;
 use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    ServiceHealth, build_health_response, create_api_info_router,
+};
 use services::{Database, DocumentService, VectorService};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -633,8 +636,8 @@ async fn home() -> &'static str {
     "TOPEMS-AI 智能知识库服务 API\n\n📚 知识库功能\n✅ AI API 已配置，使用真实 AI\n\n配置说明：\n- 设置 OPENAI_API_KEY 启用真实 AI\n- 可选：OPENAI_BASE_URL（自定义 API 地址）、OPENAI_MODEL（模型名称）\n\n示例：\n- OpenAI: OPENAI_API_KEY=sk-xxx\n- 阿里云/通义千问: OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1, OPENAI_API_KEY=sk-xxx\n- Ollama: OPENAI_BASE_URL=http://localhost:11434/v1, OPENAI_API_KEY=ollama\n\n🔗 数据连接器框架\n支持的连接器类型：\n- Database (Postgres/Mysql/Sqlite/SqlServer)\n- API (RESTful)\n- File (文件系统)\n- MessageQueue (消息队列)\n- CloudStorage (云存储)\n\nAPI 端点：\n- GET  /api/v1/connectors - 列出连接器\n- GET  /api/v1/connectors/get?id=xxx - 获取连接器详情\n- POST /api/v1/connectors/create - 创建连接器\n- POST /api/v1/connectors/update?id=xxx - 更新连接器\n- POST /api/v1/connectors/delete?id=xxx - 删除连接器\n- GET  /api/v1/connectors/test?id=xxx - 测试连接\n- POST /api/v1/connectors/query - 执行数据查询\n\n📊 向量库功能\n- POST /api/v1/vectors/index - 索引所有文档\n- GET  /api/v1/vectors/stats - 获取向量统计\n- POST /api/v1/vectors/search - 向量搜索\n- POST /api/v1/vectors/clear - 清空向量库"
 }
 
-async fn health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success("TOPEMS-AI is running!".to_string(), "OK"))
+async fn health() -> ServiceHealth {
+    build_health_response("topems-ai", true)
 }
 
 async fn list_documents() -> Json<ApiResponse<Vec<Document>>> {
@@ -1503,18 +1506,13 @@ async fn call_ai_api(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "topems_ai=debug,tower_http=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    dotenv::dotenv().ok();
+
+    init_logging("topems-ai");
 
     tracing::info!("🚀 TOPEMS-AI 智能知识库服务启动中...");
     tracing::info!("📦 PostgreSQL + pgvector 持久化存储");
     tracing::info!("📄 PDF 文档解析支持");
-    dotenv::dotenv().ok();
 
     // 读取配置
     let api_key = std::env::var("OLLAMA_API_KEY").ok()
@@ -1631,10 +1629,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-ai"))
         .layer(cors)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
 
-    let port = std::env::var("SERVER_PORT")
+    let port = std::env::var("PORT")
+        .or_else(|_| std::env::var("SERVER_PORT"))
         .unwrap_or_else(|_| "8013".to_string())
         .parse()
         .unwrap_or(8013);

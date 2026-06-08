@@ -18,6 +18,9 @@ use topems_shared::{
     test_database_connection,
     Config,
     Result,
+    ServiceHealth,
+    build_health_response,
+    create_api_info_router,
 };
 use utoipa::OpenApi;
 
@@ -59,6 +62,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-lims"))
         .layer(cors);
 
     let port = config.get_server().await.port;
@@ -101,8 +105,8 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("TOPEMS-LIMS is running", "健康检查"))
+async fn health_check() -> ServiceHealth {
+    build_health_response("topems-lims", true)
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {

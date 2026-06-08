@@ -9,11 +9,13 @@ use axum::{
 };
 use serde_json::json;
 use std::env;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    ServiceHealth, build_health_response, create_api_info_router,
+};
 
 use models::*;
 use db::repository::*;
@@ -36,8 +38,8 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-async fn health_check() -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success("OK".to_string(), "移动服务工作正常"))
+async fn health_check() -> ServiceHealth {
+    build_health_response("topems-mobile", true)
 }
 
 async fn get_dashboard_stats(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
@@ -215,12 +217,7 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-mobile");
 
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
     
@@ -270,6 +267,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-mobile"))
         .with_state(app_state)
         .layer(cors);
 

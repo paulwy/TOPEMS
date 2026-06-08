@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -14,12 +14,13 @@ pub struct Company {
     pub contact_phone: Option<String>,
     pub email: Option<String>,
     pub website: Option<String>,
+    pub description: Option<String>,
     pub status: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: DateTime<chrono::Utc>,
+    pub updated_at: DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CreateCompanyRequest {
     pub name: String,
     pub short_name: Option<String>,
@@ -29,9 +30,10 @@ pub struct CreateCompanyRequest {
     pub contact_phone: Option<String>,
     pub email: Option<String>,
     pub website: Option<String>,
+    pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct UpdateCompanyRequest {
     pub name: Option<String>,
     pub short_name: Option<String>,
@@ -41,5 +43,6 @@ pub struct UpdateCompanyRequest {
     pub contact_phone: Option<String>,
     pub email: Option<String>,
     pub website: Option<String>,
+    pub description: Option<String>,
     pub status: Option<String>,
 }

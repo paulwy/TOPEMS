@@ -2153,6 +2153,8 @@ async fn main() {
     let jwt_secret = std::env::var("JWT_SECRET")
         .expect("JWT_SECRET environment variable must be set for security");
     
+    tracing::info!("🔑 读取到的 JWT_SECRET: {}", jwt_secret);
+    
     if jwt_secret.len() < 32 {
         panic!("JWT_SECRET must be at least 32 characters long for security");
     }

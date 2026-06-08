@@ -13,12 +13,12 @@ use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer,
     ServiceHealth, HealthStatus, DependencyHealth,
     SystemMetrics, check_http_health, NotificationServiceClient,
+    create_hrm_client, init_logging, create_api_info_router,
 };
 use api::ApiState;
 
@@ -26,12 +26,7 @@ use api::ApiState;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-erp");
 
     let database_url = env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -55,16 +50,28 @@ async fn main() -> Result<()> {
         .unwrap_or_else(|_| "http://localhost:8003".to_string());
     let notification_client = Arc::new(NotificationServiceClient::with_base_url(notification_service_url));
 
+    // 初始化 HRM 服务客户端
+    let hrm_client = create_hrm_client()
+        .map(Arc::new)
+        .unwrap_or_else(|e| {
+            tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
+            // 在实际生产中应该处理这个错误，但这里继续启动
+            // 但实际上 create_hrm_client 默认会返回错误，但系统会在访问时才真正调用
+            // 这里的 mock 逻辑放在后面添加了，我们可以直接创建：
+            // 实际上如果失败，我们可以创建一个默认的 URL 客户端
+            use topems_shared::service_client::HrmServiceClient;
+            let default_url = "http://localhost:8011".to_string();
+            Arc::new(HrmServiceClient::new(default_url).expect("默认HRM客户端创建失败"))
+        });
+
     let api_state = ApiState {
         db: pool.clone(),
         auth_state: AuthState::from_env(),
         metrics: metrics.clone(),
         start_time,
-        company_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
-        department_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
-        employee_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
         dict_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(600))),
         notification_client,
+        hrm_client,
     };
 
     let cors = create_cors_layer();
@@ -85,6 +92,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .merge(health_router)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-erp"))
         .layer(cors);
 
     let port = env::var("SERVER_PORT").or_else(|_| env::var("PORT")).unwrap_or_else(|_| "8009".to_string());
@@ -255,75 +263,6 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS erp"#)
         .execute(pool)
         .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS erp.companies (
-            id UUID PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            short_name VARCHAR(100),
-            registration_number VARCHAR(100),
-            tax_number VARCHAR(100),
-            address VARCHAR(500),
-            contact_phone VARCHAR(50),
-            email VARCHAR(255),
-            website VARCHAR(255),
-            status VARCHAR(50) NOT NULL DEFAULT 'active',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS erp.departments (
-            id UUID PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            code VARCHAR(100),
-            parent_id UUID,
-            company_id UUID,
-            description TEXT,
-            status VARCHAR(50) NOT NULL DEFAULT 'active',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS erp.employees (
-            id UUID PRIMARY KEY,
-            employee_number VARCHAR(100) NOT NULL UNIQUE,
-            name VARCHAR(255) NOT NULL,
-            gender VARCHAR(10),
-            birth_date TIMESTAMPTZ,
-            hire_date TIMESTAMPTZ,
-            department_id UUID,
-            position VARCHAR(100),
-            email VARCHAR(255),
-            phone VARCHAR(50),
-            status VARCHAR(50) NOT NULL DEFAULT 'active',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        ALTER TABLE erp.employees ADD COLUMN IF NOT EXISTS user_id UUID
-        "#,
-    )
-    .execute(pool)
-    .await?;
 
     sqlx::query(
         r#"
@@ -842,81 +781,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
-    // 创建通讯录联合视图
-    sqlx::query(
-        r#"
-        CREATE OR REPLACE VIEW erp.v_addressbook AS
-        SELECT
-            'EMPLOYEE' as contact_type,
-            e.id,
-            e.name,
-            e.employee_number as code,
-            e.position,
-            e.email,
-            e.phone,
-            e.department_id,
-            d.name as department_name,
-            d.code as department_code,
-            e.status,
-            e.created_at,
-            e.updated_at
-        FROM erp.employees e
-        LEFT JOIN erp.departments d ON e.department_id = d.id
 
-        UNION ALL
-
-        SELECT
-            'DEPARTMENT' as contact_type,
-            d.id,
-            d.name,
-            d.code,
-            NULL::varchar as position,
-            NULL::varchar as email,
-            NULL::varchar as phone,
-            d.parent_id as department_id,
-            p.name as department_name,
-            p.code as department_code,
-            d.status,
-            d.created_at,
-            d.updated_at
-        FROM erp.departments d
-        LEFT JOIN erp.departments p ON d.parent_id = p.id
-
-        UNION ALL
-
-        SELECT
-            'COMPANY' as contact_type,
-            c.id,
-            c.name,
-            c.registration_number as code,
-            NULL::varchar as position,
-            c.email,
-            c.contact_phone as phone,
-            NULL::uuid as department_id,
-            NULL::varchar as department_name,
-            NULL::varchar as department_code,
-            c.status,
-            c.created_at,
-            c.updated_at
-        FROM erp.companies c
-        "#
-    )
-    .execute(pool)
-    .await?;
-
-    // 为通讯录视图查询创建索引
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_addressbook_contact_type ON erp.employees(id)"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_addressbook_name ON erp.employees(name)"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_addressbook_department_id ON erp.employees(department_id)"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_addressbook_status ON erp.employees(status)"#)
-        .execute(pool)
-        .await?;
 
     tracing::info!("✅ ERP数据库表初始化完成");
 

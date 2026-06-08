@@ -11,22 +11,19 @@ use axum::{
 };
 use sqlx::postgres::PgPoolOptions;
 use std::env;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use api::ApiState;
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    ServiceHealth, build_health_response, create_api_info_router
+};
 use api::audit::log_audit_event;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-wms");
 
     let database_url = env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/topems".to_string());
@@ -60,6 +57,7 @@ async fn main() -> Result<()> {
                     auth_middleware,
                 ))
         })
+        .merge(create_api_info_router("topems-wms"))
         .with_state(api_state)
         .layer(cors);
 
@@ -76,8 +74,8 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("TOPEMS-WMS is running", "健康检查"))
+async fn health_check() -> ServiceHealth {
+    build_health_response("topems-wms", true)
 }
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<()> {

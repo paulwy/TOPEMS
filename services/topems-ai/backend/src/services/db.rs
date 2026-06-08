@@ -23,12 +23,19 @@ impl Database {
 
     /// 运行数据库迁移
     pub async fn run_migrations(&self) -> Result<(), sqlx::Error> {
-        // 创建向量表（如果不存在）
+        // 创建扩展
+        sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp";"#)
+            .execute(&self.pool)
+            .await?;
+
+        // 尝试创建 vector 扩展，如果不可用则跳过
+        let _ = sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "vector";"#)
+            .execute(&self.pool)
+            .await;
+
+        // 创建文档表
         sqlx::query(
             r#"
-            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-            CREATE EXTENSION IF NOT EXISTS "vector";
-
             CREATE TABLE IF NOT EXISTS kb_documents (
                 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                 title VARCHAR(500) NOT NULL,
@@ -45,11 +52,27 @@ impl Database {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
 
-            CREATE INDEX IF NOT EXISTS idx_documents_status ON kb_documents(status);
-            CREATE INDEX IF NOT EXISTS idx_documents_category ON kb_documents(category);
-            CREATE INDEX IF NOT EXISTS idx_documents_created_at ON kb_documents(created_at DESC);
+        // 创建文档表索引
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_status ON kb_documents(status);"#)
+            .execute(&self.pool)
+            .await?;
 
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON kb_documents(category);"#)
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_created_at ON kb_documents(created_at DESC);"#)
+            .execute(&self.pool)
+            .await?;
+
+        // 创建文档块表
+        sqlx::query(
+            r#"
             CREATE TABLE IF NOT EXISTS kb_document_chunks (
                 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                 document_id UUID NOT NULL REFERENCES kb_documents(id) ON DELETE CASCADE,
@@ -58,9 +81,18 @@ impl Database {
                 metadata JSONB DEFAULT '{}',
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
 
-            CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON kb_document_chunks(document_id);
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON kb_document_chunks(document_id);"#)
+            .execute(&self.pool)
+            .await?;
 
+        // 尝试创建向量表（带 vector 类型），如果失败则使用 BYTEA 类型
+        let vector_table_result = sqlx::query(
+            r#"
             CREATE TABLE IF NOT EXISTS kb_vector_embeddings (
                 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                 document_id UUID NOT NULL REFERENCES kb_documents(id) ON DELETE CASCADE,
@@ -70,14 +102,53 @@ impl Database {
                 embedding VECTOR(768),
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+            "#,
+        )
+        .execute(&self.pool)
+        .await;
 
+        if vector_table_result.is_err() {
+            tracing::warn!("⚠️  vector 类型不可用，使用 BYTEA 类型替代");
+            // 创建使用 BYTEA 类型的向量表
+            sqlx::query(
+                r#"
+                CREATE TABLE IF NOT EXISTS kb_vector_embeddings (
+                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                    document_id UUID NOT NULL REFERENCES kb_documents(id) ON DELETE CASCADE,
+                    chunk_id UUID NOT NULL REFERENCES kb_document_chunks(id) ON DELETE CASCADE,
+                    chunk_index INTEGER NOT NULL,
+                    content TEXT NOT NULL,
+                    embedding BYTEA,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+                "#,
+            )
+            .execute(&self.pool)
+            .await?;
+        }
+
+        // 尝试创建向量索引，失败则跳过
+        let _ = sqlx::query(
+            r#"
             CREATE INDEX IF NOT EXISTS idx_vectors_embedding ON kb_vector_embeddings
                 USING hnsw (embedding vector_cosine_ops)
                 WITH (m = 16, ef_construction = 64);
-            CREATE INDEX IF NOT EXISTS idx_vectors_document_id ON kb_vector_embeddings(document_id);
-            CREATE INDEX IF NOT EXISTS idx_vectors_chunk_id ON kb_vector_embeddings(chunk_id);
+            "#,
+        )
+        .execute(&self.pool)
+        .await;
 
-            -- Trigger for updated_at
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_vectors_document_id ON kb_vector_embeddings(document_id);"#)
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_vectors_chunk_id ON kb_vector_embeddings(chunk_id);"#)
+            .execute(&self.pool)
+            .await?;
+
+        // 创建触发器
+        sqlx::query(
+            r#"
             CREATE OR REPLACE FUNCTION update_kb_documents_timestamp()
             RETURNS TRIGGER AS $$
             BEGIN
@@ -85,8 +156,17 @@ impl Database {
                 RETURN NEW;
             END;
             $$ LANGUAGE plpgsql;
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
 
-            DROP TRIGGER IF EXISTS update_kb_documents_updated_at ON kb_documents;
+        sqlx::query(r#"DROP TRIGGER IF EXISTS update_kb_documents_updated_at ON kb_documents;"#)
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query(
+            r#"
             CREATE TRIGGER update_kb_documents_updated_at
                 BEFORE UPDATE ON kb_documents
                 FOR EACH ROW

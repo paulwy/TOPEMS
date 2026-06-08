@@ -11,10 +11,12 @@ use std::env;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use serde_json::json;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use reqwest::Client;
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims, init_logging,
+    ServiceHealth, build_health_response, create_api_info_router,
+};
 use crate::services::permission::{check_permission, BIPermission};
 
 mod services;
@@ -271,11 +273,8 @@ impl AppState {
     }
 }
 
-async fn health_check() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(json!({
-        "service": "topems-bi",
-        "status": "healthy"
-    }), "健康检查"))
+async fn health_check() -> ServiceHealth {
+    build_health_response("topems-bi", true)
 }
 
 async fn list_dashboards(
@@ -1773,12 +1772,7 @@ async fn get_analytics_overview(
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-bi");
 
     let app_state = AppState::new(AuthState::from_env());
 
@@ -1829,6 +1823,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-bi"))
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8052".to_string());
