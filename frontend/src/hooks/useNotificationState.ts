@@ -23,8 +23,8 @@ export const useNotificationState = () => {
       if (response.success && response.data) {
         setState((prev) => ({
           ...prev,
-          notifications: response.data!.notifications,
-          unreadCount: response.data!.unread_count,
+          notifications: response.data.notifications,
+          unreadCount: response.data.unread_count,
           loading: false,
         }));
       }
@@ -47,7 +47,6 @@ export const useNotificationState = () => {
         }));
       }
     } catch (error: any) {
-      // 不记录请求取消或中止的错误，因为这是正常行为
       if (error.code !== 'ERR_CANCELED' && error.code !== 'ECONNABORTED' && error.name !== 'AbortError') {
         console.error('Failed to fetch unread count:', error);
       }
@@ -87,11 +86,10 @@ export const useNotificationState = () => {
     });
   }, []);
 
-  // Auto-fetch notifications and unread count when hook initializes
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
-  }, []); // Only run once on mount
+  }, []);
 
   return {
     ...state,

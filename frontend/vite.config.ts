@@ -167,8 +167,10 @@ export default defineConfig({
     },
     proxy: {
       '/api/v1/files': createServiceProxyConfig('doc', 'http://localhost:8001', true),
-      '/mail': createServiceProxyConfig('mail', 'http://localhost:8054'),
-      '/hrm': createServiceProxyConfig('hrm', 'http://localhost:8011'),
+      '/mail/api': createServiceProxyConfig('mail', 'http://localhost:8054'),
+      '/mail/health': createServiceProxyConfig('mail', 'http://localhost:8054'),
+      '/hrm/api': createServiceProxyConfig('hrm', 'http://localhost:8011'),
+      '/hrm/health': createServiceProxyConfig('hrm', 'http://localhost:8011'),
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -177,22 +179,34 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
-      '/iam': {
+      '/iam/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/iam/, ''),
       },
-      '/doc/': createServiceProxyConfig('doc', 'http://localhost:8001'),
-      '/flow': createServiceProxyConfig('flow', 'http://localhost:8006'),
-      '/notification/ws': {
+      '/iam/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/iam/, ''),
+      },
+      '/doc/api': createServiceProxyConfig('doc', 'http://localhost:8001'),
+      '/doc/health': createServiceProxyConfig('doc', 'http://localhost:8001'),
+      '/flow/api': createServiceProxyConfig('flow', 'http://localhost:8006'),
+      '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8006'),
+      '/notification': {
         target: 'http://localhost:8003',
         changeOrigin: true,
         ws: true,
         secure: false,
         rewrite: (path: string) => path.replace(/^\/notification/, ''),
-        configure: (proxy) => {
+        configure: (proxy, _options) => {
           proxy.on('error', (err, req, res) => {
-            console.warn('[Vite Proxy] Notification WS service unavailable:', err.message);
+            console.warn('[Vite Proxy] Notification service unavailable:', err.message);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            if (req.headers.upgrade === 'websocket') {
+              console.log('[Vite Proxy] WebSocket upgrade request:', req.url);
+            }
           });
         },
       },
@@ -208,26 +222,45 @@ export default defineConfig({
           });
         },
       },
-      '/notification': createServiceProxyConfig('notification', 'http://localhost:8003'),
-      '/integration': createServiceProxyConfig('integration', 'http://localhost:8004'),
-      '/portal': createServiceProxyConfig('portal', 'http://localhost:8005'),
-      '/erp': createServiceProxyConfig('erp', 'http://localhost:8010'),
-      '/crm': createServiceProxyConfig('crm', 'http://localhost:8012'),
-      '/ai': createServiceProxyConfig('ai', 'http://localhost:8013'),
-      '/rs': createServiceProxyConfig('rs', 'http://localhost:8020'),
-      '/lims': createServiceProxyConfig('lims', 'http://localhost:8022'),
-      '/pdm': createServiceProxyConfig('pdm', 'http://localhost:8023'),
-      '/mes': createServiceProxyConfig('mes', 'http://localhost:8030'),
-      '/qms': createServiceProxyConfig('qms', 'http://localhost:8031'),
-      '/ehs': createServiceProxyConfig('ehs', 'http://localhost:8032'),
-      '/scm': createServiceProxyConfig('scm', 'http://localhost:8040'),
-      '/srm': createServiceProxyConfig('srm', 'http://localhost:8041'),
-      '/wms': createServiceProxyConfig('wms', 'http://localhost:8042'),
-      '/pm': createServiceProxyConfig('pm', 'http://localhost:8002'),
-      '/gis': createServiceProxyConfig('gis', 'http://localhost:8050'),
-      '/im': createServiceProxyConfig('im', 'http://localhost:8051'),
-      '/bi': createServiceProxyConfig('bi', 'http://localhost:8052'),
-      '/report': createServiceProxyConfig('report', 'http://localhost:8053'),
+
+      '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8004'),
+      '/integration/health': createServiceProxyConfig('integration', 'http://localhost:8004'),
+      '/portal/api': createServiceProxyConfig('portal', 'http://localhost:8005'),
+      '/portal/health': createServiceProxyConfig('portal', 'http://localhost:8005'),
+      '/erp/api': createServiceProxyConfig('erp', 'http://localhost:8010'),
+      '/erp/health': createServiceProxyConfig('erp', 'http://localhost:8010'),
+      '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8012'),
+      '/crm/health': createServiceProxyConfig('crm', 'http://localhost:8012'),
+      '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8013'),
+      '/ai/health': createServiceProxyConfig('ai', 'http://localhost:8013'),
+      '/rs/api': createServiceProxyConfig('rs', 'http://localhost:8020'),
+      '/rs/health': createServiceProxyConfig('rs', 'http://localhost:8020'),
+      '/lims/api': createServiceProxyConfig('lims', 'http://localhost:8022'),
+      '/lims/health': createServiceProxyConfig('lims', 'http://localhost:8022'),
+      '/pdm/api': createServiceProxyConfig('pdm', 'http://localhost:8023'),
+      '/pdm/health': createServiceProxyConfig('pdm', 'http://localhost:8023'),
+      '/mes/api': createServiceProxyConfig('mes', 'http://localhost:8030'),
+      '/mes/health': createServiceProxyConfig('mes', 'http://localhost:8030'),
+      '/qms/api': createServiceProxyConfig('qms', 'http://localhost:8031'),
+      '/qms/health': createServiceProxyConfig('qms', 'http://localhost:8031'),
+      '/ehs/api': createServiceProxyConfig('ehs', 'http://localhost:8032'),
+      '/ehs/health': createServiceProxyConfig('ehs', 'http://localhost:8032'),
+      '/scm/api': createServiceProxyConfig('scm', 'http://localhost:8040'),
+      '/scm/health': createServiceProxyConfig('scm', 'http://localhost:8040'),
+      '/srm/api': createServiceProxyConfig('srm', 'http://localhost:8041'),
+      '/srm/health': createServiceProxyConfig('srm', 'http://localhost:8041'),
+      '/wms/api': createServiceProxyConfig('wms', 'http://localhost:8042'),
+      '/wms/health': createServiceProxyConfig('wms', 'http://localhost:8042'),
+      '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8002'),
+      '/pm/health': createServiceProxyConfig('pm', 'http://localhost:8002'),
+      '/gis/api': createServiceProxyConfig('gis', 'http://localhost:8050'),
+      '/gis/health': createServiceProxyConfig('gis', 'http://localhost:8050'),
+      '/im/api': createServiceProxyConfig('im', 'http://localhost:8051'),
+      '/im/health': createServiceProxyConfig('im', 'http://localhost:8051'),
+      '/bi/api': createServiceProxyConfig('bi', 'http://localhost:8052'),
+      '/bi/health': createServiceProxyConfig('bi', 'http://localhost:8052'),
+      '/report/api': createServiceProxyConfig('report', 'http://localhost:8053'),
+      '/report/health': createServiceProxyConfig('report', 'http://localhost:8053'),
       },
   },
 })

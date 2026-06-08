@@ -24,6 +24,8 @@ export interface Document {
   tags?: string[];
   created_at: string;
   updated_at: string;
+  description?: string;
+  error_message?: string;
 }
 
 export interface Conversation {

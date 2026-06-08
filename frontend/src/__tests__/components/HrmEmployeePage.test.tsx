@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import HrmEmployeePage from '../../pages/HrmEmployeePage';
 import { employeeApi, departmentApi } from '../../api/hrm';
@@ -7,11 +7,13 @@ import { ThemeProvider } from '../../components/ThemeProvider';
 import { ToastProvider } from '../../components/ToastProvider';
 import { LoadingProvider } from '../../components/LoadingProvider';
 import ErrorBoundary from '../../components/ErrorBoundary';
+import { useAppStore } from '../../store';
 
 // 模拟依赖
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: () => jest.fn(),
+  useLocation: () => ({ pathname: '/hrm/employees' }),
 }));
 
 // 模拟 API
@@ -32,8 +34,32 @@ jest.mock('../../components/DataTable', () => ({
   DataTable: () => <div data-testid="data-table">Mock Data Table</div>,
 }));
 
+// 模拟 MetricCard 组件以避免测试问题
+jest.mock('../../components/MetricCard', () => ({
+  MetricCard: (props: any) => (
+    <div data-testid="metric-card">
+      <p>{props.title}</p>
+      <p>{props.value}</p>
+    </div>
+  ),
+}));
+
+// 模拟 StatsChart 组件以避免测试问题
+jest.mock('../../components/StatsChart', () => ({
+  StatsChart: () => <div data-testid="stats-chart">Mock Stats Chart</div>,
+}));
+
+// 模拟 zustand store
+jest.mock('../../store', () => ({
+  useAppStore: jest.fn(),
+}));
+
 const mockEmployeeApi = employeeApi as jest.Mocked<typeof employeeApi>;
 const mockDepartmentApi = departmentApi as jest.Mocked<typeof departmentApi>;
+
+// 模拟 zustand store 返回值
+const mockAddNotification = jest.fn();
+const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 
 // 模拟数据
 const mockEmployees = {
@@ -44,10 +70,20 @@ const mockEmployees = {
 };
 
 const mockDepartments = {
-  departments: [],
+  items: [],
+  total: 0,
+  page: 1,
+  page_size: 100,
 };
 
 const renderWithProviders = (ui: React.ReactElement) => {
+  mockUseAppStore.mockImplementation((selector) => {
+    const store = {
+      addNotification: mockAddNotification,
+    };
+    return selector(store);
+  });
+
   return render(
     <ErrorBoundary>
       <ThemeProvider>
@@ -64,7 +100,6 @@ const renderWithProviders = (ui: React.ReactElement) => {
 describe('HrmEmployeePage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorage.clear();
 
     // 模拟 API 响应
     mockEmployeeApi.list.mockResolvedValue({
@@ -92,10 +127,9 @@ describe('HrmEmployeePage', () => {
   test('should call APIs on mount', async () => {
     renderWithProviders(<HrmEmployeePage />);
     
-    // 等待一段时间让 API 调用发生
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    expect(mockEmployeeApi.list).toHaveBeenCalled();
-    expect(mockDepartmentApi.list).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockEmployeeApi.list).toHaveBeenCalled();
+      expect(mockDepartmentApi.list).toHaveBeenCalled();
+    });
   });
 });

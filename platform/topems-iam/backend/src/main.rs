@@ -1,13 +1,13 @@
 use axum::{
     extract::{FromRequestParts, Path, Query, Request, State},
-    http::{request::Parts, StatusCode},
+    http::{header, request::Parts, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post, put, delete},
     Json, Router,
 };
 use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, Algorithm};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -18,18 +18,7 @@ use std::net::SocketAddr;
 use tower_http::cors::{CorsLayer, Any};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-// JWT Claims
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Claims {
-    sub: String,         // Subject: user id
-    username: String,    // Username
-    role: String,        // User role
-    roles: Vec<String>,  // User roles
-    permissions: Vec<String>, // User permissions
-    is_superuser: bool,  // Is superuser
-    exp: usize,          // Expiration time
-    iat: usize,          // Issued at time
-}
+use topems_shared::{AuthState, auth_middleware, Claims, ApiResponse, api_error};
 
 // User model
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,50 +43,10 @@ struct User {
 #[derive(Debug, Clone)]
 struct AppState {
     db: PgPool,
-    jwt_secret: String,
+    auth: AuthState,
 }
 
-// Api response
-#[derive(Debug, Serialize, Deserialize)]
-struct ApiResponse<T> {
-    code: i32,
-    success: bool,
-    data: Option<T>,
-    message: String,
-    timestamp: String,
-}
 
-impl<T> ApiResponse<T> {
-    fn success(data: T, message: &str) -> Self {
-        ApiResponse {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    fn error(code: i32, message: &str) -> Self {
-        ApiResponse {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    fn ok(message: &str) -> Self {
-        ApiResponse {
-            code: 200,
-            success: true,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-}
 
 // Request/Response models
 #[derive(Debug, Deserialize)]
@@ -390,17 +339,21 @@ fn generate_token(user: &User, secret: &str, expires_in_hours: i64) -> Result<St
         is_superuser: user.is_superuser,
         exp: expiration,
         iat: Utc::now().timestamp() as usize,
+        email: Some(user.email.clone()),
+        department: None,
+        tenant_id: None,
     };
     
     encode(
-        &Header::default(),
+        &Header::new(Algorithm::HS256),
         &claims,
         &EncodingKey::from_secret(secret.as_ref()),
     ).map_err(|e| format!("生成token失败: {}", e))
 }
 
 fn verify_token(token: &str, secret: &str) -> Result<Claims, String> {
-    let validation = Validation::default();
+    let mut validation = Validation::new(Algorithm::HS256);
+    validation.validate_exp = true;
     decode::<Claims>(
         token,
         &DecodingKey::from_secret(secret.as_ref()),
@@ -410,37 +363,7 @@ fn verify_token(token: &str, secret: &str) -> Result<Claims, String> {
     .map_err(|e| format!("Token验证失败: {}", e))
 }
 
-// JWT auth middleware
-async fn auth_middleware(
-    State(state): State<AppState>,
-    mut req: Request,
-    next: Next,
-) -> Response {
-    let auth_header = req.headers()
-        .get("Authorization")
-        .and_then(|h| h.to_str().ok());
-    
-    match auth_header {
-        Some(header) if header.starts_with("Bearer ") => {
-            let token = &header[7..];
-            match verify_token(token, &state.jwt_secret) {
-                Ok(claims) => {
-                    req.extensions_mut().insert(claims);
-                    next.run(req).await
-                }
-                Err(e) => {
-                    tracing::warn!("Token验证失败: {}", e);
-                    let response = Json(ApiResponse::<()>::error(401, "认证失效，请重新登录"));
-                    (StatusCode::UNAUTHORIZED, response).into_response()
-                }
-            }
-        }
-        _ => {
-            let response = Json(ApiResponse::<()>::error(401, "请先登录"));
-            (StatusCode::UNAUTHORIZED, response).into_response()
-        }
-    }
-}
+
 
 // Handlers
 async fn home() -> &'static str {
@@ -503,8 +426,8 @@ async fn login(
                     is_superuser,
                 };
                 
-                let access_token = generate_token(&user_for_token, &state.jwt_secret, 1).unwrap();
-                let refresh_token = generate_token(&user_for_token, &state.jwt_secret, 168).unwrap();
+                let access_token = generate_token(&user_for_token, &state.auth.jwt_secret, 1).unwrap();
+                let refresh_token = generate_token(&user_for_token, &state.auth.jwt_secret, 168).unwrap();
                 
                 let resp = LoginResponse {
                     access_token,
@@ -642,8 +565,8 @@ async fn register(
                 is_superuser: user_info.is_superuser,
             };
             
-            let access_token = generate_token(&new_user, &state.jwt_secret, 1).unwrap();
-            let refresh_token = generate_token(&new_user, &state.jwt_secret, 168).unwrap();
+            let access_token = generate_token(&new_user, &state.auth.jwt_secret, 1).unwrap();
+            let refresh_token = generate_token(&new_user, &state.auth.jwt_secret, 168).unwrap();
             
             let resp = LoginResponse {
                 access_token,
@@ -669,7 +592,7 @@ async fn refresh_token(
     State(state): State<AppState>,
     Json(req): Json<RefreshTokenRequest>,
 ) -> Json<ApiResponse<RefreshTokenResponse>> {
-    match verify_token(&req.refresh_token, &state.jwt_secret) {
+    match verify_token(&req.refresh_token, &state.auth.jwt_secret) {
         Ok(claims) => {
             let result = sqlx::query_as::<_, (String, String, String, Option<String>, String, bool, chrono::DateTime<Utc>, chrono::DateTime<Utc>, bool)>(
                 "SELECT id::text, username, email, full_name, password_hash, is_active, created_at, updated_at, is_superuser FROM iam.users WHERE id = $1"
@@ -699,7 +622,7 @@ async fn refresh_token(
                         is_superuser: claims.is_superuser,
                     };
                     
-                    let access_token = generate_token(&user_for_token, &state.jwt_secret, 1).unwrap();
+                    let access_token = generate_token(&user_for_token, &state.auth.jwt_secret, 1).unwrap();
                     
                     let resp = RefreshTokenResponse {
                         access_token,
@@ -937,7 +860,7 @@ async fn change_password(
             match update_result {
                 Ok(_) => {
                     tracing::info!("🔑 用户密码修改成功: {}", claims.username);
-                    Json(ApiResponse::ok("密码修改成功"))
+                    Json(ApiResponse::success_no_data("密码修改成功"))
                 }
                 Err(e) => {
                     tracing::error!("数据库更新错误: {}", e);
@@ -2065,7 +1988,7 @@ async fn request_password_reset(
             
             let _ = log_audit(&state, Some(&user_id), "password_reset_request", Some("user"), Some(&user_id), None, None, None).await;
             
-            Json(ApiResponse::ok("密码重置链接已发送至您的邮箱"))
+            Json(ApiResponse::success_no_data("密码重置链接已发送至您的邮箱"))
         }
         Ok(None) => {
             Json(ApiResponse::error(404, "该邮箱未注册"))
@@ -2119,7 +2042,7 @@ async fn set_new_password(
                     
                     let _ = log_audit(&state, Some(&user_id), "password_reset", Some("user"), Some(&user_id), None, None, None).await;
                     
-                    Json(ApiResponse::ok("密码重置成功"))
+                    Json(ApiResponse::success_no_data("密码重置成功"))
                 }
                 Err(e) => {
                     tracing::error!("数据库更新错误: {}", e);
@@ -2150,14 +2073,7 @@ async fn main() {
     tracing::info!("🚀 TOPEMS-IAM 身份认证服务启动中...");
     dotenv::dotenv().ok();
 
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .expect("JWT_SECRET environment variable must be set for security");
-    
-    tracing::info!("🔑 读取到的 JWT_SECRET: {}", jwt_secret);
-    
-    if jwt_secret.len() < 32 {
-        panic!("JWT_SECRET must be at least 32 characters long for security");
-    }
+    let auth_state = AuthState::from_env();
     
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -2183,7 +2099,7 @@ async fn main() {
     
     let state = AppState {
         db: pool,
-        jwt_secret,
+        auth: auth_state.clone(),
     };
 
     // 允许所有来源的CORS配置
@@ -2252,7 +2168,7 @@ async fn main() {
         .nest("/permissions", permission_routes)
         .nest("/access-logs", access_log_routes)
         .nest("/audit-logs", audit_log_routes)
-        .layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
+        .layer(middleware::from_fn_with_state(auth_state, auth_middleware));
 
     let app = Router::new()
         .route("/", get(home))

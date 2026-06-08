@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -10,6 +10,8 @@ use uuid::Uuid;
 
 use crate::models::{Company, CreateCompanyRequest, UpdateCompanyRequest};
 use crate::api::audit::log_audit_event;
+use crate::utils::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
 
@@ -32,8 +34,14 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_companies(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CompanyRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -112,9 +120,15 @@ async fn list_companies(
 
 async fn create_company(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -182,8 +196,14 @@ async fn create_company(
 
 async fn get_company(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Company>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CompanyRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
     let result = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, name, short_name, registration_number, tax_number, address,
@@ -211,10 +231,16 @@ async fn get_company(
 
 async fn update_company(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
     // 先检查公司是否存在
     let existing = sqlx::query_as::<_, Company>(
         r#"
@@ -311,9 +337,15 @@ async fn update_company(
 
 async fn delete_company(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    
     // 先检查公司是否存在
     let existing = sqlx::query_as::<_, Company>(
         r#"

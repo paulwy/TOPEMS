@@ -22,6 +22,7 @@ bcrypt = "0.15"
 regex = "1.10"
 jsonwebtoken = "9.2"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
+topems-shared = { path = "../../../shared/lib" }
 
 [dev-dependencies]
 tower = "0.5"

@@ -5,6 +5,8 @@ use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ModulePermission {
+    CompanyRead,
+    CompanyWrite,
     AttendanceRead,
     AttendanceWrite,
     LeaveRead,
@@ -23,6 +25,8 @@ pub enum ModulePermission {
 impl std::fmt::Display for ModulePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            ModulePermission::CompanyRead => write!(f, "company_read"),
+            ModulePermission::CompanyWrite => write!(f, "company_write"),
             ModulePermission::AttendanceRead => write!(f, "attendance_read"),
             ModulePermission::AttendanceWrite => write!(f, "attendance_write"),
             ModulePermission::LeaveRead => write!(f, "leave_read"),
