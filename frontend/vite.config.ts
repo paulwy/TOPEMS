@@ -168,6 +168,7 @@ export default defineConfig({
     proxy: {
       '/api/v1/files': createServiceProxyConfig('doc', 'http://localhost:8001', true),
       '/mail': createServiceProxyConfig('mail', 'http://localhost:8054'),
+      '/hrm': createServiceProxyConfig('hrm', 'http://localhost:8011'),
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -211,7 +212,6 @@ export default defineConfig({
       '/integration': createServiceProxyConfig('integration', 'http://localhost:8004'),
       '/portal': createServiceProxyConfig('portal', 'http://localhost:8005'),
       '/erp': createServiceProxyConfig('erp', 'http://localhost:8010'),
-      '/hrm': createServiceProxyConfig('hrm', 'http://localhost:8011'),
       '/crm': createServiceProxyConfig('crm', 'http://localhost:8012'),
       '/ai': createServiceProxyConfig('ai', 'http://localhost:8013'),
       '/rs': createServiceProxyConfig('rs', 'http://localhost:8020'),

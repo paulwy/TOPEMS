@@ -1,5 +1,7 @@
 use sqlx::Error as SqlxError;
 use thiserror::Error;
+use crate::service_client::ServiceClientError;
+use crate::event::EventError;
 
 #[derive(Error, Debug)]
 pub enum TopemsError {
@@ -35,6 +37,27 @@ pub enum TopemsError {
     
     #[error("SQL error: {0}")]
     Sql(#[from] SqlxError),
+    
+    #[error("HTTP request error: {0}")]
+    HttpRequest(#[from] reqwest::Error),
+    
+    #[error("Service not found: {0}")]
+    ServiceNotFound(String),
+    
+    #[error("Service returned error: {status_code} - {message}")]
+    ServiceError { status_code: u16, message: String },
+    
+    #[error("Invalid URL: {0}")]
+    InvalidUrl(String),
+    
+    #[error("Redis error: {0}")]
+    RedisError(#[from] redis::RedisError),
+    
+    #[error("Service client error: {0}")]
+    ServiceClient(#[from] ServiceClientError),
+    
+    #[error("Event error: {0}")]
+    Event(#[from] EventError),
 }
 
 impl TopemsError {
@@ -51,6 +74,27 @@ impl TopemsError {
             TopemsError::Io(_) => 500,
             TopemsError::Serialization(_) => 500,
             TopemsError::Sql(_) => 500,
+            TopemsError::HttpRequest(_) => 502,
+            TopemsError::ServiceNotFound(_) => 404,
+            TopemsError::ServiceError { status_code, .. } => *status_code,
+            TopemsError::InvalidUrl(_) => 400,
+            TopemsError::RedisError(_) => 500,
+            TopemsError::ServiceClient(err) => match err {
+                ServiceClientError::HttpRequestError(_) => 502,
+                ServiceClientError::JsonError(_) => 500,
+                ServiceClientError::ServiceNotFound(_) => 404,
+                ServiceClientError::ServiceError { status_code, .. } => *status_code,
+                ServiceClientError::InvalidUrl(_) => 400,
+                ServiceClientError::ConfigError(_) => 500,
+            },
+            TopemsError::Event(err) => match err {
+                EventError::RedisError(_) => 500,
+                EventError::SerializationError(_) => 500,
+                EventError::InvalidEventType(_) => 400,
+                EventError::SubscriberNotFound(_) => 404,
+                EventError::PublishTimeout => 504,
+                EventError::ConfigError(_) => 500,
+            },
         }
     }
 
@@ -67,6 +111,13 @@ impl TopemsError {
             TopemsError::Io(_) => "IO_ERROR",
             TopemsError::Serialization(_) => "SERIALIZATION_ERROR",
             TopemsError::Sql(_) => "SQL_ERROR",
+            TopemsError::HttpRequest(_) => "HTTP_REQUEST_ERROR",
+            TopemsError::ServiceNotFound(_) => "SERVICE_NOT_FOUND",
+            TopemsError::ServiceError { .. } => "SERVICE_ERROR",
+            TopemsError::InvalidUrl(_) => "INVALID_URL",
+            TopemsError::RedisError(_) => "REDIS_ERROR",
+            TopemsError::ServiceClient(_) => "SERVICE_CLIENT_ERROR",
+            TopemsError::Event(_) => "EVENT_ERROR",
         }
     }
 

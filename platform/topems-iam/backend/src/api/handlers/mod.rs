@@ -8,7 +8,7 @@ pub struct LoginResponse {
     pub user: User,
 }
 
-pub async fn login(Query(params): Query<LoginQuery>) -> Json<LoginResponse> {
+pub async fn login(Json(params): Json<LoginQuery>) -> Json<LoginResponse> {
     tracing::debug!("Login attempt for user: {}", params.username);
     
     Json(LoginResponse {

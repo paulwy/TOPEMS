@@ -6,9 +6,11 @@ use axum::{
 };
 use std::env;
 use tower_cookies::CookieManagerLayer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    ServiceHealth, build_health_response, create_api_info_router
+};
 
 #[derive(Clone)]
 struct AppState {
@@ -25,12 +27,7 @@ impl FromRef<AppState> for AuthState {
 async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-portal");
 
     let app_state = AppState {
         auth_state: AuthState::from_env(),
@@ -66,6 +63,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-portal"))
         .layer(cors)
         .layer(CookieManagerLayer::new());
 
@@ -82,8 +80,8 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("TOPEMS-PORTAL is running", "健康检查"))
+async fn health_check() -> ServiceHealth {
+    build_health_response("topems-portal", true)
 }
 
 async fn home() -> Json<ApiResponse<&'static str>> {

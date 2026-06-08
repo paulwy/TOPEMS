@@ -4,13 +4,13 @@ use axum::{
     extract::State,
     Json,
 };
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use sqlx::PgPool;
 use std::net::SocketAddr;
 use chrono::Utc;
 use serde::Serialize;
 use topems_shared::auth::{auth_middleware, AuthState};
 use topems_shared::cors::create_cors_layer;
+use topems_shared::init_logging;
 
 mod api;
 mod db;
@@ -95,13 +95,7 @@ async fn init_database_tables(pool: &PgPool) -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "topems_flow=debug,tower_http=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-flow");
 
     tracing::info!("Starting TOPEMS-FLOW Workflow Engine...");
     dotenv::dotenv().ok();

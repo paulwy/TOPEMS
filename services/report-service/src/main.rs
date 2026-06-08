@@ -1,15 +1,17 @@
 use axum::{
-    extract::FromRef,
+    extract::{FromRef, State},
     routing::{get, post},
-    Json, Router,
+    Router,
 };
 use anyhow::Result;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::env;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    ServiceHealth, SimpleHealthConfig, simple_health_check, create_api_info_router
+};
 
 mod api;
 mod models;
@@ -21,6 +23,7 @@ use api::*;
 struct AppState {
     pool: PgPool,
     auth_state: AuthState,
+    health_config: SimpleHealthConfig,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -35,27 +38,15 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-async fn health_check() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "service": "topems-report",
-            "status": "healthy",
-            "timestamp": Utc::now().to_rfc3339()
-        }),
-        "报表服务运行正常",
-    ))
+async fn health_check(State(app_state): State<AppState>) -> ServiceHealth {
+    simple_health_check(&app_state.health_config).await
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-report");
 
     let database_url = env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -71,9 +62,15 @@ async fn main() -> Result<()> {
     init_db(&pool).await?;
 
     let auth_state = AuthState::from_env();
+    
+    // 创建健康检查配置
+    let health_config = SimpleHealthConfig::new("topems-report")
+        .with_db(pool.clone());
+    
     let app_state = AppState {
         pool: pool.clone(),
         auth_state: auth_state.clone(),
+        health_config,
     };
 
     let cors = create_cors_layer();
@@ -98,6 +95,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(create_api_info_router("report-service"))
         .with_state(app_state)
         .layer(cors);
 

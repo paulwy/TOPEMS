@@ -10,10 +10,10 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use tower_http::cors::{AllowOrigin, CorsLayer};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 use dotenv::dotenv;
 use utoipa::{OpenApi, ToSchema};
+use topems_shared::init_logging;
 
 mod models;
 mod db;
@@ -2008,13 +2008,7 @@ async fn delete_folder_permission(
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "topems_doc=debug,tower_http=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-doc");
 
     tracing::info!("🚀 TOPEMS-DOC 文档管理服务启动中...");
     dotenv::dotenv().ok();

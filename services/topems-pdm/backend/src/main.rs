@@ -5,10 +5,12 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use chrono::{Utc, DateTime};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 use sqlx::{postgres::PgPoolOptions, PgPool};
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_cors_layer};
+use topems_shared::{
+    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    ServiceHealth, build_health_response, create_api_info_router,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ProductionProcess {
@@ -233,13 +235,7 @@ impl FromRef<AppState> for PgPool {
 async fn main() {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "topems_pdm=info".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-pdm");
 
     tracing::info!("🚀 TOPEMS-PDM Production Data Management System starting...");
 
@@ -310,6 +306,7 @@ async fn main() {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-pdm"))
         .layer(cors);
 
     let port = std::env::var("SERVER_PORT")
@@ -440,11 +437,8 @@ async fn home() -> &'static str {
     "TOPEMS-PDM Production Data Management System API\n\nCheck out the API at /health"
 }
 
-async fn health(State(_state): State<AppState>) -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success(
-        "TOPEMS-PDM is running!".to_string(),
-        "OK",
-    ))
+async fn health() -> ServiceHealth {
+    build_health_response("topems-pdm", true)
 }
 
 async fn list_processes(State(state): State<AppState>) -> Json<ApiResponse<Vec<ProductionProcess>>> {

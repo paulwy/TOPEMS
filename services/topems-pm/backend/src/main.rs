@@ -17,6 +17,9 @@ use topems_shared::{
     auth_middleware,
     Config,
     Result,
+    ServiceHealth,
+    build_health_response,
+    create_api_info_router,
 };
 use utoipa::OpenApi;
 use axum_prometheus::PrometheusMetricLayer;
@@ -72,6 +75,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-pm"))
         .layer(prometheus_layer)
         .layer(cors);
 
@@ -88,8 +92,8 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("TOPEMS-PM is running", "Health check"))
+async fn health_check() -> ServiceHealth {
+    build_health_response("topems-pm", true)
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {

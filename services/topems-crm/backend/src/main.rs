@@ -6,9 +6,11 @@ use axum::{
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use topems_shared::{ApiResponse, create_cors_layer, auth_middleware};
+use topems_shared::{
+    ApiResponse, create_cors_layer, auth_middleware, init_logging,
+    ServiceHealth, build_health_response, create_api_info_router, crm_table
+};
 
 mod api;
 mod models;
@@ -21,9 +23,14 @@ async fn init_db(db: &sqlx::PgPool) -> Result<()> {
         .execute(db)
         .await?;
 
+    // 创建 crm schema
+    sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS crm"#)
+        .execute(db)
+        .await?;
+
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS customers (
+        CREATE TABLE IF NOT EXISTS crm.customers (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             name VARCHAR(255) NOT NULL,
             code VARCHAR(100) UNIQUE,
@@ -44,9 +51,9 @@ async fn init_db(db: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS contacts (
+        CREATE TABLE IF NOT EXISTS crm.contacts (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            customer_id UUID REFERENCES customers(id),
+            customer_id UUID REFERENCES crm.customers(id),
             first_name VARCHAR(255) NOT NULL,
             last_name VARCHAR(255),
             email VARCHAR(255),
@@ -64,9 +71,9 @@ async fn init_db(db: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS opportunities (
+        CREATE TABLE IF NOT EXISTS crm.opportunities (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            customer_id UUID REFERENCES customers(id),
+            customer_id UUID REFERENCES crm.customers(id),
             name VARCHAR(255) NOT NULL,
             value NUMERIC(15,2),
             stage VARCHAR(50) DEFAULT 'prospecting',
@@ -83,10 +90,10 @@ async fn init_db(db: &sqlx::PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS interactions (
+        CREATE TABLE IF NOT EXISTS crm.interactions (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            customer_id UUID REFERENCES customers(id),
-            contact_id UUID REFERENCES contacts(id),
+            customer_id UUID REFERENCES crm.customers(id),
+            contact_id UUID REFERENCES crm.contacts(id),
             type VARCHAR(50) NOT NULL,
             subject TEXT,
             content TEXT,
@@ -106,20 +113,15 @@ async fn init_db(db: &sqlx::PgPool) -> Result<()> {
     Ok(())
 }
 
-async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("TOPEMS-CRM is running", "健康检查"))
+async fn health_check() -> ServiceHealth {
+    build_health_response("topems-crm", true)
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-crm");
 
     let database_url = env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -156,6 +158,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-crm"))
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8012".to_string());

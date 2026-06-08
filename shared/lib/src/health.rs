@@ -1,8 +1,17 @@
+use axum::{
+    extract::State,
+    http::StatusCode,
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
+use tracing::info;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServiceHealth {
@@ -405,5 +414,249 @@ impl SystemMetrics {
 
     pub fn get_uptime_seconds(&self) -> u64 {
         self.start_time.elapsed().as_secs()
+    }
+}
+
+// ==================== 健康检查中间件和处理程序 ====================
+
+#[derive(Clone)]
+pub struct HealthState {
+    pub service_name: String,
+    pub start_time: Instant,
+    pub db_pool: Option<PgPool>,
+    pub metrics: Arc<SystemMetrics>,
+}
+
+impl HealthState {
+    pub fn new(service_name: &str) -> Self {
+        Self {
+            service_name: service_name.to_string(),
+            start_time: Instant::now(),
+            db_pool: None,
+            metrics: Arc::new(SystemMetrics::new()),
+        }
+    }
+
+    pub fn with_db(mut self, pool: PgPool) -> Self {
+        self.db_pool = Some(pool);
+        self
+    }
+}
+
+impl IntoResponse for ServiceHealth {
+    fn into_response(self) -> axum::response::Response {
+        let status_code = match self.status {
+            HealthStatus::Healthy => StatusCode::OK,
+            HealthStatus::Degraded => StatusCode::OK,
+            HealthStatus::Unhealthy => StatusCode::SERVICE_UNAVAILABLE,
+        };
+        (status_code, axum::Json(self)).into_response()
+    }
+}
+
+pub async fn standard_health_check(State(state): State<HealthState>) -> ServiceHealth {
+    let start = Instant::now();
+    let mut dependencies = Vec::new();
+    
+    // 检查数据库健康状态
+    if let Some(pool) = &state.db_pool {
+        let db_health = check_database_health(pool).await;
+        dependencies.push(db_health);
+    }
+    
+    let response_time = start.elapsed().as_millis() as u64;
+    let uptime = format_uptime(state.start_time.elapsed());
+    
+    let overall_status = if dependencies.iter().any(|d| d.status == HealthStatus::Unhealthy) {
+        HealthStatus::Unhealthy
+    } else if dependencies.iter().any(|d| d.status == HealthStatus::Degraded) {
+        HealthStatus::Degraded
+    } else {
+        HealthStatus::Healthy
+    };
+    
+    ServiceHealth {
+        service_name: state.service_name.clone(),
+        status: overall_status,
+        message: format!("{} is running", state.service_name),
+        timestamp: Utc::now().to_rfc3339(),
+        uptime: Some(uptime),
+        dependencies: if dependencies.is_empty() { None } else { Some(dependencies) },
+        response_time_ms: Some(response_time),
+        last_check: Some(Utc::now().to_rfc3339()),
+    }
+}
+
+async fn check_database_health(pool: &PgPool) -> DependencyHealth {
+    let start = Instant::now();
+    match sqlx::query("SELECT 1").fetch_one(pool).await {
+        Ok(_) => {
+            let elapsed = start.elapsed();
+            DependencyHealth {
+                name: "database".to_string(),
+                status: if elapsed.as_millis() > 1000 {
+                    HealthStatus::Degraded
+                } else {
+                    HealthStatus::Healthy
+                },
+                message: format!("Database is healthy ({}ms)", elapsed.as_millis()),
+            }
+        }
+        Err(e) => DependencyHealth {
+            name: "database".to_string(),
+            status: HealthStatus::Unhealthy,
+            message: format!("Database connection failed: {}", e),
+        },
+    }
+}
+
+fn format_uptime(duration: std::time::Duration) -> String {
+    let secs = duration.as_secs();
+    let days = secs / 86400;
+    let hours = (secs % 86400) / 3600;
+    let minutes = (secs % 3600) / 60;
+    let seconds = secs % 60;
+    
+    if days > 0 {
+        format!("{}d {}h {}m {}s", days, hours, minutes, seconds)
+    } else if hours > 0 {
+        format!("{}h {}m {}s", hours, minutes, seconds)
+    } else if minutes > 0 {
+        format!("{}m {}s", minutes, seconds)
+    } else {
+        format!("{}s", seconds)
+    }
+}
+
+pub fn create_health_router(service_name: &str, pool: Option<PgPool>) -> Router {
+    let state = HealthState::new(service_name);
+    let state = if let Some(pool) = pool {
+        state.with_db(pool)
+    } else {
+        state
+    };
+    
+    Router::new()
+        .route("/health", get(standard_health_check))
+        .with_state(state)
+}
+
+// ==================== 请求跟踪中间件 ====================
+
+pub async fn metrics_middleware(
+    State(state): State<Arc<SystemMetrics>>,
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> impl IntoResponse {
+    state.record_request();
+    let start = Instant::now();
+    let response = next.run(req).await;
+    let elapsed = start.elapsed();
+    
+    if response.status().is_server_error() {
+        state.record_error();
+    }
+    
+    info!(
+        "Request processed in {}ms, status: {}",
+        elapsed.as_millis(),
+        response.status()
+    );
+    
+    response
+}
+
+pub fn create_metrics_router(metrics: Arc<SystemMetrics>) -> Router {
+    Router::new()
+        .route("/metrics", get(get_system_metrics))
+        .with_state(metrics)
+}
+
+async fn get_system_metrics(State(metrics): State<Arc<SystemMetrics>>) -> impl IntoResponse {
+    #[derive(Serialize)]
+    struct MetricsResponse {
+        uptime: String,
+        uptime_seconds: u64,
+        request_count: u64,
+        error_count: u64,
+        active_connections: u64,
+    }
+    
+    axum::Json(MetricsResponse {
+        uptime: metrics.get_uptime(),
+        uptime_seconds: metrics.get_uptime_seconds(),
+        request_count: metrics.get_request_count(),
+        error_count: metrics.get_error_count(),
+        active_connections: metrics.get_active_connections(),
+    })
+}
+
+// ==================== 简化的健康检查辅助函数 ====================
+
+#[derive(Clone)]
+pub struct SimpleHealthConfig {
+    pub service_name: String,
+    pub start_time: Instant,
+    pub db_pool: Option<PgPool>,
+}
+
+impl SimpleHealthConfig {
+    pub fn new(service_name: &str) -> Self {
+        Self {
+            service_name: service_name.to_string(),
+            start_time: Instant::now(),
+            db_pool: None,
+        }
+    }
+    
+    pub fn with_db(mut self, pool: PgPool) -> Self {
+        self.db_pool = Some(pool);
+        self
+    }
+}
+
+pub async fn simple_health_check(config: &SimpleHealthConfig) -> ServiceHealth {
+    let start = Instant::now();
+    let mut dependencies = Vec::new();
+    
+    if let Some(pool) = &config.db_pool {
+        let db_health = check_database_health(pool).await;
+        dependencies.push(db_health);
+    }
+    
+    let response_time = start.elapsed().as_millis() as u64;
+    let uptime = format_uptime(config.start_time.elapsed());
+    
+    let overall_status = if dependencies.iter().any(|d| d.status == HealthStatus::Unhealthy) {
+        HealthStatus::Unhealthy
+    } else if dependencies.iter().any(|d| d.status == HealthStatus::Degraded) {
+        HealthStatus::Degraded
+    } else {
+        HealthStatus::Healthy
+    };
+    
+    ServiceHealth {
+        service_name: config.service_name.clone(),
+        status: overall_status,
+        message: format!("{} is running", config.service_name),
+        timestamp: Utc::now().to_rfc3339(),
+        uptime: Some(uptime),
+        dependencies: if dependencies.is_empty() { None } else { Some(dependencies) },
+        response_time_ms: Some(response_time),
+        last_check: Some(Utc::now().to_rfc3339()),
+    }
+}
+
+// 构建标准化健康响应的辅助函数
+pub fn build_health_response(service_name: &str, is_healthy: bool) -> ServiceHealth {
+    ServiceHealth {
+        service_name: service_name.to_string(),
+        status: if is_healthy { HealthStatus::Healthy } else { HealthStatus::Unhealthy },
+        message: format!("{} is {}", service_name, if is_healthy { "running" } else { "unhealthy" }),
+        timestamp: Utc::now().to_rfc3339(),
+        uptime: None,
+        dependencies: None,
+        response_time_ms: None,
+        last_check: Some(Utc::now().to_rfc3339()),
     }
 }

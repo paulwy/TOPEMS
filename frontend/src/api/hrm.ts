@@ -369,23 +369,23 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 export const companyApi: CrudOperations<Company> = {
   list: async (params?: ListParams) => {
     const queryString = buildQueryString(params);
-    return await apiClient.erp.get(`/api/v1/companies${queryString}`);
+    return await apiClient.hrm.get(`/api/v1/companies${queryString}`);
   },
 
   get: (id: string) => {
-    return apiClient.erp.get(`/api/v1/companies/${id}`);
+    return apiClient.hrm.get(`/api/v1/companies/${id}`);
   },
 
   create: (data: Partial<Company>) => {
-    return apiClient.erp.post('/api/v1/companies', data);
+    return apiClient.hrm.post('/api/v1/companies', data);
   },
 
   update: (id: string, data: Partial<Company>) => {
-    return apiClient.erp.put(`/api/v1/companies/${id}`, data);
+    return apiClient.hrm.put(`/api/v1/companies/${id}`, data);
   },
 
   delete: (id: string) => {
-    return apiClient.erp.delete(`/api/v1/companies/${id}`);
+    return apiClient.hrm.delete(`/api/v1/companies/${id}`);
   },
 };
 

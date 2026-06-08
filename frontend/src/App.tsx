@@ -353,13 +353,7 @@ const AppContent: React.FC = () => {
           />
           <Route
             path='/employees'
-            element={
-              <ProtectedRoute requiredPermissions={['erp:admin']}>
-                <ModuleGate module='erp' action='admin'>
-                  <EmployeeManagementPage />
-                </ModuleGate>
-              </ProtectedRoute>
-            }
+            element={<Navigate to='/hrm/employees' replace />}
           />
           <Route
             path='/assets'

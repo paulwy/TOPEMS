@@ -62,7 +62,7 @@ async fn list_interactions(
     let result = sqlx::query_as::<_, Interaction>(
         r#"
         SELECT id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
-        FROM interactions
+        FROM crm.interactions
         WHERE ($1::text IS NULL OR subject ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR customer_id = $3)
@@ -84,7 +84,7 @@ async fn list_interactions(
         Ok(interactions) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM interactions
+                SELECT COUNT(*) FROM crm.interactions
                 WHERE ($1::text IS NULL OR subject ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR customer_id = $3)
@@ -137,7 +137,7 @@ async fn create_interaction(
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
-        INSERT INTO interactions (
+        INSERT INTO crm.interactions (
             id, customer_id, contact_id, type, subject, content, scheduled_at, notes, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'scheduled', $9, $10)
         RETURNING id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
@@ -211,7 +211,7 @@ async fn get_interaction(
     let result = sqlx::query_as::<_, Interaction>(
         r#"
         SELECT id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
-        FROM interactions WHERE id = $1
+        FROM crm.interactions WHERE id = $1
         "#,
     )
     .bind(id)
@@ -242,7 +242,7 @@ async fn update_interaction(
 
     let existing = sqlx::query_as::<_, Interaction>(
         r#"
-        SELECT id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at FROM interactions WHERE id = $1
+        SELECT id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at FROM crm.interactions WHERE id = $1
         "#,
     )
     .bind(id)
@@ -269,7 +269,7 @@ async fn update_interaction(
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
-        UPDATE interactions SET
+        UPDATE crm.interactions SET
             customer_id = $2, contact_id = $3, type = $4, subject = $5, content = $6,
             scheduled_at = $7, completed_at = $8, status = $9, updated_at = $10
         WHERE id = $1
@@ -341,7 +341,7 @@ async fn delete_interaction(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM interactions WHERE id = $1")
+    let result = sqlx::query("DELETE FROM crm.interactions WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -407,7 +407,7 @@ async fn batch_delete_interactions(
         return Json(api_error(400, "请选择要删除的交互记录"));
     }
 
-    let result = sqlx::query("DELETE FROM interactions WHERE id = ANY($1)")
+    let result = sqlx::query("DELETE FROM crm.interactions WHERE id = ANY($1)")
         .bind(&req.ids)
         .execute(&state.db)
         .await;

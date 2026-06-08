@@ -84,6 +84,8 @@ impl AuthState {
             .or_else(|_| std::env::var("REFRESH_SECRET"))
             .expect("JWT_REFRESH_SECRET or REFRESH_SECRET environment variable must be set for security");
         
+        tracing::info!("🔑 AuthState 读取到的 JWT_SECRET: {}", jwt_secret);
+        
         if jwt_secret.len() < 32 {
             panic!("JWT_SECRET must be at least 32 characters long for security");
         }

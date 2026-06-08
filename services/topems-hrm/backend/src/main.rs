@@ -12,12 +12,12 @@ use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer,
     ServiceHealth, HealthStatus, DependencyHealth,
-    SystemMetrics, check_http_health,
+    SystemMetrics, check_http_health, init_logging,
+    create_api_info_router,
 };
 use api::ApiState;
 
@@ -25,12 +25,7 @@ use api::ApiState;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    init_logging("topems-hrm");
 
     let database_url = env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -74,6 +69,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .merge(health_router)
         .merge(protected_routes)
+        .merge(create_api_info_router("topems-hrm"))
         .layer(cors);
 
     let port = env::var("SERVER_PORT").or_else(|_| env::var("PORT")).unwrap_or_else(|_| "8010".to_string());
@@ -246,6 +242,35 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .await?;
 
     sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS hrm"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS hrm.companies (
+            id UUID PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            short_name VARCHAR(100),
+            registration_number VARCHAR(100),
+            tax_number VARCHAR(100),
+            address TEXT,
+            contact_phone VARCHAR(50),
+            email VARCHAR(255),
+            website VARCHAR(255),
+            description TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_companies_name ON hrm.companies(name)"#)
+        .execute(pool)
+        .await?;
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_companies_status ON hrm.companies(status)"#)
         .execute(pool)
         .await?;
 
