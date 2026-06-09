@@ -8,18 +8,18 @@ import { ToastProvider } from '../../components/ToastProvider';
 import { LoadingProvider } from '../../components/LoadingProvider';
 import ErrorBoundary from '../../components/ErrorBoundary';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => jest.fn(),
+vi.mock('react-router-dom', async () => ({
+  ...await vi.importActual('react-router-dom'),
+  useNavigate: () => vi.fn(),
 }));
 
-jest.mock('../../api/lims', () => ({
+vi.mock('../../api/lims', () => ({
   limsApi: {
-    getSamples: jest.fn().mockResolvedValue({ success: true, data: [] }),
-    listSamples: jest.fn().mockResolvedValue({ success: true, data: [] }),
-    listProcesses: jest.fn().mockResolvedValue({ success: true, data: [] }),
-    listTasks: jest.fn().mockResolvedValue({ success: true, data: [] }),
-    createSample: jest.fn().mockResolvedValue({ success: true }),
+    getSamples: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    listSamples: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    listProcesses: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    listTasks: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    createSample: vi.fn().mockResolvedValue({ success: true }),
   },
 }));
 
@@ -45,7 +45,7 @@ const renderLimspage = () => {
 
 describe('Limspage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
   });
 

@@ -1,3 +1,8 @@
+pub mod environment;
+pub mod health;
+pub mod safety;
+pub mod risk;
+pub mod training;
 
 use sqlx::PgPool;
 use chrono::Utc;
@@ -5,6 +10,14 @@ use uuid::Uuid;
 use crate::models::*;
 use anyhow::Result;
 
+// 导出所有Repository
+pub use environment::{MonitoringPointRepository, EnvironmentalDataRepository, EnvironmentalAlertRepository};
+pub use health::{HealthRecordRepository, HealthCheckupRepository, VaccinationRecordRepository};
+pub use safety::{SafetyIncidentRepository, SafetyHazardNewRepository};
+pub use risk::{RiskAssessmentRepository, RiskControlRepository};
+pub use training::{TrainingProgramRepository, TrainingRecordRepository};
+
+// 保留原有的Repository（兼容现有代码）
 pub struct SafetyHazardRepository<'a> {
     pool: &'a PgPool,
 }

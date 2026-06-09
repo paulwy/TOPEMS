@@ -23,32 +23,41 @@ impl Database {
 
     /// 运行数据库迁移
     pub async fn run_migrations(&self) -> Result<(), sqlx::Error> {
+        // 创建 ai schema
+        sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS ai;"#)
+            .execute(&self.pool)
+            .await?;
+
         // 创建扩展
         sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp";"#)
             .execute(&self.pool)
             .await?;
 
-        // 尝试创建 vector 扩展，如果不可用则跳过
-        let _ = sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "vector";"#)
+        // 创建 vector 扩展到 ai schema
+        sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA ai;"#)
             .execute(&self.pool)
-            .await;
+            .await?;
 
         // 创建文档表
         sqlx::query(
             r#"
-            CREATE TABLE IF NOT EXISTS kb_documents (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            CREATE TABLE IF NOT EXISTS ai.documents (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                knowledge_base_id UUID,
                 title VARCHAR(500) NOT NULL,
-                filename VARCHAR(500) NOT NULL,
-                file_path VARCHAR(1000),
+                file_name VARCHAR(500) NOT NULL,
+                file_path TEXT NOT NULL,
                 file_size BIGINT,
                 mime_type VARCHAR(100),
                 content_hash VARCHAR(64),
                 category VARCHAR(100),
                 tags TEXT[],
                 description TEXT,
-                status VARCHAR(50) DEFAULT 'pending',
+                chunk_count INTEGER DEFAULT 0,
+                status VARCHAR(50) NOT NULL DEFAULT 'pending',
                 error_message TEXT,
+                processed_at TIMESTAMP WITH TIME ZONE,
+                created_by UUID,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
@@ -58,27 +67,39 @@ impl Database {
         .await?;
 
         // 创建文档表索引
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_status ON kb_documents(status);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_status ON ai.documents(status);"#)
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON kb_documents(category);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON ai.documents(category);"#)
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_created_at ON kb_documents(created_at DESC);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_created_at ON ai.documents(created_at DESC);"#)
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_title ON ai.documents(title);"#)
             .execute(&self.pool)
             .await?;
 
         // 创建文档块表
         sqlx::query(
             r#"
-            CREATE TABLE IF NOT EXISTS kb_document_chunks (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                document_id UUID NOT NULL REFERENCES kb_documents(id) ON DELETE CASCADE,
-                chunk_index INTEGER NOT NULL,
+            CREATE TABLE IF NOT EXISTS ai.document_chunks (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                document_id UUID NOT NULL REFERENCES ai.documents(id) ON DELETE CASCADE,
+                knowledge_base_id UUID,
+                chunk_index INTEGER NOT NULL DEFAULT 0,
                 content TEXT NOT NULL,
+                content_hash VARCHAR(64),
+                embedding vector(1536) NOT NULL,
+                vector_dimensions INTEGER DEFAULT 1536,
+                token_count INTEGER DEFAULT 0,
+                embedding_status VARCHAR(50) DEFAULT 'pending',
+                embedding_model VARCHAR(255),
                 metadata JSONB DEFAULT '{}',
+                created_by UUID,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
             "#,
@@ -86,70 +107,26 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON kb_document_chunks(document_id);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON ai.document_chunks(document_id);"#)
             .execute(&self.pool)
             .await?;
 
-        // 尝试创建向量表（带 vector 类型），如果失败则使用 BYTEA 类型
-        let vector_table_result = sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS kb_vector_embeddings (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                document_id UUID NOT NULL REFERENCES kb_documents(id) ON DELETE CASCADE,
-                chunk_id UUID NOT NULL REFERENCES kb_document_chunks(id) ON DELETE CASCADE,
-                chunk_index INTEGER NOT NULL,
-                content TEXT NOT NULL,
-                embedding VECTOR(768),
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-            "#,
-        )
-        .execute(&self.pool)
-        .await;
-
-        if vector_table_result.is_err() {
-            tracing::warn!("⚠️  vector 类型不可用，使用 BYTEA 类型替代");
-            // 创建使用 BYTEA 类型的向量表
-            sqlx::query(
-                r#"
-                CREATE TABLE IF NOT EXISTS kb_vector_embeddings (
-                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                    document_id UUID NOT NULL REFERENCES kb_documents(id) ON DELETE CASCADE,
-                    chunk_id UUID NOT NULL REFERENCES kb_document_chunks(id) ON DELETE CASCADE,
-                    chunk_index INTEGER NOT NULL,
-                    content TEXT NOT NULL,
-                    embedding BYTEA,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-                "#,
-            )
-            .execute(&self.pool)
-            .await?;
-        }
-
-        // 尝试创建向量索引，失败则跳过
-        let _ = sqlx::query(
-            r#"
-            CREATE INDEX IF NOT EXISTS idx_vectors_embedding ON kb_vector_embeddings
-                USING hnsw (embedding vector_cosine_ops)
-                WITH (m = 16, ef_construction = 64);
-            "#,
-        )
-        .execute(&self.pool)
-        .await;
-
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_vectors_document_id ON kb_vector_embeddings(document_id);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding ON ai.document_chunks USING hnsw (embedding vector_cosine_ops);"#)
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_vectors_chunk_id ON kb_vector_embeddings(chunk_id);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_chunks_content_search ON ai.document_chunks USING gin(to_tsvector('chinese', content));"#)
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_chunk_index ON ai.document_chunks(chunk_index);"#)
             .execute(&self.pool)
             .await?;
 
         // 创建触发器
         sqlx::query(
             r#"
-            CREATE OR REPLACE FUNCTION update_kb_documents_timestamp()
+            CREATE OR REPLACE FUNCTION ai.update_documents_timestamp()
             RETURNS TRIGGER AS $$
             BEGIN
                 NEW.updated_at = CURRENT_TIMESTAMP;
@@ -161,20 +138,70 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query(r#"DROP TRIGGER IF EXISTS update_kb_documents_updated_at ON kb_documents;"#)
+        sqlx::query(r#"DROP TRIGGER IF EXISTS update_documents_updated_at ON ai.documents;"#)
             .execute(&self.pool)
             .await?;
 
         sqlx::query(
             r#"
-            CREATE TRIGGER update_kb_documents_updated_at
-                BEFORE UPDATE ON kb_documents
+            CREATE TRIGGER update_documents_updated_at
+                BEFORE UPDATE ON ai.documents
                 FOR EACH ROW
-                EXECUTE FUNCTION update_kb_documents_timestamp();
+                EXECUTE FUNCTION ai.update_documents_timestamp();
             "#,
         )
         .execute(&self.pool)
         .await?;
+
+        // 创建问答历史表
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS ai.qa_history (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                question TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                context JSONB DEFAULT '{}',
+                sources JSONB DEFAULT '[]',
+                feedback TEXT,
+                rating INTEGER,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_qa_history_created_at ON ai.qa_history(created_at DESC);"#)
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_qa_history_rating ON ai.qa_history(rating);"#)
+            .execute(&self.pool)
+            .await?;
+
+        // 创建分析结果表
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS ai.analysis_results (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                analysis_type VARCHAR(50) NOT NULL,
+                input_text TEXT NOT NULL,
+                result JSONB NOT NULL,
+                confidence DOUBLE PRECISION,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_analysis_type ON ai.analysis_results(analysis_type);"#)
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_analysis_created_at ON ai.analysis_results(created_at DESC);"#)
+            .execute(&self.pool)
+            .await?;
 
         tracing::info!("✅ 数据库迁移完成");
         Ok(())

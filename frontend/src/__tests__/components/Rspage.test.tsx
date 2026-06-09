@@ -8,15 +8,15 @@ import { ToastProvider } from '../../components/ToastProvider';
 import { LoadingProvider } from '../../components/LoadingProvider';
 import ErrorBoundary from '../../components/ErrorBoundary';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => jest.fn(),
+vi.mock('react-router-dom', async () => ({
+  ...await vi.importActual('react-router-dom'),
+  useNavigate: () => vi.fn(),
 }));
 
-jest.mock('../../api/rs', () => ({
+vi.mock('../../api/rs', () => ({
   rsApi: {
-    getProjects: jest.fn().mockResolvedValue({ success: true, data: [] }),
-    createProject: jest.fn().mockResolvedValue({ success: true }),
+    getProjects: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    createProject: vi.fn().mockResolvedValue({ success: true }),
   },
 }));
 
@@ -42,7 +42,7 @@ const renderRspage = () => {
 
 describe('Rspage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
   });
 

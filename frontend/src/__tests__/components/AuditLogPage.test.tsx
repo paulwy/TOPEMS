@@ -8,15 +8,15 @@ import { ToastProvider } from '../../components/ToastProvider';
 import { LoadingProvider } from '../../components/LoadingProvider';
 import ErrorBoundary from '../../components/ErrorBoundary';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => jest.fn(),
+vi.mock('react-router-dom', async () => ({
+  ...await vi.importActual('react-router-dom'),
+  useNavigate: () => vi.fn(),
 }));
 
 // Mock audit APIs
-jest.mock('../../api/lims', () => ({
+vi.mock('../../api/lims', () => ({
   auditLimsApi: {
-    listAuditLogs: jest.fn().mockResolvedValue({
+    listAuditLogs: vi.fn().mockResolvedValue({
       success: true,
       data: {
         audit_logs: [
@@ -51,9 +51,9 @@ jest.mock('../../api/lims', () => ({
   },
 }));
 
-jest.mock('../../api/rs', () => ({
+vi.mock('../../api/rs', () => ({
   auditRsApi: {
-    listAuditLogs: jest.fn().mockResolvedValue({
+    listAuditLogs: vi.fn().mockResolvedValue({
       success: true,
       data: {
         audit_logs: [
@@ -98,7 +98,7 @@ const renderAuditLogPage = () => {
 
 describe('AuditLogPage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
   });
 

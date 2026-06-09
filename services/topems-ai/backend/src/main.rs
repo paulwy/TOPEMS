@@ -1,6 +1,7 @@
 // TOPEMS-AI Backend - with PostgreSQL/pgvector persistence and PDF support
 // =============================================================================
 
+mod api;
 mod services;
 
 use axum::{
@@ -23,7 +24,7 @@ use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
     ServiceHealth, build_health_response, create_api_info_router,
 };
-use services::{Database, DocumentService, VectorService};
+use services::{Database, DocumentService, VectorService, QAService, QAConfig, AnalysisService, AnalysisConfig};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct AIGenerateRequest {
@@ -216,6 +217,9 @@ struct Config {
 struct AppState {
     auth_state: AuthState,
     document_service: DocumentService,
+    vector_service: VectorService,
+    qa_service: QAService,
+    analysis_service: AnalysisService,
     http_client: Client,
     config: Config,
 }
@@ -1556,14 +1560,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     db.run_migrations().await?;
     tracing::info!("✅ 数据库表结构已就绪");
 
-    // 创建服务
-    let vector_service = VectorService::new(db);
-    let document_service = DocumentService::new(vector_service);
-    
     // HTTP 客户端
     let http_client = Client::builder()
         .timeout(std::time::Duration::from_secs(120))
         .build()?;
+
+    // 创建服务
+    let vector_service = VectorService::new(db);
+    let document_service = DocumentService::new(vector_service.clone());
+    
+    // 创建 QA 和 Analysis 服务
+    let qa_config = QAConfig {
+        base_url: base_url.clone(),
+        api_key: api_key.clone(),
+        model: model.clone(),
+        embedding_model: embedding_model.clone(),
+    };
+    let qa_service = QAService::new(vector_service.db.clone(), http_client.clone(), qa_config);
+    
+    let analysis_config = AnalysisConfig {
+        base_url: base_url.clone(),
+        api_key: api_key.clone(),
+        model: model.clone(),
+    };
+    let analysis_service = AnalysisService::new(vector_service.db.clone(), http_client.clone(), analysis_config);
 
     // 初始化静态存储（向后兼容）
     let docs = load_documents_from_dir(DOCS_DIR).await;
@@ -1586,6 +1606,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app_state = AppState {
         auth_state: AuthState::from_env(),
         document_service,
+        vector_service,
+        qa_service,
+        analysis_service,
         http_client: http_client.clone(),
         config: config.clone(),
     };
@@ -1604,11 +1627,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/v1/ai/complete", post(complete))
         .route("/api/v1/ai/summarize", post(summarize))
         .route("/api/v1/ai/templates", get(list_templates))
+        // 文档处理 API
         .route("/api/v1/documents", get(list_documents))
         .route("/api/v1/documents/reload", post(reload_documents))
         .route("/api/v1/documents/upload", post(upload_document))
         .route("/api/v1/documents/delete", get(delete_document))
         .route("/api/v1/documents/update", post(update_document))
+        // 向量检索 API
+        .route("/api/v1/vectors/index", post(index_documents))
+        .route("/api/v1/vectors/stats", get(get_vector_stats))
+        .route("/api/v1/vectors/search", post(vector_search_handler))
+        .route("/api/v1/vectors/clear", post(clear_vectors))
+        // 数据连接器 API
         .route("/api/v1/connectors", get(list_connectors))
         .route("/api/v1/connectors/get", get(get_connector))
         .route("/api/v1/connectors/create", post(create_connector))
@@ -1616,10 +1646,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/v1/connectors/delete", post(delete_connector))
         .route("/api/v1/connectors/test", get(test_connector))
         .route("/api/v1/connectors/query", post(query_data))
-        .route("/api/v1/vectors/index", post(index_documents))
-        .route("/api/v1/vectors/stats", get(get_vector_stats))
-        .route("/api/v1/vectors/search", post(vector_search_handler))
-        .route("/api/v1/vectors/clear", post(clear_vectors))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

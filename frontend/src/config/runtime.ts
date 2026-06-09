@@ -72,6 +72,7 @@ const config: RuntimeConfig = {
     report: getEnv('VITE_REPORT_SERVICE_URL', '/report'),
     mail: getEnv('VITE_MAIL_SERVICE_URL', '/mail'),
     pm: getEnv('VITE_PM_SERVICE_URL', '/pm'),
+    migration: getEnv('VITE_MIGRATION_SERVICE_URL', 'http://localhost:8787'),
   },
   features: {
     debugMode: getEnvBool('VITE_ENABLE_DEBUG_MODE', false),

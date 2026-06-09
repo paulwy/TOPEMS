@@ -73,6 +73,7 @@ const MobileWorkstationPage = lazy(() => import('./pages/MobileWorkstationPage')
 const SystemManagementPage = lazy(() => import('./pages/SystemManagementPage'));
 const DictionaryManagementPage = lazy(() => import('./pages/DictionaryManagementPage'));
 const DatabaseStructurePage = lazy(() => import('./pages/DatabaseStructurePage'));
+const MigrationAdminPage = lazy(() => import('./pages/MigrationAdminPage'));
 const MailPage = lazy(() => import('./pages/MailPage'));
 const CRMPage = lazy(() => import('./pages/CRMPage'));
 const CRMDashboardPage = lazy(() => import('./pages/CRMDashboardPage'));
@@ -775,6 +776,16 @@ const AppContent: React.FC = () => {
               <ProtectedRoute requiredPermissions={['iam:admin']}>
                 <ModuleGate module='iam' action='admin'>
                   <DatabaseStructurePage />
+                </ModuleGate>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/migration'
+            element={
+              <ProtectedRoute requiredPermissions={['iam:admin']}>
+                <ModuleGate module='iam' action='admin'>
+                  <MigrationAdminPage />
                 </ModuleGate>
               </ProtectedRoute>
             }

@@ -25,8 +25,14 @@ pub mod service_client;
 pub mod event;
 pub mod api_version;
 pub mod schema;
+pub mod cache;
+pub mod query_optimizer;
+pub mod service_bootstrap;
 
-pub use config::{Config, AppConfig, ServiceConfig, ServiceRegistry, get_default_port};
+pub use config::{Config, AppConfig, ServiceConfig, ServiceRegistry, get_default_port, CacheConfig};
+pub use config::enhanced::{
+    DatabaseConfig, RedisConfig, JwtConfig, AIConfig, CacheConfig as EnhancedCacheConfig,
+};
 pub use error::{TopemsError, Result};
 pub use auth::{Claims, AuthState, Role, Permission, get_permissions, get_roles, auth_middleware, check_permission, check_role, require_superuser, require_any_permission, require_all_permissions, get_role_by_id, get_permission_by_id};
 pub use response::{ApiResponse, PaginationParams, PaginatedResponse, api_error};
@@ -39,8 +45,16 @@ pub use health::{
     SimpleHealthConfig, simple_health_check, build_health_response
 };
 pub use hrm::{AppState, PaginationQuery, PaginatedResult};
-pub use performance::{PerformanceMetrics, MetricsSnapshot, RequestTimer};
-pub use database::{create_database_pool, test_database_connection};
+pub use performance::{
+    PerformanceMetrics, MetricsSnapshot, RequestTimer,
+    ApiCallMetrics, DatabaseQueryMetrics, CacheMetrics,
+    ComprehensiveMetrics, EndpointStats, ApiStats, TableStats,
+    DatabaseStats, ComprehensiveStats, DatabaseQueryTimer, CacheOperationRecorder
+};
+pub use database::{
+    create_database_pool, test_database_connection,
+    HealthCheckResult, check_pool_health
+};
 pub use logging::{LogEntry, LogQuery, LogStats, LogAggregator, TraceContext, create_log_filter, init_logging};
 pub use monitoring::{MonitoringState, ServiceHealth as MonServiceHealth, ServiceStatus, MonitoringMetrics, AlertRule, AlertSeverity, Alert, default_alert_rules};
 pub use backup::{BackupManager, BackupConfig, BackupMetadata, BackupType, BackupStatus, BackupRequest, RestoreRequest, BackupStatistics, BackupError, BackupSchedule, CompressionType};
@@ -145,4 +159,17 @@ pub use schema::{
     mail_table,
     mobile_table,
     portal_table,
+};
+pub use cache::{
+    InMemoryCache, CacheManager, CacheStatistics, EvictionPolicy
+};
+pub use query_optimizer::{
+    IndexRecommendation, QueryOptimizationSuggestion,
+    suggest_query_optimization,
+    BatchOperations, PaginationOptimizer,
+    NPlusOneDetector, NPlusOneWarning
+};
+pub use service_bootstrap::{
+    ServiceBootstrap, BootstrapConfig, AppState as BootstrapAppState,
+    quick_bootstrap, quick_bootstrap_with_db,
 };

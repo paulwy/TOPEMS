@@ -9,7 +9,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use anyhow::Result;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 
@@ -104,6 +103,7 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .execute(pool)
         .await?;
 
+    // 原有表
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS ehs.safety_hazards (
@@ -194,6 +194,326 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
+    // 新增环境管理表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.monitoring_points (
+            id UUID PRIMARY KEY,
+            point_no VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            point_type VARCHAR(100) NOT NULL,
+            location VARCHAR(255),
+            latitude DOUBLE PRECISION,
+            longitude DOUBLE PRECISION,
+            parameters JSONB DEFAULT '[]',
+            thresholds JSONB,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            last_data_time TIMESTAMPTZ,
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.environmental_data (
+            id UUID PRIMARY KEY,
+            point_id UUID NOT NULL REFERENCES ehs.monitoring_points(id),
+            data_time TIMESTAMPTZ NOT NULL,
+            parameter VARCHAR(100) NOT NULL,
+            value DOUBLE PRECISION NOT NULL,
+            unit VARCHAR(50) NOT NULL,
+            quality VARCHAR(50),
+            remarks TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.environmental_alerts (
+            id UUID PRIMARY KEY,
+            point_id UUID NOT NULL REFERENCES ehs.monitoring_points(id),
+            alert_type VARCHAR(100) NOT NULL,
+            alert_level VARCHAR(50) NOT NULL,
+            parameter VARCHAR(100) NOT NULL,
+            threshold_value DOUBLE PRECISION NOT NULL,
+            actual_value DOUBLE PRECISION NOT NULL,
+            alert_time TIMESTAMPTZ NOT NULL,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            handled_by VARCHAR(255),
+            handled_time TIMESTAMPTZ,
+            handle_result TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 新增健康管理表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.health_records (
+            id UUID PRIMARY KEY,
+            employee_id VARCHAR(100) NOT NULL,
+            employee_name VARCHAR(255) NOT NULL,
+            gender VARCHAR(20),
+            birth_date TIMESTAMPTZ,
+            blood_type VARCHAR(10),
+            allergies JSONB,
+            chronic_diseases JSONB,
+            medical_history TEXT,
+            emergency_contact VARCHAR(255),
+            emergency_phone VARCHAR(50),
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.health_checkups (
+            id UUID PRIMARY KEY,
+            employee_id VARCHAR(100) NOT NULL,
+            employee_name VARCHAR(255) NOT NULL,
+            checkup_date TIMESTAMPTZ NOT NULL,
+            checkup_type VARCHAR(100) NOT NULL,
+            institution VARCHAR(255),
+            result_summary TEXT,
+            abnormal_items JSONB,
+            recommendations TEXT,
+            attachments JSONB,
+            next_checkup_date TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'completed',
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.vaccination_records (
+            id UUID PRIMARY KEY,
+            employee_id VARCHAR(100) NOT NULL,
+            employee_name VARCHAR(255) NOT NULL,
+            vaccine_name VARCHAR(255) NOT NULL,
+            vaccine_type VARCHAR(100) NOT NULL,
+            vaccination_date TIMESTAMPTZ NOT NULL,
+            dose_number INTEGER NOT NULL,
+            institution VARCHAR(255),
+            batch_number VARCHAR(100),
+            expiry_date TIMESTAMPTZ,
+            next_dose_date TIMESTAMPTZ,
+            remarks TEXT,
+            attachments JSONB,
+            status VARCHAR(50) NOT NULL DEFAULT 'completed',
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 新增安全事故表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.safety_incidents (
+            id UUID PRIMARY KEY,
+            incident_no VARCHAR(100) NOT NULL UNIQUE,
+            title VARCHAR(255) NOT NULL,
+            incident_type VARCHAR(100) NOT NULL,
+            incident_level VARCHAR(50) NOT NULL,
+            location VARCHAR(255),
+            incident_time TIMESTAMPTZ NOT NULL,
+            description TEXT,
+            casualties INTEGER,
+            injuries INTEGER,
+            economic_loss DOUBLE PRECISION,
+            cause_analysis TEXT,
+            corrective_actions JSONB,
+            responsible_persons JSONB,
+            status VARCHAR(50) NOT NULL DEFAULT 'reported',
+            handled_by VARCHAR(255),
+            handled_time TIMESTAMPTZ,
+            attachments JSONB,
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.safety_hazards_new (
+            id UUID PRIMARY KEY,
+            hazard_no VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            category VARCHAR(100) NOT NULL,
+            level VARCHAR(50) NOT NULL,
+            description TEXT,
+            location VARCHAR(255),
+            risk_assessment TEXT,
+            control_measures JSONB DEFAULT '[]',
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 新增风险评估表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.risk_assessments (
+            id UUID PRIMARY KEY,
+            assessment_no VARCHAR(100) NOT NULL UNIQUE,
+            title VARCHAR(255) NOT NULL,
+            assessment_type VARCHAR(100) NOT NULL,
+            risk_source VARCHAR(255) NOT NULL,
+            risk_category VARCHAR(100) NOT NULL,
+            likelihood INTEGER NOT NULL,
+            consequence INTEGER NOT NULL,
+            risk_level VARCHAR(50) NOT NULL,
+            risk_score INTEGER NOT NULL,
+            description TEXT,
+            affected_area VARCHAR(255),
+            affected_persons INTEGER,
+            existing_controls JSONB,
+            status VARCHAR(50) NOT NULL DEFAULT 'draft',
+            assessor VARCHAR(255),
+            assessment_date TIMESTAMPTZ,
+            review_date TIMESTAMPTZ,
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.risk_controls (
+            id UUID PRIMARY KEY,
+            assessment_id UUID NOT NULL REFERENCES ehs.risk_assessments(id),
+            control_type VARCHAR(100) NOT NULL,
+            control_measure TEXT NOT NULL,
+            implementation_plan TEXT,
+            responsible_person VARCHAR(255),
+            target_date TIMESTAMPTZ,
+            completion_date TIMESTAMPTZ,
+            effectiveness VARCHAR(50),
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 新增培训管理表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.training_programs (
+            id UUID PRIMARY KEY,
+            program_no VARCHAR(100) NOT NULL UNIQUE,
+            title VARCHAR(255) NOT NULL,
+            training_type VARCHAR(100) NOT NULL,
+            content TEXT,
+            objectives TEXT,
+            target_audience VARCHAR(255),
+            duration_hours DOUBLE PRECISION,
+            training_method VARCHAR(100),
+            instructor VARCHAR(255),
+            location VARCHAR(255),
+            start_date TIMESTAMPTZ,
+            end_date TIMESTAMPTZ,
+            max_participants INTEGER,
+            materials JSONB,
+            status VARCHAR(50) NOT NULL DEFAULT 'planned',
+            completion_rate DOUBLE PRECISION,
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.training_records (
+            id UUID PRIMARY KEY,
+            program_id UUID NOT NULL REFERENCES ehs.training_programs(id),
+            employee_id VARCHAR(100) NOT NULL,
+            employee_name VARCHAR(255) NOT NULL,
+            enrollment_date TIMESTAMPTZ NOT NULL,
+            completion_date TIMESTAMPTZ,
+            score DOUBLE PRECISION,
+            certificate_no VARCHAR(100),
+            certificate_expiry TIMESTAMPTZ,
+            status VARCHAR(50) NOT NULL DEFAULT 'enrolled',
+            remarks TEXT,
+            created_by VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 新增审计日志表
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS ehs.audit_logs (
+            id UUID PRIMARY KEY,
+            module VARCHAR(100) NOT NULL,
+            action VARCHAR(100) NOT NULL,
+            resource_type VARCHAR(100) NOT NULL,
+            resource_id UUID,
+            user_id VARCHAR(255),
+            user_name VARCHAR(255),
+            old_values JSONB,
+            new_values JSONB,
+            ip_address VARCHAR(50),
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 创建索引
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_hazards_status ON ehs.safety_hazards(status)"#)
         .execute(pool)
         .await?;
@@ -207,6 +527,54 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
         .await?;
 
     sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_drills_plan_id ON ehs.drill_records(plan_id)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_monitoring_points_status ON ehs.monitoring_points(status)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_environmental_data_point_id ON ehs.environmental_data(point_id)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_environmental_alerts_status ON ehs.environmental_alerts(status)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_health_records_employee_id ON ehs.health_records(employee_id)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_health_checkups_employee_id ON ehs.health_checkups(employee_id)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_vaccination_records_employee_id ON ehs.vaccination_records(employee_id)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_safety_incidents_status ON ehs.safety_incidents(status)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_risk_assessments_status ON ehs.risk_assessments(status)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_risk_controls_assessment_id ON ehs.risk_controls(assessment_id)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_training_programs_status ON ehs.training_programs(status)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_training_records_program_id ON ehs.training_records(program_id)"#)
+        .execute(pool)
+        .await?;
+
+    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_ehs_audit_logs_module ON ehs.audit_logs(module)"#)
         .execute(pool)
         .await?;
 

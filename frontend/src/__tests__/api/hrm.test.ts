@@ -2,23 +2,23 @@ import { hrmApi } from '../../api/hrm';
 import apiClient from '../../api/client';
 
 // 模拟 apiClient
-jest.mock('../../api/client', () => ({
+vi.mock('../../api/client', () => ({
   __esModule: true,
   default: {
     hrm: {
-      get: jest.fn(),
-      post: jest.fn(),
-      put: jest.fn(),
-      delete: jest.fn(),
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
     },
   },
 }));
 
-const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
+const mockApiClient = apiClient as vi.Mock<typeof apiClient>;
 
 describe('HRM API Module', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('hrmApi', () => {

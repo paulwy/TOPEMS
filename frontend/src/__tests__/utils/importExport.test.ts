@@ -48,30 +48,27 @@ describe('importExport utils', () => {
 
   describe('downloadBase64File', () => {
     test('should create download link and click it', () => {
-      // Mock document.createElement and appendChild/removeChild
-      const mockLink = {
-        href: '',
-        download: '',
-        click: jest.fn(),
-      };
-      jest.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
-      jest.spyOn(document.body, 'appendChild').mockImplementation();
-      jest.spyOn(document.body, 'removeChild').mockImplementation();
+      // Create a real anchor element and spy on its methods
+      const mockLink = document.createElement('a');
+      const clickSpy = vi.spyOn(mockLink, 'click').mockImplementation(() => {});
+      const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(mockLink);
+      const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((() => {}) as any);
+      const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((() => {}) as any);
 
       const base64Data = 'dGVzdCBjb250ZW50'; // base64 of 'test content'
       const filename = 'test.txt';
 
       downloadBase64File(base64Data, filename);
 
-      expect(document.createElement).toHaveBeenCalledWith('a');
+      expect(createElementSpy).toHaveBeenCalledWith('a');
       expect(mockLink.href).toContain(base64Data);
       expect(mockLink.download).toBe(filename);
-      expect(mockLink.click).toHaveBeenCalled();
-      expect(document.body.appendChild).toHaveBeenCalled();
-      expect(document.body.removeChild).toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
+      expect(appendChildSpy).toHaveBeenCalled();
+      expect(removeChildSpy).toHaveBeenCalled();
 
       // Restore spies
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
   });
 });
