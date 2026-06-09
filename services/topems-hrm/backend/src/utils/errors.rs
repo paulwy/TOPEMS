@@ -101,3 +101,21 @@ impl IntoResponse for HrmError {
 
 #[allow(dead_code)]
 pub type Result<T> = std::result::Result<T, HrmError>;
+
+// 从 HrmError 转换为 TopemsError（用于统一响应）
+impl From<HrmError> for topems_shared::error::TopemsError {
+    fn from(err: HrmError) -> Self {
+        match err {
+            HrmError::DatabaseError(e) => topems_shared::error::TopemsError::DatabaseQuery(e.to_string()),
+            HrmError::NotFound(msg) => topems_shared::error::TopemsError::ResourceNotFound(msg),
+            HrmError::BadRequest(msg) => topems_shared::error::TopemsError::ValidationFailed(msg),
+            HrmError::Unauthorized => topems_shared::error::TopemsError::Unauthorized,
+            HrmError::Forbidden => topems_shared::error::TopemsError::PermissionDenied {
+                required: "需要权限".to_string(),
+            },
+            HrmError::ValidationError(msg) => topems_shared::error::TopemsError::ValidationFailed(msg),
+            HrmError::InternalError(msg) => topems_shared::error::TopemsError::Internal(msg),
+            HrmError::Conflict(msg) => topems_shared::error::TopemsError::ResourceAlreadyExists(msg),
+        }
+    }
+}

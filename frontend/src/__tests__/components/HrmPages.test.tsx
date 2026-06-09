@@ -22,7 +22,7 @@ vi.mock('../../api/hrm', () => ({
 
 // 模拟 DataTable 组件以避免测试问题
 vi.mock('../../components/DataTable', () => ({
-  DataTable: () => <div data-testid="data-table">Mock Data Table</div>,
+  DataTable: () => <div data-testid='data-table'>Mock Data Table</div>,
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {

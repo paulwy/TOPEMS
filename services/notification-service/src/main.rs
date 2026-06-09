@@ -13,6 +13,9 @@ use uuid::Uuid;
 use sqlx::PgPool;
 use dotenv;
 use serde::{Deserialize, Serialize};
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{default_registry, Gauge};
+
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims, init_logging,
     ServiceHealth, SimpleHealthConfig, simple_health_check, get_api_info_handler
@@ -148,11 +151,21 @@ async fn main() {
 
     let cors = create_cors_layer();
 
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let custom_gauge = Gauge::new(
+        "topems_notification_custom_metric",
+        "This is a custom metric for TOPEMS Notification Service",
+    ).unwrap();
+    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    custom_gauge.set(42.0);
+    tracing::info!("✅ Prometheus 监控已初始化");
+
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("notification-service")))
         .route("/api/info", get(|| get_api_info_handler("notification-service")))
+        .route("/metrics", get(move || async move { metric_handle.render() }))
         // WebSocket 路由 - 不需要认证，用户通过订阅消息标识自己
         .route("/ws/notifications", get(ws_handler));
 
@@ -193,6 +206,7 @@ async fn main() {
         .merge(public_routes)
         .merge(protected_routes)
         .layer(cors)
+        .layer(prometheus_layer)
         .with_state(state);
 
     let port = std::env::var("SERVER_PORT")

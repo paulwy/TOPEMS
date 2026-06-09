@@ -7,6 +7,8 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
@@ -53,10 +55,18 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
+    let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();
+
     let health_router = Router::new()
-        .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
+        .route("/metrics", get(move || async move {
+            let encoder = TextEncoder::new();
+            let metrics = prometheus::gather();
+            let mut buffer = Vec::new();
+            encoder.encode(&metrics, &mut buffer).unwrap();
+            String::from_utf8(buffer).unwrap()
+        }))
         .with_state(api_state.clone());
 
     let protected_routes = api::create_routes()
@@ -70,6 +80,7 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-hrm"))
+        .layer(prometheus_layer)
         .layer(cors);
 
     let port = env::var("SERVER_PORT").or_else(|_| env::var("PORT")).unwrap_or_else(|_| "8011".to_string());

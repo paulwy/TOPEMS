@@ -45,7 +45,7 @@ async fn list_assets(
         "
         SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
-        FROM erp.assets
+        FROM assets
         WHERE ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -63,7 +63,7 @@ async fn list_assets(
         Ok(assets) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 "
-                SELECT COUNT(*) FROM erp.assets
+                SELECT COUNT(*) FROM assets
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 ",
@@ -105,7 +105,7 @@ async fn create_asset(
 
     let result = sqlx::query_as::<_, Asset>(
         "
-        INSERT INTO erp.assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
+        INSERT INTO assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                                  serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'in_use', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
         RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
@@ -185,7 +185,7 @@ async fn get_asset(
         "
         SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
-        FROM erp.assets WHERE id = $1
+        FROM assets WHERE id = $1
         ",
     )
     .bind(id)
@@ -211,7 +211,7 @@ async fn update_asset(
     let existing = sqlx::query_as::<_, Asset>(
         "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
-           FROM erp.assets WHERE id = $1",
+           FROM assets WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -246,7 +246,7 @@ async fn update_asset(
 
     let result = sqlx::query_as::<_, Asset>(
         "
-        UPDATE erp.assets SET
+        UPDATE assets SET
             name = $2, category = $3, brand = $4, model = $5, purchase_date = $6, purchase_amount = $7, location = $8, responsible_id = $9, status = $10, updated_at = $11,
             serial_number = $12, manufacturer = $13, rated_power = $14, rated_voltage = $15, rated_current = $16, specifications = $17, image_url = $18, department = $19
         WHERE id = $1
@@ -322,7 +322,7 @@ async fn delete_asset(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.assets WHERE id = $1")
+    let result = sqlx::query("DELETE FROM assets WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -37,7 +37,7 @@ vi.mock('../../hooks/useNotification', () => ({
 }));
 
 vi.mock('../../components/NotificationContainer', () => ({
-  NotificationContainer: () => <div data-testid="notification-container" />,
+  NotificationContainer: () => <div data-testid='notification-container' />,
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {

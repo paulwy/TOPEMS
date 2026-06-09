@@ -4,7 +4,7 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -54,7 +54,7 @@ async fn list_rooms(
     let result = sqlx::query_as::<_, MeetingRoom>(
         r#"
         SELECT id, name, capacity, location, facilities, status, created_at, updated_at
-        FROM erp.meeting_rooms
+        FROM meeting_rooms
         WHERE ($1::text IS NULL OR name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -72,7 +72,7 @@ async fn list_rooms(
         Ok(rooms) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.meeting_rooms
+                SELECT COUNT(*) FROM meeting_rooms
                 WHERE ($1::text IS NULL OR name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -110,7 +110,7 @@ async fn create_room(
 
     let result = sqlx::query_as::<_, MeetingRoom>(
         r#"
-        INSERT INTO erp.meeting_rooms (id, name, capacity, location, facilities, status, created_at, updated_at)
+        INSERT INTO meeting_rooms (id, name, capacity, location, facilities, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, 'available', $6, $7)
         RETURNING id, name, capacity, location, facilities, status, created_at, updated_at
         "#,
@@ -174,7 +174,7 @@ async fn get_room(
     let result = sqlx::query_as::<_, MeetingRoom>(
         r#"
         SELECT id, name, capacity, location, facilities, status, created_at, updated_at
-        FROM erp.meeting_rooms WHERE id = $1
+        FROM meeting_rooms WHERE id = $1
         "#,
     )
     .bind(id)
@@ -198,7 +198,7 @@ async fn update_room(
     Json(req): Json<UpdateMeetingRoomRequest>,
 ) -> Json<ApiResponse<MeetingRoom>> {
     let existing = sqlx::query_as::<_, MeetingRoom>(
-        "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM erp.meeting_rooms WHERE id = $1",
+        "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -221,7 +221,7 @@ async fn update_room(
 
     let result = sqlx::query_as::<_, MeetingRoom>(
         r#"
-        UPDATE erp.meeting_rooms SET
+        UPDATE meeting_rooms SET
             name = $2, capacity = $3, location = $4, facilities = $5, status = $6, updated_at = $7
         WHERE id = $1
         RETURNING id, name, capacity, location, facilities, status, created_at, updated_at
@@ -283,7 +283,7 @@ async fn delete_room(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.meeting_rooms WHERE id = $1")
+    let result = sqlx::query("DELETE FROM meeting_rooms WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -348,7 +348,7 @@ async fn list_bookings(
     let result = sqlx::query_as::<_, MeetingBooking>(
         r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
-        FROM erp.meeting_bookings
+        FROM meeting_bookings
         WHERE ($1::text IS NULL OR title ILIKE $1 OR room_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY start_time DESC
@@ -366,7 +366,7 @@ async fn list_bookings(
         Ok(bookings) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.meeting_bookings
+                SELECT COUNT(*) FROM meeting_bookings
                 WHERE ($1::text IS NULL OR title ILIKE $1 OR room_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -400,7 +400,7 @@ async fn create_booking(
     }
 
     let room_result = sqlx::query_as::<_, MeetingRoom>(
-        "SELECT id, name FROM erp.meeting_rooms WHERE id = $1 AND status = 'available'",
+        "SELECT id, name FROM meeting_rooms WHERE id = $1 AND status = 'available'",
     )
     .bind(&req.room_id)
     .fetch_optional(&state.db)
@@ -414,7 +414,7 @@ async fn create_booking(
 
     let overlapping = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM erp.meeting_bookings
+        SELECT COUNT(*) FROM meeting_bookings
         WHERE room_id = $1 AND status = 'confirmed'
           AND ((start_time < $2 AND end_time > $2) OR (start_time < $3 AND end_time > $3))
         "#,
@@ -436,7 +436,7 @@ async fn create_booking(
 
     let result = sqlx::query_as::<_, MeetingBooking>(
         r#"
-        INSERT INTO erp.meeting_bookings (id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at)
+        INSERT INTO meeting_bookings (id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8, $9)
         RETURNING id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
         "#,
@@ -502,7 +502,7 @@ async fn get_booking(
     let result = sqlx::query_as::<_, MeetingBooking>(
         r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
-        FROM erp.meeting_bookings WHERE id = $1
+        FROM meeting_bookings WHERE id = $1
         "#,
     )
     .bind(id)
@@ -526,7 +526,7 @@ async fn update_booking(
     Json(req): Json<UpdateMeetingBookingRequest>,
 ) -> Json<ApiResponse<MeetingBooking>> {
     let existing = sqlx::query_as::<_, MeetingBooking>(
-        "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM erp.meeting_bookings WHERE id = $1",
+        "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM meeting_bookings WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -549,7 +549,7 @@ async fn update_booking(
 
     let result = sqlx::query_as::<_, MeetingBooking>(
         r#"
-        UPDATE erp.meeting_bookings SET
+        UPDATE meeting_bookings SET
             title = $2, organizer = $3, start_time = $4, end_time = $5, status = $6, updated_at = $7
         WHERE id = $1
         RETURNING id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
@@ -611,7 +611,7 @@ async fn delete_booking(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.meeting_bookings WHERE id = $1")
+    let result = sqlx::query("DELETE FROM meeting_bookings WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -669,7 +669,7 @@ async fn get_room_bookings(
     let result = sqlx::query_as::<_, MeetingBooking>(
         r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
-        FROM erp.meeting_bookings WHERE room_id = $1 ORDER BY start_time ASC
+        FROM meeting_bookings WHERE room_id = $1 ORDER BY start_time ASC
         "#,
     )
     .bind(id)

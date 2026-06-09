@@ -77,6 +77,7 @@ COMMENT ON COLUMN hrm.departments.manager_id IS '部门负责人ID（关联员�
 CREATE TABLE IF NOT EXISTS hrm.positions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL,
+    company_id UUID REFERENCES hrm.companies(id) ON DELETE SET NULL,
     department_id UUID REFERENCES hrm.departments(id) ON DELETE SET NULL,
     name VARCHAR(255) NOT NULL,
     code VARCHAR(50),
@@ -95,6 +96,7 @@ CREATE TABLE IF NOT EXISTS hrm.positions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_positions_organization_id ON hrm.positions(organization_id);
+CREATE INDEX IF NOT EXISTS idx_positions_company_id ON hrm.positions(company_id);
 CREATE INDEX IF NOT EXISTS idx_positions_department_id ON hrm.positions(department_id);
 CREATE INDEX IF NOT EXISTS idx_positions_status ON hrm.positions(status);
 CREATE INDEX IF NOT EXISTS idx_positions_code ON hrm.positions(code);
@@ -524,35 +526,37 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON hrm.audit_logs(created_a
 COMMENT ON TABLE hrm.audit_logs IS '审计日志表';
 
 -- ============================================
--- 插入默认数据（种子数据）
+-- 插入最小种子数据
+-- 
+-- 【生产环境说明】
+-- 此迁移脚本仅包含系统运行所需的最小数据。
+-- 
+-- 以下数据应由管理员通过初始化向导创建：
+--   - 公司详细信息（除默认公司外的其他公司）
+--   - 部门结构
+--   - 职位信息
+--   - 员工信息
+--   - 薪资、考勤、绩效等业务数据
+-- 
+-- 敏感数据（如管理员账户）应在单独的安全迁移或初始化脚本中处理。
 -- ============================================
 
--- 插入默认公司（示例）
-INSERT INTO hrm.companies (id, organization_id, name, short_name, registration_number, status)
-VALUES
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', 'TOPEMS科技有限公司', 'TOPEMS', 'REG001', 'active'),
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', 'TOPEMS研究院', '研究院', 'REG002', 'active')
-ON CONFLICT DO NOTHING;
+-- 插入默认公司（最小数据）
+-- 注意：仅提供最基本的标识信息，详细数据由管理员补全
+DO $$
+DECLARE
+    v_org_id UUID := '00000000-0000-0000-0000-000000000001';
+    v_company_id UUID := '00000000-0000-0000-0000-000000000001';
+BEGIN
+    INSERT INTO hrm.companies (id, organization_id, name, status, created_at, updated_at)
+    VALUES (v_company_id, v_org_id, '我的公司', 'active', NOW(), NOW())
+    ON CONFLICT (id) DO NOTHING;
+END $$;
 
--- 插入默认部门（示例）
-INSERT INTO hrm.departments (id, organization_id, name, code, status)
-VALUES
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '人力资源部', 'HR', 'active'),
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '技术部', 'TECH', 'active'),
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '财务部', 'FIN', 'active'),
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '市场部', 'MARKET', 'active'),
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '研发部', 'RD', 'active')
-ON CONFLICT DO NOTHING;
-
--- 插入默认职位（示例）
-INSERT INTO hrm.positions (id, organization_id, name, code, level, status)
-VALUES
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '软件工程师', 'SE', 3, 'active'),
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '高级软件工程师', 'SSE', 4, 'active'),
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '技术经理', 'TM', 5, 'active'),
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '人事专员', 'HR_SPEC', 2, 'active'),
-    (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', '财务专员', 'FIN_SPEC', 2, 'active')
-ON CONFLICT DO NOTHING;
+-- 注意：不要在此迁移脚本中添加：
+--   - 部门数据（应由管理员初始化向导创建）
+--   - 职位数据（应关联到部门后创建）
+--   - 员工数据（包含敏感信息，应单独处理）
 
 -- ============================================
 -- 创建更新时间触发器函数

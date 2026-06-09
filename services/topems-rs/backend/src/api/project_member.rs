@@ -13,8 +13,8 @@ use crate::models::project_member::{
 };
 use topems_shared::response::ApiResponse;
 
-pub fn create_routes() -> Router<Arc<super::ApiState>> {
-    Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
         .route("/api/v1/members", post(create_member))
         .route(
             "/api/v1/members/project/{project_id}",
@@ -25,7 +25,7 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
 }
 
 pub async fn create_member(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Json(payload): Json<CreateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
     let request_id = Uuid::new_v4();
@@ -111,7 +111,7 @@ pub async fn create_member(
 }
 
 pub async fn get_project_members(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
     let request_id = Uuid::new_v4();
@@ -158,7 +158,7 @@ pub async fn get_project_members(
 }
 
 pub async fn update_member(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
@@ -250,7 +250,7 @@ pub async fn update_member(
 }
 
 pub async fn delete_member(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let request_id = Uuid::new_v4();

@@ -14,6 +14,8 @@ use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{default_registry, Gauge};
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer,
@@ -73,10 +75,20 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let custom_gauge = Gauge::new(
+        "topems_mail_custom_metric",
+        "This is a custom metric for TOPEMS-Mail",
+    ).unwrap();
+    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    custom_gauge.set(42.0);
+    tracing::info!("✅ Prometheus 监控已初始化");
+
     let health_router = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
+        .route("/metrics", get(move || async move { metric_handle.render() }))
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
@@ -90,7 +102,8 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-mail"))
-        .layer(cors);
+        .layer(cors)
+        .layer(prometheus_layer);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8054".to_string());
     let addr = format!("0.0.0.0:{}", port);

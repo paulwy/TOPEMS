@@ -21,7 +21,7 @@ use crate::api::ApiState;
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/example/employees", get(list_employees_from_hrm))
-        .route("/api/v1/example/employees/:id", get(get_employee_from_hrm))
+        .route("/api/v1/example/employees/{id}", get(get_employee_from_hrm))
         .route("/api/v1/example/departments", get(list_departments_from_hrm))
         .route("/api/v1/example/companies", get(list_companies_from_hrm))
 }

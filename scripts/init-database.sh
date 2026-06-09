@@ -64,7 +64,7 @@ echo ""
 
 # 初始化权限表结构
 echo "🔐 初始化权限管理表结构..."
-PERMISSION_SCHEMA_FILE="../platform/topems-iam/backend/db/permission_schema.sql"
+PERMISSION_SCHEMA_FILE="../services/topems-iam/backend/db/permission_schema.sql"
 
 if [ -f "$PERMISSION_SCHEMA_FILE" ]; then
     psql -d topems -U topems -f "$PERMISSION_SCHEMA_FILE" > /dev/null 2>&1
@@ -81,7 +81,7 @@ fi
 
 # 初始化权限数据
 echo "🔑 初始化权限和角色数据..."
-PERMISSION_SEED_FILE="../platform/topems-iam/backend/db/permission_seed.sql"
+PERMISSION_SEED_FILE="../services/topems-iam/backend/db/permission_seed.sql"
 
 if [ -f "$PERMISSION_SEED_FILE" ]; then
     psql -d topems -U topems -f "$PERMISSION_SEED_FILE" > /dev/null 2>&1

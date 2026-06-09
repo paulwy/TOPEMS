@@ -10,11 +10,20 @@ use axum::{
 };
 use sqlx::postgres::PgPoolOptions;
 use std::env;
+use std::time::Instant;
 
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{default_registry, Gauge};
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
     ServiceHealth, build_health_response, create_api_info_router
 };
+
+static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+
+fn get_uptime() -> u64 {
+    START_TIME.get_or_init(Instant::now).elapsed().as_secs()
+}
 
 use api::{
     create_supplier_routes, create_category_routes, create_evaluation_routes,
@@ -44,6 +53,16 @@ async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
     init_logging("topems-srm");
+    START_TIME.get_or_init(Instant::now);
+
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let custom_gauge = Gauge::new(
+        "topems_srm_custom_metric",
+        "This is a custom metric for TOPEMS-SRM",
+    ).unwrap();
+    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    custom_gauge.set(42.0);
+    tracing::info!("✅ Prometheus 监控已初始化");
 
     tracing::info!("🚀 TOPEMS-SRM 供应商关系管理系统启动中...");
 
@@ -70,6 +89,8 @@ async fn main() -> Result<()> {
 
     let health_router = Router::new()
         .route("/health", get(health_check))
+        .route("/api/v1/health/detailed", get(health_check_detailed))
+        .route("/metrics", get(move || async move { metric_handle.render() }))
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
@@ -88,7 +109,8 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-srm"))
-        .layer(cors);
+        .layer(cors)
+        .layer(prometheus_layer);
 
     let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8041".to_string());
     let addr = format!("0.0.0.0:{}", port);
@@ -105,6 +127,75 @@ async fn main() -> Result<()> {
 
 async fn health_check() -> ServiceHealth {
     build_health_response("topems-srm", true)
+}
+
+#[derive(Debug, Clone, serde::Serialize, PartialEq)]
+enum HealthStatus {
+    #[serde(rename = "healthy")]
+    Healthy,
+    #[serde(rename = "degraded")]
+    Degraded,
+    #[serde(rename = "unhealthy")]
+    Unhealthy,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+struct DependencyHealth {
+    name: String,
+    status: HealthStatus,
+    message: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+struct DetailedHealth {
+    service_name: String,
+    status: HealthStatus,
+    message: String,
+    timestamp: String,
+    uptime: Option<u64>,
+    dependencies: Option<Vec<DependencyHealth>>,
+    response_time_ms: Option<u64>,
+    last_check: Option<String>,
+}
+
+async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<DetailedHealth>> {
+    let mut dependencies = Vec::new();
+
+    let db_result = sqlx::query("SELECT 1").fetch_one(&state.pool).await;
+    let db_health = match db_result {
+        Ok(_) => DependencyHealth {
+            name: "database".to_string(),
+            status: HealthStatus::Healthy,
+            message: "PostgreSQL 数据库连接正常".to_string(),
+        },
+        Err(e) => DependencyHealth {
+            name: "database".to_string(),
+            status: HealthStatus::Unhealthy,
+            message: format!("数据库连接失败: {}", e),
+        },
+    };
+    dependencies.push(db_health);
+
+    let status = if dependencies.iter().all(|d| d.status == HealthStatus::Healthy) {
+        HealthStatus::Healthy
+    } else if dependencies.iter().any(|d| d.status == HealthStatus::Unhealthy) {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let health = DetailedHealth {
+        service_name: "topems-srm".to_string(),
+        status,
+        message: "健康检查完成".to_string(),
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        uptime: Some(get_uptime()),
+        dependencies: Some(dependencies),
+        response_time_ms: None,
+        last_check: Some(chrono::Utc::now().to_rfc3339()),
+    };
+
+    Json(ApiResponse::success(health, "健康检查完成"))
 }
 
 // Statistics routes

@@ -52,7 +52,7 @@ async fn list_expenses(
     let result = sqlx::query_as::<_, Expense>(
         r#"
         SELECT id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, approver_id, approved_at, reimbursed_at, created_at, updated_at
-        FROM erp.expenses
+        FROM expenses
         WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -70,7 +70,7 @@ async fn list_expenses(
         Ok(expenses) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.expenses
+                SELECT COUNT(*) FROM expenses
                 WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -104,7 +104,7 @@ async fn create_expense(
 
     let result = sqlx::query_as::<_, Expense>(
         r#"
-        INSERT INTO erp.expenses (id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, created_at, updated_at)
+        INSERT INTO expenses (id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11)
         RETURNING id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, approver_id, approved_at, reimbursed_at, created_at, updated_at
         "#,
@@ -172,7 +172,7 @@ async fn get_expense(
     let result = sqlx::query_as::<_, Expense>(
         r#"
         SELECT id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, approver_id, approved_at, reimbursed_at, created_at, updated_at
-        FROM erp.expenses WHERE id = $1
+        FROM expenses WHERE id = $1
         "#,
     )
     .bind(id)
@@ -196,7 +196,7 @@ async fn update_expense(
     Json(req): Json<UpdateExpenseRequest>,
 ) -> Json<ApiResponse<Expense>> {
     let existing = sqlx::query_as::<_, Expense>(
-        "SELECT id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, approver_id, approved_at, reimbursed_at, created_at, updated_at FROM erp.expenses WHERE id = $1",
+        "SELECT id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, approver_id, approved_at, reimbursed_at, created_at, updated_at FROM expenses WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -225,7 +225,7 @@ async fn update_expense(
 
     let result = sqlx::query_as::<_, Expense>(
         r#"
-        UPDATE erp.expenses SET
+        UPDATE expenses SET
             applicant_name = $2, department_id = $3, expense_type = $4, amount = $5, description = $6, expense_date = $7, receipt_count = $8, status = $9, approver_id = $10, approved_at = $11, reimbursed_at = $12, updated_at = $13
         WHERE id = $1
         RETURNING id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, approver_id, approved_at, reimbursed_at, created_at, updated_at
@@ -293,7 +293,7 @@ async fn delete_expense(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.expenses WHERE id = $1")
+    let result = sqlx::query("DELETE FROM expenses WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -358,7 +358,7 @@ async fn list_budgets(
     let result = sqlx::query_as::<_, Budget>(
         r#"
         SELECT id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at
-        FROM erp.budgets
+        FROM budgets
         WHERE ($1::text IS NULL OR budget_type ILIKE $1 OR fiscal_year ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -376,7 +376,7 @@ async fn list_budgets(
         Ok(budgets) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.budgets
+                SELECT COUNT(*) FROM budgets
                 WHERE ($1::text IS NULL OR budget_type ILIKE $1 OR fiscal_year ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -413,7 +413,7 @@ async fn create_budget(
 
     let result = sqlx::query_as::<_, Budget>(
         r#"
-        INSERT INTO erp.budgets (id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at)
+        INSERT INTO budgets (id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
         RETURNING id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at
         "#,
@@ -480,7 +480,7 @@ async fn get_budget(
     let result = sqlx::query_as::<_, Budget>(
         r#"
         SELECT id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at
-        FROM erp.budgets WHERE id = $1
+        FROM budgets WHERE id = $1
         "#,
     )
     .bind(id)
@@ -504,7 +504,7 @@ async fn update_budget(
     Json(req): Json<UpdateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
     let existing = sqlx::query_as::<_, Budget>(
-        "SELECT id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at FROM erp.budgets WHERE id = $1",
+        "SELECT id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at FROM budgets WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -530,7 +530,7 @@ async fn update_budget(
 
     let result = sqlx::query_as::<_, Budget>(
         r#"
-        UPDATE erp.budgets SET
+        UPDATE budgets SET
             department_id = $2, budget_type = $3, fiscal_year = $4, total_budget = $5, used_amount = $6, remaining_amount = $7, usage_rate = $8, status = $9, updated_at = $10
         WHERE id = $1
         RETURNING id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at
@@ -595,7 +595,7 @@ async fn delete_budget(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.budgets WHERE id = $1")
+    let result = sqlx::query("DELETE FROM budgets WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -660,7 +660,7 @@ async fn list_receivables(
     let result = sqlx::query_as::<_, Receivable>(
         r#"
         SELECT id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at
-        FROM erp.receivables
+        FROM receivables
         WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -678,7 +678,7 @@ async fn list_receivables(
         Ok(receivables) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.receivables
+                SELECT COUNT(*) FROM receivables
                 WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -712,7 +712,7 @@ async fn create_receivable(
 
     let result = sqlx::query_as::<_, Receivable>(
         r#"
-        INSERT INTO erp.receivables (id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at)
+        INSERT INTO receivables (id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', 0.0, $8, $9)
         RETURNING id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at
         "#,
@@ -778,7 +778,7 @@ async fn get_receivable(
     let result = sqlx::query_as::<_, Receivable>(
         r#"
         SELECT id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at
-        FROM erp.receivables WHERE id = $1
+        FROM receivables WHERE id = $1
         "#,
     )
     .bind(id)
@@ -802,7 +802,7 @@ async fn update_receivable(
     Json(req): Json<UpdateReceivableRequest>,
 ) -> Json<ApiResponse<Receivable>> {
     let existing = sqlx::query_as::<_, Receivable>(
-        "SELECT id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at FROM erp.receivables WHERE id = $1",
+        "SELECT id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at FROM receivables WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -827,7 +827,7 @@ async fn update_receivable(
 
     let result = sqlx::query_as::<_, Receivable>(
         r#"
-        UPDATE erp.receivables SET
+        UPDATE receivables SET
             customer_name = $2, project_name = $3, amount = $4, invoice_date = $5, due_date = $6, status = $7, received_amount = $8, updated_at = $9
         WHERE id = $1
         RETURNING id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at
@@ -891,7 +891,7 @@ async fn delete_receivable(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.receivables WHERE id = $1")
+    let result = sqlx::query("DELETE FROM receivables WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -956,7 +956,7 @@ async fn list_payables(
     let result = sqlx::query_as::<_, Payable>(
         r#"
         SELECT id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at
-        FROM erp.payables
+        FROM payables
         WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -974,7 +974,7 @@ async fn list_payables(
         Ok(payables) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.payables
+                SELECT COUNT(*) FROM payables
                 WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -1008,7 +1008,7 @@ async fn create_payable(
 
     let result = sqlx::query_as::<_, Payable>(
         r#"
-        INSERT INTO erp.payables (id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at)
+        INSERT INTO payables (id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', 0.0, $8, $9)
         RETURNING id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at
         "#,
@@ -1074,7 +1074,7 @@ async fn get_payable(
     let result = sqlx::query_as::<_, Payable>(
         r#"
         SELECT id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at
-        FROM erp.payables WHERE id = $1
+        FROM payables WHERE id = $1
         "#,
     )
     .bind(id)
@@ -1098,7 +1098,7 @@ async fn update_payable(
     Json(req): Json<UpdatePayableRequest>,
 ) -> Json<ApiResponse<Payable>> {
     let existing = sqlx::query_as::<_, Payable>(
-        "SELECT id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at FROM erp.payables WHERE id = $1",
+        "SELECT id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at FROM payables WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -1123,7 +1123,7 @@ async fn update_payable(
 
     let result = sqlx::query_as::<_, Payable>(
         r#"
-        UPDATE erp.payables SET
+        UPDATE payables SET
             supplier_name = $2, category = $3, amount = $4, invoice_date = $5, due_date = $6, status = $7, paid_amount = $8, updated_at = $9
         WHERE id = $1
         RETURNING id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at
@@ -1187,7 +1187,7 @@ async fn delete_payable(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.payables WHERE id = $1")
+    let result = sqlx::query("DELETE FROM payables WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -4,7 +4,7 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -49,7 +49,7 @@ async fn list_announcements(
     let result = sqlx::query_as::<_, Announcement>(
         r#"
         SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
-        FROM erp.announcements
+        FROM announcements
         WHERE ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR priority = $3)
@@ -69,7 +69,7 @@ async fn list_announcements(
         Ok(announcements) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.announcements
+                SELECT COUNT(*) FROM announcements
                 WHERE ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR priority = $3)
@@ -113,7 +113,7 @@ async fn create_announcement(
 
     let result = sqlx::query_as::<_, Announcement>(
         r#"
-        INSERT INTO erp.announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at)
+        INSERT INTO announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8)
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         "#,
@@ -178,7 +178,7 @@ async fn get_announcement(
     let result = sqlx::query_as::<_, Announcement>(
         r#"
         SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
-        FROM erp.announcements WHERE id = $1
+        FROM announcements WHERE id = $1
         "#,
     )
     .bind(id)
@@ -202,7 +202,7 @@ async fn update_announcement(
     Json(req): Json<UpdateAnnouncementRequest>,
 ) -> Json<ApiResponse<Announcement>> {
     let existing = sqlx::query_as::<_, Announcement>(
-        "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM erp.announcements WHERE id = $1",
+        "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -226,7 +226,7 @@ async fn update_announcement(
 
     let result = sqlx::query_as::<_, Announcement>(
         r#"
-        UPDATE erp.announcements SET
+        UPDATE announcements SET
             title = $2, content = $3, author = $4, status = $5, priority = $6, expire_at = $7, updated_at = $8
         WHERE id = $1
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
@@ -289,7 +289,7 @@ async fn delete_announcement(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.announcements WHERE id = $1")
+    let result = sqlx::query("DELETE FROM announcements WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -349,7 +349,7 @@ async fn publish_announcement(
 
     let result = sqlx::query_as::<_, Announcement>(
         r#"
-        UPDATE erp.announcements SET
+        UPDATE announcements SET
             status = 'published', publish_at = $2, updated_at = $3
         WHERE id = $1 AND status = 'draft'
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
@@ -416,7 +416,7 @@ async fn unpublish_announcement(
 
     let result = sqlx::query_as::<_, Announcement>(
         r#"
-        UPDATE erp.announcements SET
+        UPDATE announcements SET
             status = 'draft', publish_at = NULL, updated_at = $2
         WHERE id = $1 AND status = 'published'
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at

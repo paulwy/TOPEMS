@@ -34,9 +34,7 @@ vi.mock('../../store', () => ({
 }));
 
 vi.mock('../../components/HrmLayout', () => ({
-  HrmLayout: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="hrm-layout">{children}</div>
-  ),
+  HrmLayout: ({ children }: { children: React.ReactNode }) => <div data-testid='hrm-layout'>{children}</div>,
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {

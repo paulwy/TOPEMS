@@ -60,8 +60,8 @@ struct ListQueryParams {
     page_size: Option<i32>,
 }
 
-pub fn create_routes() -> axum::Router<Arc<super::ApiState>> {
-    axum::Router::new()
+pub fn create_routes() -> axum::Router<super::ApiState> {
+    axum::Router::<super::ApiState>::new()
         .route("/api/v1/ai/analyses", axum::routing::get(list_analyses))
         .route("/api/v1/ai/analyses", axum::routing::post(create_analysis))
         .route("/api/v1/ai/analyses/{id}", axum::routing::get(get_analysis))
@@ -73,7 +73,7 @@ pub fn create_routes() -> axum::Router<Arc<super::ApiState>> {
 }
 
 async fn list_analyses(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<ListQueryParams>,
 ) -> impl IntoResponse {
     let page = params.page.unwrap_or(1);
@@ -119,7 +119,7 @@ async fn list_analyses(
 }
 
 async fn create_analysis(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Json(request): Json<CreateAnalysisRequest>,
 ) -> impl IntoResponse {
     let ai_service_url = env::var("AI_SERVICE_URL")
@@ -167,7 +167,7 @@ async fn create_analysis(
     }
 }
 
-async fn get_analysis(State(state): State<Arc<super::ApiState>>, Path(id): Path<Uuid>) -> impl IntoResponse {
+async fn get_analysis(State(state): State<super::ApiState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     let result: Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
          FROM rs.ai_analyses WHERE id = $1"
@@ -210,7 +210,7 @@ async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
 }
 
 async fn get_entity_analyses(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
     let result: Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(

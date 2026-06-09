@@ -15,13 +15,13 @@ NC='\033[0m'
 
 # 服务配置 (使用空格分隔，格式: 服务名 路径 端口)
 SERVICES_CONFIG="
-iam platform/topems-iam/backend 8000
-doc platform/topems-doc/backend 8001
+iam services/topems-iam/backend 8000
+doc services/topems-doc/backend 8001
 pm services/topems-pm/backend 8002
 notification services/notification-service 8003
 integration services/topems-integration/backend 8004
 portal services/topems-portal/backend 8005
-flow platform/topems-flow/backend 8006
+flow services/topems-flow/backend 8006
 erp services/topems-erp/backend 8010
 hrm services/topems-hrm/backend 8011
 crm services/topems-crm/backend 8012

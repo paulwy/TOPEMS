@@ -26,9 +26,9 @@ log_step() { echo -e "${BLUE}[STEP]${NC} $1"; }
 
 # 平台核心服务
 PLATFORM_SERVICES=(
-    "platform/topems-iam/backend:iam-service"
-    "platform/topems-doc/backend:doc-service"
-    "platform/topems-flow/backend:flow-service"
+    "services/topems-iam/backend:iam-service"
+    "services/topems-doc/backend:doc-service"
+    "services/topems-flow/backend:flow-service"
 )
 
 # 业务服务

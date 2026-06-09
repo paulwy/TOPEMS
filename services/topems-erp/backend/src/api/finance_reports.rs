@@ -169,9 +169,9 @@ async fn balance_sheet(
             s.code,
             s.name,
             COALESCE(SUM(CASE WHEN vi.debit_amount > 0 THEN vi.debit_amount ELSE -vi.credit_amount END), 0.0) as amount
-        FROM erp.accounting_subjects s
-        LEFT JOIN erp.voucher_items vi ON vi.subject_code = s.code
-        LEFT JOIN erp.financial_vouchers v ON vi.voucher_id = v.id
+        FROM accounting_subjects s
+        LEFT JOIN voucher_items vi ON vi.subject_code = s.code
+        LEFT JOIN financial_vouchers v ON vi.voucher_id = v.id
         WHERE (v.period = $1 OR v.period IS NULL)
           AND s.status = 'active'
         GROUP BY category, s.code, s.name
@@ -306,9 +306,9 @@ async fn income_statement(
             s.code,
             s.name,
             COALESCE(SUM(CASE WHEN vi.debit_amount > 0 THEN vi.debit_amount ELSE -vi.credit_amount END), 0.0) as amount
-        FROM erp.accounting_subjects s
-        LEFT JOIN erp.voucher_items vi ON vi.subject_code = s.code
-        LEFT JOIN erp.financial_vouchers v ON vi.voucher_id = v.id
+        FROM accounting_subjects s
+        LEFT JOIN voucher_items vi ON vi.subject_code = s.code
+        LEFT JOIN financial_vouchers v ON vi.voucher_id = v.id
         WHERE v.period = $1
         GROUP BY category, s.code, s.name
         ORDER BY s.code
@@ -388,9 +388,9 @@ async fn cash_flow(
             END as category,
             s.name,
             COALESCE(SUM(vi.debit_amount - vi.credit_amount), 0.0) as amount
-        FROM erp.accounting_subjects s
-        LEFT JOIN erp.voucher_items vi ON vi.subject_code = s.code
-        LEFT JOIN erp.financial_vouchers v ON vi.voucher_id = v.id
+        FROM accounting_subjects s
+        LEFT JOIN voucher_items vi ON vi.subject_code = s.code
+        LEFT JOIN financial_vouchers v ON vi.voucher_id = v.id
         WHERE v.period = $1
           AND s.status = 'active'
         GROUP BY category, s.name
@@ -458,7 +458,7 @@ async fn voucher_summary(
         r#"
         SELECT v.voucher_number, v.voucher_date, v.summary, v.status, 
                v.total_debit, v.total_credit, v.maker_name, v.created_at
-        FROM erp.financial_vouchers v
+        FROM financial_vouchers v
         WHERE v.period = $1
         ORDER BY v.voucher_date DESC
         LIMIT $2 OFFSET $3
@@ -494,7 +494,7 @@ async fn voucher_summary(
     };
 
     let count_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM erp.financial_vouchers WHERE period = $1",
+        "SELECT COUNT(*) FROM financial_vouchers WHERE period = $1",
     )
     .bind(&period)
     .fetch_one(&state.db)
@@ -526,8 +526,8 @@ async fn voucher_details(
         r#"
         SELECT v.voucher_number, v.voucher_date, v.summary, 
                vi.subject_code, vi.subject_name, vi.debit_amount, vi.credit_amount, v.maker_name
-        FROM erp.financial_vouchers v
-        JOIN erp.voucher_items vi ON v.id = vi.voucher_id
+        FROM financial_vouchers v
+        JOIN voucher_items vi ON v.id = vi.voucher_id
         WHERE v.period = $1
         ORDER BY v.voucher_date, v.voucher_number
         "#,
@@ -573,7 +573,7 @@ async fn receivables_report(
     let end_date = params.end_date.clone().unwrap_or_else(|| Utc::now().to_rfc3339());
 
     let result = sqlx::query(
-        "SELECT SUM(amount) as total, status FROM erp.receivables WHERE due_date BETWEEN $1 AND $2 GROUP BY status",
+        "SELECT SUM(amount) as total, status FROM receivables WHERE due_date BETWEEN $1 AND $2 GROUP BY status",
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -611,7 +611,7 @@ async fn payables_report(
     let end_date = params.end_date.clone().unwrap_or_else(|| Utc::now().to_rfc3339());
 
     let result = sqlx::query(
-        "SELECT SUM(amount) as total, status FROM erp.payables WHERE due_date BETWEEN $1 AND $2 GROUP BY status",
+        "SELECT SUM(amount) as total, status FROM payables WHERE due_date BETWEEN $1 AND $2 GROUP BY status",
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -649,8 +649,8 @@ async fn budget_summary(
         SELECT d.name as department_name, 
                COALESCE(SUM(b.total_budget), 0.0) as total_budget, 
                COALESCE(SUM(b.used_amount), 0.0) as used_amount
-        FROM erp.departments d
-        LEFT JOIN erp.budgets b ON d.id = b.department_id
+        FROM departments d
+        LEFT JOIN budgets b ON d.id = b.department_id
         WHERE b.fiscal_year = $1 OR b.fiscal_year IS NULL
         GROUP BY d.id, d.name
         ORDER BY d.name
@@ -690,8 +690,8 @@ async fn employee_summary(
         SELECT e.department_id, d.name as department_name, 
                COUNT(*) as employee_count, 
                AVG(EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.hire_date))) as avg_tenure
-        FROM erp.employees e
-        LEFT JOIN erp.departments d ON e.department_id = d.id
+        FROM employees e
+        LEFT JOIN departments d ON e.department_id = d.id
         WHERE e.status = 'active'
         GROUP BY e.department_id, d.name
         "#,
@@ -729,7 +729,7 @@ async fn voucher_trend(
     let result = sqlx::query(
         r#"
         SELECT v.period, COUNT(*) as voucher_count, SUM(v.total_debit) as total_amount
-        FROM erp.financial_vouchers v
+        FROM financial_vouchers v
         WHERE v.status = 'posted'
         GROUP BY v.period
         ORDER BY v.period DESC
@@ -774,9 +774,9 @@ async fn category_summary(
         r#"
         SELECT s.category, 
                COALESCE(SUM(CASE WHEN vi.debit_amount > 0 THEN vi.debit_amount ELSE -vi.credit_amount END), 0.0) as amount
-        FROM erp.accounting_subjects s
-        LEFT JOIN erp.voucher_items vi ON vi.subject_code = s.code
-        LEFT JOIN erp.financial_vouchers v ON vi.voucher_id = v.id
+        FROM accounting_subjects s
+        LEFT JOIN voucher_items vi ON vi.subject_code = s.code
+        LEFT JOIN financial_vouchers v ON vi.voucher_id = v.id
         WHERE v.period = $1
           AND s.status = 'active'
         GROUP BY s.category

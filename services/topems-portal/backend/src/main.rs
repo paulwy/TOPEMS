@@ -1,16 +1,25 @@
 use axum::{
-    extract::{FromRef, Path},
+    extract::{FromRef, Path, State},
     routing::{delete, get, post},
     Json,
     Router,
 };
 use std::env;
+use std::time::Instant;
 use tower_cookies::CookieManagerLayer;
 
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{default_registry, Gauge};
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
     ServiceHealth, build_health_response, create_api_info_router
 };
+
+static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+
+fn get_uptime() -> u64 {
+    START_TIME.get_or_init(Instant::now).elapsed().as_secs()
+}
 
 #[derive(Clone)]
 struct AppState {
@@ -28,6 +37,16 @@ async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
 
     init_logging("topems-portal");
+    START_TIME.get_or_init(Instant::now);
+
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let custom_gauge = Gauge::new(
+        "topems_portal_custom_metric",
+        "This is a custom metric for TOPEMS-PORTAL",
+    ).unwrap();
+    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    custom_gauge.set(42.0);
+    tracing::info!("✅ Prometheus 监控已初始化");
 
     let app_state = AppState {
         auth_state: AuthState::from_env(),
@@ -37,6 +56,8 @@ async fn main() -> anyhow::Result<()> {
 
     let public_routes = Router::new()
         .route("/health", get(health_check))
+        .route("/api/v1/health/detailed", get(health_check_detailed))
+        .route("/metrics", get(move || async move { metric_handle.render() }))
         .route("/", get(home));
 
     let protected_routes = Router::new()
@@ -65,7 +86,8 @@ async fn main() -> anyhow::Result<()> {
         .merge(protected_routes)
         .merge(create_api_info_router("topems-portal"))
         .layer(cors)
-        .layer(CookieManagerLayer::new());
+        .layer(CookieManagerLayer::new())
+        .layer(prometheus_layer);
 
     let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8005".to_string());
     let addr = format!("0.0.0.0:{}", port);
@@ -82,6 +104,50 @@ async fn main() -> anyhow::Result<()> {
 
 async fn health_check() -> ServiceHealth {
     build_health_response("topems-portal", true)
+}
+
+#[derive(Debug, Clone, serde::Serialize, PartialEq)]
+enum HealthStatus {
+    #[serde(rename = "healthy")]
+    Healthy,
+    #[serde(rename = "degraded")]
+    Degraded,
+    #[serde(rename = "unhealthy")]
+    Unhealthy,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+struct DependencyHealth {
+    name: String,
+    status: HealthStatus,
+    message: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+struct DetailedHealth {
+    service_name: String,
+    status: HealthStatus,
+    message: String,
+    timestamp: String,
+    uptime: Option<u64>,
+    dependencies: Option<Vec<DependencyHealth>>,
+    response_time_ms: Option<u64>,
+    last_check: Option<String>,
+}
+
+async fn health_check_detailed() -> Json<ApiResponse<DetailedHealth>> {
+    let health = DetailedHealth {
+        service_name: "topems-portal".to_string(),
+        status: HealthStatus::Healthy,
+        message: "健康检查完成".to_string(),
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        uptime: Some(get_uptime()),
+        dependencies: None,
+        response_time_ms: None,
+        last_check: Some(chrono::Utc::now().to_rfc3339()),
+    };
+
+    Json(ApiResponse::success(health, "健康检查完成"))
 }
 
 async fn home() -> Json<ApiResponse<&'static str>> {

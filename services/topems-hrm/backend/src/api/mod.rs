@@ -21,6 +21,8 @@ pub mod training;
 pub mod reports;
 pub mod salary_adjustment;
 pub mod company;
+pub mod health;
+pub mod setup;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -44,6 +46,7 @@ impl FromRef<ApiState> for PgPool {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .merge(health::create_routes())
         .merge(employee::create_routes())
         .merge(department::create_routes())
         .merge(contract::create_routes())
@@ -58,4 +61,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(reports::create_routes())
         .merge(salary_adjustment::create_routes())
         .merge(company::create_routes())
+        .merge(setup::create_routes())
 }

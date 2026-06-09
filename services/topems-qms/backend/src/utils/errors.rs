@@ -98,3 +98,21 @@ impl IntoResponse for QmsError {
 }
 
 pub type Result<T> = std::result::Result<T, QmsError>;
+
+// 从 QmsError 转换为 TopemsError（用于统一响应）
+impl From<QmsError> for topems_shared::error::TopemsError {
+    fn from(err: QmsError) -> Self {
+        match err {
+            QmsError::DatabaseError(e) => topems_shared::error::TopemsError::DatabaseQuery(e.to_string()),
+            QmsError::NotFound(msg) => topems_shared::error::TopemsError::ResourceNotFound(msg),
+            QmsError::BadRequest(msg) => topems_shared::error::TopemsError::ValidationFailed(msg),
+            QmsError::Unauthorized => topems_shared::error::TopemsError::Unauthorized,
+            QmsError::Forbidden => topems_shared::error::TopemsError::PermissionDenied {
+                required: "需要权限".to_string(),
+            },
+            QmsError::ValidationError(msg) => topems_shared::error::TopemsError::ValidationFailed(msg),
+            QmsError::InternalError(msg) => topems_shared::error::TopemsError::Internal(msg),
+            QmsError::Conflict(msg) => topems_shared::error::TopemsError::ResourceAlreadyExists(msg),
+        }
+    }
+}

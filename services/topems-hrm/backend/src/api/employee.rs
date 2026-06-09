@@ -29,6 +29,7 @@ pub struct EmployeePaginationParams {
     pub search: Option<String>,
     pub status: Option<String>,
     pub department_id: Option<Uuid>,
+    pub company_id: Option<Uuid>,
 }
 
 async fn list_employees(
@@ -42,24 +43,28 @@ async fn list_employees(
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let dept_filter = params.department_id;
+    let company_filter = params.company_id;
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        SELECT id, employee_number, name, gender, birth_date, hire_date, 
-               department_id, position, job_title, email, phone, 
-               emergency_contact_name, emergency_contact_phone, address, status, 
+        SELECT id, organization_id, company_id, department_id, position_id,
+               employee_number, name, gender, birth_date, hire_date,
+               position, job_title, email, phone,
+               emergency_contact_name, emergency_contact_phone, address, status,
                created_at, updated_at
         FROM hrm.employees
         WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR department_id = $3)
+          AND ($4::uuid IS NULL OR company_id = $4)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(&dept_filter)
+    .bind(&company_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -73,11 +78,13 @@ async fn list_employees(
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR department_id = $3)
+                  AND ($4::uuid IS NULL OR company_id = $4)
                 "#,
             )
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&dept_filter)
+            .bind(&company_filter)
             .fetch_one(&state.db)
             .await;
 
@@ -119,24 +126,29 @@ async fn create_employee(
     let result = sqlx::query_as::<_, Employee>(
         r#"
         INSERT INTO hrm.employees (
-            id, employee_number, name, gender, birth_date, hire_date, 
-            department_id, position, job_title, email, phone, 
-            emergency_contact_name, emergency_contact_phone, address, 
+            id, organization_id, company_id, department_id, position_id,
+            employee_number, name, gender, birth_date, hire_date,
+            position, job_title, email, phone,
+            emergency_contact_name, emergency_contact_phone, address,
             status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'active', $15, $16)
-        RETURNING id, employee_number, name, gender, birth_date, hire_date, 
-                  department_id, position, job_title, email, phone, 
-                  emergency_contact_name, emergency_contact_phone, address, status, 
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'active', $18, $19)
+        RETURNING id, organization_id, company_id, department_id, position_id,
+                  employee_number, name, gender, birth_date, hire_date,
+                  position, job_title, email, phone,
+                  emergency_contact_name, emergency_contact_phone, address, status,
                   created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(req.organization_id)
+    .bind(&req.company_id)
+    .bind(&req.department_id)
+    .bind(&req.position_id)
     .bind(&req.employee_number)
     .bind(&req.name)
     .bind(&req.gender)
     .bind(&req.birth_date)
     .bind(&req.hire_date)
-    .bind(&req.department_id)
     .bind(&req.position)
     .bind(&req.job_title)
     .bind(&req.email)
@@ -196,9 +208,10 @@ async fn get_employee(
 ) -> Json<ApiResponse<Employee>> {
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        SELECT id, employee_number, name, gender, birth_date, hire_date, 
-               department_id, position, job_title, email, phone, 
-               emergency_contact_name, emergency_contact_phone, address, status, 
+        SELECT id, organization_id, company_id, department_id, position_id,
+               employee_number, name, gender, birth_date, hire_date,
+               position, job_title, email, phone,
+               emergency_contact_name, emergency_contact_phone, address, status,
                created_at, updated_at
         FROM hrm.employees WHERE id = $1
         "#,
@@ -225,9 +238,10 @@ async fn update_employee(
 ) -> Json<ApiResponse<Employee>> {
     let existing = sqlx::query_as::<_, Employee>(
         r#"
-        SELECT id, employee_number, name, gender, birth_date, hire_date, 
-               department_id, position, job_title, email, phone, 
-               emergency_contact_name, emergency_contact_phone, address, status, 
+        SELECT id, organization_id, company_id, department_id, position_id,
+               employee_number, name, gender, birth_date, hire_date,
+               position, job_title, email, phone,
+               emergency_contact_name, emergency_contact_phone, address, status,
                created_at, updated_at FROM hrm.employees WHERE id = $1
         "#,
     )
@@ -244,11 +258,13 @@ async fn update_employee(
     // 先获取 request_data，避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
 
+    let company_id = req.company_id.or(existing.company_id);
+    let department_id = req.department_id.or(existing.department_id);
+    let position_id = req.position_id.or(existing.position_id);
     let name = req.name.unwrap_or(existing.name);
     let gender = req.gender.or(existing.gender);
     let birth_date = req.birth_date.or(existing.birth_date);
     let hire_date = req.hire_date.or(existing.hire_date);
-    let department_id = req.department_id.or(existing.department_id);
     let position = req.position.or(existing.position);
     let job_title = req.job_title.or(existing.job_title);
     let email = req.email.or(existing.email);
@@ -262,24 +278,28 @@ async fn update_employee(
     let result = sqlx::query_as::<_, Employee>(
         r#"
         UPDATE hrm.employees SET
-            name = $2, gender = $3, birth_date = $4, hire_date = $5, 
-            department_id = $6, position = $7, job_title = $8, 
-            email = $9, phone = $10, emergency_contact_name = $11, 
-            emergency_contact_phone = $12, address = $13, 
-            status = $14, updated_at = $15
+            organization_id = $2, company_id = $3, department_id = $4, position_id = $5,
+            name = $6, gender = $7, birth_date = $8, hire_date = $9,
+            position = $10, job_title = $11, email = $12, phone = $13,
+            emergency_contact_name = $14, emergency_contact_phone = $15, address = $16,
+            status = $17, updated_at = $18
         WHERE id = $1
-        RETURNING id, employee_number, name, gender, birth_date, hire_date, 
-                  department_id, position, job_title, email, phone, 
-                  emergency_contact_name, emergency_contact_phone, address, status, 
+        RETURNING id, organization_id, company_id, department_id, position_id,
+                  employee_number, name, gender, birth_date, hire_date,
+                  position, job_title, email, phone,
+                  emergency_contact_name, emergency_contact_phone, address, status,
                   created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(existing.organization_id)
+    .bind(&company_id)
+    .bind(&department_id)
+    .bind(&position_id)
     .bind(&name)
     .bind(&gender)
     .bind(&birth_date)
     .bind(&hire_date)
-    .bind(&department_id)
     .bind(&position)
     .bind(&job_title)
     .bind(&email)

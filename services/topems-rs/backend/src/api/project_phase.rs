@@ -16,8 +16,8 @@ use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 
-pub fn create_routes() -> Router<Arc<super::ApiState>> {
-    Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
         .route("/api/v1/phases", post(create_phase))
         .route(
             "/api/v1/projects/{project_id}/phases",
@@ -28,7 +28,7 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
 }
 
 pub async fn create_phase(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
@@ -128,7 +128,7 @@ pub async fn create_phase(
 }
 
 pub async fn get_project_phases(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
@@ -192,7 +192,7 @@ pub async fn get_project_phases(
 }
 
 pub async fn update_phase(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<UpdatePhaseRequest>,
@@ -314,7 +314,7 @@ pub async fn update_phase(
 }
 
 pub async fn delete_phase(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<()>> {

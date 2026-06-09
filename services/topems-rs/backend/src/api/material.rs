@@ -57,8 +57,8 @@ pub struct UpdateMaterialTestRequest {
     pub conclusion: Option<String>,
 }
 
-pub fn create_routes() -> Router<Arc<super::ApiState>> {
-    Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
         .route(
             "/api/v1/material-tests",
             get(list_material_tests).post(create_material_test),
@@ -80,7 +80,7 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
 }
 
 async fn list_material_tests(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -143,7 +143,7 @@ async fn list_material_tests(
 }
 
 async fn list_by_project(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<MaterialTest>>> {
     let result = sqlx::query_as::<_, MaterialTest>(
@@ -169,7 +169,7 @@ async fn list_by_project(
 }
 
 async fn list_by_experiment(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(experiment_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<MaterialTest>>> {
     let result = sqlx::query_as::<_, MaterialTest>(
@@ -195,7 +195,7 @@ async fn list_by_experiment(
 }
 
 async fn create_material_test(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
@@ -280,7 +280,7 @@ async fn create_material_test(
 }
 
 async fn get_material_test(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MaterialTest>> {
     let result = sqlx::query_as::<_, MaterialTest>(
@@ -305,7 +305,7 @@ async fn get_material_test(
 }
 
 async fn update_material_test(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateMaterialTestRequest>,
@@ -398,7 +398,7 @@ async fn update_material_test(
 }
 
 async fn delete_material_test(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {

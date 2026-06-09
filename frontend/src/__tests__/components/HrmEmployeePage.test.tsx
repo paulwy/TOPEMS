@@ -11,7 +11,7 @@ import { useAppStore } from '../../store';
 
 // 模拟依赖
 vi.mock('react-router-dom', async () => ({
-  ...await vi.importActual('react-router-dom'),
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => vi.fn(),
   useLocation: () => ({ pathname: '/hrm/employees' }),
 }));
@@ -31,13 +31,13 @@ vi.mock('../../api/hrm', () => ({
 
 // 模拟 DataTable 组件以避免测试问题
 vi.mock('../../components/DataTable', () => ({
-  DataTable: () => <div data-testid="data-table">Mock Data Table</div>,
+  DataTable: () => <div data-testid='data-table'>Mock Data Table</div>,
 }));
 
 // 模拟 MetricCard 组件以避免测试问题
 vi.mock('../../components/MetricCard', () => ({
   MetricCard: (props: any) => (
-    <div data-testid="metric-card">
+    <div data-testid='metric-card'>
       <p>{props.title}</p>
       <p>{props.value}</p>
     </div>
@@ -46,7 +46,7 @@ vi.mock('../../components/MetricCard', () => ({
 
 // 模拟 StatsChart 组件以避免测试问题
 vi.mock('../../components/StatsChart', () => ({
-  StatsChart: () => <div data-testid="stats-chart">Mock Stats Chart</div>,
+  StatsChart: () => <div data-testid='stats-chart'>Mock Stats Chart</div>,
 }));
 
 // 模拟 zustand store
@@ -126,7 +126,7 @@ describe('HrmEmployeePage', () => {
 
   test('should call APIs on mount', async () => {
     renderWithProviders(<HrmEmployeePage />);
-    
+
     await waitFor(() => {
       expect(mockEmployeeApi.list).toHaveBeenCalled();
       expect(mockDepartmentApi.list).toHaveBeenCalled();

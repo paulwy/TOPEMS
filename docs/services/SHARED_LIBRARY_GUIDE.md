@@ -5,18 +5,23 @@
 
 TOPEMS 共享库 (`shared/lib`) 提供了一组统一的工具和模块，用于所有 TOPEMS 后端服务。本文档介绍了如何使用这些模块。
 
+> **注意**: 项目已采用 Cargo Workspace 架构，所有服务共享统一的依赖版本管理。
+
 ---
 
 ## 目录
 
 1. [快速开始](#快速开始)
-2. [配置管理](#配置管理)
-3. [日志系统](#日志系统)
-4. [数据库连接](#数据库连接)
-5. [错误处理](#错误处理)
-6. [认证授权](#认证授权)
-7. [API 响应](#api-响应)
-8. [健康检查](#健康检查)
+2. [Workspace 架构](#workspace-架构)
+3. [配置管理](#配置管理)
+4. [日志系统](#日志系统)
+5. [数据库连接](#数据库连接)
+6. [错误处理](#错误处理)
+7. [认证授权](#认证授权)
+8. [API 响应](#api-响应)
+9. [缓存模块](#缓存模块)
+10. [验证模块](#验证模块)
+11. [监控模块](#监控模块)
 
 ---
 
@@ -24,11 +29,11 @@ TOPEMS 共享库 (`shared/lib`) 提供了一组统一的工具和模块，用于
 
 ### 添加依赖
 
-在服务的 `Cargo.toml` 中添加：
+在服务的 `Cargo.toml` 中添加（使用 workspace 依赖）：
 
 ```toml
 [dependencies]
-topems-shared = { path = "../../../shared/lib" }
+topems-shared.workspace = true
 ```
 
 ### 导入模块
@@ -67,180 +72,39 @@ async fn main() -> Result<()> {
     let cors = create_cors_layer();
 
     // 5. 构建应用...
-    
+
     Ok(())
 }
 ```
 
 ---
 
-## 配置管理
+## Workspace 架构
 
-### Config 模块
+### Cargo Workspace 配置
 
-`Config` 提供统一的配置管理，支持多环境配置。
+项目根目录的 `Cargo.toml` 定义了 workspace：
 
-```rust
-use topems_shared::Config;
+```toml
+[workspace]
+members = [
+    "shared/lib",
+    "services/topems-iam/backend",
+    "services/topems-hrm/backend",
+    "services/topems-erp/backend",
+    # ... 其他服务
+]
 
-// 加载配置（自动检测环境）
-let config = Config::load().await?;
-
-// 获取配置值
-let db_config = config.get_database().await;
-let auth_config = config.get_auth().await;
-let server_config = config.get_server().await;
+[workspace.dependencies]
+# 统一的依赖版本
+axum = "0.8"
+sqlx = { version = "0.8", features = ["runtime-tokio-native-tls", "postgres", "chrono", "uuid"] }
+# ...
 ```
 
-### 配置结构
+### 增量编译
 
-```rust
-// 数据库配置
-struct DatabaseConfig {
-    pub url: String,
-    pub host: String,
-    pub port: u16,
-    pub name: String,
-    pub user: String,
-    pub password: String,
-    pub pool_max_size: u32,
-    pub pool_min_size: u32,
-    pub connect_timeout: u64,
-    pub idle_timeout: u64,
-}
-
-// 认证配置
-struct AuthConfig {
-    pub jwt_secret: String,
-    pub jwt_expiry_hours: u64,
-    pub jwt_refresh_secret: String,
-    pub jwt_refresh_expiry_days: u64,
-}
-
-// 服务配置
-struct ServerConfig {
-    pub host: String,
-    pub port: u16,
-    pub cors_origins: Vec<String>,
-    pub cors_methods: Vec<String>,
-    pub cors_credentials: bool,
-    pub rate_limit_enabled: bool,
-}
-```
-
-### 环境变量
-
-支持的环境变量：
-
-```env
-# 应用环境
-APP_ENV=development
-
-# 数据库
-DATABASE_URL=postgres://user:pass@localhost:5432/db
-DB_POOL_MAX_SIZE=10
-DB_POOL_MIN_SIZE=2
-
-# JWT
-JWT_SECRET=your-secret-key
-JWT_EXPIRY_HOURS=24
-
-# 服务
-SERVER_PORT=8000
-CORS_ORIGINS=http://localhost:3000,http://localhost:5173
-```
-
----
-
-## 日志系统
-
-### 初始化日志
-
-```rust
-use topems_shared::init_logging;
-
-// 简单的日志初始化
-init_logging("my-service");
-```
-
-### 结构化日志
-
-```rust
-use topems_shared::init_structured_logging;
-
-// JSON 格式的结构化日志
-init_structured_logging("my-service");
-
-// 日志会自动包含：
-// - service: 服务名称
-// - timestamp: 时间戳
-// - level: 日志级别
-// - target: 目标模块
-// - thread_id: 线程 ID
-```
-
-### 自定义过滤器
-
-```rust
-use topems_shared::init_logging_with_filter;
-use tracing_subscriber::EnvFilter;
-
-let filter = EnvFilter::new("info,my_module=debug,warnings=warn");
-init_logging_with_filter("my-service", Some(filter));
-```
-
-### 使用日志
-
-```rust
-tracing::info!("Service started");
-tracing::debug!("Processing request: {:?}", request);
-tracing::warn!("Retrying operation");
-tracing::error!("Operation failed: {}", error);
-```
-
----
-
-## 数据库连接
-
-### 创建连接池
-
-```rust
-use topems_shared::{Config, create_database_pool};
-
-let config = Config::load().await?;
-let pool = create_database_pool(&config.get_database().await).await?;
-```
-
-### 测试连接
-
-```rust
-use topems_shared::{test_database_connection, check_database_health};
-
-// 测试连接（失败会返回错误）
-test_database_connection(&pool).await?;
-
-// 检查健康状态（返回布尔值）
-let is_healthy = check_database_health(&pool).await;
-if !is_healthy {
-    tracing::error!("Database connection unhealthy!");
-}
-```
-
-### 在处理器中使用
-
-```rust
-use axum::{extract::State, Json};
-use sqlx::PgPool;
-
-async fn list_items(State(pool): State<PgPool>) -> Result<Json<Vec<Item>>, TopemsError> {
-    let items = sqlx::query_as::<_, Item>("SELECT * FROM items")
-        .fetch_all(&pool)
-        .await
-        .map_err(|e| TopemsError::Database(format!("Query failed: {}", e)))?;
-    
-    Ok(Json(items))
-}
-```
+修改 `topems-shared` 后，只会影响依赖它的服务，实现增量编译。
 
 ---
 
@@ -248,53 +112,89 @@ async fn list_items(State(pool): State<PgPool>) -> Result<Json<Vec<Item>>, Topem
 
 ### TopemsError 类型
 
+`TopemsError` 是统一的错误类型，支持 `IntoResponse`：
+
 ```rust
-use topems_shared::{TopemsError, Result};
+use topems_shared::{TopemsError, Result, error::TopemsError as Error};
 
 pub enum TopemsError {
-    Config(String),      // 500 - 配置错误
-    Database(String),    // 500 - 数据库错误
-    Auth(String),        // 401 - 认证错误
-    Validation(String),  // 400 - 验证错误
-    NotFound(String),    // 404 - 资源未找到
-    Unauthorized(String), // 401 - 未授权
-    Forbidden(String),   // 403 - 禁止访问
-    Internal(String),    // 500 - 内部错误
+    // 数据库错误
+    DatabaseConnection(String),
+    DatabaseQuery(String),
+    DatabaseTransaction(String),
+
+    // 认证错误
+    AuthenticationFailed(String),
+    InvalidToken,
+    PermissionDenied { required: String },
+    Unauthorized,
+
+    // 业务错误
+    ValidationFailed(String),
+    ResourceNotFound(String),
+    ResourceAlreadyExists(String),
+    OperationNotAllowed(String),
+
+    // 其他
+    Internal(String),
+    // ... 更多变体
 }
 ```
 
-### 使用 Result 类型
+### 服务错误转换
+
+各服务可以定义自己的错误类型，并通过 `From` 实现转换：
 
 ```rust
-use topems_shared::{Result, TopemsError};
+use topems_shared::error::TopemsError;
 
-async fn get_user(id: &str) -> Result<User> {
-    // 成功返回
-    Ok(user)
-    
-    // 错误返回
-    Err(TopemsError::NotFound(format!("User {} not found", id)))
-    Err(TopemsError::Database(format!("Query failed: {}", e)))
-}
-```
-
-### 转换为 HTTP 响应
-
-```rust
-use axum::{response::IntoResponse, Json};
-use topems_shared::{TopemsError, ApiResponse};
-
-impl IntoResponse for TopemsError {
-    fn into_response(self) -> axum::response::Response {
-        let status = axum::http::StatusCode::from_u16(self.status_code())
-            .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-        
-        (
-            status,
-            Json(ApiResponse::<()>::error(self.error_code(), &self.to_string()))
-        ).into_response()
+impl From<MyServiceError> for TopemsError {
+    fn from(err: MyServiceError) -> Self {
+        match err {
+            MyServiceError::NotFound(msg) => TopemsError::ResourceNotFound(msg),
+            MyServiceError::Validation(msg) => TopemsError::ValidationFailed(msg),
+            // ...
+        }
     }
 }
+```
+
+---
+
+## 缓存模块
+
+### InMemoryCache
+
+```rust
+use topems_shared::cache::InMemoryCache;
+
+let cache = InMemoryCache::<String>::new(Duration::from_secs(300));
+cache.set("key".to_string(), "value".to_string());
+let value = cache.get("key");
+```
+
+### CacheManager
+
+```rust
+use topems_shared::cache::CacheManager;
+
+let manager = CacheManager::new(cache);
+manager.get_or_insert("key", || async { "computed".to_string() }).await?;
+```
+
+---
+
+## 验证模块
+
+### Validator
+
+```rust
+use topems_shared::validation::{Validator, ValidationResult};
+
+let validator = Validator::new();
+let result = validator.validate_field("email", "test@example.com", |v| {
+    if v.contains('@') { Ok(()) } else { Err("Invalid email") }
+});
 ```
 
 ---
@@ -313,19 +213,6 @@ let app = Router::new()
     .layer(axum::middleware::from_fn_with_state(
         auth_state.clone(),
         auth_middleware,
-    ));
-```
-
-### 可选认证（不强制登录）
-
-```rust
-use topems_shared::optional_auth_middleware;
-
-let app = Router::new()
-    .route("/optional", get(optional_handler))
-    .layer(axum::middleware::from_fn_with_state(
-        auth_state.clone(),
-        optional_auth_middleware,
     ));
 ```
 
@@ -373,120 +260,79 @@ Json(PaginatedResponse::new(
 
 ---
 
-## 健康检查
+## 监控模块
 
-### Health 模块
+### MonitoringState
+
+`MonitoringState` 提供请求监控和服务健康状态管理：
 
 ```rust
-use topems_shared::{ServiceHealth, HealthStatus};
+use topems_shared::monitoring::{MonitoringState, ServiceHealth, ServiceStatus};
 
-let health = ServiceHealth {
-    service_name: "my-service".to_string(),
-    status: HealthStatus::Healthy,
-    version: env!("CARGO_PKG_VERSION").to_string(),
-    timestamp: Utc::now(),
-};
+// 创建监控状态
+let state = MonitoringState::new();
+
+// 记录请求
+state.record_request(true, 50).await;  // 成功请求，响应时间 50ms
+state.record_request(false, 100).await; // 失败请求，响应时间 100ms
+
+// 获取监控指标
+let metrics = state.get_metrics().await;
+println!("Total: {}, Success: {}, Failed: {}",
+    metrics.requests_total,
+    metrics.requests_success,
+    metrics.requests_failed
+);
+
+// 更新服务健康状态
+state.update_service_health(
+    "my-service".to_string(),
+    ServiceHealth {
+        service_name: "my-service".to_string(),
+        status: ServiceStatus::Healthy,
+        response_time_ms: 45,
+        last_check: Utc::now(),
+        message: Some("All systems operational".to_string()),
+        details: Default::default(),
+    }
+).await;
 ```
 
-### HTTP 健康检查
+### 告警管理
 
 ```rust
-use topems_shared::check_http_health;
+use topems_shared::monitoring::{AlertRule, AlertCondition, AlertSeverity};
 
-async fn health_check() -> impl IntoResponse {
-    check_http_health("my-service", "1.0.0", vec![])
-}
-```
-
----
-
-## 示例：完整的服务模板
-
-```rust
-//! TOPEMS 服务模板
-
-use axum::{
-    routing::get,
-    Json, Router,
-};
-use topems_shared::{
-    Config,
-    init_logging,
-    create_database_pool,
-    test_database_connection,
-    create_cors_layer,
-    auth_middleware,
-    AuthState,
-    ApiResponse,
-    Result,
-    TopemsError,
+// 创建告警规则
+let rule = AlertRule {
+    name: "high_error_rate".to_string(),
+    condition: AlertCondition {
+        metric: "error_rate".to_string(),
+        operator: ">".to_string(),
+        threshold: 5.0,
+    },
+    severity: AlertSeverity::Critical,
+    cooldown_seconds: 300,
+    enabled: true,
 };
 
-#[derive(Clone)]
-struct AppState {
-    pool: sqlx::PgPool,
-}
+// 创建告警
+let alert = state.create_alert(&rule, "Error rate exceeded threshold".to_string()).await;
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    // 1. 初始化
-    dotenv::dotenv().ok();
-    init_logging("my-service");
+// 获取活跃告警
+let active_alerts = state.get_active_alerts().await;
 
-    // 2. 配置
-    let config = Config::load().await?;
-    tracing::info!("Starting in {} mode", config.env());
+// 确认告警
+state.acknowledge_alert(&alert.id).await;
 
-    // 3. 数据库
-    let pool = create_database_pool(&config.get_database().await).await?;
-    test_database_connection(&pool).await?;
-
-    // 4. 应用状态
-    let state = AppState { pool };
-
-    // 5. 认证和 CORS
-    let auth_state = AuthState::from_env();
-    let cors = create_cors_layer();
-
-    // 6. 路由
-    let app = Router::new()
-        .route("/health", get(health_check))
-        .route("/api/items", get(list_items).post(create_item))
-        .with_state(state)
-        .layer(axum::middleware::from_fn_with_state(auth_state, auth_middleware))
-        .layer(cors);
-
-    // 7. 启动
-    let port = config.get_server().await.port;
-    let addr = format!("0.0.0.0:{}", port);
-    tracing::info!("Server listening on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
-}
-
-async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("healthy", "Service is running"))
-}
-
-async fn list_items(State(pool): State<sqlx::PgPool>) -> Result<Json<Vec<Item>>> {
-    let items = sqlx::query_as::<_, Item>("SELECT * FROM items")
-        .fetch_all(&pool)
-        .await
-        .map_err(|e| TopemsError::Database(e.to_string()))?;
-    
-    Ok(Json(items))
-}
+// 解决告警
+state.resolve_alert(&alert.id).await;
 ```
 
 ---
 
 ## 更多资源
 
-- [优化计划](./PHASE1_OPTIMIZATION_PLAN.md)
-- [优化总结](./PHASE1_OPTIMIZATION_SUMMARY.md)
-- [第二阶段工作总结](./PHASE2_WORK_SUMMARY.md)
 - [服务优化指南](./SERVICE_OPTIMIZATION_GUIDE.md)
-
+- [健康检查使用指南](../健康检查组件使用指南.md)
+- [架构改进计划](../ARCHITECTURE_IMPROVEMENT_PLAN.md)

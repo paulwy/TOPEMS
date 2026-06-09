@@ -41,23 +41,11 @@ pub struct ListQueryParams {
     pub status: Option<String>,
 }
 
-#[derive(Clone)]
-pub struct ApiState {
-    pub ehs_service: EhsService,
-    pub auth_state: AuthState,
-}
+// Re-export AppState from main.rs
+pub use crate::AppState as ApiState;
 
-impl FromRef<ApiState> for AuthState {
-    fn from_ref(state: &ApiState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
-pub async fn create_routes(db: PgPool, auth_state: AuthState) -> Result<Router> {
-    let ehs_service = EhsService::new(db.clone());
-    let state = ApiState { ehs_service, auth_state: auth_state.clone() };
-
-    let app = Router::new()
+pub fn create_routes(app_state: crate::AppState) -> Router<crate::AppState> {
+    let app = Router::<crate::AppState>::new()
         // 原有路由
         .route("/api/v1/hazards", get(list_hazards).post(create_hazard))
         .route(
@@ -80,18 +68,17 @@ pub async fn create_routes(db: PgPool, auth_state: AuthState) -> Result<Router> 
             get(get_drill).put(update_drill).delete(delete_drill),
         )
         // 新增环境管理路由
-        .merge(environment::create_routes(state.clone()))
+        .merge(environment::create_routes(app_state.clone()))
         // 新增健康管理路由
-        .merge(health::create_routes(state.clone()))
+        .merge(health::create_routes(app_state.clone()))
         // 新增安全管理路由
-        .merge(safety::create_routes(state.clone()))
+        .merge(safety::create_routes(app_state.clone()))
         // 新增风险评估路由
-        .merge(risk::create_routes(state.clone()))
+        .merge(risk::create_routes(app_state.clone()))
         // 新增培训管理路由
-        .merge(training::create_routes(state.clone()))
-        .with_state(state);
+        .merge(training::create_routes(app_state.clone()));
 
-    Ok(app)
+    app
 }
 
 // ==================== Safety Hazard Handlers ====================

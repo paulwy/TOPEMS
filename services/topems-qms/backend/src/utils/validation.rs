@@ -1,4 +1,7 @@
+// 重新导出共享库的验证模块
+pub use topems_shared::validation::{Validator, ValidationError, ValidationResult};
 
+// 自定义验证函数（保留原有实现以确保 API 兼容）
 use lazy_static::lazy_static;
 use regex::Regex;
 

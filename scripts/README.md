@@ -11,6 +11,7 @@
 | `start-all.sh` | 一键启动所有服务（推荐） | ⭐⭐⭐⭐⭐ |
 | `stop-all.sh` | 一键停止所有服务 | ⭐⭐⭐⭐⭐ |
 | `manage-services.sh` | 单个服务管理（启动/停止/编译） | ⭐⭐⭐⭐⭐ |
+| `monitor.sh` | 监控管理（Prometheus/Grafana） | ⭐⭐⭐⭐⭐ |
 | `init-database.sh` | 初始化数据库 | ⭐⭐⭐⭐ |
 | `cleanup.sh` | 全面清理（端口/进程/缓存） | ⭐⭐⭐⭐⭐ |
 | `deploy.sh` | 离线部署脚本 | ⭐⭐⭐⭐ |
@@ -18,6 +19,10 @@
 | `build-all-services.sh` | 构建所有服务镜像 | ⭐⭐⭐ |
 | `run-clippy.sh` | 运行 Clippy 代码检查 | ⭐⭐⭐ |
 | `run_ci_tests.sh` | 运行 CI 测试 | ⭐⭐⭐ |
+| `check-all-rust-services.sh` | 检查所有 Rust 服务编译 | ⭐⭐⭐ |
+| `test-all-rust-services.sh` | 测试所有 Rust 服务 | ⭐⭐⭐ |
+| `collect-test-data.sh` | 收集测试数据和警告统计 | ⭐⭐ |
+| `clean-warnings.sh` | 批量清理代码警告 | ⭐⭐ |
 
 ---
 
@@ -127,10 +132,10 @@ cd /Users/air/TOPEMS
 **核心平台服务：**
 | 服务名 | 端口 | 说明 | 目录 |
 |--------|------|------|------|
-| `iam` | 8000 | 身份认证服务 | platform/topems-iam |
-| `doc` | 8001 | 文档管理服务 | platform/topems-doc |
+| `iam` | 8000 | 身份认证服务 | services/topems-iam |
+| `doc` | 8001 | 文档管理服务 | services/topems-doc |
 | `pm` | 8002 | 项目管理服务 | services/topems-pm |
-| `flow` | 8006 | 工作流服务 | platform/topems-flow |
+| `flow` | 8006 | 工作流服务 | services/topems-flow |
 
 **业务应用服务：**
 | 服务名 | 端口 | 说明 | 目录 |
@@ -183,9 +188,50 @@ cd /Users/air/TOPEMS
 ./cleanup.sh
 ```
 
+### 5. `monitor.sh` ⭐⭐⭐⭐⭐
+
+监控系统管理脚本，支持 Docker 和本地两种模式。
+
+**功能：**
+- 启动/停止 Prometheus、Grafana、Alertmanager
+- 支持 Docker 和本地 Homebrew 安装
+- 查看监控系统状态
+- 查看监控日志
+- 验证 Prometheus 配置
+
+**Docker 模式（推荐）：**
+```bash
+./monitor.sh start      # 启动监控系统
+./monitor.sh status    # 查看状态
+./monitor.sh logs      # 查看日志
+./monitor.sh stop      # 停止监控系统
+```
+
+**本地模式（不使用 Docker）：**
+```bash
+# 安装依赖
+brew install prometheus grafana
+
+# 启动监控系统
+./monitor.sh start
+```
+
+**访问地址：**
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000 (admin/admin)
+- Alertmanager: http://localhost:9093
+
+**验证配置：**
+```bash
+./monitor.sh validate
+```
+
+**详细使用说明：**
+- 详见 [健康检查组件使用指南](../docs/健康检查组件使用指南.md)
+
 ---
 
-## � 脚本详细说明
+## 🔧 脚本详细说明
 
 ### `run-clippy.sh`
 运行 Clippy 静态代码分析工具，检查所有 Rust 项目的代码质量问题。
@@ -229,10 +275,10 @@ cd /Users/air/TOPEMS
 
 | 服务类别 | 服务 | 端口 | 目录 |
 |---------|------|------|------|
-| **核心平台** | IAM | 8000 | platform/topems-iam |
-| | DOC | 8001 | platform/topems-doc |
+| **核心平台** | IAM | 8000 | services/topems-iam |
+| | DOC | 8001 | services/topems-doc |
 | | PM | 8002 | services/topems-pm |
-| | FLOW | 8006 | platform/topems-flow |
+| | FLOW | 8006 | services/topems-flow |
 | **业务服务** | Notification | 8003 | services/notification-service |
 | | Integration | 8004 | services/topems-integration |
 | | Portal | 8005 | services/topems-portal |
@@ -272,6 +318,11 @@ cd /Users/air/TOPEMS
 ./scripts/init-database.sh
 
 # 3. 编译所有服务
+# 推荐使用 Cargo Workspace 统一编译（共享依赖）
+cd ..  # 返回项目根目录
+cargo build --workspace
+
+# 或使用脚本编译所有服务
 ./scripts/manage-services.sh build-all
 ```
 
@@ -306,5 +357,5 @@ cd /Users/air/TOPEMS
 
 ---
 
-**版本**: 2.0.0
-**最后更新**: 2026-06-04
+**版本**: 2.2.0
+**最后更新**: 2026-06-10

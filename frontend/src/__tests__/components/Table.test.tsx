@@ -1,14 +1,14 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { 
-  Table, 
-  TableHeader, 
-  TableBody, 
-  TableFooter, 
-  TableHead, 
-  TableRow, 
-  TableCell, 
-  TableCaption 
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
 } from '../../components/ui/table';
 
 describe('Table Components', () => {
@@ -76,7 +76,7 @@ describe('Table Components', () => {
     render(
       <Table>
         <TableBody>
-          <TableRow data-state="selected">
+          <TableRow data-state='selected'>
             <TableCell>Selected</TableCell>
           </TableRow>
           <TableRow>

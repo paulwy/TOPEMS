@@ -15,13 +15,14 @@
    - [工作流服务](#14-工作流服务-topems-flow)
 
 2. [业务服务](#2-业务服务)
-   - [研发管理服务](#21-研发管理服务-topems-rs)
-   - [实验室管理服务](#22-实验室管理服务-topems-lims)
-   - [质量管理服务](#23-质量管理服务-topems-qms)
-   - [安全环保服务](#24-安全环保服务-topems-ehs)
-   - [供应商管理服务](#25-供应商管理服务-topems-srm)
-   - [产品数据管理服务](#26-产品数据管理服务-topems-pdm)
-   - [移动工作台服务](#27-移动工作台服务-topems-mobile)
+   - [人力资源服务](#21-人力资源服务-topems-hrm)
+   - [研发管理服务](#22-研发管理服务-topems-rs)
+   - [实验室管理服务](#23-实验室管理服务-topems-lims)
+   - [质量管理服务](#24-质量管理服务-topems-qms)
+   - [安全环保服务](#25-安全环保服务-topems-ehs)
+   - [供应商管理服务](#26-供应商管理服务-topems-srm)
+   - [产品数据管理服务](#27-产品数据管理服务-topems-pdm)
+   - [移动工作台服务](#28-移动工作台服务-topems-mobile)
 
 3. [公共服务](#3-公共服务)
    - [报表服务](#31-报表服务-topems-report)
@@ -134,7 +135,41 @@
 
 ## 2. 业务服务
 
-### 2.1 研发管理服务 (topems-rs)
+### 2.1 人力资源服务 (topems-hrm)
+
+**服务地址**: `http://localhost:8011`
+
+**详细 API 文档**: [API_HRM.md](./API_HRM.md)
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/hrm/setup/progress` | GET | 获取初始化进度 |
+| `/api/v1/hrm/setup/company` | POST | 更新公司信息 |
+| `/api/v1/hrm/setup/departments` | POST | 批量创建部门 |
+| `/api/v1/hrm/setup/positions` | POST | 批量创建职位 |
+| `/api/v1/hrm/setup/admin` | POST | 创建管理员 |
+| `/api/v1/hrm/setup/complete` | POST | 完成初始化 |
+| `/api/v1/hrm/companies` | GET | 获取公司列表 |
+| `/api/v1/hrm/companies/{id}` | GET | 获取公司详情 |
+| `/api/v1/hrm/companies` | POST | 创建公司 |
+| `/api/v1/hrm/departments` | GET | 获取部门列表 |
+| `/api/v1/hrm/departments/{id}` | GET | 获取部门详情 |
+| `/api/v1/hrm/departments` | POST | 创建部门 |
+| `/api/v1/hrm/positions` | GET | 获取职位列表 |
+| `/api/v1/hrm/positions/{id}` | GET | 获取职位详情 |
+| `/api/v1/hrm/positions` | POST | 创建职位 |
+| `/api/v1/hrm/employees` | GET | 获取员工列表 |
+| `/api/v1/hrm/employees/{id}` | GET | 获取员工详情 |
+| `/api/v1/hrm/employees` | POST | 创建员工 |
+| `/api/v1/health` | GET | 健康检查 |
+
+**数据模型**:
+- Company（公司）
+- Department（部门）
+- Position（职位）
+- Employee（员工）
+
+### 2.2 研发管理服务 (topems-rs)
 
 **服务地址**: `http://localhost:8000`
 
@@ -171,9 +206,9 @@
 - Patent（专利）
 - AuditLog（审计日志）
 
-### 2.2 实验室管理服务 (topems-lims)
+### 2.3 实验室管理服务 (topems-lims)
 
-**服务地址**: `http://localhost:8006`
+**服务地址**: `http://localhost:8022`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -207,7 +242,7 @@
 - Instrument（仪器）
 - Reagent（试剂）
 
-### 2.3 质量管理服务 (topems-qms)
+### 2.4 质量管理服务 (topems-qms)
 
 **服务地址**: `http://localhost:8031`
 
@@ -236,7 +271,7 @@
 - NonConformity（不合格品）
 - CorrectiveAction（纠正措施）
 
-### 2.4 安全环保服务 (topems-ehs)
+### 2.5 安全环保服务 (topems-ehs)
 
 **服务地址**: `http://localhost:8032`
 
@@ -263,7 +298,7 @@
 - Incident（事故记录）
 - Training（培训记录）
 
-### 2.5 供应商管理服务 (topems-srm)
+### 2.6 供应商管理服务 (topems-srm)
 
 **服务地址**: `http://localhost:8041`
 
@@ -289,7 +324,7 @@
 - PurchaseOrder（采购订单）
 - PurchaseItem（采购项目）
 
-### 2.6 产品数据管理服务 (topems-pdm)
+### 2.7 产品数据管理服务 (topems-pdm)
 
 **服务地址**: `http://localhost:8023`
 
@@ -315,7 +350,7 @@
 - BOM（物料清单）
 - Document（技术文档）
 
-### 2.7 移动工作台服务 (topems-mobile)
+### 2.8 移动工作台服务 (topems-mobile)
 
 **服务地址**: `http://localhost:8055`
 

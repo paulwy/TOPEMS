@@ -26,6 +26,7 @@ pub struct DepartmentPaginationParams {
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,
+    pub company_id: Option<Uuid>,
 }
 
 async fn list_departments(
@@ -38,19 +39,22 @@ async fn list_departments(
 
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
+    let company_id_filter = params.company_id.clone();
 
     let result = sqlx::query_as::<_, Department>(
         r#"
-        SELECT id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR company_id = $3)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
     .bind(&search_pattern)
     .bind(&status_filter)
+    .bind(&company_id_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -63,10 +67,12 @@ async fn list_departments(
                 SELECT COUNT(*) FROM hrm.departments
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR company_id = $3)
                 "#,
             )
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(&company_id_filter)
             .fetch_one(&state.db)
             .await;
 
@@ -95,16 +101,23 @@ async fn create_department(
 ) -> Json<ApiResponse<Department>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    
+    // 如果没有提供 organization_id，使用默认的 organization
+    let org_id = req.organization_id.unwrap_or_else(|| {
+        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, Department>(
         r#"
         INSERT INTO hrm.departments (
-            id, name, code, parent_id, manager_id, description, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, $8)
-        RETURNING id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+            id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
+        RETURNING id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(org_id)
+    .bind(&req.company_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(&req.parent_id)
@@ -130,7 +143,7 @@ async fn get_department(
 ) -> Json<ApiResponse<Department>> {
     let result = sqlx::query_as::<_, Department>(
         r#"
-        SELECT id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments WHERE id = $1
         "#,
     )
@@ -154,7 +167,7 @@ async fn update_department(
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let existing = sqlx::query_as::<_, Department>(
-        "SELECT id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE id = $1",
+        "SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -174,16 +187,24 @@ async fn update_department(
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
 
+    // 如果没有提供 company_id，使用 existing 的值
+    let company_id = req.company_id.or(existing.company_id);
+    
+    // 如果没有提供 parent_id，使用 existing 的值
+    let parent_id = req.parent_id.or(existing.parent_id);
+
     let result = sqlx::query_as::<_, Department>(
         r#"
         UPDATE hrm.departments SET
-            name = $2, code = $3, parent_id = $4, manager_id = $5, 
-            description = $6, status = $7, updated_at = $8
+            organization_id = $2, company_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
+            description = $8, status = $9, updated_at = $10
         WHERE id = $1
-        RETURNING id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        RETURNING id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(existing.organization_id)
+    .bind(&company_id)
     .bind(&name)
     .bind(&code)
     .bind(&parent_id)
