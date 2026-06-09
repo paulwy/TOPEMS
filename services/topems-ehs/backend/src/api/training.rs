@@ -1,10 +1,9 @@
-use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{
@@ -12,11 +11,10 @@ use crate::models::{
     CreateTrainingProgramRequest, UpdateTrainingProgramRequest,
     CreateTrainingRecordRequest, CompleteTrainingRequest,
 };
-use crate::services::EhsService;
 use crate::services::permission::{
     check_training_permission, check_training_write_permission,
 };
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared::ApiResponse;
 use topems_shared::auth::Claims;
 
 #[derive(Debug, Deserialize)]
@@ -28,13 +26,7 @@ pub struct ListQueryParams {
     pub training_type: Option<String>,
 }
 
-#[derive(Clone)]
-pub struct ApiState {
-    pub ehs_service: EhsService,
-    pub auth_state: AuthState,
-}
-
-pub fn create_routes(state: ApiState) -> Router<ApiState> {
+pub fn create_routes(state: super::ApiState) -> Router<super::ApiState> {
     Router::new()
         .route("/api/v1/training/programs", get(list_programs).post(create_program))
         .route("/api/v1/training/programs/{id}", get(get_program).put(update_program).delete(delete_program))
@@ -47,7 +39,7 @@ pub fn create_routes(state: ApiState) -> Router<ApiState> {
 // ==================== 培训计划管理 ====================
 
 async fn list_programs(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<TrainingProgram>>> {
@@ -68,7 +60,7 @@ async fn list_programs(
 }
 
 async fn create_program(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTrainingProgramRequest>,
 ) -> Json<ApiResponse<TrainingProgram>> {
@@ -86,7 +78,7 @@ async fn create_program(
 }
 
 async fn get_program(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TrainingProgram>> {
@@ -105,7 +97,7 @@ async fn get_program(
 }
 
 async fn update_program(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTrainingProgramRequest>,
@@ -124,7 +116,7 @@ async fn update_program(
 }
 
 async fn delete_program(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
@@ -143,7 +135,7 @@ async fn delete_program(
 }
 
 async fn create_training_record(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(program_id): Path<Uuid>,
     Json(req): Json<CreateTrainingRecordRequest>,
@@ -168,7 +160,7 @@ async fn create_training_record(
 }
 
 async fn complete_training(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<CompleteTrainingRequest>,
@@ -189,7 +181,7 @@ async fn complete_training(
 // ==================== 培训记录管理 ====================
 
 async fn list_records(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<TrainingRecord>>> {

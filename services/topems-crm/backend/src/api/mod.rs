@@ -3,7 +3,6 @@ use axum::{
     Router,
 };
 use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use topems_shared::AuthState;
 
 pub mod customer;

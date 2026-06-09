@@ -6,3 +6,7 @@ pub mod scan;
 pub mod offline;
 pub mod device;
 pub mod shortcut;
+pub mod patrol;
+pub mod task;
+pub mod media;
+pub mod stats;

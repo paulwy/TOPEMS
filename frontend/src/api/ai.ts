@@ -74,6 +74,69 @@ export interface SearchResult {
   query_time_ms: number;
 }
 
+// 分析相关类型
+export interface SentimentAnalysisRequest {
+  text: string;
+}
+
+export interface SentimentAnalysisResponse {
+  sentiment: 'positive' | 'negative' | 'neutral';
+  confidence: number;
+  details?: {
+    positive_words?: string[];
+    negative_words?: string[];
+    emotional_intensity?: number;
+  };
+}
+
+export interface ClassifyTextRequest {
+  text: string;
+  categories?: string[];
+}
+
+export interface CategoryScore {
+  category: string;
+  score: number;
+}
+
+export interface ClassifyTextResponse {
+  category: string;
+  confidence: number;
+  all_categories?: CategoryScore[];
+}
+
+export interface ExtractEntitiesRequest {
+  text: string;
+  entity_types?: string[];
+}
+
+export interface Entity {
+  text: string;
+  entity_type: string;
+  start_pos?: number;
+  end_pos?: number;
+  confidence: number;
+}
+
+export interface ExtractEntitiesResponse {
+  entities: Entity[];
+}
+
+export interface ExtractKeywordsRequest {
+  text: string;
+  max_keywords?: number;
+}
+
+export interface Keyword {
+  text: string;
+  score: number;
+  frequency: number;
+}
+
+export interface ExtractKeywordsResponse {
+  keywords: Keyword[];
+}
+
 export interface AIGenerateRequest {
   template_id?: string;
   variables: Record<string, any>;
@@ -173,5 +236,22 @@ export const aiApi = {
 
   listTemplates: async (): Promise<ApiResponse<AITemplate[]>> => {
     return apiClient.ai.get<AITemplate[]>('/api/v1/ai/templates');
+  },
+
+  // 分析相关接口
+  analyzeSentiment: async (data: SentimentAnalysisRequest): Promise<ApiResponse<SentimentAnalysisResponse>> => {
+    return apiClient.ai.post<SentimentAnalysisResponse>('/api/v1/analysis/sentiment', data);
+  },
+
+  classifyText: async (data: ClassifyTextRequest): Promise<ApiResponse<ClassifyTextResponse>> => {
+    return apiClient.ai.post<ClassifyTextResponse>('/api/v1/analysis/classify', data);
+  },
+
+  extractEntities: async (data: ExtractEntitiesRequest): Promise<ApiResponse<ExtractEntitiesResponse>> => {
+    return apiClient.ai.post<ExtractEntitiesResponse>('/api/v1/analysis/entities', data);
+  },
+
+  extractKeywords: async (data: ExtractKeywordsRequest): Promise<ApiResponse<ExtractKeywordsResponse>> => {
+    return apiClient.ai.post<ExtractKeywordsResponse>('/api/v1/analysis/keywords', data);
   },
 };

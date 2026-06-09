@@ -4,7 +4,6 @@ use std::time::Duration;
 pub mod repository;
 pub mod schema;
 
-pub use repository::*;
 
 pub async fn create_pool(database_url: &str) -> Result<PgPool, sqlx::Error> {
     let pool = PgPoolOptions::new()

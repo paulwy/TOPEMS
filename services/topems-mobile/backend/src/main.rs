@@ -3,7 +3,7 @@ mod db;
 mod api;
 
 use axum::{
-    extract::{FromRef, Path, State},
+    extract::{FromRef, State},
     Json, Router,
 };
 use serde_json::json;
@@ -25,6 +25,10 @@ use api::scan::{scan_barcode, scan_qrcode, image_ocr};
 use api::offline::{sync_offline_data, get_offline_status};
 use api::device::{register_device, update_push_token};
 use api::shortcut::{get_shortcuts, create_shortcut};
+use api::patrol::{get_all_patrol_records, get_patrol_record, create_patrol_record, update_patrol_record, delete_patrol_record};
+use api::task::{get_all_tasks, get_task, create_task, update_task, update_task_status, delete_task};
+use api::media::{get_photos, get_audio, get_video, upload_media, delete_media};
+use api::stats::{get_dashboard_stats, get_patrol_stats, get_task_stats};
 
 #[derive(Clone)]
 struct AppState {
@@ -48,27 +52,6 @@ async fn health_check() -> ServiceHealth {
     build_health_response("topems-mobile", true)
 }
 
-async fn get_dashboard_stats(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let (patrol_count, scan_count, _photo_count, task_count) = match db_get_dashboard_stats(&state.pool).await {
-        Ok(stats) => stats,
-        Err(e) => {
-            tracing::error!("获取统计数据失败: {}", e);
-            (0, 0, 0, 0)
-        }
-    };
-
-    Json(ApiResponse::success(
-        json!({
-            "today_patrols": patrol_count,
-            "today_scans": scan_count,
-            "pending_tasks": 0,
-            "in_progress_tasks": 0,
-            "completed_tasks": task_count
-        }),
-        "获取统计数据成功"
-    ))
-}
-
 async fn list_patrol_records(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let records = match db_get_patrol_records(&state.pool).await {
         Ok(r) => r,
@@ -79,16 +62,6 @@ async fn list_patrol_records(State(state): State<AppState>) -> Json<ApiResponse<
     };
     let total = records.len() as i64;
     Json(ApiResponse::success(json!({ "items": records, "total": total }), "获取巡逻记录成功"))
-}
-
-async fn create_patrol_record(State(state): State<AppState>, Json(payload): Json<CreatePatrolRecord>) -> Json<ApiResponse<PatrolRecord>> {
-    match db_create_patrol_record(&state.pool, payload).await {
-        Ok(record) => Json(ApiResponse::success(record, "创建巡逻记录成功")),
-        Err(e) => {
-            tracing::error!("创建巡逻记录失败: {}", e);
-            Json(ApiResponse::error(500, &format!("创建巡逻记录失败: {}", e)))
-        }
-    }
 }
 
 async fn list_scan_records(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
@@ -188,27 +161,6 @@ async fn list_mobile_tasks(State(state): State<AppState>) -> Json<ApiResponse<se
     Json(ApiResponse::success(json!({ "items": records, "total": total }), "获取移动任务成功"))
 }
 
-async fn create_mobile_task(State(state): State<AppState>, Json(payload): Json<CreateMobileTask>) -> Json<ApiResponse<MobileTask>> {
-    match db_create_mobile_task(&state.pool, payload).await {
-        Ok(task) => Json(ApiResponse::success(task, "创建移动任务成功")),
-        Err(e) => {
-            tracing::error!("创建移动任务失败: {}", e);
-            Json(ApiResponse::error(500, &format!("创建移动任务失败: {}", e)))
-        }
-    }
-}
-
-async fn update_task_status(State(state): State<AppState>, Path(id): Path<uuid::Uuid>, Json(payload): Json<UpdateTaskStatus>) -> Json<ApiResponse<MobileTask>> {
-    match db_update_task_status(&state.pool, id, &payload.status).await {
-        Ok(Some(task)) => Json(ApiResponse::success(task, "更新任务状态成功")),
-        Ok(None) => Json(ApiResponse::error(404, "任务不存在")),
-        Err(e) => {
-            tracing::error!("更新任务状态失败: {}", e);
-            Json(ApiResponse::error(500, &format!("更新任务状态失败: {}", e)))
-        }
-    }
-}
-
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     let sql_statements = include_str!("../init.sql");
     for stmt in sql_statements.split(';').filter(|s| !s.trim().is_empty()) {
@@ -259,7 +211,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/auth/verify-code", axum::routing::post(verify_code));
 
     let protected_routes = Router::new()
-        .route("/api/v1/dashboard/stats", axum::routing::get(get_dashboard_stats))
+        // Stats Routes
+        .route("/api/v1/stats/dashboard", axum::routing::get(get_dashboard_stats))
+        .route("/api/v1/stats/patrol", axum::routing::get(get_patrol_stats))
+        .route("/api/v1/stats/task", axum::routing::get(get_task_stats))
         
         // Auth Routes
         .route("/api/v1/auth/logout", axum::routing::post(logout))
@@ -290,14 +245,28 @@ async fn main() -> anyhow::Result<()> {
         // Shortcut Routes
         .route("/api/v1/shortcuts", axum::routing::get(get_shortcuts).post(create_shortcut))
         
+        // Patrol Routes
+        .route("/api/v1/patrol-records", axum::routing::get(get_all_patrol_records).post(create_patrol_record))
+        .route("/api/v1/patrol-records/:id", axum::routing::get(get_patrol_record).put(update_patrol_record).delete(delete_patrol_record))
+        
+        // Task Routes
+        .route("/api/v1/mobile-tasks", axum::routing::get(get_all_tasks).post(create_task))
+        .route("/api/v1/mobile-tasks/:id", axum::routing::get(get_task).put(update_task).delete(delete_task))
+        .route("/api/v1/mobile-tasks/:id/status", axum::routing::post(update_task_status))
+        
+        // Media Routes
+        .route("/api/v1/media/photos", axum::routing::get(get_photos))
+        .route("/api/v1/media/audio", axum::routing::get(get_audio))
+        .route("/api/v1/media/video", axum::routing::get(get_video))
+        .route("/api/v1/media/upload/:file_type", axum::routing::post(upload_media))
+        .route("/api/v1/media/:file_type/:id", axum::routing::delete(delete_media))
+        
         // Legacy Routes
-        .route("/api/v1/patrol-records", axum::routing::get(list_patrol_records).post(create_patrol_record))
+        .route("/api/v1/dashboard/stats", axum::routing::get(get_dashboard_stats))
         .route("/api/v1/scan-records", axum::routing::get(list_scan_records).post(create_scan_record))
         .route("/api/v1/photo-evidences", axum::routing::get(list_photo_evidences).post(create_photo_evidence))
         .route("/api/v1/audio-recordings", axum::routing::get(list_audio_recordings).post(create_audio_recording))
         .route("/api/v1/video-recordings", axum::routing::get(list_video_recordings).post(create_video_recording))
-        .route("/api/v1/mobile-tasks", axum::routing::get(list_mobile_tasks).post(create_mobile_task))
-        .route("/api/v1/mobile-tasks/{id}/status", axum::routing::put(update_task_status))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

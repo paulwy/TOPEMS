@@ -1,10 +1,9 @@
-use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{
@@ -12,11 +11,10 @@ use crate::models::{
     CreateRiskAssessmentRequest, UpdateRiskAssessmentRequest,
     CreateRiskControlRequest,
 };
-use crate::services::EhsService;
 use crate::services::permission::{
     check_risk_permission, check_risk_write_permission,
 };
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared::ApiResponse;
 use topems_shared::auth::Claims;
 
 #[derive(Debug, Deserialize)]
@@ -28,13 +26,7 @@ pub struct ListQueryParams {
     pub risk_level: Option<String>,
 }
 
-#[derive(Clone)]
-pub struct ApiState {
-    pub ehs_service: EhsService,
-    pub auth_state: AuthState,
-}
-
-pub fn create_routes(state: ApiState) -> Router<ApiState> {
+pub fn create_routes(state: super::ApiState) -> Router<super::ApiState> {
     Router::new()
         .route("/api/v1/risks/assessments", get(list_assessments).post(create_assessment))
         .route("/api/v1/risks/assessments/{id}", get(get_assessment).put(update_assessment).delete(delete_assessment))
@@ -47,7 +39,7 @@ pub fn create_routes(state: ApiState) -> Router<ApiState> {
 // ==================== 风险评估管理 ====================
 
 async fn list_assessments(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<RiskAssessment>>> {
@@ -68,7 +60,7 @@ async fn list_assessments(
 }
 
 async fn create_assessment(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRiskAssessmentRequest>,
 ) -> Json<ApiResponse<RiskAssessment>> {
@@ -86,7 +78,7 @@ async fn create_assessment(
 }
 
 async fn get_assessment(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<RiskAssessment>> {
@@ -105,7 +97,7 @@ async fn get_assessment(
 }
 
 async fn update_assessment(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateRiskAssessmentRequest>,
@@ -124,7 +116,7 @@ async fn update_assessment(
 }
 
 async fn delete_assessment(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
@@ -143,7 +135,7 @@ async fn delete_assessment(
 }
 
 async fn create_risk_control(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(assessment_id): Path<Uuid>,
     Json(req): Json<CreateRiskControlRequest>,
@@ -170,7 +162,7 @@ async fn create_risk_control(
 // ==================== 风险矩阵和统计 ====================
 
 async fn get_risk_matrix(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<RiskMatrix>> {
     if let Err(e) = check_risk_permission(&state.ehs_service.pool, &claims).await {
@@ -187,7 +179,7 @@ async fn get_risk_matrix(
 }
 
 async fn get_risk_statistics(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<RiskStatistics>> {
     if let Err(e) = check_risk_permission(&state.ehs_service.pool, &claims).await {

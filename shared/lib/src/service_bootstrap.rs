@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use axum::{
+    extract::State,
     routing::get,
     Router,
 };
@@ -14,9 +15,9 @@ use std::env;
 use crate::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer,
     ServiceHealth, HealthStatus, DependencyHealth,
-    SystemMetrics, check_http_health, init_logging,
-    create_api_info_router, create_database_pool,
-    config::{ServiceConfig, DatabaseConfig},
+    SystemMetrics, init_logging,
+    create_api_info_router,
+    config::enhanced::DatabaseConfig,
 };
 
 /// 服务启动配置
@@ -211,16 +212,19 @@ impl ServiceBootstrap {
         
         // 添加自定义路由
         if let Some(custom_routes) = self.custom_routes.clone() {
+            // 创建一个带有状态的新路由，然后合并自定义路由
+            let mut stateful_router = Router::new().with_state(state.clone());
+            stateful_router = stateful_router.merge(custom_routes);
+            
             if self.config.enable_auth {
-                let protected_routes = custom_routes
+                let protected_routes = stateful_router
                     .layer(axum::middleware::from_fn_with_state(
                         state.auth_state.clone(),
                         auth_middleware,
-                    ))
-                    .with_state(state.clone());
+                    ));
                 router = router.merge(protected_routes);
             } else {
-                router = router.merge(custom_routes.with_state(state.clone()));
+                router = router.merge(stateful_router);
             }
         }
         
@@ -245,7 +249,7 @@ impl ServiceBootstrap {
 /// 基础健康检查
 async fn health_check(
     axum::extract::State(state): axum::extract::State<AppState>,
-) -> axum::Json<ApiResponse<String>> {
+) -> axum::Json<ApiResponse<ServiceHealth>> {
     let db_health = check_database_health(&state.db).await;
     
     let status = if db_health.status == HealthStatus::Healthy {
@@ -255,17 +259,17 @@ async fn health_check(
     };
     
     let health = ServiceHealth {
-        service: state.config.service_name.to_string(),
-        status: status.to_string(),
-        version: state.config.service_version.to_string(),
+        service_name: state.config.service_name.to_string(),
+        status,
+        message: format!("{} 服务运行正常", state.config.service_name),
         timestamp: chrono::Utc::now().to_rfc3339(),
-        dependencies: vec![db_health],
+        uptime: Some(state.metrics.get_uptime()),
+        dependencies: Some(vec![db_health]),
+        response_time_ms: None,
+        last_check: Some(chrono::Utc::now().to_rfc3339()),
     };
     
-    axum::Json(ApiResponse::success(
-        format!("{} 服务运行正常", state.config.service_name),
-        serde_json::to_string(&health).unwrap_or_default(),
-    ))
+    axum::Json(ApiResponse::success(health, "服务运行正常"))
 }
 
 /// 详细健康检查
@@ -274,16 +278,21 @@ async fn health_check_detailed(
 ) -> axum::Json<ApiResponse<ServiceHealth>> {
     let db_health = check_database_health(&state.db).await;
     
+    let status = if db_health.status == HealthStatus::Healthy {
+        HealthStatus::Healthy
+    } else {
+        HealthStatus::Unhealthy
+    };
+    
     let health = ServiceHealth {
-        service: state.config.service_name.to_string(),
-        status: if db_health.status == HealthStatus::Healthy {
-            HealthStatus::Healthy.to_string()
-        } else {
-            HealthStatus::Unhealthy.to_string()
-        },
-        version: state.config.service_version.to_string(),
+        service_name: state.config.service_name.to_string(),
+        status,
+        message: "健康检查完成".to_string(),
         timestamp: chrono::Utc::now().to_rfc3339(),
-        dependencies: vec![db_health],
+        uptime: Some(state.metrics.get_uptime()),
+        dependencies: Some(vec![db_health]),
+        response_time_ms: None,
+        last_check: Some(chrono::Utc::now().to_rfc3339()),
     };
     
     axum::Json(ApiResponse::success(health, "健康检查完成"))
@@ -291,12 +300,25 @@ async fn health_check_detailed(
 
 /// 获取系统指标
 async fn get_metrics(
-    axum::extract::State(state): axum::extract::State<AppState>,
-) -> axum::Json<ApiResponse<SystemMetrics>> {
-    axum::Json(ApiResponse::success(
-        SystemMetrics::new(),
-        "系统指标",
-    ))
+    State(state): State<AppState>,
+) -> axum::Json<ApiResponse<MetricsResponse>> {
+    let metrics = state.metrics.as_ref();
+    let response = MetricsResponse {
+        uptime: metrics.get_uptime(),
+        request_count: metrics.get_request_count(),
+        error_count: metrics.get_error_count(),
+        active_connections: metrics.get_active_connections(),
+    };
+    axum::Json(ApiResponse::success(response, "系统指标"))
+}
+
+/// 指标响应结构
+#[derive(Debug, Clone, serde::Serialize)]
+struct MetricsResponse {
+    pub uptime: String,
+    pub request_count: u64,
+    pub error_count: u64,
+    pub active_connections: u64,
 }
 
 /// 检查数据库健康状态
@@ -317,7 +339,6 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
         } else {
             "数据库连接失败".to_string()
         },
-        response_time_ms: None,
     }
 }
 
@@ -359,6 +380,9 @@ pub async fn quick_bootstrap_with_db(
         database: DatabaseConfig {
             url: database_url,
             max_connections: 10,
+            min_connections: Some(2),
+            connect_timeout: Some(30),
+            idle_timeout: Some(600),
         },
         ..Default::default()
     };

@@ -11,7 +11,7 @@ use uuid::Uuid;
 use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Shortcut {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -70,12 +70,11 @@ pub async fn get_shortcuts(
         }
     };
 
-    let shortcuts = match sqlx::query_as!(
-        Shortcut,
+    let shortcuts: Vec<Shortcut> = match sqlx::query_as::<_, Shortcut>(
         "SELECT id, user_id, name, icon, action_type, action_params, sort_order, is_active, created_at, updated_at 
-         FROM shortcuts WHERE user_id = $1 AND is_active = true ORDER BY sort_order ASC",
-        user_id_uuid
+         FROM shortcuts WHERE user_id = $1 AND is_active = true ORDER BY sort_order ASC"
     )
+    .bind(user_id_uuid)
     .fetch_all(&pool)
     .await
     {
@@ -109,45 +108,49 @@ pub async fn create_shortcut(
         }
     };
 
-    let sort_order = payload.sort_order.unwrap_or_else(|| {
-        match sqlx::query!(
-            "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM shortcuts WHERE user_id = $1",
-            user_id_uuid
-        )
-        .fetch_one(&pool)
-        .await
-        {
-            Ok(r) => r.next_order.unwrap_or(1),
-            Err(_) => 1,
+    let sort_order = match payload.sort_order {
+        Some(v) => v,
+        None => {
+            #[derive(Debug, sqlx::FromRow)]
+            struct NextOrder { next_order: Option<i32> }
+            match sqlx::query_as::<_, NextOrder>(
+                "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM shortcuts WHERE user_id = $1"
+            )
+            .bind(user_id_uuid)
+            .fetch_one(&pool)
+            .await
+            {
+                Ok(r) => r.next_order.unwrap_or(1),
+                Err(_) => 1,
+            }
         }
-    });
+    };
 
     let shortcut_id = Uuid::new_v4();
-    if let Err(e) = sqlx::query!(
+    if let Err(e) = sqlx::query(
         "INSERT INTO shortcuts (id, user_id, name, icon, action_type, action_params, sort_order, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-        shortcut_id,
-        user_id_uuid,
-        payload.name,
-        payload.icon,
-        payload.action_type,
-        payload.action_params,
-        sort_order,
-        true
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
     )
-    .execute(&pool)
-    .await
+        .bind(shortcut_id)
+        .bind(user_id_uuid)
+        .bind(&payload.name)
+        .bind(&payload.icon)
+        .bind(&payload.action_type)
+        .bind(&payload.action_params)
+        .bind(sort_order)
+        .bind(true)
+        .execute(&pool)
+        .await
     {
         tracing::error!("创建快捷操作失败: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "创建快捷操作失败")));
     }
 
-    let shortcut = match sqlx::query_as!(
-        Shortcut,
+    let shortcut = match sqlx::query_as::<_, Shortcut>(
         "SELECT id, user_id, name, icon, action_type, action_params, sort_order, is_active, created_at, updated_at 
-         FROM shortcuts WHERE id = $1",
-        shortcut_id
+         FROM shortcuts WHERE id = $1"
     )
+    .bind(shortcut_id)
     .fetch_one(&pool)
     .await
     {

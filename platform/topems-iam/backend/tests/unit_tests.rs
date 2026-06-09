@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 #[cfg(test)]
 mod password_validation_tests {
-    use super::*;
+    
 
     fn validate_password(password: &str) -> Result<(), String> {
         if password.len() < 8 {
@@ -179,7 +179,7 @@ mod email_validation_tests {
 
 #[cfg(test)]
 mod username_validation_tests {
-    use super::*;
+    
 
     fn validate_username(username: &str) -> Result<(), String> {
         if username.len() < 2 {
@@ -433,7 +433,7 @@ mod jwt_token_tests {
 
 #[cfg(test)]
 mod permission_tests {
-    use super::*;
+    
 
     #[test]
     fn test_permission_check_admin() {
@@ -473,7 +473,7 @@ mod permission_tests {
 
     #[test]
     fn test_role_hierarchy() {
-        let roles = vec!["admin", "manager", "user", "guest"];
+        let _roles = vec!["admin", "manager", "user", "guest"];
         let permissions = vec!["read", "write", "delete", "admin"];
 
         // admin 应该有所有权限
@@ -505,7 +505,7 @@ mod permission_tests {
 mod user_model_tests {
     use super::*;
     use serde::{Deserialize, Serialize};
-    use chrono::{DateTime, Utc};
+    use chrono::Utc;
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct User {

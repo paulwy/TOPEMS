@@ -7,14 +7,13 @@ use anyhow::Result;
 use axum::{
     extract::FromRef,
     routing::get,
-    Json,
     Router,
 };
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    AuthState, auth_middleware, create_cors_layer, init_logging,
     ServiceHealth, build_health_response, create_api_info_router
 };
 
@@ -98,103 +97,6 @@ async fn health_check() -> ServiceHealth {
     build_health_response("topems-qms", true)
 }
 
-async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS qms"#)
-        .execute(pool)
-        .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS qms.quality_standards (
-            id UUID PRIMARY KEY,
-            code VARCHAR(100) NOT NULL UNIQUE,
-            name VARCHAR(255) NOT NULL,
-            description TEXT,
-            category VARCHAR(100),
-            version VARCHAR(50),
-            status VARCHAR(50) NOT NULL DEFAULT 'active',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS qms.quality_inspections (
-            id UUID PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            description TEXT,
-            inspection_type VARCHAR(100) NOT NULL,
-            standard_id UUID REFERENCES qms.quality_standards(id),
-            inspector VARCHAR(255) NOT NULL,
-            status VARCHAR(50) NOT NULL DEFAULT 'pending',
-            result VARCHAR(100),
-            findings TEXT,
-            inspected_at TIMESTAMPTZ,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS qms.quality_issues (
-            id UUID PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            description TEXT NOT NULL,
-            severity VARCHAR(50) NOT NULL,
-            status VARCHAR(50) NOT NULL DEFAULT 'open',
-            source VARCHAR(100),
-            related_inspection_id UUID REFERENCES qms.quality_inspections(id),
-            assigned_to VARCHAR(255),
-            priority VARCHAR(50) DEFAULT 'medium',
-            due_date TIMESTAMPTZ,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS qms.corrective_actions (
-            id UUID PRIMARY KEY,
-            issue_id UUID NOT NULL REFERENCES qms.quality_issues(id) ON DELETE CASCADE,
-            title VARCHAR(255) NOT NULL,
-            description TEXT,
-            assigned_to VARCHAR(255) NOT NULL,
-            status VARCHAR(50) NOT NULL DEFAULT 'pending',
-            implementation_date TIMESTAMPTZ,
-            verification_result TEXT,
-            verified_by VARCHAR(255),
-            verified_at TIMESTAMPTZ,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(r#"GRANT ALL PRIVILEGES ON SCHEMA qms TO topems"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA qms TO topems"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA qms TO topems"#)
-        .execute(pool)
-        .await?;
-
-    tracing::info!("✅ 数据库表初始化完成");
-
+async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
 }

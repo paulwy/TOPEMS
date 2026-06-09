@@ -1,15 +1,13 @@
 use axum::{
-    extract::{Extension, FromRef, Path, State},
-    routing::{delete, get, post, put},
+    extract::{Extension, FromRef, State},
+    routing::{get, post, put},
     Json,
     Router,
 };
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use std::env;
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
+use chrono::Utc;
 use serde_json::json;
 use reqwest::Client;
 use sqlx::PgPool;
@@ -510,6 +508,28 @@ async fn main() -> Result<()> {
         .route("/:id", get(api::visualization::get_visualization).put(api::visualization::update_visualization).delete(api::visualization::delete_visualization))
         .route("/:id/data", post(api::visualization::get_visualization_data));
 
+    // 模块数据分析API路由
+    let module_routes = Router::new()
+        .route("/rs/summary", get(api::module::get_rs_summary))
+        .route("/rs/project-timeline", get(api::module::get_rs_project_timeline))
+        .route("/rs/experiment-success-rate", get(api::module::get_rs_experiment_success_rate))
+        .route("/lims/summary", get(api::module::get_lims_summary))
+        .route("/lims/sample-timeline", get(api::module::get_lims_sample_timeline))
+        .route("/lims/test-pass-rate", get(api::module::get_lims_test_pass_rate))
+        .route("/qms/summary", get(api::module::get_qms_summary))
+        .route("/qms/quality-trend", get(api::module::get_qms_quality_trend))
+        .route("/qms/issue-distribution", get(api::module::get_qms_issue_distribution))
+        .route("/ehs/summary", get(api::module::get_ehs_summary))
+        .route("/ehs/risk-distribution", get(api::module::get_ehs_risk_distribution))
+        .route("/ehs/incident-trend", get(api::module::get_ehs_incident_trend))
+        .route("/srm/summary", get(api::module::get_srm_summary))
+        .route("/srm/supplier-ranking", get(api::module::get_srm_supplier_ranking))
+        .route("/srm/order-timeline", get(api::module::get_srm_order_timeline))
+        .route("/pdm/summary", get(api::module::get_pdm_summary))
+        .route("/pdm/production-trend", get(api::module::get_pdm_production_trend))
+        .route("/pdm/batch-status-distribution", get(api::module::get_pdm_batch_status_distribution))
+        .route("/:module_id", get(api::module::get_module_detail));
+
     let protected_routes = Router::new()
         // 新的BI API路由
         .nest("/api/v1/analysis", analysis_routes)
@@ -517,6 +537,7 @@ async fn main() -> Result<()> {
         .nest("/api/v1/dashboards", dashboard_routes)
         .nest("/api/v1/datasources", datasource_routes)
         .nest("/api/v1/visualizations", visualization_routes)
+        .nest("/api/v1/bi", module_routes)
         // 保留原有的分析API
         .route("/api/v1/analytics/summary", get(get_analytics_summary))
         .route("/api/v1/analytics/overview", get(get_analytics_overview))

@@ -1,14 +1,6 @@
 // IAM 服务集成测试
 // 测试 API 端点和数据库交互
 
-use axum::{
-    body::Body,
-    http::{Request, StatusCode, Method},
-    Router,
-    routing::{get, post, put, delete},
-    Json,
-};
-use tower::ServiceExt;
 use serde_json::json;
 use uuid::Uuid;
 
@@ -208,7 +200,7 @@ mod login_api_tests {
 
 #[cfg(test)]
 mod register_api_tests {
-    use super::*;
+    
     use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Deserialize, Serialize)]
@@ -502,8 +494,8 @@ mod permission_management_api_tests {
 
 #[cfg(test)]
 mod password_change_api_tests {
-    use super::*;
-    use serde::{Deserialize, Serialize};
+    
+    use serde::Deserialize;
 
     #[derive(Debug, Deserialize)]
     struct ChangePasswordRequest {
@@ -540,7 +532,7 @@ mod password_change_api_tests {
 #[cfg(test)]
 mod password_reset_api_tests {
     use super::*;
-    use serde::{Deserialize, Serialize};
+    use serde::Deserialize;
 
     #[derive(Debug, Deserialize)]
     struct ResetPasswordRequest {
@@ -586,7 +578,7 @@ mod password_reset_api_tests {
 #[cfg(test)]
 mod audit_log_api_tests {
     use super::*;
-    use serde::{Deserialize, Serialize};
+    use serde::Serialize;
 
     #[derive(Debug, Serialize)]
     struct AuditLogInfo {
@@ -726,7 +718,7 @@ mod http_endpoint_tests {
 
 #[cfg(test)]
 mod user_role_association_tests {
-    use super::*;
+    
 
     #[test]
     fn test_user_has_role() {
@@ -764,7 +756,7 @@ mod user_role_association_tests {
 
 #[cfg(test)]
 mod role_permission_association_tests {
-    use super::*;
+    
 
     #[test]
     fn test_role_has_permission() {
@@ -802,7 +794,7 @@ mod role_permission_association_tests {
 
 #[cfg(test)]
 mod token_refresh_tests {
-    use super::*;
+    
     use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Deserialize)]

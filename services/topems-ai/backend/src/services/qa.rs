@@ -34,7 +34,7 @@ impl QAService {
         &self,
         question: &str,
         context: Option<&str>,
-        top_k: usize,
+        _top_k: usize,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), String> {
         // 构建提示词
         let prompt = if let Some(ctx) = context {
@@ -173,7 +173,7 @@ impl QAService {
             temperature: f64,
         }
 
-        #[derive(Serialize)]
+        #[derive(Serialize, Deserialize)]
         struct OpenAIMessage {
             role: String,
             content: String,

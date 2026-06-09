@@ -41,7 +41,7 @@ async fn login(Json(req): Json<LoginRequest>) -> Json<ApiResponse<AuthTokens>> {
     }
 }
 
-async fn register(Json(req): Json<RegisterRequest>) -> Json<ApiResponse<AuthTokens>> {
+async fn register(Json(_req): Json<RegisterRequest>) -> Json<ApiResponse<AuthTokens>> {
     Json(ApiResponse::success(
         AuthTokens {
             access_token: "test-token-12345".to_string(),

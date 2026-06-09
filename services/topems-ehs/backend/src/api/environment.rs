@@ -1,13 +1,10 @@
-use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
+use serde::Deserialize;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 use crate::models::{
     MonitoringPoint, EnvironmentalData, EnvironmentalAlert,
@@ -15,11 +12,10 @@ use crate::models::{
     CreateEnvironmentalDataRequest, EnvironmentalDataQuery,
     HandleAlertRequest,
 };
-use crate::services::EhsService;
 use crate::services::permission::{
     check_environment_permission, check_environment_write_permission,
 };
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared::ApiResponse;
 use topems_shared::auth::Claims;
 
 #[derive(Debug, Deserialize)]
@@ -31,13 +27,7 @@ pub struct ListQueryParams {
     pub point_type: Option<String>,
 }
 
-#[derive(Clone)]
-pub struct ApiState {
-    pub ehs_service: EhsService,
-    pub auth_state: AuthState,
-}
-
-pub fn create_routes(state: ApiState) -> Router<ApiState> {
+pub fn create_routes(state: super::ApiState) -> Router<super::ApiState> {
     Router::new()
         .route("/api/v1/environment/monitoring-points", get(list_monitoring_points).post(create_monitoring_point))
         .route("/api/v1/environment/monitoring-points/{id}", get(get_monitoring_point).put(update_monitoring_point).delete(delete_monitoring_point))
@@ -50,7 +40,7 @@ pub fn create_routes(state: ApiState) -> Router<ApiState> {
 // ==================== 监测点管理 ====================
 
 async fn list_monitoring_points(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<MonitoringPoint>>> {
@@ -71,7 +61,7 @@ async fn list_monitoring_points(
 }
 
 async fn create_monitoring_point(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMonitoringPointRequest>,
 ) -> Json<ApiResponse<MonitoringPoint>> {
@@ -89,7 +79,7 @@ async fn create_monitoring_point(
 }
 
 async fn get_monitoring_point(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MonitoringPoint>> {
@@ -108,7 +98,7 @@ async fn get_monitoring_point(
 }
 
 async fn update_monitoring_point(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMonitoringPointRequest>,
@@ -127,7 +117,7 @@ async fn update_monitoring_point(
 }
 
 async fn delete_monitoring_point(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
@@ -148,7 +138,7 @@ async fn delete_monitoring_point(
 // ==================== 监测数据管理 ====================
 
 async fn submit_monitoring_data(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(point_id): Path<Uuid>,
     Json(req): Json<CreateEnvironmentalDataRequest>,
@@ -173,7 +163,7 @@ async fn submit_monitoring_data(
 }
 
 async fn get_monitoring_data(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(point_id): Path<Uuid>,
     Query(params): Query<EnvironmentalDataQuery>,
@@ -194,7 +184,7 @@ async fn get_monitoring_data(
 // ==================== 环境预警管理 ====================
 
 async fn list_alerts(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<EnvironmentalAlert>>> {
@@ -215,7 +205,7 @@ async fn list_alerts(
 }
 
 async fn handle_alert(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<HandleAlertRequest>,

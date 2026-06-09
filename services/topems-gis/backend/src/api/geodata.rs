@@ -83,7 +83,7 @@ pub async fn upload_geodata(
 
     match sqlx::query_as::<_, GeoData>(
         r#"
-        INSERT INTO geodata (name, data_type, format, geojson_data, feature_count, uploaded_by)
+        INSERT INTO gis.geodata (name, data_type, format, geojson_data, feature_count, uploaded_by)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         "#,
@@ -126,7 +126,7 @@ async fn insert_feature(pool: &PgPool, geodata_id: &Uuid, feature: &serde_json::
 
     sqlx::query(
         r#"
-        INSERT INTO geofeatures (geodata_id, feature_type, geometry, properties)
+        INSERT INTO gis.geofeatures (geodata_id, feature_type, geometry, properties)
         VALUES ($1, $2, $3, $4)
         "#,
     )
@@ -142,7 +142,7 @@ async fn insert_feature(pool: &PgPool, geodata_id: &Uuid, feature: &serde_json::
 
 /// 获取地理数据列表
 pub async fn list_geodata(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, GeoData>("SELECT * FROM geodata ORDER BY created_at DESC")
+    match sqlx::query_as::<_, GeoData>("SELECT * FROM gis.geodata ORDER BY created_at DESC")
         .fetch_all(&pool)
         .await
     {
@@ -162,7 +162,7 @@ pub async fn get_geodata(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeoData>> {
-    match sqlx::query_as::<_, GeoData>("SELECT * FROM geodata WHERE id = $1")
+    match sqlx::query_as::<_, GeoData>("SELECT * FROM gis.geodata WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -186,7 +186,7 @@ pub async fn update_geodata(
 
     match sqlx::query_as::<_, GeoData>(
         r#"
-        UPDATE geodata 
+        UPDATE gis.geodata 
         SET name = $1, data_type = $2, metadata = $3, status = COALESCE($4, status), updated_at = NOW()
         WHERE id = $5
         RETURNING *
@@ -216,7 +216,7 @@ pub async fn delete_geodata(
         return e;
     }
 
-    match sqlx::query("DELETE FROM geodata WHERE id = $1")
+    match sqlx::query("DELETE FROM gis.geodata WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
@@ -244,7 +244,7 @@ pub async fn convert_geodata(
     }
 
     // Get source data
-    match sqlx::query_as::<_, GeoData>("SELECT * FROM geodata WHERE id = $1")
+    match sqlx::query_as::<_, GeoData>("SELECT * FROM gis.geodata WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -325,7 +325,7 @@ pub async fn list_geofeatures(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, GeoFeature>(
-        "SELECT * FROM geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC"
+        "SELECT * FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC"
     )
     .bind(id)
     .fetch_all(&pool)

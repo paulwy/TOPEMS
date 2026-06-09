@@ -1,10 +1,9 @@
-use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{
@@ -12,11 +11,10 @@ use crate::models::{
     CreateHealthRecordRequest, UpdateHealthRecordRequest,
     CreateHealthCheckupRequest, CreateVaccinationRecordRequest,
 };
-use crate::services::EhsService;
 use crate::services::permission::{
     check_health_permission, check_health_write_permission,
 };
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared::ApiResponse;
 use topems_shared::auth::Claims;
 
 #[derive(Debug, Deserialize)]
@@ -27,13 +25,7 @@ pub struct ListQueryParams {
     pub employee_id: Option<String>,
 }
 
-#[derive(Clone)]
-pub struct ApiState {
-    pub ehs_service: EhsService,
-    pub auth_state: AuthState,
-}
-
-pub fn create_routes(state: ApiState) -> Router<ApiState> {
+pub fn create_routes(state: super::ApiState) -> Router<super::ApiState> {
     Router::new()
         .route("/api/v1/health/records", get(list_health_records).post(create_health_record))
         .route("/api/v1/health/records/{id}", get(get_health_record).put(update_health_record).delete(delete_health_record))
@@ -46,7 +38,7 @@ pub fn create_routes(state: ApiState) -> Router<ApiState> {
 // ==================== 健康档案管理 ====================
 
 async fn list_health_records(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<HealthRecord>>> {
@@ -67,7 +59,7 @@ async fn list_health_records(
 }
 
 async fn create_health_record(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateHealthRecordRequest>,
 ) -> Json<ApiResponse<HealthRecord>> {
@@ -85,7 +77,7 @@ async fn create_health_record(
 }
 
 async fn get_health_record(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<HealthRecord>> {
@@ -104,7 +96,7 @@ async fn get_health_record(
 }
 
 async fn update_health_record(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateHealthRecordRequest>,
@@ -123,7 +115,7 @@ async fn update_health_record(
 }
 
 async fn delete_health_record(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
@@ -144,7 +136,7 @@ async fn delete_health_record(
 // ==================== 体检记录管理 ====================
 
 async fn list_checkups(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<HealthCheckup>>> {
@@ -165,7 +157,7 @@ async fn list_checkups(
 }
 
 async fn create_checkup(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateHealthCheckupRequest>,
 ) -> Json<ApiResponse<HealthCheckup>> {
@@ -183,7 +175,7 @@ async fn create_checkup(
 }
 
 async fn get_checkup(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<HealthCheckup>> {
@@ -204,7 +196,7 @@ async fn get_checkup(
 // ==================== 疫苗接种记录管理 ====================
 
 async fn list_vaccinations(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<VaccinationRecord>>> {
@@ -225,7 +217,7 @@ async fn list_vaccinations(
 }
 
 async fn create_vaccination(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVaccinationRecordRequest>,
 ) -> Json<ApiResponse<VaccinationRecord>> {

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{State, Json, Multipart},
+    extract::{State, Json},
     http::{StatusCode, HeaderMap},
     response::IntoResponse,
 };
@@ -167,11 +167,16 @@ pub async fn update_profile(
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct UploadAvatarRequest {
+    pub avatar_base64: String,
+}
+
 pub async fn upload_avatar(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
-    mut multipart: Multipart,
+    Json(payload): Json<UploadAvatarRequest>,
 ) -> impl IntoResponse {
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
@@ -187,35 +192,25 @@ pub async fn upload_avatar(
         }
     };
 
-    let mut avatar_path = None;
+    let raw_bytes = match base64_decode(&payload.avatar_base64) {
+        Ok(b) if !b.is_empty() => b,
+        _ => return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "缺少头像文件"))),
+    };
 
-    while let Some(field) = multipart.next_field().await.unwrap() {
-        let name = field.name().unwrap_or("");
-        if name == "avatar" {
-            let file_name = format!("{}_{}", Uuid::new_v4(), "avatar.jpg");
-            let path = Path::new("./uploads").join(&file_name);
-            
-            if let Err(e) = fs::create_dir_all("./uploads") {
-                tracing::error!("创建上传目录失败: {}", e);
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "创建上传目录失败")));
-            }
+    let file_name = format!("{}_{}", Uuid::new_v4(), "avatar.jpg");
+    let path = Path::new("./uploads").join(&file_name);
 
-            let bytes = field.bytes().await.unwrap();
-            if let Err(e) = fs::write(&path, bytes) {
-                tracing::error!("保存头像失败: {}", e);
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "保存头像失败")));
-            }
-
-            avatar_path = Some(format!("/uploads/{}", file_name));
-        }
+    if let Err(e) = fs::create_dir_all("./uploads") {
+        tracing::error!("创建上传目录失败: {}", e);
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "创建上传目录失败")));
     }
 
-    let avatar_url = match avatar_path {
-        Some(p) => p,
-        None => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "缺少头像文件")));
-        }
-    };
+    if let Err(e) = fs::write(&path, &raw_bytes) {
+        tracing::error!("保存头像失败: {}", e);
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "保存头像失败")));
+    }
+
+    let avatar_url = format!("/uploads/{}", file_name);
 
     let result = sqlx::query("UPDATE mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2")
         .bind(&avatar_url)
@@ -230,4 +225,29 @@ pub async fn upload_avatar(
             (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "更新头像URL失败")))
         }
     }
+}
+
+fn base64_decode(s: &str) -> Result<Vec<u8>, ()> {
+    // 简单 base64 解码实现，避免额外依赖
+    use std::collections::HashMap;
+    let chars: Vec<char> = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".chars().collect();
+    let map: HashMap<char, u8> = chars.iter().enumerate().map(|(i, c)| (*c, i as u8)).collect();
+
+    let cleaned: String = s.chars().filter(|c| c != &'=' && c != &'\n' && c != &'\r' && c != &' ').collect();
+    let mut out = Vec::new();
+    let bytes: Vec<char> = cleaned.chars().collect();
+    for i in (0..bytes.len()).step_by(4) {
+        let n1 = bytes.get(i).and_then(|c| map.get(c)).copied().unwrap_or(0);
+        let n2 = bytes.get(i + 1).and_then(|c| map.get(c)).copied().unwrap_or(0);
+        let n3 = bytes.get(i + 2).and_then(|c| map.get(c)).copied().unwrap_or(0);
+        let n4 = bytes.get(i + 3).and_then(|c| map.get(c)).copied().unwrap_or(0);
+        out.push((n1 << 2) | (n2 >> 4));
+        if i + 2 < bytes.len() {
+            out.push(((n2 & 0x0F) << 4) | (n3 >> 2));
+        }
+        if i + 3 < bytes.len() {
+            out.push(((n3 & 0x03) << 6) | n4);
+        }
+    }
+    Ok(out)
 }

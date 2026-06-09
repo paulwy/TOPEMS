@@ -1,10 +1,9 @@
-use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{
@@ -12,11 +11,10 @@ use crate::models::{
     CreateSafetyIncidentRequest, UpdateSafetyIncidentRequest,
     HandleIncidentRequest, CreateSafetyHazardRequest, RectifyHazardRequest,
 };
-use crate::services::EhsService;
 use crate::services::permission::{
     check_safety_permission, check_safety_write_permission,
 };
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared::ApiResponse;
 use topems_shared::auth::Claims;
 
 #[derive(Debug, Deserialize)]
@@ -28,13 +26,7 @@ pub struct ListQueryParams {
     pub level: Option<String>,
 }
 
-#[derive(Clone)]
-pub struct ApiState {
-    pub ehs_service: EhsService,
-    pub auth_state: AuthState,
-}
-
-pub fn create_routes(state: ApiState) -> Router<ApiState> {
+pub fn create_routes(state: super::ApiState) -> Router<super::ApiState> {
     Router::new()
         .route("/api/v1/safety/incidents", get(list_incidents).post(create_incident))
         .route("/api/v1/safety/incidents/{id}", get(get_incident).put(update_incident).delete(delete_incident))
@@ -47,7 +39,7 @@ pub fn create_routes(state: ApiState) -> Router<ApiState> {
 // ==================== 安全事故管理 ====================
 
 async fn list_incidents(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<SafetyIncident>>> {
@@ -68,7 +60,7 @@ async fn list_incidents(
 }
 
 async fn create_incident(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSafetyIncidentRequest>,
 ) -> Json<ApiResponse<SafetyIncident>> {
@@ -86,7 +78,7 @@ async fn create_incident(
 }
 
 async fn get_incident(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SafetyIncident>> {
@@ -105,7 +97,7 @@ async fn get_incident(
 }
 
 async fn update_incident(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSafetyIncidentRequest>,
@@ -124,7 +116,7 @@ async fn update_incident(
 }
 
 async fn delete_incident(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
@@ -143,7 +135,7 @@ async fn delete_incident(
 }
 
 async fn handle_incident(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<HandleIncidentRequest>,
@@ -164,7 +156,7 @@ async fn handle_incident(
 // ==================== 安全隐患管理 ====================
 
 async fn list_hazards(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<SafetyHazard>>> {
@@ -185,7 +177,7 @@ async fn list_hazards(
 }
 
 async fn create_hazard(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSafetyHazardRequest>,
 ) -> Json<ApiResponse<SafetyHazard>> {
@@ -203,7 +195,7 @@ async fn create_hazard(
 }
 
 async fn rectify_hazard(
-    State(state): State<ApiState>,
+    State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<RectifyHazardRequest>,

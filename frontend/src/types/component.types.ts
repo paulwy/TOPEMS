@@ -91,7 +91,7 @@ export interface FilterPanelProps {
   className?: string;
 }
 
-export interface DataTableColumn<TData, TValue = unknown> extends ColumnDef<TData, TValue> {
+export interface DataTableColumn<TData = unknown, TValue = unknown> {
   id: string;
   header: string;
   accessorKey?: string;
@@ -99,9 +99,10 @@ export interface DataTableColumn<TData, TValue = unknown> extends ColumnDef<TDat
   filterable?: boolean;
   width?: string | number;
   align?: 'left' | 'center' | 'right';
+  cell?: (info: { row: TData; getValue: () => TValue }) => React.ReactNode;
 }
 
-export interface ExportConfig {
+export interface ExportConfig<TData = unknown> {
   enabled: boolean;
   formats?: Array<'csv' | 'xlsx' | 'json'>;
   filename?: string;

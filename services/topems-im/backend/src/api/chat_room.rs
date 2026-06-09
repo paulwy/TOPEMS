@@ -22,7 +22,7 @@ pub async fn create_chat_room(
 
     let result = sqlx::query_as::<_, ChatRoom>(
         r#"
-        INSERT INTO chat_rooms (id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at)
+        INSERT INTO im.chat_rooms (id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, NULL, NULL, FALSE, FALSE, $6, $7)
         RETURNING id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
         "#
@@ -53,7 +53,7 @@ pub async fn list_chat_rooms(
     let result = sqlx::query_as::<_, ChatRoom>(
         r#"
         SELECT id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
-        FROM chat_rooms
+        FROM im.chat_rooms
         ORDER BY is_pinned DESC, updated_at DESC
         "#
     )
@@ -80,7 +80,7 @@ pub async fn get_chat_room(
     let room_result = sqlx::query_as::<_, ChatRoom>(
         r#"
         SELECT id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
-        FROM chat_rooms
+        FROM im.chat_rooms
         WHERE id = $1
         "#
     )
@@ -94,7 +94,7 @@ pub async fn get_chat_room(
             let members_result = sqlx::query_as::<_, ChatRoomMember>(
                 r#"
                 SELECT id, chat_room_id, user_id, role, joined_at, last_read_at
-                FROM chat_room_members
+                FROM im.chat_room_members
                 WHERE chat_room_id = $1
                 ORDER BY joined_at ASC
                 "#
@@ -129,7 +129,7 @@ pub async fn update_chat_room(
 
     let result = sqlx::query_as::<_, ChatRoom>(
         r#"
-        UPDATE chat_rooms
+        UPDATE im.chat_rooms
         SET name = COALESCE($1, name),
             room_type = COALESCE($2, room_type),
             members = COALESCE($3, members),
@@ -163,7 +163,7 @@ pub async fn delete_chat_room(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query(
         r#"
-        DELETE FROM chat_rooms
+        DELETE FROM im.chat_rooms
         WHERE id = $1
         RETURNING id
         "#
@@ -195,7 +195,7 @@ pub async fn add_chat_room_member(
 
     let result = sqlx::query_as::<_, ChatRoomMember>(
         r#"
-        INSERT INTO chat_room_members (id, chat_room_id, user_id, role, joined_at, last_read_at)
+        INSERT INTO im.chat_room_members (id, chat_room_id, user_id, role, joined_at, last_read_at)
         VALUES ($1, $2, $3, $4, $5, NULL)
         ON CONFLICT (chat_room_id, user_id) 
         DO UPDATE SET role = $4, joined_at = $5
@@ -215,7 +215,7 @@ pub async fn add_chat_room_member(
             // 更新聊天室成员列表
             let _ = sqlx::query(
                 r#"
-                UPDATE chat_rooms
+                UPDATE im.chat_rooms
                 SET members = members || $1::jsonb,
                     updated_at = $2
                 WHERE id = $3
@@ -246,7 +246,7 @@ pub async fn remove_chat_room_member(
     // 删除成员记录
     let result = sqlx::query(
         r#"
-        DELETE FROM chat_room_members
+        DELETE FROM im.chat_room_members
         WHERE chat_room_id = $1 AND user_id = $2
         RETURNING id
         "#
@@ -261,7 +261,7 @@ pub async fn remove_chat_room_member(
             // 更新聊天室成员列表
             let _ = sqlx::query(
                 r#"
-                UPDATE chat_rooms
+                UPDATE im.chat_rooms
                 SET members = members - $1,
                     updated_at = $2
                 WHERE id = $3
@@ -293,7 +293,7 @@ pub async fn get_chat_room_messages(
         SELECT id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                is_read, is_edited, is_deleted, created_at, updated_at
-        FROM messages
+        FROM im.messages
         WHERE chat_room_id = $1 AND is_deleted = FALSE
         ORDER BY created_at ASC
         LIMIT 100
@@ -324,7 +324,7 @@ pub async fn mute_chat_room(
 
     let result = sqlx::query(
         r#"
-        UPDATE chat_rooms
+        UPDATE im.chat_rooms
         SET is_muted = true, updated_at = $1
         WHERE id = $2
         "#
@@ -352,7 +352,7 @@ pub async fn unmute_chat_room(
 
     let result = sqlx::query(
         r#"
-        UPDATE chat_rooms
+        UPDATE im.chat_rooms
         SET is_muted = false, updated_at = $1
         WHERE id = $2
         "#
@@ -380,7 +380,7 @@ pub async fn pin_chat_room(
 
     let result = sqlx::query(
         r#"
-        UPDATE chat_rooms
+        UPDATE im.chat_rooms
         SET is_pinned = true, updated_at = $1
         WHERE id = $2
         "#
@@ -408,7 +408,7 @@ pub async fn unpin_chat_room(
 
     let result = sqlx::query(
         r#"
-        UPDATE chat_rooms
+        UPDATE im.chat_rooms
         SET is_pinned = false, updated_at = $1
         WHERE id = $2
         "#

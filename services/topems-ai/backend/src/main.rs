@@ -4,8 +4,11 @@
 mod api;
 mod services;
 
+// 分析 API handlers
+use api::models::*;
+
 use axum::{
-    extract::{DefaultBodyLimit, FromRef, Multipart, Query},
+    extract::{DefaultBodyLimit, FromRef, Multipart, Query, State},
     routing::{get, post},
     Json, Router,
 };
@@ -1450,6 +1453,53 @@ async fn clear_vectors() -> Json<ApiResponse<String>> {
     }
 }
 
+// 分析 API State
+#[derive(Clone)]
+struct AnalysisState {
+    analysis_service: AnalysisService,
+    auth_state: AuthState,
+}
+
+async fn sentiment_analysis(
+    State(state): State<AnalysisState>,
+    Json(req): Json<SentimentAnalysisRequest>,
+) -> Json<ApiResponse<SentimentAnalysisResponse>> {
+    match state.analysis_service.analyze_sentiment(&req.text).await {
+        Ok(response) => Json(ApiResponse::success(response, "Success")),
+        Err(e) => Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e)),
+    }
+}
+
+async fn classify_text(
+    State(state): State<AnalysisState>,
+    Json(req): Json<ClassifyTextRequest>,
+) -> Json<ApiResponse<ClassifyTextResponse>> {
+    match state.analysis_service.classify_text(&req.text, req.categories.as_deref()).await {
+        Ok(response) => Json(ApiResponse::success(response, "Success")),
+        Err(e) => Json(ApiResponse::<ClassifyTextResponse>::error(500, &e)),
+    }
+}
+
+async fn extract_entities(
+    State(state): State<AnalysisState>,
+    Json(req): Json<ExtractEntitiesRequest>,
+) -> Json<ApiResponse<ExtractEntitiesResponse>> {
+    match state.analysis_service.extract_entities(&req.text, req.entity_types.as_deref()).await {
+        Ok(response) => Json(ApiResponse::success(response, "Success")),
+        Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::error(500, &e)),
+    }
+}
+
+async fn extract_keywords(
+    State(state): State<AnalysisState>,
+    Json(req): Json<ExtractKeywordsRequest>,
+) -> Json<ApiResponse<ExtractKeywordsResponse>> {
+    match state.analysis_service.extract_keywords(&req.text, req.max_keywords).await {
+        Ok(response) => Json(ApiResponse::success(response, "Success")),
+        Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::error(500, &e)),
+    }
+}
+
 async fn call_ai_api(
     client: &Client,
     base_url: &str,
@@ -1576,14 +1626,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         model: model.clone(),
         embedding_model: embedding_model.clone(),
     };
-    let qa_service = QAService::new(vector_service.db.clone(), http_client.clone(), qa_config);
+    let qa_service = QAService::new(vector_service.db().clone(), http_client.clone(), qa_config);
     
     let analysis_config = AnalysisConfig {
         base_url: base_url.clone(),
         api_key: api_key.clone(),
         model: model.clone(),
     };
-    let analysis_service = AnalysisService::new(vector_service.db.clone(), http_client.clone(), analysis_config);
+    let analysis_service = AnalysisService::new(vector_service.db().clone(), http_client.clone(), analysis_config);
 
     // 初始化静态存储（向后兼容）
     let docs = load_documents_from_dir(DOCS_DIR).await;
@@ -1652,9 +1702,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ))
         .with_state(app_state.clone());
 
+    // 分析 API - 使用单独的Router以便正确注入State
+    let analysis_state = AnalysisState {
+        analysis_service: app_state.analysis_service.clone(),
+        auth_state: app_state.auth_state.clone(),
+    };
+    
+    let analysis_router = Router::new()
+        .route("/api/v1/analysis/sentiment", post(sentiment_analysis))
+        .route("/api/v1/analysis/classify", post(classify_text))
+        .route("/api/v1/analysis/entities", post(extract_entities))
+        .route("/api/v1/analysis/keywords", post(extract_keywords))
+        .layer(axum::middleware::from_fn_with_state(
+            analysis_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(analysis_state);
+
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(analysis_router)
         .merge(create_api_info_router("topems-ai"))
         .layer(cors)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));

@@ -264,6 +264,72 @@ EOF
     log "数据库初始化完成"
 }
 
+# ==================== 执行数据库迁移 ====================
+
+run_migrations() {
+    step "执行数据库迁移..."
+
+    set -a
+    source ${DATA_DIR}/.env
+    set +a
+
+    # 迁移目录列表（按服务顺序排列）
+    # 注意：部分服务的迁移目录在 backend/src/db/migrations
+    local MIGRATION_DIRS=(
+        # 平台服务
+        "platform/topems-iam/backend/src/db/migrations"
+        "platform/topems-doc/backend/src/db/migrations"
+        "platform/topems-flow/backend/migrations"
+        # 业务服务
+        "services/topems-erp/backend/migrations"
+        "services/topems-hrm/backend/migrations"
+        "services/topems-crm/backend/migrations"
+        "services/topems-ai/backend/migrations"
+        "services/topems-pm/backend/migrations"
+        "services/topems-rs/backend/migrations"
+        "services/topems-lims/backend/migrations"
+        "services/topems-pdm/backend/migrations"
+        "services/topems-mes/backend/migrations"
+        "services/topems-qms/backend/migrations"
+        "services/topems-ehs/backend/migrations"
+        "services/topems-scm/backend/migrations"
+        "services/topems-srm/backend/migrations"
+        "services/topems-wms/backend/migrations"
+        "services/topems-gis/backend/migrations"
+        "services/topems-im/backend/migrations"
+        "services/topems-bi/backend/migrations"
+        "services/topems-mail/backend/migrations"
+        "services/topems-mobile/backend/migrations"
+        "services/topems-portal/backend/migrations"
+        "services/topems-integration/backend/migrations"
+        "services/topems-notification/backend/src/db/migrations"
+        "services/report-service/migrations"
+    )
+
+    for migration_dir in "${MIGRATION_DIRS[@]}"; do
+        if [ -d "$migration_dir" ]; then
+            log "执行迁移: $migration_dir"
+            
+            # 查找迁移SQL文件
+            sql_files=$(find "$migration_dir" -name "*.sql" | sort)
+            
+            if [ -n "$sql_files" ]; then
+                for sql_file in $sql_files; do
+                    log "  执行: $(basename "$sql_file")"
+                    docker exec -i ${PROJECT_NAME}-postgres psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} < "$sql_file" || \
+                        warn "  迁移文件执行失败: $sql_file"
+                done
+            else
+                warn "  未找到迁移SQL文件"
+            fi
+        else
+            log "  跳过不存在的目录: $migration_dir"
+        fi
+    done
+
+    log "数据库迁移完成"
+}
+
 # ==================== 部署服务 ====================
 
 deploy_services() {
@@ -401,16 +467,60 @@ main() {
     echo "📁 数据目录: ${DATA_DIR}"
     echo "🌐 网络名称: ${NETWORK_NAME}"
     echo ""
+    echo "部署流程:"
+    echo "  1. 初始化部署环境"
+    echo "  2. 配置环境变量"
+    echo "  3. 加载 Docker 镜像"
+    echo "  4. 启动基础设施 (PostgreSQL/Redis)"
+    echo "  5. 初始化数据库 (创建 Schema)"
+    echo "  6. 执行数据库迁移脚本"
+    echo "  7. 部署各服务"
+    echo ""
 
     # 执行部署步骤
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "步骤 1/7: 初始化部署环境"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     init
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "步骤 2/7: 配置环境变量"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     setup_env
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "步骤 3/7: 加载 Docker 镜像"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     load_images
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "步骤 4/7: 启动基础设施 (PostgreSQL/Redis)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     start_infrastructure
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "步骤 5/7: 初始化数据库 (创建 Schema)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     init_database
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "步骤 6/7: 执行数据库迁移脚本"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    run_migrations
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "步骤 7/7: 部署各服务"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     deploy_services
 
     # 显示状态
+    echo ""
     check_status
     show_complete
 }

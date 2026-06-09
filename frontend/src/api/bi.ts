@@ -291,4 +291,9 @@ export async function fetchPdmBatchStatusDistribution() {
   return await apiClient.bi.get('/api/v1/bi/pdm/batch-status-distribution');
 }
 
+// 模块详细数据API
+export async function fetchModuleDetailData(moduleId: string) {
+  return await apiClient.bi.get(`/api/v1/bi/${moduleId}`);
+}
+
 export default apiClient.bi;

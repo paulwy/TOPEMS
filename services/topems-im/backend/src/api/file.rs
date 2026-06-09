@@ -56,7 +56,7 @@ pub async fn upload_file(
         // 保存文件信息到数据库
         let result = sqlx::query_as::<_, FileTransfer>(
             r#"
-            INSERT INTO file_transfers (id, file_name, file_path, file_size, content_type, 
+            INSERT INTO im.file_transfers (id, file_name, file_path, file_size, content_type, 
                                        uploader_id, uploader_name, chat_room_id, message_id, 
                                        is_shared, share_link, download_count, expires_at, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, 'system', 'System', NULL, NULL, FALSE, NULL, 0, NULL, $6, $6)
@@ -107,7 +107,7 @@ pub async fn get_file_info(
         r#"
         SELECT id, file_name, file_path, file_size, content_type, uploader_id, uploader_name, 
                chat_room_id, message_id, is_shared, share_link, download_count, expires_at, created_at, updated_at
-        FROM file_transfers
+        FROM im.file_transfers
         WHERE id = $1
         "#
     )
@@ -134,7 +134,7 @@ pub async fn download_file(
         r#"
         SELECT id, file_name, file_path, file_size, content_type, uploader_id, uploader_name, 
                chat_room_id, message_id, is_shared, share_link, download_count, expires_at, created_at, updated_at
-        FROM file_transfers
+        FROM im.file_transfers
         WHERE id = $1
         "#
     )
@@ -154,7 +154,7 @@ pub async fn download_file(
             // 更新下载次数
             let _ = sqlx::query(
                 r#"
-                UPDATE file_transfers
+                UPDATE im.file_transfers
                 SET download_count = download_count + 1, updated_at = $1
                 WHERE id = $2
                 "#
@@ -194,7 +194,7 @@ pub async fn delete_file(
         r#"
         SELECT id, file_name, file_path, file_size, content_type, uploader_id, uploader_name, 
                chat_room_id, message_id, is_shared, share_link, download_count, expires_at, created_at, updated_at
-        FROM file_transfers
+        FROM im.file_transfers
         WHERE id = $1
         "#
     )
@@ -210,7 +210,7 @@ pub async fn delete_file(
             // 删除数据库记录
             let _ = sqlx::query(
                 r#"
-                DELETE FROM file_transfers
+                DELETE FROM im.file_transfers
                 WHERE id = $1
                 "#
             )
@@ -246,7 +246,7 @@ pub async fn share_file(
 
     let result = sqlx::query(
         r#"
-        UPDATE file_transfers
+        UPDATE im.file_transfers
         SET is_shared = TRUE, share_link = $1, expires_at = $2, updated_at = $3
         WHERE id = $4
         "#
@@ -293,9 +293,9 @@ pub async fn get_file_history(
         r#"
         SELECT id, file_name, file_path, file_size, content_type, uploader_id, uploader_name, 
                chat_room_id, message_id, is_shared, share_link, download_count, expires_at, created_at, updated_at
-        FROM file_transfers
+        FROM im.file_transfers
         WHERE uploader_id = $1 OR chat_room_id IN (
-            SELECT chat_room_id FROM chat_room_members WHERE user_id = $1
+            SELECT chat_room_id FROM im.chat_room_members WHERE user_id = $1
         )
         ORDER BY created_at DESC
         LIMIT $2
@@ -327,7 +327,7 @@ pub async fn download_shared_file(
         r#"
         SELECT id, file_name, file_path, file_size, content_type, uploader_id, uploader_name, 
                chat_room_id, message_id, is_shared, share_link, download_count, expires_at, created_at, updated_at
-        FROM file_transfers
+        FROM im.file_transfers
         WHERE share_link = $1 AND is_shared = TRUE
         "#
     )
@@ -347,7 +347,7 @@ pub async fn download_shared_file(
             // 更新下载次数
             let _ = sqlx::query(
                 r#"
-                UPDATE file_transfers
+                UPDATE im.file_transfers
                 SET download_count = download_count + 1, updated_at = $1
                 WHERE id = $2
                 "#

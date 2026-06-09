@@ -19,6 +19,8 @@ import {
   Copy,
   Check,
   Wand2,
+  BarChart2,
+  FileStack,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -28,7 +30,7 @@ import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { aiApi } from '../api/ai';
 import { useAppStore } from '../store';
 import AISettingsModal from '../components/AISettingsModal';
-import { AIDocumentGenerator } from '../components/ai';
+import { AIDocumentGenerator, DocumentManager, AIAnalyzer } from '../components/ai';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -107,7 +109,7 @@ const AIPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [activeTab, setActiveTab] = useState<'chat' | 'documents'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'documents' | 'analysis' | 'manage'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -121,6 +123,7 @@ const AIPage: React.FC = () => {
   const [currentRole, setCurrentRole] = useState<AssistantRole>('general');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false);
+  const [showAnalyzer, setShowAnalyzer] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 从本地存储加载对话历史
@@ -509,15 +512,23 @@ const AIPage: React.FC = () => {
               <ModeToggle />
             </div>
           </div>
-          <Tabs defaultValue={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'documents')} className='w-full mb-4'>
-            <TabsList className='w-full grid grid-cols-2'>
-              <TabsTrigger value='chat' className='flex items-center gap-1'>
+          <Tabs defaultValue={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'documents' | 'analysis' | 'manage')} className='w-full mb-4'>
+            <TabsList className='w-full grid grid-cols-4'>
+              <TabsTrigger value='chat' className='flex items-center gap-1 text-xs'>
                 <MessageSquare className='w-4 h-4' />
                 <span>AI 聊天</span>
               </TabsTrigger>
-              <TabsTrigger value='documents' className='flex items-center gap-1'>
+              <TabsTrigger value='documents' className='flex items-center gap-1 text-xs'>
                 <Wand2 className='w-4 h-4' />
                 <span>文档生成</span>
+              </TabsTrigger>
+              <TabsTrigger value='analysis' className='flex items-center gap-1 text-xs'>
+                <BarChart2 className='w-4 h-4' />
+                <span>文本分析</span>
+              </TabsTrigger>
+              <TabsTrigger value='manage' className='flex items-center gap-1 text-xs'>
+                <FileStack className='w-4 h-4' />
+                <span>文档管理</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -816,6 +827,43 @@ const AIPage: React.FC = () => {
             </Card>
           </div>
         )}
+
+        {activeTab === 'analysis' && (
+          <div className='flex-1 p-6'>
+            <Card className='h-full'>
+              <CardHeader>
+                <div className='flex items-center gap-3'>
+                  <div className='p-2 bg-blue-100 rounded-lg'>
+                    <BarChart2 className='w-6 h-6 text-blue-600' />
+                  </div>
+                  <div>
+                    <CardTitle className='text-xl'>AI 文本分析</CardTitle>
+                    <p className='text-sm text-gray-500'>对文本进行情感分析、分类、实体提取和关键词提取</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <AIAnalyzer
+                  isOpen={true}
+                  onClose={() => setShowAnalyzer(false)}
+                  onAnalysisComplete={(results) => {
+                    addNotification({
+                      title: '分析完成',
+                      message: '文本分析已完成',
+                      type: 'success',
+                    });
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'manage' && (
+          <div className='flex-1 p-6 overflow-auto'>
+            <DocumentManager />
+          </div>
+        )}
       </div>
 
       <AISettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
@@ -823,6 +871,17 @@ const AIPage: React.FC = () => {
         isOpen={showDocumentGenerator}
         onClose={() => setShowDocumentGenerator(false)}
         onDocumentGenerated={handleDocumentGenerated}
+      />
+      <AIAnalyzer
+        isOpen={showAnalyzer}
+        onClose={() => setShowAnalyzer(false)}
+        onAnalysisComplete={(results) => {
+          addNotification({
+            title: '分析完成',
+            message: '文本分析已完成',
+            type: 'success',
+          });
+        }}
       />
     </div>
   );

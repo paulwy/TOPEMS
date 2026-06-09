@@ -1,10 +1,10 @@
 use axum::{extract::{State, Query}, Json};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::state::AppState;
 use crate::models::{AuditLog, AuditLogQuery, AuditLogResponse, CreateAuditLogRequest};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use topems_shared::ApiResponse;
 
 pub async fn list_audit_logs(

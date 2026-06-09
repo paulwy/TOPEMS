@@ -2,7 +2,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use serde::Deserialize;
@@ -18,7 +18,6 @@ use crate::models::{
 };
 use crate::services::EhsService;
 use crate::services::permission::{
-    check_permission, EhsPermission,
     check_hazard_permission, check_hazard_write_permission,
     check_safety_check_permission, check_safety_check_write_permission,
     check_emergency_plan_permission, check_emergency_plan_write_permission,
@@ -57,33 +56,7 @@ impl FromRef<ApiState> for AuthState {
 pub async fn create_routes(db: PgPool, auth_state: AuthState) -> Result<Router> {
     let ehs_service = EhsService::new(db.clone());
     let state = ApiState { ehs_service, auth_state: auth_state.clone() };
-    
-    // 创建新的API状态
-    let new_api_state = environment::ApiState {
-        ehs_service: EhsService::new(db.clone()),
-        auth_state: auth_state.clone(),
-    };
-    
-    let health_api_state = health::ApiState {
-        ehs_service: EhsService::new(db.clone()),
-        auth_state: auth_state.clone(),
-    };
-    
-    let safety_api_state = safety::ApiState {
-        ehs_service: EhsService::new(db.clone()),
-        auth_state: auth_state.clone(),
-    };
-    
-    let risk_api_state = risk::ApiState {
-        ehs_service: EhsService::new(db.clone()),
-        auth_state: auth_state.clone(),
-    };
-    
-    let training_api_state = training::ApiState {
-        ehs_service: EhsService::new(db.clone()),
-        auth_state: auth_state.clone(),
-    };
-    
+
     let app = Router::new()
         // 原有路由
         .route("/api/v1/hazards", get(list_hazards).post(create_hazard))
@@ -107,15 +80,15 @@ pub async fn create_routes(db: PgPool, auth_state: AuthState) -> Result<Router> 
             get(get_drill).put(update_drill).delete(delete_drill),
         )
         // 新增环境管理路由
-        .merge(environment::create_routes(new_api_state))
+        .merge(environment::create_routes(state.clone()))
         // 新增健康管理路由
-        .merge(health::create_routes(health_api_state))
+        .merge(health::create_routes(state.clone()))
         // 新增安全管理路由
-        .merge(safety::create_routes(safety_api_state))
+        .merge(safety::create_routes(state.clone()))
         // 新增风险评估路由
-        .merge(risk::create_routes(risk_api_state))
+        .merge(risk::create_routes(state.clone()))
         // 新增培训管理路由
-        .merge(training::create_routes(training_api_state))
+        .merge(training::create_routes(state.clone()))
         .with_state(state);
 
     Ok(app)

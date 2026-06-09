@@ -1,5 +1,4 @@
 use anyhow::Result;
-use chrono::{DateTime, Utc};
 use lettre::{
     message::{Mailbox, Message, MultiPart, SinglePart},
     transport::smtp::authentication::Credentials,
@@ -8,6 +7,8 @@ use lettre::{
 use serde_json::Value;
 use sqlx::postgres::PgPool;
 use std::env;
+use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::models::{Email, EmailTemplate, SendEmailRequest};
@@ -39,7 +40,7 @@ impl EmailService {
 
     pub async fn send_email(&self, request: SendEmailRequest) -> Result<Email> {
         let id = Uuid::new_v4();
-        let now = Utc::now();
+        let now = OffsetDateTime::now_utc();
         let priority = request.priority.unwrap_or_else(|| "normal".to_string());
 
         let cc_addresses = request.cc_addresses.as_ref()
@@ -72,7 +73,7 @@ impl EmailService {
         let result = self.deliver_email(&email).await;
 
         let (status, sent_at, error_message) = match result {
-            Ok(_) => ("sent".to_string(), Some(Utc::now()), None),
+            Ok(_) => ("sent".to_string(), Some(OffsetDateTime::now_utc()), None),
             Err(e) => ("failed".to_string(), None, Some(e.to_string())),
         };
 
@@ -178,7 +179,7 @@ impl EmailService {
         &self,
         id: Uuid,
         status: String,
-        sent_at: Option<DateTime<Utc>>,
+        sent_at: Option<OffsetDateTime>,
         error_message: Option<String>,
     ) -> Result<()> {
         sqlx::query!(
@@ -190,7 +191,7 @@ impl EmailService {
             status,
             sent_at,
             error_message,
-            Utc::now(),
+            OffsetDateTime::now_utc(),
             id,
         )
         .execute(&self.pool)
@@ -227,8 +228,8 @@ impl EmailService {
             sent_at: r.sent_at,
             error_message: r.error_message,
             template_id: r.template_id,
-            created_at: r.created_at.unwrap_or_else(|| Utc::now()),
-            updated_at: r.updated_at.unwrap_or_else(|| Utc::now()),
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 
@@ -278,8 +279,8 @@ impl EmailService {
             sent_at: r.sent_at,
             error_message: r.error_message,
             template_id: r.template_id,
-            created_at: r.created_at.unwrap_or_else(|| Utc::now()),
-            updated_at: r.updated_at.unwrap_or_else(|| Utc::now()),
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
         .collect();
 
@@ -321,7 +322,7 @@ impl EmailService {
             if let Some(email) = self.get_email(email_id).await {
                 match self.deliver_email(&email).await {
                     Ok(_) => {
-                        let _ = self.update_email_status(email_id, "sent".to_string(), Some(Utc::now()), None).await;
+                        let _ = self.update_email_status(email_id, "sent".to_string(), Some(OffsetDateTime::now_utc()), None).await;
                         success_count += 1;
                     }
                     Err(e) => {
@@ -369,13 +370,17 @@ impl EmailService {
         .await?
         .unwrap_or(0);
 
+        let last_sent_at_str = result
+            .last_sent_at
+            .and_then(|dt| dt.format(&Rfc3339).ok());
+
         Ok(serde_json::json!({
             "total": result.total.unwrap_or(0),
             "sent_count": result.sent_count.unwrap_or(0),
             "failed_count": result.failed_count.unwrap_or(0),
             "pending_count": result.pending_count.unwrap_or(0),
             "today_count": today_count,
-            "last_sent_at": result.last_sent_at,
+            "last_sent_at": last_sent_at_str,
         }))
     }
 }
@@ -401,7 +406,7 @@ impl TemplateService {
         tags: Option<Vec<String>>,
     ) -> Result<EmailTemplate> {
         let id = Uuid::new_v4();
-        let now = Utc::now();
+        let now = OffsetDateTime::now_utc();
         let category = category.unwrap_or_else(|| "general".to_string());
         let tags_json = tags.map(|t| serde_json::to_value(t)).transpose()?;
 
@@ -469,8 +474,8 @@ impl TemplateService {
             category: r.category,
             tags: r.tags,
             status: r.status,
-            created_at: r.created_at.unwrap_or_else(|| Utc::now()),
-            updated_at: r.updated_at.unwrap_or_else(|| Utc::now()),
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 
@@ -498,8 +503,8 @@ impl TemplateService {
             category: r.category,
             tags: r.tags,
             status: r.status,
-            created_at: r.created_at.unwrap_or_else(|| Utc::now()),
-            updated_at: r.updated_at.unwrap_or_else(|| Utc::now()),
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 
@@ -545,8 +550,8 @@ impl TemplateService {
             category: r.category,
             tags: r.tags,
             status: r.status,
-            created_at: r.created_at.unwrap_or_else(|| Utc::now()),
-            updated_at: r.updated_at.unwrap_or_else(|| Utc::now()),
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
         .collect();
 
@@ -591,7 +596,7 @@ impl TemplateService {
         let category = category.unwrap_or(existing.category);
         let tags_json = tags.map(|t| serde_json::to_value(t)).transpose()?.or(existing.tags);
         let status = status.unwrap_or(existing.status);
-        let now = Utc::now();
+        let now = OffsetDateTime::now_utc();
 
         let result = sqlx::query!(
             r#"
@@ -644,7 +649,7 @@ impl TemplateService {
     }
 
     pub async fn update_template_status(&self, id: Uuid, status: &str) -> Result<EmailTemplate> {
-        let now = Utc::now();
+        let now = OffsetDateTime::now_utc();
 
         let result = sqlx::query!(
             r#"

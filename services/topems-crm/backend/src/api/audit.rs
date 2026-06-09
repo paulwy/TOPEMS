@@ -4,15 +4,13 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::{ApiResponse, api_error};
 use topems_shared::auth::Claims;
-use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+use crate::models::AuditLog;
 use crate::services::permission::{check_permission, ModulePermission};
 use super::ApiState;
 

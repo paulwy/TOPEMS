@@ -1,13 +1,11 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State, Extension},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::{ApiResponse, api_error};

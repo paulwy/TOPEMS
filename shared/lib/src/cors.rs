@@ -21,7 +21,7 @@ pub fn create_cors_layer() -> CorsLayer {
     
     use axum::http::Method;
 
-CorsLayer::new()
+    CorsLayer::new()
         .allow_origin(allow_origin)
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
         .allow_headers([
