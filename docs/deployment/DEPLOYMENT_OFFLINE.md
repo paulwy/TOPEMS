@@ -432,9 +432,9 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # 所有服务列表
 PLATFORM_SERVICES=(
-    "platform/topems-iam/backend:iam-service"
-    "platform/topems-doc/backend:doc-service"
-    "platform/topems-flow/backend:flow-service"
+    "services/topems-iam/backend:iam-service"
+    "services/topems-doc/backend:doc-service"
+    "services/topems-flow/backend:flow-service"
 )
 
 BUSINESS_SERVICES=(

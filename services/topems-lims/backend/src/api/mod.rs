@@ -16,6 +16,7 @@ pub mod doc_integration;
 pub mod ai_integration;
 pub mod rs_integration;
 pub mod openapi;
+pub mod health;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -40,6 +41,7 @@ pub async fn create_routes(db: PgPool, auth_state: AuthState, config: Config) ->
     let state = ApiState { db, auth_state, config };
 
     let app = Router::new()
+        .merge(health::create_routes())
         .merge(sample::create_routes().await?)
         .merge(inspection_process::create_routes().await?)
         .merge(inspection_task::create_routes().await?)

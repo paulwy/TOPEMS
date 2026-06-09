@@ -20,6 +20,11 @@ impl DocumentService {
         }
     }
 
+    pub async fn pool(&self) -> sqlx::PgPool {
+        // Get the pool from vector service for health checks
+        self.vector_service.read().await.db().pool().clone()
+    }
+
     /// 处理文档上传
     pub async fn process_upload(
         &self,

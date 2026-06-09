@@ -6,12 +6,15 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Employee {
     pub id: Uuid,
+    pub organization_id: Uuid,
+    pub company_id: Option<Uuid>,
+    pub department_id: Option<Uuid>,
+    pub position_id: Option<Uuid>,
     pub employee_number: String,
     pub name: String,
     pub gender: Option<String>,
     pub birth_date: Option<DateTime<Utc>>,
     pub hire_date: Option<DateTime<Utc>>,
-    pub department_id: Option<Uuid>,
     pub position: Option<String>,
     pub job_title: Option<String>,
     pub email: Option<String>,
@@ -26,12 +29,15 @@ pub struct Employee {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateEmployeeRequest {
+    pub organization_id: Uuid,
+    pub company_id: Option<Uuid>,
+    pub department_id: Option<Uuid>,
+    pub position_id: Option<Uuid>,
     pub employee_number: String,
     pub name: String,
     pub gender: Option<String>,
     pub birth_date: Option<DateTime<Utc>>,
     pub hire_date: Option<DateTime<Utc>>,
-    pub department_id: Option<Uuid>,
     pub position: Option<String>,
     pub job_title: Option<String>,
     pub email: Option<String>,
@@ -43,11 +49,13 @@ pub struct CreateEmployeeRequest {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateEmployeeRequest {
+    pub company_id: Option<Uuid>,
+    pub department_id: Option<Uuid>,
+    pub position_id: Option<Uuid>,
     pub name: Option<String>,
     pub gender: Option<String>,
     pub birth_date: Option<DateTime<Utc>>,
     pub hire_date: Option<DateTime<Utc>>,
-    pub department_id: Option<Uuid>,
     pub position: Option<String>,
     pub job_title: Option<String>,
     pub email: Option<String>,
@@ -65,17 +73,21 @@ mod tests {
     #[test]
     fn test_employee_struct() {
         let id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let created_at = Utc::now();
         let updated_at = Utc::now();
         
         let employee = Employee {
             id,
+            organization_id: org_id,
+            company_id: None,
+            department_id: None,
+            position_id: None,
             employee_number: "EMP001".to_string(),
             name: "John Doe".to_string(),
             gender: Some("male".to_string()),
             birth_date: None,
             hire_date: Some(created_at),
-            department_id: None,
             position: Some("Software Engineer".to_string()),
             job_title: Some("Senior Engineer".to_string()),
             email: Some("john@example.com".to_string()),
@@ -97,13 +109,17 @@ mod tests {
 
     #[test]
     fn test_create_employee_request() {
+        let org_id = Uuid::new_v4();
         let request = CreateEmployeeRequest {
+            organization_id: org_id,
+            company_id: None,
+            department_id: None,
+            position_id: None,
             employee_number: "EMP002".to_string(),
             name: "Jane Smith".to_string(),
             gender: Some("female".to_string()),
             birth_date: None,
             hire_date: None,
-            department_id: None,
             position: Some("Designer".to_string()),
             job_title: Some("UI Designer".to_string()),
             email: Some("jane@example.com".to_string()),

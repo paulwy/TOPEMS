@@ -745,7 +745,7 @@ const HrmDepartmentPage: React.FC = () => {
               </Label>
               <Select
                 value={(formData as Department)?.company_id || ''}
-                onValueChange={(value) => handleInputChange('company_id', value === 'none' ? undefined : value)}
+                onValueChange={(value) => handleInputChange('company_id', value === 'none' ? '' : value)}
               >
                 <SelectTrigger className='h-10'>
                   <SelectValue placeholder='请选择公司' />

@@ -51,7 +51,7 @@ async fn list_subjects(
     let result = sqlx::query_as::<_, AccountingSubject>(
         r#"
         SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
-        FROM erp.accounting_subjects
+        FROM accounting_subjects
         WHERE ($1::text IS NULL OR code ILIKE $1 OR name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY code ASC
@@ -69,7 +69,7 @@ async fn list_subjects(
         Ok(subjects) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.accounting_subjects
+                SELECT COUNT(*) FROM accounting_subjects
                 WHERE ($1::text IS NULL OR code ILIKE $1 OR name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -105,7 +105,7 @@ async fn create_subject(
 
     let result = sqlx::query_as::<_, AccountingSubject>(
         r#"
-        INSERT INTO erp.accounting_subjects (id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at)
+        INSERT INTO accounting_subjects (id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
         "#,
@@ -173,7 +173,7 @@ async fn get_subject(
     let result = sqlx::query_as::<_, AccountingSubject>(
         r#"
         SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
-        FROM erp.accounting_subjects WHERE id = $1
+        FROM accounting_subjects WHERE id = $1
         "#,
     )
     .bind(id)
@@ -197,7 +197,7 @@ async fn update_subject(
     Json(req): Json<UpdateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
     let existing = sqlx::query_as::<_, AccountingSubject>(
-        "SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at FROM erp.accounting_subjects WHERE id = $1",
+        "SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at FROM accounting_subjects WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -221,7 +221,7 @@ async fn update_subject(
 
     let result = sqlx::query_as::<_, AccountingSubject>(
         r#"
-        UPDATE erp.accounting_subjects SET
+        UPDATE accounting_subjects SET
             name = $2, category = $3, parent_code = $4, description = $5, is_cash_flow = $6, status = $7, updated_at = $8
         WHERE id = $1
         RETURNING id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
@@ -284,7 +284,7 @@ async fn delete_subject(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.accounting_subjects WHERE id = $1")
+    let result = sqlx::query("DELETE FROM accounting_subjects WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -348,7 +348,7 @@ async fn list_vouchers(
     let result = sqlx::query_as::<_, FinancialVoucher>(
         r#"
         SELECT id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at
-        FROM erp.financial_vouchers
+        FROM financial_vouchers
         WHERE ($1::text IS NULL OR voucher_number ILIKE $1 OR summary ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR period = $3)
@@ -368,7 +368,7 @@ async fn list_vouchers(
         Ok(vouchers) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.financial_vouchers
+                SELECT COUNT(*) FROM financial_vouchers
                 WHERE ($1::text IS NULL OR voucher_number ILIKE $1 OR summary ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR period = $3)
@@ -411,7 +411,7 @@ async fn create_voucher(
 
     let result = sqlx::query_as::<_, FinancialVoucher>(
         r#"
-        INSERT INTO erp.financial_vouchers (id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, status, total_debit, total_credit, project_id, contract_id, created_at, updated_at)
+        INSERT INTO financial_vouchers (id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, status, total_debit, total_credit, project_id, contract_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12, $13, $14)
         RETURNING id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at
         "#,
@@ -447,7 +447,7 @@ async fn create_voucher(
             name.clone()
         } else {
             let subject = sqlx::query_as::<_, AccountingSubject>(
-                "SELECT name FROM erp.accounting_subjects WHERE code = $1",
+                "SELECT name FROM accounting_subjects WHERE code = $1",
             )
             .bind(&item.subject_code)
             .fetch_optional(&state.db)
@@ -457,7 +457,7 @@ async fn create_voucher(
 
         let _ = sqlx::query(
             r#"
-            INSERT INTO erp.voucher_items (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, quantity, unit, price, department_id, project_id, contract_id, created_at, updated_at)
+            INSERT INTO voucher_items (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, quantity, unit, price, department_id, project_id, contract_id, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
             "#,
         )
@@ -510,7 +510,7 @@ async fn get_voucher(
     let result = sqlx::query_as::<_, FinancialVoucher>(
         r#"
         SELECT id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at
-        FROM erp.financial_vouchers WHERE id = $1
+        FROM financial_vouchers WHERE id = $1
         "#,
     )
     .bind(id)
@@ -534,7 +534,7 @@ async fn get_voucher_items(
     let result = sqlx::query_as::<_, VoucherItem>(
         r#"
         SELECT id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, quantity, unit, price, department_id, project_id, contract_id, created_at, updated_at
-        FROM erp.voucher_items WHERE voucher_id = $1 ORDER BY line_number ASC
+        FROM voucher_items WHERE voucher_id = $1 ORDER BY line_number ASC
         "#,
     )
     .bind(id)
@@ -557,7 +557,7 @@ async fn update_voucher(
     Json(req): Json<UpdateFinancialVoucherRequest>,
 ) -> Json<ApiResponse<FinancialVoucher>> {
     let existing = sqlx::query_as::<_, FinancialVoucher>(
-        "SELECT id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at FROM erp.financial_vouchers WHERE id = $1",
+        "SELECT id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at FROM financial_vouchers WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -584,7 +584,7 @@ async fn update_voucher(
 
     let result = sqlx::query_as::<_, FinancialVoucher>(
         r#"
-        UPDATE erp.financial_vouchers SET
+        UPDATE financial_vouchers SET
             voucher_date = $2, period = $3, attachment_count = $4, summary = $5, checker_id = $6, checker_name = $7, bookkeeper_id = $8, bookkeeper_name = $9, status = $10, updated_at = $11
         WHERE id = $1
         RETURNING id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at
@@ -650,12 +650,12 @@ async fn delete_voucher(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let _ = sqlx::query("DELETE FROM erp.voucher_items WHERE voucher_id = $1")
+    let _ = sqlx::query("DELETE FROM voucher_items WHERE voucher_id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    let result = sqlx::query("DELETE FROM erp.financial_vouchers WHERE id = $1")
+    let result = sqlx::query("DELETE FROM financial_vouchers WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -750,7 +750,7 @@ async fn import_u8_vouchers(
 
         let result = sqlx::query_as::<_, FinancialVoucher>(
             r#"
-            INSERT INTO erp.financial_vouchers (id, voucher_number, voucher_date, period, summary, maker_name, status, total_debit, total_credit, source_system, created_at, updated_at)
+            INSERT INTO financial_vouchers (id, voucher_number, voucher_date, period, summary, maker_name, status, total_debit, total_credit, source_system, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, 'imported', $7, $8, 'U8', $9, $10)
             RETURNING id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at
             "#,
@@ -774,7 +774,7 @@ async fn import_u8_vouchers(
                     let item_id = Uuid::new_v4();
                     let _ = sqlx::query(
                         r#"
-                        INSERT INTO erp.voucher_items (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, quantity, unit, created_at, updated_at)
+                        INSERT INTO voucher_items (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, quantity, unit, created_at, updated_at)
                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                         "#,
                     )

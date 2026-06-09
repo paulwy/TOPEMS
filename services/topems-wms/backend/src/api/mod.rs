@@ -3,7 +3,9 @@ use axum::{
     Router,
 };
 use sqlx::postgres::PgPool;
-use topems_shared::AuthState;
+use std::sync::Arc;
+use std::time::Instant;
+use topems_shared::{AuthState, SystemMetrics};
 
 pub mod warehouse;
 pub mod inventory;
@@ -15,6 +17,8 @@ pub mod audit;
 pub struct ApiState {
     pub db: PgPool,
     pub auth_state: AuthState,
+    pub metrics: Arc<SystemMetrics>,
+    pub start_time: Instant,
 }
 
 impl FromRef<ApiState> for AuthState {

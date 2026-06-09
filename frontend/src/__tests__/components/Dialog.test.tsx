@@ -1,14 +1,14 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { 
-  Dialog, 
-  DialogTrigger, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose
+  DialogClose,
 } from '../../components/ui/dialog';
 import { Button } from '../../components/ui/button';
 
@@ -26,7 +26,7 @@ describe('Dialog Component', () => {
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Close</Button>
+              <Button variant='outline'>Close</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>
@@ -35,9 +35,9 @@ describe('Dialog Component', () => {
 
     const trigger = screen.getByRole('button', { name: /open dialog/i });
     expect(trigger).toBeInTheDocument();
-    
+
     fireEvent.click(trigger);
-    
+
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Test Dialog')).toBeInTheDocument();
     expect(screen.getByText('This is a test dialog')).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe('Dialog Component', () => {
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Close</Button>
+              <Button variant='outline'>Close</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>
@@ -64,12 +64,12 @@ describe('Dialog Component', () => {
 
     const trigger = screen.getByRole('button', { name: /open dialog/i });
     fireEvent.click(trigger);
-    
+
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    
+
     const closeButton = screen.getByRole('button', { name: /close/i });
     fireEvent.click(closeButton);
-    
+
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -96,7 +96,7 @@ describe('Dialog Component', () => {
   test('renders with custom className', () => {
     render(
       <Dialog open>
-        <DialogContent className="custom-dialog">
+        <DialogContent className='custom-dialog'>
           <DialogHeader>
             <DialogTitle>Custom Dialog</DialogTitle>
           </DialogHeader>

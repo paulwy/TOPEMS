@@ -21,6 +21,7 @@ pub mod meeting_room;
 pub mod vehicles;
 pub mod announcement;
 pub mod hrm_integration_example;
+pub mod health;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -47,6 +48,7 @@ impl FromRef<ApiState> for PgPool {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .merge(health::create_routes())
         .merge(asset::create_routes())
         .merge(audit::create_routes())
         .merge(finance::create_routes())

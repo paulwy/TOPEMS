@@ -49,7 +49,7 @@ Use the root `Dockerfile` to build individual service images:
 
 ```bash
 # Build IAM service
-docker build --build-arg SERVICE_PATH=platform/topems-iam/backend --build-arg SERVICE_PORT=8000 --build-arg SERVICE_NAME=topems-iam -t topems-iam:latest .
+docker build --build-arg SERVICE_PATH=services/topems-iam/backend --build-arg SERVICE_PORT=8000 --build-arg SERVICE_NAME=topems-iam -t topems-iam:latest .
 
 # Build ERP service
 docker build --build-arg SERVICE_PATH=services/topems-erp/backend --build-arg SERVICE_PORT=8010 --build-arg SERVICE_NAME=topems-erp -t topems-erp:latest .

@@ -25,15 +25,15 @@ vi.mock('../../store', () => ({
 }));
 
 vi.mock('../../components/LoadingSpinner', () => ({
-  LoadingSpinner: () => <div data-testid="loading-spinner">Loading...</div>,
+  LoadingSpinner: () => <div data-testid='loading-spinner'>Loading...</div>,
 }));
 
 vi.mock('../../components/EmptyState', () => ({
-  EmptyState: () => <div data-testid="empty-state">Empty</div>,
+  EmptyState: () => <div data-testid='empty-state'>Empty</div>,
 }));
 
 vi.mock('../../components/ImportExportModal', () => ({
-  ImportExportModal: () => <div data-testid="import-export-modal">Modal</div>,
+  ImportExportModal: () => <div data-testid='import-export-modal'>Modal</div>,
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
@@ -77,7 +77,7 @@ describe('CustomerManagementPage', () => {
       const addButton = screen.getByRole('button', { name: /新增客户/i });
       fireEvent.click(addButton);
     });
-    
+
     await waitFor(() => {
       const dialogTitles = screen.getAllByText('新增客户');
       expect(dialogTitles.length).toBeGreaterThanOrEqual(2);
@@ -90,7 +90,7 @@ describe('CustomerManagementPage', () => {
       const importExportButton = screen.getByRole('button', { name: /导入导出/i });
       fireEvent.click(importExportButton);
     });
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('import-export-modal')).toBeInTheDocument();
     });

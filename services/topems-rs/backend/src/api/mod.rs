@@ -4,7 +4,9 @@ use axum::{
 };
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use std::time::Instant;
 use topems_shared::{AuthState, Config};
+use topems_shared::SystemMetrics;
 
 pub mod auth;
 pub mod experiment;
@@ -25,6 +27,8 @@ pub struct ApiState {
     pub db: PgPool,
     pub auth_state: AuthState,
     pub config: Config,
+    pub metrics: Arc<SystemMetrics>,
+    pub start_time: Instant,
 }
 
 impl FromRef<ApiState> for AuthState {
@@ -39,18 +43,9 @@ impl FromRef<ApiState> for PgPool {
     }
 }
 
-pub fn create_routes(
-    db: PgPool,
-    auth_state: AuthState,
-    config: Config,
-) -> Router {
-    let state = Arc::new(ApiState {
-        db,
-        auth_state,
-        config,
-    });
-
+pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .merge(auth::create_routes())
         .merge(project::create_routes())
         .merge(formula::create_routes())
         .merge(experiment::create_routes())
@@ -62,5 +57,4 @@ pub fn create_routes(
         .merge(project_milestone::create_routes())
         .merge(project_member::create_routes())
         .merge(project_report::create_routes())
-        .with_state(state)
 }

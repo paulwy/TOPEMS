@@ -4,7 +4,7 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -56,7 +56,7 @@ async fn list_vehicles(
     let result = sqlx::query_as::<_, Vehicle>(
         r#"
         SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at
-        FROM erp.vehicles
+        FROM vehicles
         WHERE ($1::text IS NULL OR plate_number ILIKE $1 OR brand ILIKE $1 OR model ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR vehicle_type = $3)
@@ -76,7 +76,7 @@ async fn list_vehicles(
         Ok(vehicles) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.vehicles
+                SELECT COUNT(*) FROM vehicles
                 WHERE ($1::text IS NULL OR plate_number ILIKE $1 OR brand ILIKE $1 OR model ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR vehicle_type = $3)
@@ -116,7 +116,7 @@ async fn create_vehicle(
 
     let result = sqlx::query_as::<_, Vehicle>(
         r#"
-        INSERT INTO erp.vehicles (id, plate_number, brand, model, vehicle_type, status, driver, mileage, fuel_type, created_at, updated_at)
+        INSERT INTO vehicles (id, plate_number, brand, model, vehicle_type, status, driver, mileage, fuel_type, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, 'available', $6, $7, $8, $9, $10)
         RETURNING id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at
         "#,
@@ -183,7 +183,7 @@ async fn get_vehicle(
     let result = sqlx::query_as::<_, Vehicle>(
         r#"
         SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at
-        FROM erp.vehicles WHERE id = $1
+        FROM vehicles WHERE id = $1
         "#,
     )
     .bind(id)
@@ -207,7 +207,7 @@ async fn update_vehicle(
     Json(req): Json<UpdateVehicleRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
     let existing = sqlx::query_as::<_, Vehicle>(
-        "SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at FROM erp.vehicles WHERE id = $1",
+        "SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at FROM vehicles WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -234,7 +234,7 @@ async fn update_vehicle(
 
     let result = sqlx::query_as::<_, Vehicle>(
         r#"
-        UPDATE erp.vehicles SET
+        UPDATE vehicles SET
             plate_number = $2, brand = $3, model = $4, vehicle_type = $5, status = $6, driver = $7, last_service = $8, mileage = $9, fuel_type = $10, updated_at = $11
         WHERE id = $1
         RETURNING id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at
@@ -300,7 +300,7 @@ async fn delete_vehicle(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.vehicles WHERE id = $1")
+    let result = sqlx::query("DELETE FROM vehicles WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -365,7 +365,7 @@ async fn list_vehicle_requests(
     let result = sqlx::query_as::<_, VehicleApplication>(
         r#"
         SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
-        FROM erp.vehicle_requests
+        FROM vehicle_requests
         WHERE ($1::text IS NULL OR vehicle_plate ILIKE $1 OR requester ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -383,7 +383,7 @@ async fn list_vehicle_requests(
         Ok(requests) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.vehicle_requests
+                SELECT COUNT(*) FROM vehicle_requests
                 WHERE ($1::text IS NULL OR vehicle_plate ILIKE $1 OR requester ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -417,7 +417,7 @@ async fn create_vehicle_request(
     }
 
     let vehicle_result = sqlx::query_as::<_, Vehicle>(
-        "SELECT id, plate_number, status FROM erp.vehicles WHERE id = $1 AND status = 'available'",
+        "SELECT id, plate_number, status FROM vehicles WHERE id = $1 AND status = 'available'",
     )
     .bind(&req.vehicle_id)
     .fetch_optional(&state.db)
@@ -431,7 +431,7 @@ async fn create_vehicle_request(
 
     let overlapping = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM erp.vehicle_requests
+        SELECT COUNT(*) FROM vehicle_requests
         WHERE vehicle_id = $1 AND status = 'approved'
           AND ((start_time < $2 AND end_time > $2) OR (start_time < $3 AND end_time > $3))
         "#,
@@ -453,7 +453,7 @@ async fn create_vehicle_request(
 
     let result = sqlx::query_as::<_, VehicleApplication>(
         r#"
-        INSERT INTO erp.vehicle_requests (id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, created_at, updated_at)
+        INSERT INTO vehicle_requests (id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
         RETURNING id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
         "#,
@@ -520,7 +520,7 @@ async fn get_vehicle_request(
     let result = sqlx::query_as::<_, VehicleApplication>(
         r#"
         SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
-        FROM erp.vehicle_requests WHERE id = $1
+        FROM vehicle_requests WHERE id = $1
         "#,
     )
     .bind(id)
@@ -544,7 +544,7 @@ async fn update_vehicle_request(
     Json(req): Json<UpdateVehicleRequestRequest>,
 ) -> Json<ApiResponse<VehicleApplication>> {
     let existing = sqlx::query_as::<_, VehicleApplication>(
-        "SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at FROM erp.vehicle_requests WHERE id = $1",
+        "SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at FROM vehicle_requests WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -566,7 +566,7 @@ async fn update_vehicle_request(
 
     let result = sqlx::query_as::<_, VehicleApplication>(
         r#"
-        UPDATE erp.vehicle_requests SET
+        UPDATE vehicle_requests SET
             status = $2, approved_by = $3, approved_at = $4, rejected_reason = $5, updated_at = $6
         WHERE id = $1
         RETURNING id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
@@ -627,7 +627,7 @@ async fn delete_vehicle_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.vehicle_requests WHERE id = $1")
+    let result = sqlx::query("DELETE FROM vehicle_requests WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -685,7 +685,7 @@ async fn get_vehicle_requests(
     let result = sqlx::query_as::<_, VehicleApplication>(
         r#"
         SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
-        FROM erp.vehicle_requests WHERE vehicle_id = $1 ORDER BY start_time ASC
+        FROM vehicle_requests WHERE vehicle_id = $1 ORDER BY start_time ASC
         "#,
     )
     .bind(id)

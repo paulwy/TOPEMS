@@ -31,11 +31,11 @@ vi.mock('../../store', () => ({
 }));
 
 vi.mock('../../components/DataTable', () => ({
-  DataTable: () => <div data-testid="data-table">Mock Data Table</div>,
+  DataTable: () => <div data-testid='data-table'>Mock Data Table</div>,
 }));
 
 vi.mock('../../components/ModeToggle', () => ({
-  ModeToggle: () => <button data-testid="mode-toggle">Toggle</button>,
+  ModeToggle: () => <button data-testid='mode-toggle'>Toggle</button>,
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {

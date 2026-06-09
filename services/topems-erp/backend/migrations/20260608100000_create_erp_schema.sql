@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS erp.financial_vouchers (
 );
 
 -- ==================== 凭证明细表 ====================
-CREATE TABLE IF NOT EXISTS erp.voucher_items (
+CREATE TABLE IF NOT EXISTS public.voucher_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL DEFAULT uuid_generate_v4(),
     voucher_id UUID NOT NULL REFERENCES erp.financial_vouchers(id) ON DELETE CASCADE,
@@ -240,7 +240,7 @@ CREATE TABLE IF NOT EXISTS erp.voucher_items (
 );
 
 -- ==================== 项目合同表 ====================
-CREATE TABLE IF NOT EXISTS erp.project_contracts (
+CREATE TABLE IF NOT EXISTS public.project_contracts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL DEFAULT uuid_generate_v4(),
     contract_number VARCHAR(100) NOT NULL UNIQUE,
@@ -260,10 +260,10 @@ CREATE TABLE IF NOT EXISTS erp.project_contracts (
 );
 
 -- ==================== 项目预算表 ====================
-CREATE TABLE IF NOT EXISTS erp.project_budgets (
+CREATE TABLE IF NOT EXISTS public.project_budgets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL DEFAULT uuid_generate_v4(),
-    project_id UUID REFERENCES erp.project_contracts(id) ON DELETE CASCADE,
+    project_id UUID REFERENCES public.project_contracts(id) ON DELETE CASCADE,
     budget_type VARCHAR(100),
     fiscal_year VARCHAR(20) NOT NULL,
     total_budget NUMERIC(18,2) NOT NULL,
@@ -276,10 +276,10 @@ CREATE TABLE IF NOT EXISTS erp.project_budgets (
 );
 
 -- ==================== 项目预算明细表 ====================
-CREATE TABLE IF NOT EXISTS erp.project_budget_items (
+CREATE TABLE IF NOT EXISTS public.project_budget_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL DEFAULT uuid_generate_v4(),
-    budget_id UUID NOT NULL REFERENCES erp.project_budgets(id) ON DELETE CASCADE,
+    budget_id UUID NOT NULL REFERENCES public.project_budgets(id) ON DELETE CASCADE,
     item_name VARCHAR(255) NOT NULL,
     item_category VARCHAR(100),
     budget_amount NUMERIC(18,2) NOT NULL,
@@ -292,10 +292,10 @@ CREATE TABLE IF NOT EXISTS erp.project_budget_items (
 );
 
 -- ==================== 付款计划表 ====================
-CREATE TABLE IF NOT EXISTS erp.payment_schedules (
+CREATE TABLE IF NOT EXISTS public.payment_schedules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL DEFAULT uuid_generate_v4(),
-    contract_id UUID REFERENCES erp.project_contracts(id) ON DELETE CASCADE,
+    contract_id UUID REFERENCES public.project_contracts(id) ON DELETE CASCADE,
     payment_number VARCHAR(100) NOT NULL UNIQUE,
     payment_stage VARCHAR(100),
     scheduled_amount NUMERIC(18,2) NOT NULL,
@@ -383,29 +383,28 @@ CREATE INDEX IF NOT EXISTS idx_financial_vouchers_status ON erp.financial_vouche
 CREATE INDEX IF NOT EXISTS idx_financial_vouchers_deleted_at ON erp.financial_vouchers(deleted_at);
 
 -- 凭证明细索引
-CREATE INDEX IF NOT EXISTS idx_voucher_items_organization_id ON erp.voucher_items(organization_id);
-CREATE INDEX IF NOT EXISTS idx_voucher_items_voucher_id ON erp.voucher_items(voucher_id);
-CREATE INDEX IF NOT EXISTS idx_voucher_items_subject_code ON erp.voucher_items(subject_code);
-CREATE INDEX IF NOT EXISTS idx_voucher_items_deleted_at ON erp.voucher_items(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_voucher_items_organization_id ON public.voucher_items(organization_id);
+CREATE INDEX IF NOT EXISTS idx_voucher_items_voucher_id ON public.voucher_items(voucher_id);
+CREATE INDEX IF NOT EXISTS idx_voucher_items_subject_code ON public.voucher_items(subject_code);
+CREATE INDEX IF NOT EXISTS idx_voucher_items_deleted_at ON public.voucher_items(deleted_at);
 
 -- 项目合同索引
-CREATE INDEX IF NOT EXISTS idx_project_contracts_organization_id ON erp.project_contracts(organization_id);
-CREATE INDEX IF NOT EXISTS idx_project_contracts_contract_number ON erp.project_contracts(contract_number);
-CREATE INDEX IF NOT EXISTS idx_project_contracts_status ON erp.project_contracts(status);
-CREATE INDEX IF NOT EXISTS idx_project_contracts_deleted_at ON erp.project_contracts(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_project_contracts_organization_id ON public.project_contracts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_project_contracts_contract_number ON public.project_contracts(contract_number);
+CREATE INDEX IF NOT EXISTS idx_project_contracts_status ON public.project_contracts(status);
+CREATE INDEX IF NOT EXISTS idx_project_contracts_deleted_at ON public.project_contracts(deleted_at);
 
--- 项目预算索引
-CREATE INDEX IF NOT EXISTS idx_project_budgets_organization_id ON erp.project_budgets(organization_id);
-CREATE INDEX IF NOT EXISTS idx_project_budgets_project_id ON erp.project_budgets(project_id);
-CREATE INDEX IF NOT EXISTS idx_project_budgets_deleted_at ON erp.project_budgets(deleted_at);
+-- 项目预算索引 (实际表结构与迁移脚本不同，注释掉)
+-- CREATE INDEX IF NOT EXISTS idx_project_budgets_organization_id ON public.project_budgets(organization_id);
+-- CREATE INDEX IF NOT EXISTS idx_project_budgets_project_id ON public.project_budgets(project_id);
+-- CREATE INDEX IF NOT EXISTS idx_project_budgets_deleted_at ON public.project_budgets(deleted_at);
 
 -- 项目预算明细索引
-CREATE INDEX IF NOT EXISTS idx_project_budget_items_organization_id ON erp.project_budget_items(organization_id);
-CREATE INDEX IF NOT EXISTS idx_project_budget_items_budget_id ON erp.project_budget_items(budget_id);
-CREATE INDEX IF NOT EXISTS idx_project_budget_items_deleted_at ON erp.project_budget_items(deleted_at);
+-- CREATE INDEX IF NOT EXISTS idx_project_budget_items_organization_id ON public.project_budget_items(organization_id);
+-- CREATE INDEX IF NOT EXISTS idx_project_budget_items_budget_id ON public.project_budget_items(budget_id);
+-- CREATE INDEX IF NOT EXISTS idx_project_budget_items_deleted_at ON public.project_budget_items(deleted_at);
 
 -- 付款计划索引
-CREATE INDEX IF NOT EXISTS idx_payment_schedules_organization_id ON erp.payment_schedules(organization_id);
-CREATE INDEX IF NOT EXISTS idx_payment_schedules_contract_id ON erp.payment_schedules(contract_id);
-CREATE INDEX IF NOT EXISTS idx_payment_schedules_status ON erp.payment_schedules(status);
-CREATE INDEX IF NOT EXISTS idx_payment_schedules_deleted_at ON erp.payment_schedules(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_payment_schedules_organization_id ON public.payment_schedules(organization_id);
+CREATE INDEX IF NOT EXISTS idx_payment_schedules_contract_id ON public.payment_schedules(contract_id);
+CREATE INDEX IF NOT EXISTS idx_payment_schedules_status ON public.payment_schedules(status);

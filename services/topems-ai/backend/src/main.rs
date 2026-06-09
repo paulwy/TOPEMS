@@ -12,6 +12,8 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{default_registry, Gauge};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
@@ -26,6 +28,7 @@ use uuid::Uuid;
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
     ServiceHealth, build_health_response, create_api_info_router,
+    HealthStatus, DependencyHealth, check_http_health,
 };
 use services::{Database, DocumentService, VectorService, QAService, QAConfig, AnalysisService, AnalysisConfig};
 
@@ -643,8 +646,141 @@ async fn home() -> &'static str {
     "TOPEMS-AI 智能知识库服务 API\n\n📚 知识库功能\n✅ AI API 已配置，使用真实 AI\n\n配置说明：\n- 设置 OPENAI_API_KEY 启用真实 AI\n- 可选：OPENAI_BASE_URL（自定义 API 地址）、OPENAI_MODEL（模型名称）\n\n示例：\n- OpenAI: OPENAI_API_KEY=sk-xxx\n- 阿里云/通义千问: OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1, OPENAI_API_KEY=sk-xxx\n- Ollama: OPENAI_BASE_URL=http://localhost:11434/v1, OPENAI_API_KEY=ollama\n\n🔗 数据连接器框架\n支持的连接器类型：\n- Database (Postgres/Mysql/Sqlite/SqlServer)\n- API (RESTful)\n- File (文件系统)\n- MessageQueue (消息队列)\n- CloudStorage (云存储)\n\nAPI 端点：\n- GET  /api/v1/connectors - 列出连接器\n- GET  /api/v1/connectors/get?id=xxx - 获取连接器详情\n- POST /api/v1/connectors/create - 创建连接器\n- POST /api/v1/connectors/update?id=xxx - 更新连接器\n- POST /api/v1/connectors/delete?id=xxx - 删除连接器\n- GET  /api/v1/connectors/test?id=xxx - 测试连接\n- POST /api/v1/connectors/query - 执行数据查询\n\n📊 向量库功能\n- POST /api/v1/vectors/index - 索引所有文档\n- GET  /api/v1/vectors/stats - 获取向量统计\n- POST /api/v1/vectors/search - 向量搜索\n- POST /api/v1/vectors/clear - 清空向量库"
 }
 
-async fn health() -> ServiceHealth {
-    build_health_response("topems-ai", true)
+async fn health() -> Json<ApiResponse<String>> {
+    let iam_health = check_iam_health().await;
+    
+    let overall_status = if iam_health.status == HealthStatus::Healthy {
+        HealthStatus::Healthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let status_str = match overall_status {
+        HealthStatus::Healthy => "healthy".to_string(),
+        HealthStatus::Degraded => "degraded".to_string(),
+        HealthStatus::Unhealthy => "unhealthy".to_string(),
+    };
+
+    Json(ApiResponse::success(status_str, "健康检查"))
+}
+
+async fn health_check_detailed(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<ServiceHealth>> {
+    let dependencies = vec![
+        check_iam_health().await,
+        check_database_health(&state.document_service.pool().await).await,
+        check_ai_service_health().await,
+    ];
+
+    let all_healthy = dependencies
+        .iter()
+        .all(|d| d.status == HealthStatus::Healthy);
+    let any_unhealthy = dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Unhealthy);
+
+    let overall_status = if all_healthy {
+        HealthStatus::Healthy
+    } else if any_unhealthy {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let message = match overall_status {
+        HealthStatus::Healthy => "所有服务运行正常",
+        HealthStatus::Degraded => "部分服务存在问题",
+        HealthStatus::Unhealthy => "存在关键服务故障",
+    };
+
+    let health = ServiceHealth::healthy_with_message("topems-ai", message)
+        .with_dependencies(dependencies);
+
+    Json(ApiResponse::success(health, "详细健康检查"))
+}
+
+async fn check_iam_health() -> DependencyHealth {
+    let iam_url = std::env::var("IAM_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let health_url = format!("{}/health", iam_url);
+
+    match check_http_health(&health_url).await {
+        Ok(status) => {
+            let message = match status {
+                HealthStatus::Healthy => "IAM 服务正常",
+                HealthStatus::Degraded => "IAM 服务响应异常",
+                HealthStatus::Unhealthy => "IAM 服务不可用",
+            };
+            DependencyHealth {
+                name: "iam-service".to_string(),
+                status,
+                message: message.to_string(),
+            }
+        }
+        Err(e) => {
+            tracing::warn!("IAM 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "iam-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("IAM 服务连接异常: {}", e),
+            }
+        }
+    }
+}
+
+async fn check_database_health(db: &sqlx::PgPool) -> DependencyHealth {
+    match sqlx::query("SELECT 1").execute(db).await {
+        Ok(_) => DependencyHealth {
+            name: "database".to_string(),
+            status: HealthStatus::Healthy,
+            message: "数据库连接正常".to_string(),
+        },
+        Err(e) => {
+            tracing::error!("数据库健康检查失败: {}", e);
+            DependencyHealth {
+                name: "database".to_string(),
+                status: HealthStatus::Unhealthy,
+                message: format!("数据库连接失败: {}", e),
+            }
+        }
+    }
+}
+
+async fn check_ai_service_health() -> DependencyHealth {
+    let base_url = std::env::var("OLLAMA_URL")
+        .or_else(|_| std::env::var("OLLAMA_BASE_URL"))
+        .or_else(|_| std::env::var("OPENAI_BASE_URL"))
+        .unwrap_or_else(|_| "http://localhost:11434/v1".to_string());
+    
+    let health_url = format!("{}/models", base_url);
+    
+    let client = Client::new();
+    match client.get(&health_url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                DependencyHealth {
+                    name: "ai-service".to_string(),
+                    status: HealthStatus::Healthy,
+                    message: "AI 服务正常".to_string(),
+                }
+            } else {
+                DependencyHealth {
+                    name: "ai-service".to_string(),
+                    status: HealthStatus::Degraded,
+                    message: format!("AI 服务状态异常: {}", response.status()),
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!("AI 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "ai-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("AI 服务连接异常: {}", e),
+            }
+        }
+    }
 }
 
 async fn list_documents() -> Json<ApiResponse<Vec<Document>>> {
@@ -1564,6 +1700,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     init_logging("topems-ai");
 
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let custom_gauge = Gauge::new(
+        "topems_ai_custom_metric",
+        "This is a custom metric for TOPEMS-AI",
+    ).unwrap();
+    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    custom_gauge.set(42.0);
+    tracing::info!("✅ Prometheus 监控已初始化");
+
     tracing::info!("🚀 TOPEMS-AI 智能知识库服务启动中...");
     tracing::info!("📦 PostgreSQL + pgvector 持久化存储");
     tracing::info!("📄 PDF 文档解析支持");
@@ -1668,6 +1813,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .route("/api/v1/health/detailed", get(health_check_detailed))
+        .route("/api/v1/metrics", get(get_vector_stats))
+        .route("/metrics", get(move || async move { metric_handle.render() }))
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
@@ -1724,6 +1872,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .merge(protected_routes)
         .merge(analysis_router)
         .merge(create_api_info_router("topems-ai"))
+        .layer(prometheus_layer)
         .layer(cors)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
 

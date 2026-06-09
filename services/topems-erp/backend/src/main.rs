@@ -8,7 +8,10 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{Encoder, TextEncoder, IntCounter, IntGauge, register_int_counter, register_int_gauge};
 use serde::Serialize;
+use utoipa::OpenApi;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
@@ -21,6 +24,39 @@ use topems_shared::{
     create_hrm_client, init_logging, create_api_info_router,
 };
 use api::ApiState;
+
+lazy_static::lazy_static! {
+    pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").unwrap();
+    pub static ref VOUCHER_COUNT: IntGauge = register_int_gauge!("topems_erp_voucher_count", "Total number of vouchers in ERP system").unwrap();
+    pub static ref FINANCIAL_TRANSACTION_COUNT: IntCounter = register_int_counter!("topems_erp_financial_transactions_total", "Total number of financial transactions").unwrap();
+    pub static ref ACTIVE_USERS: IntGauge = register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour").unwrap();
+    pub static ref API_REQUESTS_TOTAL: IntCounter = register_int_counter!("topems_erp_api_requests_total", "Total number of API requests").unwrap();
+}
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "ERP", description = "企业资源计划系统 API"),
+        (name = "Health", description = "健康检查接口"),
+        (name = "Metrics", description = "服务指标接口"),
+        (name = "Assets", description = "资产管理接口"),
+        (name = "Finance", description = "财务管理接口"),
+        (name = "Voucher", description = "凭证管理接口"),
+        (name = "Audit", description = "审计日志接口"),
+        (name = "Dict", description = "数据字典接口"),
+    ),
+    info(
+        title = "TOPEMS-ERP API",
+        version = "1.0.0",
+        description = "TOPEMS 企业资源计划系统 API 文档\n\n## 功能模块\n\n- **资产管理**: 资产的增删改查、状态管理\n- **财务管理**: 科目管理、预算管理、费用管理\n- **凭证管理**: 财务凭证的创建和审核\n- **审计日志**: 操作记录和审计追踪\n- **数据字典**: 系统配置数据管理",
+    ),
+    servers(
+        (url = "http://localhost:8009", description = "本地开发环境"),
+        (url = "http://erp.topems.local", description = "测试环境"),
+        (url = "http://erp.topems.prod", description = "生产环境"),
+    )
+)]
+struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -37,6 +73,15 @@ async fn main() -> Result<()> {
         .await?;
 
     tracing::info!("🔗 数据库连接成功");
+
+    let pool_clone = pool.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(60));
+        loop {
+            interval.tick().await;
+            update_business_metrics(&pool_clone).await;
+        }
+    });
 
     if let Err(e) = init_db(&pool).await {
         tracing::warn!("数据库初始化警告: {}", e);
@@ -76,10 +121,18 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
+    let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();
+
     let health_router = Router::new()
-        .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
+        .route("/metrics", get(move || async move {
+            let encoder = TextEncoder::new();
+            let metrics = prometheus::gather();
+            let mut buffer = Vec::new();
+            encoder.encode(&metrics, &mut buffer).unwrap();
+            String::from_utf8(buffer).unwrap()
+        }))
         .with_state(api_state.clone());
 
     let protected_routes = api::create_routes()
@@ -93,6 +146,10 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-erp"))
+        .route("/api-docs/openapi.json", get(|| async {
+            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap()
+        }))
+        .layer(prometheus_layer)
         .layer(cors);
 
     let port = env::var("SERVER_PORT").or_else(|_| env::var("PORT")).unwrap_or_else(|_| "8009".to_string());
@@ -227,6 +284,26 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
                 message: format!("数据库连接失败: {}", e),
             }
         }
+    }
+}
+
+async fn update_business_metrics(pool: &sqlx::PgPool) {
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM assets").fetch_one(pool).await {
+        Ok(count) => ASSET_COUNT.set(count),
+        Err(e) => tracing::warn!("Failed to update asset count: {}", e),
+    }
+
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM financial_vouchers").fetch_one(pool).await {
+        Ok(count) => VOUCHER_COUNT.set(count),
+        Err(e) => tracing::warn!("Failed to update voucher count: {}", e),
+    }
+
+    match sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM audit_logs 
+         WHERE created_at >= NOW() - INTERVAL '1 hour'"
+    ).fetch_one(pool).await {
+        Ok(count) => ACTIVE_USERS.set(count),
+        Err(e) => tracing::warn!("Failed to update active users: {}", e),
     }
 }
 

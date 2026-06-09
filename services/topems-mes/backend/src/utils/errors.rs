@@ -98,3 +98,21 @@ impl IntoResponse for MesError {
 }
 
 pub type Result<T> = std::result::Result<T, MesError>;
+
+// 从 MesError 转换为 TopemsError（用于统一响应）
+impl From<MesError> for topems_shared::error::TopemsError {
+    fn from(err: MesError) -> Self {
+        match err {
+            MesError::DatabaseError(e) => topems_shared::error::TopemsError::DatabaseQuery(e.to_string()),
+            MesError::NotFound(msg) => topems_shared::error::TopemsError::ResourceNotFound(msg),
+            MesError::BadRequest(msg) => topems_shared::error::TopemsError::ValidationFailed(msg),
+            MesError::Unauthorized => topems_shared::error::TopemsError::Unauthorized,
+            MesError::Forbidden => topems_shared::error::TopemsError::PermissionDenied {
+                required: "需要权限".to_string(),
+            },
+            MesError::ValidationError(msg) => topems_shared::error::TopemsError::ValidationFailed(msg),
+            MesError::InternalError(msg) => topems_shared::error::TopemsError::Internal(msg),
+            MesError::Conflict(msg) => topems_shared::error::TopemsError::ResourceAlreadyExists(msg),
+        }
+    }
+}

@@ -23,8 +23,8 @@ pub struct PaginationParams {
     pub experiment_type: Option<String>,
 }
 
-pub fn create_routes() -> Router<Arc<super::ApiState>> {
-    Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
         .route(
             "/api/v1/experiments",
             get(list_experiments).post(create_experiment),
@@ -56,7 +56,7 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
 }
 
 async fn list_experiments(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -124,7 +124,7 @@ async fn list_experiments(
 }
 
 async fn create_experiment(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateExperimentRequest>,
 ) -> Json<ApiResponse<Experiment>> {
@@ -221,7 +221,7 @@ async fn create_experiment(
 }
 
 async fn get_experiment(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Experiment>> {
     let result = sqlx::query_as::<_, Experiment>(
@@ -248,7 +248,7 @@ async fn get_experiment(
 }
 
 async fn update_experiment(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateExperimentRequest>,
@@ -345,7 +345,7 @@ async fn update_experiment(
 }
 
 async fn delete_experiment(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
@@ -401,7 +401,7 @@ async fn delete_experiment(
 }
 
 async fn get_experiment_records(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
@@ -442,7 +442,7 @@ async fn get_experiment_records(
 }
 
 async fn create_experiment_record(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateRecordRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -482,7 +482,7 @@ async fn create_experiment_record(
 }
 
 async fn list_lab_experiments(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -545,7 +545,7 @@ async fn list_lab_experiments(
 }
 
 async fn list_pilot_experiments(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -608,7 +608,7 @@ async fn list_pilot_experiments(
 }
 
 async fn list_scaleup_experiments(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -671,7 +671,7 @@ async fn list_scaleup_experiments(
 }
 
 async fn advance_phase(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<AdvancePhaseRequest>,
 ) -> Json<ApiResponse<Experiment>> {
@@ -723,7 +723,7 @@ async fn advance_phase(
 }
 
 async fn trace_batch(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(batch_number): Path<String>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(

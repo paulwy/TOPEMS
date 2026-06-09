@@ -1,0 +1,146 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  backend-build:
+    name: Backend Build & Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - topems-erp
+          - topems-hrm
+          - topems-lims
+          - topems-rs
+          - topems-qms
+          - topems-crm
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          path: services/${{ matrix.service }}/backend
+
+      - name: Build service
+        run: cd services/${{ matrix.service }}/backend && cargo build --release
+
+      - name: Run Clippy
+        run: cd services/${{ matrix.service }}/backend && cargo clippy --all-targets -- -D warnings
+
+      - name: Run tests
+        run: cd services/${{ matrix.service }}/backend && cargo test --release -- --test-threads=1
+
+  frontend-build:
+    name: Frontend Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Run ESLint
+        run: cd frontend && npm run lint
+
+      - name: TypeScript check
+        run: cd frontend && npx tsc --noEmit
+
+      - name: Run unit tests
+        run: cd frontend && npm test
+
+      - name: Build frontend
+        run: cd frontend && npm run build
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend-build, frontend-build]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ERP service
+        uses: docker/build-push-action@v5
+        with:
+          context: services/topems-erp/backend
+          push: false
+          tags: topems-erp:latest
+
+      - name: Build HRM service
+        uses: docker/build-push-action@v5
+        with:
+          context: services/topems-hrm/backend
+          push: false
+          tags: topems-hrm:latest
+
+      - name: Build LIMS service
+        uses: docker/build-push-action@v5
+        with:
+          context: services/topems-lims/backend
+          push: false
+          tags: topems-lims:latest
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [frontend-build]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Install Playwright browsers
+        run: cd frontend && npx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: cd frontend && npm run e2e
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/

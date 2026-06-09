@@ -277,9 +277,9 @@ run_migrations() {
     # 注意：部分服务的迁移目录在 backend/src/db/migrations
     local MIGRATION_DIRS=(
         # 平台服务
-        "platform/topems-iam/backend/src/db/migrations"
-        "platform/topems-doc/backend/src/db/migrations"
-        "platform/topems-flow/backend/migrations"
+        "services/topems-iam/backend/src/db/migrations"
+        "services/topems-doc/backend/src/db/migrations"
+        "services/topems-flow/backend/migrations"
         # 业务服务
         "services/topems-erp/backend/migrations"
         "services/topems-hrm/backend/migrations"
@@ -358,7 +358,7 @@ deploy_services() {
         warn "未找到 docker-compose 文件，将手动部署基础服务"
 
         # 手动部署 IAM 服务示例
-        deploy_service "iam-service" "platform/topems-iam/backend" 8000
+        deploy_service "iam-service" "services/topems-iam/backend" 8000
         return
     fi
 

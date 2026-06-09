@@ -134,9 +134,9 @@ run_migrations() {
     # 注意：部分服务的迁移目录在 backend/src/db/migrations
     local MIGRATION_DIRS=(
         # 平台服务
-        "platform/topems-iam/backend/src/db/migrations"
-        "platform/topems-doc/backend/src/db/migrations"
-        "platform/topems-flow/backend/migrations"
+        "services/topems-iam/backend/src/db/migrations"
+        "services/topems-doc/backend/src/db/migrations"
+        "services/topems-flow/backend/migrations"
         # 业务服务
         "services/topems-erp/backend/migrations"
         "services/topems-hrm/backend/migrations"
@@ -331,9 +331,9 @@ echo ""
 echo "----------------------------------------"
 log_info "处理服务: iam (端口 8000)"
 IAM_PID=""
-if check_executable "platform/topems-iam/backend" "iam"; then
+if check_executable "services/topems-iam/backend" "iam"; then
     log_detail "正在启动..."
-    cd "$PROJECT_ROOT/platform/topems-iam/backend"
+    cd "$PROJECT_ROOT/services/topems-iam/backend"
     SERVER_PORT=8000 ./target/release/topems-iam &
     IAM_PID=$!
     cd "$PROJECT_ROOT"
@@ -346,9 +346,9 @@ fi
 echo "----------------------------------------"
 log_info "处理服务: doc (端口 8001)"
 DOC_PID=""
-if check_executable "platform/topems-doc/backend" "doc"; then
+if check_executable "services/topems-doc/backend" "doc"; then
     log_detail "正在启动..."
-    cd "$PROJECT_ROOT/platform/topems-doc/backend"
+    cd "$PROJECT_ROOT/services/topems-doc/backend"
     SERVER_PORT=8001 ./target/release/topems-doc &
     DOC_PID=$!
     cd "$PROJECT_ROOT"
@@ -380,20 +380,18 @@ if ! check_executable "services/notification-service" "notification"; then
     log_warn "notification 服务需要编译，正在编译..."
     if build_service "services/notification-service" "notification"; then
         log_detail "正在启动..."
-        cd "$PROJECT_ROOT/services/notification-service"
-        SERVER_PORT=8003 DATABASE_URL="$DATABASE_URL" ./target/release/notification-service &
-        NOTIFICATION_PID=$!
         cd "$PROJECT_ROOT"
+        SERVER_PORT=8003 DATABASE_URL="$DATABASE_URL" RUST_LOG=info ./target/release/notification-service &
+        NOTIFICATION_PID=$!
         log_success "notification 服务已启动 (PID: $NOTIFICATION_PID, 端口: 8003)"
     else
         log_warn "跳过 notification 服务"
     fi
 else
     log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/notification-service"
-    SERVER_PORT=8003 DATABASE_URL="$DATABASE_URL" ./target/release/notification-service &
-    NOTIFICATION_PID=$!
     cd "$PROJECT_ROOT"
+    SERVER_PORT=8003 DATABASE_URL="$DATABASE_URL" RUST_LOG=info ./target/release/notification-service &
+    NOTIFICATION_PID=$!
     log_success "notification 服务已启动 (PID: $NOTIFICATION_PID, 端口: 8003)"
 fi
 
@@ -431,11 +429,11 @@ fi
 echo "----------------------------------------"
 log_info "处理服务: flow (端口 8006)"
 FLOW_PID=""
-if ! check_executable "platform/topems-flow/backend" "flow"; then
+if ! check_executable "services/topems-flow/backend" "flow"; then
     log_warn "flow 服务需要编译，正在编译..."
-    if build_service "platform/topems-flow/backend" "flow"; then
+    if build_service "services/topems-flow/backend" "flow"; then
         log_detail "正在启动..."
-        cd "$PROJECT_ROOT/platform/topems-flow/backend"
+        cd "$PROJECT_ROOT/services/topems-flow/backend"
         SERVER_PORT=8006 ./target/release/topems-flow &
         FLOW_PID=$!
         cd "$PROJECT_ROOT"
@@ -445,7 +443,7 @@ if ! check_executable "platform/topems-flow/backend" "flow"; then
     fi
 else
     log_detail "正在启动..."
-    cd "$PROJECT_ROOT/platform/topems-flow/backend"
+    cd "$PROJECT_ROOT/services/topems-flow/backend"
     SERVER_PORT=8006 ./target/release/topems-flow &
     FLOW_PID=$!
     cd "$PROJECT_ROOT"
@@ -708,10 +706,9 @@ log_info "处理服务: report (端口 8053)"
 REPORT_PID=""
 if check_executable "services/report-service" "report"; then
     log_detail "正在启动..."
-    cd "$PROJECT_ROOT/services/report-service"
-    SERVER_PORT=8053 ./target/release/topems-report &
-    REPORT_PID=$!
     cd "$PROJECT_ROOT"
+    SERVER_PORT=8053 RUST_LOG=info ./target/release/topems-report &
+    REPORT_PID=$!
     log_success "report 服务已启动 (PID: $REPORT_PID, 端口: 8053)"
 else
     log_warn "跳过 report 服务"

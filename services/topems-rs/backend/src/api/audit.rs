@@ -12,8 +12,8 @@ use uuid::Uuid;
 use crate::models::AuditLog;
 use topems_shared::response::ApiResponse;
 
-pub fn create_routes() -> Router<Arc<super::ApiState>> {
-    Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
         .route("/api/v1/audit-logs", get(list_audit_logs))
         .route("/api/v1/audit-logs/{id}", get(get_audit_log))
 }
@@ -50,7 +50,7 @@ pub struct ListAuditLogsQuery {
     )
 )]
 async fn list_audit_logs(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -139,7 +139,7 @@ async fn list_audit_logs(
     )
 )]
 async fn get_audit_log(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
     let result = sqlx::query_as::<_, AuditLog>(

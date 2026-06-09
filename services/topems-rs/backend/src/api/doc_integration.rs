@@ -55,8 +55,8 @@ struct ListQueryParams {
     page_size: Option<i32>,
 }
 
-pub fn create_routes() -> axum::Router<Arc<super::ApiState>> {
-    axum::Router::new()
+pub fn create_routes() -> axum::Router<super::ApiState> {
+    axum::Router::<super::ApiState>::new()
         .route("/api/v1/documents", axum::routing::get(list_documents))
         .route(
             "/api/v1/documents",
@@ -77,7 +77,7 @@ pub fn create_routes() -> axum::Router<Arc<super::ApiState>> {
 }
 
 async fn list_documents(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<ListQueryParams>,
 ) -> impl IntoResponse {
     let page = params.page.unwrap_or(1);
@@ -124,7 +124,7 @@ async fn list_documents(
 }
 
 async fn create_document_relation(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Json(request): Json<CreateDocumentRelationRequest>,
 ) -> impl IntoResponse {
     let id = Uuid::new_v4();
@@ -166,7 +166,7 @@ async fn create_document_relation(
 }
 
 async fn get_document_relation(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     let result: Result<Option<DocumentRelation>, sqlx::Error> = sqlx::query_as(
@@ -195,7 +195,7 @@ async fn get_document_relation(
 }
 
 async fn delete_document_relation(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     let result: Result<sqlx::postgres::PgQueryResult, sqlx::Error> =
@@ -221,7 +221,7 @@ async fn delete_document_relation(
 }
 
 async fn get_entity_documents(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
     let result: Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(

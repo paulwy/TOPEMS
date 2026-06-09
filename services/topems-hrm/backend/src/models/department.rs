@@ -6,6 +6,8 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Department {
     pub id: Uuid,
+    pub organization_id: Uuid,
+    pub company_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
     pub parent_id: Option<Uuid>,
@@ -18,6 +20,8 @@ pub struct Department {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateDepartmentRequest {
+    pub organization_id: Option<Uuid>,
+    pub company_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
     pub parent_id: Option<Uuid>,
@@ -27,6 +31,7 @@ pub struct CreateDepartmentRequest {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateDepartmentRequest {
+    pub company_id: Option<Uuid>,
     pub name: Option<String>,
     pub code: Option<String>,
     pub parent_id: Option<Uuid>,
@@ -42,11 +47,14 @@ mod tests {
     #[test]
     fn test_department_struct() {
         let id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let created_at = Utc::now();
         let updated_at = Utc::now();
         
         let department = Department {
             id,
+            organization_id: org_id,
+            company_id: None,
             name: "Engineering".to_string(),
             code: Some("ENG".to_string()),
             parent_id: None,
@@ -65,7 +73,10 @@ mod tests {
 
     #[test]
     fn test_create_department_request() {
+        let org_id = Uuid::new_v4();
         let request = CreateDepartmentRequest {
+            organization_id: org_id,
+            company_id: None,
             name: "HR Department".to_string(),
             code: Some("HR".to_string()),
             parent_id: None,

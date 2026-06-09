@@ -43,27 +43,23 @@ vi.mock('../../store', () => ({
 }));
 
 vi.mock('../../components/DataTable', () => ({
-  DataTable: () => <div data-testid="data-table">Mock Data Table</div>,
+  DataTable: () => <div data-testid='data-table'>Mock Data Table</div>,
 }));
 
 vi.mock('../../components/ui/OrganizationFilter', () => ({
-  default: () => <div data-testid="organization-filter" />,
+  default: () => <div data-testid='organization-filter' />,
 }));
 
 vi.mock('../../components/MetricCard', () => ({
-  MetricCard: ({ title }: { title: string }) => (
-    <div data-testid={`metric-${title}`}>{title}</div>
-  ),
+  MetricCard: ({ title }: { title: string }) => <div data-testid={`metric-${title}`}>{title}</div>,
 }));
 
 vi.mock('../../components/StatsChart', () => ({
-  StatsChart: ({ type }: { type: string }) => (
-    <div data-testid={`chart-${type}`}>Chart</div>
-  ),
+  StatsChart: ({ type }: { type: string }) => <div data-testid={`chart-${type}`}>Chart</div>,
 }));
 
 vi.mock('../../components/ModeToggle', () => ({
-  ModeToggle: () => <button data-testid="mode-toggle">Toggle</button>,
+  ModeToggle: () => <button data-testid='mode-toggle'>Toggle</button>,
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {

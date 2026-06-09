@@ -47,7 +47,7 @@ async fn list_supplies(
     let result = sqlx::query_as::<_, OfficeSupply>(
         r#"
         SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at
-        FROM erp.office_supplies
+        FROM office_supplies
         WHERE ($1::text IS NULL OR name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR category = $3)
@@ -67,7 +67,7 @@ async fn list_supplies(
         Ok(supplies) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.office_supplies
+                SELECT COUNT(*) FROM office_supplies
                 WHERE ($1::text IS NULL OR name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR category = $3)
@@ -107,7 +107,7 @@ async fn create_supply(
 
     let result = sqlx::query_as::<_, OfficeSupply>(
         r#"
-        INSERT INTO erp.office_supplies (id, name, category, quantity, unit, price, location, status, created_at, updated_at)
+        INSERT INTO office_supplies (id, name, category, quantity, unit, price, location, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'in_stock', $8, $9)
         RETURNING id, name, category, quantity, unit, price, location, status, created_at, updated_at
         "#,
@@ -173,7 +173,7 @@ async fn get_supply(
     let result = sqlx::query_as::<_, OfficeSupply>(
         r#"
         SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at
-        FROM erp.office_supplies WHERE id = $1
+        FROM office_supplies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -197,7 +197,7 @@ async fn update_supply(
     Json(req): Json<UpdateOfficeSupplyRequest>,
 ) -> Json<ApiResponse<OfficeSupply>> {
     let existing = sqlx::query_as::<_, OfficeSupply>(
-        "SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at FROM erp.office_supplies WHERE id = $1",
+        "SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at FROM office_supplies WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -222,7 +222,7 @@ async fn update_supply(
 
     let result = sqlx::query_as::<_, OfficeSupply>(
         r#"
-        UPDATE erp.office_supplies SET
+        UPDATE office_supplies SET
             name = $2, category = $3, quantity = $4, unit = $5, price = $6, location = $7, status = $8, updated_at = $9
         WHERE id = $1
         RETURNING id, name, category, quantity, unit, price, location, status, created_at, updated_at
@@ -286,7 +286,7 @@ async fn delete_supply(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.office_supplies WHERE id = $1")
+    let result = sqlx::query("DELETE FROM office_supplies WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

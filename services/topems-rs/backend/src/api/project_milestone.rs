@@ -16,8 +16,8 @@ use crate::services::project_progress;
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use topems_shared::response::ApiResponse;
 
-pub fn create_routes() -> Router<Arc<super::ApiState>> {
-    Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
         .route("/api/v1/milestones", post(create_milestone))
         .route(
             "/api/v1/milestones/project/{project_id}",
@@ -28,7 +28,7 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
 }
 
 pub async fn create_milestone(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Json(payload): Json<CreateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
     let request_id = Uuid::new_v4();
@@ -110,7 +110,7 @@ pub async fn create_milestone(
 }
 
 pub async fn get_project_milestones(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
     let request_id = Uuid::new_v4();
@@ -174,7 +174,7 @@ pub async fn get_project_milestones(
 }
 
 pub async fn update_milestone(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
@@ -273,7 +273,7 @@ pub async fn update_milestone(
 }
 
 pub async fn delete_milestone(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let request_id = Uuid::new_v4();

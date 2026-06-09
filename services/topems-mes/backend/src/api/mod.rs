@@ -4,7 +4,10 @@ use axum::{
     Router,
 };
 use sqlx::postgres::PgPool;
+use std::sync::Arc;
+use std::time::Instant;
 use topems_shared::AuthState;
+use topems_shared::SystemMetrics;
 
 pub mod production_order;
 pub mod production_process;
@@ -17,6 +20,8 @@ pub mod equipment;
 pub struct ApiState {
     pub db: PgPool,
     pub auth_state: AuthState,
+    pub metrics: Arc<SystemMetrics>,
+    pub start_time: Instant,
 }
 
 impl FromRef<ApiState> for AuthState {
@@ -31,17 +36,13 @@ impl FromRef<ApiState> for PgPool {
     }
 }
 
-pub async fn create_routes(db: PgPool, auth_state: AuthState) -> Result<Router> {
-    let state = ApiState { db, auth_state };
-    
-    let app = Router::new()
-        .merge(production_order::create_routes().await?)
-        .merge(production_process::create_routes().await?)
-        .merge(work_station::create_routes().await?)
-        .merge(production_record::create_routes().await?)
-        .merge(audit::create_routes().await?)
-        .merge(equipment::create_routes().await?)
-        .with_state(state);
-
-    Ok(app)
+pub async fn create_routes(app_state: ApiState) -> Router<ApiState> {
+    Router::new()
+        .merge(production_order::create_routes().await.unwrap())
+        .merge(production_process::create_routes().await.unwrap())
+        .merge(work_station::create_routes().await.unwrap())
+        .merge(production_record::create_routes().await.unwrap())
+        .merge(audit::create_routes().await.unwrap())
+        .merge(equipment::create_routes().await.unwrap())
+        .with_state(app_state)
 }

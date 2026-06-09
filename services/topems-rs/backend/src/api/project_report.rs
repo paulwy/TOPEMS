@@ -57,8 +57,8 @@ pub struct ReportQuery {
     pub project_type: Option<String>,
 }
 
-pub fn create_routes() -> Router<Arc<super::ApiState>> {
-    Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
         .route("/api/v1/reports/projects/summary", get(get_project_summary))
         .route("/api/v1/reports/projects/trends", get(get_project_trends))
         .route("/api/v1/reports/projects/types", get(get_project_type_stats))
@@ -67,7 +67,7 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
 }
 
 pub async fn get_project_summary(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
 ) -> Json<ApiResponse<ProjectSummary>> {
     let start_date = query.start_date.clone().unwrap_or_else(|| {
@@ -131,7 +131,7 @@ pub async fn get_project_summary(
 }
 
 pub async fn get_project_trends(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
 ) -> Json<ApiResponse<Vec<TrendData>>> {
     let start_date = query.start_date.clone().unwrap_or_else(|| {
@@ -183,7 +183,7 @@ pub async fn get_project_trends(
 }
 
 pub async fn get_project_type_stats(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
 ) -> Json<ApiResponse<Vec<ProjectTypeStats>>> {
     let result = sqlx::query(
         r#"
@@ -222,7 +222,7 @@ pub async fn get_project_type_stats(
 }
 
 pub async fn get_performance_metrics(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
 ) -> Json<ApiResponse<PerformanceMetrics>> {
     let on_time_result = sqlx::query(
         r#"
@@ -324,7 +324,7 @@ pub struct ProjectDetailReport {
 }
 
 pub async fn get_project_detail_report(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDetailReport>> {
     let project = sqlx::query_as::<_, ProjectDetailReport>(

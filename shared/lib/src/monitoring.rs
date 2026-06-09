@@ -121,20 +121,34 @@ impl MonitoringState {
 
     pub async fn record_request(&self, success: bool, response_time_ms: u64) {
         self.request_count.fetch_add(1, Ordering::Relaxed);
-        
+
         if success {
             self.success_count.fetch_add(1, Ordering::Relaxed);
         } else {
             self.failure_count.fetch_add(1, Ordering::Relaxed);
         }
 
+        // 直接更新 metrics，不调用 update_metrics() 避免锁冲突
+        let request_count = self.request_count.load(Ordering::Relaxed);
+        let success_count = self.success_count.load(Ordering::Relaxed);
+        let failure_count = self.failure_count.load(Ordering::Relaxed);
+
         let mut times = self.response_times.write().await;
         times.push(response_time_ms);
         if times.len() > 1000 {
             times.remove(0);
         }
+        let avg_response = if times.is_empty() {
+            0
+        } else {
+            times.iter().sum::<u64>() / times.len() as u64
+        };
 
-        self.update_metrics().await;
+        let mut metrics = self.metrics.write().await;
+        metrics.requests_total = request_count;
+        metrics.requests_success = success_count;
+        metrics.requests_failed = failure_count;
+        metrics.avg_response_time_ms = avg_response;
     }
 
     async fn update_metrics(&self) {

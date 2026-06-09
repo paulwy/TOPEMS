@@ -47,8 +47,8 @@ pub struct BatchOperationResult {
     pub errors: Vec<String>,
 }
 
-pub fn create_routes() -> Router<Arc<super::ApiState>> {
-    Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
         .route("/api/v1/projects", get(list_projects).post(create_project))
         .route(
             "/api/v1/projects/batch",
@@ -83,7 +83,7 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
     )
 )]
 async fn list_projects(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(params): Query<ListProjectsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -157,7 +157,7 @@ async fn list_projects(
     )
 )]
 async fn create_project(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
@@ -269,7 +269,7 @@ async fn create_project(
     )
 )]
 async fn get_project(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Project>> {
@@ -328,7 +328,7 @@ async fn get_project(
     )
 )]
 async fn update_project(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -452,7 +452,7 @@ async fn update_project(
     )
 )]
 async fn delete_project(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -529,7 +529,7 @@ async fn delete_project(
     )
 )]
 async fn batch_create_projects(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     headers: HeaderMap,
     Json(req): Json<BatchCreateRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
@@ -647,7 +647,7 @@ async fn batch_create_projects(
     )
 )]
 async fn batch_delete_projects(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     headers: HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
@@ -740,7 +740,7 @@ async fn batch_delete_projects(
         ("bearer_auth" = [])
     )
 )]
-async fn export_projects(State(state): State<Arc<super::ApiState>>, headers: HeaderMap) -> Response {
+async fn export_projects(State(state): State<super::ApiState>, headers: HeaderMap) -> Response {
     let result = sqlx::query_as::<_, Project>(
         r#"
         SELECT id, name, code, description, project_type, status, leader,
@@ -950,7 +950,7 @@ async fn export_projects(State(state): State<Arc<super::ApiState>>, headers: Hea
     )
 )]
 async fn import_projects(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     headers: HeaderMap,
     bytes: Bytes,
 ) -> Json<ApiResponse<BatchOperationResult>> {
@@ -1156,7 +1156,7 @@ pub struct ProjectDashboardResponse {
     )
 )]
 async fn get_project_dashboard(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
     let project_result = sqlx::query_as::<_, Project>(
@@ -1327,7 +1327,7 @@ pub struct ProjectGanttResponse {
     )
 )]
 async fn get_project_gantt(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
     let phases_result = sqlx::query_as::<_, crate::models::ProjectPhase>(

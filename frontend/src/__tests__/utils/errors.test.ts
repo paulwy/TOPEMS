@@ -29,12 +29,7 @@ describe('AppException', () => {
 
   test('creates exception with details and originalError', () => {
     const originalError = new Error('Original error');
-    const exception = new AppException(
-      ErrorCode.SERVER,
-      'Server error',
-      { detail: 'detail' },
-      originalError
-    );
+    const exception = new AppException(ErrorCode.SERVER, 'Server error', { detail: 'detail' }, originalError);
     expect(exception.details).toEqual({ detail: 'detail' });
     expect(exception.originalError).toBe(originalError);
   });
@@ -187,23 +182,25 @@ describe('safeExecute', () => {
     const error = new Error('Test error');
     const fn = vi.fn().mockRejectedValue(error);
     const errorHandler = vi.fn();
-    
+
     const result = await safeExecute(fn, errorHandler);
-    
+
     expect(result).toBe(null);
     expect(fn).toHaveBeenCalledTimes(1);
     expect(errorHandler).toHaveBeenCalledTimes(1);
-    expect(errorHandler).toHaveBeenCalledWith(expect.objectContaining({
-      code: ErrorCode.UNKNOWN,
-    }));
+    expect(errorHandler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: ErrorCode.UNKNOWN,
+      })
+    );
   });
 
   test('returns null without errorHandler on error', async () => {
     const error = new Error('Test error');
     const fn = vi.fn().mockRejectedValue(error);
-    
+
     const result = await safeExecute(fn);
-    
+
     expect(result).toBe(null);
     expect(fn).toHaveBeenCalledTimes(1);
   });

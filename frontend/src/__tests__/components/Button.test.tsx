@@ -11,36 +11,36 @@ describe('Button Component', () => {
   });
 
   test('renders button with different variants', () => {
-    const { rerender } = render(<Button variant="default">Default</Button>);
+    const { rerender } = render(<Button variant='default'>Default</Button>);
     expect(screen.getByRole('button')).toHaveClass('bg-primary');
 
-    rerender(<Button variant="destructive">Destructive</Button>);
+    rerender(<Button variant='destructive'>Destructive</Button>);
     expect(screen.getByRole('button')).toHaveClass('bg-destructive');
 
-    rerender(<Button variant="outline">Outline</Button>);
+    rerender(<Button variant='outline'>Outline</Button>);
     expect(screen.getByRole('button')).toHaveClass('border', 'border-input');
 
-    rerender(<Button variant="secondary">Secondary</Button>);
+    rerender(<Button variant='secondary'>Secondary</Button>);
     expect(screen.getByRole('button')).toHaveClass('bg-secondary');
 
-    rerender(<Button variant="ghost">Ghost</Button>);
+    rerender(<Button variant='ghost'>Ghost</Button>);
     expect(screen.getByRole('button')).toHaveClass('hover:bg-accent');
 
-    rerender(<Button variant="link">Link</Button>);
+    rerender(<Button variant='link'>Link</Button>);
     expect(screen.getByRole('button')).toHaveClass('text-primary', 'hover:underline');
   });
 
   test('renders button with different sizes', () => {
-    const { rerender } = render(<Button size="default">Default</Button>);
+    const { rerender } = render(<Button size='default'>Default</Button>);
     expect(screen.getByRole('button')).toHaveClass('h-9', 'px-4');
 
-    rerender(<Button size="sm">Small</Button>);
+    rerender(<Button size='sm'>Small</Button>);
     expect(screen.getByRole('button')).toHaveClass('h-8', 'text-xs');
 
-    rerender(<Button size="lg">Large</Button>);
+    rerender(<Button size='lg'>Large</Button>);
     expect(screen.getByRole('button')).toHaveClass('h-10', 'px-8');
 
-    rerender(<Button size="icon">Icon</Button>);
+    rerender(<Button size='icon'>Icon</Button>);
     expect(screen.getByRole('button')).toHaveClass('h-9', 'w-9');
   });
 
@@ -48,7 +48,7 @@ describe('Button Component', () => {
     const handleClick = vi.fn();
     render(<Button onClick={handleClick}>Click me</Button>);
     const button = screen.getByRole('button');
-    
+
     fireEvent.click(button);
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
@@ -63,7 +63,7 @@ describe('Button Component', () => {
   test('renders button with children', () => {
     render(
       <Button>
-        <span data-testid="icon">Icon</span>
+        <span data-testid='icon'>Icon</span>
         Click me
       </Button>
     );

@@ -11,10 +11,13 @@ use chrono::Utc;
 use serde_json::json;
 use reqwest::Client;
 use sqlx::PgPool;
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{default_registry, Gauge};
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims, init_logging,
     ServiceHealth, build_health_response, create_api_info_router,
+    HealthStatus, DependencyHealth, check_http_health,
 };
 use crate::services::permission::{check_permission, BIPermission};
 
@@ -245,8 +248,296 @@ impl AppState {
     }
 }
 
-async fn health_check() -> ServiceHealth {
-    build_health_response("topems-bi", true)
+async fn health_check(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<String>> {
+    let database_health = check_database_health(&state.db_pool).await;
+    let iam_health = check_iam_health().await;
+
+    let overall_status = if database_health.status == HealthStatus::Healthy
+        && iam_health.status == HealthStatus::Healthy
+    {
+        HealthStatus::Healthy
+    } else if database_health.status == HealthStatus::Unhealthy
+        || iam_health.status == HealthStatus::Unhealthy
+    {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let status_str = match overall_status {
+        HealthStatus::Healthy => "healthy".to_string(),
+        HealthStatus::Degraded => "degraded".to_string(),
+        HealthStatus::Unhealthy => "unhealthy".to_string(),
+    };
+
+    Json(ApiResponse::success(status_str, "健康检查"))
+}
+
+async fn health_check_detailed(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<ServiceHealth>> {
+    let dependencies = vec![
+        check_database_health(&state.db_pool).await,
+        check_iam_health().await,
+        check_rs_service_health(&state).await,
+        check_lims_service_health(&state).await,
+        check_qms_service_health(&state).await,
+        check_ehs_service_health(&state).await,
+        check_srm_service_health(&state).await,
+        check_pdm_service_health(&state).await,
+    ];
+
+    let all_healthy = dependencies
+        .iter()
+        .all(|d| d.status == HealthStatus::Healthy);
+    let any_unhealthy = dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Unhealthy);
+
+    let overall_status = if all_healthy {
+        HealthStatus::Healthy
+    } else if any_unhealthy {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let message = match overall_status {
+        HealthStatus::Healthy => "所有服务运行正常",
+        HealthStatus::Degraded => "部分服务存在问题",
+        HealthStatus::Unhealthy => "存在关键服务故障",
+    };
+
+    let health = ServiceHealth::healthy_with_message("topems-bi", message)
+        .with_dependencies(dependencies);
+
+    Json(ApiResponse::success(health, "详细健康检查"))
+}
+
+async fn check_database_health(pool: &PgPool) -> DependencyHealth {
+    match sqlx::query("SELECT 1")
+        .execute(pool)
+        .await
+    {
+        Ok(_) => DependencyHealth {
+            name: "database".to_string(),
+            status: HealthStatus::Healthy,
+            message: "数据库连接正常".to_string(),
+        },
+        Err(e) => {
+            tracing::error!("数据库健康检查失败: {}", e);
+            DependencyHealth {
+                name: "database".to_string(),
+                status: HealthStatus::Unhealthy,
+                message: format!("数据库连接失败: {}", e),
+            }
+        }
+    }
+}
+
+async fn check_iam_health() -> DependencyHealth {
+    let iam_url = std::env::var("IAM_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let health_url = format!("{}/health", iam_url);
+
+    match check_http_health(&health_url).await {
+        Ok(status) => {
+            let message = match status {
+                HealthStatus::Healthy => "IAM 服务正常",
+                HealthStatus::Degraded => "IAM 服务响应异常",
+                HealthStatus::Unhealthy => "IAM 服务不可用",
+            };
+            DependencyHealth {
+                name: "iam-service".to_string(),
+                status,
+                message: message.to_string(),
+            }
+        }
+        Err(e) => {
+            tracing::warn!("IAM 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "iam-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("IAM 服务连接异常: {}", e),
+            }
+        }
+    }
+}
+
+async fn check_rs_service_health(state: &AppState) -> DependencyHealth {
+    let health_url = format!("{}/health", state.rs_service_url);
+    match state.http_client.get(&health_url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                DependencyHealth {
+                    name: "rs-service".to_string(),
+                    status: HealthStatus::Healthy,
+                    message: "研发管理服务正常".to_string(),
+                }
+            } else {
+                DependencyHealth {
+                    name: "rs-service".to_string(),
+                    status: HealthStatus::Degraded,
+                    message: format!("研发管理服务状态异常: {}", response.status()),
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!("RS 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "rs-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("研发管理服务连接异常: {}", e),
+            }
+        }
+    }
+}
+
+async fn check_lims_service_health(state: &AppState) -> DependencyHealth {
+    let health_url = format!("{}/health", state.lims_service_url);
+    match state.http_client.get(&health_url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                DependencyHealth {
+                    name: "lims-service".to_string(),
+                    status: HealthStatus::Healthy,
+                    message: "实验室管理服务正常".to_string(),
+                }
+            } else {
+                DependencyHealth {
+                    name: "lims-service".to_string(),
+                    status: HealthStatus::Degraded,
+                    message: format!("实验室管理服务状态异常: {}", response.status()),
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!("LIMS 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "lims-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("实验室管理服务连接异常: {}", e),
+            }
+        }
+    }
+}
+
+async fn check_qms_service_health(state: &AppState) -> DependencyHealth {
+    let health_url = format!("{}/health", state.qms_service_url);
+    match state.http_client.get(&health_url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                DependencyHealth {
+                    name: "qms-service".to_string(),
+                    status: HealthStatus::Healthy,
+                    message: "质量管理服务正常".to_string(),
+                }
+            } else {
+                DependencyHealth {
+                    name: "qms-service".to_string(),
+                    status: HealthStatus::Degraded,
+                    message: format!("质量管理服务状态异常: {}", response.status()),
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!("QMS 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "qms-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("质量管理服务连接异常: {}", e),
+            }
+        }
+    }
+}
+
+async fn check_ehs_service_health(state: &AppState) -> DependencyHealth {
+    let health_url = format!("{}/health", state.ehs_service_url);
+    match state.http_client.get(&health_url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                DependencyHealth {
+                    name: "ehs-service".to_string(),
+                    status: HealthStatus::Healthy,
+                    message: "安全环保服务正常".to_string(),
+                }
+            } else {
+                DependencyHealth {
+                    name: "ehs-service".to_string(),
+                    status: HealthStatus::Degraded,
+                    message: format!("安全环保服务状态异常: {}", response.status()),
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!("EHS 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "ehs-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("安全环保服务连接异常: {}", e),
+            }
+        }
+    }
+}
+
+async fn check_srm_service_health(state: &AppState) -> DependencyHealth {
+    let health_url = format!("{}/health", state.srm_service_url);
+    match state.http_client.get(&health_url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                DependencyHealth {
+                    name: "srm-service".to_string(),
+                    status: HealthStatus::Healthy,
+                    message: "供应链管理服务正常".to_string(),
+                }
+            } else {
+                DependencyHealth {
+                    name: "srm-service".to_string(),
+                    status: HealthStatus::Degraded,
+                    message: format!("供应链管理服务状态异常: {}", response.status()),
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!("SRM 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "srm-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("供应链管理服务连接异常: {}", e),
+            }
+        }
+    }
+}
+
+async fn check_pdm_service_health(state: &AppState) -> DependencyHealth {
+    let health_url = format!("{}/health", state.pdm_service_url);
+    match state.http_client.get(&health_url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                DependencyHealth {
+                    name: "pdm-service".to_string(),
+                    status: HealthStatus::Healthy,
+                    message: "生产数据服务正常".to_string(),
+                }
+            } else {
+                DependencyHealth {
+                    name: "pdm-service".to_string(),
+                    status: HealthStatus::Degraded,
+                    message: format!("生产数据服务状态异常: {}", response.status()),
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!("PDM 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "pdm-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("生产数据服务连接异常: {}", e),
+            }
+        }
+    }
 }
 
 // 保留原有的数据分析函数（从其他服务获取数据）
@@ -458,12 +749,24 @@ async fn main() -> Result<()> {
 
     init_logging("topems-bi");
 
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let custom_gauge = Gauge::new(
+        "topems_bi_custom_metric",
+        "This is a custom metric for TOPEMS-BI",
+    ).unwrap();
+    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    custom_gauge.set(42.0);
+    tracing::info!("✅ Prometheus 监控已初始化");
+
     let app_state = AppState::new(AuthState::from_env()).await?;
 
     let cors = create_cors_layer();
 
     let public_routes = Router::new()
-        .route("/health", get(health_check));
+        .route("/health", get(health_check))
+        .route("/api/v1/health/detailed", get(health_check_detailed))
+        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .with_state(app_state.clone());
 
     // BI数据分析API路由
     let analysis_routes = Router::new()
@@ -551,6 +854,7 @@ async fn main() -> Result<()> {
         .merge(public_routes)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-bi"))
+        .layer(prometheus_layer)
         .layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8052".to_string());

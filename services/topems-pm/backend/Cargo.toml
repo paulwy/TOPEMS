@@ -1,36 +1,36 @@
 [package]
 name = "topems-pm"
-version = "0.1.0"
-edition = "2021"
-authors = ["TOPEMS Team"]
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
 description = "TOPEMS-PM 统一项目管理服务"
 
 [dependencies]
-axum = "0.8"
-tokio = { version = "1", features = ["full"] }
-tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "trace"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+axum.workspace = true
+tokio.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "uuid", "rust_decimal"] }
-rust_decimal = { version = "1", features = ["serde"] }
-chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "1", features = ["serde", "v4"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-dotenv = "0.15"
-thiserror = "2"
-anyhow = "1"
+chrono.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+dotenv.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
 topems-shared = { path = "../../../shared/lib" }
-utoipa = { version = "4", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "6", features = ["axum"] }
-futures = "0.3"
-prometheus = { version = "0.13", features = ["process"] }
-axum-prometheus = "0.6"
+utoipa.workspace = true
+utoipa-swagger-ui.workspace = true
+futures.workspace = true
+prometheus.workspace = true
+axum-prometheus.workspace = true
+rust_decimal.workspace = true
 
 [dev-dependencies]
-tokio-test = "0.4"
-axum-test = "18"
+tokio-test.workspace = true
+axum-test.workspace = true
 
 [[bin]]
 name = "topems-pm"

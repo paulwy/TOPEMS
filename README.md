@@ -2,7 +2,7 @@
 
 > 统一身份认证与授权管理、文档管理、AI协作、流程自动化、数据分析、质量管理、供应链管理
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Version](https://img.shields.io/badge/version-2.2.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)
 ![React](https://img.shields.io/badge/react-18-blue)
@@ -42,6 +42,7 @@
 - 🌐 **PWA 支持** - 离线访问，快速启动
 - 🎯 **微服务架构** - 20+个独立服务，灵活扩展
 - 🔄 **统一架构** - 统一的认证保护和架构规范化
+- 🏗️ **Cargo Workspace** - 增量编译，共享依赖缓存
 
 ## 📁 项目结构
 
@@ -94,6 +95,7 @@ topems/
 ├── scripts/                       # 管理脚本
 ├── tools/                         # 开发工具
 ├── templates/                     # 数据模板
+├── Cargo.toml                    # Cargo Workspace 配置
 └── docker-compose.yml             # Docker 配置
 ```
 
@@ -111,13 +113,18 @@ npm run dev
 
 ### 后端开发
 
-```bash
-# 启动单个服务（示例 IAM）
-cd platform/topems-iam/backend
-cargo run
-```
+项目采用 Cargo Workspace 架构，所有服务共享依赖。
 
-服务运行在 http://localhost:8000
+```bash
+# 编译所有服务（使用 workspace）
+cargo build --workspace
+
+# 增量编译（只编译修改的部分）
+cargo build
+
+# 检查编译
+cargo check --workspace
+```
 
 ### 数据库初始化
 
@@ -271,5 +278,5 @@ MIT License
 
 ---
 
-**最后更新**: 2026-06-04
+**最后更新**: 2026-06-10
 **版本**: v2.0.0

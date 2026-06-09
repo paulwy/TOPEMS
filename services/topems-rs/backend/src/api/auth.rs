@@ -7,13 +7,13 @@ use axum::{
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
 use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgPool, Row};
-use std::sync::Arc;
+use sqlx::Row;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::User;
-use topems_shared::auth::{AuthState, Claims};
+use crate::api::ApiState;
+use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
@@ -43,21 +43,11 @@ pub struct TokenResponse {
     pub expires_in: i64,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-    pub auth_state: AuthState,
-}
-
-pub async fn create_routes(db: PgPool, auth_state: AuthState) -> topems_shared::Result<Router> {
-    let state = Arc::new(AppState { db, auth_state });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::new()
         .route("/api/v1/auth/login", post(login))
         .route("/api/v1/auth/refresh", post(refresh_token))
         .route("/api/v1/auth/logout", post(logout))
-        .with_state(state);
-
-    Ok(app)
 }
 
 #[utoipa::path(
@@ -72,7 +62,7 @@ pub async fn create_routes(db: PgPool, auth_state: AuthState) -> topems_shared::
     )
 )]
 async fn login(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<LoginRequest>,
 ) -> Json<ApiResponse<LoginResponse>> {
@@ -203,7 +193,7 @@ async fn login(
     )
 )]
 async fn refresh_token(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     _headers: HeaderMap,
     Json(req): Json<RefreshRequest>,
 ) -> Json<ApiResponse<TokenResponse>> {
@@ -295,7 +285,7 @@ async fn refresh_token(
     )
 )]
 async fn logout(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let auth_header = headers

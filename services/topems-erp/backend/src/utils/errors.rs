@@ -101,3 +101,21 @@ impl IntoResponse for ErpError {
 
 #[allow(dead_code, unused_imports)]
 pub type Result<T> = std::result::Result<T, ErpError>;
+
+// 从 ErpError 转换为 TopemsError（用于统一响应）
+impl From<ErpError> for topems_shared::error::TopemsError {
+    fn from(err: ErpError) -> Self {
+        match err {
+            ErpError::DatabaseError(e) => topems_shared::error::TopemsError::DatabaseQuery(e.to_string()),
+            ErpError::NotFound(msg) => topems_shared::error::TopemsError::ResourceNotFound(msg),
+            ErpError::BadRequest(msg) => topems_shared::error::TopemsError::ValidationFailed(msg),
+            ErpError::Unauthorized => topems_shared::error::TopemsError::Unauthorized,
+            ErpError::Forbidden => topems_shared::error::TopemsError::PermissionDenied {
+                required: "需要权限".to_string(),
+            },
+            ErpError::ValidationError(msg) => topems_shared::error::TopemsError::ValidationFailed(msg),
+            ErpError::InternalError(msg) => topems_shared::error::TopemsError::Internal(msg),
+            ErpError::Conflict(msg) => topems_shared::error::TopemsError::ResourceAlreadyExists(msg),
+        }
+    }
+}

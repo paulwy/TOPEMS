@@ -25,8 +25,8 @@ pub struct PaginationParams {
     pub project_id: Option<Uuid>,
 }
 
-pub fn create_routes() -> Router<Arc<super::ApiState>> {
-    Router::new()
+pub fn create_routes() -> Router<super::ApiState> {
+    Router::<super::ApiState>::new()
         .route("/api/v1/formulas", get(list_formulas).post(create_formula))
         .route(
             "/api/v1/formulas/{id}",
@@ -40,7 +40,7 @@ pub fn create_routes() -> Router<Arc<super::ApiState>> {
 }
 
 async fn list_formulas(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -105,7 +105,7 @@ async fn list_formulas(
 }
 
 async fn create_formula(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
@@ -206,7 +206,7 @@ async fn create_formula(
 }
 
 async fn get_formula(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Formula>> {
     let result = sqlx::query_as::<_, Formula>(
@@ -233,7 +233,7 @@ async fn get_formula(
 }
 
 async fn update_formula(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateFormulaRequest>,
@@ -339,7 +339,7 @@ async fn update_formula(
 }
 
 async fn delete_formula(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
@@ -395,7 +395,7 @@ async fn delete_formula(
 }
 
 async fn get_formula_versions(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<FormulaVersion>>> {
     let result = sqlx::query_as::<_, FormulaVersion>(
@@ -422,7 +422,7 @@ async fn get_formula_versions(
 }
 
 async fn create_formula_version(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateFormulaVersionRequest>,
 ) -> Json<ApiResponse<FormulaVersion>> {
@@ -505,7 +505,7 @@ async fn create_formula_version(
 }
 
 async fn approve_formula(
-    State(state): State<Arc<super::ApiState>>,
+    State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Json(_req): Json<crate::models::ApproveFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {

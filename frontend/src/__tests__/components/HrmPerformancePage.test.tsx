@@ -37,19 +37,15 @@ vi.mock('../../hooks/useNotification', () => ({
 }));
 
 vi.mock('../../components/NotificationContainer', () => ({
-  NotificationContainer: () => <div data-testid="notification-container" />,
+  NotificationContainer: () => <div data-testid='notification-container' />,
 }));
 
 vi.mock('../../components/MetricCard', () => ({
-  MetricCard: ({ title }: { title: string }) => (
-    <div data-testid={`metric-${title}`}>{title}</div>
-  ),
+  MetricCard: ({ title }: { title: string }) => <div data-testid={`metric-${title}`}>{title}</div>,
 }));
 
 vi.mock('../../components/StatsChart', () => ({
-  StatsChart: ({ type }: { type: string }) => (
-    <div data-testid={`chart-${type}`}>Chart</div>
-  ),
+  StatsChart: ({ type }: { type: string }) => <div data-testid={`chart-${type}`}>Chart</div>,
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
