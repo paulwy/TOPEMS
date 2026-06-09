@@ -3,6 +3,7 @@ use axum::{
     Json,
 };
 use chrono::Utc;
+use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -214,7 +215,6 @@ pub async fn add_widget(
     let widget_id = Uuid::new_v4();
     let position_json = serde_json::to_value(&payload.position).unwrap_or_default();
     let size_json = serde_json::to_value(&payload.size).unwrap_or_default();
-
     let result = sqlx::query(
         "INSERT INTO dashboard_widgets (id, dashboard_id, widget_type, title, description, position, size, config, data_source_id, visualization_id, refresh_interval, created_at, updated_at, is_active)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"

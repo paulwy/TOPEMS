@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
-use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+use crate::models::AuditLog;
 use crate::api::ApiState;
 
 #[derive(Debug, Serialize)]

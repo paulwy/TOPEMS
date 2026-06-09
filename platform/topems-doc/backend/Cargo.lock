@@ -93,8 +93,8 @@ dependencies = [
  "sync_wrapper 1.0.2",
  "tokio",
  "tower",
- "tower-layer",
- "tower-service",
+ "tower-layer 0.3.3",
+ "tower-service 0.3.3",
  "tracing",
 ]
 
@@ -112,8 +112,8 @@ dependencies = [
  "mime",
  "pin-project-lite",
  "sync_wrapper 1.0.2",
- "tower-layer",
- "tower-service",
+ "tower-layer 0.3.3",
+ "tower-service 0.3.3",
  "tracing",
 ]
 
@@ -538,6 +538,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "futures"
+version = "0.1.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a471a38ef8ed83cd6e40aa59c1ffe17db6855c18e3604d9c4ed8c08ebc28678"
+
+[[package]]
 name = "futures-channel"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -832,7 +838,7 @@ dependencies = [
  "pin-project-lite",
  "socket2 0.5.10",
  "tokio",
- "tower-service",
+ "tower-service 0.3.3",
  "tracing",
  "want",
 ]
@@ -882,7 +888,7 @@ dependencies = [
  "hyper 1.9.0",
  "pin-project-lite",
  "tokio",
- "tower-service",
+ "tower-service 0.3.3",
 ]
 
 [[package]]
@@ -1667,7 +1673,7 @@ dependencies = [
  "system-configuration",
  "tokio",
  "tokio-native-tls",
- "tower-service",
+ "tower-service 0.3.3",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -2034,6 +2040,7 @@ dependencies = [
  "sha2",
  "smallvec",
  "thiserror 2.0.18",
+ "time",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -2118,6 +2125,7 @@ dependencies = [
  "sqlx-core",
  "stringprep",
  "thiserror 2.0.18",
+ "time",
  "tracing",
  "uuid",
  "whoami",
@@ -2157,6 +2165,7 @@ dependencies = [
  "sqlx-core",
  "stringprep",
  "thiserror 2.0.18",
+ "time",
  "tracing",
  "uuid",
  "whoami",
@@ -2183,6 +2192,7 @@ dependencies = [
  "serde_urlencoded",
  "sqlx-core",
  "thiserror 2.0.18",
+ "time",
  "tracing",
  "url",
  "uuid",
@@ -2479,7 +2489,9 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "topems-shared",
+ "tower",
  "tower-http",
+ "tower-util",
  "tracing",
  "tracing-subscriber",
  "utoipa",
@@ -2494,10 +2506,13 @@ dependencies = [
  "async-trait",
  "axum",
  "chrono",
+ "dotenv",
  "envy",
  "futures-util",
  "jsonwebtoken",
  "md5",
+ "parking_lot",
+ "rand",
  "redis",
  "regex",
  "reqwest",
@@ -2525,8 +2540,8 @@ dependencies = [
  "pin-project-lite",
  "sync_wrapper 1.0.2",
  "tokio",
- "tower-layer",
- "tower-service",
+ "tower-layer 0.3.3",
+ "tower-service 0.3.3",
  "tracing",
 ]
 
@@ -2541,9 +2556,19 @@ dependencies = [
  "http 1.4.1",
  "http-body 1.0.1",
  "pin-project-lite",
- "tower-layer",
- "tower-service",
+ "tower-layer 0.3.3",
+ "tower-service 0.3.3",
  "tracing",
+]
+
+[[package]]
+name = "tower-layer"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ddf07e10c07dcc8f41da6de036dc66def1a85b70eb8a385159e3908bb258328"
+dependencies = [
+ "futures",
+ "tower-service 0.2.0",
 ]
 
 [[package]]
@@ -2554,9 +2579,29 @@ checksum = "121c2a6cda46980bb0fcd1647ffaf6cd3fc79a013de288782836f6df9c48780e"
 
 [[package]]
 name = "tower-service"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2cc0c98637d23732f8de6dfd16494c9f1559c3b9e20b4a46462c8f9b9e827bfa"
+dependencies = [
+ "futures",
+]
+
+[[package]]
+name = "tower-service"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8df9b6e13f2d32c91b9bd719c00d1958837bc7dec474d94952798cc8e69eeec3"
+
+[[package]]
+name = "tower-util"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4792342fac093db5d2558655055a89a04ca909663467a4310c7739d9f8b64698"
+dependencies = [
+ "futures",
+ "tower-layer 0.1.0",
+ "tower-service 0.2.0",
+]
 
 [[package]]
 name = "tracing"

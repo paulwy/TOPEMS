@@ -143,7 +143,8 @@ pub struct ExportReport {
 }
 
 /// 导出格式
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "export_format", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum ExportFormat {
     Pdf,
@@ -151,6 +152,18 @@ pub enum ExportFormat {
     Csv,
     Json,
     Html,
+}
+
+impl std::fmt::Display for ExportFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ExportFormat::Pdf => write!(f, "pdf"),
+            ExportFormat::Excel => write!(f, "excel"),
+            ExportFormat::Csv => write!(f, "csv"),
+            ExportFormat::Json => write!(f, "json"),
+            ExportFormat::Html => write!(f, "html"),
+        }
+    }
 }
 
 /// 设置报表定时任务请求

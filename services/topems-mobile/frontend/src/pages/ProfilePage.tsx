@@ -12,7 +12,11 @@ import {
   BellOff
 } from 'lucide-react';
 
-const ProfilePage: React.FC = () => {
+interface ProfilePageProps {
+  onLogout?: () => void;
+}
+
+const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
   const userInfo = {
     name: '张三',
     avatar: null,
@@ -33,8 +37,12 @@ const ProfilePage: React.FC = () => {
 
   const handleLogout = () => {
     if (confirm('确定要退出登录吗？')) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      if (onLogout) {
+        onLogout();
+      } else {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
   };
 

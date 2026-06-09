@@ -4,9 +4,7 @@ mod services;
 
 use anyhow::Result;
 use axum::{
-    extract::State,
     routing::get,
-    Json,
     Router,
 };
 use sqlx::postgres::PgPoolOptions;
@@ -14,10 +12,9 @@ use std::env;
 
 use api::ApiState;
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
+    AuthState, auth_middleware, create_cors_layer, init_logging,
     ServiceHealth, build_health_response, create_api_info_router
 };
-use api::audit::log_audit_event;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -46,7 +43,6 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    // 构建所有路由
     let app = Router::new()
         .route("/health", get(health_check))
         .merge({
@@ -78,151 +74,6 @@ async fn health_check() -> ServiceHealth {
     build_health_response("topems-wms", true)
 }
 
-async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#)
-        .execute(pool)
-        .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS warehouses (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            name VARCHAR(255) NOT NULL,
-            code VARCHAR(100) UNIQUE,
-            address VARCHAR(500),
-            manager VARCHAR(255),
-            phone VARCHAR(50),
-            status VARCHAR(50) NOT NULL DEFAULT 'active',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS locations (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            warehouse_id UUID REFERENCES warehouses(id),
-            code VARCHAR(100) NOT NULL,
-            name VARCHAR(255),
-            type VARCHAR(50),
-            capacity NUMERIC(15,4),
-            status VARCHAR(50) NOT NULL DEFAULT 'available',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS inventory_items (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            sku VARCHAR(100) NOT NULL,
-            name VARCHAR(255) NOT NULL,
-            specification VARCHAR(255),
-            unit VARCHAR(50),
-            quantity NUMERIC(15,4) NOT NULL DEFAULT 0,
-            location_id UUID REFERENCES locations(id),
-            warehouse_id UUID REFERENCES warehouses(id),
-            min_quantity NUMERIC(15,4),
-            max_quantity NUMERIC(15,4),
-            status VARCHAR(50) NOT NULL DEFAULT 'normal',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS inbound_orders (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            order_number VARCHAR(100) NOT NULL UNIQUE,
-            warehouse_id UUID REFERENCES warehouses(id),
-            supplier_id UUID,
-            order_date TIMESTAMPTZ NOT NULL,
-            expected_arrival TIMESTAMPTZ,
-            actual_arrival TIMESTAMPTZ,
-            total_amount NUMERIC(15,2),
-            status VARCHAR(50) NOT NULL DEFAULT 'pending',
-            remarks TEXT,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS outbound_orders (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            order_number VARCHAR(100) NOT NULL UNIQUE,
-            warehouse_id UUID REFERENCES warehouses(id),
-            customer_id UUID,
-            order_date TIMESTAMPTZ NOT NULL,
-            expected_delivery TIMESTAMPTZ,
-            actual_delivery TIMESTAMPTZ,
-            total_amount NUMERIC(15,2),
-            status VARCHAR(50) NOT NULL DEFAULT 'pending',
-            remarks TEXT,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS audit_logs (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            action VARCHAR(50) NOT NULL,
-            entity_type VARCHAR(50) NOT NULL,
-            entity_id UUID,
-            entity_ids JSONB,
-            user_id VARCHAR(255),
-            user_name VARCHAR(255),
-            request_details JSONB,
-            response_details JSONB,
-            status VARCHAR(50) NOT NULL,
-            error_message TEXT,
-            ip_address VARCHAR(255),
-            user_agent TEXT,
-            created_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type)"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)"#)
-        .execute(pool)
-        .await?;
-    sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status)"#)
-        .execute(pool)
-        .await?;
-
-    tracing::info!("✅ 数据库表初始化完成");
-
+async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
 }

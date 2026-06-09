@@ -98,6 +98,11 @@ const NotificationStatsPage = lazy(() => import('./pages/NotificationStatsPage')
 const NotificationDetailPage = lazy(() => import('./pages/NotificationDetailPage'));
 const BIDashboardPage = lazy(() => import('./pages/BIDashboardPage'));
 const BIAnalyticsPage = lazy(() => import('./pages/BIAnalyticsPage'));
+const BIComparisonPage = lazy(() => import('./pages/BIComparisonPage'));
+const BIReportPage = lazy(() => import('./pages/BIReportPage'));
+const BIDataSourcePage = lazy(() => import('./pages/BIDataSourcePage'));
+const BIVisualizationPage = lazy(() => import('./pages/BIVisualizationPage'));
+const BIModuleDetailPage = lazy(() => import('./pages/BIModuleDetailPage'));
 const IntegrationPage = lazy(() => import('./pages/IntegrationPage'));
 const CRMCustomerScoringPage = lazy(() => import('./pages/CRMCustomerScoringPage'));
 const CRMSalesForecastPage = lazy(() => import('./pages/CRMSalesForecastPage'));
@@ -987,6 +992,46 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <BIAnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/bi/comparison'
+            element={
+              <ProtectedRoute>
+                <BIComparisonPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/bi/reports'
+            element={
+              <ProtectedRoute>
+                <BIReportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/bi/datasources'
+            element={
+              <ProtectedRoute>
+                <BIDataSourcePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/bi/visualizations'
+            element={
+              <ProtectedRoute>
+                <BIVisualizationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/bi/module/:moduleId'
+            element={
+              <ProtectedRoute>
+                <BIModuleDetailPage />
               </ProtectedRoute>
             }
           />

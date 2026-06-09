@@ -1,7 +1,7 @@
 use axum::{
-    extract::{FromRequestParts, Path, Query, Request, State},
-    http::{header, request::Parts, StatusCode},
-    middleware::{self, Next},
+    extract::{FromRequestParts, Path, Query, State},
+    http::{request::Parts, StatusCode},
+    middleware::{self},
     response::{IntoResponse, Response},
     routing::{get, post, put, delete},
     Json, Router,
@@ -18,7 +18,7 @@ use std::net::SocketAddr;
 use tower_http::cors::{CorsLayer, Any};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use topems_shared::{AuthState, auth_middleware, Claims, ApiResponse, api_error};
+use topems_shared::{AuthState, auth_middleware, Claims, ApiResponse};
 
 // User model
 #[derive(Debug, Clone, Serialize, Deserialize)]

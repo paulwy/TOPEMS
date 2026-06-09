@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  BarChart3, ArrowLeft, TrendingUp, TrendingDown, ArrowUpRight 
-} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BarChart3 } from 'lucide-react';
 import { 
   BarChart, 
   Bar, 
@@ -12,13 +10,9 @@ import {
   Tooltip, 
   ResponsiveContainer,
   PieChart as RechartsPieChart,
-  Pie,
-  Cell
+  Pie
 } from 'recharts';
-import { 
-  fetchAnalyticsOverview, 
-  fetchModuleAnalytics 
-} from '../api/bi';
+import { fetchAnalyticsOverview } from '../api/bi';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import OrganizationFilter, { type OrganizationFilterValue } from '../components/ui/OrganizationFilter';
 
@@ -76,6 +70,7 @@ const BIAnalyticsPage = () => {
   const [overview, setOverview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadOverview = async () => {
@@ -136,7 +131,7 @@ const BIAnalyticsPage = () => {
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
   const handleModuleSelect = (moduleId: string) => {
-    console.log('Selected module:', moduleId);
+    navigate(`/bi/module/${moduleId}`);
   };
 
   return (
@@ -166,11 +161,7 @@ const BIAnalyticsPage = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#3B82F6">
-                  {finalChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
+                <Bar dataKey="value" />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -187,11 +178,7 @@ const BIAnalyticsPage = () => {
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   dataKey="value"
-                >
-                  {finalChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
+                />
                 <Tooltip />
               </RechartsPieChart>
             </ResponsiveContainer>

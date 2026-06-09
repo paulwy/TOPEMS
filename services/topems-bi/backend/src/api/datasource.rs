@@ -3,6 +3,7 @@ use axum::{
     Json,
 };
 use chrono::Utc;
+use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -205,9 +206,9 @@ pub async fn test_datasource(
     .await;
 
     match datasource {
-        Ok(Some(datasource_config)) => {
+        Ok(Some(_datasource_config)) => {
             // 测试连接（简化实现）
-            let start_time = Utc::now();
+            let _start_time = Utc::now();
             
             // 模拟测试结果
             let test_result = DataSourceTestResult {
@@ -245,7 +246,7 @@ pub async fn test_datasource(
 
 /// 获取数据源表列表
 pub async fn get_datasource_tables(
-    State(pool): State<PgPool>,
+    State(_pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -288,7 +289,7 @@ pub async fn get_datasource_tables(
 
 /// 获取数据源字段列表
 pub async fn get_datasource_fields(
-    State(pool): State<PgPool>,
+    State(_pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(params): Query<FieldQueryParams>,

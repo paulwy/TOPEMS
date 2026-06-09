@@ -40,7 +40,7 @@ impl AnalysisApi {
         }
     }
 
-    /// POST /api/v1/analysis/extract-entities - 实体提取
+    /// POST /api/v1/analysis/entities - 实体提取
     pub async fn extract_entities(
         analysis_service: AnalysisService,
         Json(req): Json<ExtractEntitiesRequest>,

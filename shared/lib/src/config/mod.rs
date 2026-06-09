@@ -5,6 +5,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use crate::error::TopemsError;
 
+pub mod enhanced;
 pub mod services;
 pub use services::{ServiceConfig, ServiceRegistry, get_default_port};
 

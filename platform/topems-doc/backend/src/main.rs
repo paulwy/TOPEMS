@@ -11,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use uuid::Uuid;
-use dotenv::dotenv;
 use utoipa::{OpenApi, ToSchema};
 use topems_shared::init_logging;
 

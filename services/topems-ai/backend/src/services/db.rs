@@ -43,6 +43,7 @@ impl Database {
             r#"
             CREATE TABLE IF NOT EXISTS ai.documents (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
                 knowledge_base_id UUID,
                 title VARCHAR(500) NOT NULL,
                 file_name VARCHAR(500) NOT NULL,
@@ -58,8 +59,9 @@ impl Database {
                 error_message TEXT,
                 processed_at TIMESTAMP WITH TIME ZONE,
                 created_by UUID,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                deleted_at TIMESTAMP WITH TIME ZONE
             );
             "#,
         )
@@ -67,6 +69,10 @@ impl Database {
         .await?;
 
         // 创建文档表索引
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_organization_id ON ai.documents(organization_id);"#)
+            .execute(&self.pool)
+            .await?;
+
         sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_status ON ai.documents(status);"#)
             .execute(&self.pool)
             .await?;
@@ -83,11 +89,16 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON ai.documents(deleted_at);"#)
+            .execute(&self.pool)
+            .await?;
+
         // 创建文档块表
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS ai.document_chunks (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
                 document_id UUID NOT NULL REFERENCES ai.documents(id) ON DELETE CASCADE,
                 knowledge_base_id UUID,
                 chunk_index INTEGER NOT NULL DEFAULT 0,
@@ -100,12 +111,17 @@ impl Database {
                 embedding_model VARCHAR(255),
                 metadata JSONB DEFAULT '{}',
                 created_by UUID,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                deleted_at TIMESTAMP WITH TIME ZONE
             );
             "#,
         )
         .execute(&self.pool)
         .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_organization_id ON ai.document_chunks(organization_id);"#)
+            .execute(&self.pool)
+            .await?;
 
         sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON ai.document_chunks(document_id);"#)
             .execute(&self.pool)
@@ -120,6 +136,10 @@ impl Database {
             .await?;
 
         sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_chunk_index ON ai.document_chunks(chunk_index);"#)
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_deleted_at ON ai.document_chunks(deleted_at);"#)
             .execute(&self.pool)
             .await?;
 
@@ -158,18 +178,24 @@ impl Database {
             r#"
             CREATE TABLE IF NOT EXISTS ai.qa_history (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
                 question TEXT NOT NULL,
                 answer TEXT NOT NULL,
                 context JSONB DEFAULT '{}',
                 sources JSONB DEFAULT '[]',
                 feedback TEXT,
                 rating INTEGER,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                deleted_at TIMESTAMP WITH TIME ZONE
             );
             "#,
         )
         .execute(&self.pool)
         .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_qa_history_organization_id ON ai.qa_history(organization_id);"#)
+            .execute(&self.pool)
+            .await?;
 
         sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_qa_history_created_at ON ai.qa_history(created_at DESC);"#)
             .execute(&self.pool)
@@ -179,27 +205,41 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_qa_history_deleted_at ON ai.qa_history(deleted_at);"#)
+            .execute(&self.pool)
+            .await?;
+
         // 创建分析结果表
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS ai.analysis_results (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
                 analysis_type VARCHAR(50) NOT NULL,
                 input_text TEXT NOT NULL,
                 result JSONB NOT NULL,
                 confidence DOUBLE PRECISION,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                deleted_at TIMESTAMP WITH TIME ZONE
             );
             "#,
         )
         .execute(&self.pool)
         .await?;
 
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_analysis_results_organization_id ON ai.analysis_results(organization_id);"#)
+            .execute(&self.pool)
+            .await?;
+
         sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_analysis_type ON ai.analysis_results(analysis_type);"#)
             .execute(&self.pool)
             .await?;
 
         sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_analysis_created_at ON ai.analysis_results(created_at DESC);"#)
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_analysis_results_deleted_at ON ai.analysis_results(deleted_at);"#)
             .execute(&self.pool)
             .await?;
 

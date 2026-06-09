@@ -7,7 +7,6 @@ use axum::{
 };
 use jsonwebtoken::{decode, Validation, DecodingKey, Algorithm};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use uuid::Uuid;
 use chrono::{Utc, Duration};
 

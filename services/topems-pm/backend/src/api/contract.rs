@@ -1,15 +1,13 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    routing::{get, post, put, delete},
+    routing::{get, post, put},
     Json,
     Router,
 };
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
-use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::models::contract::{

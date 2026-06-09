@@ -129,19 +129,19 @@ async fn get_project_samples(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let sample_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM samples WHERE project_id = $1"#)
+    let sample_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM lims.samples WHERE project_id = $1"#)
         .bind(project_id)
         .fetch_one(&state.db)
         .await
         .unwrap_or(0);
 
-    let completed_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM samples WHERE project_id = $1 AND status = 'completed'"#)
+    let completed_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM lims.samples WHERE project_id = $1 AND status = 'completed'"#)
         .bind(project_id)
         .fetch_one(&state.db)
         .await
         .unwrap_or(0);
 
-    let pending_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM samples WHERE project_id = $1 AND status != 'completed'"#)
+    let pending_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM lims.samples WHERE project_id = $1 AND status != 'completed'"#)
         .bind(project_id)
         .fetch_one(&state.db)
         .await
@@ -149,7 +149,7 @@ async fn get_project_samples(
 
     let samples = sqlx::query_as::<_, Sample>(r#"
         SELECT id, name, description, status, project_id, received_date, created_at, updated_at
-        FROM samples
+        FROM lims.samples
         WHERE project_id = $1
         ORDER BY received_date DESC
         LIMIT $2 OFFSET $3
@@ -202,7 +202,7 @@ async fn get_sample_project(
     State(state): State<ApiState>,
     Path(sample_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let sample = sqlx::query_as::<_, Sample>(r#"SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM samples WHERE id = $1"#)
+    let sample = sqlx::query_as::<_, Sample>(r#"SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM lims.samples WHERE id = $1"#)
         .bind(sample_id)
         .fetch_optional(&state.db)
         .await;
@@ -250,20 +250,20 @@ async fn get_sample_inspections(
     State(state): State<ApiState>,
     Path(sample_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let sample = sqlx::query_as::<_, Sample>(r#"SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM samples WHERE id = $1"#)
+    let sample = sqlx::query_as::<_, Sample>(r#"SELECT id, name, description, status, project_id, received_date, created_at, updated_at FROM lims.samples WHERE id = $1"#)
         .bind(sample_id)
         .fetch_optional(&state.db)
         .await;
 
     match sample {
         Ok(Some(sample)) => {
-            let inspection_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM inspection_records r JOIN inspection_tasks t ON r.task_id = t.id WHERE t.sample_id = $1"#)
+            let inspection_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM lims.inspection_records r JOIN lims.inspection_tasks t ON r.task_id = t.id WHERE t.sample_id = $1"#)
                 .bind(sample_id)
                 .fetch_one(&state.db)
                 .await
                 .unwrap_or(0);
 
-            let latest_inspection_result = sqlx::query(r#"SELECT r.id, r.result, r.conclusion, r.inspector, r.recorded_at, r.created_at FROM inspection_records r JOIN inspection_tasks t ON r.task_id = t.id WHERE t.sample_id = $1 ORDER BY r.recorded_at DESC LIMIT 1"#)
+            let latest_inspection_result = sqlx::query(r#"SELECT r.id, r.result, r.conclusion, r.inspector, r.recorded_at, r.created_at FROM lims.inspection_records r JOIN lims.inspection_tasks t ON r.task_id = t.id WHERE t.sample_id = $1 ORDER BY r.recorded_at DESC LIMIT 1"#)
                 .bind(sample_id)
                 .fetch_optional(&state.db)
                 .await;
@@ -315,7 +315,7 @@ async fn link_sample_to_project(
     State(state): State<ApiState>,
     Json(req): Json<LinkSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
-    let result = sqlx::query_as::<_, Sample>(r#"UPDATE samples SET project_id = $2, updated_at = $3 WHERE id = $1 RETURNING id, name, description, status, project_id, received_date, created_at, updated_at"#)
+    let result = sqlx::query_as::<_, Sample>(r#"UPDATE lims.samples SET project_id = $2, updated_at = $3 WHERE id = $1 RETURNING id, name, description, status, project_id, received_date, created_at, updated_at"#)
         .bind(req.sample_id)
         .bind(req.project_id)
         .bind(Utc::now())
@@ -353,7 +353,7 @@ async fn batch_link_samples(
         return Json(ApiResponse::error(400, "未提供样品ID"));
     }
 
-    let result = sqlx::query(r#"UPDATE samples SET project_id = $1, updated_at = $2 WHERE id = ANY($3)"#)
+    let result = sqlx::query(r#"UPDATE lims.samples SET project_id = $1, updated_at = $2 WHERE id = ANY($3)"#)
         .bind(req.project_id)
         .bind(Utc::now())
         .bind(&req.sample_ids)

@@ -11,7 +11,6 @@ pub use audit_log::{AuditLog, AuditLogQuery};
 pub use experiment::*;
 pub use formula::*;
 pub use project::*;
-pub use project_member::*;
 pub use project_milestone::*;
 pub use project_phase::*;
 pub use user::*;

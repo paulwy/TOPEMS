@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { patrolApi, taskApi } from './api/client';
+import { patrolApi, taskApi, statsApi } from './api/client';
 import { StatsCards, PatrolCard, TaskCard, QuickAction } from './components/Widgets';
+import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import ScanPage from './pages/ScanPage';
 import MediaPage from './pages/MediaPage';
@@ -19,6 +20,8 @@ import {
 import type { PatrolRecord, MobileTask, DashboardStats } from './types';
 
 const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     todayPatrols: 0,
     todayScans: 0,
@@ -32,30 +35,40 @@ const App: React.FC = () => {
   const [showMediaPage, setShowMediaPage] = useState(false);
 
   useEffect(() => {
-    loadData();
+    checkAuth();
   }, []);
+
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+    setIsLoading(false);
+    if (token) {
+      loadData();
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
+    loadData();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userInfo');
+    setIsLoggedIn(false);
+    setActiveTab('home');
+  };
 
   const loadData = async () => {
     try {
-      const [patrolsData, tasksData] = await Promise.all([
+      const [patrolsData, tasksData, statsData] = await Promise.all([
         patrolApi.getAll(),
         taskApi.getAll(),
+        statsApi.getDashboard(),
       ]);
       setPatrols(patrolsData);
       setTasks(tasksData);
-      
-      // Calculate stats from local data
-      const today = new Date().toDateString();
-      const todayPatrols = patrolsData.filter(p => 
-        new Date(p.created_at).toDateString() === today
-      ).length;
-      
-      setStats({
-        todayPatrols,
-        todayScans: 0,
-        pendingTasks: tasksData.filter(t => t.status === 'pending').length,
-        completedTasks: tasksData.filter(t => t.status === 'completed').length,
-      });
+      setStats(statsData);
     } catch (error) {
       console.error('Failed to load data:', error);
     }
@@ -97,6 +110,18 @@ const App: React.FC = () => {
       console.error('Failed to complete task:', error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -287,7 +312,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Profile Page */}
-      {activeTab === 'profile' && <ProfilePage />}
+      {activeTab === 'profile' && <ProfilePage onLogout={handleLogout} />}
 
       {showScanPage && <ScanPage onBack={() => setShowScanPage(false)} />}
       {showMediaPage && <MediaPage onBack={() => setShowMediaPage(false)} />}

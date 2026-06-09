@@ -104,6 +104,10 @@ const NotificationArchivePage: React.FC = () => {
       reminder: '提醒通知',
       alert: '告警通知',
       message: '消息通知',
+      info: '信息通知',
+      success: '成功通知',
+      warning: '警告通知',
+      error: '错误通知',
     };
     return labels[type] || type;
   };
@@ -115,6 +119,10 @@ const NotificationArchivePage: React.FC = () => {
       reminder: 'bg-yellow-100 text-yellow-700',
       alert: 'bg-red-100 text-red-700',
       message: 'bg-green-100 text-green-700',
+      info: 'bg-cyan-100 text-cyan-700',
+      success: 'bg-emerald-100 text-emerald-700',
+      warning: 'bg-orange-100 text-orange-700',
+      error: 'bg-rose-100 text-rose-700',
     };
     return colors[type] || 'bg-gray-100 text-gray-700';
   };
@@ -427,6 +435,10 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
       reminder: '提醒通知',
       alert: '告警通知',
       message: '消息通知',
+      info: '信息通知',
+      success: '成功通知',
+      warning: '警告通知',
+      error: '错误通知',
     };
     return labels[type] || type;
   };

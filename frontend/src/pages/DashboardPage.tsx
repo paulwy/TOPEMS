@@ -800,6 +800,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   { id: 'departments', label: '部门管理', icon: Folder, adminOnly: true },
                   { id: 'employees', label: '员工管理', icon: Users, adminOnly: true },
                   { id: 'documents', label: '文档中心', icon: BookOpen },
+                  { id: 'bi', label: '商业智能', icon: BarChart3, path: '/bi/dashboard' },
                   { id: 'help', label: '帮助中心', icon: HelpCircle },
                 ]
                   .filter((item) => !item.adminOnly || user?.is_superuser || hasPermission('iam:admin'))

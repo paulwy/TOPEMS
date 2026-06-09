@@ -6,7 +6,6 @@ use crate::services::db::Database;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AnalysisService {
@@ -259,7 +258,7 @@ impl AnalysisService {
             temperature: f64,
         }
 
-        #[derive(Serialize)]
+        #[derive(Serialize, Deserialize)]
         struct OpenAIMessage {
             role: String,
             content: String,

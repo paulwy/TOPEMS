@@ -1,8 +1,9 @@
 use axum::{
-    extract::{Extension, Path, Query, State},
+    extract::{Extension, Query, State},
     Json,
 };
 use chrono::Utc;
+use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -31,7 +32,7 @@ pub async fn execute_query(
     .await;
 
     match query_config {
-        Ok(Some(config)) => {
+        Ok(Some(_config)) => {
             // 执行查询（这里简化实现，实际应该根据数据源类型执行不同的查询）
             let start_time = Utc::now();
             
@@ -145,9 +146,9 @@ pub async fn execute_aggregation(
 
 /// 数据对比分析
 pub async fn execute_comparison(
-    State(pool): State<PgPool>,
+    State(_pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-    Json(payload): Json<AnalysisQueryRequest>,
+    Json(_payload): Json<AnalysisQueryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsRead).await {
         Ok(_) => {},
@@ -191,9 +192,9 @@ pub async fn execute_comparison(
 
 /// 趋势分析
 pub async fn execute_trend(
-    State(pool): State<PgPool>,
+    State(_pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-    Json(payload): Json<AnalysisQueryRequest>,
+    Json(_payload): Json<AnalysisQueryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsRead).await {
         Ok(_) => {},

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState, generate_jwt_token, verify_jwt_token, generate_refresh_token};
+use topems_shared::{ApiResponse, AuthState, generate_jwt_token, generate_refresh_token};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoginRequest {
@@ -36,7 +36,7 @@ pub struct VerifyCodeRequest {
     pub code: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct RefreshTokenRecord {
     pub id: Uuid,
     pub user_id: String,
@@ -57,15 +57,22 @@ impl RefreshTokenRecord {
     }
 }
 
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct MobileUserRow {
+    id: Uuid,
+    username: String,
+    password_hash: String,
+}
+
 pub async fn login(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Json(payload): Json<LoginRequest>,
 ) -> impl IntoResponse {
-    let user = match sqlx::query!(
-        "SELECT id, username, password_hash FROM mobile_users WHERE username = $1",
-        payload.username
+    let user = match sqlx::query_as::<_, MobileUserRow>(
+        "SELECT id, username, password_hash FROM mobile_users WHERE username = $1"
     )
+    .bind(&payload.username)
     .fetch_optional(&pool)
     .await
     {
@@ -83,19 +90,20 @@ pub async fn login(
         return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "用户名或密码错误")));
     }
 
-    let access_token = generate_jwt_token(&user.id.to_string(), &auth_state.jwt_secret, auth_state.jwt_expire_minutes);
+    let jwt_expire_minutes = auth_state.token_expiry_hours * 60;
+    let access_token = generate_jwt_token(&user.id.to_string(), &auth_state.jwt_secret, jwt_expire_minutes);
     let refresh_token = generate_refresh_token();
-    let expires_in = (auth_state.jwt_expire_minutes * 60) as i64;
+    let expires_in = (jwt_expire_minutes * 60) as i64;
 
     let expires_at = Utc::now() + Duration::days(7);
-    if let Err(e) = sqlx::query!(
-        "INSERT INTO refresh_tokens (user_id, refresh_token, expires_at) VALUES ($1, $2, $3)",
-        user.id,
-        refresh_token,
-        expires_at
+    if let Err(e) = sqlx::query(
+        "INSERT INTO refresh_tokens (user_id, refresh_token, expires_at) VALUES ($1, $2, $3)"
     )
-    .execute(&pool)
-    .await
+        .bind(user.id)
+        .bind(&refresh_token)
+        .bind(expires_at)
+        .execute(&pool)
+        .await
     {
         tracing::error!("保存refresh token失败: {}", e);
     }
@@ -128,10 +136,10 @@ pub async fn logout(
         }
     };
 
-    if let Err(e) = sqlx::query!(
-        "DELETE FROM refresh_tokens WHERE refresh_token = $1",
-        token_str
+    if let Err(e) = sqlx::query(
+        "DELETE FROM refresh_tokens WHERE refresh_token = $1"
     )
+    .bind(token_str)
     .execute(&pool)
     .await
     {
@@ -147,11 +155,10 @@ pub async fn refresh_token(
     State(pool): State<PgPool>,
     Json(payload): Json<RefreshRequest>,
 ) -> impl IntoResponse {
-    let record = match sqlx::query_as!(
-        RefreshTokenRecord,
-        "SELECT id, user_id, refresh_token, expires_at, created_at FROM refresh_tokens WHERE refresh_token = $1",
-        payload.refresh_token
+    let record = match sqlx::query_as::<_, RefreshTokenRecord>(
+        "SELECT id, user_id, refresh_token, expires_at, created_at FROM refresh_tokens WHERE refresh_token = $1"
     )
+    .bind(&payload.refresh_token)
     .fetch_optional(&pool)
     .await
     {
@@ -169,19 +176,20 @@ pub async fn refresh_token(
         return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "refresh token已过期")));
     }
 
-    let access_token = generate_jwt_token(&record.user_id, &auth_state.jwt_secret, auth_state.jwt_expire_minutes);
+    let jwt_expire_minutes = auth_state.token_expiry_hours * 60;
+    let access_token = generate_jwt_token(&record.user_id, &auth_state.jwt_secret, jwt_expire_minutes);
     let new_refresh_token = generate_refresh_token();
-    let expires_in = (auth_state.jwt_expire_minutes * 60) as i64;
+    let expires_in = (jwt_expire_minutes * 60) as i64;
 
     let expires_at = Utc::now() + Duration::days(7);
-    if let Err(e) = sqlx::query!(
-        "UPDATE refresh_tokens SET refresh_token = $1, expires_at = $2 WHERE id = $3",
-        new_refresh_token,
-        expires_at,
-        record.id
+    if let Err(e) = sqlx::query(
+        "UPDATE refresh_tokens SET refresh_token = $1, expires_at = $2 WHERE id = $3"
     )
-    .execute(&pool)
-    .await
+        .bind(&new_refresh_token)
+        .bind(expires_at)
+        .bind(record.id)
+        .execute(&pool)
+        .await
     {
         tracing::error!("更新refresh token失败: {}", e);
     }

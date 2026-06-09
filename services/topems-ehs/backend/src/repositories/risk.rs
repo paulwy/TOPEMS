@@ -211,14 +211,14 @@ impl<'a> RiskControlRepository<'a> {
 
 fn calculate_risk_level(score: i32) -> String {
     if score >= 20 {
-        "极高"
+        "极高".to_string()
     } else if score >= 15 {
-        "高"
+        "高".to_string()
     } else if score >= 10 {
-        "中"
+        "中".to_string()
     } else if score >= 5 {
-        "低"
+        "低".to_string()
     } else {
-        "极低"
+        "极低".to_string()
     }
 }

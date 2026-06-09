@@ -106,6 +106,45 @@ impl AuthState {
     }
 }
 
+/// 生成 JWT 访问令牌。`expire_minutes` 以分钟为单位。
+pub fn generate_jwt_token(user_id: &str, secret: &str, expire_minutes: i64) -> String {
+    let now = chrono::Utc::now();
+    let exp = (now + chrono::Duration::minutes(expire_minutes)).timestamp() as usize;
+    let claims = Claims {
+        sub: user_id.to_string(),
+        username: user_id.to_string(),
+        role: "user".to_string(),
+        roles: vec!["user".to_string()],
+        permissions: Vec::new(),
+        is_superuser: false,
+        exp,
+        iat: now.timestamp() as usize,
+        email: None,
+        department: None,
+        tenant_id: None,
+    };
+    claims.encode(secret).unwrap_or_else(|_| String::new())
+}
+
+/// 验证 JWT 令牌，返回 claims。
+pub fn verify_jwt_token(token: &str, secret: &str) -> Result<Claims, TopemsError> {
+    let token_data = decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(secret.as_ref()),
+        &Validation::new(Algorithm::HS256),
+    )
+    .map_err(|e| TopemsError::Auth(format!("JWT 验证失败: {}", e)))?;
+    Ok(token_data.claims)
+}
+
+/// 生成一个随机的 refresh token。
+pub fn generate_refresh_token() -> String {
+    use rand::RngCore;
+    let mut bytes = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut bytes);
+    bytes.iter().map(|b| format!("{:02x}", b)).collect()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Role {
     pub id: String,

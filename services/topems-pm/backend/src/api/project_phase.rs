@@ -1,11 +1,10 @@
 use axum::{
     extract::{Path, State},
-    routing::{get, post, put, delete},
+    routing::get,
     Json,
     Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
 use utoipa::ToSchema;

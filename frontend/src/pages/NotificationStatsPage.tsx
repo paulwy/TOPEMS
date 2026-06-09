@@ -49,10 +49,17 @@ const NotificationStatsPage: React.FC = () => {
         setStats(statsRes.data);
       }
       if (healthRes.success && healthRes.data) {
+        const deps = healthRes.data.dependencies;
+        const dependencies = typeof deps === 'object' && !Array.isArray(deps)
+          ? [
+              { name: 'database', status: deps.database },
+              { name: 'redis', status: deps.redis },
+            ]
+          : deps || [];
         setServiceStatus({
           status: healthRes.data.status,
           uptime: healthRes.data.uptime,
-          dependencies: healthRes.data.dependencies || [],
+          dependencies,
         });
       }
     } catch (err) {

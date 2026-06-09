@@ -1,6 +1,6 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use time::OffsetDateTime;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -15,11 +15,14 @@ pub struct Email {
     pub body_html: Option<String>,
     pub status: String,
     pub priority: String,
-    pub sent_at: Option<DateTime<Utc>>,
+    #[serde(default, with = "time::serde::rfc3339::option")]
+    pub sent_at: Option<OffsetDateTime>,
     pub error_message: Option<String>,
     pub template_id: Option<Uuid>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
+    pub updated_at: OffsetDateTime,
 }
 
 #[derive(Debug, Deserialize)]
@@ -62,7 +65,6 @@ pub struct ResendEmailsRequest {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Utc;
 
     #[test]
     fn test_email_serialization() {
@@ -80,8 +82,8 @@ mod tests {
             sent_at: None,
             error_message: None,
             template_id: None,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
+            created_at: OffsetDateTime::now_utc(),
+            updated_at: OffsetDateTime::now_utc(),
         };
 
         let json = serde_json::to_string(&email).unwrap();

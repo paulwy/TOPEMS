@@ -1,11 +1,10 @@
 use axum::{
     extract::{FromRef, Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{CreateWarehouseRequest, Warehouse, UpdateWarehouseRequest};

@@ -758,8 +758,7 @@ impl TemplateCategoryRepository {
 // ==================== 档案管理 Repository ====================
 
 use crate::models::{
-    Archive, ArchiveCategory, ArchiveCategoryResponse, ArchiveResponse, ArchiveBorrow,
-    ArchiveDestruction, ArchiveMetadata, CreateArchiveCategoryRequest, CreateArchiveRequest,
+    Archive, ArchiveCategory, ArchiveCategoryResponse, ArchiveResponse, CreateArchiveCategoryRequest, CreateArchiveRequest,
     UpdateArchiveCategoryRequest, UpdateArchiveRequest, ListArchivesQuery,
 };
 

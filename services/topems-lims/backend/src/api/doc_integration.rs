@@ -148,7 +148,7 @@ async fn create_document_relation(
     let now = Utc::now();
 
     let result: std::result::Result<DocumentRelation, sqlx::Error> = sqlx::query_as(
-        "INSERT INTO document_relations (
+        "INSERT INTO lims.document_relations (
             id, entity_type, entity_id, doc_service_file_id, doc_service_url, 
             file_name, file_size, file_type, description, created_by, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -214,7 +214,7 @@ async fn delete_document_relation(
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     let result: std::result::Result<sqlx::postgres::PgQueryResult, sqlx::Error> = sqlx::query(
-        "DELETE FROM document_relations WHERE id = $1"
+        "DELETE FROM lims.document_relations WHERE id = $1"
     )
     .bind(id)
     .execute(&state.db)

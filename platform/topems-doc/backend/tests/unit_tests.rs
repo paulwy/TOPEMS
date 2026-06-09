@@ -4,7 +4,6 @@
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 // ============ 文件元数据测试 ============
 
@@ -97,7 +96,7 @@ mod file_metadata_tests {
             (1073741824, "1 GB"),
         ];
 
-        for (size, expected) in sizes {
+        for (size, _expected) in sizes {
             let file = FileMetadata {
                 id: Uuid::new_v4(),
                 name: "test.txt".to_string(),
@@ -691,7 +690,7 @@ mod template_category_tests {
 
 #[cfg(test)]
 mod file_path_tests {
-    use super::*;
+    
 
     fn validate_file_name(name: &str) -> Result<(), String> {
         if name.is_empty() {
@@ -758,7 +757,7 @@ mod file_path_tests {
 
 #[cfg(test)]
 mod file_type_tests {
-    use super::*;
+    
 
     fn get_content_type(filename: &str) -> String {
         let extension = filename.rsplit('.').next().unwrap_or("");

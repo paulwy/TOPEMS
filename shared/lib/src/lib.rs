@@ -34,7 +34,7 @@ pub use config::enhanced::{
     DatabaseConfig, RedisConfig, JwtConfig, AIConfig, CacheConfig as EnhancedCacheConfig,
 };
 pub use error::{TopemsError, Result};
-pub use auth::{Claims, AuthState, Role, Permission, get_permissions, get_roles, auth_middleware, check_permission, check_role, require_superuser, require_any_permission, require_all_permissions, get_role_by_id, get_permission_by_id};
+pub use auth::{Claims, AuthState, Role, Permission, get_permissions, get_roles, auth_middleware, check_permission, check_role, require_superuser, require_any_permission, require_all_permissions, get_role_by_id, get_permission_by_id, generate_jwt_token, verify_jwt_token, generate_refresh_token};
 pub use response::{ApiResponse, PaginationParams, PaginatedResponse, api_error};
 pub use cors::create_cors_layer;
 pub use health::{

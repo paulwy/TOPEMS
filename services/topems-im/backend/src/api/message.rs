@@ -25,7 +25,7 @@ pub async fn send_message(
 
     let result = sqlx::query_as::<_, Message>(
         r#"
-        INSERT INTO messages (id, chat_room_id, sender_id, sender_name, receiver_id, message_type, 
+        INSERT INTO im.messages (id, chat_room_id, sender_id, sender_name, receiver_id, message_type, 
                              content, file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                              is_read, is_edited, is_deleted, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULL, FALSE, FALSE, FALSE, $12, NULL)
@@ -55,7 +55,7 @@ pub async fn send_message(
             if let Some(chat_id) = chat_room_id {
                 let _ = sqlx::query(
                     r#"
-                    UPDATE chat_rooms
+                    UPDATE im.chat_rooms
                     SET last_message = $1, last_message_time = $2, updated_at = $3
                     WHERE id = $4
                     "#
@@ -87,7 +87,7 @@ pub async fn get_message(
         SELECT id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                is_read, is_edited, is_deleted, created_at, updated_at
-        FROM messages
+        FROM im.messages
         WHERE id = $1 AND is_deleted = FALSE
         "#
     )
@@ -101,7 +101,7 @@ pub async fn get_message(
             let receipts_result = sqlx::query_as::<_, MessageReadReceipt>(
                 r#"
                 SELECT id, message_id, user_id, read_at
-                FROM message_read_receipts
+                FROM im.message_read_receipts
                 WHERE message_id = $1
                 ORDER BY read_at ASC
                 "#
@@ -136,7 +136,7 @@ pub async fn update_message(
 
     let result = sqlx::query_as::<_, Message>(
         r#"
-        UPDATE messages
+        UPDATE im.messages
         SET content = $1, is_edited = TRUE, updated_at = $2
         WHERE id = $3 AND is_deleted = FALSE
         RETURNING id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
@@ -156,7 +156,7 @@ pub async fn update_message(
             if let Some(chat_id) = message.chat_room_id {
                 let _ = sqlx::query(
                     r#"
-                    UPDATE chat_rooms
+                    UPDATE im.chat_rooms
                     SET last_message = $1, updated_at = $2
                     WHERE id = $3
                     "#
@@ -191,7 +191,7 @@ pub async fn delete_message(
         SELECT id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                is_read, is_edited, is_deleted, created_at, updated_at
-        FROM messages
+        FROM im.messages
         WHERE id = $1
         "#
     )
@@ -203,7 +203,7 @@ pub async fn delete_message(
         // 标记消息为已删除（软删除）
         let result = sqlx::query(
             r#"
-            UPDATE messages
+            UPDATE im.messages
             SET is_deleted = TRUE, updated_at = $1
             WHERE id = $2
             "#
@@ -219,7 +219,7 @@ pub async fn delete_message(
                 if let Some(chat_id) = message.chat_room_id {
                     let _ = sqlx::query(
                         r#"
-                        UPDATE chat_rooms
+                        UPDATE im.chat_rooms
                         SET last_message = NULL, last_message_time = NULL, updated_at = $1
                         WHERE id = $2 AND last_message = $3
                         "#
@@ -279,7 +279,7 @@ pub async fn mark_message_read(
     if result.is_ok() {
         let _ = sqlx::query(
             r#"
-            UPDATE messages
+            UPDATE im.messages
             SET is_read = TRUE
             WHERE id = $1
             "#
@@ -314,7 +314,7 @@ pub async fn get_unread_messages(
         SELECT id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                is_read, is_edited, is_deleted, created_at, updated_at
-        FROM messages
+        FROM im.messages
         WHERE (receiver_id = $1 OR chat_room_id IN (
             SELECT chat_room_id FROM chat_room_members WHERE user_id = $1
         ))
@@ -351,7 +351,7 @@ pub async fn reply_message(
         SELECT id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                is_read, is_edited, is_deleted, created_at, updated_at
-        FROM messages
+        FROM im.messages
         WHERE id = $1 AND is_deleted = FALSE
         "#
     )
@@ -367,7 +367,7 @@ pub async fn reply_message(
             // 创建回复消息
             let result = sqlx::query_as::<_, Message>(
                 r#"
-                INSERT INTO messages (id, chat_room_id, sender_id, sender_name, receiver_id, 
+                INSERT INTO im.messages (id, chat_room_id, sender_id, sender_name, receiver_id, 
                                      message_type, content, file_url, file_name, file_size, 
                                      reply_to_id, forwarded_from_id, is_read, is_edited, is_deleted, 
                                      created_at, updated_at)
@@ -394,7 +394,7 @@ pub async fn reply_message(
                     if let Some(chat_id) = original.chat_room_id {
                         let _ = sqlx::query(
                             r#"
-                            UPDATE chat_rooms
+                            UPDATE im.chat_rooms
                             SET last_message = $1, last_message_time = $2, updated_at = $3
                             WHERE id = $4
                             "#
@@ -435,7 +435,7 @@ pub async fn forward_message(
         SELECT id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                is_read, is_edited, is_deleted, created_at, updated_at
-        FROM messages
+        FROM im.messages
         WHERE id = $1 AND is_deleted = FALSE
         "#
     )
@@ -452,7 +452,7 @@ pub async fn forward_message(
             // 创建转发消息
             let result = sqlx::query_as::<_, Message>(
                 r#"
-                INSERT INTO messages (id, chat_room_id, sender_id, sender_name, receiver_id, 
+                INSERT INTO im.messages (id, chat_room_id, sender_id, sender_name, receiver_id, 
                                      message_type, content, file_url, file_name, file_size, 
                                      reply_to_id, forwarded_from_id, is_read, is_edited, is_deleted, 
                                      created_at, updated_at)
@@ -483,7 +483,7 @@ pub async fn forward_message(
                     if let Some(chat_id) = target_chat_room_id {
                         let _ = sqlx::query(
                             r#"
-                            UPDATE chat_rooms
+                            UPDATE im.chat_rooms
                             SET last_message = $1, last_message_time = $2, updated_at = $3
                             WHERE id = $4
                             "#
@@ -531,7 +531,7 @@ pub async fn search_messages(
             SELECT id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                    file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                    is_read, is_edited, is_deleted, created_at, updated_at
-            FROM messages
+            FROM im.messages
             WHERE chat_room_id = $1 AND content ILIKE $2 AND is_deleted = FALSE
             ORDER BY created_at DESC
             LIMIT 50
@@ -547,7 +547,7 @@ pub async fn search_messages(
             SELECT id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                    file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                    is_read, is_edited, is_deleted, created_at, updated_at
-            FROM messages
+            FROM im.messages
             WHERE (sender_id = $1 OR receiver_id = $1 OR chat_room_id IN (
                 SELECT chat_room_id FROM chat_room_members WHERE user_id = $1
             ))
@@ -566,7 +566,7 @@ pub async fn search_messages(
             SELECT id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                    file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                    is_read, is_edited, is_deleted, created_at, updated_at
-            FROM messages
+            FROM im.messages
             WHERE content ILIKE $1 AND is_deleted = FALSE
             ORDER BY created_at DESC
             LIMIT 50

@@ -1,17 +1,17 @@
 import React, { useCallback } from 'react';
 import {
   Input,
-  Textarea,
+  TextArea,
   Select,
-  SelectItem,
+  ListBoxItem,
   Checkbox,
   DatePicker,
-  NumberInput,
   Button,
   Form,
   Card,
-  CardBody,
-} from '@nextui-org/react';
+  Label,
+  TextField,
+} from '@heroui/react';
 
 export interface FormFieldConfig {
   name: string;
@@ -68,107 +68,59 @@ export default function FormBuilder({
       const isDisabled = field.disabled ?? false;
       const defaultValue = initialValues[field.name] ?? field.defaultValue;
 
-      const validationPattern = field.validation?.pattern
-        ? { pattern: field.validation.pattern }
-        : {};
-
       switch (field.type) {
         case 'text':
         case 'email':
         case 'password':
           return (
-            <Input
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              type={field.type}
-              placeholder={field.placeholder}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultValue={defaultValue}
-              minLength={field.validation?.minLength}
-              maxLength={field.validation?.maxLength}
-              {...validationPattern}
-            />
+            <TextField key={field.name} name={field.name} isRequired={isRequired} isDisabled={isDisabled} defaultValue={defaultValue}>
+              <Label>{field.label}</Label>
+              <Input type={field.type} placeholder={field.placeholder} />
+            </TextField>
           );
         case 'number':
           return (
-            <NumberInput
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              placeholder={field.placeholder}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultValue={defaultValue}
-              minValue={field.validation?.min}
-              maxValue={field.validation?.max}
-            />
+            <TextField key={field.name} name={field.name} isRequired={isRequired} isDisabled={isDisabled} defaultValue={defaultValue?.toString()}>
+              <Label>{field.label}</Label>
+              <Input type="number" placeholder={field.placeholder} />
+            </TextField>
           );
         case 'textarea':
           return (
-            <Textarea
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              placeholder={field.placeholder}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultValue={defaultValue}
-              minLength={field.validation?.minLength}
-              maxLength={field.validation?.maxLength}
-            />
+            <TextField key={field.name} name={field.name} isRequired={isRequired} isDisabled={isDisabled} defaultValue={defaultValue}>
+              <Label>{field.label}</Label>
+              <TextArea placeholder={field.placeholder} />
+            </TextField>
           );
         case 'select':
           return (
-            <Select
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              placeholder={field.placeholder}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultSelectedKeys={defaultValue ? [String(defaultValue)] : undefined}
-            >
+            <Select key={field.name} name={field.name} isRequired={isRequired} isDisabled={isDisabled} defaultSelectedKey={defaultValue ? String(defaultValue) : undefined}>
+              <Label>{field.label}</Label>
               {field.options?.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
+                <ListBoxItem key={opt.value} id={opt.value}>
                   {opt.label}
-                </SelectItem>
+                </ListBoxItem>
               ))}
             </Select>
           );
         case 'checkbox':
           return (
-            <Checkbox
-              key={field.name}
-              name={field.name}
-              isSelected={defaultValue || false}
-              isDisabled={isDisabled}
-            >
+            <Checkbox key={field.name} name={field.name} isSelected={defaultValue || false} isDisabled={isDisabled}>
               {field.label}
             </Checkbox>
           );
         case 'date':
           return (
-            <DatePicker
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultValue={defaultValue}
-            />
+            <DatePicker key={field.name} name={field.name} isRequired={isRequired} isDisabled={isDisabled} defaultValue={defaultValue}>
+              <Label>{field.label}</Label>
+            </DatePicker>
           );
         case 'file':
           return (
-            <Input
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              type="file"
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-            />
+            <TextField key={field.name} name={field.name} isRequired={isRequired} isDisabled={isDisabled}>
+              <Label>{field.label}</Label>
+              <Input type="file" />
+            </TextField>
           );
         default:
           if (field.render) {
@@ -216,21 +168,21 @@ export default function FormBuilder({
           <h3 className="text-lg font-semibold">{title}</h3>
         </div>
       )}
-      <CardBody>
+      <div className="p-6">
         <Form onSubmit={handleSubmit} onReset={handleReset} className="flex flex-col gap-6">
           {renderForm()}
           <div className="flex gap-3 justify-end">
             {showReset && (
-              <Button type="reset" variant="flat">
+              <Button type="reset" variant="secondary">
                 {resetLabel}
               </Button>
             )}
-            <Button type="submit" color="primary">
+            <Button type="submit" variant="primary">
               {submitLabel}
             </Button>
           </div>
         </Form>
-      </CardBody>
+      </div>
     </Card>
   );
 }

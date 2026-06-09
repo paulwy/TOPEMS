@@ -323,7 +323,7 @@ impl WorkflowEngine {
                     .await?;
                 approvals.push(approval);
             } else if approver_str.starts_with("role:") {
-                let role_name = approver_str.strip_prefix("role:").unwrap_or(approver_str);
+                let _role_name = approver_str.strip_prefix("role:").unwrap_or(approver_str);
                 let default_user_id = Uuid::parse_str("550e8400-e29b-41d4-a716-446655440001").unwrap_or_default();
                 let approval = self
                     .create_approval(CreateApprovalRequest {

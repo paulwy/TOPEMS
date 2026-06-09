@@ -126,7 +126,76 @@ wait_for_db() {
     return 1
 }
 
+# 执行数据库迁移（在启动服务之前）
+run_migrations() {
+    log_info "执行数据库迁移..."
+    
+    # 迁移目录列表（按服务顺序排列）
+    # 注意：部分服务的迁移目录在 backend/src/db/migrations
+    local MIGRATION_DIRS=(
+        # 平台服务
+        "platform/topems-iam/backend/src/db/migrations"
+        "platform/topems-doc/backend/src/db/migrations"
+        "platform/topems-flow/backend/migrations"
+        # 业务服务
+        "services/topems-erp/backend/migrations"
+        "services/topems-hrm/backend/migrations"
+        "services/topems-crm/backend/migrations"
+        "services/topems-ai/backend/migrations"
+        "services/topems-pm/backend/migrations"
+        "services/topems-rs/backend/migrations"
+        "services/topems-lims/backend/migrations"
+        "services/topems-pdm/backend/migrations"
+        "services/topems-mes/backend/migrations"
+        "services/topems-qms/backend/migrations"
+        "services/topems-ehs/backend/migrations"
+        "services/topems-scm/backend/migrations"
+        "services/topems-srm/backend/migrations"
+        "services/topems-wms/backend/migrations"
+        "services/topems-gis/backend/migrations"
+        "services/topems-im/backend/migrations"
+        "services/topems-bi/backend/migrations"
+        "services/topems-mail/backend/migrations"
+        "services/topems-mobile/backend/migrations"
+        "services/topems-portal/backend/migrations"
+        "services/topems-integration/backend/migrations"
+        "services/topems-notification/backend/src/db/migrations"
+        "services/report-service/migrations"
+    )
+
+    local success_count=0
+    local total_count=0
+    
+    for migration_dir in "${MIGRATION_DIRS[@]}"; do
+        if [ -d "$migration_dir" ]; then
+            total_count=$((total_count + 1))
+            local sql_files=$(find "$migration_dir" -name "*.sql" | sort)
+            
+            if [ -n "$sql_files" ]; then
+                for sql_file in $sql_files; do
+                    log_detail "执行迁移: $(basename "$sql_file")"
+                    if docker exec -i topems-postgres psql -U topems -d topems < "$sql_file" >/dev/null 2>&1; then
+                        success_count=$((success_count + 1))
+                    else
+                        log_warn "迁移失败: $sql_file"
+                    fi
+                done
+            fi
+        fi
+    done
+    
+    if [ $success_count -gt 0 ]; then
+        log_success "数据库迁移完成 ($success_count 个文件)"
+    else
+        log_warn "未找到迁移文件或迁移全部失败"
+    fi
+}
+
 # 1. 检查 Docker
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "步骤 1/5: 检查 Docker 服务"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info "检查 Docker 服务..."
 if ! docker info > /dev/null 2>&1; then
     log_warn "Docker 未运行，正在尝试启动..."
@@ -140,6 +209,10 @@ fi
 log_success "Docker 已就绪"
 
 # 2. 启动数据库服务
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "步骤 2/5: 启动基础设施 (PostgreSQL/Redis)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info "准备数据库服务..."
 cd docker
 if [ ! -f .env ]; then
@@ -160,7 +233,18 @@ cd "$PROJECT_ROOT"
 wait_for_db
 sleep 2
 
-# 3. 配置环境变量
+# 3. 执行数据库迁移（在启动服务之前）
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "步骤 3/5: 执行数据库迁移脚本"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+run_migrations
+
+# 4. 配置环境变量
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "步骤 4/5: 配置环境变量"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info "配置环境变量..."
 
 # 从 .env 文件加载环境变量
@@ -236,6 +320,10 @@ cleanup_port 8055 || true
 cleanup_port 3000 || true
 
 # 5. 依次启动各个服务
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "步骤 5/5: 启动各服务"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info "检查并启动后端服务..."
 echo ""
 

@@ -26,7 +26,7 @@ pub async fn add_contact(
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        INSERT INTO contacts (id, user_id, contact_user_id, contact_name, contact_avatar, alias, status, is_blocked, group_id, created_at, updated_at)
+        INSERT INTO im.contacts (id, user_id, contact_user_id, contact_name, contact_avatar, alias, status, is_blocked, group_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'active', FALSE, $7, $8, $9)
         ON CONFLICT (user_id, contact_user_id) 
         DO UPDATE SET contact_name = $4, contact_avatar = $5, alias = $6, updated_at = $9
@@ -68,7 +68,7 @@ pub async fn list_contacts(
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, user_id, contact_user_id, contact_name, contact_avatar, alias, status, is_blocked, group_id, created_at, updated_at
-        FROM contacts
+        FROM im.contacts
         WHERE user_id = $1 AND is_blocked = FALSE
         ORDER BY contact_name ASC
         "#
@@ -97,7 +97,7 @@ pub async fn get_contact(
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, user_id, contact_user_id, contact_name, contact_avatar, alias, status, is_blocked, group_id, created_at, updated_at
-        FROM contacts
+        FROM im.contacts
         WHERE id = $1
         "#
     )
@@ -126,7 +126,7 @@ pub async fn update_contact(
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        UPDATE contacts
+        UPDATE im.contacts
         SET alias = COALESCE($1, alias),
             group_id = COALESCE($2, group_id),
             updated_at = $3
@@ -158,7 +158,7 @@ pub async fn delete_contact(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query(
         r#"
-        DELETE FROM contacts
+        DELETE FROM im.contacts
         WHERE id = $1
         RETURNING id
         "#
@@ -186,7 +186,7 @@ pub async fn block_contact(
 
     let result = sqlx::query(
         r#"
-        UPDATE contacts
+        UPDATE im.contacts
         SET is_blocked = TRUE, updated_at = $1
         WHERE id = $2
         "#
@@ -214,7 +214,7 @@ pub async fn unblock_contact(
 
     let result = sqlx::query(
         r#"
-        UPDATE contacts
+        UPDATE im.contacts
         SET is_blocked = FALSE, updated_at = $1
         WHERE id = $2
         "#
@@ -252,7 +252,7 @@ pub async fn search_contacts(
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, user_id, contact_user_id, contact_name, contact_avatar, alias, status, is_blocked, group_id, created_at, updated_at
-        FROM contacts
+        FROM im.contacts
         WHERE user_id = $1 
         AND (contact_name ILIKE $2 OR alias ILIKE $2 OR contact_user_id ILIKE $2)
         AND is_blocked = FALSE
@@ -292,7 +292,7 @@ pub async fn list_blocked_contacts(
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, user_id, contact_user_id, contact_name, contact_avatar, alias, status, is_blocked, group_id, created_at, updated_at
-        FROM contacts
+        FROM im.contacts
         WHERE user_id = $1 AND is_blocked = TRUE
         ORDER BY updated_at DESC
         "#
@@ -332,7 +332,7 @@ pub async fn create_contact_group(
 
     let result = sqlx::query_as::<_, ContactGroup>(
         r#"
-        INSERT INTO contact_groups (id, user_id, name, created_at, updated_at)
+        INSERT INTO im.contact_groups (id, user_id, name, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id, user_id, name, created_at, updated_at
         "#
@@ -368,7 +368,7 @@ pub async fn list_contact_groups(
     let result = sqlx::query_as::<_, ContactGroup>(
         r#"
         SELECT id, user_id, name, created_at, updated_at
-        FROM contact_groups
+        FROM im.contact_groups
         WHERE user_id = $1
         ORDER BY updated_at DESC
         "#
@@ -399,7 +399,7 @@ pub async fn update_contact_group(
 
     let result = sqlx::query_as::<_, ContactGroup>(
         r#"
-        UPDATE contact_groups
+        UPDATE im.contact_groups
         SET name = $1, updated_at = $2
         WHERE id = $3
         RETURNING id, user_id, name, created_at, updated_at
@@ -428,7 +428,7 @@ pub async fn delete_contact_group(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query(
         r#"
-        DELETE FROM contact_groups
+        DELETE FROM im.contact_groups
         WHERE id = $1
         RETURNING id
         "#

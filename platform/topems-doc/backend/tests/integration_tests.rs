@@ -1,13 +1,6 @@
 // DOC 服务集成测试
 // 测试 API 端点和数据库交互
 
-use axum::{
-    body::Body,
-    http::{Request, StatusCode, Method},
-    Router,
-    routing::{get, post, delete, put},
-};
-use tower::ServiceExt;
 use serde_json::json;
 use uuid::Uuid;
 

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::models::{Permission, Role};
-use crate::api::ApiResponse;
+use topems_shared::ApiResponse;
 
 // ============ 请求/响应模型 ============
 

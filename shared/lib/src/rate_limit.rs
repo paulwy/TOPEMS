@@ -43,9 +43,9 @@ impl RateLimitMiddleware {
         self: Arc<Self>,
         req: Request<axum::body::Body>,
         next: Next,
-    ) -> Result<Response, StatusCode> {
+    ) -> Response {
         if !self.state.config.enabled {
-            return Ok(next.run(req).await);
+            return next.run(req).await;
         }
 
         let client_ip = get_client_ip(&req);
@@ -59,13 +59,16 @@ impl RateLimitMiddleware {
         if now.duration_since(entry.1) >= window {
             *entry = (1, now);
         } else if entry.0 >= self.state.config.requests {
-            return Err(StatusCode::TOO_MANY_REQUESTS);
+            return axum::response::Response::builder()
+                .status(StatusCode::TOO_MANY_REQUESTS)
+                .body(axum::body::Body::from("Too many requests"))
+                .unwrap();
         } else {
             entry.0 += 1;
         }
 
         drop(counters);
-        Ok(next.run(req).await)
+        next.run(req).await
     }
 }
 

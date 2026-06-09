@@ -3,6 +3,7 @@ use axum::{
     Json,
 };
 use chrono::Utc;
+use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -144,35 +145,35 @@ pub async fn update_report(
     }
 
     // 动态构建更新SQL
-    let mut updates = vec!["updated_at = $2"];
+    let mut updates: Vec<String> = vec!["updated_at = $2".to_string()];
     let mut param_count = 3;
 
     if payload.name.is_some() {
-        updates.push(&format!("name = ${}", param_count));
+        updates.push(format!("name = ${}", param_count));
         param_count += 1;
     }
     if payload.description.is_some() {
-        updates.push(&format!("description = ${}", param_count));
+        updates.push(format!("description = ${}", param_count));
         param_count += 1;
     }
     if payload.report_type.is_some() {
-        updates.push(&format!("report_type = ${}", param_count));
+        updates.push(format!("report_type = ${}", param_count));
         param_count += 1;
     }
     if payload.status.is_some() {
-        updates.push(&format!("status = ${}", param_count));
+        updates.push(format!("status = ${}", param_count));
         param_count += 1;
     }
     if payload.config.is_some() {
-        updates.push(&format!("config = ${}", param_count));
+        updates.push(format!("config = ${}", param_count));
         param_count += 1;
     }
     if payload.layout.is_some() {
-        updates.push(&format!("layout = ${}", param_count));
+        updates.push(format!("layout = ${}", param_count));
         param_count += 1;
     }
     if payload.is_active.is_some() {
-        updates.push(&format!("is_active = ${}", param_count));
+        updates.push(format!("is_active = ${}", param_count));
         param_count += 1;
     }
 
@@ -246,7 +247,7 @@ pub async fn generate_report(
     .await;
 
     match report {
-        Ok(Some(report_config)) => {
+        Ok(Some(_report_config)) => {
             // 生成报表数据（简化实现）
             let generated_data = json!({
                 "report_id": id,
@@ -300,7 +301,7 @@ pub async fn generate_report(
 
 /// 导出报表
 pub async fn export_report(
-    State(pool): State<PgPool>,
+    State(_pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<ExportReport>,

@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, State},
-    routing::{get, post, put, delete},
+    routing::get,
     Json,
     Router,
 };
@@ -15,22 +15,22 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
-async fn list_integrations(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<()>>> {
+async fn list_integrations(State(_pool): State<PgPool>) -> Json<ApiResponse<Vec<()>>> {
     Json(ApiResponse::success(vec![], "获取服务集成列表成功"))
 }
 
-async fn create_integration(State(pool): State<PgPool>) -> Json<ApiResponse<()>> {
+async fn create_integration(State(_pool): State<PgPool>) -> Json<ApiResponse<()>> {
     Json(ApiResponse::success((), "创建服务集成成功"))
 }
 
-async fn get_integration(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
+async fn get_integration(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> Json<ApiResponse<()>> {
     Json(ApiResponse::success((), "获取服务集成成功"))
 }
 
-async fn update_integration(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
+async fn update_integration(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> Json<ApiResponse<()>> {
     Json(ApiResponse::success((), "更新服务集成成功"))
 }
 
-async fn delete_integration(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
+async fn delete_integration(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> Json<ApiResponse<()>> {
     Json(ApiResponse::success((), "删除服务集成成功"))
 }

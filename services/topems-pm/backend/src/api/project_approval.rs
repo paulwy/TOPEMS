@@ -141,7 +141,7 @@ async fn handle_approval_action(
     .fetch_optional(&pool)
     .await;
 
-    let mut approval = match result {
+    let approval = match result {
         Ok(Some(a)) => a,
         Ok(None) => return Json(ApiResponse::error(404, "项目审批信息不存在")),
         Err(e) => {

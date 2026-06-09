@@ -14,17 +14,17 @@ impl DocumentApi {
     /// POST /api/v1/documents/upload - 上传文档并处理
     pub async fn upload(
         document_service: DocumentService,
-        multipart: Multipart,
+        _multipart: Multipart,
     ) -> Json<ApiResponse<UploadDocumentResponse>> {
         // 处理 multipart 上传
-        let mut title = String::new();
-        let mut filename = String::new();
-        let mut file_path = String::new();
-        let mut file_size = 0u64;
-        let mut mime_type: Option<String> = None;
-        let mut category: Option<String> = None;
-        let mut tags: Option<Vec<String>> = None;
-        let mut description: Option<String> = None;
+        let title = String::new();
+        let filename = String::new();
+        let file_path = String::new();
+        let file_size = 0u64;
+        let mime_type: Option<String> = None;
+        let _category: Option<String> = None;
+        let _tags: Option<Vec<String>> = None;
+        let _description: Option<String> = None;
 
         // 注意：这里需要实际处理 multipart 数据
         // 由于 multipart 处理比较复杂，这里提供简化版本
@@ -59,7 +59,7 @@ impl DocumentApi {
     ) -> Json<ApiResponse<ProcessDocumentResponse>> {
         // 获取文档
         match document_service.get_document(req.document_id).await {
-            Ok(Some(doc)) => {
+            Ok(Some(_doc)) => {
                 // 处理文档（分块和向量化）
                 // 这里需要调用向量服务生成向量
                 Json(ApiResponse::success(
@@ -190,7 +190,7 @@ impl DocumentApi {
     /// POST /api/v1/documents/:id/summarize - 生成文档摘要
     pub async fn summarize(
         Path(id): Path<Uuid>,
-        Json(req): Json<SummarizeDocumentRequest>,
+        Json(_req): Json<SummarizeDocumentRequest>,
     ) -> Json<ApiResponse<SummarizeDocumentResponse>> {
         // 这里需要调用 AI 服务生成摘要
         Json(ApiResponse::success(

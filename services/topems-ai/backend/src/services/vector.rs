@@ -61,6 +61,14 @@ impl VectorService {
         Self { db }
     }
 
+    pub fn db(&self) -> &Database {
+        &self.db
+    }
+
+    pub fn db_mut(&mut self) -> &mut Database {
+        &mut self.db
+    }
+
     /// 创建文档记录
     pub async fn create_document(&self, doc: &CreateDocumentRequest) -> Result<Uuid, sqlx::Error> {
         let id: Uuid = sqlx::query_scalar(

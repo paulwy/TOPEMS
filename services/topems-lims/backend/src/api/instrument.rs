@@ -83,7 +83,7 @@ async fn create_maintenance_record(
 
     let result = sqlx::query_as::<_, MaintenanceRecord>(
         r#"
-        INSERT INTO maintenance_records (
+        INSERT INTO lims.maintenance_records (
             id, instrument_id, maintenance_type, description, 
             performed_by, performed_at, next_maintenance_date, cost, notes, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -154,7 +154,7 @@ async fn delete_maintenance_record(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM maintenance_records WHERE id = $1")
+    let result = sqlx::query("DELETE FROM lims.maintenance_records WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -219,7 +219,7 @@ async fn list_instruments(
                location, purchase_date, calibration_date, next_calibration_date,
                maintenance_history, responsible_person, description,
                created_at, updated_at
-        FROM instruments
+        FROM lims.instruments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -237,7 +237,7 @@ async fn list_instruments(
         Ok(instruments) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM instruments
+                SELECT COUNT(*) FROM lims.instruments
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -285,7 +285,7 @@ async fn create_instrument(
 
     let result = sqlx::query_as::<_, Instrument>(
         r#"
-        INSERT INTO instruments (
+        INSERT INTO lims.instruments (
             id, name, code, instrument_type, model, manufacturer, serial_number, status,
             location, purchase_date, calibration_date, next_calibration_date,
             maintenance_history, responsible_person, description,
@@ -367,7 +367,7 @@ async fn get_instrument(
                location, purchase_date, calibration_date, next_calibration_date,
                maintenance_history, responsible_person, description,
                created_at, updated_at
-        FROM instruments WHERE id = $1
+        FROM lims.instruments WHERE id = $1
         "#,
     )
     .bind(id)
@@ -391,7 +391,7 @@ async fn update_instrument(
     Json(req): Json<UpdateInstrumentRequest>,
 ) -> Json<ApiResponse<Instrument>> {
     let existing = sqlx::query_as::<_, Instrument>(
-        "SELECT id, name, code, instrument_type as type, model, manufacturer, serial_number, status, location, purchase_date, calibration_date, next_calibration_date, maintenance_history, responsible_person, description, created_at, updated_at FROM instruments WHERE id = $1",
+        "SELECT id, name, code, instrument_type as type, model, manufacturer, serial_number, status, location, purchase_date, calibration_date, next_calibration_date, maintenance_history, responsible_person, description, created_at, updated_at FROM lims.instruments WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -412,7 +412,7 @@ async fn update_instrument(
 
     let result = sqlx::query_as::<_, Instrument>(
         r#"
-        UPDATE instruments SET
+        UPDATE lims.instruments SET
             name = $2, instrument_type = $3, model = $4, manufacturer = $5, serial_number = $6,
             status = $7, location = $8, calibration_date = $9,
             next_calibration_date = $10, responsible_person = $11,
@@ -485,7 +485,7 @@ async fn delete_instrument(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM instruments WHERE id = $1")
+    let result = sqlx::query("DELETE FROM lims.instruments WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -584,7 +584,7 @@ async fn add_calibration(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO instrument_calibrations (
+        INSERT INTO lims.instrument_calibrations (
             id, instrument_id, calibration_date, calibrated_by, calibration_results, notes, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         "#,
@@ -603,7 +603,7 @@ async fn add_calibration(
         Ok(_) => {
             sqlx::query(
             r#"
-            UPDATE instruments SET
+            UPDATE lims.instruments SET
                 calibration_date = $2,
                 next_calibration_date = $3,
                 updated_at = $4

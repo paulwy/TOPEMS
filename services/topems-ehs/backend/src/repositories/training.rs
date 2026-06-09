@@ -159,7 +159,7 @@ impl<'a> TrainingProgramRepository<'a> {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn complete(&self, id: Uuid, req: CompleteTrainingRequest) -> Result<TrainingProgram> {
+    pub async fn complete(&self, id: Uuid, _req: CompleteTrainingRequest) -> Result<TrainingProgram> {
         let now = Utc::now();
 
         let program = sqlx::query_as::<_, TrainingProgram>(
