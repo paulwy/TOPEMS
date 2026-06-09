@@ -3,7 +3,7 @@ import { User, Search, Plus, Edit, Trash2, ChevronLeft, AlertCircle, Mail, Phone
 import { useNavigate } from 'react-router-dom';
 import { employeeApi, type Employee } from '../api/hrm';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 
 import { Button } from '@/components/ui/button';

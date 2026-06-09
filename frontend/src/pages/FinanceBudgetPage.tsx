@@ -174,33 +174,62 @@ const FinanceBudgetPage: React.FC = () => {
     budgets.length > 0 ? budgets.reduce((sum, b) => sum + (b.usage_rate || 0), 0) / budgets.length : 0;
 
   // 预算统计数据
-  const budgetStats = useMemo(() => ({
-    totalBudget,
-    totalUsed,
-    totalRemaining,
-    avgUsageRate,
-    activeBudgets: budgets.filter(b => b.status === 'active').length,
-    completedBudgets: budgets.filter(b => b.status === 'completed').length,
-    frozenBudgets: budgets.filter(b => b.status === 'frozen').length,
-    expiredBudgets: budgets.filter(b => b.status === 'expired').length,
-  }), [budgets, totalBudget, totalUsed, totalRemaining, avgUsageRate]);
+  const budgetStats = useMemo(
+    () => ({
+      totalBudget,
+      totalUsed,
+      totalRemaining,
+      avgUsageRate,
+      activeBudgets: budgets.filter((b) => b.status === 'active').length,
+      completedBudgets: budgets.filter((b) => b.status === 'completed').length,
+      frozenBudgets: budgets.filter((b) => b.status === 'frozen').length,
+      expiredBudgets: budgets.filter((b) => b.status === 'expired').length,
+    }),
+    [budgets, totalBudget, totalUsed, totalRemaining, avgUsageRate]
+  );
 
   // 预算类型分布数据
-  const budgetTypeData = useMemo(() => [
-    { name: '运营预算', value: budgets.filter(b => b.budget_type === 'operating').reduce((sum, b) => sum + b.total_budget, 0), color: '#3b82f6' },
-    { name: '资本预算', value: budgets.filter(b => b.budget_type === 'capital').reduce((sum, b) => sum + b.total_budget, 0), color: '#22c55e' },
-    { name: '项目预算', value: budgets.filter(b => b.budget_type === 'project').reduce((sum, b) => sum + b.total_budget, 0), color: '#f59e0b' },
-    { name: '市场预算', value: budgets.filter(b => b.budget_type === 'marketing').reduce((sum, b) => sum + b.total_budget, 0), color: '#ef4444' },
-    { name: '人事预算', value: budgets.filter(b => b.budget_type === 'personnel').reduce((sum, b) => sum + b.total_budget, 0), color: '#8b5cf6' },
-  ], [budgets]);
+  const budgetTypeData = useMemo(
+    () => [
+      {
+        name: '运营预算',
+        value: budgets.filter((b) => b.budget_type === 'operating').reduce((sum, b) => sum + b.total_budget, 0),
+        color: '#3b82f6',
+      },
+      {
+        name: '资本预算',
+        value: budgets.filter((b) => b.budget_type === 'capital').reduce((sum, b) => sum + b.total_budget, 0),
+        color: '#22c55e',
+      },
+      {
+        name: '项目预算',
+        value: budgets.filter((b) => b.budget_type === 'project').reduce((sum, b) => sum + b.total_budget, 0),
+        color: '#f59e0b',
+      },
+      {
+        name: '市场预算',
+        value: budgets.filter((b) => b.budget_type === 'marketing').reduce((sum, b) => sum + b.total_budget, 0),
+        color: '#ef4444',
+      },
+      {
+        name: '人事预算',
+        value: budgets.filter((b) => b.budget_type === 'personnel').reduce((sum, b) => sum + b.total_budget, 0),
+        color: '#8b5cf6',
+      },
+    ],
+    [budgets]
+  );
 
   // 预算状态分布数据
-  const budgetStatusData = useMemo(() => [
-    { name: '执行中', value: budgets.filter(b => b.status === 'active').length, color: '#22c55e' },
-    { name: '已完成', value: budgets.filter(b => b.status === 'completed').length, color: '#3b82f6' },
-    { name: '已冻结', value: budgets.filter(b => b.status === 'frozen').length, color: '#94a3b8' },
-    { name: '已过期', value: budgets.filter(b => b.status === 'expired').length, color: '#ef4444' },
-  ], [budgets]);
+  const budgetStatusData = useMemo(
+    () => [
+      { name: '执行中', value: budgets.filter((b) => b.status === 'active').length, color: '#22c55e' },
+      { name: '已完成', value: budgets.filter((b) => b.status === 'completed').length, color: '#3b82f6' },
+      { name: '已冻结', value: budgets.filter((b) => b.status === 'frozen').length, color: '#94a3b8' },
+      { name: '已过期', value: budgets.filter((b) => b.status === 'expired').length, color: '#ef4444' },
+    ],
+    [budgets]
+  );
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -398,20 +427,12 @@ const FinanceBudgetPage: React.FC = () => {
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         <div className='bg-white rounded-lg shadow-sm p-6'>
           <h3 className='text-lg font-semibold text-gray-900 mb-4'>预算类型分布</h3>
-          <StatsChart
-            type='pie'
-            data={budgetTypeData}
-            height={250}
-          />
+          <StatsChart type='pie' data={budgetTypeData} height={250} />
         </div>
 
         <div className='bg-white rounded-lg shadow-sm p-6'>
           <h3 className='text-lg font-semibold text-gray-900 mb-4'>预算状态分布</h3>
-          <StatsChart
-            type='pie'
-            data={budgetStatusData}
-            height={250}
-          />
+          <StatsChart type='pie' data={budgetStatusData} height={250} />
         </div>
       </div>
 

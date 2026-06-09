@@ -394,61 +394,62 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
   // 系统服务模块 - 包含系统管理、集成、报表、模板、帮助等综合服务
   const systemServicesModules = useMemo(
-    () => [
-      {
-        title: '系统管理',
-        icon: Settings,
-        description: '用户、角色、权限、系统设置管理',
-        path: '/system',
-        color: 'bg-slate-600',
-        status: 'online' as const,
-        permission: 'system:admin',
-        module: 'iam',
-        adminOnly: true,
-      },
-      {
-        title: '系统集成',
-        icon: Link,
-        description: 'LIMS-QMS/MES-ERP/WMS-SCM 等系统间数据同步',
-        path: '/integration',
-        color: 'bg-blue-500',
-        status: 'online' as const,
-        permission: 'system:admin',
-        module: 'integration',
-        adminOnly: true,
-      },
-      {
-        title: '报表中心',
-        icon: BarChart3,
-        description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
-        path: '/reports',
-        color: 'bg-emerald-500',
-        status: 'online' as const,
-        permission: 'system:admin',
-        module: 'iam',
-        adminOnly: true,
-      },
-      {
-        title: '模板管理',
-        icon: FileTemplate,
-        description: '文档模板、流程模板管理',
-        path: '/templates',
-        color: 'bg-violet-500',
-        status: 'online' as const,
-        permission: 'doc:admin',
-        module: 'doc',
-        adminOnly: true,
-      },
-      {
-        title: '帮助中心',
-        icon: HelpCircle,
-        description: '使用指南、视频教程、常见问题',
-        path: '/help',
-        color: 'bg-amber-500',
-        status: 'online' as const,
-        permission: null,
-      },
-    ].filter((module) => shouldShowModule(module)),
+    () =>
+      [
+        {
+          title: '系统管理',
+          icon: Settings,
+          description: '用户、角色、权限、系统设置管理',
+          path: '/system',
+          color: 'bg-slate-600',
+          status: 'online' as const,
+          permission: 'system:admin',
+          module: 'iam',
+          adminOnly: true,
+        },
+        {
+          title: '系统集成',
+          icon: Link,
+          description: 'LIMS-QMS/MES-ERP/WMS-SCM 等系统间数据同步',
+          path: '/integration',
+          color: 'bg-blue-500',
+          status: 'online' as const,
+          permission: 'system:admin',
+          module: 'integration',
+          adminOnly: true,
+        },
+        {
+          title: '报表中心',
+          icon: BarChart3,
+          description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
+          path: '/reports',
+          color: 'bg-emerald-500',
+          status: 'online' as const,
+          permission: 'system:admin',
+          module: 'iam',
+          adminOnly: true,
+        },
+        {
+          title: '模板管理',
+          icon: FileTemplate,
+          description: '文档模板、流程模板管理',
+          path: '/templates',
+          color: 'bg-violet-500',
+          status: 'online' as const,
+          permission: 'doc:admin',
+          module: 'doc',
+          adminOnly: true,
+        },
+        {
+          title: '帮助中心',
+          icon: HelpCircle,
+          description: '使用指南、视频教程、常见问题',
+          path: '/help',
+          color: 'bg-amber-500',
+          status: 'online' as const,
+          permission: null,
+        },
+      ].filter((module) => shouldShowModule(module)),
     [shouldShowModule]
   );
 
@@ -680,61 +681,62 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   );
 
   const systemManagementModules = useMemo(
-    () => [
-      {
-        title: '系统管理',
-        icon: Settings,
-        description: '用户、角色、权限、系统设置管理',
-        path: '/system',
-        color: 'bg-slate-600',
-        status: 'online' as const,
-        permission: 'system:admin',
-        module: 'iam',
-        adminOnly: true,
-      },
-      {
-        title: '系统集成',
-        icon: Link,
-        description: 'LIMS-QMS/MES-ERP/WMS-SCM 等系统间数据同步',
-        path: '/integration',
-        color: 'bg-blue-500',
-        status: 'online' as const,
-        permission: 'system:admin',
-        module: 'integration',
-        adminOnly: true,
-      },
-      {
-        title: '报表中心',
-        icon: BarChart3,
-        description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
-        path: '/reports',
-        color: 'bg-emerald-500',
-        status: 'online' as const,
-        permission: 'system:admin',
-        module: 'iam',
-        adminOnly: true,
-      },
-      {
-        title: '模板管理',
-        icon: FileTemplate,
-        description: '文档模板、流程模板管理',
-        path: '/templates',
-        color: 'bg-violet-500',
-        status: 'online' as const,
-        permission: 'doc:admin',
-        module: 'doc',
-        adminOnly: true,
-      },
-      {
-        title: '帮助中心',
-        icon: HelpCircle,
-        description: '使用指南、视频教程、常见问题',
-        path: '/help',
-        color: 'bg-amber-500',
-        status: 'online' as const,
-        permission: null,
-      },
-    ].filter((module) => shouldShowModule(module)),
+    () =>
+      [
+        {
+          title: '系统管理',
+          icon: Settings,
+          description: '用户、角色、权限、系统设置管理',
+          path: '/system',
+          color: 'bg-slate-600',
+          status: 'online' as const,
+          permission: 'system:admin',
+          module: 'iam',
+          adminOnly: true,
+        },
+        {
+          title: '系统集成',
+          icon: Link,
+          description: 'LIMS-QMS/MES-ERP/WMS-SCM 等系统间数据同步',
+          path: '/integration',
+          color: 'bg-blue-500',
+          status: 'online' as const,
+          permission: 'system:admin',
+          module: 'integration',
+          adminOnly: true,
+        },
+        {
+          title: '报表中心',
+          icon: BarChart3,
+          description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
+          path: '/reports',
+          color: 'bg-emerald-500',
+          status: 'online' as const,
+          permission: 'system:admin',
+          module: 'iam',
+          adminOnly: true,
+        },
+        {
+          title: '模板管理',
+          icon: FileTemplate,
+          description: '文档模板、流程模板管理',
+          path: '/templates',
+          color: 'bg-violet-500',
+          status: 'online' as const,
+          permission: 'doc:admin',
+          module: 'doc',
+          adminOnly: true,
+        },
+        {
+          title: '帮助中心',
+          icon: HelpCircle,
+          description: '使用指南、视频教程、常见问题',
+          path: '/help',
+          color: 'bg-amber-500',
+          status: 'online' as const,
+          permission: null,
+        },
+      ].filter((module) => shouldShowModule(module)),
     [shouldShowModule]
   );
 
@@ -1200,138 +1202,138 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             </div>
 
             {/* 核心服务 */}
-          <div className='mb-6'>
-            <h4 className='text-sm font-medium text-slate-500 mb-3'>核心服务</h4>
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-              {[
-                { name: '身份认证', service: 'IAM', port: 8000, key: 'iam', icon: Shield },
-                { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
-                { name: '项目管理', service: 'PM', port: 8002, key: 'pm', icon: FolderKanban },
-                { name: '通知服务', service: 'NOTIFICATION', port: 8003, key: 'notification', icon: Bell },
-                { name: '系统集成', service: 'INTEGRATION', port: 8004, key: 'integration', icon: Link },
-                { name: '统一门户', service: 'PORTAL', port: 8005, key: 'portal', icon: Building },
-                { name: '流程引擎', service: 'FLOW', port: 8006, key: 'flow', icon: GitBranch },
-              ].map((service) => (
-                <ServiceStatusCard
-                  key={service.key}
-                  name={service.name}
-                  service={service.service}
-                  port={service.port}
-                  status={serviceStatuses[service.key]}
-                  icon={service.icon}
-                />
-              ))}
+            <div className='mb-6'>
+              <h4 className='text-sm font-medium text-slate-500 mb-3'>核心服务</h4>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                {[
+                  { name: '身份认证', service: 'IAM', port: 8000, key: 'iam', icon: Shield },
+                  { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
+                  { name: '项目管理', service: 'PM', port: 8002, key: 'pm', icon: FolderKanban },
+                  { name: '通知服务', service: 'NOTIFICATION', port: 8003, key: 'notification', icon: Bell },
+                  { name: '系统集成', service: 'INTEGRATION', port: 8004, key: 'integration', icon: Link },
+                  { name: '统一门户', service: 'PORTAL', port: 8005, key: 'portal', icon: Building },
+                  { name: '流程引擎', service: 'FLOW', port: 8006, key: 'flow', icon: GitBranch },
+                ].map((service) => (
+                  <ServiceStatusCard
+                    key={service.key}
+                    name={service.name}
+                    service={service.service}
+                    port={service.port}
+                    status={serviceStatuses[service.key]}
+                    icon={service.icon}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* 业务运营 */}
-          <div className='mb-6'>
-            <h4 className='text-sm font-medium text-slate-500 mb-3'>业务运营</h4>
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-              {[
-                { name: '企业资源', service: 'ERP', port: 8010, key: 'erp', icon: Building },
-                { name: '人力资源', service: 'HRM', port: 8011, key: 'hrm', icon: Users },
-                { name: '客户关系', service: 'CRM', port: 8012, key: 'crm', icon: Users },
-              ].map((service) => (
-                <ServiceStatusCard
-                  key={service.key}
-                  name={service.name}
-                  service={service.service}
-                  port={service.port}
-                  status={serviceStatuses[service.key]}
-                  icon={service.icon}
-                />
-              ))}
+            {/* 业务运营 */}
+            <div className='mb-6'>
+              <h4 className='text-sm font-medium text-slate-500 mb-3'>业务运营</h4>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                {[
+                  { name: '企业资源', service: 'ERP', port: 8010, key: 'erp', icon: Building },
+                  { name: '人力资源', service: 'HRM', port: 8011, key: 'hrm', icon: Users },
+                  { name: '客户关系', service: 'CRM', port: 8012, key: 'crm', icon: Users },
+                ].map((service) => (
+                  <ServiceStatusCard
+                    key={service.key}
+                    name={service.name}
+                    service={service.service}
+                    port={service.port}
+                    status={serviceStatuses[service.key]}
+                    icon={service.icon}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* 研发管理 */}
-          <div className='mb-6'>
-            <h4 className='text-sm font-medium text-slate-500 mb-3'>研发管理</h4>
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-              {[
-                { name: 'AI 服务', service: 'AI', port: 8013, key: 'ai', icon: Bot },
-                { name: '研发管理', service: 'RS', port: 8020, key: 'rs', icon: FlaskConical },
-                { name: '实验室管理', service: 'LIMS', port: 8022, key: 'lims', icon: ClipboardList },
-                { name: '产品数据管理', service: 'PDM', port: 8023, key: 'pdm', icon: FileText },
-              ].map((service) => (
-                <ServiceStatusCard
-                  key={service.key}
-                  name={service.name}
-                  service={service.service}
-                  port={service.port}
-                  status={serviceStatuses[service.key]}
-                  icon={service.icon}
-                />
-              ))}
+            {/* 研发管理 */}
+            <div className='mb-6'>
+              <h4 className='text-sm font-medium text-slate-500 mb-3'>研发管理</h4>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                {[
+                  { name: 'AI 服务', service: 'AI', port: 8013, key: 'ai', icon: Bot },
+                  { name: '研发管理', service: 'RS', port: 8020, key: 'rs', icon: FlaskConical },
+                  { name: '实验室管理', service: 'LIMS', port: 8022, key: 'lims', icon: ClipboardList },
+                  { name: '产品数据管理', service: 'PDM', port: 8023, key: 'pdm', icon: FileText },
+                ].map((service) => (
+                  <ServiceStatusCard
+                    key={service.key}
+                    name={service.name}
+                    service={service.service}
+                    port={service.port}
+                    status={serviceStatuses[service.key]}
+                    icon={service.icon}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* 生产管理 */}
-          <div className='mb-6'>
-            <h4 className='text-sm font-medium text-slate-500 mb-3'>生产管理</h4>
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-              {[
-                { name: '制造执行', service: 'MES', port: 8030, key: 'mes', icon: Factory },
-                { name: '质量管理', service: 'QMS', port: 8031, key: 'qms', icon: ClipboardList },
-                { name: '环境安全', service: 'EHS', port: 8032, key: 'ehs', icon: AlertTriangle },
-              ].map((service) => (
-                <ServiceStatusCard
-                  key={service.key}
-                  name={service.name}
-                  service={service.service}
-                  port={service.port}
-                  status={serviceStatuses[service.key]}
-                  icon={service.icon}
-                />
-              ))}
+            {/* 生产管理 */}
+            <div className='mb-6'>
+              <h4 className='text-sm font-medium text-slate-500 mb-3'>生产管理</h4>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                {[
+                  { name: '制造执行', service: 'MES', port: 8030, key: 'mes', icon: Factory },
+                  { name: '质量管理', service: 'QMS', port: 8031, key: 'qms', icon: ClipboardList },
+                  { name: '环境安全', service: 'EHS', port: 8032, key: 'ehs', icon: AlertTriangle },
+                ].map((service) => (
+                  <ServiceStatusCard
+                    key={service.key}
+                    name={service.name}
+                    service={service.service}
+                    port={service.port}
+                    status={serviceStatuses[service.key]}
+                    icon={service.icon}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* 供应链 */}
-          <div className='mb-6'>
-            <h4 className='text-sm font-medium text-slate-500 mb-3'>供应链</h4>
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-              {[
-                { name: '供应链管理', service: 'SCM', port: 8040, key: 'scm', icon: Truck },
-                { name: '供应商管理', service: 'SRM', port: 8041, key: 'srm', icon: ShoppingCart },
-                { name: '仓库管理', service: 'WMS', port: 8042, key: 'wms', icon: Warehouse },
-              ].map((service) => (
-                <ServiceStatusCard
-                  key={service.key}
-                  name={service.name}
-                  service={service.service}
-                  port={service.port}
-                  status={serviceStatuses[service.key]}
-                  icon={service.icon}
-                />
-              ))}
+            {/* 供应链 */}
+            <div className='mb-6'>
+              <h4 className='text-sm font-medium text-slate-500 mb-3'>供应链</h4>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                {[
+                  { name: '供应链管理', service: 'SCM', port: 8040, key: 'scm', icon: Truck },
+                  { name: '供应商管理', service: 'SRM', port: 8041, key: 'srm', icon: ShoppingCart },
+                  { name: '仓库管理', service: 'WMS', port: 8042, key: 'wms', icon: Warehouse },
+                ].map((service) => (
+                  <ServiceStatusCard
+                    key={service.key}
+                    name={service.name}
+                    service={service.service}
+                    port={service.port}
+                    status={serviceStatuses[service.key]}
+                    icon={service.icon}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* 专业服务 */}
-          <div className='mb-6'>
-            <h4 className='text-sm font-medium text-slate-500 mb-3'>专业服务</h4>
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-              {[
-                { name: '地理信息', service: 'GIS', port: 8050, key: 'gis', icon: Map },
-                { name: '即时通讯', service: 'IM', port: 8051, key: 'im', icon: MessageCircle },
-                { name: '数据分析', service: 'BI', port: 8052, key: 'bi', icon: BarChart2 },
-                { name: '报表服务', service: 'REPORT', port: 8053, key: 'report', icon: BarChart3 },
-                { name: '邮件服务', service: 'MAIL', port: 8054, key: 'mail', icon: Mail },
-                { name: '移动服务', service: 'MOBILE', port: 8055, key: 'mobile', icon: Smartphone },
-              ].map((service) => (
-                <ServiceStatusCard
-                  key={service.key}
-                  name={service.name}
-                  service={service.service}
-                  port={service.port}
-                  status={serviceStatuses[service.key]}
-                  icon={service.icon}
-                />
-              ))}
+            {/* 专业服务 */}
+            <div className='mb-6'>
+              <h4 className='text-sm font-medium text-slate-500 mb-3'>专业服务</h4>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                {[
+                  { name: '地理信息', service: 'GIS', port: 8050, key: 'gis', icon: Map },
+                  { name: '即时通讯', service: 'IM', port: 8051, key: 'im', icon: MessageCircle },
+                  { name: '数据分析', service: 'BI', port: 8052, key: 'bi', icon: BarChart2 },
+                  { name: '报表服务', service: 'REPORT', port: 8053, key: 'report', icon: BarChart3 },
+                  { name: '邮件服务', service: 'MAIL', port: 8054, key: 'mail', icon: Mail },
+                  { name: '移动服务', service: 'MOBILE', port: 8055, key: 'mobile', icon: Smartphone },
+                ].map((service) => (
+                  <ServiceStatusCard
+                    key={service.key}
+                    name={service.name}
+                    service={service.service}
+                    port={service.port}
+                    status={serviceStatuses[service.key]}
+                    icon={service.icon}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
           </div>
 
           {/* Recent Activities */}

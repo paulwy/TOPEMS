@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  Button,
-} from '@heroui/react';
+import { Modal, Button } from '@heroui/react';
 
 export interface ConfirmDialogConfig {
   isOpen: boolean;
@@ -42,11 +39,11 @@ export default function ConfirmDialog({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <div className="p-6 bg-white rounded-lg shadow-xl">
-        <h2 className="text-lg font-semibold mb-4">{title}</h2>
-        <div className="text-sm text-gray-600 mb-6">{message}</div>
-        <div className="flex justify-end gap-3">
-          <Button variant="ghost" onPress={onClose} isDisabled={isLoading}>
+      <div className='p-6 bg-white rounded-lg shadow-xl'>
+        <h2 className='text-lg font-semibold mb-4'>{title}</h2>
+        <div className='text-sm text-gray-600 mb-6'>{message}</div>
+        <div className='flex justify-end gap-3'>
+          <Button variant='ghost' onPress={onClose} isDisabled={isLoading}>
             {cancelLabel}
           </Button>
           <Button

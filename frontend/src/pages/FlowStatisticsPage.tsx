@@ -354,16 +354,23 @@ const FlowStatisticsPage: React.FC = () => {
             <table className='w-full'>
               <thead>
                 <tr className='border-b border-gray-200 dark:border-gray-700'>
-                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>工作流名称</th>
+                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    工作流名称
+                  </th>
                   <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>实例数</th>
                   <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>完成率</th>
-                  <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>平均时长</th>
+                  <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    平均时长
+                  </th>
                   <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>状态</th>
                 </tr>
               </thead>
               <tbody>
                 {stats?.workflow_stats.map((stat, index) => (
-                  <tr key={stat.workflow_id} className='border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'>
+                  <tr
+                    key={stat.workflow_id}
+                    className='border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  >
                     <td className='py-4 px-4'>
                       <div className='flex items-center'>
                         <span className='w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300 mr-3'>
@@ -419,7 +426,9 @@ const FlowStatisticsPage: React.FC = () => {
                   <span className='text-gray-600 dark:text-gray-400'>审批通过率</span>
                 </div>
                 <div className='flex items-center'>
-                  <span className='text-2xl font-bold text-green-600 dark:text-green-400'>{stats?.approval_rate || 0}%</span>
+                  <span className='text-2xl font-bold text-green-600 dark:text-green-400'>
+                    {stats?.approval_rate || 0}%
+                  </span>
                   <span className='ml-2 text-xs text-green-500 dark:text-green-400 flex items-center'>
                     <ArrowUpRight className='w-3 h-3 mr-1' />
                     +2.5%
@@ -432,7 +441,9 @@ const FlowStatisticsPage: React.FC = () => {
                   <span className='text-gray-600 dark:text-gray-400'>审批拒绝率</span>
                 </div>
                 <div className='flex items-center'>
-                  <span className='text-2xl font-bold text-red-600 dark:text-red-400'>{stats?.rejection_rate || 0}%</span>
+                  <span className='text-2xl font-bold text-red-600 dark:text-red-400'>
+                    {stats?.rejection_rate || 0}%
+                  </span>
                   <span className='ml-2 text-xs text-red-500 dark:text-red-400 flex items-center'>
                     <ArrowDownRight className='w-3 h-3 mr-1' />
                     -1.2%
@@ -445,7 +456,9 @@ const FlowStatisticsPage: React.FC = () => {
                   <span className='text-gray-600 dark:text-gray-400'>平均审批时长</span>
                 </div>
                 <div className='flex items-center'>
-                  <span className='text-2xl font-bold text-blue-600 dark:text-blue-400'>{stats?.avg_approval_time || 0}h</span>
+                  <span className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
+                    {stats?.avg_approval_time || 0}h
+                  </span>
                   <span className='ml-2 text-xs text-green-500 dark:text-green-400 flex items-center'>
                     <ArrowDownRight className='w-3 h-3 mr-1' />
                     -0.5h

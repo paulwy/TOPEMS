@@ -1,28 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Database, RefreshCw, Play, Eye, FileSearch, RotateCcw } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '../components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../components/ui/dialog';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useToast } from '../components/ToastProvider';
-import {
-  migrationApi,
-  type MigrationService,
-  type MigrationStatus,
-} from '../api/migration';
+import { migrationApi, type MigrationService, type MigrationStatus } from '../api/migration';
 
 interface ServiceStatusMap {
   [serviceName: string]: MigrationStatus;
@@ -77,10 +60,7 @@ const MigrationAdminPage: React.FC = () => {
     setRollingBackService(service.name);
     try {
       const result = await migrationApi.rollbackMigration(service.name);
-      showToast(
-        'success',
-        `${service.name} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`
-      );
+      showToast('success', `${service.name} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`);
       await fetchStatusFor(service.name, true);
     } catch (err: any) {
       showToast('error', err.message || `${service.name} 回滚失败`);
@@ -140,18 +120,13 @@ const MigrationAdminPage: React.FC = () => {
     } catch (err) {
       // ignore
     }
-    showToast(
-      failed === 0 ? 'success' : 'warning',
-      `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`
-    );
+    showToast(failed === 0 ? 'success' : 'warning', `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`);
     setBatchApplying(false);
   };
 
-  const getPendingCount = (serviceName: string) =>
-    statusMap[serviceName]?.pending?.length ?? 0;
+  const getPendingCount = (serviceName: string) => statusMap[serviceName]?.pending?.length ?? 0;
 
-  const getAppliedCount = (serviceName: string) =>
-    statusMap[serviceName]?.applied?.length ?? 0;
+  const getAppliedCount = (serviceName: string) => statusMap[serviceName]?.applied?.length ?? 0;
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -164,23 +139,12 @@ const MigrationAdminPage: React.FC = () => {
               </div>
               <div>
                 <h1 className='text-2xl font-bold text-gray-900'>数据库迁移管理</h1>
-                <p className='text-sm text-gray-500 mt-1'>
-                  查看各服务迁移状态，生成并执行 schema / index / audit 迁移
-                </p>
+                <p className='text-sm text-gray-500 mt-1'>查看各服务迁移状态，生成并执行 schema / index / audit 迁移</p>
               </div>
             </div>
             <div className='flex flex-wrap gap-2'>
-              <Button
-                variant='outline'
-                onClick={fetchServices}
-                disabled={loading}
-                className='gap-2'
-              >
-                {loading ? (
-                  <LoadingSpinner size='sm' />
-                ) : (
-                  <RefreshCw className='w-4 h-4' />
-                )}
+              <Button variant='outline' onClick={fetchServices} disabled={loading} className='gap-2'>
+                {loading ? <LoadingSpinner size='sm' /> : <RefreshCw className='w-4 h-4' />}
                 刷新列表
               </Button>
               <Button
@@ -230,15 +194,11 @@ const MigrationAdminPage: React.FC = () => {
                   const applied = getAppliedCount(svc.name);
                   return (
                     <TableRow key={svc.name}>
-                      <TableCell className='font-medium text-gray-900'>
-                        {svc.name}
-                      </TableCell>
+                      <TableCell className='font-medium text-gray-900'>{svc.name}</TableCell>
                       <TableCell className='text-gray-700'>{svc.schema}</TableCell>
                       <TableCell className='text-right text-gray-700'>{svc.port}</TableCell>
                       <TableCell className='text-right text-gray-700'>{svc.tables}</TableCell>
-                      <TableCell className='text-gray-600 max-w-xs truncate'>
-                        {svc.description || '-'}
-                      </TableCell>
+                      <TableCell className='text-gray-600 max-w-xs truncate'>{svc.description || '-'}</TableCell>
                       <TableCell className='text-center'>
                         {isLoadingStatus ? (
                           <span className='inline-flex items-center gap-2 text-gray-500 text-xs'>
@@ -276,11 +236,7 @@ const MigrationAdminPage: React.FC = () => {
                             title={getAppliedCount(svc.name) === 0 ? '暂无可回滚记录' : '回滚最近一次迁移'}
                             className='gap-1 text-amber-700 hover:text-amber-800 hover:bg-amber-50'
                           >
-                            {isRolling ? (
-                              <LoadingSpinner size='sm' />
-                            ) : (
-                              <RotateCcw className='w-3.5 h-3.5' />
-                            )}
+                            {isRolling ? <LoadingSpinner size='sm' /> : <RotateCcw className='w-3.5 h-3.5' />}
                             回滚
                           </Button>
                           <Button
@@ -289,11 +245,7 @@ const MigrationAdminPage: React.FC = () => {
                             disabled={isApplying || isRolling}
                             className='gap-1'
                           >
-                            {isApplying ? (
-                              <LoadingSpinner size='sm' />
-                            ) : (
-                              <Play className='w-3.5 h-3.5' />
-                            )}
+                            {isApplying ? <LoadingSpinner size='sm' /> : <Play className='w-3.5 h-3.5' />}
                             生成迁移
                           </Button>
                         </div>
@@ -310,13 +262,9 @@ const MigrationAdminPage: React.FC = () => {
       <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
         <DialogContent className='sm:max-w-3xl'>
           <DialogHeader>
-            <DialogTitle>
-              {activeService ? `${activeService.name} · 迁移状态` : '迁移状态'}
-            </DialogTitle>
+            <DialogTitle>{activeService ? `${activeService.name} · 迁移状态` : '迁移状态'}</DialogTitle>
             <DialogDescription>
-              {activeService
-                ? `Schema: ${activeService.schema} ｜ 端口: ${activeService.port}`
-                : ''}
+              {activeService ? `Schema: ${activeService.schema} ｜ 端口: ${activeService.port}` : ''}
             </DialogDescription>
           </DialogHeader>
 
@@ -370,18 +318,12 @@ const MigrationAdminPage: React.FC = () => {
                       <TableBody>
                         {statusMap[activeService.name].applied.map((m) => (
                           <TableRow key={`${m.version}-${m.name}`}>
-                            <TableCell className='font-mono text-xs text-gray-800'>
-                              {m.version}
-                            </TableCell>
+                            <TableCell className='font-mono text-xs text-gray-800'>{m.version}</TableCell>
                             <TableCell className='text-gray-700'>{m.name}</TableCell>
                             <TableCell className='text-gray-600 text-xs'>
-                              {m.applied_at
-                                ? new Date(m.applied_at).toLocaleString()
-                                : '-'}
+                              {m.applied_at ? new Date(m.applied_at).toLocaleString() : '-'}
                             </TableCell>
-                            <TableCell className='text-right text-gray-600 text-xs'>
-                              {m.duration_ms ?? '-'}
-                            </TableCell>
+                            <TableCell className='text-right text-gray-600 text-xs'>{m.duration_ms ?? '-'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

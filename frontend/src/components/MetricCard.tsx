@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface MetricCardProps {
   title: string;
@@ -36,9 +36,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     return (
       <div className={`flex items-center space-x-1 ${trendColor}`}>
         {trendIcon}
-        <span className='text-sm font-medium'>
-          {change !== undefined ? `${change > 0 ? '+' : ''}${change}%` : ''}
-        </span>
+        <span className='text-sm font-medium'>{change !== undefined ? `${change > 0 ? '+' : ''}${change}%` : ''}</span>
       </div>
     );
   };
@@ -53,9 +51,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     return (icon as LucideIcon)({ className: 'w-6 h-6 text-white' });
   };
 
-  const iconBgStyle = gradient ? {
-    background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`
-  } : undefined;
+  const iconBgStyle = gradient
+    ? {
+        background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
+      }
+    : undefined;
 
   return (
     <div className='bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border border-slate-200'>
@@ -72,7 +72,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           {subtitle && <p className='text-xs text-slate-500 mt-1'>{subtitle}</p>}
           {renderTrend()}
         </div>
-        <div className={`w-12 h-12 bg-gradient-to-br ${color} rounded-lg flex items-center justify-center shadow-lg`} style={iconBgStyle}>
+        <div
+          className={`w-12 h-12 bg-gradient-to-br ${color} rounded-lg flex items-center justify-center shadow-lg`}
+          style={iconBgStyle}
+        >
           {renderIcon()}
         </div>
       </div>

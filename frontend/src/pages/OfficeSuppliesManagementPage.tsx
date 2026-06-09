@@ -3,7 +3,7 @@ import { Package, Search, Plus, Edit, Trash2, ChevronLeft, AlertCircle, DollarSi
 import { useNavigate } from 'react-router-dom';
 import { officeSupplyApi, type OfficeSupply } from '../api/erp';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 
 import { Button } from '@/components/ui/button';

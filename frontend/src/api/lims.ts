@@ -335,14 +335,14 @@ export interface LimsStatistics {
   testing_samples: number;
   completed_samples: number;
   cancelled_samples: number;
-  
+
   total_tasks: number;
   pending_tasks: number;
   in_progress_tasks: number;
   completed_tasks: number;
-  
+
   total_processes: number;
-  
+
   total_instruments: number;
   normal_instruments: number;
   calibration_instruments: number;

@@ -14,6 +14,13 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type {
+  NotificationTemplate,
+  CreateTemplateRequest,
+  UpdateTemplateRequest,
+  TemplateStatusEnum,
+  NotificationTypeEnum,
+} from '../api/notification';
 import {
   getTemplates,
   getTemplate,
@@ -21,11 +28,6 @@ import {
   updateTemplate,
   deleteTemplate,
   renderTemplate,
-  NotificationTemplate,
-  CreateTemplateRequest,
-  UpdateTemplateRequest,
-  TemplateStatusEnum,
-  NotificationTypeEnum,
 } from '../api/notification';
 import { useNotification } from '../hooks/useNotification';
 import { NotificationContainer } from '../components/NotificationContainer';
@@ -119,7 +121,10 @@ const NotificationTemplatesPage: React.FC = () => {
       const template = templates.find((t) => t.id === id);
       if (!template) return;
 
-      const res = await updateTemplate(id, { id, status: template.status === 'active' ? 'inactive' as TemplateStatusEnum : 'active' as TemplateStatusEnum });
+      const res = await updateTemplate(id, {
+        id,
+        status: template.status === 'active' ? ('inactive' as TemplateStatusEnum) : ('active' as TemplateStatusEnum),
+      });
       if (res.success) {
         success('模板状态更新成功');
         loadTemplates();
@@ -313,7 +318,9 @@ const NotificationTemplatesPage: React.FC = () => {
                           </div>
                         </td>
                         <td className='px-6 py-4 whitespace-nowrap'>
-                          <span className={`px-2 py-1 text-xs rounded-full ${getTypeColor(template.notification_type)}`}>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${getTypeColor(template.notification_type)}`}
+                          >
                             {getTypeLabel(template.notification_type)}
                           </span>
                         </td>
@@ -408,10 +415,7 @@ const NotificationTemplatesPage: React.FC = () => {
 
       {/* Create/Edit Modal */}
       {showCreateModal && (
-        <TemplateFormModal
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateTemplate}
-        />
+        <TemplateFormModal onClose={() => setShowCreateModal(false)} onSubmit={handleCreateTemplate} />
       )}
 
       {showEditModal && selectedTemplate && (

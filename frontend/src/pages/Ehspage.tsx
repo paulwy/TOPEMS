@@ -27,8 +27,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ehsApi,
+import type {
   SafetyHazard,
   SafetyCheck,
   EmergencyPlan,
@@ -40,8 +39,9 @@ import {
   ListQueryParams,
   PaginatedResponse,
 } from '../api/ehs';
+import { ehsApi } from '../api/ehs';
 import { DataTable } from '../components/DataTable';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
 
@@ -111,13 +111,14 @@ const Ehspage: React.FC = () => {
 
       setStats({
         totalHazards: hazardsRes.data?.total || 0,
-        activeHazards: hazardsRes.data?.data.filter(h => h.status === 'active' || h.status === 'identified').length || 0,
+        activeHazards:
+          hazardsRes.data?.data.filter((h) => h.status === 'active' || h.status === 'identified').length || 0,
         totalChecks: checksRes.data?.total || 0,
-        completedChecks: checksRes.data?.data.filter(c => c.status === 'completed').length || 0,
+        completedChecks: checksRes.data?.data.filter((c) => c.status === 'completed').length || 0,
         totalPlans: plansRes.data?.total || 0,
-        activePlans: plansRes.data?.data.filter(p => p.status === 'active').length || 0,
+        activePlans: plansRes.data?.data.filter((p) => p.status === 'active').length || 0,
         totalDrills: drillsRes.data?.total || 0,
-        completedDrills: drillsRes.data?.data.filter(d => d.status === 'completed').length || 0,
+        completedDrills: drillsRes.data?.data.filter((d) => d.status === 'completed').length || 0,
       });
     } catch (err) {
       console.error('加载统计数据失败:', err);
@@ -311,7 +312,10 @@ const Ehspage: React.FC = () => {
           description: formData.description || undefined,
           location: formData.location || undefined,
           control_measures: formData.control_measures
-            ? formData.control_measures.split(',').map((s) => s.trim()).filter((s) => s)
+            ? formData.control_measures
+                .split(',')
+                .map((s) => s.trim())
+                .filter((s) => s)
             : undefined,
           status: formData.status || undefined,
         };
@@ -324,7 +328,10 @@ const Ehspage: React.FC = () => {
           location: formData.location || undefined,
           result: formData.result || undefined,
           issues: formData.issues
-            ? formData.issues.split(',').map((s) => s.trim()).filter((s) => s)
+            ? formData.issues
+                .split(',')
+                .map((s) => s.trim())
+                .filter((s) => s)
             : undefined,
           status: formData.status || undefined,
         };
@@ -338,7 +345,10 @@ const Ehspage: React.FC = () => {
           trigger_conditions: formData.trigger_conditions || undefined,
           response_procedures: formData.response_procedures || undefined,
           responsible_persons: formData.responsible_persons
-            ? formData.responsible_persons.split(',').map((s) => s.trim()).filter((s) => s)
+            ? formData.responsible_persons
+                .split(',')
+                .map((s) => s.trim())
+                .filter((s) => s)
             : undefined,
           contact_info: formData.contact_info || undefined,
           status: formData.status || undefined,
@@ -350,7 +360,10 @@ const Ehspage: React.FC = () => {
           plan_id: formData.plan_id || undefined,
           drill_name: formData.drill_name || undefined,
           participants: formData.participants
-            ? formData.participants.split(',').map((s) => s.trim()).filter((s) => s)
+            ? formData.participants
+                .split(',')
+                .map((s) => s.trim())
+                .filter((s) => s)
             : undefined,
           duration_hours: formData.duration_hours ? parseFloat(formData.duration_hours) : undefined,
           location: formData.location || undefined,
@@ -438,9 +451,9 @@ const Ehspage: React.FC = () => {
 
     try {
       // 过滤掉不需要的字段
-      const filteredData = data.map(item => {
+      const filteredData = data.map((item) => {
         const filtered: any = {};
-        Object.keys(item).forEach(key => {
+        Object.keys(item).forEach((key) => {
           // 排除一些内部字段
           if (!['id', 'created_at', 'updated_at', 'created_by'].includes(key)) {
             filtered[key] = item[key];
@@ -450,7 +463,7 @@ const Ehspage: React.FC = () => {
       });
 
       const headers = Object.keys(filteredData[0]);
-      const csvHeaders = headers.map(h => {
+      const csvHeaders = headers.map((h) => {
         // 将字段名转换为中文
         const headerMap: Record<string, string> = {
           hazard_no: '隐患编号',
@@ -491,23 +504,25 @@ const Ehspage: React.FC = () => {
       const csv = [
         csvHeaders.join(','),
         ...filteredData.map((row) =>
-          headers.map((h) => {
-            let value = row[h];
-            // 处理数组类型
-            if (Array.isArray(value)) {
-              value = value.join('; ');
-            }
-            // 处理对象类型
-            if (typeof value === 'object' && value !== null) {
-              value = JSON.stringify(value);
-            }
-            // 处理 null 和 undefined
-            if (value === null || value === undefined) {
-              value = '';
-            }
-            // 转义引号
-            return `"${value.toString().replace(/"/g, '""')}"`;
-          }).join(',')
+          headers
+            .map((h) => {
+              let value = row[h];
+              // 处理数组类型
+              if (Array.isArray(value)) {
+                value = value.join('; ');
+              }
+              // 处理对象类型
+              if (typeof value === 'object' && value !== null) {
+                value = JSON.stringify(value);
+              }
+              // 处理 null 和 undefined
+              if (value === null || value === undefined) {
+                value = '';
+              }
+              // 转义引号
+              return `"${value.toString().replace(/"/g, '""')}"`;
+            })
+            .join(',')
         ),
       ].join('\n');
 
@@ -539,7 +554,7 @@ const Ehspage: React.FC = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.csv,.xlsx,.xls';
-    
+
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
@@ -550,24 +565,24 @@ const Ehspage: React.FC = () => {
         // 读取文件内容
         const text = await file.text();
         const lines = text.split('\n');
-        
+
         if (lines.length < 2) {
           showNotification('error', '文件格式错误，至少需要包含标题行和一行数据');
           return;
         }
 
         // 解析 CSV
-        const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-        const dataLines = lines.slice(1).filter(line => line.trim());
+        const headers = lines[0].split(',').map((h) => h.replace(/"/g, '').trim());
+        const dataLines = lines.slice(1).filter((line) => line.trim());
 
         let importedCount = 0;
         let failedCount = 0;
 
         for (const line of dataLines) {
           try {
-            const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+            const values = line.split(',').map((v) => v.replace(/"/g, '').trim());
             const item: any = {};
-            
+
             headers.forEach((header, index) => {
               if (values[index]) {
                 item[header] = values[index];
@@ -583,7 +598,10 @@ const Ehspage: React.FC = () => {
                 level: item['等级'] || item['level'] || '中',
                 description: item['描述'] || item['description'] || null,
                 location: item['位置'] || item['location'] || null,
-                control_measures: (item['控制措施'] || item['control_measures'] || '').split(';').map(s => s.trim()).filter(s => s),
+                control_measures: (item['控制措施'] || item['control_measures'] || '')
+                  .split(';')
+                  .map((s) => s.trim())
+                  .filter((s) => s),
                 status: item['状态'] || item['status'] || 'identified',
               };
               await ehsApi.createHazard(req);
@@ -595,7 +613,10 @@ const Ehspage: React.FC = () => {
                 inspector: item['检查人'] || item['inspector'] || '',
                 location: item['位置'] || item['location'] || null,
                 result: item['结果'] || item['result'] || '',
-                issues: (item['发现问题'] || item['issues'] || '').split(';').map(s => s.trim()).filter(s => s),
+                issues: (item['发现问题'] || item['issues'] || '')
+                  .split(';')
+                  .map((s) => s.trim())
+                  .filter((s) => s),
                 status: item['状态'] || item['status'] || 'in_progress',
               };
               await ehsApi.createCheck(req);
@@ -608,7 +629,10 @@ const Ehspage: React.FC = () => {
                 scope: item['适用范围'] || item['scope'] || null,
                 trigger_conditions: item['触发条件'] || item['trigger_conditions'] || null,
                 response_procedures: item['响应程序'] || item['response_procedures'] || null,
-                responsible_persons: (item['负责人'] || item['responsible_persons'] || '').split(';').map(s => s.trim()).filter(s => s),
+                responsible_persons: (item['负责人'] || item['responsible_persons'] || '')
+                  .split(';')
+                  .map((s) => s.trim())
+                  .filter((s) => s),
                 contact_info: item['联系方式'] || item['contact_info'] || null,
                 status: item['状态'] || item['status'] || 'active',
               };
@@ -618,7 +642,10 @@ const Ehspage: React.FC = () => {
               const req: CreateDrillRecordRequest = {
                 drill_no: item['演练编号'] || item['drill_no'] || '',
                 drill_name: item['演练名称'] || item['drill_name'] || '',
-                participants: (item['参与人员'] || item['participants'] || '').split(';').map(s => s.trim()).filter(s => s),
+                participants: (item['参与人员'] || item['participants'] || '')
+                  .split(';')
+                  .map((s) => s.trim())
+                  .filter((s) => s),
                 duration_hours: parseFloat(item['时长(小时)'] || item['duration_hours'] || '1'),
                 location: item['位置'] || item['location'] || null,
                 summary: item['总结'] || item['summary'] || null,
@@ -653,9 +680,12 @@ const Ehspage: React.FC = () => {
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800';
     const s = status.toLowerCase();
-    if (s.includes('已') || s.includes('complete') || s.includes('pass') || s.includes('解决')) return 'bg-green-100 text-green-800';
-    if (s.includes('进行') || s.includes('process') || s.includes('pending') || s.includes('待')) return 'bg-blue-100 text-blue-800';
-    if (s.includes('高') || s.includes('高风险') || s.includes('严重') || s.includes('重大')) return 'bg-red-100 text-red-800';
+    if (s.includes('已') || s.includes('complete') || s.includes('pass') || s.includes('解决'))
+      return 'bg-green-100 text-green-800';
+    if (s.includes('进行') || s.includes('process') || s.includes('pending') || s.includes('待'))
+      return 'bg-blue-100 text-blue-800';
+    if (s.includes('高') || s.includes('高风险') || s.includes('严重') || s.includes('重大'))
+      return 'bg-red-100 text-red-800';
     return 'bg-gray-100 text-gray-800';
   };
 
@@ -694,7 +724,10 @@ const Ehspage: React.FC = () => {
       header: '操作',
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
-          <button onClick={() => openDetailModal(row.original)} className='p-2 text-gray-600 hover:bg-gray-50 rounded-lg'>
+          <button
+            onClick={() => openDetailModal(row.original)}
+            className='p-2 text-gray-600 hover:bg-gray-50 rounded-lg'
+          >
             <Eye className='w-4 h-4' />
           </button>
           <button onClick={() => openEditModal(row.original)} className='p-2 text-blue-600 hover:bg-blue-50 rounded-lg'>
@@ -731,7 +764,10 @@ const Ehspage: React.FC = () => {
       header: '操作',
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
-          <button onClick={() => openDetailModal(row.original)} className='p-2 text-gray-600 hover:bg-gray-50 rounded-lg'>
+          <button
+            onClick={() => openDetailModal(row.original)}
+            className='p-2 text-gray-600 hover:bg-gray-50 rounded-lg'
+          >
             <Eye className='w-4 h-4' />
           </button>
           <button onClick={() => openEditModal(row.original)} className='p-2 text-blue-600 hover:bg-blue-50 rounded-lg'>
@@ -767,7 +803,10 @@ const Ehspage: React.FC = () => {
       header: '操作',
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
-          <button onClick={() => openDetailModal(row.original)} className='p-2 text-gray-600 hover:bg-gray-50 rounded-lg'>
+          <button
+            onClick={() => openDetailModal(row.original)}
+            className='p-2 text-gray-600 hover:bg-gray-50 rounded-lg'
+          >
             <Eye className='w-4 h-4' />
           </button>
           <button onClick={() => openEditModal(row.original)} className='p-2 text-blue-600 hover:bg-blue-50 rounded-lg'>
@@ -807,7 +846,10 @@ const Ehspage: React.FC = () => {
       header: '操作',
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
-          <button onClick={() => openDetailModal(row.original)} className='p-2 text-gray-600 hover:bg-gray-50 rounded-lg'>
+          <button
+            onClick={() => openDetailModal(row.original)}
+            className='p-2 text-gray-600 hover:bg-gray-50 rounded-lg'
+          >
             <Eye className='w-4 h-4' />
           </button>
           <button onClick={() => openEditModal(row.original)} className='p-2 text-blue-600 hover:bg-blue-50 rounded-lg'>
@@ -851,40 +893,43 @@ const Ehspage: React.FC = () => {
   };
 
   // 统计数据卡片
-  const statsCards = useMemo(() => [
-    {
-      title: '危险源总数',
-      value: stats.totalHazards,
-      subtitle: `活跃: ${stats.activeHazards}`,
-      icon: AlertCircle,
-      color: 'from-red-500 to-orange-500',
-      trend: (stats.activeHazards > stats.totalHazards * 0.3 ? 'up' : 'down') as 'up' | 'down',
-    },
-    {
-      title: '安全检查',
-      value: stats.totalChecks,
-      subtitle: `已完成: ${stats.completedChecks}`,
-      icon: ClipboardCheck,
-      color: 'from-blue-500 to-cyan-500',
-      trend: (stats.completedChecks > stats.totalChecks * 0.5 ? 'up' : 'down') as 'up' | 'down',
-    },
-    {
-      title: '应急预案',
-      value: stats.totalPlans,
-      subtitle: `有效: ${stats.activePlans}`,
-      icon: FileText,
-      color: 'from-green-500 to-emerald-500',
-      trend: (stats.activePlans > stats.totalPlans * 0.8 ? 'up' : 'down') as 'up' | 'down',
-    },
-    {
-      title: '演练记录',
-      value: stats.totalDrills,
-      subtitle: `已完成: ${stats.completedDrills}`,
-      icon: Activity,
-      color: 'from-purple-500 to-pink-500',
-      trend: (stats.completedDrills > stats.totalDrills * 0.6 ? 'up' : 'down') as 'up' | 'down',
-    },
-  ], [stats]);
+  const statsCards = useMemo(
+    () => [
+      {
+        title: '危险源总数',
+        value: stats.totalHazards,
+        subtitle: `活跃: ${stats.activeHazards}`,
+        icon: AlertCircle,
+        color: 'from-red-500 to-orange-500',
+        trend: (stats.activeHazards > stats.totalHazards * 0.3 ? 'up' : 'down') as 'up' | 'down',
+      },
+      {
+        title: '安全检查',
+        value: stats.totalChecks,
+        subtitle: `已完成: ${stats.completedChecks}`,
+        icon: ClipboardCheck,
+        color: 'from-blue-500 to-cyan-500',
+        trend: (stats.completedChecks > stats.totalChecks * 0.5 ? 'up' : 'down') as 'up' | 'down',
+      },
+      {
+        title: '应急预案',
+        value: stats.totalPlans,
+        subtitle: `有效: ${stats.activePlans}`,
+        icon: FileText,
+        color: 'from-green-500 to-emerald-500',
+        trend: (stats.activePlans > stats.totalPlans * 0.8 ? 'up' : 'down') as 'up' | 'down',
+      },
+      {
+        title: '演练记录',
+        value: stats.totalDrills,
+        subtitle: `已完成: ${stats.completedDrills}`,
+        icon: Activity,
+        color: 'from-purple-500 to-pink-500',
+        trend: (stats.completedDrills > stats.totalDrills * 0.6 ? 'up' : 'down') as 'up' | 'down',
+      },
+    ],
+    [stats]
+  );
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 to-blue-50'>
@@ -970,9 +1015,13 @@ const Ehspage: React.FC = () => {
             type='bar'
             title='危险源等级分布'
             data={[
-              { name: '低风险', value: hazards.filter(h => h.level.includes('低')).length, color: '#10b981' },
-              { name: '中风险', value: hazards.filter(h => h.level.includes('中')).length, color: '#f59e0b' },
-              { name: '高风险', value: hazards.filter(h => h.level.includes('高') || h.level.includes('重大')).length, color: '#ef4444' },
+              { name: '低风险', value: hazards.filter((h) => h.level.includes('低')).length, color: '#10b981' },
+              { name: '中风险', value: hazards.filter((h) => h.level.includes('中')).length, color: '#f59e0b' },
+              {
+                name: '高风险',
+                value: hazards.filter((h) => h.level.includes('高') || h.level.includes('重大')).length,
+                color: '#ef4444',
+              },
             ]}
             xKey='name'
             yKey='value'
@@ -981,9 +1030,21 @@ const Ehspage: React.FC = () => {
             type='pie'
             title='安全检查状态分布'
             data={[
-              { name: '已完成', value: checks.filter(c => c.status.includes('已完成') || c.status.includes('完成')).length, color: '#10b981' },
-              { name: '进行中', value: checks.filter(c => c.status.includes('进行中') || c.status.includes('进行')).length, color: '#3b82f6' },
-              { name: '待处理', value: checks.filter(c => c.status.includes('待处理') || c.status.includes('待')).length, color: '#f59e0b' },
+              {
+                name: '已完成',
+                value: checks.filter((c) => c.status.includes('已完成') || c.status.includes('完成')).length,
+                color: '#10b981',
+              },
+              {
+                name: '进行中',
+                value: checks.filter((c) => c.status.includes('进行中') || c.status.includes('进行')).length,
+                color: '#3b82f6',
+              },
+              {
+                name: '待处理',
+                value: checks.filter((c) => c.status.includes('待处理') || c.status.includes('待')).length,
+                color: '#f59e0b',
+              },
             ]}
             xKey='name'
             yKey='value'

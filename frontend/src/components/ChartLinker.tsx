@@ -19,8 +19,8 @@ export const ChartLinkerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [selections, setSelections] = useState<ChartSelection[]>([]);
 
   const selectData = useCallback((chartId: string, data: any[]) => {
-    setSelections(prev => {
-      const existingIndex = prev.findIndex(s => s.chartId === chartId);
+    setSelections((prev) => {
+      const existingIndex = prev.findIndex((s) => s.chartId === chartId);
       if (existingIndex >= 0) {
         const updated = [...prev];
         updated[existingIndex] = { chartId, selectedData: data };
@@ -31,18 +31,21 @@ export const ChartLinkerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, []);
 
   const clearSelection = useCallback((chartId: string) => {
-    setSelections(prev => prev.filter(s => s.chartId !== chartId));
+    setSelections((prev) => prev.filter((s) => s.chartId !== chartId));
   }, []);
 
   const clearAllSelections = useCallback(() => {
     setSelections([]);
   }, []);
 
-  const isSelected = useCallback((chartId: string, dataItem: any) => {
-    const selection = selections.find(s => s.chartId === chartId);
-    if (!selection) return false;
-    return selection.selectedData.some(d => JSON.stringify(d) === JSON.stringify(dataItem));
-  }, [selections]);
+  const isSelected = useCallback(
+    (chartId: string, dataItem: any) => {
+      const selection = selections.find((s) => s.chartId === chartId);
+      if (!selection) return false;
+      return selection.selectedData.some((d) => JSON.stringify(d) === JSON.stringify(dataItem));
+    },
+    [selections]
+  );
 
   return (
     <ChartLinkerContext.Provider

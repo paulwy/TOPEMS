@@ -273,18 +273,23 @@ export const gisApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-    
+
     return apiClient.gis.get<PaginatedResponse<DevicePoint>>(`/api/v1/device-locations?${queryParams.toString()}`);
   },
   getDevicePoint: async (id: string): Promise<ApiResponse<DevicePoint>> => {
     return apiClient.gis.get<DevicePoint>(`/api/v1/device-locations/${id}`);
   },
-  listDevicePointsByMap: async (mapId: string, params?: ListQueryParams): Promise<ApiResponse<PaginatedResponse<DevicePoint>>> => {
+  listDevicePointsByMap: async (
+    mapId: string,
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<DevicePoint>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
-    
-    return apiClient.gis.get<PaginatedResponse<DevicePoint>>(`/api/v1/device-locations/map/${mapId}?${queryParams.toString()}`);
+
+    return apiClient.gis.get<PaginatedResponse<DevicePoint>>(
+      `/api/v1/device-locations/map/${mapId}?${queryParams.toString()}`
+    );
   },
   createDevicePoint: async (data: CreateDevicePointRequest): Promise<ApiResponse<DevicePoint>> => {
     return apiClient.gis.post<DevicePoint>('/api/v1/device-locations', data);
@@ -303,17 +308,20 @@ export const gisApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-    
+
     return apiClient.gis.get<PaginatedResponse<Pipeline>>(`/api/v1/pipelines?${queryParams.toString()}`);
   },
   getPipeline: async (id: string): Promise<ApiResponse<Pipeline>> => {
     return apiClient.gis.get<Pipeline>(`/api/v1/pipelines/${id}`);
   },
-  listPipelinesByMap: async (mapId: string, params?: ListQueryParams): Promise<ApiResponse<PaginatedResponse<Pipeline>>> => {
+  listPipelinesByMap: async (
+    mapId: string,
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<Pipeline>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
-    
+
     return apiClient.gis.get<PaginatedResponse<Pipeline>>(`/api/v1/pipelines/map/${mapId}?${queryParams.toString()}`);
   },
   createPipeline: async (data: CreatePipelineRequest): Promise<ApiResponse<Pipeline>> => {
@@ -333,18 +341,25 @@ export const gisApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-    
-    return apiClient.gis.get<PaginatedResponse<StorageLocation>>(`/api/v1/warehouse-locations?${queryParams.toString()}`);
+
+    return apiClient.gis.get<PaginatedResponse<StorageLocation>>(
+      `/api/v1/warehouse-locations?${queryParams.toString()}`
+    );
   },
   getStorageLocation: async (id: string): Promise<ApiResponse<StorageLocation>> => {
     return apiClient.gis.get<StorageLocation>(`/api/v1/warehouse-locations/${id}`);
   },
-  listStorageLocationsByMap: async (mapId: string, params?: ListQueryParams): Promise<ApiResponse<PaginatedResponse<StorageLocation>>> => {
+  listStorageLocationsByMap: async (
+    mapId: string,
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<StorageLocation>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
-    
-    return apiClient.gis.get<PaginatedResponse<StorageLocation>>(`/api/v1/warehouse-locations/map/${mapId}?${queryParams.toString()}`);
+
+    return apiClient.gis.get<PaginatedResponse<StorageLocation>>(
+      `/api/v1/warehouse-locations/map/${mapId}?${queryParams.toString()}`
+    );
   },
   createStorageLocation: async (data: CreateStorageLocationRequest): Promise<ApiResponse<StorageLocation>> => {
     return apiClient.gis.post<StorageLocation>('/api/v1/warehouse-locations', data);
@@ -365,18 +380,23 @@ export const gisApi = {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
-    
+
     return apiClient.gis.get<PaginatedResponse<EvidenceRecord>>(`/api/v1/location-photos?${queryParams.toString()}`);
   },
   getEvidenceRecord: async (id: string): Promise<ApiResponse<LocationPhoto>> => {
     return apiClient.gis.get<LocationPhoto>(`/api/v1/location-photos/${id}`);
   },
-  listEvidenceRecordsByMap: async (mapId: string, params?: ListQueryParams): Promise<ApiResponse<PaginatedResponse<EvidenceRecord>>> => {
+  listEvidenceRecordsByMap: async (
+    mapId: string,
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<EvidenceRecord>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
-    
-    return apiClient.gis.get<PaginatedResponse<EvidenceRecord>>(`/api/v1/location-photos/map/${mapId}?${queryParams.toString()}`);
+
+    return apiClient.gis.get<PaginatedResponse<EvidenceRecord>>(
+      `/api/v1/location-photos/map/${mapId}?${queryParams.toString()}`
+    );
   },
   createEvidenceRecord: async (data: CreateEvidenceRecordRequest): Promise<ApiResponse<EvidenceRecord>> => {
     return apiClient.gis.post<EvidenceRecord>('/api/v1/location-photos', data);
@@ -391,7 +411,7 @@ export const gisApi = {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
-    
+
     return apiClient.gis.get<PaginatedResponse<FactoryMap>>(`/api/v1/factory-maps?${queryParams.toString()}`);
   },
   getFactoryMap: async (id: string): Promise<ApiResponse<FactoryMap>> => {
@@ -408,29 +428,41 @@ export const gisApi = {
   },
 
   // 业务位置
-  listBusinessLocations: async (params?: ListQueryParams): Promise<ApiResponse<PaginatedResponse<BusinessLocation>>> => {
+  listBusinessLocations: async (
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<BusinessLocation>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-    
-    return apiClient.gis.get<PaginatedResponse<BusinessLocation>>(`/api/v1/business-locations?${queryParams.toString()}`);
+
+    return apiClient.gis.get<PaginatedResponse<BusinessLocation>>(
+      `/api/v1/business-locations?${queryParams.toString()}`
+    );
   },
   getBusinessLocation: async (id: string): Promise<ApiResponse<BusinessLocation>> => {
     return apiClient.gis.get<BusinessLocation>(`/api/v1/business-locations/${id}`);
   },
-  listBusinessLocationsByType: async (type: string, params?: ListQueryParams): Promise<ApiResponse<PaginatedResponse<BusinessLocation>>> => {
+  listBusinessLocationsByType: async (
+    type: string,
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<BusinessLocation>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
-    
-    return apiClient.gis.get<PaginatedResponse<BusinessLocation>>(`/api/v1/business-locations/type/${type}?${queryParams.toString()}`);
+
+    return apiClient.gis.get<PaginatedResponse<BusinessLocation>>(
+      `/api/v1/business-locations/type/${type}?${queryParams.toString()}`
+    );
   },
   createBusinessLocation: async (data: CreateBusinessLocationRequest): Promise<ApiResponse<BusinessLocation>> => {
     return apiClient.gis.post<BusinessLocation>('/api/v1/business-locations', data);
   },
-  updateBusinessLocation: async (id: string, data: Partial<CreateBusinessLocationRequest>): Promise<ApiResponse<BusinessLocation>> => {
+  updateBusinessLocation: async (
+    id: string,
+    data: Partial<CreateBusinessLocationRequest>
+  ): Promise<ApiResponse<BusinessLocation>> => {
     return apiClient.gis.put<BusinessLocation>(`/api/v1/business-locations/${id}`, data);
   },
   deleteBusinessLocation: async (id: string): Promise<ApiResponse<void>> => {
@@ -443,7 +475,7 @@ export const gisApi = {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
-    
+
     return apiClient.gis.get<PaginatedResponse<MapMarker>>(`/api/v1/map-markers?${queryParams.toString()}`);
   },
   createMapMarker: async (data: CreateMapMarkerRequest): Promise<ApiResponse<MapMarker>> => {

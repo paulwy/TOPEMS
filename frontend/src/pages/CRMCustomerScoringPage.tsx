@@ -13,7 +13,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { crmApi, Customer } from '@/api/crm';
+import type { Customer } from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Star, TrendingUp, TrendingDown, Minus, Award, Target, DollarSign, Users } from 'lucide-react';

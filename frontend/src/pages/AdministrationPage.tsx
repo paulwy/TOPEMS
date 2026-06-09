@@ -54,7 +54,14 @@ import {
   type Vehicle,
   type Announcement,
 } from '../api/erp';
-import { leaveApi, attendanceApi, type LeaveRequest, type AttendanceRecord, employeeApi, type Employee } from '../api/hrm';
+import {
+  leaveApi,
+  attendanceApi,
+  type LeaveRequest,
+  type AttendanceRecord,
+  employeeApi,
+  type Employee,
+} from '../api/hrm';
 import MobileHeader from '../components/MobileHeader';
 import MobileNav from '../components/MobileNav';
 
@@ -1311,7 +1318,8 @@ const AdministrationPage: React.FC = () => {
                         setMobileMenuOpen(false);
                       }}
                       className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                        activeTab === item.key ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                        activeTab === item.key ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
                     >
                       <Icon className='w-5 h-5' />
                       <span>{item.label}</span>

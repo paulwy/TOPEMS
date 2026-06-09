@@ -14,7 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { departmentApi, type Department } from '../api/hrm';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 
 import { Button } from '@/components/ui/button';

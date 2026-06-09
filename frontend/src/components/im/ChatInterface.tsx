@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, Users, Bell, Search, Plus, ChevronLeft, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { imApi, ChatRoom, ChatMessage, Friend } from '../../api/im';
-import { useWebSocket, WsMessage } from '../../hooks/useWebSocket';
+import type { ChatRoom, ChatMessage, Friend } from '../../api/im';
+import { imApi } from '../../api/im';
+import type { WsMessage } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import { ChatRoomItem } from './ChatRoomItem';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
@@ -33,21 +35,24 @@ export const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // WebSocket 回调函数
-  const handleWsMessage = useCallback((message: WsMessage) => {
-    if (selectedRoom && message.chat_id === selectedRoom.id) {
-      const newMessage: ChatMessage = {
-        id: Date.now().toString(),
-        chat_id: message.chat_id!,
-        sender_id: message.sender_id,
-        sender_name: message.sender_name,
-        message_type: 'text',
-        content: message.content,
-        created_at: message.timestamp,
-        is_read: false,
-      };
-      setMessages((prev) => [...prev, newMessage]);
-    }
-  }, [selectedRoom]);
+  const handleWsMessage = useCallback(
+    (message: WsMessage) => {
+      if (selectedRoom && message.chat_id === selectedRoom.id) {
+        const newMessage: ChatMessage = {
+          id: Date.now().toString(),
+          chat_id: message.chat_id!,
+          sender_id: message.sender_id,
+          sender_name: message.sender_name,
+          message_type: 'text',
+          content: message.content,
+          created_at: message.timestamp,
+          is_read: false,
+        };
+        setMessages((prev) => [...prev, newMessage]);
+      }
+    },
+    [selectedRoom]
+  );
 
   const handleWsOpen = useCallback(() => {
     addNotification({ title: '连接成功', message: 'WebSocket 连接已建立', type: 'success' });
@@ -150,11 +155,11 @@ export const ChatInterface: React.FC = () => {
 
   const markAllMessagesRead = async (chatRoomId: string) => {
     try {
-      const unreadMessages = messages.filter(m => !m.is_read && m.sender_id !== 'current-user');
+      const unreadMessages = messages.filter((m) => !m.is_read && m.sender_id !== 'current-user');
       for (const message of unreadMessages) {
         await imApi.markMessageRead(message.id);
       }
-      setMessages(prev => prev.map(m => ({ ...m, is_read: true })));
+      setMessages((prev) => prev.map((m) => ({ ...m, is_read: true })));
     } catch (error) {
       console.error('Failed to mark messages as read:', error);
     }
@@ -167,7 +172,9 @@ export const ChatInterface: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`/im/api/v1/chat-rooms/${selectedRoom.id}/messages/search?keyword=${encodeURIComponent(keyword)}`);
+      const response = await fetch(
+        `/im/api/v1/chat-rooms/${selectedRoom.id}/messages/search?keyword=${encodeURIComponent(keyword)}`
+      );
       const data = await response.json();
       if (data.success && data.data) {
         setFilteredMessages(data.data.messages || []);
@@ -181,9 +188,9 @@ export const ChatInterface: React.FC = () => {
     try {
       const response = await imApi.updateChatMessage(updatedMessage.id, updatedMessage.content);
       if (response.success) {
-        setMessages(prev => prev.map(m => 
-          m.id === updatedMessage.id ? { ...m, content: updatedMessage.content } : m
-        ));
+        setMessages((prev) =>
+          prev.map((m) => (m.id === updatedMessage.id ? { ...m, content: updatedMessage.content } : m))
+        );
       }
     } catch (error) {
       console.error('Failed to edit message:', error);
@@ -197,7 +204,7 @@ export const ChatInterface: React.FC = () => {
     try {
       const response = await imApi.deleteChatMessage(messageId);
       if (response.success) {
-        setMessages(prev => prev.filter(m => m.id !== messageId));
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
         addNotification({ title: '删除成功', message: '消息已删除', type: 'success' });
       }
     } catch (error) {
@@ -215,8 +222,8 @@ export const ChatInterface: React.FC = () => {
     try {
       const response = await imApi.muteChatRoom(selectedRoom.id);
       if (response.success) {
-        setChatRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, is_muted: true } : r));
-        setSelectedRoom(prev => prev ? { ...prev, is_muted: true } : null);
+        setChatRooms((prev) => prev.map((r) => (r.id === selectedRoom.id ? { ...r, is_muted: true } : r)));
+        setSelectedRoom((prev) => (prev ? { ...prev, is_muted: true } : null));
         addNotification({ title: '成功', message: '已开启免打扰', type: 'success' });
       }
     } catch (error) {
@@ -229,8 +236,8 @@ export const ChatInterface: React.FC = () => {
     try {
       const response = await imApi.unmuteChatRoom(selectedRoom.id);
       if (response.success) {
-        setChatRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, is_muted: false } : r));
-        setSelectedRoom(prev => prev ? { ...prev, is_muted: false } : null);
+        setChatRooms((prev) => prev.map((r) => (r.id === selectedRoom.id ? { ...r, is_muted: false } : r)));
+        setSelectedRoom((prev) => (prev ? { ...prev, is_muted: false } : null));
         addNotification({ title: '成功', message: '已关闭免打扰', type: 'success' });
       }
     } catch (error) {
@@ -243,8 +250,8 @@ export const ChatInterface: React.FC = () => {
     try {
       const response = await imApi.pinChatRoom(selectedRoom.id);
       if (response.success) {
-        setChatRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, is_pinned: true } : r));
-        setSelectedRoom(prev => prev ? { ...prev, is_pinned: true } : null);
+        setChatRooms((prev) => prev.map((r) => (r.id === selectedRoom.id ? { ...r, is_pinned: true } : r)));
+        setSelectedRoom((prev) => (prev ? { ...prev, is_pinned: true } : null));
         addNotification({ title: '成功', message: '已置顶会话', type: 'success' });
       }
     } catch (error) {
@@ -257,8 +264,8 @@ export const ChatInterface: React.FC = () => {
     try {
       const response = await imApi.unpinChatRoom(selectedRoom.id);
       if (response.success) {
-        setChatRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, is_pinned: false } : r));
-        setSelectedRoom(prev => prev ? { ...prev, is_pinned: false } : null);
+        setChatRooms((prev) => prev.map((r) => (r.id === selectedRoom.id ? { ...r, is_pinned: false } : r)));
+        setSelectedRoom((prev) => (prev ? { ...prev, is_pinned: false } : null));
         addNotification({ title: '成功', message: '已取消置顶', type: 'success' });
       }
     } catch (error) {
@@ -271,7 +278,7 @@ export const ChatInterface: React.FC = () => {
     try {
       const response = await imApi.deleteChatRoom(selectedRoom.id);
       if (response.success) {
-        setChatRooms(prev => prev.filter(r => r.id !== selectedRoom.id));
+        setChatRooms((prev) => prev.filter((r) => r.id !== selectedRoom.id));
         setSelectedRoom(null);
         setMessages([]);
         setIsSettingsModalOpen(false);
@@ -362,41 +369,41 @@ export const ChatInterface: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className='flex h-screen bg-gray-50'>
       {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className='w-80 bg-white border-r border-gray-200 flex flex-col'>
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
-                <ChevronLeft className="w-5 h-5" />
+        <div className='p-4 border-b border-gray-200'>
+          <div className='flex items-center justify-between mb-4'>
+            <div className='flex items-center gap-2'>
+              <Button variant='ghost' size='sm' onClick={() => navigate('/dashboard')}>
+                <ChevronLeft className='w-5 h-5' />
               </Button>
-              <h1 className="text-xl font-bold text-gray-900">消息</h1>
+              <h1 className='text-xl font-bold text-gray-900'>消息</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className='flex items-center gap-2'>
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-              <Button variant="ghost" size="sm" onClick={() => setIsCreateModalOpen(true)}>
-                <Plus className="w-5 h-5" />
+              <Button variant='ghost' size='sm' onClick={() => setIsCreateModalOpen(true)}>
+                <Plus className='w-5 h-5' />
               </Button>
             </div>
           </div>
 
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <div className='relative'>
+            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400' />
             <Input
-              type="text"
-              placeholder="搜索聊天..."
+              type='text'
+              placeholder='搜索聊天...'
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className='pl-10'
             />
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className='flex border-b border-gray-200'>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -409,8 +416,8 @@ export const ChatInterface: React.FC = () => {
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span className="text-xs font-medium">{tab.label}</span>
+                <Icon className='w-4 h-4' />
+                <span className='text-xs font-medium'>{tab.label}</span>
               </button>
             );
           })}
@@ -418,23 +425,23 @@ export const ChatInterface: React.FC = () => {
 
         {/* Chat Rooms List, Contacts or Notifications */}
         {activeTab === 'notifications' ? (
-          <div className="flex-1 overflow-y-auto">
+          <div className='flex-1 overflow-y-auto'>
             <NotificationList />
           </div>
         ) : activeTab === 'contacts' ? (
-          <div className="flex-1 overflow-y-auto">
+          <div className='flex-1 overflow-y-auto'>
             <ContactList onSelectContact={(friend) => handleSelectContact(friend)} />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-2">
+          <div className='flex-1 overflow-y-auto p-2'>
             {loading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
+              <div className='flex justify-center items-center py-8'>
+                <div className='animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent'></div>
               </div>
             ) : filteredRooms.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">暂无聊天记录</p>
+              <div className='text-center py-8'>
+                <MessageSquare className='w-12 h-12 text-gray-300 mx-auto mb-3' />
+                <p className='text-gray-500'>暂无聊天记录</p>
               </div>
             ) : (
               filteredRooms.map((room) => (
@@ -456,70 +463,70 @@ export const ChatInterface: React.FC = () => {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className='flex-1 flex flex-col'>
         {selectedRoom && activeTab !== 'notifications' && activeTab !== 'contacts' ? (
           <>
             {/* Chat Header */}
-            <div className="bg-white border-b border-gray-200 p-4">
-              <div className="flex items-center justify-between mb-3">
+            <div className='bg-white border-b border-gray-200 p-4'>
+              <div className='flex items-center justify-between mb-3'>
                 <div>
-                  <h2 className="font-semibold text-gray-900">{selectedRoom.name || '未命名会话'}</h2>
-                  <p className="text-sm text-gray-500">
+                  <h2 className='font-semibold text-gray-900'>{selectedRoom.name || '未命名会话'}</h2>
+                  <p className='text-sm text-gray-500'>
                     {selectedRoom.room_type === 'direct' ? '私聊' : '群聊'}
                     {!isConnected && ' · 连接断开'}
                   </p>
                 </div>
               </div>
               {/* Message Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div className='relative'>
+                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400' />
                 <Input
-                  type="text"
-                  placeholder="搜索消息..."
+                  type='text'
+                  placeholder='搜索消息...'
                   value={messageSearchQuery}
                   onChange={(e) => {
                     setMessageSearchQuery(e.target.value);
                     searchMessages(e.target.value);
                   }}
-                  className="pl-10"
+                  className='pl-10'
                 />
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <div className='flex-1 overflow-y-auto p-4 bg-gray-50'>
               {messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">暂无消息，开始聊天吧</p>
+                <div className='flex items-center justify-center h-full'>
+                  <div className='text-center'>
+                    <MessageSquare className='w-12 h-12 text-gray-300 mx-auto mb-3' />
+                    <p className='text-gray-500'>暂无消息，开始聊天吧</p>
                   </div>
                 </div>
               ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">未找到匹配的消息</p>
+                <div className='flex items-center justify-center h-full'>
+                  <div className='text-center'>
+                    <Search className='w-12 h-12 text-gray-300 mx-auto mb-3' />
+                    <p className='text-gray-500'>未找到匹配的消息</p>
                   </div>
                 </div>
               ) : (
                 <>
                   {messageSearchQuery.trim() && filteredMessages.length > 0 && (
-                    <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <span className="text-sm text-yellow-800">
-                        找到 {filteredMessages.length} 条匹配消息
-                      </span>
+                    <div className='mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded-lg'>
+                      <span className='text-sm text-yellow-800'>找到 {filteredMessages.length} 条匹配消息</span>
                     </div>
                   )}
-                  {(messageSearchQuery.trim() && filteredMessages.length > 0 ? filteredMessages : messages).map((message) => (
-                    <MessageBubble 
-                      key={message.id} 
-                      message={message} 
-                      isSent={message.sender_id === 'current-user'}
-                      onEdit={handleEditMessage}
-                      onDelete={handleDeleteMessage}
-                    />
-                  ))}
+                  {(messageSearchQuery.trim() && filteredMessages.length > 0 ? filteredMessages : messages).map(
+                    (message) => (
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        isSent={message.sender_id === 'current-user'}
+                        onEdit={handleEditMessage}
+                        onDelete={handleDeleteMessage}
+                      />
+                    )
+                  )}
                   <div ref={messagesEndRef} />
                 </>
               )}
@@ -529,18 +536,14 @@ export const ChatInterface: React.FC = () => {
             <ChatInput onSendMessage={handleSendMessage} onUploadFile={handleUploadFile} disabled={!isConnected} />
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">欢迎使用 TOPEMS IM</h2>
-              <p className="text-gray-500 mb-4">
+          <div className='flex-1 flex items-center justify-center bg-gray-50'>
+            <div className='text-center'>
+              <MessageSquare className='w-16 h-16 text-gray-300 mx-auto mb-4' />
+              <h2 className='text-xl font-semibold text-gray-900 mb-2'>欢迎使用 TOPEMS IM</h2>
+              <p className='text-gray-500 mb-4'>
                 {activeTab === 'notifications' ? '查看通知中心' : '选择一个聊天室开始聊天'}
               </p>
-              {activeTab !== 'notifications' && (
-                <Button onClick={() => setIsCreateModalOpen(true)}>
-                  创建聊天室
-                </Button>
-              )}
+              {activeTab !== 'notifications' && <Button onClick={() => setIsCreateModalOpen(true)}>创建聊天室</Button>}
             </div>
           </div>
         )}

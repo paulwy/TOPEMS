@@ -72,7 +72,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
 
   const getOnlineCount = () => {
     const members = Array.isArray(chatRoom.members) ? chatRoom.members : [];
-    return members.filter(m => onlineStatus[m]).length;
+    return members.filter((m) => onlineStatus[m]).length;
   };
 
   const members = Array.isArray(chatRoom.members) ? chatRoom.members : [];
@@ -86,13 +86,9 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
       } ${chatRoom.is_pinned ? 'bg-amber-50/50' : ''}`}
     >
       {/* Pinned & Muted Indicators */}
-      <div className="absolute top-2 right-2 flex gap-1">
-        {chatRoom.is_pinned && (
-          <Pin className="w-3 h-3 text-amber-500" />
-        )}
-        {chatRoom.is_muted && (
-          <BellOff className="w-3 h-3 text-gray-400" />
-        )}
+      <div className='absolute top-2 right-2 flex gap-1'>
+        {chatRoom.is_pinned && <Pin className='w-3 h-3 text-amber-500' />}
+        {chatRoom.is_muted && <BellOff className='w-3 h-3 text-gray-400' />}
       </div>
 
       <div className='flex items-start gap-3'>
@@ -120,12 +116,10 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
           </div>
           <div className='flex items-center justify-between mt-1'>
             <p className='text-sm text-gray-500 truncate flex-1'>{chatRoom.last_message || '暂无消息'}</p>
-            <div className="flex items-center gap-2">
+            <div className='flex items-center gap-2'>
               {chatRoom.room_type !== 'direct' && (
                 <span className='text-xs text-gray-400 flex items-center gap-1'>
-                  {getOnlineCount() > 0 && (
-                    <span className='w-1.5 h-1.5 bg-green-500 rounded-full' />
-                  )}
+                  {getOnlineCount() > 0 && <span className='w-1.5 h-1.5 bg-green-500 rounded-full' />}
                   {getMemberCount()}人
                 </span>
               )}
@@ -135,11 +129,8 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({ chatRoom, isActive, 
                 </span>
               )}
               {onSettings && (
-                <button
-                  onClick={onSettings}
-                  className="p-1 rounded hover:bg-gray-200 transition-colors"
-                >
-                  <MoreVertical className="w-4 h-4 text-gray-400" />
+                <button onClick={onSettings} className='p-1 rounded hover:bg-gray-200 transition-colors'>
+                  <MoreVertical className='w-4 h-4 text-gray-400' />
                 </button>
               )}
             </div>

@@ -129,8 +129,7 @@ const HrmRecruitmentPage: React.FC = () => {
       }
 
       // 转换职位数据
-      const openings = openingsResult.status === 'fulfilled' ? 
-        (openingsResult.value.data?.items || []) : [];
+      const openings = openingsResult.status === 'fulfilled' ? openingsResult.value.data?.items || [] : [];
       const transformedPositions: JobPosition[] = openings.map((opening) => {
         const dept = deptMap[opening.department_id || ''];
         const pos = positionMap[opening.position_id || ''];
@@ -151,8 +150,7 @@ const HrmRecruitmentPage: React.FC = () => {
       setPositions(transformedPositions);
 
       // 转换候选人数据
-      const candidates = candidatesResult.status === 'fulfilled' ? 
-        (candidatesResult.value.data?.items || []) : [];
+      const candidates = candidatesResult.status === 'fulfilled' ? candidatesResult.value.data?.items || [] : [];
       const transformedCandidates: Candidate[] = candidates.map((candidate) => {
         const pos = positionMap[candidate.position_id || ''];
         const opening = transformedPositions.find((o) => o.id === candidate.job_opening_id);
@@ -176,8 +174,7 @@ const HrmRecruitmentPage: React.FC = () => {
       setCandidates(transformedCandidates);
 
       // 转换面试数据
-      const interviews = interviewsResult.status === 'fulfilled' ? 
-        (interviewsResult.value.data?.items || []) : [];
+      const interviews = interviewsResult.status === 'fulfilled' ? interviewsResult.value.data?.items || [] : [];
       const transformedInterviews: InterviewRecord[] = interviews.map((interview) => {
         const candidate = transformedCandidates.find((c) => c.id === interview.candidate_id);
         return {

@@ -205,32 +205,41 @@ const HrmPayrollPage: React.FC = () => {
   const totalEmployees = payrollRuns.reduce((sum, run) => sum + run.employee_count, 0);
 
   // 薪资统计数据
-  const payrollStats = useMemo(() => ({
-    totalEmployees,
-    totalBaseSalary: totalAmount * 0.6,
-    totalBonus: totalAmount * 0.2,
-    totalDeductions: totalAmount * 0.1,
-    totalNetSalary: totalAmount * 0.9,
-    avgSalary: totalEmployees > 0 ? totalAmount * 0.9 / totalEmployees : 0,
-    pendingRuns: payrollRuns.filter(r => r.status === 'draft').length,
-    paidRuns: payrollRuns.filter(r => r.status === 'paid').length,
-  }), [payrollRuns, totalAmount, totalEmployees]);
+  const payrollStats = useMemo(
+    () => ({
+      totalEmployees,
+      totalBaseSalary: totalAmount * 0.6,
+      totalBonus: totalAmount * 0.2,
+      totalDeductions: totalAmount * 0.1,
+      totalNetSalary: totalAmount * 0.9,
+      avgSalary: totalEmployees > 0 ? (totalAmount * 0.9) / totalEmployees : 0,
+      pendingRuns: payrollRuns.filter((r) => r.status === 'draft').length,
+      paidRuns: payrollRuns.filter((r) => r.status === 'paid').length,
+    }),
+    [payrollRuns, totalAmount, totalEmployees]
+  );
 
   // 薪资构成数据
-  const salaryCompositionData = useMemo(() => [
-    { name: '基本工资', value: 60, color: '#3b82f6' },
-    { name: '奖金', value: 15, color: '#22c55e' },
-    { name: '补贴', value: 10, color: '#f59e0b' },
-    { name: '社保公积金（个人）', value: 8, color: '#ef4444' },
-    { name: '个人所得税', value: 7, color: '#8b5cf6' },
-  ], []);
+  const salaryCompositionData = useMemo(
+    () => [
+      { name: '基本工资', value: 60, color: '#3b82f6' },
+      { name: '奖金', value: 15, color: '#22c55e' },
+      { name: '补贴', value: 10, color: '#f59e0b' },
+      { name: '社保公积金（个人）', value: 8, color: '#ef4444' },
+      { name: '个人所得税', value: 7, color: '#8b5cf6' },
+    ],
+    []
+  );
 
   // 工资发放状态分布
-  const payrollStatusData = useMemo(() => [
-    { name: '待计算', value: payrollRuns.filter(r => r.status === 'draft').length, color: '#eab308' },
-    { name: '已计算', value: payrollRuns.filter(r => r.status === 'calculated').length, color: '#3b82f6' },
-    { name: '已发放', value: payrollRuns.filter(r => r.status === 'paid').length, color: '#22c55e' },
-  ], [payrollRuns]);
+  const payrollStatusData = useMemo(
+    () => [
+      { name: '待计算', value: payrollRuns.filter((r) => r.status === 'draft').length, color: '#eab308' },
+      { name: '已计算', value: payrollRuns.filter((r) => r.status === 'calculated').length, color: '#3b82f6' },
+      { name: '已发放', value: payrollRuns.filter((r) => r.status === 'paid').length, color: '#22c55e' },
+    ],
+    [payrollRuns]
+  );
 
   const summary: PayrollSummary = {
     total_employees: totalEmployees,
@@ -356,20 +365,12 @@ const HrmPayrollPage: React.FC = () => {
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
           <div className='bg-white rounded-lg shadow-sm p-6'>
             <h3 className='text-lg font-semibold text-gray-900 mb-4'>薪资构成比例</h3>
-            <StatsChart
-              type='pie'
-              data={salaryCompositionData}
-              height={250}
-            />
+            <StatsChart type='pie' data={salaryCompositionData} height={250} />
           </div>
 
           <div className='bg-white rounded-lg shadow-sm p-6'>
             <h3 className='text-lg font-semibold text-gray-900 mb-4'>工资发放状态</h3>
-            <StatsChart
-              type='pie'
-              data={payrollStatusData}
-              height={250}
-            />
+            <StatsChart type='pie' data={payrollStatusData} height={250} />
           </div>
         </div>
 

@@ -10,7 +10,13 @@ interface MessageBubbleProps {
   onDelete?: (messageId: string) => void;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSent, showStatus = true, onEdit, onDelete }) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({
+  message,
+  isSent,
+  showStatus = true,
+  onEdit,
+  onDelete,
+}) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -67,7 +73,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSent, s
               <MoreVertical className='w-4 h-4 text-gray-400 bg-white rounded-full p-0.5' />
             </div>
           )}
-          
+
           {showMenu && isSent && (
             <div className='absolute -top-16 -right-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-10'>
               <button
@@ -88,7 +94,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSent, s
           )}
 
           {!isSent && <div className='text-xs font-medium mb-1 opacity-70'>{message.sender_name}</div>}
-          
+
           {isEditing ? (
             <div className='flex flex-col gap-2'>
               <textarea
@@ -112,7 +118,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSent, s
                 <button
                   onClick={handleSaveEdit}
                   className={`text-xs px-3 py-1 rounded ${
-                    isSent ? 'bg-white text-indigo-600 hover:bg-indigo-50' : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    isSent
+                      ? 'bg-white text-indigo-600 hover:bg-indigo-50'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
                   }`}
                 >
                   保存
@@ -142,7 +150,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSent, s
           ) : (
             <div className='whitespace-pre-wrap break-words'>{message.content}</div>
           )}
-          
+
           {!isEditing && (
             <div
               className={`flex items-center justify-end gap-1 mt-1 text-xs ${isSent ? 'text-indigo-200' : 'text-gray-500'}`}

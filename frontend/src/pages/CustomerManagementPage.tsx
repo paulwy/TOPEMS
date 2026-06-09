@@ -16,7 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { crmApi, Customer, CreateCustomerRequest, UpdateCustomerRequest } from '@/api/crm';
+import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/EmptyState';
@@ -30,7 +31,7 @@ import {
 } from '@/components/ui/pagination';
 import { ImportExportModal } from '@/components/ImportExportModal';
 import { Search, Plus, Edit, Trash2, Eye, Download } from 'lucide-react';
-import { ExportColumn } from '@/utils/importExport';
+import type { ExportColumn } from '@/utils/importExport';
 
 const customerColumns: ExportColumn<Customer>[] = [
   { key: 'name', label: '客户名称' },

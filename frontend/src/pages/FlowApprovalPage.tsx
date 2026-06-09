@@ -18,7 +18,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { flowApi, Approval, ApprovalRecord, WorkflowInstance } from '../api/flow';
+import type { Approval, WorkflowInstance } from '../api/flow';
+import { flowApi, ApprovalRecord } from '../api/flow';
 import { useAppStore } from '../store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -259,7 +260,9 @@ const FlowApprovalPage: React.FC = () => {
           ) : filteredApprovals.length === 0 ? (
             <div className='text-center py-12'>
               <CheckCircle2 className='w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4' />
-              <p className='text-gray-500 dark:text-gray-400'>{activeTab === 'pending' ? '暂无待审批项' : '暂无审批记录'}</p>
+              <p className='text-gray-500 dark:text-gray-400'>
+                {activeTab === 'pending' ? '暂无待审批项' : '暂无审批记录'}
+              </p>
             </div>
           ) : (
             <div className='space-y-4'>
@@ -272,7 +275,15 @@ const FlowApprovalPage: React.FC = () => {
                     <div className='flex-1'>
                       <div className='flex items-center space-x-3 mb-2'>
                         <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>{approval.task_name}</h3>
-                        <Badge variant={approval.status === 'approved' ? 'secondary' : approval.status === 'rejected' ? 'destructive' : 'outline'}>
+                        <Badge
+                          variant={
+                            approval.status === 'approved'
+                              ? 'secondary'
+                              : approval.status === 'rejected'
+                                ? 'destructive'
+                                : 'outline'
+                          }
+                        >
                           {getStatusIcon(approval.status)}
                           <span className='ml-1'>{getStatusText(approval.status)}</span>
                         </Badge>
@@ -343,7 +354,12 @@ const FlowApprovalPage: React.FC = () => {
                           </Button>
                         </>
                       )}
-                      <Button variant='ghost' size='sm' onClick={() => navigate(`/flow/approvals/${approval.id}`)} title='查看详情'>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => navigate(`/flow/approvals/${approval.id}`)}
+                        title='查看详情'
+                      >
                         <Eye className='w-5 h-5' />
                       </Button>
                     </div>
@@ -367,7 +383,9 @@ const FlowApprovalPage: React.FC = () => {
             {selectedApproval && (
               <>
                 <p className='text-gray-600 dark:text-gray-400'>任务: {selectedApproval.task_name}</p>
-                {selectedApproval.node_id && <p className='text-gray-600 dark:text-gray-400'>节点: {selectedApproval.node_id}</p>}
+                {selectedApproval.node_id && (
+                  <p className='text-gray-600 dark:text-gray-400'>节点: {selectedApproval.node_id}</p>
+                )}
               </>
             )}
             <div className='space-y-2'>
@@ -382,16 +400,21 @@ const FlowApprovalPage: React.FC = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant='secondary' onClick={() => {
-              setShowApprovalModal(false);
-              setSelectedApproval(null);
-            }}>
+            <Button
+              variant='secondary'
+              onClick={() => {
+                setShowApprovalModal(false);
+                setSelectedApproval(null);
+              }}
+            >
               取消
             </Button>
             <Button
               onClick={handleProcessApproval}
               disabled={processing || (approvalAction === 'reject' && !comment.trim())}
-              className={approvalAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+              className={
+                approvalAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+              }
             >
               {processing && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
               {approvalAction === 'approve' ? '确认通过' : '确认拒绝'}

@@ -14,7 +14,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { flowApi, Approval, ApprovalRecord } from '../api/flow';
+import type { Approval, ApprovalRecord } from '../api/flow';
+import { flowApi } from '../api/flow';
 import { useAppStore } from '../store';
 import { Button } from '@/components/ui/button';
 import {
@@ -193,19 +194,25 @@ const FlowApprovalDetailPage: React.FC = () => {
             </span>
             {approval.status === 'pending' && (
               <div className='flex items-center space-x-2'>
-                <Button onClick={() => {
+                <Button
+                  onClick={() => {
                     setApprovalAction('approve');
                     setComment('');
                     setShowApprovalModal(true);
-                  }} className='bg-green-600 hover:bg-green-700'>
+                  }}
+                  className='bg-green-600 hover:bg-green-700'
+                >
                   <CheckCircle className='w-5 h-5 mr-2' />
                   通过
                 </Button>
-                <Button onClick={() => {
+                <Button
+                  onClick={() => {
                     setApprovalAction('reject');
                     setComment('');
                     setShowApprovalModal(true);
-                  }} className='bg-red-600 hover:bg-red-700'>
+                  }}
+                  className='bg-red-600 hover:bg-red-700'
+                >
                   <XCircle className='w-5 h-5 mr-2' />
                   拒绝
                 </Button>
@@ -389,7 +396,9 @@ const FlowApprovalDetailPage: React.FC = () => {
             <Button
               onClick={handleProcessApproval}
               disabled={processing || (approvalAction === 'reject' && !comment.trim())}
-              className={approvalAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+              className={
+                approvalAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+              }
             >
               {processing && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
               {approvalAction === 'approve' ? '确认通过' : '确认拒绝'}

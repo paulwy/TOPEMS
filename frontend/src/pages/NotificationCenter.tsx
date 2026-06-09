@@ -16,15 +16,14 @@ import {
   FileText,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type { Notification, NotificationTypeEnum } from '../api/notification';
 import {
-  Notification,
   getNotifications,
   markAsRead,
   markAllAsRead,
   deleteNotification,
   bulkMarkAsRead,
   bulkDeleteNotifications,
-  NotificationTypeEnum,
 } from '../api/notification';
 import NotificationItem from '../components/notifications/NotificationItem';
 import NotificationSettings from '../components/notifications/NotificationSettings';

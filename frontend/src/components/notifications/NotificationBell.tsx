@@ -4,7 +4,7 @@ import NotificationPanel from './NotificationPanel';
 import { useNotificationWebSocket } from '../../hooks/useNotificationWebSocket';
 import { useNotificationState } from '../../hooks/useNotificationState';
 import { useAuth } from '../../hooks/useAuth';
-import { Notification } from '../../api/notification';
+import type { Notification } from '../../api/notification';
 
 interface NotificationBellProps {
   onNotificationClick?: () => void;

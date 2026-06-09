@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReportData } from '../api/report';
+import type { ReportData } from '../api/report';
 
 interface ExportModalProps {
   report: ReportData;

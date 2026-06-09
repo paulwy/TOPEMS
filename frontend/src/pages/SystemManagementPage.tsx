@@ -106,7 +106,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                   );
                 })}
               </div>
-              </div>
+            </div>
           </div>
         </div>
       )}
@@ -145,7 +145,9 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
               >
                 <div className='p-6'>
                   <div className='flex items-start justify-between mb-4'>
-                    <div className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
+                    <div
+                      className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}
+                    >
                       <Icon className='w-6 h-6 text-white' />
                     </div>
                   </div>

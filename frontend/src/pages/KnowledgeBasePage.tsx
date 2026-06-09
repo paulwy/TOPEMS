@@ -23,7 +23,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
-import { aiApi, Document } from '../api/ai';
+import type { Document } from '../api/ai';
+import { aiApi } from '../api/ai';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -137,9 +138,7 @@ const KnowledgeBasePage: React.FC = () => {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const files = Array.from(e.dataTransfer.files).filter((file) =>
-        ['txt', 'md', 'json', 'pdf', 'doc', 'docx'].some((ext) =>
-          file.name.toLowerCase().endsWith(ext)
-        )
+        ['txt', 'md', 'json', 'pdf', 'doc', 'docx'].some((ext) => file.name.toLowerCase().endsWith(ext))
       );
       setUploadFiles(files);
     }
@@ -238,7 +237,10 @@ const KnowledgeBasePage: React.FC = () => {
         title: editForm.title,
         description: editForm.description,
         category: editForm.category,
-        tags: editForm.tags.split(',').map((t) => t.trim()).filter((t) => t),
+        tags: editForm.tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter((t) => t),
       };
 
       const response = await aiApi.updateDocument(selectedDocument.id, updatedDoc);
@@ -407,9 +409,7 @@ const KnowledgeBasePage: React.FC = () => {
               <div className='text-center py-12'>
                 <FileSearch className='w-16 h-16 mx-auto mb-4 text-gray-400' />
                 <p className='text-gray-500 dark:text-gray-400 mb-2'>暂无文档</p>
-                <p className='text-sm text-gray-400 dark:text-gray-500'>
-                  点击"上传文档"按钮添加知识库文档
-                </p>
+                <p className='text-sm text-gray-400 dark:text-gray-500'>点击"上传文档"按钮添加知识库文档</p>
               </div>
             ) : (
               <div className='space-y-3'>
@@ -437,9 +437,7 @@ const KnowledgeBasePage: React.FC = () => {
                               </Badge>
                             )}
                           </div>
-                          <p className='text-sm text-gray-500 dark:text-gray-400 mb-2'>
-                            文件名: {doc.filename}
-                          </p>
+                          <p className='text-sm text-gray-500 dark:text-gray-400 mb-2'>文件名: {doc.filename}</p>
                           <div className='flex items-center space-x-4 text-xs text-gray-400 dark:text-gray-500'>
                             <span className='flex items-center'>
                               <Calendar className='w-3 h-3 mr-1' />
@@ -496,9 +494,7 @@ const KnowledgeBasePage: React.FC = () => {
           <DialogContent className='max-w-2xl'>
             <DialogHeader>
               <DialogTitle>上传文档</DialogTitle>
-              <DialogDescription>
-                上传文档到知识库，支持 txt、md、json、pdf、doc、docx 格式
-              </DialogDescription>
+              <DialogDescription>上传文档到知识库，支持 txt、md、json、pdf、doc、docx 格式</DialogDescription>
             </DialogHeader>
             <div className='space-y-4'>
               {/* 拖拽上传区域 */}
@@ -514,9 +510,7 @@ const KnowledgeBasePage: React.FC = () => {
                 onDrop={handleDrop}
               >
                 <Upload className='w-12 h-12 mx-auto mb-4 text-gray-400' />
-                <p className='text-gray-600 dark:text-gray-300 mb-2'>
-                  拖拽文件到这里，或点击选择文件
-                </p>
+                <p className='text-gray-600 dark:text-gray-300 mb-2'>拖拽文件到这里，或点击选择文件</p>
                 <input
                   type='file'
                   multiple
@@ -536,7 +530,10 @@ const KnowledgeBasePage: React.FC = () => {
                 <div className='space-y-2'>
                   <Label>已选择的文件</Label>
                   {uploadFiles.map((file, idx) => (
-                    <div key={idx} className='flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 rounded'>
+                    <div
+                      key={idx}
+                      className='flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 rounded'
+                    >
                       <div className='flex items-center space-x-2'>
                         <FileText className='w-4 h-4 text-purple-500' />
                         <span className='text-sm'>{file.name}</span>
@@ -612,7 +609,9 @@ const KnowledgeBasePage: React.FC = () => {
                 {selectedDocument.category && (
                   <div>
                     <Label className='text-sm text-gray-500'>分类</Label>
-                    <Badge variant='outline' className='mt-1'>{selectedDocument.category}</Badge>
+                    <Badge variant='outline' className='mt-1'>
+                      {selectedDocument.category}
+                    </Badge>
                   </div>
                 )}
                 {selectedDocument.tags && selectedDocument.tags.length > 0 && (
@@ -620,7 +619,9 @@ const KnowledgeBasePage: React.FC = () => {
                     <Label className='text-sm text-gray-500'>标签</Label>
                     <div className='flex items-center space-x-1 mt-1'>
                       {selectedDocument.tags.map((tag, idx) => (
-                        <Badge key={idx} variant='outline'>{tag}</Badge>
+                        <Badge key={idx} variant='outline'>
+                          {tag}
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -634,9 +635,7 @@ const KnowledgeBasePage: React.FC = () => {
                 {selectedDocument.file_path && (
                   <div>
                     <Label className='text-sm text-gray-500'>文件路径</Label>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
-                      {selectedDocument.file_path}
-                    </p>
+                    <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>{selectedDocument.file_path}</p>
                   </div>
                 )}
               </div>
@@ -645,10 +644,12 @@ const KnowledgeBasePage: React.FC = () => {
               <Button variant='outline' onClick={() => setShowDetailDialog(false)}>
                 关闭
               </Button>
-              <Button onClick={() => {
-                setShowDetailDialog(false);
-                handleEdit(selectedDocument!);
-              }}>
+              <Button
+                onClick={() => {
+                  setShowDetailDialog(false);
+                  handleEdit(selectedDocument!);
+                }}
+              >
                 <Edit className='w-4 h-4 mr-2' />
                 编辑
               </Button>
@@ -661,9 +662,7 @@ const KnowledgeBasePage: React.FC = () => {
           <DialogContent className='max-w-2xl'>
             <DialogHeader>
               <DialogTitle>编辑文档信息</DialogTitle>
-              <DialogDescription>
-                更新文档的标题、描述、分类和标签信息
-              </DialogDescription>
+              <DialogDescription>更新文档的标题、描述、分类和标签信息</DialogDescription>
             </DialogHeader>
             <div className='space-y-4'>
               <div>
@@ -676,16 +675,21 @@ const KnowledgeBasePage: React.FC = () => {
               </div>
               <div>
                 <Label htmlFor='category'>分类</Label>
-                <Select value={editForm.category} onValueChange={(value) => setEditForm({ ...editForm, category: value })}>
+                <Select
+                  value={editForm.category}
+                  onValueChange={(value) => setEditForm({ ...editForm, category: value })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder='选择分类' />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.filter(c => c.value !== 'all').map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
+                    {categories
+                      .filter((c) => c.value !== 'all')
+                      .map((cat) => (
+                        <SelectItem key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

@@ -17,9 +17,10 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { flowApi, Workflow, CreateWorkflowRequest } from '../api/flow';
+import type { Workflow } from '../api/flow';
+import { flowApi, CreateWorkflowRequest } from '../api/flow';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

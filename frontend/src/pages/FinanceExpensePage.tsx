@@ -17,9 +17,10 @@ import { useNavigate } from 'react-router-dom';
 import { expenseApi, type Expense } from '../api/erp';
 import { employeeApi, departmentApi, companyApi, type Employee, type Department, type Company } from '../api/hrm';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
-import OrganizationFilter, { OrganizationFilterValue } from '@/components/ui/OrganizationFilter';
+import type { OrganizationFilterValue } from '@/components/ui/OrganizationFilter';
+import OrganizationFilter from '@/components/ui/OrganizationFilter';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
 
@@ -343,34 +344,71 @@ const FinanceExpensePage: React.FC = () => {
   const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   // 费用统计数据
-  const expenseStats = useMemo(() => ({
-    pendingCount,
-    approvedCount,
-    reimbursedCount,
-    rejectedCount,
-    totalAmount,
-    totalExpenses: expenses.length,
-    avgAmount: expenses.length > 0 ? totalAmount / expenses.length : 0,
-  }), [expenses, pendingCount, approvedCount, reimbursedCount, rejectedCount, totalAmount]);
+  const expenseStats = useMemo(
+    () => ({
+      pendingCount,
+      approvedCount,
+      reimbursedCount,
+      rejectedCount,
+      totalAmount,
+      totalExpenses: expenses.length,
+      avgAmount: expenses.length > 0 ? totalAmount / expenses.length : 0,
+    }),
+    [expenses, pendingCount, approvedCount, reimbursedCount, rejectedCount, totalAmount]
+  );
 
   // 费用状态分布数据
-  const expenseStatusData = useMemo(() => [
-    { name: '待审批', value: pendingCount, color: '#f59e0b' },
-    { name: '已审批', value: approvedCount, color: '#3b82f6' },
-    { name: '已报销', value: reimbursedCount, color: '#22c55e' },
-    { name: '已拒绝', value: rejectedCount, color: '#ef4444' },
-  ], [pendingCount, approvedCount, reimbursedCount, rejectedCount]);
+  const expenseStatusData = useMemo(
+    () => [
+      { name: '待审批', value: pendingCount, color: '#f59e0b' },
+      { name: '已审批', value: approvedCount, color: '#3b82f6' },
+      { name: '已报销', value: reimbursedCount, color: '#22c55e' },
+      { name: '已拒绝', value: rejectedCount, color: '#ef4444' },
+    ],
+    [pendingCount, approvedCount, reimbursedCount, rejectedCount]
+  );
 
   // 费用类型分布数据
-  const expenseTypeData = useMemo(() => [
-    { name: '差旅费', value: expenses.filter(e => e.expense_type === 'travel').reduce((sum, e) => sum + e.amount, 0), color: '#3b82f6' },
-    { name: '办公费', value: expenses.filter(e => e.expense_type === 'office').reduce((sum, e) => sum + e.amount, 0), color: '#22c55e' },
-    { name: '餐费', value: expenses.filter(e => e.expense_type === 'meal').reduce((sum, e) => sum + e.amount, 0), color: '#f59e0b' },
-    { name: '交通费', value: expenses.filter(e => e.expense_type === 'transportation').reduce((sum, e) => sum + e.amount, 0), color: '#ef4444' },
-    { name: '通讯费', value: expenses.filter(e => e.expense_type === 'communication').reduce((sum, e) => sum + e.amount, 0), color: '#8b5cf6' },
-    { name: '培训费', value: expenses.filter(e => e.expense_type === 'training').reduce((sum, e) => sum + e.amount, 0), color: '#06b6d4' },
-    { name: '其他', value: expenses.filter(e => e.expense_type === 'other').reduce((sum, e) => sum + e.amount, 0), color: '#94a3b8' },
-  ], [expenses]);
+  const expenseTypeData = useMemo(
+    () => [
+      {
+        name: '差旅费',
+        value: expenses.filter((e) => e.expense_type === 'travel').reduce((sum, e) => sum + e.amount, 0),
+        color: '#3b82f6',
+      },
+      {
+        name: '办公费',
+        value: expenses.filter((e) => e.expense_type === 'office').reduce((sum, e) => sum + e.amount, 0),
+        color: '#22c55e',
+      },
+      {
+        name: '餐费',
+        value: expenses.filter((e) => e.expense_type === 'meal').reduce((sum, e) => sum + e.amount, 0),
+        color: '#f59e0b',
+      },
+      {
+        name: '交通费',
+        value: expenses.filter((e) => e.expense_type === 'transportation').reduce((sum, e) => sum + e.amount, 0),
+        color: '#ef4444',
+      },
+      {
+        name: '通讯费',
+        value: expenses.filter((e) => e.expense_type === 'communication').reduce((sum, e) => sum + e.amount, 0),
+        color: '#8b5cf6',
+      },
+      {
+        name: '培训费',
+        value: expenses.filter((e) => e.expense_type === 'training').reduce((sum, e) => sum + e.amount, 0),
+        color: '#06b6d4',
+      },
+      {
+        name: '其他',
+        value: expenses.filter((e) => e.expense_type === 'other').reduce((sum, e) => sum + e.amount, 0),
+        color: '#94a3b8',
+      },
+    ],
+    [expenses]
+  );
 
   return (
     <div className='min-h-screen bg-slate-50 dark:bg-slate-900'>
@@ -460,20 +498,12 @@ const FinanceExpensePage: React.FC = () => {
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
           <div className='bg-white rounded-lg shadow-sm p-6'>
             <h3 className='text-lg font-semibold text-gray-900 mb-4'>费用状态分布</h3>
-            <StatsChart
-              type='pie'
-              data={expenseStatusData}
-              height={250}
-            />
+            <StatsChart type='pie' data={expenseStatusData} height={250} />
           </div>
 
           <div className='bg-white rounded-lg shadow-sm p-6'>
             <h3 className='text-lg font-semibold text-gray-900 mb-4'>费用类型分布</h3>
-            <StatsChart
-              type='bar'
-              data={expenseTypeData}
-              height={250}
-            />
+            <StatsChart type='bar' data={expenseTypeData} height={250} />
           </div>
         </div>
 

@@ -1,11 +1,35 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Search, Plus, Edit, Trash2, Eye, Mail, Phone, Briefcase, Building2, LayoutGrid, List, UserCheck, UserX, TrendingUp } from 'lucide-react';
-import { employeeApi, departmentApi, type Employee, type Department, type PaginatedResult, type ListParams } from '../api/hrm';
+import {
+  Users,
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Mail,
+  Phone,
+  Briefcase,
+  Building2,
+  LayoutGrid,
+  List,
+  UserCheck,
+  UserX,
+  TrendingUp,
+} from 'lucide-react';
+import {
+  employeeApi,
+  departmentApi,
+  type Employee,
+  type Department,
+  type PaginatedResult,
+  type ListParams,
+} from '../api/hrm';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '../components/DataTable';
 import { HrmLayout } from '../components/HrmLayout';
-import TreeView, { TreeNode } from '../components/TreeView';
+import type { TreeNode } from '../components/TreeView';
+import TreeView from '../components/TreeView';
 import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } from '../components/ai';
 import type { CompletionItem, ValidateRequest } from '../types/ai';
 import { MetricCard } from '../components/MetricCard';
@@ -80,7 +104,7 @@ const HrmEmployeePage: React.FC = () => {
         const data = response.data as any;
         const depts = data.items || [];
         setDepartments(depts);
-        
+
         const tree = buildTree(depts, []);
         setTreeData(tree);
       }
@@ -93,17 +117,17 @@ const HrmEmployeePage: React.FC = () => {
     const deptMap = new Map<string, TreeNode>();
     const rootNodes: TreeNode[] = [];
 
-    depts.forEach(dept => {
+    depts.forEach((dept) => {
       deptMap.set(dept.id, {
         id: dept.id,
         name: dept.name,
         type: 'department' as const,
         children: [],
-        data: dept
+        data: dept,
       });
     });
 
-    depts.forEach(dept => {
+    depts.forEach((dept) => {
       const node = deptMap.get(dept.id)!;
       if (dept.parent_id && deptMap.has(dept.parent_id)) {
         deptMap.get(dept.parent_id)!.children!.push(node);
@@ -112,12 +136,12 @@ const HrmEmployeePage: React.FC = () => {
       }
     });
 
-    emps.forEach(emp => {
+    emps.forEach((emp) => {
       const empNode: TreeNode = {
         id: emp.id,
         name: emp.name,
         type: 'employee' as const,
-        data: emp
+        data: emp,
       };
       if (emp.department_id && deptMap.has(emp.department_id)) {
         deptMap.get(emp.department_id)!.children!.push(empNode);
@@ -143,21 +167,24 @@ const HrmEmployeePage: React.FC = () => {
     const params: any = { search: searchText };
     if (departmentFilter && departmentFilter !== 'all') params.department_id = departmentFilter;
     if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
-    
+
     if (viewMode === 'list') {
       fetchEmployees(params);
     } else {
       setLoading(true);
-      employeeApi.list({ ...params, page_size: 100 }).then(response => {
-        if (response.code === 200 && response.data) {
-          const data = response.data as any;
-          const emps = data.items || [];
-          setFilteredEmployees(emps);
-          const tree = buildTree(departments, emps);
-          setTreeData(tree);
-        }
-        setLoading(false);
-      }).catch(() => setLoading(false));
+      employeeApi
+        .list({ ...params, page_size: 100 })
+        .then((response) => {
+          if (response.code === 200 && response.data) {
+            const data = response.data as any;
+            const emps = data.items || [];
+            setFilteredEmployees(emps);
+            const tree = buildTree(departments, emps);
+            setTreeData(tree);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
     }
   };
 
@@ -214,7 +241,7 @@ const HrmEmployeePage: React.FC = () => {
 
   const handleApplyValidationSuggestions = (suggestions: any[]) => {
     const updates: Record<string, any> = {};
-    suggestions.forEach(s => {
+    suggestions.forEach((s) => {
       updates[s.field] = s.value;
     });
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -235,7 +262,7 @@ const HrmEmployeePage: React.FC = () => {
         if (viewMode === 'list') {
           fetchEmployees();
         } else {
-          const newEmps = filteredEmployees.filter(e => e.id !== id);
+          const newEmps = filteredEmployees.filter((e) => e.id !== id);
           setFilteredEmployees(newEmps);
           const tree = buildTree(departments, newEmps);
           setTreeData(tree);
@@ -400,19 +427,19 @@ const HrmEmployeePage: React.FC = () => {
 
   const selectedDeptEmployees = useMemo(() => {
     if (!selectedDeptId) return filteredEmployees;
-    return filteredEmployees.filter(e => e.department_id === selectedDeptId);
+    return filteredEmployees.filter((e) => e.department_id === selectedDeptId);
   }, [selectedDeptId, filteredEmployees]);
 
-  const selectedDept = departments.find(d => d.id === selectedDeptId);
+  const selectedDept = departments.find((d) => d.id === selectedDeptId);
 
   // 员工统计数据
   const employeeStats = useMemo(() => {
     const allEmployees = data.items;
     const totalEmployees = allEmployees.length;
-    const activeEmployees = allEmployees.filter(e => e.status === 'active').length;
-    const inactiveEmployees = allEmployees.filter(e => e.status === 'inactive').length;
-    const maleEmployees = allEmployees.filter(e => e.gender === 'male').length;
-    const femaleEmployees = allEmployees.filter(e => e.gender === 'female').length;
+    const activeEmployees = allEmployees.filter((e) => e.status === 'active').length;
+    const inactiveEmployees = allEmployees.filter((e) => e.status === 'inactive').length;
+    const maleEmployees = allEmployees.filter((e) => e.gender === 'male').length;
+    const femaleEmployees = allEmployees.filter((e) => e.gender === 'female').length;
 
     return {
       totalEmployees,
@@ -428,16 +455,19 @@ const HrmEmployeePage: React.FC = () => {
   const departmentDistributionData = useMemo(() => {
     return departments.map((d, index) => ({
       name: d.name,
-      value: data.items.filter(e => e.department_id === d.id).length,
+      value: data.items.filter((e) => e.department_id === d.id).length,
       color: ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#94a3b8', '#ec4899'][index % 8],
     }));
   }, [departments, data.items]);
 
   // 员工状态分布数据
-  const employeeStatusData = useMemo(() => [
-    { name: '在职', value: employeeStats.activeEmployees, color: '#22c55e' },
-    { name: '离职', value: employeeStats.inactiveEmployees, color: '#ef4444' },
-  ], [employeeStats]);
+  const employeeStatusData = useMemo(
+    () => [
+      { name: '在职', value: employeeStats.activeEmployees, color: '#22c55e' },
+      { name: '离职', value: employeeStats.inactiveEmployees, color: '#ef4444' },
+    ],
+    [employeeStats]
+  );
 
   return (
     <HrmLayout title='员工管理' subtitle='管理企业员工信息'>
@@ -476,19 +506,11 @@ const HrmEmployeePage: React.FC = () => {
       {/* 图表区域 */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
         <div className='bg-white rounded-lg shadow-sm p-6'>
-          <StatsChart
-            type='pie'
-            title=''
-            data={departmentDistributionData}
-          />
+          <StatsChart type='pie' title='' data={departmentDistributionData} />
         </div>
 
         <div className='bg-white rounded-lg shadow-sm p-6'>
-          <StatsChart
-            type='pie'
-            title=''
-            data={employeeStatusData}
-          />
+          <StatsChart type='pie' title='' data={employeeStatusData} />
         </div>
       </div>
 
@@ -605,25 +627,25 @@ const HrmEmployeePage: React.FC = () => {
                       <Building2 className='w-5 h-5 text-emerald-600' />
                       部门树
                     </h3>
-                    <div className="text-sm text-slate-500">{departments.length} 个部门</div>
+                    <div className='text-sm text-slate-500'>{departments.length} 个部门</div>
                   </div>
-                  <div className="mb-4">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <div className='mb-4'>
+                    <div className='relative'>
+                      <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400' />
                       <Input
-                        type="text"
-                        placeholder="搜索部门"
+                        type='text'
+                        placeholder='搜索部门'
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        className="pl-9 text-sm"
+                        className='pl-9 text-sm'
                       />
                     </div>
                   </div>
-                  <div className="flex gap-2 mb-4">
+                  <div className='flex gap-2 mb-4'>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder="全部状态" />
+                      <SelectTrigger className='w-[120px]'>
+                        <SelectValue placeholder='全部状态' />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value='all'>全部状态</SelectItem>
@@ -657,15 +679,13 @@ const HrmEmployeePage: React.FC = () => {
 
             <div className='lg:col-span-2'>
               {selectedDept ? (
-                <div className="space-y-6">
+                <div className='space-y-6'>
                   <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-4">
+                    <CardContent className='p-4'>
+                      <div className='flex items-center justify-between mb-4'>
                         <div>
-                          <h2 className="text-xl font-bold text-slate-900">{selectedDept.name}</h2>
-                          {selectedDept.code && (
-                            <p className="text-sm text-slate-500">编码: {selectedDept.code}</p>
-                          )}
+                          <h2 className='text-xl font-bold text-slate-900'>{selectedDept.name}</h2>
+                          {selectedDept.code && <p className='text-sm text-slate-500'>编码: {selectedDept.code}</p>}
                         </div>
                         <Badge>{selectedDeptEmployees.length} 人</Badge>
                       </div>
@@ -673,9 +693,9 @@ const HrmEmployeePage: React.FC = () => {
                   </Card>
 
                   <Card>
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-blue-500" />
+                    <CardContent className='p-4'>
+                      <h3 className='text-lg font-semibold mb-4 flex items-center gap-2'>
+                        <Users className='w-5 h-5 text-blue-500' />
                         部门成员
                       </h3>
                       {selectedDeptEmployees.length === 0 ? (
@@ -684,25 +704,30 @@ const HrmEmployeePage: React.FC = () => {
                           <p>该部门暂无员工</p>
                         </div>
                       ) : (
-                        <div className="space-y-3">
-                          {selectedDeptEmployees.map(emp => (
-                            <div key={emp.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                        <div className='space-y-3'>
+                          {selectedDeptEmployees.map((emp) => (
+                            <div key={emp.id} className='flex items-center justify-between p-3 bg-slate-50 rounded-lg'>
                               <div>
-                                <p className="font-medium text-slate-900">{emp.name}</p>
-                                <p className="text-sm text-slate-500">
+                                <p className='font-medium text-slate-900'>{emp.name}</p>
+                                <p className='text-sm text-slate-500'>
                                   {emp.employee_number} · {emp.position || '无职位'}
                                 </p>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-slate-600">{getStatusBadge(emp.status)}</span>
-                                <Button variant="ghost" size="sm" onClick={() => handleView(emp)}>
-                                  <Eye className="w-4 h-4" />
+                              <div className='flex items-center space-x-2'>
+                                <span className='text-sm text-slate-600'>{getStatusBadge(emp.status)}</span>
+                                <Button variant='ghost' size='sm' onClick={() => handleView(emp)}>
+                                  <Eye className='w-4 h-4' />
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleEdit(emp)}>
-                                  <Edit className="w-4 h-4" />
+                                <Button variant='ghost' size='sm' onClick={() => handleEdit(emp)}>
+                                  <Edit className='w-4 h-4' />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleDelete(emp.id)}>
-                                  <Trash2 className="w-4 h-4" />
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  className='text-red-600'
+                                  onClick={() => handleDelete(emp.id)}
+                                >
+                                  <Trash2 className='w-4 h-4' />
                                 </Button>
                               </div>
                             </div>
@@ -713,11 +738,11 @@ const HrmEmployeePage: React.FC = () => {
                   </Card>
                 </div>
               ) : (
-                <Card className="h-full">
-                  <CardContent className="p-12 text-center">
-                    <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-500 mb-2">选择部门查看员工</h3>
-                    <p className="text-sm text-slate-400">从左侧部门树中选择一个部门，查看部门成员信息</p>
+                <Card className='h-full'>
+                  <CardContent className='p-12 text-center'>
+                    <Building2 className='w-16 h-16 text-gray-300 mx-auto mb-4' />
+                    <h3 className='text-lg font-semibold text-slate-500 mb-2'>选择部门查看员工</h3>
+                    <p className='text-sm text-slate-400'>从左侧部门树中选择一个部门，查看部门成员信息</p>
                   </CardContent>
                 </Card>
               )}
@@ -916,21 +941,23 @@ const HrmEmployeePage: React.FC = () => {
                   <div className='space-y-2'>
                     <Label htmlFor='edit-department'>所属部门</Label>
                     <Select
-                    value={(formData as Employee)?.department_id || 'none'}
-                    onValueChange={(value) => handleInputChange('department_id', value === 'none' ? undefined : value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='请选择' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='none'>无</SelectItem>
-                      {departments.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>
-                          {d.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      value={(formData as Employee)?.department_id || 'none'}
+                      onValueChange={(value) =>
+                        handleInputChange('department_id', value === 'none' ? undefined : value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='请选择' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='none'>无</SelectItem>
+                        {departments.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>
+                            {d.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='edit-position'>职位</Label>
@@ -1067,7 +1094,7 @@ const HrmEmployeePage: React.FC = () => {
             name: (formData as Employee)?.name,
           }}
           onSelect={handleSelectAICode}
-          existingCodes={data.items.map(e => e.employee_number).filter(Boolean) as string[]}
+          existingCodes={data.items.map((e) => e.employee_number).filter(Boolean) as string[]}
         />
 
         <AIDataCompleter

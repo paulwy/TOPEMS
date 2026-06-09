@@ -16,7 +16,8 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { flowApi, Workflow, WorkflowVersion } from '../api/flow';
+import type { Workflow, WorkflowVersion } from '../api/flow';
+import { flowApi } from '../api/flow';
 import { useAppStore } from '../store';
 import { Button } from '@/components/ui/button';
 import {
@@ -293,22 +294,38 @@ const FlowVersionHistoryPage: React.FC = () => {
                   <div className='flex items-center space-x-2'>
                     {!version.is_active && (
                       <>
-                        <Button variant='ghost' size='sm' onClick={() => {
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={() => {
                             setSelectedVersion(version);
                             setShowRollbackModal(true);
-                          }} className='text-orange-600 hover:text-orange-700 hover:bg-orange-50' title='回滚到此版本'>
+                          }}
+                          className='text-orange-600 hover:text-orange-700 hover:bg-orange-50'
+                          title='回滚到此版本'
+                        >
                           <RotateCcw className='w-4 h-4' />
                         </Button>
-                        <Button variant='ghost' size='sm' onClick={() => handleDeleteVersion(version)} className='text-red-600 hover:text-red-700 hover:bg-red-50' title='删除版本'>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={() => handleDeleteVersion(version)}
+                          className='text-red-600 hover:text-red-700 hover:bg-red-50'
+                          title='删除版本'
+                        >
                           <Trash2 className='w-4 h-4' />
                         </Button>
                       </>
                     )}
-                    <Button 
-                      size='sm' 
+                    <Button
+                      size='sm'
                       onClick={() => handleActivateVersion(version)}
                       disabled={version.is_active}
-                      className={version.is_active ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}
+                      className={
+                        version.is_active
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-purple-600 hover:bg-purple-700'
+                      }
                     >
                       {version.is_active ? '已激活' : '激活'}
                     </Button>
@@ -352,7 +369,11 @@ const FlowVersionHistoryPage: React.FC = () => {
             <Button variant='secondary' onClick={() => setShowCreateModal(false)}>
               取消
             </Button>
-            <Button onClick={handleCreateVersion} disabled={actionLoading || !createForm.version.trim()} className='bg-purple-600 hover:bg-purple-700'>
+            <Button
+              onClick={handleCreateVersion}
+              disabled={actionLoading || !createForm.version.trim()}
+              className='bg-purple-600 hover:bg-purple-700'
+            >
               {actionLoading && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
               创建
             </Button>
@@ -368,7 +389,9 @@ const FlowVersionHistoryPage: React.FC = () => {
             <DialogDescription>
               {selectedVersion && (
                 <>
-                  <p>确定要回滚到版本 <strong>v{selectedVersion.version}</strong> 吗？</p>
+                  <p>
+                    确定要回滚到版本 <strong>v{selectedVersion.version}</strong> 吗？
+                  </p>
                   <p className='text-sm text-gray-500'>当前工作流将被更新为该版本的内容。</p>
                 </>
               )}
@@ -385,11 +408,14 @@ const FlowVersionHistoryPage: React.FC = () => {
             />
           </div>
           <DialogFooter>
-            <Button variant='secondary' onClick={() => {
-                  setShowRollbackModal(false);
-                  setSelectedVersion(null);
-                  setRollbackForm({ reason: '' });
-                }}>
+            <Button
+              variant='secondary'
+              onClick={() => {
+                setShowRollbackModal(false);
+                setSelectedVersion(null);
+                setRollbackForm({ reason: '' });
+              }}
+            >
               取消
             </Button>
             <Button onClick={handleRollback} disabled={actionLoading} className='bg-orange-600 hover:bg-orange-700'>

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Check, Trash2, Settings, RefreshCw } from 'lucide-react';
 import NotificationItem from './NotificationItem';
 import NotificationSettings from './NotificationSettings';
-import { Notification, getNotifications, getUnreadCount, markAllAsRead } from '../../api/notification';
+import type { Notification } from '../../api/notification';
+import { getNotifications, getUnreadCount, markAllAsRead } from '../../api/notification';
 
 interface NotificationPanelProps {
   onClose: () => void;

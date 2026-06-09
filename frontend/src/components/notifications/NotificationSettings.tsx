@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bell, Volume2, VolumeX, Monitor, Smartphone } from 'lucide-react';
-import useNotificationSettings, { NotificationSettingsData } from '../../hooks/useNotificationSettings';
+import type { NotificationSettingsData } from '../../hooks/useNotificationSettings';
+import useNotificationSettings from '../../hooks/useNotificationSettings';
 
 const NotificationSettings: React.FC = () => {
   const { settings, toggleSetting, toggleNotificationType, toggleQuietHours, updateQuietHours } =

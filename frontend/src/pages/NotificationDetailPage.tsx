@@ -1,21 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Bell,
-  ChevronLeft,
-  Check,
-  Trash2,
-  ExternalLink,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react';
+import { Bell, ChevronLeft, Check, Trash2, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Notification,
-  NotificationTypeEnum,
-  markAsRead,
-  deleteNotification,
-  getNotifications,
-} from '../api/notification';
+import type { Notification, NotificationTypeEnum } from '../api/notification';
+import { markAsRead, deleteNotification, getNotifications } from '../api/notification';
 import { useNotification } from '../hooks/useNotification';
 import { NotificationContainer } from '../components/NotificationContainer';
 
@@ -250,18 +237,14 @@ const NotificationDetailPage: React.FC = () => {
                 <span className={`px-3 py-1 text-sm rounded-full ${getTypeColor(notification.notification_type)}`}>
                   {getTypeLabel(notification.notification_type)}
                 </span>
-                <span className={`px-3 py-1 text-sm rounded-full ${priorityInfo.color}`}>
-                  {priorityInfo.label}
-                </span>
+                <span className={`px-3 py-1 text-sm rounded-full ${priorityInfo.color}`}>{priorityInfo.label}</span>
                 {notification.is_read ? (
                   <span className='px-3 py-1 text-sm rounded-full bg-green-100 text-green-700'>已读</span>
                 ) : (
                   <span className='px-3 py-1 text-sm rounded-full bg-red-100 text-red-700'>未读</span>
                 )}
               </div>
-              <span className='text-sm text-gray-500'>
-                {new Date(notification.created_at).toLocaleString('zh-CN')}
-              </span>
+              <span className='text-sm text-gray-500'>{new Date(notification.created_at).toLocaleString('zh-CN')}</span>
             </div>
 
             <h2 className='text-xl font-semibold text-gray-900 mb-2'>{notification.title}</h2>

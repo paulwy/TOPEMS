@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, FileSpreadsheet, File, FileText, Download, CheckCircle, Loader2, Columns } from 'lucide-react';
-import { ReportData, ExportFormat, ExportReportRequest } from '../api/report';
+import type { ReportData, ExportFormat } from '../api/report';
+import { ExportReportRequest } from '../api/report';
 
 interface ExportModalProps {
   report: ReportData;

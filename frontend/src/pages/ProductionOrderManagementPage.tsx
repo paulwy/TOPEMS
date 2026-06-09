@@ -16,7 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { mesApi, ProductionOrder, CreateProductionOrderRequest, UpdateProductionOrderRequest } from '@/api/mes';
+import type { ProductionOrder, CreateProductionOrderRequest, UpdateProductionOrderRequest } from '@/api/mes';
+import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/EmptyState';

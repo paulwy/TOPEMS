@@ -1,7 +1,16 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
 
-export type NotificationTypeEnum = 'info' | 'success' | 'warning' | 'error' | 'system' | 'workflow' | 'reminder' | 'alert' | 'message';
+export type NotificationTypeEnum =
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'system'
+  | 'workflow'
+  | 'reminder'
+  | 'alert'
+  | 'message';
 
 export interface Notification {
   id: string;
@@ -170,7 +179,10 @@ export const getArchivedNotifications = async (
     page,
     page_size: pageSize,
   };
-  const response = await apiClient.notification.get<NotificationListResponse<ArchivedNotification>>('/api/v1/notifications/archived', { params });
+  const response = await apiClient.notification.get<NotificationListResponse<ArchivedNotification>>(
+    '/api/v1/notifications/archived',
+    { params }
+  );
   return response;
 };
 
@@ -217,7 +229,10 @@ export const getTemplates = async (
   if (status) {
     params.status = status;
   }
-  const response = await apiClient.notification.get<NotificationTemplateListResponse>('/api/v1/notification-templates', { params });
+  const response = await apiClient.notification.get<NotificationTemplateListResponse>(
+    '/api/v1/notification-templates',
+    { params }
+  );
   return response;
 };
 
@@ -231,8 +246,14 @@ export const createTemplate = async (template: CreateTemplateRequest): Promise<A
   return response;
 };
 
-export const updateTemplate = async (id: string, template: UpdateTemplateRequest): Promise<ApiResponse<NotificationTemplate>> => {
-  const response = await apiClient.notification.put<NotificationTemplate>(`/api/v1/notification-templates/${id}`, template);
+export const updateTemplate = async (
+  id: string,
+  template: UpdateTemplateRequest
+): Promise<ApiResponse<NotificationTemplate>> => {
+  const response = await apiClient.notification.put<NotificationTemplate>(
+    `/api/v1/notification-templates/${id}`,
+    template
+  );
   return response;
 };
 
@@ -241,8 +262,14 @@ export const deleteTemplate = async (id: string): Promise<ApiResponse<boolean>> 
   return response;
 };
 
-export const renderTemplate = async (id: string, data: Record<string, any>): Promise<ApiResponse<{ title: string; content: string }>> => {
-  const response = await apiClient.notification.post<{ title: string; content: string }>(`/api/v1/notification-templates/${id}/render`, data);
+export const renderTemplate = async (
+  id: string,
+  data: Record<string, any>
+): Promise<ApiResponse<{ title: string; content: string }>> => {
+  const response = await apiClient.notification.post<{ title: string; content: string }>(
+    `/api/v1/notification-templates/${id}/render`,
+    data
+  );
   return response;
 };
 

@@ -7,13 +7,17 @@ export const exportToCSV = (data: any[], filename: string) => {
   const headers = Object.keys(data[0]);
   const csvContent = [
     headers.join(','),
-    ...data.map(row => headers.map(header => {
-      const cell = row[header];
-      if (typeof cell === 'string') {
-        return `"${cell.replace(/"/g, '""')}"`;
-      }
-      return cell;
-    }).join(','))
+    ...data.map((row) =>
+      headers
+        .map((header) => {
+          const cell = row[header];
+          if (typeof cell === 'string') {
+            return `"${cell.replace(/"/g, '""')}"`;
+          }
+          return cell;
+        })
+        .join(',')
+    ),
   ].join('\n');
 
   const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
@@ -65,7 +69,7 @@ export const exportToMarkdown = (data: any[], filename: string) => {
     '',
     `| ${headers.join(' | ')} |`,
     `| ${headers.map(() => '---').join(' | ')} |`,
-    ...data.map(row => `| ${headers.map(header => row[header] || '').join(' | ')} |`)
+    ...data.map((row) => `| ${headers.map((header) => row[header] || '').join(' | ')} |`),
   ].join('\n');
 
   const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8;' });
@@ -132,6 +136,6 @@ export const getDateRange = (range: string): { start: string; end: string } => {
 
   return {
     start: formatDate(startDate),
-    end: formatDate(endDate)
+    end: formatDate(endDate),
   };
 };

@@ -27,8 +27,7 @@ import {
   PieChart,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  pmApi,
+import type {
   Project,
   ProjectPhase,
   ProjectMilestone,
@@ -50,6 +49,7 @@ import {
   ProjectDocument,
   ProjectReport,
 } from '../api/pm';
+import { pmApi } from '../api/pm';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '草稿',
@@ -572,7 +572,9 @@ const PmProjectDetailPage: React.FC = () => {
                           >
                             {risk.level || risk.impact}
                           </span>
-                          <span className='text-gray-700'>{risk.risk_description || risk.description || risk.risk_name}</span>
+                          <span className='text-gray-700'>
+                            {risk.risk_description || risk.description || risk.risk_name}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -1194,12 +1196,18 @@ const PmProjectDetailPage: React.FC = () => {
                                     : risk.status}
                               </span>
                             </div>
-                            {risk.risk_description && <p className='text-sm text-gray-500 mt-1'>{risk.risk_description}</p>}
+                            {risk.risk_description && (
+                              <p className='text-sm text-gray-500 mt-1'>{risk.risk_description}</p>
+                            )}
                             <div className='flex items-center gap-4 mt-2'>
-                              <span className={`px-2 py-1 text-xs rounded-full ${RISK_COLORS[risk.likelihood] || 'bg-gray-100'}`}>
+                              <span
+                                className={`px-2 py-1 text-xs rounded-full ${RISK_COLORS[risk.likelihood] || 'bg-gray-100'}`}
+                              >
                                 可能性: {RISK_LABELS[risk.likelihood] || risk.likelihood}
                               </span>
-                              <span className={`px-2 py-1 text-xs rounded-full ${RISK_COLORS[risk.impact] || 'bg-gray-100'}`}>
+                              <span
+                                className={`px-2 py-1 text-xs rounded-full ${RISK_COLORS[risk.impact] || 'bg-gray-100'}`}
+                              >
                                 影响: {RISK_LABELS[risk.impact] || risk.impact}
                               </span>
                               <span className='text-sm text-gray-500'>风险评分: {risk.risk_score}</span>
@@ -1239,10 +1247,16 @@ const PmProjectDetailPage: React.FC = () => {
                                         : 'bg-gray-100 text-gray-800'
                                   }`}
                                 >
-                                  {check.status === 'passed' ? '通过' : check.status === 'failed' ? '未通过' : check.status}
+                                  {check.status === 'passed'
+                                    ? '通过'
+                                    : check.status === 'failed'
+                                      ? '未通过'
+                                      : check.status}
                                 </span>
                               </div>
-                              {check.check_criteria && <p className='text-sm text-gray-500 mt-1'>{check.check_criteria}</p>}
+                              {check.check_criteria && (
+                                <p className='text-sm text-gray-500 mt-1'>{check.check_criteria}</p>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1412,11 +1426,7 @@ const PmProjectDetailPage: React.FC = () => {
                               <span>预算: {formatCurrency(settlement.budget_amount)}</span>
                               <span>实际: {formatCurrency(settlement.actual_amount)}</span>
                               {settlement.variance_amount !== undefined && (
-                                <span
-                                  className={
-                                    settlement.variance_amount >= 0 ? 'text-green-600' : 'text-red-600'
-                                  }
-                                >
+                                <span className={settlement.variance_amount >= 0 ? 'text-green-600' : 'text-red-600'}>
                                   差异: {formatCurrency(settlement.variance_amount)}
                                 </span>
                               )}

@@ -500,26 +500,33 @@ export const qmsApi = {
 
       const statistics: QmsStatistics = {
         total_standards: standards.length,
-        active_standards: standards.filter(s => s.status === 'active' || s.status === '启用').length,
-        inactive_standards: standards.filter(s => s.status === 'inactive' || s.status === '禁用').length,
+        active_standards: standards.filter((s) => s.status === 'active' || s.status === '启用').length,
+        inactive_standards: standards.filter((s) => s.status === 'inactive' || s.status === '禁用').length,
 
         total_inspections: checks.length,
-        pending_inspections: checks.filter(c => c.status === 'pending' || c.status === '待处理').length,
-        in_progress_inspections: checks.filter(c => c.status === 'in_progress' || c.status === '进行中').length,
-        completed_inspections: checks.filter(c => c.status === 'completed' || c.status === '已完成').length,
+        pending_inspections: checks.filter((c) => c.status === 'pending' || c.status === '待处理').length,
+        in_progress_inspections: checks.filter((c) => c.status === 'in_progress' || c.status === '进行中').length,
+        completed_inspections: checks.filter((c) => c.status === 'completed' || c.status === '已完成').length,
 
         total_issues: issues.length,
-        open_issues: issues.filter(i => i.status === 'open' || i.status === '待处理' || i.status === '处理中').length,
-        resolved_issues: issues.filter(i => i.status === 'closed' || i.status === 'resolved' || i.status === '已关闭').length,
-        critical_issues: issues.filter(i => i.severity === 'critical' || i.severity === '严重').length,
+        open_issues: issues.filter((i) => i.status === 'open' || i.status === '待处理' || i.status === '处理中').length,
+        resolved_issues: issues.filter((i) => i.status === 'closed' || i.status === 'resolved' || i.status === '已关闭')
+          .length,
+        critical_issues: issues.filter((i) => i.severity === 'critical' || i.severity === '严重').length,
 
         total_actions: improvements.length,
-        pending_actions: improvements.filter(a => a.status === 'pending' || a.status === '提议').length,
-        in_progress_actions: improvements.filter(a => a.status === 'in_progress' || a.status === '实施中').length,
-        completed_actions: improvements.filter(a => a.status === 'completed' || a.status === '已完成').length,
+        pending_actions: improvements.filter((a) => a.status === 'pending' || a.status === '提议').length,
+        in_progress_actions: improvements.filter((a) => a.status === 'in_progress' || a.status === '实施中').length,
+        completed_actions: improvements.filter((a) => a.status === 'completed' || a.status === '已完成').length,
       };
 
-      return { success: true, data: statistics, message: 'Statistics calculated', code: 200, timestamp: new Date().toISOString() };
+      return {
+        success: true,
+        data: statistics,
+        message: 'Statistics calculated',
+        code: 200,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       console.error('Failed to calculate QMS statistics:', error);
       const fallbackStats: QmsStatistics = {
@@ -539,7 +546,13 @@ export const qmsApi = {
         in_progress_actions: 0,
         completed_actions: 0,
       };
-      return { success: true, data: fallbackStats, message: 'Using fallback statistics', code: 200, timestamp: new Date().toISOString() };
+      return {
+        success: true,
+        data: fallbackStats,
+        message: 'Using fallback statistics',
+        code: 200,
+        timestamp: new Date().toISOString(),
+      };
     }
   },
 

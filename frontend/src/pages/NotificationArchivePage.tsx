@@ -1,25 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Archive,
-  ChevronLeft,
-  Search,
-  Loader2,
-  RefreshCw,
-  Settings,
-  Trash2,
-  RotateCcw,
-  Eye,
-} from 'lucide-react';
+import { Archive, ChevronLeft, Search, Loader2, RefreshCw, Settings, Trash2, RotateCcw, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  getArchivedNotifications,
-  getArchiveConfig,
-  updateArchiveConfig,
-  runAutoArchive,
-  ArchiveConfig,
-  ArchivedNotification,
-  NotificationTypeEnum,
-} from '../api/notification';
+import type { ArchiveConfig, ArchivedNotification, NotificationTypeEnum } from '../api/notification';
+import { getArchivedNotifications, getArchiveConfig, updateArchiveConfig, runAutoArchive } from '../api/notification';
 import { useNotification } from '../hooks/useNotification';
 import { NotificationContainer } from '../components/NotificationContainer';
 
@@ -43,10 +26,7 @@ const NotificationArchivePage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [archivedRes, configRes] = await Promise.all([
-        getArchivedNotifications(page, 20),
-        getArchiveConfig(),
-      ]);
+      const [archivedRes, configRes] = await Promise.all([getArchivedNotifications(page, 20), getArchiveConfig()]);
 
       if (archivedRes.success && archivedRes.data) {
         setArchivedNotifications(archivedRes.data.notifications || []);
@@ -260,7 +240,9 @@ const NotificationArchivePage: React.FC = () => {
                           <div className='text-xs text-gray-500 truncate max-w-md'>{notification.content}</div>
                         </td>
                         <td className='px-6 py-4 whitespace-nowrap'>
-                          <span className={`px-2 py-1 text-xs rounded-full ${getTypeColor(notification.notification_type)}`}>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${getTypeColor(notification.notification_type)}`}
+                          >
                             {getTypeLabel(notification.notification_type)}
                           </span>
                         </td>
@@ -409,10 +391,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
           >
             取消
           </button>
-          <button
-            onClick={handleSubmit}
-            className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
-          >
+          <button onClick={handleSubmit} className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'>
             保存
           </button>
         </div>

@@ -3,7 +3,7 @@ import { Bell, Search, Plus, Edit, Trash2, ChevronLeft, AlertCircle, Calendar, U
 import { useNavigate } from 'react-router-dom';
 import { announcementApi, type Announcement } from '../api/erp';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 
 import { Button } from '@/components/ui/button';

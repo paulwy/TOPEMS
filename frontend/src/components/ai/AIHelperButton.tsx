@@ -29,22 +29,17 @@ export function AIHelperButton({
   variant = 'default',
 }: AIHelperButtonProps) {
   const buttonLabel = label || typeLabels[type];
-  
+
   return (
-    <Button
-      onClick={onClick}
-      disabled={disabled || loading}
-      size={size}
-      variant={variant}
-    >
+    <Button onClick={onClick} disabled={disabled || loading} size={size} variant={variant}>
       {loading ? (
         <>
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          <Loader2 className='w-4 h-4 mr-2 animate-spin' />
           处理中...
         </>
       ) : (
         <>
-          <Sparkles className="w-4 h-4 mr-2" />
+          <Sparkles className='w-4 h-4 mr-2' />
           {buttonLabel}
         </>
       )}
