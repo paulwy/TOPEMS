@@ -8,9 +8,9 @@ import { ToastProvider } from '../../components/ToastProvider';
 import { LoadingProvider } from '../../components/LoadingProvider';
 import ErrorBoundary from '../../components/ErrorBoundary';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => jest.fn(),
+vi.mock('react-router-dom', async () => ({
+  ...await vi.importActual('react-router-dom'),
+  useNavigate: () => vi.fn(),
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
@@ -35,7 +35,7 @@ const renderDashboardPage = () => {
 
 describe('DashboardPage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
   });
 

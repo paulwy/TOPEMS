@@ -12,6 +12,15 @@ use topems_shared::{
     ServiceHealth, build_health_response, create_api_info_router,
 };
 
+pub mod models;
+pub mod api;
+
+use api::product::create_router as create_product_router;
+use api::document::create_router as create_document_router;
+use api::material::create_router as create_material_router;
+use api::version::create_router as create_version_router;
+use api::configuration::create_router as create_configuration_router;
+
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ProductionProcess {
     pub id: Uuid,
@@ -297,11 +306,16 @@ async fn main() {
         .route("/api/v1/production-batches/{id}", delete(delete_batch))
         .route("/api/v1/production-statistics", get(list_statistics))
         .route("/api/v1/production-statistics", post(create_statistics))
+        .with_state(app_state.clone())
+        .merge(create_product_router(pool.clone()))
+        .merge(create_document_router(pool.clone()))
+        .merge(create_material_router(pool.clone()))
+        .merge(create_version_router(pool.clone()))
+        .merge(create_configuration_router(pool.clone()))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .with_state(app_state);
+        ));
 
     let app = Router::new()
         .merge(public_routes)
@@ -430,6 +444,137 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS products (
+            id UUID PRIMARY KEY,
+            product_no VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            category VARCHAR(100),
+            unit VARCHAR(50),
+            status VARCHAR(50) NOT NULL DEFAULT 'draft',
+            version VARCHAR(50) NOT NULL,
+            created_by UUID,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )"
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS product_boms (
+            id UUID PRIMARY KEY,
+            product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+            material_id UUID,
+            material_name VARCHAR(255) NOT NULL,
+            quantity NUMERIC NOT NULL,
+            unit VARCHAR(50) NOT NULL,
+            parent_id UUID REFERENCES product_boms(id),
+            level INTEGER NOT NULL DEFAULT 1,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )"
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS material_categories (
+            id UUID PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            parent_id UUID REFERENCES material_categories(id),
+            description TEXT,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )"
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS materials (
+            id UUID PRIMARY KEY,
+            material_no VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            category_id UUID NOT NULL REFERENCES material_categories(id),
+            specification TEXT,
+            unit VARCHAR(50) NOT NULL,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_by UUID,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )"
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS documents (
+            id UUID PRIMARY KEY,
+            doc_no VARCHAR(100) NOT NULL UNIQUE,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            product_id UUID REFERENCES products(id),
+            file_path VARCHAR(500) NOT NULL,
+            file_size BIGINT NOT NULL,
+            file_type VARCHAR(100) NOT NULL,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            created_by UUID,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )"
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS document_versions (
+            id UUID PRIMARY KEY,
+            document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+            version VARCHAR(50) NOT NULL,
+            changelog TEXT,
+            file_path VARCHAR(500) NOT NULL,
+            file_size BIGINT NOT NULL,
+            created_by UUID,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )"
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS versions (
+            id UUID PRIMARY KEY,
+            version_no VARCHAR(100) NOT NULL,
+            product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+            description TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT 'draft',
+            release_date TIMESTAMPTZ,
+            created_by UUID,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )"
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS configurations (
+            id UUID PRIMARY KEY,
+            config_key VARCHAR(255) NOT NULL,
+            config_value TEXT NOT NULL,
+            description TEXT,
+            product_id UUID REFERENCES products(id),
+            version_id UUID REFERENCES versions(id),
+            created_by UUID,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )"
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }
 
@@ -544,7 +689,6 @@ async fn update_process(
     }
 
     if first {
-        // No fields to update
         return get_process(State(state), Path(id)).await;
     }
 
@@ -848,7 +992,6 @@ async fn update_formula(
     }
 
     if first {
-        // No fields to update
         return get_formula(State(state), Path(id)).await;
     }
 
@@ -1095,7 +1238,6 @@ async fn update_batch(
     }
 
     if first {
-        // No fields to update
         return get_batch(State(state), Path(id)).await;
     }
 

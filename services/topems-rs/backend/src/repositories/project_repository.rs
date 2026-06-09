@@ -231,37 +231,12 @@ mod tests {
         let database_url = "postgres://topems:topems_secret@localhost:5432/topems";
         let pool = PgPool::connect(database_url).await.unwrap();
         
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS rs_test.projects (
-                id UUID PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                code VARCHAR(100) NOT NULL,
-                description TEXT,
-                project_type VARCHAR(100) NOT NULL,
-                status VARCHAR(50) NOT NULL DEFAULT 'active',
-                leader VARCHAR(255) NOT NULL,
-                team_members JSONB,
-                start_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                end_date TIMESTAMPTZ,
-                budget DOUBLE PRECISION,
-                progress INTEGER NOT NULL DEFAULT 0,
-                created_by VARCHAR(255) NOT NULL,
-                created_at TIMESTAMPTZ DEFAULT NOW(),
-                updated_at TIMESTAMPTZ DEFAULT NOW(),
-                project_config JSONB,
-                benefit_target JSONB,
-                risk_level VARCHAR(50),
-                priority INTEGER,
-                tags TEXT[],
-                parent_id UUID,
-                workspace_id UUID
-            )
-            "#,
-        )
-        .execute(&pool)
-        .await
-        .unwrap_or_default();
+        // 清理测试表中的所有数据，确保测试隔离
+        // 使用 CASCADE 以删除关联数据（如 project_phases 等外键关联表）
+        sqlx::query("TRUNCATE TABLE rs_test.projects, rs_test.project_phases, rs_test.milestones, rs_test.project_members CASCADE")
+            .execute(&pool)
+            .await
+            .unwrap_or_default();
         
         pool
     }

@@ -36,6 +36,7 @@ export interface ServicesConfig {
   portal: string;
   mail: string;
   pm: string;
+  migration: string;
 }
 
 export interface FeaturesConfig {

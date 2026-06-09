@@ -1,7 +1,6 @@
-
-
 mod models;
 mod db;
+mod api;
 
 use axum::{
     extract::{FromRef, Path, State},
@@ -19,6 +18,13 @@ use topems_shared::{
 
 use models::*;
 use db::repository::*;
+use api::auth::{login, logout, refresh_token, verify_code};
+use api::user::{get_profile, update_profile, upload_avatar};
+use api::notification::{get_notifications, get_unread_count, mark_all_read};
+use api::scan::{scan_barcode, scan_qrcode, image_ocr};
+use api::offline::{sync_offline_data, get_offline_status};
+use api::device::{register_device, update_push_token};
+use api::shortcut::{get_shortcuts, create_shortcut};
 
 #[derive(Clone)]
 struct AppState {
@@ -248,10 +254,43 @@ async fn main() -> anyhow::Result<()> {
     let cors = create_cors_layer();
 
     let public_routes = Router::new()
-        .route("/health", axum::routing::get(health_check));
+        .route("/health", axum::routing::get(health_check))
+        .route("/api/v1/auth/login", axum::routing::post(login))
+        .route("/api/v1/auth/verify-code", axum::routing::post(verify_code));
 
     let protected_routes = Router::new()
         .route("/api/v1/dashboard/stats", axum::routing::get(get_dashboard_stats))
+        
+        // Auth Routes
+        .route("/api/v1/auth/logout", axum::routing::post(logout))
+        .route("/api/v1/auth/refresh", axum::routing::post(refresh_token))
+        
+        // User Routes
+        .route("/api/v1/user/profile", axum::routing::get(get_profile).put(update_profile))
+        .route("/api/v1/user/avatar", axum::routing::post(upload_avatar))
+        
+        // Notification Routes
+        .route("/api/v1/notifications", axum::routing::get(get_notifications))
+        .route("/api/v1/notifications/unread-count", axum::routing::get(get_unread_count))
+        .route("/api/v1/notifications/read-all", axum::routing::put(mark_all_read))
+        
+        // Scan Routes
+        .route("/api/v1/scan/barcode", axum::routing::post(scan_barcode))
+        .route("/api/v1/scan/qrcode", axum::routing::post(scan_qrcode))
+        .route("/api/v1/scan/image-ocr", axum::routing::post(image_ocr))
+        
+        // Offline Routes
+        .route("/api/v1/offline/sync", axum::routing::post(sync_offline_data))
+        .route("/api/v1/offline/status", axum::routing::get(get_offline_status))
+        
+        // Device Routes
+        .route("/api/v1/devices/register", axum::routing::post(register_device))
+        .route("/api/v1/devices/token", axum::routing::put(update_push_token))
+        
+        // Shortcut Routes
+        .route("/api/v1/shortcuts", axum::routing::get(get_shortcuts).post(create_shortcut))
+        
+        // Legacy Routes
         .route("/api/v1/patrol-records", axum::routing::get(list_patrol_records).post(create_patrol_record))
         .route("/api/v1/scan-records", axum::routing::get(list_scan_records).post(create_scan_record))
         .route("/api/v1/photo-evidences", axum::routing::get(list_photo_evidences).post(create_photo_evidence))

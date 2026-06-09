@@ -255,6 +255,10 @@ class ApiClient {
     return this.clients.scm;
   }
 
+  get migration() {
+    return this.clients.migration;
+  }
+
   setAuthToken(token: string) {
     Object.values(this.clients).forEach((client) => {
       client.defaults.headers.common['Authorization'] = `Bearer ${token}`;

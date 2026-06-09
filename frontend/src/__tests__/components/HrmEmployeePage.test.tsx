@@ -10,32 +10,32 @@ import ErrorBoundary from '../../components/ErrorBoundary';
 import { useAppStore } from '../../store';
 
 // 模拟依赖
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => jest.fn(),
+vi.mock('react-router-dom', async () => ({
+  ...await vi.importActual('react-router-dom'),
+  useNavigate: () => vi.fn(),
   useLocation: () => ({ pathname: '/hrm/employees' }),
 }));
 
 // 模拟 API
-jest.mock('../../api/hrm', () => ({
+vi.mock('../../api/hrm', () => ({
   employeeApi: {
-    list: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+    list: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
   },
   departmentApi: {
-    list: jest.fn(),
+    list: vi.fn(),
   },
 }));
 
 // 模拟 DataTable 组件以避免测试问题
-jest.mock('../../components/DataTable', () => ({
+vi.mock('../../components/DataTable', () => ({
   DataTable: () => <div data-testid="data-table">Mock Data Table</div>,
 }));
 
 // 模拟 MetricCard 组件以避免测试问题
-jest.mock('../../components/MetricCard', () => ({
+vi.mock('../../components/MetricCard', () => ({
   MetricCard: (props: any) => (
     <div data-testid="metric-card">
       <p>{props.title}</p>
@@ -45,21 +45,21 @@ jest.mock('../../components/MetricCard', () => ({
 }));
 
 // 模拟 StatsChart 组件以避免测试问题
-jest.mock('../../components/StatsChart', () => ({
+vi.mock('../../components/StatsChart', () => ({
   StatsChart: () => <div data-testid="stats-chart">Mock Stats Chart</div>,
 }));
 
 // 模拟 zustand store
-jest.mock('../../store', () => ({
-  useAppStore: jest.fn(),
+vi.mock('../../store', () => ({
+  useAppStore: vi.fn(),
 }));
 
-const mockEmployeeApi = employeeApi as jest.Mocked<typeof employeeApi>;
-const mockDepartmentApi = departmentApi as jest.Mocked<typeof departmentApi>;
+const mockEmployeeApi = employeeApi as vi.Mock<typeof employeeApi>;
+const mockDepartmentApi = departmentApi as vi.Mock<typeof departmentApi>;
 
 // 模拟 zustand store 返回值
-const mockAddNotification = jest.fn();
-const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
+const mockAddNotification = vi.fn();
+const mockUseAppStore = useAppStore as vi.MockFunction<typeof useAppStore>;
 
 // 模拟数据
 const mockEmployees = {
@@ -99,7 +99,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
 
 describe('HrmEmployeePage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // 模拟 API 响应
     mockEmployeeApi.list.mockResolvedValue({

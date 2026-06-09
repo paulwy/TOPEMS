@@ -31,12 +31,12 @@ async fn main() -> Result<()> {
     
     // 2. 创建 HRM 服务客户端
     println!("2. 服务客户端示例");
-    let hrm_client = create_hrm_client(&hrm_url)?;
+    let hrm_client = create_hrm_client()?;
     println!("   HRM 客户端创建成功\n");
     
     // 3. 事件发布示例
     println!("3. 事件发布示例");
-    let publisher = EventPublisher::new()?;
+    let publisher = EventPublisher::new("example-service")?;
     
     // 发布 HRM 员工创建事件
     publisher.publish_hrm_employee_created(

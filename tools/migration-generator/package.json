@@ -1,0 +1,53 @@
+{
+  "name": "topems-migrate",
+  "version": "0.1.0",
+  "description": "TOPEMS 多租户多服务数据库迁移工具",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "topems-migrate": "./bin/topems-migrate.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist",
+    "dev": "ts-node src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "topems",
+    "migration",
+    "postgresql",
+    "pgvector"
+  ],
+  "license": "MIT",
+  "author": "TOPEMS Team",
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "cli-progress": "^3.12.0",
+    "commander": "^11.1.0",
+    "ora": "^5.4.1",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^12.0.1",
+    "@types/cli-progress": "^3.11.5",
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.10.9",
+    "testcontainers": "^12.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.6.0"
+  }
+}

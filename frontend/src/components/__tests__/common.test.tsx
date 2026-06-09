@@ -36,7 +36,7 @@ describe('EmptyState', () => {
   });
 
   it('renders with action button', () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
     render(<EmptyState title='No files found' action={{ label: 'Upload File', onClick: handleClick }} />);
     const button = screen.getByText('Upload File');
     expect(button).toBeInTheDocument();

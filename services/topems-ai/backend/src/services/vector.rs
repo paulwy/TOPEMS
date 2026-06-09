@@ -65,7 +65,7 @@ impl VectorService {
     pub async fn create_document(&self, doc: &CreateDocumentRequest) -> Result<Uuid, sqlx::Error> {
         let id: Uuid = sqlx::query_scalar(
             r#"
-            INSERT INTO kb_documents (title, filename, file_path, file_size, mime_type, category, tags, description, status)
+            INSERT INTO ai.documents (title, file_name, file_path, file_size, mime_type, category, tags, description, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id
             "#,
@@ -94,7 +94,7 @@ impl VectorService {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
-            UPDATE kb_documents
+            UPDATE ai.documents
             SET status = $1, error_message = $2
             WHERE id = $3
             "#,
@@ -112,10 +112,10 @@ impl VectorService {
     pub async fn get_document(&self, id: Uuid) -> Result<Option<Document>, sqlx::Error> {
         let doc = sqlx::query_as::<_, DocumentRow>(
             r#"
-            SELECT id, title, filename, file_path, file_size, mime_type,
+            SELECT id, title, file_name, file_path, file_size, mime_type,
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
-            FROM kb_documents WHERE id = $1
+            FROM ai.documents WHERE id = $1
             "#,
         )
         .bind(id)
@@ -129,10 +129,10 @@ impl VectorService {
     pub async fn list_documents(&self) -> Result<Vec<Document>, sqlx::Error> {
         let docs = sqlx::query_as::<_, DocumentRow>(
             r#"
-            SELECT id, title, filename, file_path, file_size, mime_type,
+            SELECT id, title, file_name, file_path, file_size, mime_type,
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
-            FROM kb_documents
+            FROM ai.documents
             ORDER BY created_at DESC
             "#,
         )
@@ -144,7 +144,7 @@ impl VectorService {
 
     /// 删除文档（级联删除向量）
     pub async fn delete_document(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM kb_documents WHERE id = $1")
+        let result = sqlx::query("DELETE FROM ai.documents WHERE id = $1")
             .bind(id)
             .execute(self.db.pool())
             .await?;
@@ -156,7 +156,7 @@ impl VectorService {
     pub async fn save_chunk(&self, chunk: &SaveChunkRequest) -> Result<Uuid, sqlx::Error> {
         let id: Uuid = sqlx::query_scalar(
             r#"
-            INSERT INTO kb_document_chunks (document_id, chunk_index, content, metadata)
+            INSERT INTO ai.document_chunks (document_id, chunk_index, content, metadata)
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
@@ -176,15 +176,14 @@ impl VectorService {
         for vector in vectors {
             sqlx::query(
                 r#"
-                INSERT INTO kb_vector_embeddings (document_id, chunk_id, chunk_index, content, embedding)
-                VALUES ($1, $2, $3, $4, $5)
+                UPDATE ai.document_chunks
+                SET embedding = $1
+                WHERE document_id = $2 AND chunk_index = $3
                 "#,
             )
-            .bind(vector.document_id)
-            .bind(vector.chunk_id)
-            .bind(vector.chunk_index)
-            .bind(&vector.content)
             .bind(&vector.embedding)
+            .bind(vector.document_id)
+            .bind(vector.chunk_index)
             .execute(self.db.pool())
             .await?;
         }
@@ -210,15 +209,15 @@ impl VectorService {
         let rows = sqlx::query(
             r#"
             SELECT
-                v.document_id,
-                v.chunk_id,
-                v.content,
-                1 - (v.embedding <=> $1::vector) AS similarity,
+                c.document_id,
+                c.id AS chunk_id,
+                c.content,
+                1 - (c.embedding <=> $1::vector) AS similarity,
                 d.title AS document_title
-            FROM kb_vector_embeddings v
-            JOIN kb_documents d ON v.document_id = d.id
-            WHERE v.embedding <=> $1::vector < 0.5
-            ORDER BY v.embedding <=> $1::vector
+            FROM ai.document_chunks c
+            JOIN ai.documents d ON c.document_id = d.id
+            WHERE c.embedding <=> $1::vector < 0.5
+            ORDER BY c.embedding <=> $1::vector
             LIMIT $2
             "#,
         )
@@ -244,22 +243,22 @@ impl VectorService {
     /// 获取统计信息
     pub async fn get_stats(&self) -> Result<VectorStats, sqlx::Error> {
         let doc_count: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM kb_documents")
+            sqlx::query_scalar("SELECT COUNT(*) FROM ai.documents")
                 .fetch_one(self.db.pool())
                 .await?;
 
         let chunk_count: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM kb_document_chunks")
+            sqlx::query_scalar("SELECT COUNT(*) FROM ai.document_chunks")
                 .fetch_one(self.db.pool())
                 .await?;
 
         let vector_count: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM kb_vector_embeddings")
+            sqlx::query_scalar("SELECT COUNT(*) FROM ai.document_chunks WHERE embedding IS NOT NULL")
                 .fetch_one(self.db.pool())
                 .await?;
 
         let dimension: Option<i64> = sqlx::query_scalar(
-            "SELECT vector_dim FROM kb_vector_embeddings LIMIT 1"
+            "SELECT vector_dimensions FROM ai.document_chunks WHERE embedding IS NOT NULL LIMIT 1"
         )
         .fetch_optional(self.db.pool())
         .await?;
@@ -274,10 +273,178 @@ impl VectorService {
 
     /// 清空所有向量数据
     pub async fn clear_all(&self) -> Result<(), sqlx::Error> {
-        sqlx::query("TRUNCATE kb_vector_embeddings, kb_document_chunks, kb_documents CASCADE")
+        sqlx::query("TRUNCATE ai.document_chunks, ai.documents CASCADE")
             .execute(self.db.pool())
             .await?;
         Ok(())
+    }
+
+    /// 关键词搜索（全文检索）
+    pub async fn keyword_search(
+        &self,
+        query: &str,
+        top_k: usize,
+    ) -> Result<Vec<SearchResult>, sqlx::Error> {
+        let rows = sqlx::query(
+            r#"
+            SELECT
+                c.document_id,
+                c.id AS chunk_id,
+                c.content,
+                ts_rank_cd(to_tsvector('chinese', c.content), query) AS similarity,
+                d.title AS document_title
+            FROM ai.document_chunks c
+            JOIN ai.documents d ON c.document_id = d.id,
+                 to_tsquery('chinese', $1) query
+            WHERE to_tsvector('chinese', c.content) @@ query
+            ORDER BY similarity DESC
+            LIMIT $2
+            "#,
+        )
+        .bind(query)
+        .bind(top_k as i64)
+        .fetch_all(self.db.pool())
+        .await?;
+
+        let results = rows
+            .iter()
+            .map(|row| SearchResult {
+                document_id: row.get("document_id"),
+                chunk_id: row.get("chunk_id"),
+                content: row.get("content"),
+                similarity: row.get::<f32, _>("similarity") as f64,
+                document_title: row.get("document_title"),
+            })
+            .collect();
+
+        Ok(results)
+    }
+
+    /// 混合检索（向量+关键词）
+    pub async fn hybrid_search(
+        &self,
+        query_embedding: &[f32],
+        query_text: &str,
+        top_k: usize,
+        vector_weight: f64,
+        keyword_weight: f64,
+    ) -> Result<Vec<crate::api::models::HybridSearchResult>, sqlx::Error> {
+        // 向量搜索
+        let vector_results = self.search_similar(query_embedding, top_k * 2).await?;
+
+        // 关键词搜索
+        let keyword_results = self.keyword_search(query_text, top_k * 2).await?;
+
+        // 合并结果
+        let mut combined_map: std::collections::HashMap<uuid::Uuid, crate::api::models::HybridSearchResult> =
+            std::collections::HashMap::new();
+
+        // 处理向量搜索结果
+        for result in vector_results {
+            let entry = combined_map.entry(result.chunk_id).or_insert(
+                crate::api::models::HybridSearchResult {
+                    document_id: result.document_id,
+                    chunk_id: result.chunk_id,
+                    content: result.content.clone(),
+                    vector_similarity: result.similarity,
+                    keyword_score: 0.0,
+                    combined_score: 0.0,
+                    document_title: result.document_title.clone(),
+                },
+            );
+            entry.vector_similarity = result.similarity;
+        }
+
+        // 处理关键词搜索结果
+        for result in keyword_results {
+            let entry = combined_map.entry(result.chunk_id).or_insert(
+                crate::api::models::HybridSearchResult {
+                    document_id: result.document_id,
+                    chunk_id: result.chunk_id,
+                    content: result.content.clone(),
+                    vector_similarity: 0.0,
+                    keyword_score: result.similarity,
+                    combined_score: 0.0,
+                    document_title: result.document_title.clone(),
+                },
+            );
+            entry.keyword_score = result.similarity;
+        }
+
+        // 计算综合得分
+        for result in combined_map.values_mut() {
+            result.combined_score =
+                vector_weight * result.vector_similarity + keyword_weight * result.keyword_score;
+        }
+
+        // 按综合得分排序
+        let mut results: Vec<_> = combined_map.values().cloned().collect();
+        results.sort_by(|a, b| {
+            b.combined_score
+                .partial_cmp(&a.combined_score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        results.truncate(top_k);
+
+        Ok(results)
+    }
+
+    /// 获取文档的所有分块
+    pub async fn get_document_chunks(
+        &self,
+        document_id: Uuid,
+    ) -> Result<Vec<DocumentChunk>, sqlx::Error> {
+        let chunks = sqlx::query_as::<_, DocumentChunkRow>(
+            r#"
+            SELECT id, document_id, chunk_index, content, metadata, created_at
+            FROM ai.document_chunks
+            WHERE document_id = $1
+            ORDER BY chunk_index
+            "#,
+        )
+        .bind(document_id)
+        .fetch_all(self.db.pool())
+        .await?;
+
+        Ok(chunks.into_iter().map(|r| r.into()).collect())
+    }
+
+    /// 获取单个向量记录
+    pub async fn get_vector(&self, id: Uuid) -> Result<Option<VectorEmbedding>, sqlx::Error> {
+        let row = sqlx::query(
+            r#"
+            SELECT id, document_id, chunk_index, content, embedding
+            FROM ai.document_chunks
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(self.db.pool())
+        .await?;
+
+        if let Some(row) = row {
+            Ok(Some(VectorEmbedding {
+                id: row.get("id"),
+                document_id: row.get("document_id"),
+                chunk_id: row.get("id"),
+                chunk_index: row.get("chunk_index"),
+                content: row.get("content"),
+                embedding: row.get("embedding"),
+                created_at: chrono::Utc::now(),
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// 删除向量记录
+    pub async fn delete_vector(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM ai.document_chunks WHERE id = $1")
+            .bind(id)
+            .execute(self.db.pool())
+            .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 }
 
@@ -323,7 +490,7 @@ pub struct VectorStats {
 struct DocumentRow {
     id: Uuid,
     title: String,
-    filename: String,
+    file_name: String,
     file_path: Option<String>,
     file_size: Option<i64>,
     mime_type: Option<String>,
@@ -342,7 +509,7 @@ impl From<DocumentRow> for Document {
         Document {
             id: r.id,
             title: r.title,
-            filename: r.filename,
+            filename: r.file_name,
             file_path: r.file_path,
             file_size: r.file_size,
             mime_type: r.mime_type,
@@ -354,6 +521,30 @@ impl From<DocumentRow> for Document {
             error_message: r.error_message,
             created_at: r.created_at,
             updated_at: r.updated_at,
+        }
+    }
+}
+
+// 文档分块行映射
+#[derive(Debug, sqlx::FromRow)]
+struct DocumentChunkRow {
+    id: Uuid,
+    document_id: Uuid,
+    chunk_index: i32,
+    content: String,
+    metadata: serde_json::Value,
+    created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<DocumentChunkRow> for DocumentChunk {
+    fn from(r: DocumentChunkRow) -> Self {
+        DocumentChunk {
+            id: r.id,
+            document_id: r.document_id,
+            chunk_index: r.chunk_index,
+            content: r.content,
+            metadata: r.metadata,
+            created_at: r.created_at,
         }
     }
 }

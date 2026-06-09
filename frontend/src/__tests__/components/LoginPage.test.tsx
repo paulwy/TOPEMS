@@ -8,16 +8,16 @@ import { ToastProvider } from '../../components/ToastProvider';
 import { LoadingProvider } from '../../components/LoadingProvider';
 import ErrorBoundary from '../../components/ErrorBoundary';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => jest.fn(),
+vi.mock('react-router-dom', async () => ({
+  ...await vi.importActual('react-router-dom'),
+  useNavigate: () => vi.fn(),
 }));
 
-jest.mock('../../api/iam', () => ({
+vi.mock('../../api/iam', () => ({
   authApi: {
-    login: jest.fn(),
-    register: jest.fn(),
-    getCurrentUser: jest.fn(),
+    login: vi.fn(),
+    register: vi.fn(),
+    getCurrentUser: vi.fn(),
   },
 }));
 
@@ -43,7 +43,7 @@ const renderLoginPage = (props = {}) => {
 
 describe('LoginPage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
   });
 

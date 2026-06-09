@@ -257,3 +257,164 @@ pub struct SrmDetailedStatistics {
     pub monthly_order_trend: Vec<MonthlyOrderTrend>,
     pub contract_by_status: Vec<StatusCount>,
 }
+
+// ==================== Supplier Category Models ====================
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct SupplierCategory {
+    pub id: Uuid,
+    pub category_no: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub parent_id: Option<Uuid>,
+    pub level: i32,
+    pub is_active: bool,
+    pub created_by: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateSupplierCategoryRequest {
+    pub category_no: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub parent_id: Option<String>,
+    pub level: i32,
+    pub is_active: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateSupplierCategoryRequest {
+    pub category_no: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub parent_id: Option<String>,
+    pub level: Option<i32>,
+    pub is_active: Option<bool>,
+}
+
+// ==================== Supplier Product Models ====================
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct SupplierProduct {
+    pub id: Uuid,
+    pub product_no: String,
+    pub supplier_id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub category: Option<String>,
+    pub unit: Option<String>,
+    pub unit_price: Option<f64>,
+    pub currency: String,
+    pub min_order_qty: Option<i32>,
+    pub lead_time_days: Option<i32>,
+    pub status: String,
+    pub specifications: Option<String>,
+    pub created_by: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateSupplierProductRequest {
+    pub product_no: String,
+    pub supplier_id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub category: Option<String>,
+    pub unit: Option<String>,
+    pub unit_price: Option<f64>,
+    pub currency: String,
+    pub min_order_qty: Option<i32>,
+    pub lead_time_days: Option<i32>,
+    pub status: String,
+    pub specifications: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateSupplierProductRequest {
+    pub product_no: Option<String>,
+    pub supplier_id: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub category: Option<String>,
+    pub unit: Option<String>,
+    pub unit_price: Option<f64>,
+    pub currency: Option<String>,
+    pub min_order_qty: Option<i32>,
+    pub lead_time_days: Option<i32>,
+    pub status: Option<String>,
+    pub specifications: Option<String>,
+}
+
+// ==================== Audit Log Models ====================
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct AuditLog {
+    pub id: Uuid,
+    pub table_name: String,
+    pub record_id: Uuid,
+    pub action: String,
+    pub old_values: Option<serde_json::Value>,
+    pub new_values: Option<serde_json::Value>,
+    pub changed_by: Option<Uuid>,
+    pub changed_at: DateTime<Utc>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub organization_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateAuditLogRequest {
+    pub table_name: String,
+    pub record_id: String,
+    pub action: String,
+    pub old_values: Option<serde_json::Value>,
+    pub new_values: Option<serde_json::Value>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub organization_id: Option<String>,
+}
+
+// ==================== Supplier Performance Models ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SupplierPerformance {
+    pub supplier_id: Uuid,
+    pub supplier_name: String,
+    pub total_orders: i64,
+    pub total_amount: f64,
+    pub avg_quality_score: Option<f64>,
+    pub avg_delivery_score: Option<f64>,
+    pub avg_service_score: Option<f64>,
+    pub avg_price_score: Option<f64>,
+    pub avg_overall_score: Option<f64>,
+    pub on_time_delivery_rate: Option<f64>,
+    pub defect_rate: Option<f64>,
+    pub last_evaluation_date: Option<DateTime<Utc>>,
+    pub evaluation_count: i64,
+}
+
+// ==================== Contract Terms Models ====================
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct ContractTerm {
+    pub id: Uuid,
+    pub contract_id: Uuid,
+    pub term_type: String,
+    pub title: String,
+    pub content: Option<String>,
+    pub sort_order: i32,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateContractTermRequest {
+    pub contract_id: String,
+    pub term_type: String,
+    pub title: String,
+    pub content: Option<String>,
+    pub sort_order: i32,
+}

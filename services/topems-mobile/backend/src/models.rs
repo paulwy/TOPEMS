@@ -1,9 +1,20 @@
-
-
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use sqlx::Row;
+
+pub use crate::api::auth::{LoginRequest, LoginResponse, RefreshRequest, VerifyCodeRequest, RefreshTokenRecord};
+pub use crate::api::user::{UserProfile, UpdateProfileRequest, UserSettings};
+pub use crate::api::notification::{Notification, NotificationListResponse, GetNotificationsQuery};
+pub use crate::api::scan::{
+    BarcodeScanRequest, BarcodeScanResponse,
+    QrCodeScanRequest, QrCodeScanResponse,
+    ImageOcrRequest, ImageOcrResponse, OcrWord,
+    ScanRecord as MobileScanRecord
+};
+pub use crate::api::offline::{OfflineSyncRequest, OfflineSyncResponse, OfflineStatusResponse, OfflineSyncRecord};
+pub use crate::api::device::{Device, RegisterDeviceRequest, UpdatePushTokenRequest};
+pub use crate::api::shortcut::{Shortcut, CreateShortcutRequest};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatrolRecord {

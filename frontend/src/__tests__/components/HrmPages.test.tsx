@@ -7,21 +7,21 @@ import { LoadingProvider } from '../../components/LoadingProvider';
 import ErrorBoundary from '../../components/ErrorBoundary';
 
 // 模拟所有 API
-jest.mock('../../api/hrm', () => ({
-  employeeApi: { list: jest.fn(), get: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
-  departmentApi: { list: jest.fn() },
-  positionApi: { list: jest.fn() },
-  leaveApi: { list: jest.fn() },
-  attendanceApi: { list: jest.fn() },
-  payrollApi: { list: jest.fn() },
-  performanceReviewsApi: { list: jest.fn() },
-  jobOpeningsApi: { list: jest.fn() },
-  contractApi: { list: jest.fn() },
-  trainingPlanApi: { list: jest.fn() },
+vi.mock('../../api/hrm', () => ({
+  employeeApi: { list: vi.fn(), get: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+  departmentApi: { list: vi.fn() },
+  positionApi: { list: vi.fn() },
+  leaveApi: { list: vi.fn() },
+  attendanceApi: { list: vi.fn() },
+  payrollApi: { list: vi.fn() },
+  performanceReviewsApi: { list: vi.fn() },
+  jobOpeningsApi: { list: vi.fn() },
+  contractApi: { list: vi.fn() },
+  trainingPlanApi: { list: vi.fn() },
 }));
 
 // 模拟 DataTable 组件以避免测试问题
-jest.mock('../../components/DataTable', () => ({
+vi.mock('../../components/DataTable', () => ({
   DataTable: () => <div data-testid="data-table">Mock Data Table</div>,
 }));
 

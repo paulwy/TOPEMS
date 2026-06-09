@@ -15,6 +15,7 @@ pub struct AppConfig {
     pub auth: AuthConfig,
     pub server: ServerConfig,
     pub redis: RedisConfig,
+    pub cache: CacheConfig,
     pub storage: StorageConfig,
     pub mail: MailConfig,
     pub ai: AiConfig,
@@ -65,6 +66,27 @@ pub struct RedisConfig {
     pub password: Option<String>,
     pub db: u8,
     pub pool_max_size: u32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CacheConfig {
+    pub prefix: String,
+    pub default_ttl: u64,
+    pub memory_cache_size: usize,
+    pub eviction_policy: String,
+    pub write_through: bool,
+}
+
+impl Default for CacheConfig {
+    fn default() -> Self {
+        Self {
+            prefix: default_cache_prefix(),
+            default_ttl: default_cache_default_ttl(),
+            memory_cache_size: default_cache_memory_size(),
+            eviction_policy: default_cache_eviction_policy(),
+            write_through: default_cache_write_through(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -244,6 +266,16 @@ struct DevEnv {
     redis_db: u8,
     #[serde(default = "default_redis_pool_max_size")]
     redis_pool_max_size: u32,
+    #[serde(default = "default_cache_prefix")]
+    cache_prefix: String,
+    #[serde(default = "default_cache_default_ttl")]
+    cache_default_ttl: u64,
+    #[serde(default = "default_cache_memory_size")]
+    cache_memory_size: usize,
+    #[serde(default = "default_cache_eviction_policy")]
+    cache_eviction_policy: String,
+    #[serde(default = "default_cache_write_through")]
+    cache_write_through: bool,
     #[serde(default = "default_upload_dir")]
     upload_dir: String,
     #[serde(default = "default_upload_max_size")]
@@ -355,6 +387,16 @@ struct TestEnv {
     redis_db: u8,
     #[serde(default = "default_redis_pool_max_size")]
     redis_pool_max_size: u32,
+    #[serde(default = "default_cache_prefix")]
+    cache_prefix: String,
+    #[serde(default = "default_cache_default_ttl")]
+    cache_default_ttl: u64,
+    #[serde(default = "default_cache_memory_size")]
+    cache_memory_size: usize,
+    #[serde(default = "default_cache_eviction_policy")]
+    cache_eviction_policy: String,
+    #[serde(default = "default_cache_write_through")]
+    cache_write_through: bool,
     #[serde(default = "default_test_upload_dir")]
     upload_dir: String,
     #[serde(default = "default_test_upload_max_size")]
@@ -436,6 +478,11 @@ struct ProductionEnv {
     redis_password: Option<String>,
     redis_db: u8,
     redis_pool_max_size: u32,
+    cache_prefix: String,
+    cache_default_ttl: u64,
+    cache_memory_size: usize,
+    cache_eviction_policy: String,
+    cache_write_through: bool,
     upload_dir: String,
     upload_max_size: u64,
     allowed_file_types: String,
@@ -502,6 +549,13 @@ impl From<DevEnv> for AppConfig {
                 password: env.redis_password,
                 db: env.redis_db,
                 pool_max_size: env.redis_pool_max_size,
+            },
+            cache: CacheConfig {
+                prefix: env.cache_prefix,
+                default_ttl: env.cache_default_ttl,
+                memory_cache_size: env.cache_memory_size,
+                eviction_policy: env.cache_eviction_policy,
+                write_through: env.cache_write_through,
             },
             storage: StorageConfig {
                 upload_dir: env.upload_dir,
@@ -580,6 +634,13 @@ impl From<TestEnv> for AppConfig {
                 db: env.redis_db,
                 pool_max_size: env.redis_pool_max_size,
             },
+            cache: CacheConfig {
+                prefix: env.cache_prefix,
+                default_ttl: env.cache_default_ttl,
+                memory_cache_size: env.cache_memory_size,
+                eviction_policy: env.cache_eviction_policy,
+                write_through: env.cache_write_through,
+            },
             storage: StorageConfig {
                 upload_dir: env.upload_dir,
                 upload_max_size: env.upload_max_size,
@@ -656,6 +717,13 @@ impl From<ProductionEnv> for AppConfig {
                 password: env.redis_password,
                 db: env.redis_db,
                 pool_max_size: env.redis_pool_max_size,
+            },
+            cache: CacheConfig {
+                prefix: env.cache_prefix,
+                default_ttl: env.cache_default_ttl,
+                memory_cache_size: env.cache_memory_size,
+                eviction_policy: env.cache_eviction_policy,
+                write_through: env.cache_write_through,
             },
             storage: StorageConfig {
                 upload_dir: env.upload_dir,
@@ -769,3 +837,8 @@ fn default_log_file_enabled() -> bool { false }
 fn default_log_file_path() -> String { "./logs/app.log".to_string() }
 fn default_log_max_size() -> u64 { 50 }
 fn default_log_max_files() -> u32 { 5 }
+fn default_cache_prefix() -> String { "topems:".to_string() }
+fn default_cache_default_ttl() -> u64 { 3600 }
+fn default_cache_memory_size() -> usize { 1000 }
+fn default_cache_eviction_policy() -> String { "LRU".to_string() }
+fn default_cache_write_through() -> bool { false }
