@@ -1,23 +1,31 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  ArrowLeft, BarChart3, PieChart, LineChart, TrendingUp, 
-  TrendingDown, Calendar, Users, Activity, Clock
+import {
+  ArrowLeft,
+  BarChart3,
+  PieChart,
+  LineChart,
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  Users,
+  Activity,
+  Clock,
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart as RechartsPieChart,
   Pie,
   Cell,
   LineChart as RechartsLineChart,
   Line,
-  Legend
+  Legend,
 } from 'recharts';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -259,8 +267,8 @@ const BIModuleDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
+        <LoadingSpinner size='lg' />
       </div>
     );
   }
@@ -268,66 +276,67 @@ const BIModuleDetailPage = () => {
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/bi/analytics">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
+    <div className='space-y-6 p-6'>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-4'>
+          <Link to='/bi/analytics'>
+            <Button variant='ghost' size='icon'>
+              <ArrowLeft className='w-5 h-5' />
             </Button>
           </Link>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{config.icon}</span>
+          <div className='flex items-center gap-3'>
+            <span className='text-3xl'>{config.icon}</span>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">{config.name}</h2>
-              <p className="text-sm text-gray-500 mt-1">详细数据分析</p>
+              <h2 className='text-2xl font-bold text-gray-800'>{config.name}</h2>
+              <p className='text-sm text-gray-500 mt-1'>详细数据分析</p>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Clock className="w-4 h-4" />
+        <div className='flex items-center gap-3'>
+          <div className='flex items-center gap-2 text-sm text-gray-500'>
+            <Clock className='w-4 h-4' />
             <span>最后更新: {new Date().toLocaleString('zh-CN')}</span>
           </div>
-          <Button variant="outline">
-            <Activity className="w-4 h-4 mr-2" />
+          <Button variant='outline'>
+            <Activity className='w-4 h-4 mr-2' />
             刷新数据
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {moduleData?.summary && Object.entries(moduleData.summary).map(([key, value]) => (
-          <Card key={key}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-500">{key}</span>
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <BarChart3 className="w-4 h-4 text-blue-600" />
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+        {moduleData?.summary &&
+          Object.entries(moduleData.summary).map(([key, value]) => (
+            <Card key={key}>
+              <CardContent className='p-6'>
+                <div className='flex items-center justify-between mb-2'>
+                  <span className='text-sm text-gray-500'>{key}</span>
+                  <div className='p-2 bg-blue-50 rounded-lg'>
+                    <BarChart3 className='w-4 h-4 text-blue-600' />
+                  </div>
                 </div>
-              </div>
-              <div className="text-2xl font-bold text-gray-800">
-                {typeof value === 'number' ? value.toLocaleString() : String(value)}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                <div className='text-2xl font-bold text-gray-800'>
+                  {typeof value === 'number' ? value.toLocaleString() : String(value)}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         {moduleData?.timeline && (
           <Card>
             <CardHeader>
               <CardTitle>月度趋势</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width='100%' height={300}>
                 <BarChart data={moduleData.timeline}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
+                  <CartesianGrid strokeDasharray='3 3' />
+                  <XAxis dataKey='month' />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="count" fill={config.color} />
+                  <Bar dataKey='count' fill={config.color} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -340,16 +349,16 @@ const BIModuleDetailPage = () => {
               <CardTitle>分布占比</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width='100%' height={300}>
                 <RechartsPieChart>
                   <Pie
                     data={moduleData.distribution}
-                    cx="50%"
-                    cy="50%"
+                    cx='50%'
+                    cy='50%'
                     labelLine={false}
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={100}
-                    dataKey="value"
+                    dataKey='value'
                   >
                     {moduleData.distribution.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -369,13 +378,13 @@ const BIModuleDetailPage = () => {
             <CardTitle>成功率趋势</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width='100%' height={300}>
               <RechartsLineChart data={moduleData.success_rate}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis dataKey='month' />
                 <YAxis domain={[80, 100]} />
                 <Tooltip />
-                <Line type="monotone" dataKey="rate" stroke={config.color} strokeWidth={2} />
+                <Line type='monotone' dataKey='rate' stroke={config.color} strokeWidth={2} />
               </RechartsLineChart>
             </ResponsiveContainer>
           </CardContent>

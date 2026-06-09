@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, FileText, Calendar, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { pmApi, Contract } from '../api/pm';
+import type { Contract } from '../api/pm';
+import { pmApi } from '../api/pm';
 
 const CONTRACT_TYPES = [
   { value: '', label: '全部类型' },

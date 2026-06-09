@@ -127,7 +127,7 @@ describe('MigrationAdminPage', () => {
       fireEvent.click(buttons[0]);
 
       await waitFor(() => {
-         expect(mockApplyMigration).toHaveBeenCalledTimes(1);
+        expect(mockApplyMigration).toHaveBeenCalledTimes(1);
         expect(mockApplyMigration).toHaveBeenCalledWith(mockServices[0].name, 'schema');
       });
 
@@ -176,16 +176,16 @@ describe('MigrationAdminPage', () => {
 
       // 现在 statusMap 有数据了，重新获取回滚按钮
       await waitFor(() => {
-        const updatedRollbackButtons = screen.getAllByRole('button').filter(
-          (b) => b.textContent?.includes('回滚') && !(b as HTMLButtonElement).disabled
-        );
+        const updatedRollbackButtons = screen
+          .getAllByRole('button')
+          .filter((b) => b.textContent?.includes('回滚') && !(b as HTMLButtonElement).disabled);
         expect(updatedRollbackButtons.length).toBeGreaterThan(0);
       });
 
       // 获取可用的回滚按钮
-      const allRollbackButtons = screen.getAllByRole('button').filter(
-        (b) => b.textContent?.includes('回滚') && !(b as HTMLButtonElement).disabled
-      );
+      const allRollbackButtons = screen
+        .getAllByRole('button')
+        .filter((b) => b.textContent?.includes('回滚') && !(b as HTMLButtonElement).disabled);
       expect(allRollbackButtons.length).toBeGreaterThan(0);
 
       await act(async () => {
@@ -219,9 +219,7 @@ describe('MigrationAdminPage', () => {
 
       const confirmSpy = vi.spyOn(window, 'confirm').mockImplementation(() => false);
 
-      const allButtons = screen.getAllByRole('button').filter((b) =>
-        b.textContent?.includes('回滚')
-      );
+      const allButtons = screen.getAllByRole('button').filter((b) => b.textContent?.includes('回滚'));
       const rollbackBtn = allButtons[0] as HTMLButtonElement;
       if (rollbackBtn.disabled) rollbackBtn.removeAttribute('disabled');
       fireEvent.click(rollbackBtn);

@@ -21,23 +21,20 @@ export const PieChart = ({
 }: PieChartProps) => {
   return (
     <div style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+      <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={0}>
         <RechartsPieChart>
           <Pie
             data={data}
-            cx="50%"
-            cy="50%"
+            cx='50%'
+            cy='50%'
             labelLine={false}
             label={showLabel ? ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%` : undefined}
             innerRadius={innerRadius}
             outerRadius={outerRadius}
-            dataKey="value"
+            dataKey='value'
           >
             {data.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={entry.color || COLORS[index % COLORS.length]}
-              />
+              <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
             ))}
           </Pie>
           <Tooltip />

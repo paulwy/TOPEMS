@@ -1,27 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  TrendingUp,
-  Award,
-  Target,
-  Search,
-  Plus,
-  ChevronLeft,
-  CheckCircle,
-  Clock,
-  BarChart3,
-} from 'lucide-react';
+import { TrendingUp, Award, Target, Search, Plus, ChevronLeft, CheckCircle, Clock, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
 import { NotificationContainer } from '../components/NotificationContainer';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
-import {
-  performanceReviewApi,
-  performanceGoalApi,
-  employeeApi,
-  departmentApi,
-  type Employee,
-} from '../api/hrm';
+import { performanceReviewApi, performanceGoalApi, employeeApi, departmentApi, type Employee } from '../api/hrm';
 
 interface PerformanceReview {
   id: string;
@@ -82,19 +66,18 @@ const HrmPerformancePage: React.FC = () => {
   // 绩效统计数据
   const performanceStats = useMemo(() => {
     const totalReviews = reviews.length;
-    const completedReviews = reviews.filter(r => r.status === 'completed').length;
-    const pendingReviews = reviews.filter(r => r.status !== 'completed').length;
-    const avgScore = reviews.length > 0
-      ? reviews.filter(r => r.final_score !== undefined).reduce((sum, r) => sum + (r.final_score || 0), 0) /
-        reviews.filter(r => r.final_score !== undefined).length
-      : 0;
+    const completedReviews = reviews.filter((r) => r.status === 'completed').length;
+    const pendingReviews = reviews.filter((r) => r.status !== 'completed').length;
+    const avgScore =
+      reviews.length > 0
+        ? reviews.filter((r) => r.final_score !== undefined).reduce((sum, r) => sum + (r.final_score || 0), 0) /
+          reviews.filter((r) => r.final_score !== undefined).length
+        : 0;
 
     const totalGoals = goals.length;
-    const completedGoals = goals.filter(g => g.status === 'completed').length;
-    const inProgressGoals = goals.filter(g => g.status === 'in_progress').length;
-    const avgGoalProgress = goals.length > 0
-      ? goals.reduce((sum, g) => sum + g.progress, 0) / goals.length
-      : 0;
+    const completedGoals = goals.filter((g) => g.status === 'completed').length;
+    const inProgressGoals = goals.filter((g) => g.status === 'in_progress').length;
+    const avgGoalProgress = goals.length > 0 ? goals.reduce((sum, g) => sum + g.progress, 0) / goals.length : 0;
 
     return {
       totalReviews,
@@ -110,29 +93,38 @@ const HrmPerformancePage: React.FC = () => {
   }, [reviews, goals, employees]);
 
   // 绩效评估状态分布
-  const reviewStatusData = useMemo(() => [
-    { name: '已完成', value: reviews.filter(r => r.status === 'completed').length, color: '#22c55e' },
-    { name: '待开始', value: reviews.filter(r => r.status === 'pending').length, color: '#94a3b8' },
-    { name: '自评中', value: reviews.filter(r => r.status === 'self_review').length, color: '#3b82f6' },
-    { name: '待上级评价', value: reviews.filter(r => r.status === 'manager_review').length, color: '#eab308' },
-  ], [reviews]);
+  const reviewStatusData = useMemo(
+    () => [
+      { name: '已完成', value: reviews.filter((r) => r.status === 'completed').length, color: '#22c55e' },
+      { name: '待开始', value: reviews.filter((r) => r.status === 'pending').length, color: '#94a3b8' },
+      { name: '自评中', value: reviews.filter((r) => r.status === 'self_review').length, color: '#3b82f6' },
+      { name: '待上级评价', value: reviews.filter((r) => r.status === 'manager_review').length, color: '#eab308' },
+    ],
+    [reviews]
+  );
 
   // 目标状态分布
-  const goalStatusData = useMemo(() => [
-    { name: '已完成', value: goals.filter(g => g.status === 'completed').length, color: '#22c55e' },
-    { name: '进行中', value: goals.filter(g => g.status === 'in_progress').length, color: '#3b82f6' },
-    { name: '未开始', value: goals.filter(g => g.status === 'not_started').length, color: '#94a3b8' },
-    { name: '已取消', value: goals.filter(g => g.status === 'cancelled').length, color: '#ef4444' },
-  ], [goals]);
+  const goalStatusData = useMemo(
+    () => [
+      { name: '已完成', value: goals.filter((g) => g.status === 'completed').length, color: '#22c55e' },
+      { name: '进行中', value: goals.filter((g) => g.status === 'in_progress').length, color: '#3b82f6' },
+      { name: '未开始', value: goals.filter((g) => g.status === 'not_started').length, color: '#94a3b8' },
+      { name: '已取消', value: goals.filter((g) => g.status === 'cancelled').length, color: '#ef4444' },
+    ],
+    [goals]
+  );
 
   // 部门绩效得分数据
-  const departmentScoreData = useMemo(() => [
-    { name: '研发部', value: 85, color: '#3b82f6' },
-    { name: '产品部', value: 88, color: '#22c55e' },
-    { name: '销售部', value: 82, color: '#f59e0b' },
-    { name: '财务部', value: 90, color: '#ef4444' },
-    { name: '人事部', value: 86, color: '#8b5cf6' },
-  ], []);
+  const departmentScoreData = useMemo(
+    () => [
+      { name: '研发部', value: 85, color: '#3b82f6' },
+      { name: '产品部', value: 88, color: '#22c55e' },
+      { name: '销售部', value: 82, color: '#f59e0b' },
+      { name: '财务部', value: 90, color: '#ef4444' },
+      { name: '人事部', value: 86, color: '#8b5cf6' },
+    ],
+    []
+  );
 
   useEffect(() => {
     loadData();
@@ -500,176 +492,164 @@ const HrmPerformancePage: React.FC = () => {
             )}
 
             {/* Statistics Dashboard */}
-        {activeTab === 'rankings' && (
-          <div className='space-y-6'>
-            {/* 统计卡片 */}
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-              <MetricCard
-                title='绩效评估总数'
-                value={performanceStats.totalReviews}
-                icon={<Award className='w-5 h-5' />}
-                trend={null}
-                color='blue'
-              />
-              <MetricCard
-                title='已完成评估'
-                value={performanceStats.completedReviews}
-                icon={<CheckCircle className='w-5 h-5' />}
-                trend={null}
-                color='green'
-              />
-              <MetricCard
-                title='待完成评估'
-                value={performanceStats.pendingReviews}
-                icon={<Clock className='w-5 h-5' />}
-                trend={null}
-                color='yellow'
-              />
-              <MetricCard
-                title='平均绩效得分'
-                value={performanceStats.avgScore}
-                icon={<TrendingUp className='w-5 h-5' />}
-                trend={null}
-                color='purple'
-              />
-            </div>
+            {activeTab === 'rankings' && (
+              <div className='space-y-6'>
+                {/* 统计卡片 */}
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+                  <MetricCard
+                    title='绩效评估总数'
+                    value={performanceStats.totalReviews}
+                    icon={<Award className='w-5 h-5' />}
+                    trend={null}
+                    color='blue'
+                  />
+                  <MetricCard
+                    title='已完成评估'
+                    value={performanceStats.completedReviews}
+                    icon={<CheckCircle className='w-5 h-5' />}
+                    trend={null}
+                    color='green'
+                  />
+                  <MetricCard
+                    title='待完成评估'
+                    value={performanceStats.pendingReviews}
+                    icon={<Clock className='w-5 h-5' />}
+                    trend={null}
+                    color='yellow'
+                  />
+                  <MetricCard
+                    title='平均绩效得分'
+                    value={performanceStats.avgScore}
+                    icon={<TrendingUp className='w-5 h-5' />}
+                    trend={null}
+                    color='purple'
+                  />
+                </div>
 
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-              <MetricCard
-                title='绩效目标总数'
-                value={performanceStats.totalGoals}
-                icon={<Target className='w-5 h-5' />}
-                trend={null}
-                color='blue'
-              />
-              <MetricCard
-                title='进行中目标'
-                value={performanceStats.inProgressGoals}
-                icon={<Clock className='w-5 h-5' />}
-                trend={null}
-                color='orange'
-              />
-              <MetricCard
-                title='平均目标进度'
-                value={`${performanceStats.avgGoalProgress}%`}
-                icon={<BarChart3 className='w-5 h-5' />}
-                trend={null}
-                color='teal'
-              />
-            </div>
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                  <MetricCard
+                    title='绩效目标总数'
+                    value={performanceStats.totalGoals}
+                    icon={<Target className='w-5 h-5' />}
+                    trend={null}
+                    color='blue'
+                  />
+                  <MetricCard
+                    title='进行中目标'
+                    value={performanceStats.inProgressGoals}
+                    icon={<Clock className='w-5 h-5' />}
+                    trend={null}
+                    color='orange'
+                  />
+                  <MetricCard
+                    title='平均目标进度'
+                    value={`${performanceStats.avgGoalProgress}%`}
+                    icon={<BarChart3 className='w-5 h-5' />}
+                    trend={null}
+                    color='teal'
+                  />
+                </div>
 
-            {/* 图表区域 */}
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-              <div className='bg-white rounded-lg shadow-sm p-6'>
-                <h3 className='text-lg font-semibold text-gray-900 mb-4'>绩效评估状态分布</h3>
-                <StatsChart
-                  type='pie'
-                  data={reviewStatusData}
-                  height={250}
-                />
+                {/* 图表区域 */}
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                  <div className='bg-white rounded-lg shadow-sm p-6'>
+                    <h3 className='text-lg font-semibold text-gray-900 mb-4'>绩效评估状态分布</h3>
+                    <StatsChart type='pie' data={reviewStatusData} height={250} />
+                  </div>
+
+                  <div className='bg-white rounded-lg shadow-sm p-6'>
+                    <h3 className='text-lg font-semibold text-gray-900 mb-4'>绩效目标状态分布</h3>
+                    <StatsChart type='pie' data={goalStatusData} height={250} />
+                  </div>
+                </div>
+
+                <div className='bg-white rounded-lg shadow-sm p-6'>
+                  <h3 className='text-lg font-semibold text-gray-900 mb-4'>部门平均绩效得分</h3>
+                  <StatsChart type='bar' data={departmentScoreData} height={300} />
+                </div>
+
+                {/* 排名表格 */}
+                <div className='bg-white rounded-lg shadow-sm overflow-hidden'>
+                  <div className='overflow-x-auto'>
+                    <table className='min-w-full divide-y divide-gray-200'>
+                      <thead className='bg-gray-50'>
+                        <tr>
+                          <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                            排名
+                          </th>
+                          <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                            员工姓名
+                          </th>
+                          <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                            部门/岗位
+                          </th>
+                          <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                            KPI得分
+                          </th>
+                          <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                            能力得分
+                          </th>
+                          <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                            态度得分
+                          </th>
+                          <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                            综合得分
+                          </th>
+                          <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                            考核周期
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className='bg-white divide-y divide-gray-200'>
+                        {rankings.map((employee, index) => (
+                          <tr key={employee.id} className='hover:bg-gray-50'>
+                            <td className='px-6 py-4 whitespace-nowrap'>
+                              <div
+                                className={`text-lg font-bold ${
+                                  index === 0
+                                    ? 'text-yellow-500'
+                                    : index === 1
+                                      ? 'text-gray-400'
+                                      : index === 2
+                                        ? 'text-orange-400'
+                                        : 'text-gray-600'
+                                }`}
+                              >
+                                #{employee.rank}
+                              </div>
+                            </td>
+                            <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
+                              {employee.employee_name}
+                            </td>
+                            <td className='px-6 py-4 whitespace-nowrap'>
+                              <div className='text-sm text-gray-900'>{employee.department}</div>
+                              <div className='text-sm text-gray-500'>{employee.position}</div>
+                            </td>
+                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>{employee.kpi_score}</td>
+                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                              {employee.capability_score}
+                            </td>
+                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                              {employee.attitude_score}
+                            </td>
+                            <td className='px-6 py-4 whitespace-nowrap'>
+                              <span className={`text-lg font-bold ${getScoreColor(employee.final_score)}`}>
+                                {employee.final_score}
+                              </span>
+                            </td>
+                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+                              {employee.review_period}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-
-              <div className='bg-white rounded-lg shadow-sm p-6'>
-                <h3 className='text-lg font-semibold text-gray-900 mb-4'>绩效目标状态分布</h3>
-                <StatsChart
-                  type='pie'
-                  data={goalStatusData}
-                  height={250}
-                />
-              </div>
-            </div>
-
-            <div className='bg-white rounded-lg shadow-sm p-6'>
-              <h3 className='text-lg font-semibold text-gray-900 mb-4'>部门平均绩效得分</h3>
-              <StatsChart
-                type='bar'
-                data={departmentScoreData}
-                height={300}
-              />
-            </div>
-
-            {/* 排名表格 */}
-            <div className='bg-white rounded-lg shadow-sm overflow-hidden'>
-              <div className='overflow-x-auto'>
-                <table className='min-w-full divide-y divide-gray-200'>
-                  <thead className='bg-gray-50'>
-                    <tr>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        排名
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        员工姓名
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        部门/岗位
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        KPI得分
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        能力得分
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        态度得分
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        综合得分
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        考核周期
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className='bg-white divide-y divide-gray-200'>
-                    {rankings.map((employee, index) => (
-                      <tr key={employee.id} className='hover:bg-gray-50'>
-                        <td className='px-6 py-4 whitespace-nowrap'>
-                          <div
-                            className={`text-lg font-bold ${
-                              index === 0
-                                ? 'text-yellow-500'
-                                : index === 1
-                                  ? 'text-gray-400'
-                                  : index === 2
-                                    ? 'text-orange-400'
-                                    : 'text-gray-600'
-                            }`}
-                          >
-                            #{employee.rank}
-                          </div>
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
-                          {employee.employee_name}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap'>
-                          <div className='text-sm text-gray-900'>{employee.department}</div>
-                          <div className='text-sm text-gray-500'>{employee.position}</div>
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>{employee.kpi_score}</td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                          {employee.capability_score}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                          {employee.attitude_score}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap'>
-                          <span className={`text-lg font-bold ${getScoreColor(employee.final_score)}`}>
-                            {employee.final_score}
-                          </span>
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                          {employee.review_period}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            )}
           </div>
         )}
-        </div>
-      )}
       </div>
     </div>
   );

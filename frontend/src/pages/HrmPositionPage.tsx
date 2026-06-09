@@ -3,7 +3,7 @@ import { Briefcase, Search, Plus, Edit, Trash2, ChevronLeft, AlertCircle, Eye } 
 import { useNavigate } from 'react-router-dom';
 import { positionApi, departmentApi, type Position, type PaginatedResult, type ListParams } from '../api/hrm';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '../components/DataTable';
 import { HrmLayout } from '../components/HrmLayout';
 

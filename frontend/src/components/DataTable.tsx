@@ -1,15 +1,17 @@
 import React from 'react';
-import {
+import type {
   ColumnDef,
+  SortingState,
+  ColumnFiltersState,
+  PaginationState,
+  VisibilityState,
+} from '@tanstack/react-table';
+import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  SortingState,
   getSortedRowModel,
-  ColumnFiltersState,
   getFilteredRowModel,
-  PaginationState,
-  VisibilityState,
 } from '@tanstack/react-table';
 import { Download, Settings2, Eye, EyeOff } from 'lucide-react';
 
@@ -238,7 +240,9 @@ export function DataTable<TData, TValue>({
       <div className='flex items-center justify-between py-4'>
         <div className='flex items-center gap-4'>
           <div className='text-sm text-gray-500'>
-            {totalItems !== undefined ? `共 ${totalItems} 条记录` : `共 ${table.getFilteredRowModel().rows.length} 条记录`}
+            {totalItems !== undefined
+              ? `共 ${totalItems} 条记录`
+              : `共 ${table.getFilteredRowModel().rows.length} 条记录`}
           </div>
           {onPageSizeChange && (
             <div className='flex items-center gap-2'>

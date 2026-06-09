@@ -38,12 +38,12 @@ const TreeView: React.FC<TreeViewProps> = ({ data, onSelect, selectedId, showEmp
 
     const getIcon = () => {
       if (node.type === 'employee') {
-        return <User className="w-4 h-4 text-blue-500" />;
+        return <User className='w-4 h-4 text-blue-500' />;
       }
       if (hasChildren && isExpanded) {
-        return <FolderOpen className="w-4 h-4 text-amber-500" />;
+        return <FolderOpen className='w-4 h-4 text-amber-500' />;
       }
-      return <Folder className="w-4 h-4 text-amber-500" />;
+      return <Folder className='w-4 h-4 text-amber-500' />;
     };
 
     return (
@@ -59,37 +59,27 @@ const TreeView: React.FC<TreeViewProps> = ({ data, onSelect, selectedId, showEmp
           }}
         >
           {hasChildren && (
-            <span className="w-5 h-5 flex items-center justify-center">
+            <span className='w-5 h-5 flex items-center justify-center'>
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4 text-slate-400" />
+                <ChevronDown className='w-4 h-4 text-slate-400' />
               ) : (
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className='w-4 h-4 text-slate-400' />
               )}
             </span>
           )}
-          {!hasChildren && <span className="w-5" />}
-          <span className="flex-shrink-0">{getIcon()}</span>
-          <span className="flex-1 truncate">{node.name}</span>
+          {!hasChildren && <span className='w-5' />}
+          <span className='flex-shrink-0'>{getIcon()}</span>
+          <span className='flex-1 truncate'>{node.name}</span>
           {showEmployeeCount && node.type !== 'employee' && node.children && (
-            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-              {node.children.length}
-            </span>
+            <span className='text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full'>{node.children.length}</span>
           )}
         </div>
-        {hasChildren && isExpanded && (
-          <div>
-            {node.children.map((child) => renderNode(child, level + 1))}
-          </div>
-        )}
+        {hasChildren && isExpanded && <div>{node.children.map((child) => renderNode(child, level + 1))}</div>}
       </div>
     );
   };
 
-  return (
-    <div className="space-y-1">
-      {data.map((node) => renderNode(node))}
-    </div>
-  );
+  return <div className='space-y-1'>{data.map((node) => renderNode(node))}</div>;
 };
 
 export default TreeView;

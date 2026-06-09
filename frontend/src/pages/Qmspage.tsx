@@ -16,8 +16,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  qmsApi,
+import type {
   QualityStandard,
   QualityCheck,
   QualityIssue,
@@ -28,10 +27,11 @@ import {
   CreateQualityImprovementRequest,
   QmsStatistics,
 } from '../api/qms';
+import { qmsApi } from '../api/qms';
 import { DataTable } from '../components/DataTable';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'standards' | 'checks' | 'issues' | 'improvements';
 type ModalType = 'create' | 'edit' | null;
@@ -1025,7 +1025,7 @@ const Qmspage: React.FC = () => {
                   { name: '已完成', value: statistics.completed_inspections, color: '#10B981' },
                   { name: '进行中', value: statistics.in_progress_inspections, color: '#3B82F6' },
                   { name: '待处理', value: statistics.pending_inspections, color: '#F59E0B' },
-                ].filter(item => item.value > 0)}
+                ].filter((item) => item.value > 0)}
                 dataKey='value'
                 nameKey='name'
               />
@@ -1036,7 +1036,7 @@ const Qmspage: React.FC = () => {
                   { name: '已关闭', value: statistics.resolved_issues, color: '#10B981' },
                   { name: '待处理', value: statistics.open_issues, color: '#F59E0B' },
                   { name: '严重', value: statistics.critical_issues, color: '#EF4444' },
-                ].filter(item => item.value > 0)}
+                ].filter((item) => item.value > 0)}
                 dataKey='value'
                 nameKey='name'
               />
@@ -1050,7 +1050,7 @@ const Qmspage: React.FC = () => {
                 data={[
                   { name: '启用', value: statistics.active_standards, color: '#10B981' },
                   { name: '禁用', value: statistics.inactive_standards, color: '#6B7280' },
-                ].filter(item => item.value > 0)}
+                ].filter((item) => item.value > 0)}
                 dataKey='value'
                 nameKey='name'
               />
@@ -1061,7 +1061,7 @@ const Qmspage: React.FC = () => {
                   { name: '已完成', value: statistics.completed_actions, color: '#10B981' },
                   { name: '实施中', value: statistics.in_progress_actions, color: '#3B82F6' },
                   { name: '提议', value: statistics.pending_actions, color: '#8B5CF6' },
-                ].filter(item => item.value > 0)}
+                ].filter((item) => item.value > 0)}
                 dataKey='value'
                 nameKey='name'
               />

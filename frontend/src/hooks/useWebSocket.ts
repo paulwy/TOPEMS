@@ -34,7 +34,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectCountRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const callbacksRef = useRef({ onMessage, onOpen, onClose, onError });
   callbacksRef.current = { onMessage, onOpen, onClose, onError };
 
@@ -45,7 +45,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
     const imServiceUrl = config.services.im;
     let wsUrl = imServiceUrl;
-    
+
     if (wsUrl.startsWith('/')) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const hostname = window.location.hostname;
@@ -55,10 +55,10 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     } else {
       wsUrl = wsUrl.replace('http://', 'ws://').replace('https://', 'wss://');
     }
-    
+
     const fullWsUrl = `${wsUrl}/ws`;
     console.log('[useWebSocket] Attempting to connect to:', fullWsUrl);
-    
+
     const ws = new WebSocket(fullWsUrl);
 
     ws.onopen = () => {

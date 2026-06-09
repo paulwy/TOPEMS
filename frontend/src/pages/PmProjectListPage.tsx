@@ -13,7 +13,8 @@ import {
   MoreVertical,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { pmApi, Project } from '../api/pm';
+import type { Project } from '../api/pm';
+import { pmApi } from '../api/pm';
 import OrganizationFilter, { type OrganizationFilterValue } from '../components/ui/OrganizationFilter';
 
 const PROJECT_TYPES = [

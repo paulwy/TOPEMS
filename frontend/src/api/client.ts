@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
+import type { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import config, { isProduction } from '../config/runtime';
 import createLogger from '../utils/logger';
 

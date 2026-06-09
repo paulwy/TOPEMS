@@ -1,16 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Briefcase,
-  Calendar,
-  DollarSign,
-  User,
-  BookOpen,
-  FileText,
-  BarChart3,
-  Users,
-  Home,
-} from 'lucide-react';
+import { Briefcase, Calendar, DollarSign, User, BookOpen, FileText, BarChart3, Users, Home } from 'lucide-react';
 
 interface HrmLayoutProps {
   children: React.ReactNode;

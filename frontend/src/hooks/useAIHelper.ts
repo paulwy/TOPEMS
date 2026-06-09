@@ -38,16 +38,19 @@ export function useAIHelper<T = any>(options: UseAIHelperOptions): UseAIHelperRe
   const [error, setError] = useState<Error | null>(null);
   const [result, setResult] = useState<T | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  
+
   const lastOperationRef = useRef<(() => Promise<any>) | null>(null);
   const maxRetries = options.maxRetries ?? 2;
   const retryDelay = options.retryDelay ?? 1000;
 
-  const handleError = useCallback((err: any) => {
-    const error = err instanceof Error ? err : new Error(String(err));
-    setError(error);
-    options.onError?.(error);
-  }, [options]);
+  const handleError = useCallback(
+    (err: any) => {
+      const error = err instanceof Error ? err : new Error(String(err));
+      setError(error);
+      options.onError?.(error);
+    },
+    [options]
+  );
 
   const clearError = useCallback(() => {
     setError(null);
@@ -62,44 +65,47 @@ export function useAIHelper<T = any>(options: UseAIHelperOptions): UseAIHelperRe
     lastOperationRef.current = null;
   }, []);
 
-  const executeWithRetry = useCallback(async <R>(
-    operation: () => Promise<{ code: number; success: boolean; data: R; message: string }>,
-    successHandler: (data: R) => void
-  ): Promise<R | null> => {
-    lastOperationRef.current = operation as any;
-    setIsLoading(true);
-    setError(null);
-    
-    let lastError: Error | null = null;
-    
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const response = await operation();
-        
-        if (response && response.code === 200 && response.data) {
-          const data = response.data;
-          setResult(data as unknown as T);
-          successHandler(data);
-          setRetryCount(0);
-          setIsLoading(false);
-          return data;
-        }
-        
-        throw new Error(response.message || '请求失败');
-      } catch (err) {
-        lastError = err instanceof Error ? err : new Error(String(err));
-        setRetryCount(attempt + 1);
-        
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
+  const executeWithRetry = useCallback(
+    async <R>(
+      operation: () => Promise<{ code: number; success: boolean; data: R; message: string }>,
+      successHandler: (data: R) => void
+    ): Promise<R | null> => {
+      lastOperationRef.current = operation as any;
+      setIsLoading(true);
+      setError(null);
+
+      let lastError: Error | null = null;
+
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await operation();
+
+          if (response && response.code === 200 && response.data) {
+            const data = response.data;
+            setResult(data as unknown as T);
+            successHandler(data);
+            setRetryCount(0);
+            setIsLoading(false);
+            return data;
+          }
+
+          throw new Error(response.message || '请求失败');
+        } catch (err) {
+          lastError = err instanceof Error ? err : new Error(String(err));
+          setRetryCount(attempt + 1);
+
+          if (attempt < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          }
         }
       }
-    }
-    
-    handleError(lastError);
-    setIsLoading(false);
-    return null;
-  }, [maxRetries, retryDelay, handleError]);
+
+      handleError(lastError);
+      setIsLoading(false);
+      return null;
+    },
+    [maxRetries, retryDelay, handleError]
+  );
 
   const retry = useCallback(async () => {
     if (lastOperationRef.current && retryCount <= maxRetries) {
@@ -107,62 +113,79 @@ export function useAIHelper<T = any>(options: UseAIHelperOptions): UseAIHelperRe
     }
   }, [executeWithRetry, retryCount, maxRetries]);
 
-  const generate = useCallback(async (prompt: string, generateOptions?: any) => {
-    const operation = () => aiApi.generate({
-      variables: { prompt },
-      output_format: 'text',
-      ...generateOptions,
-    });
-    
-    const result = await executeWithRetry(operation, (data) => {
-      options.onSuccess?.(data);
-    });
-    
-    return result?.content ?? null;
-  }, [executeWithRetry, options]);
+  const generate = useCallback(
+    async (prompt: string, generateOptions?: any) => {
+      const operation = () =>
+        aiApi.generate({
+          variables: { prompt },
+          output_format: 'text',
+          ...generateOptions,
+        });
 
-  const validate = useCallback(async (data: ValidateRequest) => {
-    const operation = () => aiApi.validate(data);
-    
-    const result = await executeWithRetry(operation, (data) => {
-      options.onSuccess?.(data);
-    });
-    
-    return result as ValidateResponse | null;
-  }, [executeWithRetry, options]);
+      const result = await executeWithRetry(operation, (data) => {
+        options.onSuccess?.(data);
+      });
 
-  const complete = useCallback(async (data: CompleteRequest) => {
-    const operation = () => aiApi.complete(data);
-    
-    const result = await executeWithRetry(operation, (data) => {
-      options.onSuccess?.(data);
-    });
-    
-    return result as CompleteResponse | null;
-  }, [executeWithRetry, options]);
+      return result?.content ?? null;
+    },
+    [executeWithRetry, options]
+  );
 
-  const summarize = useCallback(async (data: SummarizeRequest) => {
-    const operation = () => aiApi.summarize(data);
-    
-    const result = await executeWithRetry(operation, (data) => {
-      options.onSuccess?.(data);
-    });
-    
-    return result as SummarizeResponse | null;
-  }, [executeWithRetry, options]);
+  const validate = useCallback(
+    async (data: ValidateRequest) => {
+      const operation = () => aiApi.validate(data);
 
-  const chat = useCallback(async (query: string, conversationId?: string) => {
-    const operation = () => aiApi.chat({
-      query,
-      conversation_id: conversationId,
-    });
-    
-    const result = await executeWithRetry(operation, (data) => {
-      options.onSuccess?.(data);
-    });
-    
-    return result?.answer ?? null;
-  }, [executeWithRetry, options]);
+      const result = await executeWithRetry(operation, (data) => {
+        options.onSuccess?.(data);
+      });
+
+      return result as ValidateResponse | null;
+    },
+    [executeWithRetry, options]
+  );
+
+  const complete = useCallback(
+    async (data: CompleteRequest) => {
+      const operation = () => aiApi.complete(data);
+
+      const result = await executeWithRetry(operation, (data) => {
+        options.onSuccess?.(data);
+      });
+
+      return result as CompleteResponse | null;
+    },
+    [executeWithRetry, options]
+  );
+
+  const summarize = useCallback(
+    async (data: SummarizeRequest) => {
+      const operation = () => aiApi.summarize(data);
+
+      const result = await executeWithRetry(operation, (data) => {
+        options.onSuccess?.(data);
+      });
+
+      return result as SummarizeResponse | null;
+    },
+    [executeWithRetry, options]
+  );
+
+  const chat = useCallback(
+    async (query: string, conversationId?: string) => {
+      const operation = () =>
+        aiApi.chat({
+          query,
+          conversation_id: conversationId,
+        });
+
+      const result = await executeWithRetry(operation, (data) => {
+        options.onSuccess?.(data);
+      });
+
+      return result?.answer ?? null;
+    },
+    [executeWithRetry, options]
+  );
 
   return {
     isLoading,

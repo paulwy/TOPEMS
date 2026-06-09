@@ -194,8 +194,6 @@ export interface ProjectBenefits {
   total_milestones: number;
 }
 
-
-
 export interface ProjectDashboardResponse {
   project: Project;
   progress: ProjectProgress;
@@ -668,20 +666,20 @@ export interface PmStatistics {
   active_projects: number;
   completed_projects: number;
   cancelled_projects: number;
-  
+
   total_contracts: number;
   pending_contracts: number;
   active_contracts: number;
   completed_contracts: number;
-  
+
   total_budget: number;
   spent_budget: number;
   budget_usage_rate: number;
-  
+
   on_time_projects: number;
   delayed_projects: number;
   average_progress: number;
-  
+
   high_risk_projects: number;
   medium_risk_projects: number;
   low_risk_projects: number;
@@ -1218,13 +1216,16 @@ export const pmApi = {
       return apiClient.pm.get(`/api/v1/budgets/${id}`);
     },
 
-    create: async (projectId: string, data: {
-      budget_code: string;
-      budget_name: string;
-      budget_type?: string;
-      total_amount: number;
-      created_by?: string;
-    }) => {
+    create: async (
+      projectId: string,
+      data: {
+        budget_code: string;
+        budget_name: string;
+        budget_type?: string;
+        total_amount: number;
+        created_by?: string;
+      }
+    ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/budgets`, data);
     },
 

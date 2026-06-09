@@ -1,7 +1,21 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { AxiosInstance } from 'axios';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'email' | 'password' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'switch' | 'date' | 'datetime' | 'file' | 'hidden';
+export type FieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'email'
+  | 'password'
+  | 'select'
+  | 'multiselect'
+  | 'checkbox'
+  | 'radio'
+  | 'switch'
+  | 'date'
+  | 'datetime'
+  | 'file'
+  | 'hidden';
 
 export type FilterOperator =
   | 'equals'
@@ -194,14 +208,18 @@ export interface ToastNotificationProps {
 export interface CrudConfig<T extends { id?: string | number } = Record<string, unknown>> {
   resourceName: string;
   resourceLabel: string;
-  apiClient: AxiosInstance | {
-    list: (params: Record<string, unknown>) => Promise<{ items: T[]; total: number; page: number; pageSize: number }>;
-    get: (id: string | number) => Promise<T>;
-    create: (data: Partial<T>) => Promise<T>;
-    update: (id: string | number, data: Partial<T>) => Promise<T>;
-    delete: (id: string | number) => Promise<void>;
-    batchDelete?: (ids: Array<string | number>) => Promise<void>;
-  };
+  apiClient:
+    | AxiosInstance
+    | {
+        list: (
+          params: Record<string, unknown>
+        ) => Promise<{ items: T[]; total: number; page: number; pageSize: number }>;
+        get: (id: string | number) => Promise<T>;
+        create: (data: Partial<T>) => Promise<T>;
+        update: (id: string | number, data: Partial<T>) => Promise<T>;
+        delete: (id: string | number) => Promise<void>;
+        batchDelete?: (ids: Array<string | number>) => Promise<void>;
+      };
   listColumns: DataTableColumn<T>[];
   formFields: FieldConfig[];
   detailFields?: Array<{

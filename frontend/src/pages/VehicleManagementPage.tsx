@@ -3,7 +3,7 @@ import { Car, Search, Plus, Edit, Trash2, ChevronLeft, AlertCircle, Calendar, Us
 import { useNavigate } from 'react-router-dom';
 import { vehicleApi, vehicleRequestApi, type Vehicle, type VehicleRequest } from '../api/erp';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 
 import { Button } from '@/components/ui/button';

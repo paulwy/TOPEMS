@@ -512,7 +512,11 @@ const AIPage: React.FC = () => {
               <ModeToggle />
             </div>
           </div>
-          <Tabs defaultValue={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'documents' | 'analysis' | 'manage')} className='w-full mb-4'>
+          <Tabs
+            defaultValue={activeTab}
+            onValueChange={(v) => setActiveTab(v as 'chat' | 'documents' | 'analysis' | 'manage')}
+            className='w-full mb-4'
+          >
             <TabsList className='w-full grid grid-cols-4'>
               <TabsTrigger value='chat' className='flex items-center gap-1 text-xs'>
                 <MessageSquare className='w-4 h-4' />
@@ -628,8 +632,8 @@ const AIPage: React.FC = () => {
           <div className='flex-1 overflow-y-auto p-4'>
             <h3 className='text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3'>快速开始</h3>
             <div className='space-y-3'>
-              <Card 
-                className='cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors' 
+              <Card
+                className='cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors'
                 onClick={() => setShowDocumentGenerator(true)}
               >
                 <CardContent className='p-4'>
@@ -792,7 +796,9 @@ const AIPage: React.FC = () => {
                     发送
                   </Button>
                 </div>
-                <p className='text-xs text-gray-500 dark:text-gray-400 text-center mt-2'>AI 基于知识库回答，建议仅作参考</p>
+                <p className='text-xs text-gray-500 dark:text-gray-400 text-center mt-2'>
+                  AI 基于知识库回答，建议仅作参考
+                </p>
               </div>
             </div>
           </>
@@ -867,7 +873,7 @@ const AIPage: React.FC = () => {
       </div>
 
       <AISettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
-      <AIDocumentGenerator 
+      <AIDocumentGenerator
         isOpen={showDocumentGenerator}
         onClose={() => setShowDocumentGenerator(false)}
         onDocumentGenerated={handleDocumentGenerated}

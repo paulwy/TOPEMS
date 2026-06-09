@@ -19,22 +19,18 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type { ProductionProcess, ProductionStep, ProductionFormula, ProductionBatch, PdmStatistics } from '../api/pdm';
 import {
   pdmApi,
-  ProductionProcess,
-  ProductionStep,
-  ProductionFormula,
-  ProductionBatch,
   CreateProductionProcessRequest,
   CreateProductionStepRequest,
   CreateProductionFormulaRequest,
   CreateProductionBatchRequest,
-  PdmStatistics,
 } from '../api/pdm';
 import { DataTable } from '../components/DataTable';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'processes' | 'steps' | 'formulas' | 'batches' | 'stats';
 
@@ -426,26 +422,16 @@ const Pdmpage: React.FC = () => {
   const renderStats = () => {
     // 计算本地统计数据作为后备
     const localTotalProcesses = safeProcesses.length;
-    const localActiveProcesses = safeProcesses.filter(
-      (p) => p.status === '启用' || p.status === 'active'
-    ).length;
+    const localActiveProcesses = safeProcesses.filter((p) => p.status === '启用' || p.status === 'active').length;
     const localTotalFormulas = safeFormulas.length;
-    const localActiveFormulas = safeFormulas.filter(
-      (f) => f.status === '启用' || f.status === 'active'
-    ).length;
+    const localActiveFormulas = safeFormulas.filter((f) => f.status === '启用' || f.status === 'active').length;
     const localTotalBatches = safeBatches.length;
-    const localPlanningBatches = safeBatches.filter(
-      (b) => b.status === '规划中' || b.status === 'planning'
-    ).length;
+    const localPlanningBatches = safeBatches.filter((b) => b.status === '规划中' || b.status === 'planning').length;
     const localInProgressBatches = safeBatches.filter(
       (b) => b.status === '进行中' || b.status === 'in_progress'
     ).length;
-    const localCompletedBatches = safeBatches.filter(
-      (b) => b.status === '已完成' || b.status === 'completed'
-    ).length;
-    const localCancelledBatches = safeBatches.filter(
-      (b) => b.status === '已取消' || b.status === 'cancelled'
-    ).length;
+    const localCompletedBatches = safeBatches.filter((b) => b.status === '已完成' || b.status === 'completed').length;
+    const localCancelledBatches = safeBatches.filter((b) => b.status === '已取消' || b.status === 'cancelled').length;
     const localTotalSteps = safeSteps.length;
 
     // 使用 API 返回的统计数据，或本地计算的数据
@@ -553,12 +539,15 @@ const Pdmpage: React.FC = () => {
                   {activeTab === 'processes'
                     ? safeProcesses.length
                     : activeTab === 'steps'
-                    ? safeSteps.length
-                    : activeTab === 'formulas'
-                    ? safeFormulas.length
-                    : activeTab === 'batches'
-                    ? safeBatches.length
-                    : displayStats.total_processes + displayStats.total_steps + displayStats.total_formulas + displayStats.total_batches}
+                      ? safeSteps.length
+                      : activeTab === 'formulas'
+                        ? safeFormulas.length
+                        : activeTab === 'batches'
+                          ? safeBatches.length
+                          : displayStats.total_processes +
+                            displayStats.total_steps +
+                            displayStats.total_formulas +
+                            displayStats.total_batches}
                 </p>
               </div>
               <div className='w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center'>
@@ -581,9 +570,7 @@ const Pdmpage: React.FC = () => {
                   <div>
                     <p className='text-sm text-gray-600 mb-1'>进行中批次</p>
                     <p className='text-3xl font-bold text-blue-600'>
-                      {safeBatches.filter(
-                        (b) => b.status === '进行中' || b.status === 'in_progress'
-                      ).length}
+                      {safeBatches.filter((b) => b.status === '进行中' || b.status === 'in_progress').length}
                     </p>
                   </div>
                   <div className='w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center'>
@@ -596,9 +583,7 @@ const Pdmpage: React.FC = () => {
                   <div>
                     <p className='text-sm text-gray-600 mb-1'>已完成批次</p>
                     <p className='text-3xl font-bold text-green-600'>
-                      {safeBatches.filter(
-                        (b) => b.status === '已完成' || b.status === 'completed'
-                      ).length}
+                      {safeBatches.filter((b) => b.status === '已完成' || b.status === 'completed').length}
                     </p>
                   </div>
                   <div className='w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center'>
@@ -616,10 +601,8 @@ const Pdmpage: React.FC = () => {
                     <p className='text-sm text-gray-600 mb-1'>活跃项</p>
                     <p className='text-3xl font-bold text-green-600'>
                       {activeTab === 'processes'
-                        ? safeProcesses.filter((p) => p.status === '启用' || p.status === 'active')
-                            .length
-                        : safeFormulas.filter((f) => f.status === '启用' || f.status === 'active')
-                            .length}
+                        ? safeProcesses.filter((p) => p.status === '启用' || p.status === 'active').length
+                        : safeFormulas.filter((f) => f.status === '启用' || f.status === 'active').length}
                     </p>
                   </div>
                   <div className='w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center'>

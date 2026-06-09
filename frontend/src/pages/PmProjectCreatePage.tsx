@@ -30,7 +30,7 @@ const PmProjectCreatePage: React.FC = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  
+
   const [showAICodeGenerator, setShowAICodeGenerator] = useState(false);
   const [showAITextOptimizer, setShowAITextOptimizer] = useState(false);
   const [showAIFormValidator, setShowAIFormValidator] = useState(false);
@@ -82,16 +82,16 @@ const PmProjectCreatePage: React.FC = () => {
       setErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
-  
+
   const handleSelectAICode = (code: string) => {
     setFormData((prev) => ({ ...prev, code }));
   };
-  
+
   const handleOptimizedText = (text: string) => {
     setFormData((prev) => ({ ...prev, description: text }));
     setShowAITextOptimizer(false);
   };
-  
+
   const handleApplyCompletion = (completions: Record<string, CompletionItem>) => {
     const updates: Record<string, any> = {};
     Object.entries(completions).forEach(([field, item]) => {
@@ -100,7 +100,7 @@ const PmProjectCreatePage: React.FC = () => {
     setFormData((prev) => ({ ...prev, ...updates }));
     setShowAIDataCompleter(false);
   };
-  
+
   const handleApplyValidationSuggestions = (suggestions: any[]) => {
     const updates: Record<string, any> = {};
     suggestions.forEach((s) => {
@@ -340,7 +340,7 @@ const PmProjectCreatePage: React.FC = () => {
           </form>
         </div>
       </div>
-      
+
       <AICodeGenerator
         isOpen={showAICodeGenerator}
         onClose={() => setShowAICodeGenerator(false)}
@@ -351,7 +351,7 @@ const PmProjectCreatePage: React.FC = () => {
         onSelect={handleSelectAICode}
         existingCodes={[]}
       />
-      
+
       <AITextOptimizer
         isOpen={showAITextOptimizer}
         onClose={() => setShowAITextOptimizer(false)}
@@ -362,7 +362,7 @@ const PmProjectCreatePage: React.FC = () => {
         originalText={formData.description}
         onOptimized={handleOptimizedText}
       />
-      
+
       <AIDataCompleter
         isOpen={showAIDataCompleter}
         onClose={() => setShowAIDataCompleter(false)}
@@ -375,7 +375,7 @@ const PmProjectCreatePage: React.FC = () => {
         }}
         onApplyCompletion={handleApplyCompletion}
       />
-      
+
       <AIFormValidator
         isOpen={showAIFormValidator}
         onClose={() => setShowAIFormValidator(false)}

@@ -1,12 +1,11 @@
 import globals from 'globals';
-import pluginJs from '@eslint/js';
 import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
-import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
   {
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -23,26 +22,32 @@ export default [
         project: './tsconfig.json',
       },
     },
-  },
-  pluginJs.configs.recommended,
-  tsPlugin.configs.recommended,
-  {
-    plugins: { '@typescript-eslint': tsPlugin },
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+      prettier: prettierPlugin,
+    },
     rules: {
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-namespace': 'off',
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      'prettier/prettier': 'error',
+      'no-console': 'off',
+      'no-unused-vars': 'off',
     },
   },
-  eslintConfigPrettier,
   {
-    plugins: {
-      prettier: prettierPlugin,
+    files: ['**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
     },
     rules: {
-      'prettier/prettier': 'error',
       'no-console': 'off',
     },
   },
@@ -52,12 +57,14 @@ export default [
       'dist/',
       'build/',
       'public/',
-      '*.config.ts',
-      '*.config.js',
-      '*.config.cjs',
       'temp.tsx',
       'e2e/**/*',
       'src/__tests__/**/*',
+      'vite.config.ts',
+      'vitest.config.ts',
+      'playwright.config.ts',
+      'tsconfig.json',
+      'tsconfig.node.json',
     ],
   },
 ];

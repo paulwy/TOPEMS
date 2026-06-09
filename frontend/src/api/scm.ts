@@ -3,7 +3,8 @@
  * 供应链管理 API 客户端
  */
 
-import { apiClient, ApiResponse, PaginationParams, PaginatedResponse } from './client';
+import type { ApiResponse, PaginationParams, PaginatedResponse } from './client';
+import { apiClient } from './client';
 
 // ==================== Types ====================
 
@@ -312,7 +313,7 @@ export const scmApi = {
   purchaseOrders: purchaseOrderApi,
   purchaseItems: purchaseItemApi,
   evaluations: supplierEvaluationApi,
-  
+
   /**
    * 健康检查
    */

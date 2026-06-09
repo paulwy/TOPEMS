@@ -16,7 +16,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { flowApi, Notification } from '../api/flow';
+import type { Notification } from '../api/flow';
+import { flowApi } from '../api/flow';
 import { useAppStore } from '../store';
 
 const FlowNotificationCenter: React.FC = () => {

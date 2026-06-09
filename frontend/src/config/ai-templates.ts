@@ -31,7 +31,7 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 2. 议题讨论要点
 3. 决议事项与责任人
 4. 下一步行动与时间节点
-`
+`,
   },
   'job-description': {
     id: 'job-description',
@@ -56,7 +56,7 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 2. 主要职责（分点列出）
 3. 任职要求（分点列出）
 4. 发展方向
-`
+`,
   },
   'project-charter': {
     id: 'project-charter',
@@ -82,7 +82,7 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 3. 项目范围与交付物
 4. 项目时间计划
 5. 项目风险评估
-`
+`,
   },
   'contract-template': {
     id: 'contract-template',
@@ -112,7 +112,7 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 5. 违约责任
 6. 争议解决方式
 7. 其他约定事项
-`
+`,
   },
   'recruitment-post': {
     id: 'recruitment-post',
@@ -142,7 +142,7 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 3. 任职要求
 4. 福利待遇
 5. 应聘方式与联系信息
-`
+`,
   },
   'project-report': {
     id: 'project-report',
@@ -170,7 +170,7 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 3. 遇到的问题与风险
 4. 下周工作安排
 5. 需要协调的事项
-`
+`,
   },
   'employee-evaluation': {
     id: 'employee-evaluation',
@@ -198,7 +198,7 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 3. 待改进之处
 4. 发展建议
 5. 下一步行动计划
-`
+`,
   },
   'business-plan': {
     id: 'business-plan',
@@ -226,7 +226,7 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 5. 商业模式与盈利方式
 6. 运营计划
 7. 财务规划
-`
+`,
   },
   'training-plan': {
     id: 'training-plan',
@@ -255,7 +255,7 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 4. 培训方式与方法
 5. 培训评估与考核
 6. 培训资源需求
-`
+`,
   },
 };
 

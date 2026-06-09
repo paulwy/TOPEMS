@@ -552,16 +552,16 @@ export interface RsStatistics {
   in_progress_projects: number;
   completed_projects: number;
   cancelled_projects: number;
-  
+
   total_experiments: number;
   pending_experiments: number;
   in_progress_experiments: number;
   completed_experiments: number;
-  
+
   total_formulas: number;
   draft_formulas: number;
   approved_formulas: number;
-  
+
   total_tasks: number;
 }
 

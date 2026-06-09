@@ -54,7 +54,7 @@ export const AlertCard = ({ title, message, level, onClick }: AlertCardProps) =>
       onClick={onClick}
     >
       <Icon className={`w-5 h-5 ${config.iconColor} flex-shrink-0 mt-0.5`} />
-      <div className="flex-1 min-w-0">
+      <div className='flex-1 min-w-0'>
         <h4 className={`font-medium ${config.titleColor} truncate`}>{title}</h4>
         <p className={`text-sm ${config.messageColor} mt-1`}>{message}</p>
       </div>

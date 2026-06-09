@@ -1,4 +1,13 @@
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 
 interface BarChartProps {
   data: any[];
@@ -26,11 +35,11 @@ export const BarChart = ({
 
   return (
     <div style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+      <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={0}>
         <RechartsBarChart data={data} layout={stacked ? 'vertical' : 'horizontal'}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" />
-          <YAxis dataKey={xKey} type="category" width={60} />
+          <CartesianGrid strokeDasharray='3 3' />
+          <XAxis type='number' />
+          <YAxis dataKey={xKey} type='category' width={60} />
           <Tooltip />
           {showLegend && <Legend />}
           {yKeys.map((yKey) => (

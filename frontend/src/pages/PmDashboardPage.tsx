@@ -14,7 +14,8 @@ import {
   Clock,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { pmApi, Project, Contract, PmStatistics } from '../api/pm';
+import type { Project, Contract, PmStatistics } from '../api/pm';
+import { pmApi } from '../api/pm';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
 
@@ -64,12 +65,12 @@ const PmDashboardPage: React.FC = () => {
     setLoading(true);
     try {
       await Promise.all([
-        pmApi.projects.list().then(res => {
+        pmApi.projects.list().then((res) => {
           if (res.success && res.data) {
             setProjects(res.data.projects || []);
           }
         }),
-        pmApi.contracts.list().then(res => {
+        pmApi.contracts.list().then((res) => {
           if (res.success && res.data) {
             setContracts(res.data.contracts || []);
           }
@@ -220,7 +221,7 @@ const PmDashboardPage: React.FC = () => {
             { name: '进行中', value: stats.active_projects, color: '#3B82F6' },
             { name: '已完成', value: stats.completed_projects, color: '#10B981' },
             { name: '已取消', value: stats.cancelled_projects, color: '#EF4444' },
-          ].filter(d => d.value > 0)}
+          ].filter((d) => d.value > 0)}
           dataKey='value'
           nameKey='name'
         />
@@ -230,7 +231,7 @@ const PmDashboardPage: React.FC = () => {
           data={[
             { name: '准时', value: stats.on_time_projects, color: '#10B981' },
             { name: '延迟', value: stats.delayed_projects, color: '#EF4444' },
-          ].filter(d => d.value > 0)}
+          ].filter((d) => d.value > 0)}
           dataKey='value'
           nameKey='name'
         />
@@ -381,7 +382,9 @@ const PmDashboardPage: React.FC = () => {
                   </div>
                   <div className='text-right mr-4'>
                     <p className='font-medium text-gray-900'>
-                      {contract.amount ? new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(contract.amount) : '-'}
+                      {contract.amount
+                        ? new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(contract.amount)
+                        : '-'}
                     </p>
                     <p className='text-xs text-gray-500'>{formatDate(contract.signing_date)}</p>
                   </div>

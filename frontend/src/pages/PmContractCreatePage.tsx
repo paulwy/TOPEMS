@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { pmApi, Project } from '../api/pm';
-import {
-  AICodeGenerator,
-  AITextOptimizer,
-  AIDataCompleter,
-  AIFormValidator,
-} from '../components/ai';
+import type { Project } from '../api/pm';
+import { pmApi } from '../api/pm';
+import { AICodeGenerator, AITextOptimizer, AIDataCompleter, AIFormValidator } from '../components/ai';
 import type { CompleteRequest, ValidateRequest, CompletionItem } from '../types/ai';
 
 const CONTRACT_TYPES = [
@@ -31,7 +27,7 @@ const PmContractCreatePage: React.FC = () => {
   const [showTextOptimizer, setShowTextOptimizer] = useState(false);
   const [showDataCompleter, setShowDataCompleter] = useState(false);
   const [showValidator, setShowValidator] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     project_id: '',
     contract_code: '',
@@ -80,11 +76,11 @@ const PmContractCreatePage: React.FC = () => {
   };
 
   const handleCodeSelected = (code: string) => {
-    setFormData(prev => ({ ...prev, contract_code: code }));
+    setFormData((prev) => ({ ...prev, contract_code: code }));
   };
 
   const handleTextOptimized = (text: string) => {
-    setFormData(prev => ({ ...prev, description: text }));
+    setFormData((prev) => ({ ...prev, description: text }));
     setShowTextOptimizer(false);
   };
 
@@ -93,48 +89,48 @@ const PmContractCreatePage: React.FC = () => {
     Object.entries(completions).forEach(([key, item]) => {
       dataToUpdate[key] = item.value;
     });
-    setFormData(prev => ({ ...prev, ...dataToUpdate }));
+    setFormData((prev) => ({ ...prev, ...dataToUpdate }));
     setShowDataCompleter(false);
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
+    <div className='p-6 bg-gray-50 min-h-screen'>
+      <div className='max-w-4xl mx-auto'>
+        <div className='flex items-center gap-4 mb-6'>
           <button
             onClick={() => navigate('/pm/contracts')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className='flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors'
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className='w-5 h-5' />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">创建合同</h1>
-            <p className="text-gray-500">填写合同基本信息</p>
+            <h1 className='text-2xl font-bold text-gray-900'>创建合同</h1>
+            <p className='text-gray-500'>填写合同基本信息</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">基本信息</h2>
+        <form onSubmit={handleSubmit} className='space-y-6'>
+          <div className='bg-white rounded-lg shadow p-6'>
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between mb-4'>
+                <h2 className='text-lg font-semibold text-gray-900'>基本信息</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    关联项目
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>关联项目</label>
                   <select
                     value={formData.project_id}
-                    onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    project_id: e.target.value
-                  }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        project_id: e.target.value,
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   >
-                    <option value="">请选择项目</option>
-                    {projects.map(project => (
+                    <option value=''>请选择项目</option>
+                    {projects.map((project) => (
                       <option key={project.id} value={project.id}>
                         {project.name}
                       </option>
@@ -143,61 +139,61 @@ const PmContractCreatePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      合同编号
-                    </label>
+                  <div className='flex items-center justify-between mb-1'>
+                    <label className='block text-sm font-medium text-gray-700'>合同编号</label>
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => setShowCodeGenerator(true)}
-                      className="text-blue-600 text-sm hover:text-blue-800"
+                      className='text-blue-600 text-sm hover:text-blue-800'
                     >
                       AI 生成
                     </button>
                   </div>
                   <input
-                    type="text"
+                    type='text'
                     value={formData.contract_code}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      contract_code: e.target.value
-                    }))}
-                    placeholder="请输入合同编号"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        contract_code: e.target.value,
+                      }))
+                    }
+                    placeholder='请输入合同编号'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    合同名称
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>合同名称</label>
                   <input
-                    type="text"
+                    type='text'
                     value={formData.contract_name}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      contract_name: e.target.value
-                    }))}
-                    placeholder="请输入合同名称"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        contract_name: e.target.value,
+                      }))
+                    }
+                    placeholder='请输入合同名称'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    合同类型
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>合同类型</label>
                   <select
                     value={formData.contract_type}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      contract_type: e.target.value
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        contract_type: e.target.value,
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   >
-                    {CONTRACT_TYPES.map(type => (
+                    {CONTRACT_TYPES.map((type) => (
                       <option key={type.value} value={type.value}>
                         {type.label}
                       </option>
@@ -207,18 +203,18 @@ const PmContractCreatePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  合同类别
-                </label>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>合同类别</label>
                 <select
                   value={formData.contract_category}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    contract_category: e.target.value
-                  }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      contract_category: e.target.value,
+                    }))
+                  }
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                 >
-                  {CONTRACT_CATEGORIES.map(category => (
+                  {CONTRACT_CATEGORIES.map((category) => (
                     <option key={category.value} value={category.value}>
                       {category.label}
                     </option>
@@ -227,173 +223,173 @@ const PmContractCreatePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">合同双方</h2>
+            <div className='border-t border-gray-200 pt-4 mt-6'>
+              <div className='flex items-center justify-between mb-4'>
+                <h2 className='text-lg font-semibold text-gray-900'>合同双方</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    甲方
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>甲方</label>
                   <input
-                    type="text"
+                    type='text'
                     value={formData.party_a_name}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      party_a_name: e.target.value
-                    }))}
-                    placeholder="请输入甲方名称"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        party_a_name: e.target.value,
+                      }))
+                    }
+                    placeholder='请输入甲方名称'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    乙方
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>乙方</label>
                   <input
-                    type="text"
+                    type='text'
                     value={formData.party_b_name}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      party_b_name: e.target.value
-                    }))}
-                    placeholder="请输入乙方名称"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        party_b_name: e.target.value,
+                      }))
+                    }
+                    placeholder='请输入乙方名称'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">金额与时间</h2>
+            <div className='border-t border-gray-200 pt-4 mt-6'>
+              <div className='flex items-center justify-between mb-4'>
+                <h2 className='text-lg font-semibold text-gray-900'>金额与时间</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    合同金额
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>合同金额</label>
                   <input
-                    type="number"
+                    type='number'
                     value={formData.amount}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      amount: Number(e.target.value)
-                    }))}
-                    placeholder="请输入合同金额"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        amount: Number(e.target.value),
+                      }))
+                    }
+                    placeholder='请输入合同金额'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    税率 (%)
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>税率 (%)</label>
                   <input
-                    type="number"
+                    type='number'
                     value={formData.tax_rate}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      tax_rate: Number(e.target.value)
-                    }))}
-                    placeholder="请输入税率"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        tax_rate: Number(e.target.value),
+                      }))
+                    }
+                    placeholder='请输入税率'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    货币
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>货币</label>
                   <select
                     value={formData.currency}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      currency: e.target.value
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        currency: e.target.value,
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   >
-                    <option value="CNY">人民币</option>
-                    <option value="USD">美元</option>
-                    <option value="EUR">欧元</option>
+                    <option value='CNY'>人民币</option>
+                    <option value='USD'>美元</option>
+                    <option value='EUR'>欧元</option>
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mt-4'>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    签约日期
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>签约日期</label>
                   <input
-                    type="date"
+                    type='date'
                     value={formData.signing_date}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      signing_date: e.target.value
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        signing_date: e.target.value,
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    生效日期
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>生效日期</label>
                   <input
-                    type="date"
+                    type='date'
                     value={formData.effective_date}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      effective_date: e.target.value
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        effective_date: e.target.value,
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    结束日期
-                  </label>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>结束日期</label>
                   <input
-                    type="date"
+                    type='date'
                     value={formData.end_date}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      end_date: e.target.value
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        end_date: e.target.value,
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">合同描述</h2>
-                <div className="flex items-center gap-2">
+            <div className='border-t border-gray-200 pt-4 mt-6'>
+              <div className='flex items-center justify-between mb-4'>
+                <h2 className='text-lg font-semibold text-gray-900'>合同描述</h2>
+                <div className='flex items-center gap-2'>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setShowTextOptimizer(true)}
-                    className="text-blue-600 text-sm hover:text-blue-800"
+                    className='text-blue-600 text-sm hover:text-blue-800'
                   >
                     AI 优化
                   </button>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setShowDataCompleter(true)}
-                    className="text-blue-600 text-sm hover:text-blue-800"
+                    className='text-blue-600 text-sm hover:text-blue-800'
                   >
                     AI 补全
                   </button>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setShowValidator(true)}
-                    className="text-blue-600 text-sm hover:text-blue-800"
+                    className='text-blue-600 text-sm hover:text-blue-800'
                   >
                     AI 校验
                   </button>
@@ -402,30 +398,32 @@ const PmContractCreatePage: React.FC = () => {
 
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  description: e.target.value
-                }))}
-                placeholder="请输入合同描述..."
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                placeholder='请输入合同描述...'
                 rows={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className='flex items-center gap-3'>
             <button
-              type="submit"
+              type='submit'
               disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className='flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50'
             >
-              <Save className="w-4 h-4" />
+              <Save className='w-4 h-4' />
               {loading ? '创建中...' : '创建合同'}
             </button>
             <button
-              type="button"
+              type='button'
               onClick={() => navigate('/pm/contracts')}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className='px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'
             >
               取消
             </button>

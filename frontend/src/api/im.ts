@@ -223,7 +223,11 @@ export const imApi = {
     return apiClient.im.post<any>(`/api/v1/contact-groups/${userId}`, data);
   },
 
-  updateContactGroup: async (userId: string, groupId: string, data: CreateContactGroupRequest): Promise<ApiResponse<any>> => {
+  updateContactGroup: async (
+    userId: string,
+    groupId: string,
+    data: CreateContactGroupRequest
+  ): Promise<ApiResponse<any>> => {
     return apiClient.im.put<any>(`/api/v1/contact-groups/${userId}/${groupId}`, data);
   },
 
@@ -235,7 +239,11 @@ export const imApi = {
     return apiClient.im.post<any>(`/api/v1/contact-groups/${userId}/${groupId}/members`, { user_id: memberUserId });
   },
 
-  removeContactGroupMember: async (userId: string, groupId: string, memberUserId: string): Promise<ApiResponse<any>> => {
+  removeContactGroupMember: async (
+    userId: string,
+    groupId: string,
+    memberUserId: string
+  ): Promise<ApiResponse<any>> => {
     return apiClient.im.delete<any>(`/api/v1/contact-groups/${userId}/${groupId}/members/${memberUserId}`);
   },
 

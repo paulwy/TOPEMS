@@ -13,7 +13,7 @@ import {
   Table,
   Eye,
 } from 'lucide-react';
-import { ReportData } from '../api/report';
+import type { ReportData } from '../api/report';
 
 interface ReportViewerProps {
   report: ReportData;

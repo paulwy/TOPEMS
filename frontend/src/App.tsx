@@ -353,14 +353,8 @@ const AppContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path='/departments'
-            element={<Navigate to='/hrm/departments' replace />}
-          />
-          <Route
-            path='/employees'
-            element={<Navigate to='/hrm/employees' replace />}
-          />
+          <Route path='/departments' element={<Navigate to='/hrm/departments' replace />} />
+          <Route path='/employees' element={<Navigate to='/hrm/employees' replace />} />
           <Route
             path='/assets'
             element={
@@ -813,10 +807,7 @@ const AppContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path='/config-debug'
-            element={<Navigate to='/debug' replace />}
-          />
+          <Route path='/config-debug' element={<Navigate to='/debug' replace />} />
           <Route
             path='/mail'
             element={

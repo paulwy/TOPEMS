@@ -19,7 +19,7 @@ import { assetApi, type Asset } from '../api/erp';
 import { employeeApi, type Employee } from '../api/hrm';
 import { mesEquipmentApi, type InspectionRecord, type MaintenanceRecord } from '../api/mesEquipment';
 import { useAppStore } from '../store';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 
 import { Button } from '@/components/ui/button';

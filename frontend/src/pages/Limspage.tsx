@@ -25,8 +25,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  limsApi,
+import type {
   Sample,
   CreateSampleRequest,
   InspectionProcess,
@@ -34,21 +33,19 @@ import {
   InspectionRecord,
   CreateInspectionTaskRequest,
   CreateInspectionRecordRequest,
-  BatchCreateSamplesRequest,
-  BatchDeleteSamplesRequest,
-  BatchOperationResult,
   Instrument,
   CreateInstrumentRequest,
   MaintenanceRecord,
   CreateMaintenanceRecordRequest,
   LimsStatistics,
 } from '../api/lims';
+import { limsApi, BatchCreateSamplesRequest, BatchDeleteSamplesRequest, BatchOperationResult } from '../api/lims';
 import { ModuleGate } from '../components/PermissionGate';
 import { MODULES } from '../config/permissions';
 import { DataTable } from '../components/DataTable';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 
 const Limspage: React.FC = () => {
   const navigate = useNavigate();
@@ -1388,7 +1385,7 @@ const Limspage: React.FC = () => {
               { name: '测试中', value: stats.testing_samples, color: '#EC4899' },
               { name: '已完成', value: stats.completed_samples, color: '#00C897' },
               { name: '已终止', value: stats.cancelled_samples, color: '#6B7280' },
-            ].filter(d => d.value > 0)}
+            ].filter((d) => d.value > 0)}
             dataKey='value'
             nameKey='name'
           />
@@ -1400,7 +1397,7 @@ const Limspage: React.FC = () => {
               { name: '校准中', value: stats.calibration_instruments, color: '#F59E0B' },
               { name: '维修中', value: stats.maintenance_instruments, color: '#EF4444' },
               { name: '停用', value: stats.disabled_instruments, color: '#6B7280' },
-            ].filter(d => d.value > 0)}
+            ].filter((d) => d.value > 0)}
             dataKey='value'
             nameKey='name'
           />

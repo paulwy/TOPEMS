@@ -10,14 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Download, Upload, FileText, CheckCircle } from 'lucide-react';
-import {
-  ExportColumn,
-  exportToExcel,
-  exportToCSV,
-  importFromExcel,
-  downloadTemplate,
-  ImportResult,
-} from '@/utils/importExport';
+import type { ExportColumn, ImportResult } from '@/utils/importExport';
+import { exportToExcel, exportToCSV, importFromExcel, downloadTemplate } from '@/utils/importExport';
 
 interface ImportExportModalProps<T> {
   open: boolean;

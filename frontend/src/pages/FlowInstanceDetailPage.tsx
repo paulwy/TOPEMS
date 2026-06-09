@@ -16,7 +16,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { flowApi, WorkflowInstance, Approval, ApprovalRecord } from '../api/flow';
+import type { WorkflowInstance, Approval, ApprovalRecord } from '../api/flow';
+import { flowApi } from '../api/flow';
 import { useAppStore } from '../store';
 import { Button } from '@/components/ui/button';
 

@@ -25,8 +25,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  gisApi,
+import type {
   DevicePoint,
   Pipeline,
   StorageLocation,
@@ -41,12 +40,19 @@ import {
   CreateBusinessLocationRequest,
   GisStatistics,
 } from '../api/gis';
+import { gisApi } from '../api/gis';
 import { DataTable } from '../components/DataTable';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import MetricCard from '../components/MetricCard';
 import StatsChart from '../components/StatsChart';
 
-type TabType = 'devicePoints' | 'pipelines' | 'storageLocations' | 'evidenceRecords' | 'factoryMaps' | 'businessLocations';
+type TabType =
+  | 'devicePoints'
+  | 'pipelines'
+  | 'storageLocations'
+  | 'evidenceRecords'
+  | 'factoryMaps'
+  | 'businessLocations';
 
 type ModalType = 'create' | 'edit' | null;
 
@@ -513,12 +519,14 @@ const Gispage: React.FC = () => {
             name: formData.name || editingItem.name,
             description: formData.description || editingItem.description,
             pipeline_type: formData.pipeline_type || editingItem.pipeline_type,
-            start_point: formData.start_lat && formData.start_lng
-              ? [parseFloat(formData.start_lat), parseFloat(formData.start_lng)]
-              : editingItem.start_point,
-            end_point: formData.end_lat && formData.end_lng
-              ? [parseFloat(formData.end_lat), parseFloat(formData.end_lng)]
-              : editingItem.end_point,
+            start_point:
+              formData.start_lat && formData.start_lng
+                ? [parseFloat(formData.start_lat), parseFloat(formData.start_lng)]
+                : editingItem.start_point,
+            end_point:
+              formData.end_lat && formData.end_lng
+                ? [parseFloat(formData.end_lat), parseFloat(formData.end_lng)]
+                : editingItem.end_point,
             status: formData.status || editingItem.status,
           };
           await gisApi.updatePipeline(editingItem.id, pipelineReq);
@@ -551,9 +559,10 @@ const Gispage: React.FC = () => {
             business_name: formData.business_name || editingItem.business_name,
             business_code: formData.business_code || editingItem.business_code,
             category: formData.category || editingItem.category,
-            position: formData.lat && formData.lng
-              ? { lat: parseFloat(formData.lat), lng: parseFloat(formData.lng) }
-              : editingItem.position,
+            position:
+              formData.lat && formData.lng
+                ? { lat: parseFloat(formData.lat), lng: parseFloat(formData.lng) }
+                : editingItem.position,
             address: formData.address || editingItem.address,
             contact_person: formData.contact_person || editingItem.contact_person,
             contact_phone: formData.contact_phone || editingItem.contact_phone,
@@ -919,8 +928,36 @@ const Gispage: React.FC = () => {
         sampleRow = ['厂区平面图', 'F001', '平面图', '', '地图描述'];
         break;
       case 'businessLocations':
-        headers = ['business_name', 'business_type', 'business_code', 'category', 'lat', 'lng', 'address', 'contact_person', 'contact_phone', 'capacity', 'current_usage', 'status', 'description'];
-        sampleRow = ['门店A', '零售', 'B001', '零售', '31.2304', '121.4737', '地址', '张三', '13800138000', '100', '50', 'active', '描述'];
+        headers = [
+          'business_name',
+          'business_type',
+          'business_code',
+          'category',
+          'lat',
+          'lng',
+          'address',
+          'contact_person',
+          'contact_phone',
+          'capacity',
+          'current_usage',
+          'status',
+          'description',
+        ];
+        sampleRow = [
+          '门店A',
+          '零售',
+          'B001',
+          '零售',
+          '31.2304',
+          '121.4737',
+          '地址',
+          '张三',
+          '13800138000',
+          '100',
+          '50',
+          'active',
+          '描述',
+        ];
         break;
       default:
         headers = ['name'];
@@ -1068,7 +1105,7 @@ const Gispage: React.FC = () => {
               { name: '仓储位置', value: statistics?.storage_locations || 0, color: '#F59E0B' },
               { name: '厂区地图', value: statistics?.factory_maps || 0, color: '#8B5CF6' },
               { name: '业务位置', value: statistics?.business_locations || 0, color: '#14B8A6' },
-            ].filter(d => d.value > 0)}
+            ].filter((d) => d.value > 0)}
             dataKey='value'
             nameKey='name'
           />

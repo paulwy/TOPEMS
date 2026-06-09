@@ -21,23 +21,22 @@ import {
   ScrollText,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  srmApi,
+import type {
   Supplier,
   SupplierEvaluation,
   PurchaseOrder,
   SupplierContract,
-  SrmStatistics,
   SrmDetailedStatistics,
   CreateSupplierRequest,
   CreateSupplierEvaluationRequest,
   CreatePurchaseOrderRequest,
   CreateSupplierContractRequest,
 } from '../api/srm';
+import { srmApi, SrmStatistics } from '../api/srm';
 import { DataTable } from '../components/DataTable';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 
 type TabType = 'dashboard' | 'suppliers' | 'evaluations' | 'orders' | 'contracts';
 type ModalType = 'create' | 'edit' | null;
@@ -785,10 +784,10 @@ const Srmpage: React.FC = () => {
               <StatsChart
                 title='供应商状态分布'
                 type='pie'
-                data={statistics.supplier_by_status.map(s => ({
+                data={statistics.supplier_by_status.map((s) => ({
                   name: mapStatusToChinese(s.status),
                   value: s.count,
-                  color: s.status === 'active' ? '#10B981' : '#6B7280'
+                  color: s.status === 'active' ? '#10B981' : '#6B7280',
                 }))}
                 yKey='value'
                 xKey='name'
@@ -796,9 +795,9 @@ const Srmpage: React.FC = () => {
               <StatsChart
                 title='订单状态分布'
                 type='pie'
-                data={statistics.order_by_status.map(s => ({
+                data={statistics.order_by_status.map((s) => ({
                   name: mapStatusToChinese(s.status),
-                  value: s.count
+                  value: s.count,
                 }))}
                 yKey='value'
                 xKey='name'
@@ -809,9 +808,9 @@ const Srmpage: React.FC = () => {
               <StatsChart
                 title='评估分数分布'
                 type='bar'
-                data={statistics.evaluation_score_distribution.map(s => ({
+                data={statistics.evaluation_score_distribution.map((s) => ({
                   name: s.range,
-                  value: s.count
+                  value: s.count,
                 }))}
                 yKey='value'
                 xKey='name'
@@ -819,10 +818,10 @@ const Srmpage: React.FC = () => {
               <StatsChart
                 title='月度订单趋势'
                 type='line'
-                data={statistics.monthly_order_trend.map(t => ({
+                data={statistics.monthly_order_trend.map((t) => ({
                   name: t.month,
                   value: t.order_count,
-                  amount: t.total_amount
+                  amount: t.total_amount,
                 }))}
                 yKey='value'
                 xKey='name'
@@ -834,9 +833,9 @@ const Srmpage: React.FC = () => {
                 <StatsChart
                   title='合同状态分布'
                   type='pie'
-                  data={statistics.contract_by_status.map(s => ({
+                  data={statistics.contract_by_status.map((s) => ({
                     name: mapStatusToChinese(s.status),
-                    value: s.count
+                    value: s.count,
                   }))}
                   yKey='value'
                   xKey='name'

@@ -1,5 +1,5 @@
 import { useCallback, useState, useMemo } from 'react';
-import { AxiosInstance } from 'axios';
+import type { AxiosInstance } from 'axios';
 
 export interface UseCrudOptions<T> {
   api: AxiosInstance;
@@ -49,7 +49,7 @@ export function useCrud<T extends { id?: string | number }, TCreate = Omit<T, 'i
       onError?.(err);
       return Promise.reject(err);
     },
-    [onError],
+    [onError]
   );
 
   const fetch = useCallback(
@@ -73,7 +73,7 @@ export function useCrud<T extends { id?: string | number }, TCreate = Omit<T, 'i
         setLoading(false);
       }
     },
-    [api, basePath, page, pageSize, handleError],
+    [api, basePath, page, pageSize, handleError]
   );
 
   const get = useCallback(
@@ -89,7 +89,7 @@ export function useCrud<T extends { id?: string | number }, TCreate = Omit<T, 'i
         setLoading(false);
       }
     },
-    [api, basePath, handleError],
+    [api, basePath, handleError]
   );
 
   const create = useCallback(
@@ -108,7 +108,7 @@ export function useCrud<T extends { id?: string | number }, TCreate = Omit<T, 'i
         setLoading(false);
       }
     },
-    [api, basePath, handleError, onSuccess],
+    [api, basePath, handleError, onSuccess]
   );
 
   const update = useCallback(
@@ -127,7 +127,7 @@ export function useCrud<T extends { id?: string | number }, TCreate = Omit<T, 'i
         setLoading(false);
       }
     },
-    [api, basePath, handleError, onSuccess],
+    [api, basePath, handleError, onSuccess]
   );
 
   const deleteItem = useCallback(
@@ -144,7 +144,7 @@ export function useCrud<T extends { id?: string | number }, TCreate = Omit<T, 'i
         setLoading(false);
       }
     },
-    [api, basePath, handleError, onSuccess],
+    [api, basePath, handleError, onSuccess]
   );
 
   const bulkDelete = useCallback(
@@ -161,7 +161,7 @@ export function useCrud<T extends { id?: string | number }, TCreate = Omit<T, 'i
         setLoading(false);
       }
     },
-    [api, basePath, handleError, onSuccess],
+    [api, basePath, handleError, onSuccess]
   );
 
   const pagination = useMemo(
@@ -172,7 +172,7 @@ export function useCrud<T extends { id?: string | number }, TCreate = Omit<T, 'i
       setPage,
       setPageSize,
     }),
-    [page, pageSize, total],
+    [page, pageSize, total]
   );
 
   return {

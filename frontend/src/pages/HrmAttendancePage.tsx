@@ -242,9 +242,8 @@ const HrmAttendancePage: React.FC = () => {
     const totalLate = summaries.reduce((sum, s) => sum + s.late_count, 0);
     const totalAbsent = summaries.reduce((sum, s) => sum + s.absent_count, 0);
     const avgOnTimeRate = totalEmployees > 0 ? (totalPresent / totalEmployees) * 100 : 0;
-    const avgWorkHours = summaries.length > 0
-      ? summaries.reduce((sum, s) => sum + s.average_work_hours, 0) / summaries.length
-      : 0;
+    const avgWorkHours =
+      summaries.length > 0 ? summaries.reduce((sum, s) => sum + s.average_work_hours, 0) / summaries.length : 0;
 
     return {
       totalEmployees,
@@ -254,35 +253,42 @@ const HrmAttendancePage: React.FC = () => {
       avgOnTimeRate: Math.round(avgOnTimeRate * 10) / 10,
       avgWorkHours: Math.round(avgWorkHours * 10) / 10,
       presentRate: Math.round((totalPresent / totalEmployees) * 100),
-      leaveCount: leaves.filter(l => l.status === 'pending').length,
-      pendingLeaves: leaves.filter(l => l.status === 'pending').length,
+      leaveCount: leaves.filter((l) => l.status === 'pending').length,
+      pendingLeaves: leaves.filter((l) => l.status === 'pending').length,
     };
   }, [summaries, leaves]);
 
   // 考勤状态分布数据
-  const attendanceStatusData = useMemo(() => [
-    { name: '正常', value: records.filter(r => r.status === 'normal').length, color: '#22c55e' },
-    { name: '迟到', value: records.filter(r => r.status === 'late').length, color: '#eab308' },
-    { name: '早退', value: records.filter(r => r.status === 'early_leave').length, color: '#f97316' },
-    { name: '缺勤', value: records.filter(r => r.status === 'absent').length, color: '#ef4444' },
-    { name: '请假', value: records.filter(r => r.status === 'leave').length, color: '#3b82f6' },
-  ], [records]);
+  const attendanceStatusData = useMemo(
+    () => [
+      { name: '正常', value: records.filter((r) => r.status === 'normal').length, color: '#22c55e' },
+      { name: '迟到', value: records.filter((r) => r.status === 'late').length, color: '#eab308' },
+      { name: '早退', value: records.filter((r) => r.status === 'early_leave').length, color: '#f97316' },
+      { name: '缺勤', value: records.filter((r) => r.status === 'absent').length, color: '#ef4444' },
+      { name: '请假', value: records.filter((r) => r.status === 'leave').length, color: '#3b82f6' },
+    ],
+    [records]
+  );
 
   // 部门出勤率数据
-  const departmentOnTimeData = useMemo(() =>
-    summaries.map(s => ({
-      name: s.department,
-      value: s.on_time_rate,
-      color: s.on_time_rate >= 95 ? '#22c55e' :
-             s.on_time_rate >= 85 ? '#eab308' : '#ef4444',
-    }))
-  , [summaries]);
+  const departmentOnTimeData = useMemo(
+    () =>
+      summaries.map((s) => ({
+        name: s.department,
+        value: s.on_time_rate,
+        color: s.on_time_rate >= 95 ? '#22c55e' : s.on_time_rate >= 85 ? '#eab308' : '#ef4444',
+      })),
+    [summaries]
+  );
 
   // 部门出勤人数数据
-  const departmentAttendanceData = useMemo(() => [
-    { name: '出勤人数', value: summaries.reduce((sum, s) => sum + s.present_count, 0), color: '#22c55e' },
-    { name: '缺勤人数', value: summaries.reduce((sum, s) => sum + s.absent_count, 0), color: '#ef4444' },
-  ], [summaries]);
+  const departmentAttendanceData = useMemo(
+    () => [
+      { name: '出勤人数', value: summaries.reduce((sum, s) => sum + s.present_count, 0), color: '#22c55e' },
+      { name: '缺勤人数', value: summaries.reduce((sum, s) => sum + s.absent_count, 0), color: '#ef4444' },
+    ],
+    [summaries]
+  );
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, React.ReactNode> = {
@@ -632,30 +638,18 @@ const HrmAttendancePage: React.FC = () => {
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
               <div className='bg-white rounded-lg shadow-sm p-6'>
                 <h3 className='text-lg font-semibold text-gray-900 mb-4'>考勤状态分布</h3>
-                <StatsChart
-                  type='pie'
-                  data={attendanceStatusData}
-                  height={250}
-                />
+                <StatsChart type='pie' data={attendanceStatusData} height={250} />
               </div>
 
               <div className='bg-white rounded-lg shadow-sm p-6'>
                 <h3 className='text-lg font-semibold text-gray-900 mb-4'>部门出勤率对比</h3>
-                <StatsChart
-                  type='bar'
-                  data={departmentOnTimeData}
-                  height={250}
-                />
+                <StatsChart type='bar' data={departmentOnTimeData} height={250} />
               </div>
             </div>
 
             <div className='bg-white rounded-lg shadow-sm p-6'>
               <h3 className='text-lg font-semibold text-gray-900 mb-4'>各部门出勤人数</h3>
-              <StatsChart
-                type='bar'
-                data={departmentAttendanceData}
-                height={300}
-              />
+              <StatsChart type='bar' data={departmentAttendanceData} height={300} />
             </div>
 
             {/* 部门明细表格 */}
@@ -693,9 +687,7 @@ const HrmAttendancePage: React.FC = () => {
                         <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
                           {summary.department}
                         </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                          {summary.total_employees}
-                        </td>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>{summary.total_employees}</td>
                         <td className='px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium'>
                           {summary.present_count}
                         </td>

@@ -21,9 +21,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  rsApi,
-  formulaApi,
+import type {
   Project,
   CreateProjectRequest,
   Experiment,
@@ -34,10 +32,11 @@ import {
   FormulaVersion,
   RsStatistics,
 } from '../api/rs';
+import { rsApi, formulaApi } from '../api/rs';
 import { FieldError } from '../components/ValidationError';
 import { ModuleGate } from '../components/PermissionGate';
 import { MODULES } from '../config/permissions';
-import { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
 
@@ -347,12 +346,7 @@ const Rspage: React.FC = () => {
   const loadAllData = async () => {
     try {
       setLoading(true);
-      await Promise.all([
-        loadProjects(),
-        loadExperiments(),
-        loadFormulas(),
-        loadStatistics()
-      ]);
+      await Promise.all([loadProjects(), loadExperiments(), loadFormulas(), loadStatistics()]);
     } finally {
       setLoading(false);
     }
@@ -1580,7 +1574,7 @@ const Rspage: React.FC = () => {
               { name: '已完成', value: stats.completed_projects, color: '#00C897' },
               { name: '待开始', value: stats.pending_projects, color: '#F59E0B' },
               { name: '已取消', value: stats.cancelled_projects, color: '#6B7280' },
-            ].filter(d => d.value > 0)}
+            ].filter((d) => d.value > 0)}
             dataKey='value'
             nameKey='name'
           />
@@ -1591,7 +1585,7 @@ const Rspage: React.FC = () => {
               { name: '进行中', value: stats.in_progress_experiments, color: '#6366F1' },
               { name: '已完成', value: stats.completed_experiments, color: '#00C897' },
               { name: '待开始', value: stats.pending_experiments, color: '#F59E0B' },
-            ].filter(d => d.value > 0)}
+            ].filter((d) => d.value > 0)}
             dataKey='value'
             nameKey='name'
           />
@@ -2517,7 +2511,16 @@ const Rspage: React.FC = () => {
               <button
                 onClick={() => {
                   setShowBatchCreateModal(false);
-                  setBatchCreateData([{ name: '', code: '', description: '', project_type: '研发', leader: '', start_date: new Date().toISOString().split('T')[0] }]);
+                  setBatchCreateData([
+                    {
+                      name: '',
+                      code: '',
+                      description: '',
+                      project_type: '研发',
+                      leader: '',
+                      start_date: new Date().toISOString().split('T')[0],
+                    },
+                  ]);
                 }}
                 className='p-2 text-slate-400 hover:text-slate-600'
               >

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, FileText, Columns, Calendar, Filter, Loader2, CheckCircle } from 'lucide-react';
-import { reportApi, ReportType, ReportTypeInfo, CreateReportRequest } from '../api/report';
+import type { ReportType, ReportTypeInfo, CreateReportRequest } from '../api/report';
+import { reportApi } from '../api/report';
 
 interface ReportBuilderProps {
   onClose: () => void;

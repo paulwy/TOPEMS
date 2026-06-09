@@ -3,7 +3,8 @@
  * 客户关系管理 API 客户端
  */
 
-import { apiClient, ApiResponse, PaginationParams, PaginatedResponse } from './client';
+import type { ApiResponse, PaginationParams, PaginatedResponse } from './client';
+import { apiClient } from './client';
 
 // ==================== Types ====================
 
@@ -367,7 +368,7 @@ export const crmApi = {
   contacts: contactApi,
   opportunities: opportunityApi,
   interactions: interactionApi,
-  
+
   /**
    * 健康检查
    */

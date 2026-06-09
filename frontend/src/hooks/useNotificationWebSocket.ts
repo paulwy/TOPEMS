@@ -38,7 +38,9 @@ export const useNotificationWebSocket = ({
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>(
+    'disconnected'
+  );
 
   const { shouldShowNotification, shouldPlaySound, shouldShowDesktopNotification } = useNotificationSettings();
 
@@ -138,14 +140,14 @@ export const useNotificationWebSocket = ({
     }
 
     resetState();
-    
+
     try {
       const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
       const notificationServicePath = config.services.notification;
       const wsUrl = `${wsProtocol}://${window.location.host}${notificationServicePath}/ws/notifications`;
-      
+
       logger.info('Attempting to connect to notification service:', wsUrl);
-      
+
       setIsConnecting(true);
       setConnectionStatus('connecting');
       setError(null);
@@ -170,7 +172,7 @@ export const useNotificationWebSocket = ({
           clearTimeout(connectionTimeoutRef.current);
           connectionTimeoutRef.current = null;
         }
-        
+
         logger.info('WebSocket connected');
         setIsConnected(true);
         setIsConnecting(false);
@@ -228,7 +230,7 @@ export const useNotificationWebSocket = ({
       ws.onerror = (err) => {
         logger.error('WebSocket error:', err);
         logger.error('WebSocket error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-        
+
         if (ws.readyState === WebSocket.CONNECTING) {
           setConnectionStatus('error');
           setIsConnecting(false);
@@ -237,7 +239,7 @@ export const useNotificationWebSocket = ({
 
       ws.onclose = (event) => {
         logger.info(`WebSocket disconnected. Code: ${event.code}, Reason: ${event.reason}`);
-        
+
         resetState();
 
         if (event.code !== 1000 && event.code !== 1001) {
@@ -307,7 +309,7 @@ export const useNotificationWebSocket = ({
       const timer = setTimeout(() => {
         connect();
       }, 1000);
-      
+
       return () => clearTimeout(timer);
     }
 

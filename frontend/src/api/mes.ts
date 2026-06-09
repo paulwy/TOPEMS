@@ -242,7 +242,9 @@ export interface PaginatedResult<T> {
 
 // 生产订单 API
 export const productionOrderApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<{ orders: ProductionOrder[]; total: number; page: number; page_size: number }>> {
+  async list(
+    params?: PaginationParams
+  ): Promise<ApiResponse<{ orders: ProductionOrder[]; total: number; page: number; page_size: number }>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
@@ -272,7 +274,9 @@ export const productionOrderApi = {
 
 // 生产工序 API
 export const productionProcessApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<{ processes: ProductionProcess[]; total: number; page: number; page_size: number }>> {
+  async list(
+    params?: PaginationParams
+  ): Promise<ApiResponse<{ processes: ProductionProcess[]; total: number; page: number; page_size: number }>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
@@ -298,7 +302,9 @@ export const productionProcessApi = {
 
 // 工作站 API
 export const workStationApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<{ workstations: WorkStation[]; total: number; page: number; page_size: number }>> {
+  async list(
+    params?: PaginationParams
+  ): Promise<ApiResponse<{ workstations: WorkStation[]; total: number; page: number; page_size: number }>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
@@ -324,7 +330,9 @@ export const workStationApi = {
 
 // 生产记录 API
 export const productionRecordApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<{ records: ProductionRecord[]; total: number; page: number; page_size: number }>> {
+  async list(
+    params?: PaginationParams
+  ): Promise<ApiResponse<{ records: ProductionRecord[]; total: number; page: number; page_size: number }>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
@@ -353,7 +361,9 @@ export const mesEquipmentApi = {
     return apiClient.mes.get('/api/v1/equipment/statistics');
   },
 
-  async listInspections(params?: PaginationParams & { equipment_id?: string }): Promise<ApiResponse<PaginatedResult<InspectionRecord>>> {
+  async listInspections(
+    params?: PaginationParams & { equipment_id?: string }
+  ): Promise<ApiResponse<PaginatedResult<InspectionRecord>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
@@ -367,7 +377,9 @@ export const mesEquipmentApi = {
     return apiClient.mes.post('/api/v1/inspections', data);
   },
 
-  async listMaintenances(params?: PaginationParams & { equipment_id?: string }): Promise<ApiResponse<PaginatedResult<MaintenanceRecord>>> {
+  async listMaintenances(
+    params?: PaginationParams & { equipment_id?: string }
+  ): Promise<ApiResponse<PaginatedResult<MaintenanceRecord>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());

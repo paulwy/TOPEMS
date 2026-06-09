@@ -141,7 +141,7 @@ export const ehsApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-    
+
     return apiClient.ehs.get<PaginatedResponse<SafetyHazard>>(`/api/v1/hazards?${queryParams.toString()}`);
   },
   getHazard: async (id: string): Promise<ApiResponse<SafetyHazard>> => {
@@ -164,7 +164,7 @@ export const ehsApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-    
+
     return apiClient.ehs.get<PaginatedResponse<SafetyCheck>>(`/api/v1/checks?${queryParams.toString()}`);
   },
   getCheck: async (id: string): Promise<ApiResponse<SafetyCheck>> => {
@@ -187,7 +187,7 @@ export const ehsApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-    
+
     return apiClient.ehs.get<PaginatedResponse<EmergencyPlan>>(`/api/v1/plans?${queryParams.toString()}`);
   },
   getPlan: async (id: string): Promise<ApiResponse<EmergencyPlan>> => {
@@ -209,7 +209,7 @@ export const ehsApi = {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
-    
+
     return apiClient.ehs.get<PaginatedResponse<DrillRecord>>(`/api/v1/drills?${queryParams.toString()}`);
   },
   getDrill: async (id: string): Promise<ApiResponse<DrillRecord>> => {

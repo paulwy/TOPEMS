@@ -3,7 +3,8 @@
  * 仓储管理 API 客户端
  */
 
-import { apiClient, ApiResponse } from './client';
+import type { ApiResponse } from './client';
+import { apiClient } from './client';
 
 // ==================== Types ====================
 
@@ -350,7 +351,7 @@ export const wmsApi = {
   inventory: inventoryApi,
   inboundOrders: inboundOrderApi,
   outboundOrders: outboundOrderApi,
-  
+
   /**
    * 健康检查
    */

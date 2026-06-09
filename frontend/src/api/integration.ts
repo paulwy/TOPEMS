@@ -175,6 +175,4 @@ export const integrationApi = {
   },
 };
 
-export {
-  integrationApi as default,
-};
+export { integrationApi as default };

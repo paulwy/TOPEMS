@@ -11,11 +11,8 @@ import {
   Calendar,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  getMyNotificationStats,
-  notificationServiceApi,
-  NotificationStats,
-} from '../api/notification';
+import type { NotificationStats } from '../api/notification';
+import { getMyNotificationStats, notificationServiceApi } from '../api/notification';
 import { MetricCard } from '../components/MetricCard';
 import { StatsChart } from '../components/StatsChart';
 import { NotificationContainer } from '../components/NotificationContainer';
@@ -40,22 +37,20 @@ const NotificationStatsPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsRes, healthRes] = await Promise.all([
-        getMyNotificationStats(),
-        notificationServiceApi.health(),
-      ]);
+      const [statsRes, healthRes] = await Promise.all([getMyNotificationStats(), notificationServiceApi.health()]);
 
       if (statsRes.success && statsRes.data) {
         setStats(statsRes.data);
       }
       if (healthRes.success && healthRes.data) {
         const deps = healthRes.data.dependencies;
-        const dependencies = typeof deps === 'object' && !Array.isArray(deps)
-          ? [
-              { name: 'database', status: deps.database },
-              { name: 'redis', status: deps.redis },
-            ]
-          : deps || [];
+        const dependencies =
+          typeof deps === 'object' && !Array.isArray(deps)
+            ? [
+                { name: 'database', status: deps.database },
+                { name: 'redis', status: deps.redis },
+              ]
+            : deps || [];
         setServiceStatus({
           status: healthRes.data.status,
           uptime: healthRes.data.uptime,
@@ -264,8 +259,9 @@ const NotificationStatsPage: React.FC = () => {
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
                     {stats && stats.total_notifications > 0
-                      ? ((stats.notifications_by_type?.system || 0) / stats.total_notifications * 100).toFixed(1)
-                      : 0}%
+                      ? (((stats.notifications_by_type?.system || 0) / stats.total_notifications) * 100).toFixed(1)
+                      : 0}
+                    %
                   </td>
                 </tr>
                 <tr>
@@ -275,8 +271,9 @@ const NotificationStatsPage: React.FC = () => {
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
                     {stats && stats.total_notifications > 0
-                      ? ((stats.notifications_by_type?.workflow || 0) / stats.total_notifications * 100).toFixed(1)
-                      : 0}%
+                      ? (((stats.notifications_by_type?.workflow || 0) / stats.total_notifications) * 100).toFixed(1)
+                      : 0}
+                    %
                   </td>
                 </tr>
                 <tr>
@@ -286,8 +283,9 @@ const NotificationStatsPage: React.FC = () => {
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
                     {stats && stats.total_notifications > 0
-                      ? ((stats.notifications_by_type?.reminder || 0) / stats.total_notifications * 100).toFixed(1)
-                      : 0}%
+                      ? (((stats.notifications_by_type?.reminder || 0) / stats.total_notifications) * 100).toFixed(1)
+                      : 0}
+                    %
                   </td>
                 </tr>
                 <tr>
@@ -297,8 +295,9 @@ const NotificationStatsPage: React.FC = () => {
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
                     {stats && stats.total_notifications > 0
-                      ? ((stats.notifications_by_type?.alert || 0) / stats.total_notifications * 100).toFixed(1)
-                      : 0}%
+                      ? (((stats.notifications_by_type?.alert || 0) / stats.total_notifications) * 100).toFixed(1)
+                      : 0}
+                    %
                   </td>
                 </tr>
                 <tr>
@@ -308,8 +307,9 @@ const NotificationStatsPage: React.FC = () => {
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
                     {stats && stats.total_notifications > 0
-                      ? ((stats.notifications_by_type?.message || 0) / stats.total_notifications * 100).toFixed(1)
-                      : 0}%
+                      ? (((stats.notifications_by_type?.message || 0) / stats.total_notifications) * 100).toFixed(1)
+                      : 0}
+                    %
                   </td>
                 </tr>
               </tbody>

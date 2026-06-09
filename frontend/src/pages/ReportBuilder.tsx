@@ -11,7 +11,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
-import { ReportTypeInfo, ReportType, ExportFormat, CreateReportRequest } from '../api/report';
+import type { ReportTypeInfo, ReportType, ExportFormat, CreateReportRequest } from '../api/report';
 
 interface ReportBuilderProps {
   onClose: () => void;

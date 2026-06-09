@@ -11,7 +11,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { pmApi, Contract, ContractMilestone, ContractPaymentSchedule } from '../api/pm';
+import type { Contract, ContractMilestone, ContractPaymentSchedule } from '../api/pm';
+import { pmApi } from '../api/pm';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '草稿',

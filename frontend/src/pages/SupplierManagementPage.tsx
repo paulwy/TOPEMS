@@ -16,7 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { scmApi, Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/scm';
+import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/scm';
+import { scmApi } from '@/api/scm';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/EmptyState';
