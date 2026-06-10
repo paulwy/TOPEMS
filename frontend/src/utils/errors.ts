@@ -53,14 +53,16 @@ export const handleApiError = (error: unknown): AppError => {
     const message = axiosError.response.data?.message || 'Unknown error';
 
     switch (status) {
+      case 400:
+        return { code: ErrorCode.VALIDATION, message: message };
       case 401:
         return { code: ErrorCode.UNAUTHORIZED, message: '未授权访问，请重新登录' };
       case 403:
         return { code: ErrorCode.FORBIDDEN, message: '无权限访问此资源' };
       case 404:
         return { code: ErrorCode.NOT_FOUND, message: '资源未找到' };
-      case 400:
-        return { code: ErrorCode.VALIDATION, message: message };
+      case 422:
+        return { code: ErrorCode.VALIDATION, message: message || '请求数据验证失败' };
       case 500:
         return { code: ErrorCode.SERVER, message: '服务器内部错误' };
       default:

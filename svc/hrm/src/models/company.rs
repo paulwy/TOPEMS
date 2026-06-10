@@ -6,7 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Company {
     pub id: Uuid,
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub name: String,
     pub short_name: Option<String>,
     pub registration_number: Option<String>,
@@ -23,7 +23,7 @@ pub struct Company {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateCompanyRequest {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub name: String,
     pub short_name: Option<String>,
     pub registration_number: Option<String>,
