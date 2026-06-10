@@ -34,7 +34,7 @@ async fn list_emails(
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
-    
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
@@ -63,7 +63,7 @@ async fn get_email(
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
-    
+
     match email_service.get_email(id).await {
         Some(email) => Json(ApiResponse::success(email, "获取邮件成功")),
         None => Json(api_error(404, "邮件不存在")),
@@ -80,7 +80,7 @@ async fn send_email(
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
-    
+
     match email_service.send_email(req).await {
         Ok(email) => Json(ApiResponse::success(email, "邮件发送成功")),
         Err(e) => {
@@ -101,7 +101,7 @@ async fn send_email_with_template(
     }
     let email_service = EmailService::new(state.db.clone());
     let template_service = TemplateService::new(state.db.clone());
-    
+
     let template = match template_service.get_template_by_code(&req.template_code).await {
         Some(t) => t,
         None => return Json(api_error(404, "模板不存在")),
@@ -140,7 +140,7 @@ async fn delete_email(
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
-    
+
     match email_service.delete_email(id).await {
         Ok(true) => Json(ApiResponse::success("".to_string(), "邮件删除成功")),
         Ok(false) => Json(api_error(404, "邮件不存在")),
@@ -161,9 +161,9 @@ async fn resend_emails(
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
-    
+
     let result = email_service.resend_emails(&req.email_ids).await;
-    
+
     Json(ApiResponse::success(result, "批量重发完成"))
 }
 
@@ -176,7 +176,7 @@ async fn get_email_stats(
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
-    
+
     match email_service.get_email_stats().await {
         Ok(stats) => Json(ApiResponse::success(stats, "获取统计成功")),
         Err(e) => {

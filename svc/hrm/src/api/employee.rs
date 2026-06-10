@@ -7,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
+use utoipa::{OpenApi, ToSchema};
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use crate::api::audit::log_audit_event;
@@ -22,16 +23,41 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-#[derive(Debug, Deserialize)]
+const EMPLOYEE_CACHE_TTL: u64 = 3600;
+
+fn employee_cache_key(id: &Uuid) -> String {
+    format!("employee:{}", id)
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[schema(example = json!({
+    "page": 1,
+    "page_size": 20,
+    "search": "张三",
+    "status": "active",
+    "department_id": "550e8400-e29b-41d4-a716-446655440002",
+    "company_id": "550e8400-e29b-41d4-a716-446655440001"
+}))]
 pub struct EmployeePaginationParams {
+    #[schema(example = 1)]
     pub page: Option<i64>,
+    #[schema(example = 20)]
     pub page_size: Option<i64>,
+    #[schema(example = "张三")]
     pub search: Option<String>,
+    #[schema(example = "active")]
     pub status: Option<String>,
+    #[schema(example = "550e8400-e29b-41d4-a716-446655440002")]
     pub department_id: Option<Uuid>,
+    #[schema(example = "550e8400-e29b-41d4-a716-446655440001")]
     pub company_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/employees",
+    tag = "employees"
+)]
 async fn list_employees(
     State(state): State<ApiState>,
     Query(params): Query<EmployeePaginationParams>,
@@ -107,6 +133,11 @@ async fn list_employees(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/employees",
+    tag = "employees"
+)]
 async fn create_employee(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -162,11 +193,19 @@ async fn create_employee(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(employee) => (
-            Json(ApiResponse::success(employee.clone(), "员工创建成功")),
-            "success",
-            None
-        ),
+        Ok(employee) => {
+            let _ = state.cache.set(
+                &employee_cache_key(&employee.id),
+                &serde_json::to_string(employee).unwrap_or_default(),
+                Some(EMPLOYEE_CACHE_TTL),
+            ).await;
+            
+            (
+                Json(ApiResponse::success(employee.clone(), "员工创建成功")),
+                "success",
+                None
+            )
+        }
         Err(e) => {
             tracing::error!("创建员工失败: {}", e);
             (
@@ -202,10 +241,23 @@ async fn create_employee(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/employees/{id}",
+    tag = "employees"
+)]
 async fn get_employee(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Employee>> {
+    let cache_key = employee_cache_key(&id);
+    
+    if let Ok(Some(cached)) = state.cache.get(&cache_key).await {
+        if let Ok(employee) = serde_json::from_str::<Employee>(&cached) {
+            return Json(ApiResponse::success(employee, "从缓存获取员工成功"));
+        }
+    }
+
     let result = sqlx::query_as::<_, Employee>(
         r#"
         SELECT id, organization_id, company_id, department_id, position_id,
@@ -221,7 +273,14 @@ async fn get_employee(
     .await;
 
     match result {
-        Ok(Some(employee)) => Json(ApiResponse::success(employee, "获取员工成功")),
+        Ok(Some(employee)) => {
+            let _ = state.cache.set(
+                &cache_key,
+                &serde_json::to_string(&employee).unwrap_or_default(),
+                Some(EMPLOYEE_CACHE_TTL),
+            ).await;
+            Json(ApiResponse::success(employee, "获取员工成功"))
+        }
         Ok(None) => Json(api_error(404, "员工不存在")),
         Err(e) => {
             tracing::error!("获取员工失败: {}", e);
@@ -230,6 +289,11 @@ async fn get_employee(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/employees/{id}",
+    tag = "employees"
+)]
 async fn update_employee(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -255,7 +319,6 @@ async fn update_employee(
         Err(e) => return Json(api_error(500, &format!("查询员工失败: {}", e))),
     };
 
-    // 先获取 request_data，避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
 
     let company_id = req.company_id.or(existing.company_id);
@@ -313,11 +376,19 @@ async fn update_employee(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(employee) => (
-            Json(ApiResponse::success(employee.clone(), "员工更新成功")),
-            "success",
-            None
-        ),
+        Ok(employee) => {
+            let _ = state.cache.set(
+                &employee_cache_key(&employee.id),
+                &serde_json::to_string(employee).unwrap_or_default(),
+                Some(EMPLOYEE_CACHE_TTL),
+            ).await;
+            
+            (
+                Json(ApiResponse::success(employee.clone(), "员工更新成功")),
+                "success",
+                None
+            )
+        }
         Err(e) => {
             tracing::error!("更新员工失败: {}", e);
             (
@@ -352,6 +423,11 @@ async fn update_employee(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/employees/{id}",
+    tag = "employees"
+)]
 async fn delete_employee(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -363,11 +439,15 @@ async fn delete_employee(
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "员工删除成功")),
-            "success",
-            None
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            let _ = state.cache.delete(&employee_cache_key(&id)).await;
+            
+            (
+                Json(ApiResponse::success("".to_string(), "员工删除成功")),
+                "success",
+                None
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "员工不存在")),
             "error",

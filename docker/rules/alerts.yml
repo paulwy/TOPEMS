@@ -1,0 +1,172 @@
+groups:
+  - name: topems-service-alerts
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "服务 {{ $labels.job }} 不可用"
+          description: "服务 {{ $labels.job }} 在 {{ $labels.instance }} 上已停止运行超过30秒"
+
+      - alert: ServiceHighErrorRate
+        expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "服务 {{ $labels.job }} 错误率过高"
+          description: "服务 {{ $labels.job }} 错误率超过5% (当前: {{ $value }}%)"
+
+      - alert: ServiceHighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 2
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "服务 {{ $labels.job }} 响应时间过长"
+          description: "服务 {{ $labels.job }} P95响应时间超过2秒"
+
+  - name: topems-database-alerts
+    rules:
+      - alert: DatabaseConnectionPoolHigh
+        expr: pg_stat_activity_count / pg_settings_max_connections > 0.8
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "PostgreSQL连接池使用率过高"
+          description: "连接池使用率: {{ $value }}%"
+
+      - alert: DatabaseSlowQueries
+        expr: sum(rate(pg_stat_statements_total_time[5m])) by (queryid) > 60
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "慢查询告警"
+          description: "查询执行时间超过60秒"
+
+      - alert: DatabaseHighLockWait
+        expr: sum(rate(pg_stat_activity_waiting[5m])) > 5
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "数据库锁等待过多"
+          description: "锁等待数量: {{ $value }}"
+
+  - name: topems-redis-alerts
+    rules:
+      - alert: RedisHighMemoryUsage
+        expr: redis_used_memory / redis_maxmemory > 0.8
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "内存使用率: {{ $value }}%"
+
+      - alert: RedisHighConnectionCount
+        expr: redis_connected_clients > 100
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Redis连接数过多"
+          description: "连接数: {{ $value }}"
+
+      - alert: RedisSlowCommands
+        expr: rate(redis_slowlog_length[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Redis慢命令过多"
+          description: "慢命令数量: {{ $value }}"
+
+  - name: topems-resource-alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 85
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "CPU使用率过高"
+          description: "CPU使用率: {{ $value }}%"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "内存使用率过高"
+          description: "内存使用率: {{ $value }}%"
+
+      - alert: HighDiskUsage
+        expr: 100 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) > 90
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "磁盘使用率过高"
+          description: "磁盘使用率: {{ $value }}%"
+
+  - name: topems-shared-schema-alerts
+    rules:
+      - alert: SharedSchemaHighQueryLatency
+        expr: histogram_quantile(0.95, sum(rate(shared_schema_query_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "shared schema查询延迟过高"
+          description: "P95查询延迟: {{ $value }}秒"
+
+      - alert: SharedSchemaHighErrorRate
+        expr: sum(rate(shared_schema_query_errors_total[5m])) > 0
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "shared schema查询错误"
+          description: "错误数量: {{ $value }}"
+
+  - name: topems-hrm-alerts
+    rules:
+      - alert: HrmHighEmployeeQueryLatency
+        expr: histogram_quantile(0.95, sum(rate(hrm_employee_query_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "HRM员工查询延迟过高"
+          description: "P95查询延迟: {{ $value }}秒"
+
+      - alert: HrmHighDepartmentQueryLatency
+        expr: histogram_quantile(0.95, sum(rate(hrm_department_query_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "HRM部门查询延迟过高"
+          description: "P95查询延迟: {{ $value }}秒"

@@ -2,26 +2,83 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches:
+      - main
+      - develop
+      - 'release/**'
   pull_request:
-    branches: [ main, develop ]
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_VERSION: '1.78.0'
+  NODE_VERSION: '20'
 
 jobs:
-  backend-build:
-    name: Backend Build & Test
+  lint:
+    name: Lint Code
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service:
-          - topems-erp
-          - topems-hrm
-          - topems-lims
-          - topems-rs
-          - topems-qms
-          - topems-crm
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust-${{ env.RUST_VERSION }}"
+
+      - name: Run cargo fmt
+        run: cargo fmt --check
+
+      - name: Run cargo clippy
+        run: cargo clippy --all --all-targets -- -D warnings
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems_test
+          POSTGRES_PASSWORD: topems_test_secret
+          POSTGRES_DB: topems_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -30,117 +87,194 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          components: rustfmt, clippy
+          toolchain: ${{ env.RUST_VERSION }}
 
-      - name: Cache Cargo dependencies
+      - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          path: services/${{ matrix.service }}/backend
+          prefix-key: "rust-${{ env.RUST_VERSION }}-test"
 
-      - name: Build service
-        run: cd services/${{ matrix.service }}/backend && cargo build --release
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
-      - name: Run Clippy
-        run: cd services/${{ matrix.service }}/backend && cargo clippy --all-targets -- -D warnings
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U topems_test; do
+            sleep 1
+          done
 
       - name: Run tests
-        run: cd services/${{ matrix.service }}/backend && cargo test --release -- --test-threads=1
-
-  frontend-build:
-    name: Frontend Build & Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: cd frontend && npm ci
-
-      - name: Run ESLint
-        run: cd frontend && npm run lint
-
-      - name: TypeScript check
-        run: cd frontend && npx tsc --noEmit
-
-      - name: Run unit tests
-        run: cd frontend && npm test
-
-      - name: Build frontend
-        run: cd frontend && npm run build
-
-  docker-build:
-    name: Docker Build
-    runs-on: ubuntu-latest
-    needs: [backend-build, frontend-build]
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build ERP service
-        uses: docker/build-push-action@v5
-        with:
-          context: services/topems-erp/backend
-          push: false
-          tags: topems-erp:latest
-
-      - name: Build HRM service
-        uses: docker/build-push-action@v5
-        with:
-          context: services/topems-hrm/backend
-          push: false
-          tags: topems-hrm:latest
-
-      - name: Build LIMS service
-        uses: docker/build-push-action@v5
-        with:
-          context: services/topems-lims/backend
-          push: false
-          tags: topems-lims:latest
-
-  e2e-test:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    needs: [frontend-build]
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: cd frontend && npm ci
-
-      - name: Install Playwright browsers
-        run: cd frontend && npx playwright install --with-deps
-
-      - name: Run E2E tests
-        run: cd frontend && npm run e2e
         env:
-          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET: test-jwt-secret-key-for-testing-only-32chars
+          APP_ENV: test
+        run: cargo test --all -- --test-threads=1
 
-      - name: Upload test report
+  build:
+    name: Build Services
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust-${{ env.RUST_VERSION }}-build"
+
+      - name: Build all services
+        run: cargo build --release --all
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
-          path: frontend/playwright-report/
+          name: topems-services
+          path: |
+            target/release/topems-iam
+            target/release/topems-hrm
+            target/release/topems-erp
+            target/release/topems-crm
+            target/release/topems-doc
+            target/release/topems-ai
+          retention-days: 7
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: topems-services
+          path: target/release/
+
+      - name: Make artifacts executable
+        run: chmod +x target/release/topems-*
+
+      - name: Deploy to staging
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT || 22 }}
+          script: |
+            set -e
+            mkdir -p /opt/topems/staging/services
+            cd /opt/topems/staging/services
+            
+            # Stop running services
+            for service in iam hrm erp crm doc ai; do
+              sudo systemctl stop topems-${service}-staging 2>/dev/null || true
+            done
+            
+            # Copy new binaries
+            scp -P ${{ secrets.STAGING_PORT || 22 }} -i /tmp/ssh_key \
+              ${{ github.workspace }}/target/release/topems-* \
+              ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/services/
+            
+            # Start services
+            for service in iam hrm erp crm doc ai; do
+              sudo systemctl start topems-${service}-staging
+            done
+            
+            # Verify deployment
+            sleep 10
+            curl -s http://localhost:8000/health
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production
+    concurrency: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: topems-services
+          path: target/release/
+
+      - name: Make artifacts executable
+        run: chmod +x target/release/topems-*
+
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT || 22 }}
+          script: |
+            set -e
+            mkdir -p /opt/topems/production/services
+            cd /opt/topems/production/services
+            
+            # Stop running services
+            for service in iam hrm erp crm doc ai; do
+              sudo systemctl stop topems-${service} 2>/dev/null || true
+            done
+            
+            # Copy new binaries
+            scp -P ${{ secrets.PROD_PORT || 22 }} -i /tmp/ssh_key \
+              ${{ github.workspace }}/target/release/topems-* \
+              ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/production/services/
+            
+            # Start services
+            for service in iam hrm erp crm doc ai; do
+              sudo systemctl start topems-${service}
+            done
+            
+            # Verify deployment
+            sleep 10
+            curl -s https://${{ secrets.PROD_DOMAIN }}/health
+
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    steps:
+      - name: Notify success
+        if: needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = process.env.ENVIRONMENT || 'unknown';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request?.number || context.payload.workflow_run?.id,
+              body: `✅ Deployment successful to ${environment}!`
+            });
+
+      - name: Notify failure
+        if: needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = process.env.ENVIRONMENT || 'unknown';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request?.number || context.payload.workflow_run?.id,
+              body: `❌ Deployment failed to ${environment}!`
+            });

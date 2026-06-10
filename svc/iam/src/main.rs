@@ -541,9 +541,10 @@ async fn login(
 }
 
 async fn get_user_roles_and_permissions(db: &PgPool, user_id: &str) -> (Vec<String>, Vec<String>) {
-    let roles: Vec<String> = sqlx::query_scalar(
-        "SELECT r.name FROM iam.roles r 
-         INNER JOIN iam.user_roles ur ON r.id = ur.role_id 
+    // 首先尝试从 iam.roles 表读取（如果表存在）
+    let roles_from_roles: Vec<String> = sqlx::query_scalar(
+        "SELECT r.name FROM iam.roles r
+         INNER JOIN iam.user_roles ur ON r.id = ur.role_id
          WHERE ur.user_id = $1::uuid"
     )
     .bind(user_id)
@@ -551,7 +552,43 @@ async fn get_user_roles_and_permissions(db: &PgPool, user_id: &str) -> (Vec<Stri
     .await
     .unwrap_or_default();
 
-    let english_roles: Vec<String> = roles.into_iter().map(|role| {
+    // 如果从 roles 表没有读到，尝试从 users 表的 roles 列读取
+    let roles_from_users: Vec<String> = sqlx::query_scalar(
+        "SELECT COALESCE(array_to_string(roles, ','), '') FROM iam.users WHERE id = $1::uuid"
+    )
+    .bind(user_id)
+    .fetch_optional(db)
+    .await
+    .ok()
+    .flatten()
+    .map(|s: String| if s.is_empty() { vec![] } else { s.split(',').map(|x| x.to_string()).collect() })
+    .unwrap_or_default();
+
+    let permissions_from_users: Vec<String> = sqlx::query_scalar(
+        "SELECT COALESCE(array_to_string(permissions, ','), '') FROM iam.users WHERE id = $1::uuid"
+    )
+    .bind(user_id)
+    .fetch_optional(db)
+    .await
+    .ok()
+    .flatten()
+    .map(|s: String| if s.is_empty() { vec![] } else { s.split(',').map(|x| x.to_string()).collect() })
+    .unwrap_or_default();
+
+    // 合并两种来源的角色
+    let mut all_roles = roles_from_roles.clone();
+    for role in roles_from_users {
+        if !all_roles.contains(&role) {
+            all_roles.push(role);
+        }
+    }
+
+    if all_roles.is_empty() {
+        all_roles.push("user".to_string());
+    }
+
+    // 转换角色名称为英文
+    let english_roles: Vec<String> = all_roles.into_iter().map(|role| {
         match role.as_str() {
             "admin" | "管理员" => "admin".to_string(),
             "manager" | "部门经理" => "manager".to_string(),
@@ -561,7 +598,9 @@ async fn get_user_roles_and_permissions(db: &PgPool, user_id: &str) -> (Vec<Stri
         }
     }).collect();
 
-    let permissions: Vec<String> = sqlx::query_scalar(
+    // 合并权限
+    let mut all_permissions = permissions_from_users;
+    let permissions_from_roles: Vec<String> = sqlx::query_scalar(
         "SELECT DISTINCT p.name FROM iam.permissions p
          INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id
          INNER JOIN iam.user_roles ur ON rp.role_id = ur.role_id
@@ -572,7 +611,13 @@ async fn get_user_roles_and_permissions(db: &PgPool, user_id: &str) -> (Vec<Stri
     .await
     .unwrap_or_default();
 
-    (english_roles, permissions)
+    for perm in permissions_from_roles {
+        if !all_permissions.contains(&perm) {
+            all_permissions.push(perm);
+        }
+    }
+
+    (english_roles, all_permissions)
 }
 
 async fn register(

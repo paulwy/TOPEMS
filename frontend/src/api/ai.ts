@@ -137,6 +137,31 @@ export interface ExtractKeywordsResponse {
   keywords: Keyword[];
 }
 
+// 向量搜索相关类型
+export interface VectorSearchRequest {
+  query: string;
+  limit?: number;
+  threshold?: number;
+  entity_type?: string;
+}
+
+export interface VectorSearchResult {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  score: number;
+  metadata: {
+    name?: string;
+    category?: string;
+  };
+}
+
+export interface VectorStoreStats {
+  total_vectors: number;
+  index_size: number;
+  dimension: number;
+}
+
 export interface AIGenerateRequest {
   template_id?: string;
   variables: Record<string, any>;
@@ -253,5 +278,24 @@ export const aiApi = {
 
   extractKeywords: async (data: ExtractKeywordsRequest): Promise<ApiResponse<ExtractKeywordsResponse>> => {
     return apiClient.ai.post<ExtractKeywordsResponse>('/api/v1/analysis/keywords', data);
+  },
+
+  // 向量搜索接口
+  vectorSearch: async (data: VectorSearchRequest): Promise<ApiResponse<VectorSearchResult[]>> => {
+    return apiClient.ai.post<VectorSearchResult[]>('/api/v1/vectors/search', data);
+  },
+
+  vectorStats: async (): Promise<ApiResponse<VectorStoreStats>> => {
+    return apiClient.ai.get<VectorStoreStats>('/api/v1/vectors/stats');
+  },
+
+  // 员工技能匹配
+  matchSkills: async (skills: string[], limit?: number): Promise<ApiResponse<VectorSearchResult[]>> => {
+    return apiClient.ai.post<VectorSearchResult[]>('/api/v1/employees/match-skills', { skills, limit });
+  },
+
+  // 查找相似员工
+  findSimilarEmployees: async (employeeId: string, limit?: number): Promise<ApiResponse<VectorSearchResult[]>> => {
+    return apiClient.ai.post<VectorSearchResult[]>(`/api/v1/employees/${employeeId}/similar`, { limit });
   },
 };

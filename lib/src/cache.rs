@@ -1,11 +1,13 @@
 use crate::config::CacheConfig;
 use crate::error::TopemsError;
 use crate::Result;
+use crate::redis::CacheService;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
 struct CacheEntry {
@@ -247,6 +249,81 @@ impl CacheManager {
 
     pub fn get_statistics(&self) -> CacheStatistics {
         self.cache.get_statistics()
+    }
+}
+
+#[async_trait]
+impl CacheService for InMemoryCache {
+    async fn get(&self, key: &str) -> Result<Option<String>> {
+        Ok(self.get(key).await)
+    }
+
+    async fn set(&self, key: &str, value: &str, ttl_seconds: Option<u64>) -> Result<()> {
+        let ttl = ttl_seconds.map(|s| Duration::from_secs(s));
+        self.set(key.to_string(), value.to_string(), ttl).await;
+        Ok(())
+    }
+
+    async fn delete(&self, key: &str) -> Result<()> {
+        self.delete(key).await;
+        Ok(())
+    }
+
+    async fn exists(&self, key: &str) -> Result<bool> {
+        Ok(self.exists(key).await)
+    }
+
+    async fn incr(&self, key: &str) -> Result<i64> {
+        let value = self.get(key).await;
+        let current: i64 = value.unwrap_or("0".to_string()).parse().unwrap_or(0);
+        let new_value = current + 1;
+        self.set(key.to_string(), new_value.to_string(), None).await;
+        Ok(new_value)
+    }
+
+    async fn hset(&self, key: &str, field: &str, value: &str) -> Result<()> {
+        let hash_key = format!("{}:{}", key, field);
+        self.set(hash_key, value.to_string(), None).await;
+        Ok(())
+    }
+
+    async fn hget(&self, key: &str, field: &str) -> Result<Option<String>> {
+        let hash_key = format!("{}:{}", key, field);
+        Ok(self.get(&hash_key).await)
+    }
+
+    async fn hdel(&self, key: &str, field: &str) -> Result<()> {
+        let hash_key = format!("{}:{}", key, field);
+        self.delete(&hash_key).await;
+        Ok(())
+    }
+
+    async fn expire(&self, key: &str, seconds: u64) -> Result<bool> {
+        if let Some(value) = self.get(key).await {
+            self.set(key.to_string(), value, Some(Duration::from_secs(seconds))).await;
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    async fn ttl(&self, key: &str) -> Result<i64> {
+        let cache = self.cache.read();
+        if let Some(entry) = cache.get(key) {
+            if let Some(expires_at) = entry.expires_at {
+                let remaining = expires_at.saturating_duration_since(Instant::now());
+                Ok(remaining.as_secs() as i64)
+            } else {
+                Ok(-1)
+            }
+        } else {
+            Ok(-2)
+        }
+    }
+
+    async fn flush_db(&self) -> Result<()> {
+        self.cache.write().clear();
+        Ok(())
     }
 }
 

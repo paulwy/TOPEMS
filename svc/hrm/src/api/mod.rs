@@ -5,7 +5,7 @@ use axum::{
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::{AuthState, SystemMetrics};
+use topems_shared::{AuthState, SystemMetrics, CacheService};
 
 pub mod employee;
 pub mod department;
@@ -23,6 +23,7 @@ pub mod salary_adjustment;
 pub mod company;
 pub mod health;
 pub mod setup;
+pub mod openapi;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -30,6 +31,7 @@ pub struct ApiState {
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
+    pub cache: Arc<dyn CacheService + Send + Sync>,
 }
 
 impl FromRef<ApiState> for AuthState {
@@ -41,6 +43,12 @@ impl FromRef<ApiState> for AuthState {
 impl FromRef<ApiState> for PgPool {
     fn from_ref(state: &ApiState) -> Self {
         state.db.clone()
+    }
+}
+
+impl FromRef<ApiState> for Arc<dyn CacheService + Send + Sync> {
+    fn from_ref(state: &ApiState) -> Self {
+        state.cache.clone()
     }
 }
 

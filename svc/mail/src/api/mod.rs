@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use topems_shared::{AuthState, SystemMetrics};
 
+pub mod attachment;
 pub mod email;
 pub mod template;
 
@@ -47,6 +48,7 @@ pub async fn create_routes(
     let app = Router::new()
         .merge(email::create_routes().await?)
         .merge(template::create_routes().await?)
+        .merge(attachment::create_routes().await?)
         .with_state(state);
 
     Ok(app)

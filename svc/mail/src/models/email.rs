@@ -15,13 +15,10 @@ pub struct Email {
     pub body_html: Option<String>,
     pub status: String,
     pub priority: String,
-    #[serde(default, with = "time::serde::rfc3339::option")]
     pub sent_at: Option<OffsetDateTime>,
     pub error_message: Option<String>,
     pub template_id: Option<Uuid>,
-    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
-    #[serde(with = "time::serde::rfc3339")]
     pub updated_at: OffsetDateTime,
 }
 

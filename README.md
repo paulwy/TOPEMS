@@ -43,6 +43,7 @@
 - 🎯 **微服务架构** - 20+个独立服务，灵活扩展
 - 🔄 **统一架构** - 统一的认证保护和架构规范化
 - 🏗️ **Cargo Workspace** - 增量编译，共享依赖缓存
+- 🤖 **AI 增强** - Ollama 本地 LLM + 向量搜索
 
 ## 📁 项目结构
 
@@ -50,7 +51,7 @@
 topems/
 ├── docs/                          # 文档
 │   ├── api/                      # API 文档
-│   ├── architecture/             # 架构设计
+│   ├── ARCHITECTURE/             # 架构设计
 │   ├── deployment/               # 部署指南
 │   ├── guides/                   # 用户指南
 │   ├── services/                 # 服务文档
@@ -63,40 +64,46 @@ topems/
 │   │   ├── api/                 # API 客户端
 │   │   └── store/               # 状态管理
 │   └── vite.config.ts           # Vite 配置
-├── platform/                      # 核心平台服务
-│   ├── topems-iam/              # 身份认证服务 (8000)
-│   ├── topems-doc/              # 文档管理服务 (8001)
-│   └── topems-flow/             # 工作流服务 (8006)
-├── services/                      # 业务应用服务
-│   ├── notification-service/     # 通知服务 (8003)
-│   ├── topems-integration/      # 集成服务 (8004)
-│   ├── topems-portal/           # 企业门户 (8005)
-│   ├── topems-erp/              # 企业资源计划 (8010)
-│   ├── topems-hrm/              # 人力资源管理 (8011)
-│   ├── topems-ai/               # AI 知识库 (8013)
-│   ├── topems-rs/               # 研发管理系统 (8020)
-│   ├── topems-lims/             # 实验室系统 (8022)
-│   ├── topems-crm/              # 客户关系管理 (8012)
-│   ├── topems-mes/              # 制造执行系统 (8030)
-│   ├── topems-qms/              # 质量管理系统 (8031)
-│   ├── topems-ehs/              # 安全管理系统 (8032)
-│   ├── topems-scm/              # 供应链系统 (8040)
-│   ├── topems-srm/              # 供应商管理 (8041)
-│   ├── topems-wms/              # 仓库管理系统 (8042)
-│   ├── topems-gis/              # 地理信息系统 (8050)
-│   ├── topems-im/               # 即时通讯 (8051)
-│   ├── topems-bi/               # 商业智能 (8052)
-│   ├── report-service/           # 报表服务 (8053)
-│   ├── topems-mail/             # 邮件服务 (8054)
-│   ├── topems-mobile/           # 移动端服务 (8055)
-│   └── topems-pdm/              # 产品数据管理 (8023)
-├── shared/                        # 共享库
-│   └── lib/                     # topems-shared 库
-├── scripts/                       # 管理脚本
-├── tools/                         # 开发工具
-├── templates/                     # 数据模板
-├── Cargo.toml                    # Cargo Workspace 配置
-└── docker-compose.yml             # Docker 配置
+├── apps/                          # 应用目录
+│   └── web/                     # Web 应用
+├── svc/                          # 后端服务
+│   ├── iam/                     # 身份认证服务 (8000)
+│   ├── doc/                     # 文档管理服务 (8001)
+│   ├── notification/            # 通知服务 (8003)
+│   ├── integration/             # 集成服务 (8004)
+│   ├── portal/                  # 企业门户 (8005)
+│   ├── flow/                    # 工作流服务 (8006)
+│   ├── erp/                     # 企业资源计划 (8010)
+│   ├── hrm/                     # 人力资源管理 (8011)
+│   ├── crm/                     # 客户关系管理 (8012)
+│   ├── ai/                      # AI 知识库 (8013)
+│   ├── rs/                      # 研发管理系统 (8020)
+│   ├── lims/                    # 实验室系统 (8022)
+│   ├── pdm/                     # 产品数据管理 (8023)
+│   ├── pm/                      # 项目管理 (8024)
+│   ├── mes/                     # 制造执行系统 (8030)
+│   ├── qms/                     # 质量管理系统 (8031)
+│   ├── ehs/                     # 安全管理系统 (8032)
+│   ├── scm/                     # 供应链系统 (8040)
+│   ├── srm/                     # 供应商管理 (8041)
+│   ├── wms/                     # 仓库管理系统 (8042)
+│   ├── gis/                     # 地理信息系统 (8050)
+│   ├── im/                      # 即时通讯 (8051)
+│   ├── bi/                      # 商业智能 (8052)
+│   ├── report/                  # 报表服务 (8053)
+│   ├── mail/                    # 邮件服务 (8054)
+│   └── mobile/                  # 移动端服务 (8055)
+├── lib/                          # 共享库 (topems-shared)
+├── docker/                       # Docker 配置
+│   ├── init-scripts/            # 数据库初始化脚本
+│   ├── rules/                   # 告警规则
+│   ├── grafana/                 # Grafana 配置
+│   └── docker-compose.yml
+├── scripts/                      # 管理脚本
+├── tools/                        # 开发工具
+├── templates/                    # 数据模板
+├── Cargo.toml                   # Cargo Workspace 配置
+└── .env                         # 环境变量配置
 ```
 
 ## 🚀 快速开始
@@ -129,8 +136,44 @@ cargo check --workspace
 ### 数据库初始化
 
 ```bash
-# 使用脚本初始化数据库
-./scripts/init-database.sh
+# 方式一：使用脚本自动初始化（推荐）
+# 自动检测环境（本地/Docker PostgreSQL），初始化所有表结构
+bash scripts/start-local.sh
+
+# 方式二：仅初始化数据库
+bash scripts/init-db-unified.sh
+
+# 方式三：使用 Docker PostgreSQL
+docker compose up -d postgres
+```
+
+### 数据库配置
+
+TOPEMS 支持多种数据库环境配置：
+
+| 环境 | 数据库 | pgvector | 说明 |
+|------|--------|----------|------|
+| 本地 macOS | PostgreSQL 18.4 | ✅ 0.8.2 | 推荐开发使用 |
+| Docker | PostgreSQL 18.4 | ❌ | 需要重建镜像 |
+| 远程 | PostgreSQL 16+ | 可选 | 生产环境 |
+
+#### 自动检测顺序
+
+1. 本地 PostgreSQL（优先，支持 pgvector）
+2. Docker PostgreSQL（备用）
+3. 远程 PostgreSQL
+
+#### 手动配置
+
+```bash
+# 本地 PostgreSQL
+DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+
+# Docker PostgreSQL
+DATABASE_URL=postgres://topems:topems@host.docker.internal:5432/topems
+
+# 远程 PostgreSQL
+DATABASE_URL=postgres://user:password@remote-host:5432/topems
 ```
 
 ## 🔒 安全配置
@@ -251,19 +294,64 @@ TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
 - [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md) - 部署指南
 - [用户手册](./docs/user/UserManual.md) - 用户使用手册
 - [服务文档](./docs/services/) - 各个服务详细文档
+- [AI 模块](./docs/AI_MODULE.md) - AI 知识库与向量搜索
+- [向量搜索架构](./docs/vector-architecture.md) - 向量存储设计
 
-## 🛠️ 脚本工具
+## 🤖 AI 与向量搜索
 
-- `scripts/init-database.sh` - 初始化数据库
-- `scripts/manage-services.sh` - 管理所有服务（启动、停止、编译）
-- `scripts/start-all.sh` - 一键启动所有服务（推荐）
-- `scripts/stop-all.sh` - 一键停止所有服务
-- `scripts/cleanup.sh` - 全面清理（端口、进程、缓存）
-- `scripts/deploy.sh` - 离线部署脚本
-- `scripts/download-images.sh` - 下载 Docker 镜像
-- `scripts/build-all-services.sh` - 构建所有服务镜像
-- `scripts/run-clippy.sh` - 运行 Clippy 代码检查
-- `scripts/run_ci_tests.sh` - 运行 CI 测试
+TOPEMS 集成 Ollama 本地 LLM 和 Redis 向量搜索，实现智能功能：
+
+### 技术栈
+
+| 组件 | 技术 | 说明 |
+|------|------|------|
+| AI 模型 | Ollama + Qwen2.5:7b | 本地部署，保护隐私 |
+| 向量存储 | Redis HNSW | 高性能相似度搜索 |
+| 嵌入服务 | Ollama API | 文本向量化 |
+
+### 快速配置
+
+```bash
+# 1. 安装 Ollama
+brew install ollama
+
+# 2. 启动并拉取模型
+ollama serve
+ollama pull qwen2.5:7b-instruct
+
+# 3. 验证安装
+curl http://localhost:11434/api/tags
+
+# 4. 初始化 Redis 向量索引
+bash scripts/init-vector-index.sh
+
+# 5. 启动服务
+bash scripts/start-local.sh
+```
+
+### 核心能力
+
+- **智能问答** - 基于知识库的 AI 问答
+- **文档摘要** - 自动生成文档摘要
+- **相似度搜索** - 员工/技能匹配
+- **RAG** - 检索增强生成
+
+## 脚本工具
+
+| 脚本 | 说明 |
+|------|------|
+| `start-local.sh` | 启动核心服务（自动初始化数据库） |
+| `start-all.sh` | 启动所有服务（需要 Docker） |
+| `stop-all.sh` | 停止所有服务 |
+| `init-db-unified.sh` | 统一数据库初始化 |
+| `init-vector-index.sh` | Redis 向量索引初始化 |
+| `install-pgvector.sh` | 安装配置 pgvector |
+| `rebuild-postgres.sh` | 重建 PostgreSQL 容器 |
+| `manage-services.sh` | 管理所有服务 |
+| `cleanup.sh` | 清理环境 |
+| `deploy.sh` | 离线部署 |
+
+详细说明请参考 [脚本工具文档](./scripts/README.md)。
 
 ## 📄 许可证
 

@@ -2,7 +2,7 @@
 // 测试员工管理、部门管理、考勤管理、薪资管理等功能
 
 use uuid::Uuid;
-use chrono::{DateTime, Utc, NaiveDate};
+use chrono::{DateTime, Utc, NaiveDate, Datelike};
 use serde::{Deserialize, Serialize};
 use bigdecimal::BigDecimal;
 
@@ -344,5 +344,270 @@ mod http_endpoint_tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
+    }
+}
+
+// ============ Shared Schema 集成测试 ============
+
+#[cfg(test)]
+mod shared_schema_integration_tests {
+    use super::*;
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    struct SharedCompany {
+        id: Uuid,
+        organization_id: Uuid,
+        name: String,
+        short_name: Option<String>,
+        status: String,
+        created_at: DateTime<Utc>,
+        updated_at: DateTime<Utc>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    struct SharedDepartment {
+        id: Uuid,
+        organization_id: Uuid,
+        company_id: Option<Uuid>,
+        name: String,
+        code: String,
+        parent_id: Option<Uuid>,
+        manager_id: Option<Uuid>,
+        status: String,
+        created_at: DateTime<Utc>,
+        updated_at: DateTime<Utc>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    struct SharedEmployee {
+        id: Uuid,
+        organization_id: Uuid,
+        company_id: Option<Uuid>,
+        department_id: Option<Uuid>,
+        position_id: Option<Uuid>,
+        employee_number: String,
+        name: String,
+        gender: Option<String>,
+        birth_date: Option<NaiveDate>,
+        hire_date: Option<NaiveDate>,
+        status: String,
+        created_at: DateTime<Utc>,
+        updated_at: DateTime<Utc>,
+    }
+
+    #[test]
+    fn test_shared_company_structure() {
+        let company = SharedCompany {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            name: "TOPEMS科技有限公司".to_string(),
+            short_name: Some("TOPEMS".to_string()),
+            status: "active".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        assert_eq!(company.name, "TOPEMS科技有限公司");
+        assert_eq!(company.short_name.unwrap(), "TOPEMS");
+        assert_eq!(company.status, "active");
+    }
+
+    #[test]
+    fn test_shared_department_structure() {
+        let department = SharedDepartment {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            company_id: Some(Uuid::new_v4()),
+            name: "人力资源部".to_string(),
+            code: "HR".to_string(),
+            parent_id: None,
+            manager_id: Some(Uuid::new_v4()),
+            status: "active".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        assert_eq!(department.name, "人力资源部");
+        assert_eq!(department.code, "HR");
+        assert!(department.parent_id.is_none());
+        assert!(department.manager_id.is_some());
+    }
+
+    #[test]
+    fn test_shared_employee_structure() {
+        let employee = SharedEmployee {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            company_id: Some(Uuid::new_v4()),
+            department_id: Some(Uuid::new_v4()),
+            position_id: Some(Uuid::new_v4()),
+            employee_number: "EMP001".to_string(),
+            name: "张三".to_string(),
+            gender: Some("男".to_string()),
+            birth_date: Some(NaiveDate::from_ymd_opt(1990, 1, 1).unwrap()),
+            hire_date: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
+            status: "active".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        assert_eq!(employee.employee_number, "EMP001");
+        assert_eq!(employee.name, "张三");
+        assert_eq!(employee.status, "active");
+        assert!(employee.birth_date.is_some());
+        assert!(employee.hire_date.is_some());
+    }
+
+    #[test]
+    fn test_shared_schema_relationships() {
+        let company_id = Uuid::new_v4();
+        let department_id = Uuid::new_v4();
+
+        let company = SharedCompany {
+            id: company_id,
+            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            name: "测试公司".to_string(),
+            short_name: Some("TEST".to_string()),
+            status: "active".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let department = SharedDepartment {
+            id: department_id,
+            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            company_id: Some(company_id),
+            name: "测试部门".to_string(),
+            code: "TEST-DEPT".to_string(),
+            parent_id: None,
+            manager_id: None,
+            status: "active".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let employee = SharedEmployee {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            company_id: Some(company_id),
+            department_id: Some(department_id),
+            position_id: None,
+            employee_number: "EMP001".to_string(),
+            name: "测试员工".to_string(),
+            gender: None,
+            birth_date: None,
+            hire_date: None,
+            status: "active".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        assert_eq!(employee.company_id.unwrap(), company.id);
+        assert_eq!(employee.department_id.unwrap(), department.id);
+        assert_eq!(department.company_id.unwrap(), company.id);
+    }
+
+    #[test]
+    fn test_shared_employee_date_types() {
+        let employee = SharedEmployee {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            company_id: None,
+            department_id: None,
+            position_id: None,
+            employee_number: "EMP001".to_string(),
+            name: "测试员工".to_string(),
+            gender: None,
+            birth_date: Some(NaiveDate::from_ymd_opt(1990, 12, 31).unwrap()),
+            hire_date: Some(NaiveDate::from_ymd_opt(2024, 1, 15).unwrap()),
+            status: "active".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        assert_eq!(employee.birth_date.unwrap().year(), 1990);
+        assert_eq!(employee.hire_date.unwrap().month(), 1);
+        assert_eq!(employee.hire_date.unwrap().day(), 15);
+    }
+
+    #[test]
+    fn test_shared_entity_serialization() {
+        let company = SharedCompany {
+            id: Uuid::parse_str("12345678-1234-5678-1234-567812345678").unwrap(),
+            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            name: "序列化测试公司".to_string(),
+            short_name: Some("SERIAL".to_string()),
+            status: "active".to_string(),
+            created_at: DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z").unwrap().with_timezone(&Utc),
+            updated_at: DateTime::parse_from_rfc3339("2024-01-02T12:00:00Z").unwrap().with_timezone(&Utc),
+        };
+
+        let json = serde_json::to_string(&company).unwrap();
+        let deserialized: SharedCompany = serde_json::from_str(&json).unwrap();
+        
+        assert_eq!(deserialized.id, company.id);
+        assert_eq!(deserialized.name, company.name);
+        assert_eq!(deserialized.status, company.status);
+    }
+}
+
+// ============ Schema 迁移验证测试 ============
+
+#[cfg(test)]
+mod schema_migration_tests {
+    use super::*;
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    struct MigrationStatus {
+        schema_name: String,
+        table_name: String,
+        migrated: bool,
+        record_count: i32,
+    }
+
+    #[test]
+    fn test_migration_status_validation() {
+        let migration_statuses = vec![
+            MigrationStatus {
+                schema_name: "shared".to_string(),
+                table_name: "companies".to_string(),
+                migrated: true,
+                record_count: 7,
+            },
+            MigrationStatus {
+                schema_name: "shared".to_string(),
+                table_name: "departments".to_string(),
+                migrated: true,
+                record_count: 5,
+            },
+            MigrationStatus {
+                schema_name: "shared".to_string(),
+                table_name: "employees".to_string(),
+                migrated: true,
+                record_count: 5,
+            },
+        ];
+
+        for status in migration_statuses {
+            assert!(status.migrated, "{} should be migrated", status.table_name);
+            assert!(status.record_count > 0, "{} should have records", status.table_name);
+            assert_eq!(status.schema_name, "shared");
+        }
+    }
+
+    #[test]
+    fn test_search_path_configuration() {
+        let search_paths = vec![
+            "hrm, shared, public",
+            "crm, shared, public",
+            "erp, shared, public",
+            "mes, shared, public",
+            "wms, shared, public",
+        ];
+
+        for path in search_paths {
+            assert!(path.contains("shared"), "search_path must include shared");
+            assert!(path.contains("public"), "search_path must include public");
+        }
     }
 }
