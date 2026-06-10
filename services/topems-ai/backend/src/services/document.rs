@@ -209,9 +209,4 @@ impl DocumentService {
             .await
             .map_err(|e| format!("查询文档失败: {}", e))
     }
-
-    /// 获取向量服务（用于外部调用嵌入生成）
-    pub fn get_vector_service(&self) -> Arc<RwLock<VectorService>> {
-        self.vector_service.clone()
-    }
 }

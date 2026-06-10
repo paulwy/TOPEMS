@@ -202,32 +202,6 @@ pub struct TemplateCategoryResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct CreateTemplateRequest {
-    pub name: String,
-    pub code: String,
-    pub category_id: Option<Uuid>,
-    pub module: String,
-    pub description: Option<String>,
-    pub content: String,
-    pub variables: Option<serde_json::Value>,
-    pub is_active: Option<bool>,
-    pub sort_order: Option<i32>,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct UpdateTemplateRequest {
-    pub name: Option<String>,
-    pub code: Option<String>,
-    pub category_id: Option<Uuid>,
-    pub module: Option<String>,
-    pub description: Option<String>,
-    pub content: Option<String>,
-    pub variables: Option<serde_json::Value>,
-    pub is_active: Option<bool>,
-    pub sort_order: Option<i32>,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ListTemplatesQuery {
     pub page: Option<u32>,
     pub page_size: Option<u32>,
@@ -453,7 +427,7 @@ pub struct CreateDestructionRequest {
     pub reason: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ListArchivesQuery {
     pub page: Option<u32>,
     pub page_size: Option<u32>,

@@ -143,6 +143,37 @@ pub struct ArchiveConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotificationListResponse {
+    pub notifications: Vec<Notification>,
+    pub total: i64,
+    pub page: u32,
+    pub page_size: u32,
+    pub unread_count: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotificationListQuery {
+    pub page: Option<u32>,
+    pub page_size: Option<u32>,
+    pub notification_type: Option<NotificationType>,
+}
+
+impl Default for NotificationListQuery {
+    fn default() -> Self {
+        Self {
+            page: Some(1),
+            page_size: Some(20),
+            notification_type: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BulkOperationRequest {
+    pub ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationStats {
     pub total_notifications: i64,
     pub unread_notifications: i64,
@@ -337,6 +368,182 @@ impl NotificationServiceClient {
         } else {
             Err(TopemsError::Internal(api_response.message))
         }
+    }
+
+    /// 获取通知列表
+    pub async fn list_notifications(&self, query: &NotificationListQuery) -> Result<NotificationListResponse> {
+        let mut url = format!("{}/api/v1/notifications?", self.base_url);
+        if let Some(page) = query.page {
+            url.push_str(&format!("page={}&", page));
+        }
+        if let Some(page_size) = query.page_size {
+            url.push_str(&format!("page_size={}&", page_size));
+        }
+        if let Some(ref ntype) = query.notification_type {
+            url.push_str(&format!("notification_type={}&", ntype.to_string()));
+        }
+
+        let response = self
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
+
+        let api_response: crate::response::ApiResponse<NotificationListResponse> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+
+        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+    }
+
+    /// 获取单个通知
+    pub async fn get_notification(&self, id: &Uuid) -> Result<Notification> {
+        let response = self
+            .client
+            .get(format!("{}/api/v1/notifications/{}", self.base_url, id))
+            .send()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
+
+        let api_response: crate::response::ApiResponse<Notification> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+
+        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+    }
+
+    /// 标记通知为已读
+    pub async fn mark_as_read(&self, id: &Uuid) -> Result<Notification> {
+        let response = self
+            .client
+            .put(format!("{}/api/v1/notifications/{}/read", self.base_url, id))
+            .send()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
+
+        let api_response: crate::response::ApiResponse<Notification> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+
+        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+    }
+
+    /// 标记所有通知为已读
+    pub async fn mark_all_as_read(&self) -> Result<i64> {
+        let response = self
+            .client
+            .put(format!("{}/api/v1/notifications/read-all", self.base_url))
+            .send()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
+
+        #[derive(Deserialize)]
+        struct CountResponse { count: i64 }
+        #[derive(Deserialize)]
+        struct ApiCountResponse { data: Option<CountResponse>, message: String }
+
+        let api_response: ApiCountResponse = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+
+        api_response.data.map(|c| c.count).ok_or_else(|| TopemsError::Internal(api_response.message))
+    }
+
+    /// 删除通知
+    pub async fn delete_notification(&self, id: &Uuid) -> Result<bool> {
+        let response = self
+            .client
+            .delete(format!("{}/api/v1/notifications/{}", self.base_url, id))
+            .send()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
+
+        #[derive(Deserialize)]
+        struct BoolResponse { success: bool }
+        #[derive(Deserialize)]
+        struct ApiBoolResponse { data: Option<BoolResponse>, message: String }
+
+        let api_response: ApiBoolResponse = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+
+        api_response.data.map(|d| d.success).ok_or_else(|| TopemsError::Internal(api_response.message))
+    }
+
+    /// 获取未读通知
+    pub async fn get_unread_notifications(&self) -> Result<Vec<Notification>> {
+        let response = self
+            .client
+            .get(format!("{}/api/v1/notifications/unread", self.base_url))
+            .send()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
+
+        let api_response: crate::response::ApiResponse<Vec<Notification>> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+
+        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+    }
+
+    /// 获取未读数量
+    pub async fn get_unread_count(&self) -> Result<i64> {
+        let response = self
+            .client
+            .get(format!("{}/api/v1/notifications/unread-count", self.base_url))
+            .send()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
+
+        let api_response: crate::response::ApiResponse<i64> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+
+        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+    }
+
+    /// 批量标记已读
+    pub async fn bulk_mark_as_read(&self, ids: &[String]) -> Result<i64> {
+        let response = self
+            .client
+            .put(format!("{}/api/v1/notifications/bulk/read", self.base_url))
+            .json(&BulkOperationRequest { ids: ids.to_vec() })
+            .send()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
+
+        let api_response: crate::response::ApiResponse<i64> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+
+        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+    }
+
+    /// 批量删除通知
+    pub async fn bulk_delete(&self, ids: &[String]) -> Result<i64> {
+        let response = self
+            .client
+            .delete(format!("{}/api/v1/notifications/bulk/delete", self.base_url))
+            .json(&BulkOperationRequest { ids: ids.to_vec() })
+            .send()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
+
+        let api_response: crate::response::ApiResponse<i64> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+
+        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 }
 

@@ -127,33 +127,77 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            // React 核心必须最先分割，避免循环依赖
+            if (id.includes('react-dom') || id.includes('@babel/runtime') || id.includes('scheduler')) {
               return 'vendor-react';
             }
-            if (id.includes('lucide-react') || id.includes('clsx') || id.includes('tailwind-merge')) {
+            // React Router
+            if (id.includes('react-router') || id.includes('react-router-dom')) {
+              return 'vendor-router';
+            }
+            // NextUI 组件库 (依赖于 React，放在 React 之后)
+            if (id.includes('@nextui-org')) {
+              return 'vendor-nextui';
+            }
+            // UI 组件库 (依赖于 React 和 NextUI)
+            if (id.includes('lucide-react') || id.includes('clsx') || id.includes('tailwind-merge') || id.includes('@heroui') || id.includes('@radix-ui')) {
               return 'vendor-ui';
             }
-            if (id.includes('recharts')) {
+            // 图表库
+            if (id.includes('recharts') || id.includes('d3-') || id.includes('chart.js')) {
               return 'vendor-charts';
             }
+            // HTTP 客户端
             if (id.includes('axios')) {
               return 'vendor-axios';
             }
-            if (id.includes('zod') || id.includes('yup')) {
+            // 表单验证
+            if (id.includes('zod') || id.includes('yup') || id.includes('react-hook-form') || id.includes('hookform')) {
               return 'vendor-validation';
+            }
+            // 数据处理
+            if (id.includes('xlsx') || id.includes('date-fns') || id.includes('dayjs') || id.includes('lodash')) {
+              return 'vendor-data';
+            }
+            // 状态管理
+            if (id.includes('zustand') || id.includes('jotai') || id.includes('redux')) {
+              return 'vendor-state';
+            }
+            // 富文本编辑器
+            if (id.includes('tiptap') || id.includes('quill') || id.includes('draft')) {
+              return 'vendor-editor';
             }
             return 'vendor-other';
           }
+          // 页面级代码分割
           if (id.includes('pages/AIPage')) {
             return 'page-ai';
           }
           if (id.includes('pages/GisPage')) {
             return 'page-gis';
           }
+          if (id.includes('pages/Limspage')) {
+            return 'page-lims';
+          }
+          if (id.includes('pages/Rspage')) {
+            return 'page-rs';
+          }
+          if (id.includes('pages/Qmspage')) {
+            return 'page-qms';
+          }
+          if (id.includes('pages/Ehspage')) {
+            return 'page-ehs';
+          }
+          if (id.includes('pages/CrmPage') || id.includes('pages/CRMDashboardPage')) {
+            return 'page-crm';
+          }
+          if (id.includes('pages/Hrm')) {
+            return 'page-hrm';
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 600,
   },
   server: {
     port: 3000,

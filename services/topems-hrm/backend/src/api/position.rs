@@ -101,8 +101,8 @@ async fn list_positions(
         "#,
     )
     .bind(&search)
-    .bind(&dept_id)
-    .bind(&company_id)
+    .bind(dept_id)
+    .bind(company_id)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
@@ -121,8 +121,8 @@ async fn list_positions(
                 "#,
             )
             .bind(&search)
-            .bind(&dept_id)
-            .bind(&company_id)
+            .bind(dept_id)
+            .bind(company_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;
@@ -162,8 +162,8 @@ async fn create_position(
     )
     .bind(id)
     .bind(req.organization_id)
-    .bind(&req.company_id)
-    .bind(&req.department_id)
+    .bind(req.company_id)
+    .bind(req.department_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(&req.level)
@@ -265,8 +265,8 @@ async fn update_position(
         RETURNING id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
         "#
     )
-    .bind(&req.company_id)
-    .bind(&req.department_id)
+    .bind(req.company_id)
+    .bind(req.department_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(&req.level)

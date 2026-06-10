@@ -3,12 +3,13 @@ use axum::{
     http::{request::Parts, StatusCode, header},
     middleware::Next,
     response::{Response, IntoResponse},
-    Json,
 };
 use jsonwebtoken::{decode, Validation, DecodingKey, Algorithm};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::{Utc, Duration};
+
+use crate::api::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
@@ -25,10 +26,6 @@ impl Claims {
     pub fn is_expired(&self) -> bool {
         let now = Utc::now().timestamp() as usize;
         self.exp < now
-    }
-
-    pub fn has_role(&self, role: &str) -> bool {
-        self.role == role
     }
 
     pub fn has_permission(&self, _permission: &str) -> bool {
@@ -52,27 +49,7 @@ pub struct AuthState {
 #[derive(Debug, Clone)]
 pub struct OptionalClaims(pub Claims);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ApiResponse<T = ()> {
-    pub code: i32,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn error(code: i32, message: &str) -> Json<ApiResponse<T>> {
-        Json(ApiResponse {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        })
-    }
-}
-
+#[allow(dead_code)]
 pub async fn auth_middleware(
     State(state): State<AuthState>,
     mut req: Request,

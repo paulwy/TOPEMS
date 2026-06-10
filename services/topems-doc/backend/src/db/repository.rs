@@ -611,7 +611,6 @@ impl TemplateRepository {
             query.push_str(&condition);
             count_query.push_str(&condition);
             params.push(if active { "true" } else { "false" }.to_string());
-            param_idx += 1;
         }
 
         query.push_str(&format!(" ORDER BY t.sort_order ASC, t.created_at DESC"));

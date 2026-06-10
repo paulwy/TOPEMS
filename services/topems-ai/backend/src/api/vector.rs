@@ -1,17 +1,17 @@
-use axum::{extract::Path, Json};
+use axum::{extract::{Path, State}, Json};
 use std::time::Instant;
 use topems_shared::ApiResponse;
 use uuid::Uuid;
 
 use crate::api::models::*;
-use crate::services::VectorService;
+use crate::AppState;
 
 pub struct VectorApi;
 
 impl VectorApi {
     /// POST /api/v1/vectors/store - 存储文档向量
     pub async fn store(
-        vector_service: VectorService,
+        State(state): State<AppState>,
         Json(req): Json<StoreVectorRequest>,
     ) -> Json<ApiResponse<StoreVectorResponse>> {
         let vector_req = crate::services::vector::SaveVectorRequest {
@@ -22,7 +22,7 @@ impl VectorApi {
             embedding: req.embedding.clone(),
         };
 
-        match vector_service.save_vectors(&[vector_req]).await {
+        match state.vector_service.save_vectors(&[vector_req]).await {
             Ok(_) => {
                 Json(ApiResponse::success(
                     StoreVectorResponse {
@@ -40,7 +40,7 @@ impl VectorApi {
 
     /// POST /api/v1/vectors/search - 向量相似度搜索
     pub async fn search(
-        vector_service: VectorService,
+        State(state): State<AppState>,
         Json(req): Json<VectorSearchRequest>,
     ) -> Json<ApiResponse<VectorSearchResponse>> {
         let start = Instant::now();
@@ -51,25 +51,13 @@ impl VectorApi {
 
         let top_k = req.top_k.unwrap_or(10);
 
-        match vector_service.search_similar(&query_embedding, top_k).await {
+        match state.vector_service.search_similar(&query_embedding, top_k).await {
             Ok(results) => {
-                // 转换类型
-                let api_results = results
-                    .into_iter()
-                    .map(|r| SearchResult {
-                        document_id: r.document_id,
-                        chunk_id: r.chunk_id,
-                        content: r.content,
-                        similarity: r.similarity,
-                        document_title: r.document_title,
-                    })
-                    .collect();
-
                 let query_time_ms = start.elapsed().as_millis() as u64;
 
                 Json(ApiResponse::success(
                     VectorSearchResponse {
-                        results: api_results,
+                        results,
                         query_time_ms,
                     },
                     "Success",
@@ -83,39 +71,28 @@ impl VectorApi {
 
     /// GET /api/v1/vectors/:id - 获取向量信息
     pub async fn get(
-        vector_service: VectorService,
+        State(state): State<AppState>,
         Path(id): Path<Uuid>,
-    ) -> Json<ApiResponse<VectorRecord>> {
-        match vector_service.get_vector(id).await {
+    ) -> Json<ApiResponse<crate::services::vector::VectorEmbedding>> {
+        match state.vector_service.get_vector(id).await {
             Ok(Some(vec)) => {
-                Json(ApiResponse::success(
-                    VectorRecord {
-                        id: vec.id,
-                        document_id: vec.document_id,
-                        chunk_id: vec.chunk_id,
-                        chunk_index: vec.chunk_index,
-                        content: vec.content,
-                        embedding: vec.embedding,
-                        created_at: vec.created_at,
-                    },
-                    "Success",
-                ))
+                Json(ApiResponse::success(vec, "Success"))
             }
             Ok(None) => {
-                Json(ApiResponse::<VectorRecord>::error(404, "向量不存在"))
+                Json(ApiResponse::<crate::services::vector::VectorEmbedding>::error(404, "向量不存在"))
             }
             Err(e) => {
-                Json(ApiResponse::<VectorRecord>::error(500, &e.to_string()))
+                Json(ApiResponse::<crate::services::vector::VectorEmbedding>::error(500, &e.to_string()))
             }
         }
     }
 
     /// DELETE /api/v1/vectors/:id - 删除向量
     pub async fn delete(
-        vector_service: VectorService,
+        State(state): State<AppState>,
         Path(id): Path<Uuid>,
     ) -> Json<ApiResponse<String>> {
-        match vector_service.delete_vector(id).await {
+        match state.vector_service.delete_vector(id).await {
             Ok(true) => {
                 Json(ApiResponse::success("向量已删除".to_string(), "Success"))
             }
@@ -130,7 +107,7 @@ impl VectorApi {
 
     /// POST /api/v1/vectors/batch-store - 批量存储向量
     pub async fn batch_store(
-        vector_service: VectorService,
+        State(state): State<AppState>,
         Json(req): Json<BatchStoreVectorsRequest>,
     ) -> Json<ApiResponse<BatchStoreVectorsResponse>> {
         let vectors: Vec<crate::services::vector::SaveVectorRequest> = req
@@ -145,7 +122,7 @@ impl VectorApi {
             })
             .collect();
 
-        match vector_service.save_vectors(&vectors).await {
+        match state.vector_service.save_vectors(&vectors).await {
             Ok(_) => {
                 Json(ApiResponse::success(
                     BatchStoreVectorsResponse {
@@ -163,7 +140,7 @@ impl VectorApi {
 
     /// POST /api/v1/vectors/hybrid-search - 混合检索（向量+关键词）
     pub async fn hybrid_search(
-        vector_service: VectorService,
+        State(state): State<AppState>,
         Json(req): Json<HybridSearchRequest>,
     ) -> Json<ApiResponse<HybridSearchResponse>> {
         let start = Instant::now();
@@ -175,7 +152,7 @@ impl VectorApi {
         let vector_weight = req.vector_weight.unwrap_or(0.7);
         let keyword_weight = req.keyword_weight.unwrap_or(0.3);
 
-        match vector_service
+        match state.vector_service
             .hybrid_search(&query_embedding, &req.query, top_k, vector_weight, keyword_weight)
             .await
         {
@@ -197,8 +174,8 @@ impl VectorApi {
     }
 
     /// GET /api/v1/vectors/stats - 获取向量统计信息
-    pub async fn stats(vector_service: VectorService) -> Json<ApiResponse<VectorStats>> {
-        match vector_service.get_stats().await {
+    pub async fn stats(State(state): State<AppState>) -> Json<ApiResponse<VectorStats>> {
+        match state.vector_service.get_stats().await {
             Ok(stats) => {
                 Json(ApiResponse::success(
                     VectorStats {
@@ -212,6 +189,18 @@ impl VectorApi {
             }
             Err(e) => {
                 Json(ApiResponse::<VectorStats>::error(500, &e.to_string()))
+            }
+        }
+    }
+
+    /// POST /api/v1/vectors/clear - 清空所有向量数据
+    pub async fn clear_all(State(state): State<AppState>) -> Json<ApiResponse<String>> {
+        match state.vector_service.clear_all().await {
+            Ok(_) => {
+                Json(ApiResponse::success("所有向量数据已清空".to_string(), "Success"))
+            }
+            Err(e) => {
+                Json(ApiResponse::<String>::error(500, &e.to_string()))
             }
         }
     }

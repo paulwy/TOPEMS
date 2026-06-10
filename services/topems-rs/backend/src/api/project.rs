@@ -10,7 +10,6 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
-use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use sqlx::Row;

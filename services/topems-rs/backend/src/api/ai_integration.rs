@@ -9,7 +9,6 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::env;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::response::ApiResponse;

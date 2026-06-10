@@ -1,0 +1,37 @@
+[package]
+name = "topems-pm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS-PM 统一项目管理服务"
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "uuid", "rust_decimal"] }
+chrono.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+dotenv.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+topems-shared = { path = "../../lib" }
+utoipa.workspace = true
+utoipa-swagger-ui.workspace = true
+futures.workspace = true
+prometheus.workspace = true
+axum-prometheus.workspace = true
+rust_decimal.workspace = true
+
+[dev-dependencies]
+tokio-test.workspace = true
+axum-test.workspace = true
+
+[[bin]]
+name = "topems-pm"
+path = "src/main.rs"

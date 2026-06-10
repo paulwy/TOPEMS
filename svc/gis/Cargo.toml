@@ -1,0 +1,34 @@
+[package]
+name = "topems-gis"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS GIS - 厂区空间数字化系统"
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+dotenv.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+topems-shared = { path = "../../lib" }
+sqlx.workspace = true
+axum-prometheus.workspace = true
+prometheus.workspace = true
+csv.workspace = true
+mime_guess.workspace = true
+
+[dev-dependencies]
+tokio-test.workspace = true
+
+[[bin]]
+name = "topems-gis"
+path = "src/main.rs"

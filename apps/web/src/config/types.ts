@@ -1,0 +1,147 @@
+export interface ApiConfig {
+  baseUrl: string;
+  timeout: number;
+}
+
+export interface WebSocketConfig {
+  url: string;
+  reconnectInterval: number;
+  maxReconnectAttempts: number;
+}
+
+export interface ServicesConfig {
+  iam: string;
+  doc: string;
+  ai: string;
+  flow: string;
+  ehs: string;
+  lims: string;
+  pdm: string;
+  qms: string;
+  rs: string;
+  srm: string;
+  erp: string;
+  notification: string;
+  report: string;
+  gis: string;
+  bi: string;
+  mobile: string;
+  im: string;
+  integration: string;
+  wms: string;
+  hrm: string;
+  crm: string;
+  mes: string;
+  scm: string;
+  portal: string;
+  mail: string;
+  pm: string;
+  migration: string;
+}
+
+export interface FeaturesConfig {
+  debugMode: boolean;
+  hotReload: boolean;
+  apiDocs: boolean;
+  oauthGithub: boolean;
+  oauthGoogle: boolean;
+  darkMode: boolean;
+}
+
+export interface UploadConfig {
+  maxSize: number;
+  allowedTypes: string[];
+}
+
+export interface LoggingConfig {
+  level: string;
+  errorTracking: boolean;
+}
+
+export interface ThemeConfig {
+  default: 'light' | 'dark';
+  enableDarkMode: boolean;
+}
+
+export interface I18nConfig {
+  defaultLocale: string;
+  fallbackLocale: string;
+  supportedLocales: string[];
+}
+
+export interface AnalyticsConfig {
+  enabled: boolean;
+  id: string;
+}
+
+export interface SecurityConfig {
+  csrfTokenUrl: string;
+  sessionTimeout: number;
+}
+
+export interface ThirdPartyConfig {
+  sentryDsn: string;
+  gaTrackingId: string;
+}
+
+export interface RuntimeConfig {
+  api: ApiConfig;
+  ws: WebSocketConfig;
+  services: ServicesConfig;
+  features: FeaturesConfig;
+  upload: UploadConfig;
+  logging: LoggingConfig;
+  theme: ThemeConfig;
+  i18n: I18nConfig;
+  analytics: AnalyticsConfig;
+  security: SecurityConfig;
+  thirdParty: ThirdPartyConfig;
+}
+
+declare global {
+  interface ImportMetaEnv {
+    readonly VITE_API_BASE_URL: string;
+    readonly VITE_API_TIMEOUT: string;
+    readonly VITE_WS_URL: string;
+    readonly VITE_WS_RECONNECT_INTERVAL: string;
+    readonly VITE_WS_MAX_RECONNECT_ATTEMPTS: string;
+    readonly VITE_IAM_SERVICE_URL: string;
+    readonly VITE_DOC_SERVICE_URL: string;
+    readonly VITE_AI_SERVICE_URL: string;
+    readonly VITE_FLOW_SERVICE_URL: string;
+    readonly VITE_EHS_SERVICE_URL: string;
+    readonly VITE_LIMS_SERVICE_URL: string;
+    readonly VITE_PDM_SERVICE_URL: string;
+    readonly VITE_QMS_SERVICE_URL: string;
+    readonly VITE_RS_SERVICE_URL: string;
+    readonly VITE_SRM_SERVICE_URL: string;
+    readonly VITE_ERP_SERVICE_URL: string;
+    readonly VITE_NOTIFICATION_SERVICE_URL: string;
+    readonly VITE_REPORT_SERVICE_URL: string;
+    readonly VITE_PM_SERVICE_URL: string;
+    readonly VITE_ENABLE_DEBUG_MODE: string;
+    readonly VITE_ENABLE_HOT_RELOAD: string;
+    readonly VITE_ENABLE_API_DOCS: string;
+    readonly VITE_OAUTH_GITHUB_ENABLED: string;
+    readonly VITE_OAUTH_GOOGLE_ENABLED: string;
+    readonly VITE_ENABLE_DARK_MODE: string;
+    readonly VITE_MAX_UPLOAD_SIZE: string;
+    readonly VITE_ALLOWED_FILE_TYPES: string;
+    readonly VITE_LOG_LEVEL: string;
+    readonly VITE_ENABLE_ERROR_TRACKING: string;
+    readonly VITE_DEFAULT_THEME: string;
+    readonly VITE_DEFAULT_LOCALE: string;
+    readonly VITE_FALLBACK_LOCALE: string;
+    readonly VITE_SUPPORTED_LOCALES: string;
+    readonly VITE_ENABLE_ANALYTICS: string;
+    readonly VITE_ANALYTICS_ID: string;
+    readonly VITE_CSRF_TOKEN_URL: string;
+    readonly VITE_SESSION_TIMEOUT: string;
+    readonly VITE_SENTRY_DSN: string;
+    readonly VITE_GA_TRACKING_ID: string;
+  }
+
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}

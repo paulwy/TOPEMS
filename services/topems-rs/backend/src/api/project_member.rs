@@ -5,7 +5,6 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::{Error as SqlxError};
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::project_member::{

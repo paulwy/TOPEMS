@@ -1,16 +1,15 @@
-use axum::Json;
+use axum::{extract::State, Json};
 use topems_shared::ApiResponse;
 
 use crate::api::models::*;
-use crate::services::{QAService, VectorService};
+use crate::AppState;
 
 pub struct QaApi;
 
 impl QaApi {
     /// POST /api/v1/qa/ask - 提问并获取答案
     pub async fn ask(
-        qa_service: QAService,
-        vector_service: VectorService,
+        State(state): State<AppState>,
         Json(req): Json<AskRequest>,
     ) -> Json<ApiResponse<AskResponse>> {
         let top_k = req.top_k.unwrap_or(5);
@@ -19,7 +18,7 @@ impl QaApi {
         // 注意：这里需要生成查询向量
         let query_embedding: Vec<f32> = vec![0.0; 768]; // 示例向量
 
-        let context_chunks = match vector_service.search_similar(&query_embedding, top_k).await {
+        let context_chunks = match state.vector_service.search_similar(&query_embedding, top_k).await {
             Ok(results) => results,
             Err(_) => vec![],
         };
@@ -38,7 +37,7 @@ impl QaApi {
         };
 
         // 调用 QA 服务
-        match qa_service.ask(&req.question, context.as_deref(), top_k).await {
+        match state.qa_service.ask(&req.question, context.as_deref(), top_k).await {
             Ok((answer, sources, qa_id, confidence)) => {
                 Json(ApiResponse::success(
                     AskResponse {
@@ -58,18 +57,17 @@ impl QaApi {
 
     /// POST /api/v1/qa/ask-with-context - 基于文档上下文提问
     pub async fn ask_with_context(
-        qa_service: QAService,
-        vector_service: VectorService,
+        State(state): State<AppState>,
         Json(req): Json<AskWithContextRequest>,
     ) -> Json<ApiResponse<AskResponse>> {
         let top_k = req.top_k.unwrap_or(5);
 
         // 获取指定文档的上下文
-        let mut context_chunks = vec![];
+        let mut context_chunks: Vec<crate::services::vector::SearchResult> = vec![];
         for doc_id in &req.document_ids {
-            if let Ok(chunks) = vector_service.get_document_chunks(*doc_id).await {
+            if let Ok(chunks) = state.vector_service.get_document_chunks(*doc_id).await {
                 for chunk in chunks {
-                    context_chunks.push(SearchResult {
+                    context_chunks.push(crate::services::vector::SearchResult {
                         document_id: chunk.document_id,
                         chunk_id: chunk.id,
                         content: chunk.content,
@@ -84,7 +82,7 @@ impl QaApi {
         context_chunks.truncate(top_k);
 
         // 调用 QA 服务
-        match qa_service
+        match state.qa_service
             .ask_with_context(&req.question, &req.document_ids, &context_chunks)
             .await
         {
@@ -106,8 +104,8 @@ impl QaApi {
     }
 
     /// GET /api/v1/qa/history - 获取问答历史
-    pub async fn history(qa_service: QAService) -> Json<ApiResponse<QAHistoryResponse>> {
-        match qa_service.get_qa_history(100).await {
+    pub async fn history(State(state): State<AppState>) -> Json<ApiResponse<QAHistoryResponse>> {
+        match state.qa_service.get_qa_history(100).await {
             Ok(history) => {
                 let total = history.len() as i32;
                 Json(ApiResponse::success(
@@ -126,10 +124,10 @@ impl QaApi {
 
     /// POST /api/v1/qa/feedback - 提交答案反馈
     pub async fn feedback(
-        qa_service: QAService,
+        State(state): State<AppState>,
         Json(req): Json<FeedbackRequest>,
     ) -> Json<ApiResponse<FeedbackResponse>> {
-        match qa_service.submit_feedback(req.qa_id, &req.feedback, req.rating).await {
+        match state.qa_service.submit_feedback(req.qa_id, &req.feedback, req.rating).await {
             Ok(_) => {
                 Json(ApiResponse::success(
                     FeedbackResponse {

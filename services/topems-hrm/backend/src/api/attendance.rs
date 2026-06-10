@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;
 use crate::models::{CreateAttendanceRequest, AttendanceRecord, UpdateAttendanceRequest};
-use crate::utils::permission::{check_permission, check_self_permission, ModulePermission};
+use crate::utils::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
@@ -53,7 +53,7 @@ async fn list_attendance(
         LIMIT $2 OFFSET $3
         "#,
     )
-    .bind(&emp_filter)
+    .bind(emp_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -67,7 +67,7 @@ async fn list_attendance(
                 WHERE ($1::uuid IS NULL OR employee_id = $1)
                 "#,
             )
-            .bind(&emp_filter)
+            .bind(emp_filter)
             .fetch_one(&state.db)
             .await;
 
@@ -113,12 +113,12 @@ async fn create_attendance(
         "#,
     )
     .bind(id)
-    .bind(&req.employee_id)
-    .bind(&req.date)
-    .bind(&req.check_in)
-    .bind(&req.check_out)
+    .bind(req.employee_id)
+    .bind(req.date)
+    .bind(req.check_in)
+    .bind(req.check_out)
     .bind(&req.status)
-    .bind(&req.work_hours)
+    .bind(req.work_hours)
     .bind(&req.notes)
     .bind(now)
     .bind(now)
@@ -231,10 +231,10 @@ async fn update_attendance(
         "#,
     )
     .bind(id)
-    .bind(&check_in)
-    .bind(&check_out)
+    .bind(check_in)
+    .bind(check_out)
     .bind(&status)
-    .bind(&work_hours)
+    .bind(work_hours)
     .bind(&notes)
     .bind(now)
     .fetch_one(&state.db)

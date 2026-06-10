@@ -1,0 +1,35 @@
+[package]
+name = "topems-ai"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS AI Knowledge Base Service"
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+dotenv.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+reqwest.workspace = true
+topems-shared = { path = "../../lib" }
+axum-prometheus.workspace = true
+prometheus.workspace = true
+walkdir.workspace = true
+tower-http.workspace = true
+mime.workspace = true
+once_cell.workspace = true
+
+# PDF 解析
+lopdf.workspace = true
+pdf-extract.workspace = true
+
+# 异步 trait
+async-trait.workspace = true

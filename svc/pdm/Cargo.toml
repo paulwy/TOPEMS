@@ -1,0 +1,24 @@
+[package]
+name = "topems-pdm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS Production Data Management System"
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+dotenv.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tower-http.workspace = true
+topems-shared = { path = "../../lib" }
+axum-prometheus.workspace = true
+prometheus.workspace = true

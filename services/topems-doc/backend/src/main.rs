@@ -20,13 +20,16 @@ mod models;
 mod db;
 mod services;
 mod middleware;
+mod api;
 
-use db::repository::{FileRepository, FolderRepository, FileVersionRepository, TemplateRepository, TemplateCategoryRepository};
+use db::repository::{FileRepository, FolderRepository, FileVersionRepository, TemplateRepository, TemplateCategoryRepository, ArchiveCategoryRepository, ArchiveRepository};
 use models::{FileMetadata, Permission};
 use services::storage_service::StorageService;
 use services::conversion_service::ConversionService;
 use services::permission_service::PermissionService;
 use middleware::auth::{AuthState, optional_auth_middleware, OptionalClaims};
+use api::handlers::archive::ArchiveState;
+use api::handlers::archive::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ApiResponse<T> {
@@ -79,7 +82,6 @@ pub struct AppState {
     storage_service: StorageService,
     conversion_service: ConversionService,
     permission_service: PermissionService,
-    jwt_secret: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, utoipa::IntoParams)]
@@ -352,6 +354,7 @@ async fn health(State(state): State<AppState>) -> Json<ApiResponse<HealthRespons
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[allow(dead_code)]
 enum HealthStatus {
     #[serde(rename = "healthy")]
     Healthy,
@@ -1080,17 +1083,6 @@ async fn delete_folder(
     Json(ApiResponse::error(404, "文件夹不存在"))
 }
 
-async fn get_next_file_version(state: &AppState, file_id: Uuid) -> i32 {
-    match state.file_version_repo.get_latest_version(file_id).await {
-        Ok(Some(version)) => version.version + 1,
-        Ok(None) => 1,
-        Err(e) => {
-            tracing::error!("获取文件版本失败: {}", e);
-            1
-        }
-    }
-}
-
 async fn save_file_version(
     state: &AppState,
     file_id: Uuid,
@@ -1310,71 +1302,6 @@ async fn download_file_version(
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());
     (StatusCode::NOT_FOUND, headers, b"Version not found".to_vec())
-}
-
-#[utoipa::path(
-    post,
-    path = "/api/v1/files/restore-version",
-    tag = "files",
-    request_body(content = RestoreFileVersionRequest, description = "Restore file version request", content_type = "application/json"),
-    responses(
-        (status = 200, description = "File version restored successfully", body = ApiResponse<FileMetadata>),
-        (status = 403, description = "Permission denied"),
-        (status = 401, description = "Unauthorized"),
-        (status = 404, description = "Version not found"),
-        (status = 500, description = "Internal server error")
-    ),
-    security(
-        ("bearer_auth" = [])
-    )
-)]
-async fn restore_file_version(
-    State(state): State<AppState>,
-    claims: OptionalClaims,
-    Json(req): Json<RestoreFileVersionRequest>,
-) -> Json<ApiResponse<FileMetadata>> {
-    tracing::debug!(
-        "恢复文件 {} 到版本 {}，用户: {}",
-        req.file_id,
-        req.version_id,
-        claims.0.username
-    );
-
-    if !claims.0.has_permission("doc_write") {
-        tracing::warn!("用户 {} 缺少 doc_write 权限，拒绝恢复文件版本", claims.0.username);
-        return Json(ApiResponse::error(403, "权限不足：缺少修改文档的权限"));
-    }
-
-    let content_version: Option<Vec<u8>> = match state.storage_service.load_file(&req.version_id).await {
-        Ok(c) => Some(c),
-        Err(e) => {
-            tracing::error!("从存储服务加载版本内容失败: {}", e);
-            None
-        }
-    };
-
-    if content_version.is_none() {
-        return Json(ApiResponse::error(404, "文件版本不存在"));
-    }
-    let content = content_version.unwrap();
-
-    match state.file_repo.find_by_id(req.file_id).await {
-        Ok(Some(mut file)) => {
-            file.updated_at = Utc::now();
-            if let Err(e) = state.storage_service.save_file(&req.file_id, &content).await {
-                tracing::error!("保存文件内容失败: {}", e);
-                return Json(ApiResponse::error(500, "保存文件内容失败"));
-            }
-            let next_version = get_next_file_version(&state, req.file_id).await;
-            let _ = save_file_version(&state, req.file_id, next_version, content.clone(), claims.0.username.clone()).await;
-            return Json(ApiResponse::success(file, "文件版本恢复成功"));
-        }
-        Ok(None) => return Json(ApiResponse::error(404, "文件不存在")),
-        Err(e) => {
-            tracing::error!("查找文件失败: {}", e);
-            return Json(ApiResponse::error(500, "查找文件失败"));
-        }
-    }
 }
 
 #[utoipa::path(
@@ -2095,6 +2022,8 @@ async fn main() {
     let file_version_repo = FileVersionRepository::new(pool.clone());
     let template_repo = TemplateRepository::new(pool.clone());
     let template_category_repo = TemplateCategoryRepository::new(pool.clone());
+    let archive_repo = ArchiveRepository::new(pool.clone());
+    let archive_category_repo = ArchiveCategoryRepository::new(pool.clone());
 
     let storage_service = match StorageService::from_env().await {
         Ok(service) => service,
@@ -2113,6 +2042,11 @@ async fn main() {
 
     let permission_service = PermissionService::new(pool.clone());
 
+    let archive_state = ArchiveState {
+        archive_repo: archive_repo.clone(),
+        category_repo: archive_category_repo.clone(),
+    };
+
     let state = AppState {
         file_repo,
         folder_repo,
@@ -2122,7 +2056,6 @@ async fn main() {
         storage_service,
         conversion_service,
         permission_service,
-        jwt_secret: jwt_secret.clone(),
     };
 
     let auth_state = AuthState { jwt_secret };
@@ -2205,6 +2138,7 @@ async fn main() {
         .route("/files/{id}/preview", get(preview_file))
         .route("/files/{id}/preview-pdf", get(preview_file))
         .route("/files/{file_id}/versions/{version_id}/download", get(download_file_version))
+        .with_state(state.clone())
         .without_v07_checks();
 
     let api_routes = Router::new()
@@ -2234,12 +2168,30 @@ async fn main() {
         .route("/templates/{id}/duplicate", post(duplicate_template))
         .route("/templates/{id}/toggle-status", put(toggle_template_status))
         .route("/templates/categories", get(list_template_categories))
-        .layer(axum_middleware::from_fn_with_state(auth_state, optional_auth_middleware))
+        .layer(axum_middleware::from_fn_with_state(auth_state.clone(), optional_auth_middleware))
+        .with_state(state.clone())
+        .without_v07_checks();
+
+    let archive_routes = Router::new()
+        .route("/archive-categories", get(list_archive_categories))
+        .route("/archive-categories", post(create_archive_category))
+        .route("/archive-categories/{id}", get(get_archive_category))
+        .route("/archive-categories/{id}", put(update_archive_category))
+        .route("/archive-categories/{id}", delete(delete_archive_category))
+        .route("/archives", get(list_archives))
+        .route("/archives", post(create_archive))
+        .route("/archives/{id}", get(get_archive))
+        .route("/archives/{id}", put(update_archive))
+        .route("/archives/{id}", delete(delete_archive))
+        .route("/archives/{id}/archive", post(archive_archive))
+        .layer(axum_middleware::from_fn_with_state(auth_state.clone(), optional_auth_middleware))
+        .with_state(archive_state)
         .without_v07_checks();
 
     let combined_routes = Router::new()
         .merge(public_routes)
-        .merge(api_routes);
+        .merge(api_routes)
+        .nest("/archives", archive_routes);
 
     let health_routes = Router::new()
         .route("/health", get(health))

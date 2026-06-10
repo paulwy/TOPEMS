@@ -1,18 +1,24 @@
 use axum::{
-    extract::{FromRef, Path, State},
+    extract::{FromRef, Path, Query, State},
     routing::{delete, get, post},
     Json,
     Router,
 };
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::env;
+use std::sync::Arc;
 use std::time::Instant;
+use tokio::sync::RwLock;
 use tower_cookies::CookieManagerLayer;
 
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, build_health_response, create_api_info_router
+    ServiceHealth, build_health_response, create_api_info_router, ServiceInfo, ServiceCategory,
+    ServiceRegistryStatus, LocalServiceRegistry, PortalServiceAggregator,
 };
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -24,11 +30,28 @@ fn get_uptime() -> u64 {
 #[derive(Clone)]
 struct AppState {
     auth_state: AuthState,
+    service_registry: Arc<LocalServiceRegistry>,
+    service_aggregator: Arc<PortalServiceAggregator>,
+    http_client: Client,
 }
 
 impl FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
         state.auth_state.clone()
+    }
+}
+
+impl AppState {
+    async fn new() -> Self {
+        let aggregator = PortalServiceAggregator::new();
+        aggregator.init_default_services().await;
+
+        Self {
+            auth_state: AuthState::from_env(),
+            service_registry: Arc::new(LocalServiceRegistry::new()),
+            service_aggregator: Arc::new(aggregator),
+            http_client: Client::new(),
+        }
     }
 }
 
@@ -48,9 +71,7 @@ async fn main() -> anyhow::Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    let app_state = AppState {
-        auth_state: AuthState::from_env(),
-    };
+    let app_state = AppState::new().await;
 
     let cors = create_cors_layer();
 
@@ -154,106 +175,26 @@ async fn home() -> Json<ApiResponse<&'static str>> {
     Json(ApiResponse::success("TOPEMS Unified Portal API", "首页"))
 }
 
-async fn list_services() -> Json<ApiResponse<Vec<Service>>> {
-    let services = vec![
-        Service {
-            id: "rs".to_string(),
-            name: "科研研发管理",
-            description: "项目、配方、试验、专利管理",
-            url: "http://localhost:3007".to_string(),
-            icon: "🔬",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "lims".to_string(),
-            name: "实验室信息管理",
-            description: "样品、检验、仪器、试剂管理",
-            url: "http://localhost:3002".to_string(),
-            icon: "🧪",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "bi".to_string(),
-            name: "数据大屏报表",
-            description: "数据分析与可视化报表",
-            url: "http://localhost:3003".to_string(),
-            icon: "📊",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "gis".to_string(),
-            name: "厂区空间数字化",
-            description: "厂区地图与空间管理",
-            url: "http://localhost:3004".to_string(),
-            icon: "🗺️",
-            status: "starting".to_string(),
-        },
-        Service {
-            id: "hrm".to_string(),
-            name: "人力资源管理",
-            description: "员工、考勤、合同管理",
-            url: "http://localhost:3005".to_string(),
-            icon: "👥",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "erp".to_string(),
-            name: "企业资源计划",
-            description: "资产、部门、组织管理",
-            url: "http://localhost:3006".to_string(),
-            icon: "🏢",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "mes".to_string(),
-            name: "生产执行系统",
-            description: "生产订单与过程管理",
-            url: "http://localhost:3008".to_string(),
-            icon: "🏭",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "wms".to_string(),
-            name: "仓储管理系统",
-            description: "库存、出入库管理",
-            url: "http://localhost:3009".to_string(),
-            icon: "📦",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "scm".to_string(),
-            name: "供应链管理",
-            description: "采购、供应商管理",
-            url: "http://localhost:3010".to_string(),
-            icon: "🔗",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "qms".to_string(),
-            name: "质量管理系统",
-            description: "质量检验、问题管理",
-            url: "http://localhost:3011".to_string(),
-            icon: "✅",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "ehs".to_string(),
-            name: "环境健康安全",
-            description: "EHS合规与安全管理",
-            url: "http://localhost:3012".to_string(),
-            icon: "🛡️",
-            status: "running".to_string(),
-        },
-        Service {
-            id: "im".to_string(),
-            name: "即时通讯",
-            description: "企业即时通讯与协作",
-            url: "http://localhost:3013".to_string(),
-            icon: "💬",
-            status: "starting".to_string(),
-        },
-    ];
-    Json(ApiResponse::success(services, "服务列表获取成功"))
+async fn list_services(State(state): State<AppState>) -> Json<ApiResponse<Vec<ServiceDto>>> {
+    let services = state.service_aggregator.registry.list_all().await;
+
+    let service_dtos: Vec<ServiceDto> = services.into_iter().map(|s| {
+        ServiceDto {
+            id: s.code,
+            name: s.name,
+            description: s.description,
+            url: s.url.map(|_| format!("http://localhost:{}", s.port)).unwrap_or_default(),
+            icon: s.icon.unwrap_or_else(|| "App".to_string()),
+            status: match s.status {
+                ServiceRegistryStatus::Active => "running".to_string(),
+                ServiceRegistryStatus::Inactive => "stopped".to_string(),
+                ServiceRegistryStatus::Maintenance => "maintenance".to_string(),
+            },
+            category: format!("{:?}", s.category),
+        }
+    }).collect();
+
+    Json(ApiResponse::success(service_dtos, "服务列表获取成功"))
 }
 
 async fn get_todos() -> Json<ApiResponse<Vec<Todo>>> {
@@ -262,7 +203,7 @@ async fn get_todos() -> Json<ApiResponse<Vec<Todo>>> {
             id: "1".to_string(),
             title: "完成项目周报".to_string(),
             service: "rs".to_string(),
-            service_name: "科研研发",
+            service_name: "科研研发".to_string(),
             due_date: "2026-05-26".to_string(),
             priority: "high".to_string(),
             completed: false,
@@ -273,7 +214,7 @@ async fn get_todos() -> Json<ApiResponse<Vec<Todo>>> {
             id: "2".to_string(),
             title: "审核检验报告".to_string(),
             service: "lims".to_string(),
-            service_name: "实验室",
+            service_name: "实验室".to_string(),
             due_date: "2026-05-26".to_string(),
             priority: "high".to_string(),
             completed: false,
@@ -284,7 +225,7 @@ async fn get_todos() -> Json<ApiResponse<Vec<Todo>>> {
             id: "3".to_string(),
             title: "提交专利申请材料".to_string(),
             service: "rs".to_string(),
-            service_name: "科研研发",
+            service_name: "科研研发".to_string(),
             due_date: "2026-05-28".to_string(),
             priority: "medium".to_string(),
             completed: false,
@@ -295,7 +236,7 @@ async fn get_todos() -> Json<ApiResponse<Vec<Todo>>> {
             id: "4".to_string(),
             title: "更新BI报表数据".to_string(),
             service: "bi".to_string(),
-            service_name: "数据大屏",
+            service_name: "数据大屏".to_string(),
             due_date: "2026-05-27".to_string(),
             priority: "low".to_string(),
             completed: false,
@@ -306,7 +247,7 @@ async fn get_todos() -> Json<ApiResponse<Vec<Todo>>> {
             id: "5".to_string(),
             title: "设备维护保养".to_string(),
             service: "lims".to_string(),
-            service_name: "实验室",
+            service_name: "实验室".to_string(),
             due_date: "2026-05-29".to_string(),
             priority: "medium".to_string(),
             completed: false,
@@ -317,7 +258,7 @@ async fn get_todos() -> Json<ApiResponse<Vec<Todo>>> {
             id: "6".to_string(),
             title: "审批员工请假申请".to_string(),
             service: "hrm".to_string(),
-            service_name: "人力资源",
+            service_name: "人力资源".to_string(),
             due_date: "2026-05-25".to_string(),
             priority: "high".to_string(),
             completed: false,
@@ -524,7 +465,7 @@ async fn get_notifications() -> Json<ApiResponse<Vec<Notification>>> {
             title: "待审批提醒".to_string(),
             content: "有3条审批请求等待处理".to_string(),
             service: "hrm".to_string(),
-            service_name: "人力资源",
+            service_name: "人力资源".to_string(),
             notification_type: "approval".to_string(),
             read: false,
             created_at: chrono::Utc::now() - chrono::Duration::minutes(10),
@@ -535,7 +476,7 @@ async fn get_notifications() -> Json<ApiResponse<Vec<Notification>>> {
             title: "系统维护通知".to_string(),
             content: "本周六凌晨2点-4点将进行系统维护，请提前做好数据备份".to_string(),
             service: "system".to_string(),
-            service_name: "系统管理",
+            service_name: "系统管理".to_string(),
             notification_type: "system".to_string(),
             read: false,
             created_at: chrono::Utc::now() - chrono::Duration::hours(2),
@@ -546,7 +487,7 @@ async fn get_notifications() -> Json<ApiResponse<Vec<Notification>>> {
             title: "试验完成提醒".to_string(),
             content: "您负责的试验'新型材料性能测试'已完成".to_string(),
             service: "rs".to_string(),
-            service_name: "科研研发",
+            service_name: "科研研发".to_string(),
             notification_type: "info".to_string(),
             read: true,
             created_at: chrono::Utc::now() - chrono::Duration::hours(4),
@@ -557,7 +498,7 @@ async fn get_notifications() -> Json<ApiResponse<Vec<Notification>>> {
             title: "库存预警".to_string(),
             content: "试剂'乙醇'库存不足，当前库存: 50ml".to_string(),
             service: "lims".to_string(),
-            service_name: "实验室",
+            service_name: "实验室".to_string(),
             notification_type: "warning".to_string(),
             read: false,
             created_at: chrono::Utc::now() - chrono::Duration::hours(6),
@@ -568,7 +509,7 @@ async fn get_notifications() -> Json<ApiResponse<Vec<Notification>>> {
             title: "会议邀请".to_string(),
             content: "邀请您参加'Q2项目进度评审会'，时间：本周四下午2点".to_string(),
             service: "system".to_string(),
-            service_name: "系统管理",
+            service_name: "系统管理".to_string(),
             notification_type: "info".to_string(),
             read: true,
             created_at: chrono::Utc::now() - chrono::Duration::days(1),
@@ -591,32 +532,33 @@ async fn mark_all_notifications_read() -> Json<ApiResponse<serde_json::Value>> {
     }), "所有通知已标记为已读"))
 }
 
-fn get_service_name(service_id: &str) -> &'static str {
+fn get_service_name(service_id: &str) -> String {
     match service_id {
-        "rs" => "科研研发",
-        "lims" => "实验室",
-        "bi" => "数据大屏",
-        "gis" => "厂区GIS",
-        "hrm" => "人力资源",
-        "erp" => "企业资源",
-        "mes" => "生产执行",
-        "wms" => "仓储管理",
-        "scm" => "供应链",
-        "qms" => "质量管理",
-        "ehs" => "EHS",
-        "im" => "即时通讯",
-        _ => "未知服务",
+        "rs" => "科研研发".to_string(),
+        "lims" => "实验室".to_string(),
+        "bi" => "数据大屏".to_string(),
+        "gis" => "厂区GIS".to_string(),
+        "hrm" => "人力资源".to_string(),
+        "erp" => "企业资源".to_string(),
+        "mes" => "生产执行".to_string(),
+        "wms" => "仓储管理".to_string(),
+        "scm" => "供应链".to_string(),
+        "qms" => "质量管理".to_string(),
+        "ehs" => "EHS".to_string(),
+        "im" => "即时通讯".to_string(),
+        _ => "未知服务".to_string(),
     }
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-struct Service {
+struct ServiceDto {
     id: String,
-    name: &'static str,
-    description: &'static str,
+    name: String,
+    description: String,
     url: String,
-    icon: &'static str,
+    icon: String,
     status: String,
+    category: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -624,7 +566,7 @@ struct Todo {
     id: String,
     title: String,
     service: String,
-    service_name: &'static str,
+    service_name: String,
     due_date: String,
     priority: String,
     completed: bool,
@@ -697,7 +639,7 @@ struct Notification {
     title: String,
     content: String,
     service: String,
-    service_name: &'static str,
+    service_name: String,
     notification_type: String,
     read: bool,
     #[serde(with = "chrono::serde::ts_seconds")]

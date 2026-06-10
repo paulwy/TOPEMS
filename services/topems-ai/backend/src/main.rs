@@ -5,11 +5,11 @@ mod api;
 mod services;
 
 // 分析 API handlers
-use api::models::*;
+use crate::api::{AnalysisApi, DocumentApi, QaApi, VectorApi};
 
 use axum::{
-    extract::{DefaultBodyLimit, FromRef, Multipart, Query, State},
-    routing::{get, post},
+    extract::{DefaultBodyLimit, FromRef, Query, State},
+    routing::{delete, get, post},
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
@@ -27,11 +27,12 @@ use uuid::Uuid;
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, build_health_response, create_api_info_router,
+    ServiceHealth, create_api_info_router,
     HealthStatus, DependencyHealth, check_http_health,
 };
 use services::{Database, DocumentService, VectorService, QAService, QAConfig, AnalysisService, AnalysisConfig};
 
+// AI 生成请求
 #[derive(Debug, Serialize, Deserialize)]
 struct AIGenerateRequest {
     template_id: Option<String>,
@@ -45,6 +46,7 @@ struct AIGenerateResponse {
     format: String,
 }
 
+// 数据验证请求
 #[derive(Debug, Serialize, Deserialize)]
 struct ValidateRequest {
     data: serde_json::Value,
@@ -64,6 +66,7 @@ struct ValidationIssue {
     fix: Option<String>,
 }
 
+// 数据补全请求
 #[derive(Debug, Serialize, Deserialize)]
 struct CompleteRequest {
     data: Option<serde_json::Value>,
@@ -84,6 +87,7 @@ struct Suggestion {
     reason: String,
 }
 
+// 摘要请求
 #[derive(Debug, Serialize, Deserialize)]
 struct SummarizeRequest {
     text: String,
@@ -97,6 +101,7 @@ struct SummarizeResponse {
     summary: String,
 }
 
+// AI 模板
 #[derive(Debug, Serialize, Deserialize)]
 struct AITemplate {
     id: String,
@@ -122,6 +127,7 @@ struct TemplateOption {
     label: String,
 }
 
+// 向量嵌入（内存存储用）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct VectorEmbedding {
     id: String,
@@ -132,6 +138,7 @@ struct VectorEmbedding {
     created_at: String,
 }
 
+// 文档分块（内存存储用）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct DocumentChunk {
     id: String,
@@ -145,6 +152,7 @@ struct DocumentChunk {
 static VECTORS: std::sync::OnceLock<Arc<Mutex<Vec<VectorEmbedding>>>> = std::sync::OnceLock::new();
 static CHUNKS: std::sync::OnceLock<Arc<Mutex<Vec<DocumentChunk>>>> = std::sync::OnceLock::new();
 
+// 文档（内存存储用）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Document {
     id: String,
@@ -206,7 +214,6 @@ static DOCUMENTS: std::sync::OnceLock<Arc<Mutex<Vec<Document>>>> = std::sync::On
 static CLIENT: std::sync::OnceLock<Client> = std::sync::OnceLock::new();
 static CONFIG: std::sync::OnceLock<Config> = std::sync::OnceLock::new();
 static DOCS_DIR: &str = "docs";
-static EMBEDDING_MODEL: &str = "all-minilm";
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -226,8 +233,6 @@ struct AppState {
     vector_service: VectorService,
     qa_service: QAService,
     analysis_service: AnalysisService,
-    http_client: Client,
-    config: Config,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -783,164 +788,6 @@ async fn check_ai_service_health() -> DependencyHealth {
     }
 }
 
-async fn list_documents() -> Json<ApiResponse<Vec<Document>>> {
-    if let Some(docs) = DOCUMENTS.get() {
-        let docs = docs.lock().unwrap();
-        Json(ApiResponse::success(docs.clone(), "Success"))
-    } else {
-        Json(ApiResponse::<Vec<Document>>::error(500, "Documents not loaded"))
-    }
-}
-
-async fn reload_documents() -> Json<ApiResponse<Vec<Document>>> {
-    if let Some(docs_arc) = DOCUMENTS.get() {
-        let new_docs = load_documents_from_dir(DOCS_DIR).await;
-        let mut docs = docs_arc.lock().unwrap();
-        *docs = new_docs.clone();
-        
-        tokio::spawn(async {
-            index_all_documents().await;
-        });
-        
-        Json(ApiResponse::success(new_docs, &format!("Reloaded {} documents", docs.len())))
-    } else {
-        Json(ApiResponse::<Vec<Document>>::error(500, "Documents not loaded"))
-    }
-}
-
-async fn delete_document(Query(params): Query<DocumentQuery>) -> Json<ApiResponse<String>> {
-    if let Some(docs_arc) = DOCUMENTS.get() {
-        let mut docs = docs_arc.lock().unwrap();
-        let original_len = docs.len();
-        
-        if let Some(doc) = docs.iter().find(|d| d.id == params.id) {
-            if let Some(file_path) = &doc.file_path {
-                let _ = fs::remove_file(file_path);
-            }
-        }
-        
-        docs.retain(|d| d.id != params.id);
-        
-        if let (Some(vectors_arc), Some(chunks_arc)) = (VECTORS.get(), CHUNKS.get()) {
-            let mut vectors = vectors_arc.lock().unwrap();
-            let mut chunks = chunks_arc.lock().unwrap();
-            vectors.retain(|v| v.document_id != params.id);
-            chunks.retain(|c| c.document_id != params.id);
-        }
-        
-        if docs.len() < original_len {
-            Json(ApiResponse::success("Document deleted successfully".to_string(), "Success"))
-        } else {
-            Json(ApiResponse::<String>::error(404, "Document not found"))
-        }
-    } else {
-        Json(ApiResponse::<String>::error(500, "Documents not loaded"))
-    }
-}
-
-async fn upload_document(mut multipart: Multipart) -> Json<ApiResponse<String>> {
-    while let Some(field) = multipart.next_field().await.unwrap_or(None) {
-        let name = field.name().unwrap_or_default().to_string();
-        if name == "file" {
-            let filename = field.file_name().unwrap_or_default().to_string();
-            let data = field.bytes().await.unwrap_or_default();
-            
-            let path = Path::new(DOCS_DIR).join(&filename);
-            match fs::write(&path, &data) {
-                Ok(_) => {
-                    if let Some(docs_arc) = DOCUMENTS.get() {
-                        let mut docs = docs_arc.lock().unwrap();
-                        let title = Path::new(&filename)
-                            .file_stem()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .to_string();
-                        let now = SystemTime::now()
-                            .duration_since(UNIX_EPOCH)
-                            .unwrap_or_default()
-                            .as_secs()
-                            .to_string();
-
-                        let ext = Path::new(&filename).extension().unwrap_or_default().to_string_lossy().to_string();
-                        let mime_type = match ext.as_str() {
-                            "txt" => Some("text/plain".to_string()),
-                            "md" => Some("text/markdown".to_string()),
-                            "json" => Some("application/json".to_string()),
-                            "pdf" => Some("application/pdf".to_string()),
-                            "doc" => Some("application/msword".to_string()),
-                            "docx" => Some("application/vnd.openxmlformats-officedocument.wordprocessingml.document".to_string()),
-                            _ => None,
-                        };
-                        
-                        let new_doc = Document {
-                            id: filename.clone(),
-                            title,
-                            filename: filename.clone(),
-                            file_path: Some(path.to_string_lossy().to_string()),
-                            file_size: Some(data.len() as u64),
-                            mime_type,
-                            content_hash: None,
-                            category: None,
-                            tags: None,
-                            description: None,
-                            created_at: now.clone(),
-                            updated_at: now,
-                            status: "processed".to_string(),
-                            error_message: None,
-                        };
-                        
-                        docs.push(new_doc.clone());
-                        
-                        tokio::spawn(async move {
-                            if let Err(e) = process_document_for_embedding(&new_doc).await {
-                                tracing::error!("处理上传文档失败: {}", e);
-                            }
-                        });
-                        
-                        return Json(ApiResponse::success("Document uploaded successfully".to_string(), &format!("Uploaded: {}", filename)));
-                    }
-                }
-                Err(e) => {
-                    return Json(ApiResponse::<String>::error(500, &format!("Failed to save file: {}", e)));
-                }
-            }
-        }
-    }
-    
-    Json(ApiResponse::<String>::error(400, "No file provided"))
-}
-
-async fn update_document(Query(params): Query<DocumentQuery>, Json(data): Json<serde_json::Value>) -> Json<ApiResponse<Document>> {
-    if let Some(docs_arc) = DOCUMENTS.get() {
-        let mut docs = docs_arc.lock().unwrap();
-        if let Some(doc) = docs.iter_mut().find(|d| d.id == params.id) {
-            if let Some(title) = data.get("title").and_then(|v| v.as_str()) {
-                doc.title = title.to_string();
-            }
-            if let Some(category) = data.get("category").and_then(|v| v.as_str()) {
-                doc.category = Some(category.to_string());
-            }
-            if let Some(description) = data.get("description").and_then(|v| v.as_str()) {
-                doc.description = Some(description.to_string());
-            }
-            if let Some(tags) = data.get("tags").and_then(|v| v.as_array()) {
-                doc.tags = Some(tags.iter().filter_map(|t| t.as_str()).map(|s| s.to_string()).collect());
-            }
-            doc.updated_at = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs()
-                .to_string();
-
-            Json(ApiResponse::success(doc.clone(), "Document updated successfully"))
-        } else {
-            Json(ApiResponse::<Document>::error(404, "Document not found"))
-        }
-    } else {
-        Json(ApiResponse::<Document>::error(500, "Documents not loaded"))
-    }
-}
-
 async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {
     if let Some(connectors) = CONNECTORS.get() {
         let connectors = connectors.lock().unwrap();
@@ -1113,11 +960,6 @@ fn test_cloud_storage_connection(connector: &DataConnector) -> (bool, Option<Str
 
 #[derive(Debug, Deserialize)]
 struct ConnectorQuery {
-    id: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct DocumentQuery {
     id: String,
 }
 
@@ -1513,129 +1355,6 @@ async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
     Json(ApiResponse::success(ChatResponse { answer, sources }, "Success"))
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct VectorSearchRequest {
-    query: String,
-    top_k: Option<usize>,
-}
-
-#[derive(Debug, Serialize)]
-struct VectorSearchResponse {
-    results: Vec<VectorSearchResult>,
-}
-
-#[derive(Debug, Serialize)]
-struct VectorSearchResult {
-    document_id: String,
-    chunk_id: String,
-    content: String,
-    similarity: f64,
-}
-
-async fn vector_search_handler(Json(req): Json<VectorSearchRequest>) -> Json<ApiResponse<VectorSearchResponse>> {
-    let top_k = req.top_k.unwrap_or(10);
-    let results = vector_search(&req.query, top_k).await;
-    
-    let search_results: Vec<VectorSearchResult> = results
-        .into_iter()
-        .map(|(vec, similarity)| VectorSearchResult {
-            document_id: vec.document_id,
-            chunk_id: vec.id,
-            content: vec.content,
-            similarity,
-        })
-        .collect();
-    
-    Json(ApiResponse::success(VectorSearchResponse { results: search_results }, "Success"))
-}
-
-async fn index_documents() -> Json<ApiResponse<String>> {
-    tokio::spawn(async {
-        index_all_documents().await;
-    });
-    
-    Json(ApiResponse::success("索引任务已启动".to_string(), "正在后台索引所有文档"))
-}
-
-async fn get_vector_stats() -> Json<ApiResponse<serde_json::Value>> {
-    if let (Some(vectors_arc), Some(chunks_arc), Some(docs_arc)) = (VECTORS.get(), CHUNKS.get(), DOCUMENTS.get()) {
-        let vectors = vectors_arc.lock().unwrap();
-        let chunks = chunks_arc.lock().unwrap();
-        let docs = docs_arc.lock().unwrap();
-        
-        let stats = serde_json::json!({
-            "total_vectors": vectors.len(),
-            "total_chunks": chunks.len(),
-            "total_documents": docs.len(),
-            "vector_dimension": if let Some(vec) = vectors.first() { vec.embedding.len() } else { 0 },
-        });
-        
-        Json(ApiResponse::success(stats, "Success"))
-    } else {
-        Json(ApiResponse::<serde_json::Value>::error(500, "Vector store not initialized"))
-    }
-}
-
-async fn clear_vectors() -> Json<ApiResponse<String>> {
-    if let (Some(vectors_arc), Some(chunks_arc)) = (VECTORS.get(), CHUNKS.get()) {
-        let mut vectors = vectors_arc.lock().unwrap();
-        let mut chunks = chunks_arc.lock().unwrap();
-        let count = vectors.len();
-        vectors.clear();
-        chunks.clear();
-        Json(ApiResponse::success(format!("已清空 {} 个向量", count), "Success"))
-    } else {
-        Json(ApiResponse::<String>::error(500, "Vector store not initialized"))
-    }
-}
-
-// 分析 API State
-#[derive(Clone)]
-struct AnalysisState {
-    analysis_service: AnalysisService,
-    auth_state: AuthState,
-}
-
-async fn sentiment_analysis(
-    State(state): State<AnalysisState>,
-    Json(req): Json<SentimentAnalysisRequest>,
-) -> Json<ApiResponse<SentimentAnalysisResponse>> {
-    match state.analysis_service.analyze_sentiment(&req.text).await {
-        Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e)),
-    }
-}
-
-async fn classify_text(
-    State(state): State<AnalysisState>,
-    Json(req): Json<ClassifyTextRequest>,
-) -> Json<ApiResponse<ClassifyTextResponse>> {
-    match state.analysis_service.classify_text(&req.text, req.categories.as_deref()).await {
-        Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<ClassifyTextResponse>::error(500, &e)),
-    }
-}
-
-async fn extract_entities(
-    State(state): State<AnalysisState>,
-    Json(req): Json<ExtractEntitiesRequest>,
-) -> Json<ApiResponse<ExtractEntitiesResponse>> {
-    match state.analysis_service.extract_entities(&req.text, req.entity_types.as_deref()).await {
-        Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::error(500, &e)),
-    }
-}
-
-async fn extract_keywords(
-    State(state): State<AnalysisState>,
-    Json(req): Json<ExtractKeywordsRequest>,
-) -> Json<ApiResponse<ExtractKeywordsResponse>> {
-    match state.analysis_service.extract_keywords(&req.text, req.max_keywords).await {
-        Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::error(500, &e)),
-    }
-}
-
 async fn call_ai_api(
     client: &Client,
     base_url: &str,
@@ -1804,8 +1523,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         vector_service,
         qa_service,
         analysis_service,
-        http_client: http_client.clone(),
-        config: config.clone(),
     };
 
     let cors = create_cors_layer();
@@ -1814,7 +1531,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(home))
         .route("/health", get(health))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/api/v1/metrics", get(get_vector_stats))
+        .route("/api/v1/metrics", get(VectorApi::stats))
         .route("/metrics", get(move || async move { metric_handle.render() }))
         .with_state(app_state.clone());
 
@@ -1825,17 +1542,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/v1/ai/complete", post(complete))
         .route("/api/v1/ai/summarize", post(summarize))
         .route("/api/v1/ai/templates", get(list_templates))
-        // 文档处理 API
-        .route("/api/v1/documents", get(list_documents))
-        .route("/api/v1/documents/reload", post(reload_documents))
-        .route("/api/v1/documents/upload", post(upload_document))
-        .route("/api/v1/documents/delete", get(delete_document))
-        .route("/api/v1/documents/update", post(update_document))
-        // 向量检索 API
-        .route("/api/v1/vectors/index", post(index_documents))
-        .route("/api/v1/vectors/stats", get(get_vector_stats))
-        .route("/api/v1/vectors/search", post(vector_search_handler))
-        .route("/api/v1/vectors/clear", post(clear_vectors))
+        // 文档处理 API - 使用 DocumentApi 模块
+        .route("/api/v1/documents", get(DocumentApi::list))
+        .route("/api/v1/documents/upload", post(DocumentApi::upload))
+        .route("/api/v1/documents/{id}", get(DocumentApi::get))
+        .route("/api/v1/documents/{id}", delete(DocumentApi::delete))
+        .route("/api/v1/documents/{id}/process", post(DocumentApi::process))
+        .route("/api/v1/documents/{id}/extract", post(DocumentApi::extract))
+        .route("/api/v1/documents/{id}/summarize", post(DocumentApi::summarize))
+        // 向量检索 API - 使用 VectorApi 模块
+        .route("/api/v1/vectors/stats", get(VectorApi::stats))
+        .route("/api/v1/vectors/search", post(VectorApi::search))
+        .route("/api/v1/vectors/store", post(VectorApi::store))
+        .route("/api/v1/vectors/{id}", get(VectorApi::get))
+        .route("/api/v1/vectors/{id}", delete(VectorApi::delete))
+        .route("/api/v1/vectors/batch-store", post(VectorApi::batch_store))
+        .route("/api/v1/vectors/hybrid-search", post(VectorApi::hybrid_search))
+        .route("/api/v1/vectors/clear", post(VectorApi::clear_all))
+        // 问答 API - 使用 QaApi 模块
+        .route("/api/v1/qa/ask", post(QaApi::ask))
+        .route("/api/v1/qa/ask-with-context", post(QaApi::ask_with_context))
+        .route("/api/v1/qa/history", get(QaApi::history))
+        .route("/api/v1/qa/feedback", post(QaApi::feedback))
         // 数据连接器 API
         .route("/api/v1/connectors", get(list_connectors))
         .route("/api/v1/connectors/get", get(get_connector))
@@ -1850,22 +1578,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ))
         .with_state(app_state.clone());
 
-    // 分析 API - 使用单独的Router以便正确注入State
-    let analysis_state = AnalysisState {
-        analysis_service: app_state.analysis_service.clone(),
-        auth_state: app_state.auth_state.clone(),
-    };
-    
+    // 分析 API - 使用 AnalysisApi 模块
     let analysis_router = Router::new()
-        .route("/api/v1/analysis/sentiment", post(sentiment_analysis))
-        .route("/api/v1/analysis/classify", post(classify_text))
-        .route("/api/v1/analysis/entities", post(extract_entities))
-        .route("/api/v1/analysis/keywords", post(extract_keywords))
+        .route("/api/v1/analysis/sentiment", post(AnalysisApi::sentiment))
+        .route("/api/v1/analysis/classify", post(AnalysisApi::classify))
+        .route("/api/v1/analysis/entities", post(AnalysisApi::extract_entities))
+        .route("/api/v1/analysis/keywords", post(AnalysisApi::extract_keywords))
+        .route("/api/v1/analysis/history", post(AnalysisApi::history))
         .layer(axum::middleware::from_fn_with_state(
-            analysis_state.auth_state.clone(),
+            app_state.auth_state.clone(),
             auth_middleware,
         ))
-        .with_state(analysis_state);
+        .with_state(app_state.clone());
 
     let app = Router::new()
         .merge(public_routes)

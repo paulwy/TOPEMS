@@ -39,7 +39,7 @@ async fn list_departments(
 
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let company_id_filter = params.company_id.clone();
+    let company_id_filter = params.company_id;
 
     let result = sqlx::query_as::<_, Department>(
         r#"
@@ -54,7 +54,7 @@ async fn list_departments(
     )
     .bind(&search_pattern)
     .bind(&status_filter)
-    .bind(&company_id_filter)
+    .bind(company_id_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -72,7 +72,7 @@ async fn list_departments(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(&company_id_filter)
+            .bind(company_id_filter)
             .fetch_one(&state.db)
             .await;
 
@@ -117,11 +117,11 @@ async fn create_department(
     )
     .bind(id)
     .bind(org_id)
-    .bind(&req.company_id)
+    .bind(req.company_id)
     .bind(&req.name)
     .bind(&req.code)
-    .bind(&req.parent_id)
-    .bind(&req.manager_id)
+    .bind(req.parent_id)
+    .bind(req.manager_id)
     .bind(&req.description)
     .bind(now)
     .bind(now)
@@ -181,7 +181,6 @@ async fn update_department(
 
     let name = req.name.unwrap_or(existing.name);
     let code = req.code.or(existing.code);
-    let parent_id = req.parent_id.or(existing.parent_id);
     let manager_id = req.manager_id.or(existing.manager_id);
     let description = req.description.or(existing.description);
     let status = req.status.unwrap_or(existing.status);
@@ -189,7 +188,7 @@ async fn update_department(
 
     // 如果没有提供 company_id，使用 existing 的值
     let company_id = req.company_id.or(existing.company_id);
-    
+
     // 如果没有提供 parent_id，使用 existing 的值
     let parent_id = req.parent_id.or(existing.parent_id);
 
@@ -204,11 +203,11 @@ async fn update_department(
     )
     .bind(id)
     .bind(existing.organization_id)
-    .bind(&company_id)
+    .bind(company_id)
     .bind(&name)
     .bind(&code)
-    .bind(&parent_id)
-    .bind(&manager_id)
+    .bind(parent_id)
+    .bind(manager_id)
     .bind(&description)
     .bind(&status)
     .bind(now)
