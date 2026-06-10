@@ -28,6 +28,7 @@ pub mod schema;
 pub mod cache;
 pub mod query_optimizer;
 pub mod service_bootstrap;
+pub mod service_discovery;
 
 pub use config::{Config, AppConfig, ServiceConfig, ServiceRegistry, get_default_port, CacheConfig};
 pub use config::enhanced::{
@@ -78,8 +79,19 @@ pub use notification::{
     TemplateStatus,
     ArchiveConfig,
     NotificationStats,
+    NotificationListResponse,
+    NotificationListQuery,
     NotificationServiceClient,
     NotificationServiceState,
+};
+pub use service_discovery::{
+    ServiceInfo,
+    ServiceCategory,
+    ServiceRegistryStatus,
+    ServiceDiscoveryClient,
+    ServiceHealthStatus,
+    LocalServiceRegistry,
+    PortalServiceAggregator,
 };
 pub use service_client::{
     ServiceClientError,

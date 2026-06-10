@@ -96,42 +96,6 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn health_check(
-    axum::extract::State(state): axum::extract::State<ApiState>,
-) -> Json<ApiResponse<String>> {
-    let database_health = check_database_health(&state.db).await;
-    let iam_health = check_iam_health().await;
-
-    let overall_status = if database_health.status == HealthStatus::Healthy
-        && iam_health.status == HealthStatus::Healthy
-    {
-        HealthStatus::Healthy
-    } else if database_health.status == HealthStatus::Unhealthy
-        || iam_health.status == HealthStatus::Unhealthy
-    {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let status_str = match overall_status {
-        HealthStatus::Healthy => "healthy".to_string(),
-        HealthStatus::Degraded => "degraded".to_string(),
-        HealthStatus::Unhealthy => "unhealthy".to_string(),
-    };
-
-    Json(ApiResponse::success(status_str, "健康检查"))
-}
-
-#[allow(dead_code)]
-#[derive(Serialize, Clone)]
-struct HrmHealthSummary {
-    service_name: String,
-    status: HealthStatus,
-    uptime: String,
-    dependencies: Vec<DependencyHealth>,
-}
-
 async fn health_check_detailed(
     axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<ServiceHealth>> {
@@ -178,7 +142,7 @@ async fn get_metrics(
         request_count: state.metrics.get_request_count(),
         error_count: state.metrics.get_error_count(),
         active_connections: state.metrics.get_active_connections(),
-        database_pool_size: state.db.size() as u32,
+        database_pool_size: state.db.size(),
         database_pool_idle: state.db.num_idle(),
     };
 

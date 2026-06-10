@@ -5,7 +5,6 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::{Error as SqlxError};
-use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
 

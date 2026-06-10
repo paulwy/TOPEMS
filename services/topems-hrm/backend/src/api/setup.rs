@@ -262,6 +262,7 @@ async fn setup_company_info(
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, FromRow)]
 pub struct Company {
     pub id: Uuid,
@@ -320,8 +321,8 @@ async fn setup_departments(
         .bind(company_id)
         .bind(&dept.name)
         .bind(&dept.code)
-        .bind(&dept.parent_id)
-        .bind(&dept.manager_id)
+        .bind(dept.parent_id)
+        .bind(dept.manager_id)
         .bind(&dept.description)
         .bind(now)
         .bind(now)
@@ -369,6 +370,7 @@ async fn setup_departments(
     ))
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, FromRow)]
 pub struct Department {
     pub id: Uuid,
@@ -416,7 +418,7 @@ async fn setup_positions(
         .bind(id)
         .bind(org_id)
         .bind(company_id)
-        .bind(&pos.department_id)
+        .bind(pos.department_id)
         .bind(&pos.name)
         .bind(&pos.code)
         .bind(pos.level)
@@ -467,6 +469,7 @@ async fn setup_positions(
     ))
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, FromRow)]
 pub struct Position {
     pub id: Uuid,
@@ -525,8 +528,8 @@ async fn setup_admin_user(
     .bind(employee_id)
     .bind(org_id)
     .bind(company_id)
-    .bind(&req.department_id)
-    .bind(&req.position_id)
+    .bind(req.department_id)
+    .bind(req.position_id)
     .bind(&req.employee_number)
     .bind(&req.name)
     .bind(&req.gender)
@@ -578,6 +581,7 @@ async fn setup_admin_user(
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, FromRow)]
 pub struct Employee {
     pub id: Uuid,

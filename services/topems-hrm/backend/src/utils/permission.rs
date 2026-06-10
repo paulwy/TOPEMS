@@ -1,8 +1,8 @@
 use sqlx::PgPool;
-use uuid::Uuid;
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum ModulePermission {
     CompanyRead,
@@ -67,31 +67,4 @@ pub async fn check_permission<T>(
         "权限不足：需要 {} 权限", 
         permission
     ))))
-}
-
-pub async fn check_self_permission<T>(
-    _db: &PgPool,
-    claims: &Claims,
-    resource_id: &Uuid,
-) -> Result<(), axum::Json<ApiResponse<T>>> {
-    if claims.is_superuser {
-        return Ok(());
-    }
-
-    if claims.has_permission("hrm.manage") {
-        return Ok(());
-    }
-
-    let user_id = match claims.user_id() {
-        Ok(id) => id,
-        Err(_) => {
-            return Err(axum::Json(ApiResponse::error(401, "无效的用户ID")));
-        }
-    };
-
-    if user_id == *resource_id {
-        return Ok(());
-    }
-
-    Err(axum::Json(ApiResponse::error(403, "权限不足：您只能访问自己的信息")))
 }

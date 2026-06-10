@@ -5,7 +5,6 @@ use axum::{
     Json, Router,
 };
 use serde::Deserialize;
-use std::sync::Arc;
 use utoipa::ToSchema;
 use uuid::Uuid;
 

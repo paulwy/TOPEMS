@@ -1,0 +1,1 @@
+import{B as m}from"./vendor-other-DuNeARC-.js";import{R as o}from"./page-ai-DFYpyzB6.js";function n({className:e,...t}){return m.jsx("div",{className:o("animate-pulse rounded-md bg-muted",e),...t})}export{n as S};

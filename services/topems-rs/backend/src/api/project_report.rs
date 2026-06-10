@@ -6,7 +6,6 @@ use axum::{
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
-use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::response::ApiResponse;

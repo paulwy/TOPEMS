@@ -131,6 +131,7 @@ async fn get_audit_log(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn log_audit_event(
     db: &PgPool,
     action: String,

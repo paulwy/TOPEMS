@@ -97,7 +97,7 @@ async fn list_leaves(
         LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(&emp_id)
+    .bind(emp_id)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
@@ -113,7 +113,7 @@ async fn list_leaves(
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(&emp_id)
+            .bind(emp_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;
@@ -161,10 +161,10 @@ async fn create_leave(
         "#
     )
     .bind(id)
-    .bind(&req.employee_id)
+    .bind(req.employee_id)
     .bind(&req.leave_type)
-    .bind(&req.start_date)
-    .bind(&req.end_date)
+    .bind(req.start_date)
+    .bind(req.end_date)
     .bind(&req.days)
     .bind(&req.reason)
     .bind(now)
@@ -257,8 +257,8 @@ async fn update_leave(
         "#
     )
     .bind(&req.leave_type)
-    .bind(&req.start_date)
-    .bind(&req.end_date)
+    .bind(req.start_date)
+    .bind(req.end_date)
     .bind(&req.days)
     .bind(&req.reason)
     .bind(now)
@@ -354,7 +354,7 @@ async fn approve_leave(
         "#
     )
     .bind(id)
-    .bind(&req.approver_id)
+    .bind(req.approver_id)
     .bind(now)
     .fetch_optional(&state.db)
     .await;
@@ -390,7 +390,7 @@ async fn reject_leave(
         "#
     )
     .bind(id)
-    .bind(&req.approver_id)
+    .bind(req.approver_id)
     .bind(now)
     .bind(&req.reason)
     .fetch_optional(&state.db)

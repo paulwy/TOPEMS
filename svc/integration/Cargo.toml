@@ -1,0 +1,24 @@
+[package]
+name = "topems-integration"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS System Integration Service"
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+dotenvy.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tower-http.workspace = true
+reqwest.workspace = true
+futures.workspace = true
+topems-shared = { path = "../../lib" }

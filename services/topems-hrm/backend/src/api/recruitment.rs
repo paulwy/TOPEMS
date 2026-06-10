@@ -184,7 +184,7 @@ async fn list_job_openings(
         "#,
     )
     .bind(&search)
-    .bind(&dept_id)
+    .bind(dept_id)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
@@ -202,7 +202,7 @@ async fn list_job_openings(
                 "#,
             )
             .bind(&search)
-            .bind(&dept_id)
+            .bind(dept_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;
@@ -248,8 +248,8 @@ async fn create_job_opening(
     .bind(id)
     .bind(&req.title)
     .bind(&req.code)
-    .bind(&req.department_id)
-    .bind(&req.position_id)
+    .bind(req.department_id)
+    .bind(req.position_id)
     .bind(&req.employment_type)
     .bind(&req.location)
     .bind(&req.description)
@@ -352,8 +352,8 @@ async fn update_job_opening(
     )
     .bind(&req.title)
     .bind(&req.code)
-    .bind(&req.department_id)
-    .bind(&req.position_id)
+    .bind(req.department_id)
+    .bind(req.position_id)
     .bind(&req.employment_type)
     .bind(&req.location)
     .bind(&req.description)
@@ -515,7 +515,7 @@ async fn list_candidates(
         "#,
     )
     .bind(&search)
-    .bind(&job_opening_id)
+    .bind(job_opening_id)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
@@ -533,7 +533,7 @@ async fn list_candidates(
                 "#,
             )
             .bind(&search)
-            .bind(&job_opening_id)
+            .bind(job_opening_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;
@@ -580,8 +580,8 @@ async fn create_candidate(
     .bind(&req.name)
     .bind(&req.email)
     .bind(&req.phone)
-    .bind(&req.position_id)
-    .bind(&req.job_opening_id)
+    .bind(req.position_id)
+    .bind(req.job_opening_id)
     .bind(&req.resume_path)
     .bind(&req.source)
     .bind(now)
@@ -679,8 +679,8 @@ async fn update_candidate(
     .bind(&req.name)
     .bind(&req.email)
     .bind(&req.phone)
-    .bind(&req.position_id)
-    .bind(&req.job_opening_id)
+    .bind(req.position_id)
+    .bind(req.job_opening_id)
     .bind(&req.resume_path)
     .bind(&req.source)
     .bind(&req.status)
@@ -776,7 +776,7 @@ async fn list_interviews(
         LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(&candidate_id)
+    .bind(candidate_id)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
@@ -792,7 +792,7 @@ async fn list_interviews(
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(&candidate_id)
+            .bind(candidate_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;
@@ -833,10 +833,10 @@ async fn create_interview(
         "#
     )
     .bind(id)
-    .bind(&req.candidate_id)
-    .bind(&req.interviewer_id)
+    .bind(req.candidate_id)
+    .bind(req.interviewer_id)
     .bind(round)
-    .bind(&req.scheduled_at)
+    .bind(req.scheduled_at)
     .bind(duration)
     .bind(now)
     .bind(now)
@@ -898,11 +898,11 @@ async fn update_interview(
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#
     )
-    .bind(&req.interviewer_id)
-    .bind(&req.round)
-    .bind(&req.scheduled_at)
-    .bind(&req.actual_at)
-    .bind(&req.duration_minutes)
+    .bind(req.interviewer_id)
+    .bind(req.round)
+    .bind(req.scheduled_at)
+    .bind(req.actual_at)
+    .bind(req.duration_minutes)
     .bind(&req.status)
     .bind(&req.result)
     .bind(&req.notes)
@@ -961,7 +961,7 @@ async fn complete_interview(
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#
     )
-    .bind(&req.actual_at)
+    .bind(req.actual_at)
     .bind(&req.result)
     .bind(&req.notes)
     .bind(&req.score)

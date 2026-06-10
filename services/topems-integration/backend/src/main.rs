@@ -177,12 +177,12 @@ async fn main() {
         }
     };
 
-    let lims_url = std::env::var("LIMS_URL").unwrap_or_else(|_| "http://localhost:8006".to_string());
-    let qms_url = std::env::var("QMS_URL").unwrap_or_else(|_| "http://localhost:8007".to_string());
-    let mes_url = std::env::var("MES_URL").unwrap_or_else(|_| "http://localhost:8008".to_string());
-    let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8009".to_string());
-    let wms_url = std::env::var("WMS_URL").unwrap_or_else(|_| "http://localhost:8011".to_string());
-    let scm_url = std::env::var("SCM_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let lims_url = std::env::var("LIMS_URL").unwrap_or_else(|_| "http://localhost:8022".to_string());
+    let qms_url = std::env::var("QMS_URL").unwrap_or_else(|_| "http://localhost:8031".to_string());
+    let mes_url = std::env::var("MES_URL").unwrap_or_else(|_| "http://localhost:8030".to_string());
+    let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let wms_url = std::env::var("WMS_URL").unwrap_or_else(|_| "http://localhost:8042".to_string());
+    let scm_url = std::env::var("SCM_URL").unwrap_or_else(|_| "http://localhost:8040".to_string());
 
     let app_state = AppState {
         pool,

@@ -1,33 +1,32 @@
 [workspace]
 members = [
-    "shared/lib",
-    "services/example-service",
-    "services/notification-service",
-    "services/report-service",
-    "services/topems-ai/backend",
-    "services/topems-bi/backend",
-    "services/topems-crm/backend",
-    "services/topems-doc/backend",
-    "services/topems-ehs/backend",
-    "services/topems-erp/backend",
-    "services/topems-flow/backend",
-    "services/topems-gis/backend",
-    "services/topems-hrm/backend",
-    "services/topems-iam/backend",
-    "services/topems-im/backend",
-    "services/topems-integration/backend",
-    "services/topems-lims/backend",
-    "services/topems-mail/backend",
-    "services/topems-mes/backend",
-    "services/topems-mobile/backend",
-    "services/topems-notification/backend",
-    "services/topems-pdm/backend",
-    "services/topems-pm/backend",
-    "services/topems-portal/backend",
-    "services/topems-qms/backend",
-    "services/topems-rs/backend",
-    "services/topems-scm/backend",
-    "services/topems-wms/backend",
+    "lib",
+    "svc/iam",
+    "svc/doc",
+    "svc/flow",
+    "svc/ai",
+    "svc/erp",
+    "svc/hrm",
+    "svc/crm",
+    "svc/lims",
+    "svc/pm",
+    "svc/pdm",
+    "svc/qms",
+    "svc/rs",
+    "svc/scm",
+    "svc/srm",
+    "svc/wms",
+    "svc/ehs",
+    "svc/gis",
+    "svc/im",
+    "svc/mail",
+    "svc/mes",
+    "svc/portal",
+    "svc/notification",
+    "svc/report",
+    "svc/bi",
+    "svc/integration",
+    "svc/mobile",
 ]
 resolver = "2"
 
@@ -37,7 +36,6 @@ edition = "2021"
 authors = ["TOPEMS Team"]
 
 [workspace.dependencies]
-# 核心依赖
 axum = { version = "0.8", features = ["multipart", "ws", "macros"] }
 tokio = { version = "1", features = ["full"] }
 tower = "0.5"
@@ -48,11 +46,9 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "uu
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1", features = ["serde", "v4"] }
 
-# Web 框架
 axum-prometheus = "0.8"
 prometheus = "0.13"
 
-# 工具库
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15"
@@ -72,7 +68,6 @@ lazy_static = "1"
 regex = "1"
 tokio-test = "0.4"
 
-# 特殊依赖
 async-trait = "0.1"
 axum-test = "18"
 bigdecimal = { version = "0.4", features = ["serde"] }

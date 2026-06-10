@@ -1,0 +1,58 @@
+# TOPEMS Docker Compose 配置
+# 用于开发和生产环境的数据库基础设施
+
+version: '3.8'
+
+volumes:
+  postgres_data:
+  redis_data:
+
+services:
+  postgres:
+    image: postgres:latest
+    pull_policy: never
+    container_name: topems-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-topems}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-topems_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-topems}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+      - ../scripts/init-database.sh:/docker-entrypoint-initdb.d/99-init-database.sh:ro
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-topems} -d ${POSTGRES_DB:-topems}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    pull_policy: never
+    container_name: topems-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+networks:
+  topems-network:
+    driver: bridge
+    name: topems-network

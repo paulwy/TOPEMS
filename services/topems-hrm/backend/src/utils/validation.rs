@@ -1,29 +1,19 @@
-// 重新导出共享库的验证模块
-pub use topems_shared::validation::{Validator, ValidationError, ValidationResult};
-
-// 自定义验证函数（保留原有实现以确保 API 兼容）
-use lazy_static::lazy_static;
-use regex::Regex;
-
-lazy_static! {
-    static ref EMAIL_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
-    static ref PHONE_REGEX: Regex = Regex::new(r"^1[3-9]\d{9}$").unwrap();
-    static ref EMPLOYEE_NUMBER_REGEX: Regex = Regex::new(r"^[A-Za-z0-9]{2,20}$").unwrap();
-}
+// 验证模块 - 当前未使用，保留接口以备将来扩展
+// TODO: 后续可整合 topems_shared::validation 模块
 
 #[allow(dead_code)]
 pub fn validate_email(email: &str) -> bool {
-    EMAIL_REGEX.is_match(email)
+    email.contains('@') && email.contains('.')
 }
 
 #[allow(dead_code)]
 pub fn validate_phone(phone: &str) -> bool {
-    PHONE_REGEX.is_match(phone)
+    phone.len() == 11 && phone.chars().all(|c| c.is_ascii_digit())
 }
 
 #[allow(dead_code)]
 pub fn validate_employee_number(number: &str) -> bool {
-    EMPLOYEE_NUMBER_REGEX.is_match(number)
+    !number.is_empty() && number.len() <= 20
 }
 
 #[allow(dead_code)]

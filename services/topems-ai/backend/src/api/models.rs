@@ -2,47 +2,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// 文档信息
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Document {
-    pub id: Uuid,
-    pub title: String,
-    pub filename: String,
-    pub file_path: Option<String>,
-    pub file_size: Option<i64>,
-    pub mime_type: Option<String>,
-    pub content_hash: Option<String>,
-    pub category: Option<String>,
-    pub tags: Option<Vec<String>>,
-    pub description: Option<String>,
-    pub status: String,
-    pub error_message: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-/// 文档分块
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DocumentChunk {
-    pub id: Uuid,
-    pub document_id: Uuid,
-    pub chunk_index: i32,
-    pub content: String,
-    pub metadata: serde_json::Value,
-    pub created_at: DateTime<Utc>,
-}
-
-/// 向量记录
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct VectorRecord {
-    pub id: Uuid,
-    pub document_id: Uuid,
-    pub chunk_id: Uuid,
-    pub chunk_index: i32,
-    pub content: String,
-    pub embedding: Vec<f32>,
-    pub created_at: DateTime<Utc>,
-}
+/// 搜索结果 - 使用 services/vector 模块的定义
+pub use crate::services::vector::SearchResult;
 
 /// 问答历史
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,29 +27,6 @@ pub struct AnalysisResult {
     pub result: serde_json::Value,
     pub confidence: Option<f64>,
     pub created_at: DateTime<Utc>,
-}
-
-/// 搜索结果
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SearchResult {
-    pub document_id: Uuid,
-    pub chunk_id: Uuid,
-    pub content: String,
-    pub similarity: f64,
-    pub document_title: Option<String>,
-}
-
-/// 文档上传请求
-#[derive(Debug, Deserialize)]
-pub struct UploadDocumentRequest {
-    pub title: String,
-    pub filename: String,
-    pub file_path: String,
-    pub file_size: u64,
-    pub mime_type: Option<String>,
-    pub category: Option<String>,
-    pub tags: Option<Vec<String>>,
-    pub description: Option<String>,
 }
 
 /// 文档处理请求
@@ -174,6 +112,20 @@ pub struct FeedbackRequest {
 #[derive(Debug, Deserialize)]
 pub struct SentimentAnalysisRequest {
     pub text: String,
+}
+
+/// 分析历史请求
+#[derive(Debug, Deserialize)]
+pub struct AnalysisHistoryRequest {
+    pub analysis_type: Option<String>,
+    pub limit: Option<usize>,
+}
+
+/// 分析历史响应
+#[derive(Debug, Serialize)]
+pub struct AnalysisHistoryResponse {
+    pub history: Vec<AnalysisResult>,
+    pub total: i32,
 }
 
 /// 文本分类请求

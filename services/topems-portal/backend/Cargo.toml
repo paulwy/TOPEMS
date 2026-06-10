@@ -19,6 +19,7 @@ dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 chrono.workspace = true
+reqwest.workspace = true
 topems-shared = { path = "../../../shared/lib" }
 axum-prometheus.workspace = true
 prometheus.workspace = true

@@ -7,7 +7,6 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared::response::ApiResponse;

@@ -151,6 +151,7 @@ impl MonitoringState {
         metrics.avg_response_time_ms = avg_response;
     }
 
+    #[allow(dead_code)]
     async fn update_metrics(&self) {
         let request_count = self.request_count.load(Ordering::Relaxed);
         let success_count = self.success_count.load(Ordering::Relaxed);

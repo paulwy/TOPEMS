@@ -1,6 +1,4 @@
 // 重新导出共享库的缓存模块
-pub use topems_shared::cache::{CacheManager, InMemoryCache as SharedInMemoryCache, CacheStatistics, EvictionPolicy};
-pub use topems_shared::config::CacheConfig;
 
 use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;

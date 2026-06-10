@@ -6,7 +6,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{

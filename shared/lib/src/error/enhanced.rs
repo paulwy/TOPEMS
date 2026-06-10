@@ -2,6 +2,7 @@
 // =============================================================================
 
 use thiserror::Error;
+#[cfg(test)]
 use anyhow::Context;
 use std::result::Result as StdResult;
 
@@ -417,7 +418,7 @@ impl ErrorStatistics {
 /// Axum IntoResponse implementation for TopemsError
 impl axum::response::IntoResponse for TopemsError {
     fn into_response(self) -> axum::response::Response {
-        use axum::{http::StatusCode, response::IntoResponse, Json};
+        use axum::{http::StatusCode, Json};
         use serde::Serialize;
 
         #[derive(Serialize)]

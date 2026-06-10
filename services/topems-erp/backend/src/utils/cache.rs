@@ -1,6 +1,4 @@
 // 重新导出共享库的缓存模块
-pub use topems_shared::cache::{CacheManager, InMemoryCache as SharedInMemoryCache, CacheStatistics, EvictionPolicy};
-pub use topems_shared::config::CacheConfig;
 
 // 保留原有实现以确保 API 兼容
 use dashmap::DashMap;

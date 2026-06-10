@@ -127,7 +127,7 @@ async fn list_reviews(
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(&emp_id)
+    .bind(emp_id)
     .bind(&review_period)
     .bind(&status_filter)
     .bind(page_size)
@@ -145,7 +145,7 @@ async fn list_reviews(
                   AND ($3::text IS NULL OR status = $3)
                 "#,
             )
-            .bind(&emp_id)
+            .bind(emp_id)
             .bind(&review_period)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -194,9 +194,9 @@ async fn create_review(
         "#
     )
     .bind(id)
-    .bind(&req.employee_id)
+    .bind(req.employee_id)
     .bind(&req.review_period)
-    .bind(&req.reviewer_id)
+    .bind(req.reviewer_id)
     .bind(now)
     .bind(now)
     .fetch_one(&state.db)
@@ -288,7 +288,7 @@ async fn update_review(
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#
     )
-    .bind(&req.reviewer_id)
+    .bind(req.reviewer_id)
     .bind(&req.status)
     .bind(&req.overall_rating)
     .bind(&req.self_rating)
@@ -447,7 +447,7 @@ async fn list_goals(
         LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(&emp_id)
+    .bind(emp_id)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
@@ -463,7 +463,7 @@ async fn list_goals(
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
-            .bind(&emp_id)
+            .bind(emp_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;
@@ -511,12 +511,12 @@ async fn create_goal(
         "#
     )
     .bind(id)
-    .bind(&req.employee_id)
+    .bind(req.employee_id)
     .bind(&req.title)
     .bind(&req.description)
     .bind(&req.target)
     .bind(&req.weight)
-    .bind(&req.due_date)
+    .bind(req.due_date)
     .bind(now)
     .bind(now)
     .fetch_one(&state.db)
@@ -614,7 +614,7 @@ async fn update_goal(
     .bind(&req.weight)
     .bind(&req.achieved)
     .bind(&req.status)
-    .bind(&req.due_date)
+    .bind(req.due_date)
     .bind(now)
     .bind(id)
     .fetch_optional(&state.db)

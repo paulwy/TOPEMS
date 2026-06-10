@@ -441,8 +441,8 @@ async fn list_payroll_items(
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(&payroll_run_id)
-    .bind(&emp_id)
+    .bind(payroll_run_id)
+    .bind(emp_id)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
@@ -459,8 +459,8 @@ async fn list_payroll_items(
                   AND ($3::text IS NULL OR status = $3)
                 "#,
             )
-            .bind(&payroll_run_id)
-            .bind(&emp_id)
+            .bind(payroll_run_id)
+            .bind(emp_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;
@@ -540,7 +540,7 @@ async fn list_payroll_details(
         LIMIT $2 OFFSET $3
         "#,
     )
-    .bind(&payroll_item_id)
+    .bind(payroll_item_id)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -551,7 +551,7 @@ async fn list_payroll_details(
             let count_result = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM hrm.payroll_details WHERE ($1::uuid IS NULL OR payroll_item_id = $1)",
             )
-            .bind(&payroll_item_id)
+            .bind(payroll_item_id)
             .fetch_one(&state.db)
             .await;
 
@@ -588,7 +588,7 @@ async fn create_payroll_detail(
         "#
     )
     .bind(id)
-    .bind(&req.payroll_item_id)
+    .bind(req.payroll_item_id)
     .bind(&req.item_type)
     .bind(&req.category)
     .bind(&req.description)
