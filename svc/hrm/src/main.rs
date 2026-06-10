@@ -13,12 +13,15 @@ use serde::Serialize;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
+use utoipa::OpenApi;
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer,
     ServiceHealth, HealthStatus, DependencyHealth,
     SystemMetrics, check_http_health, init_logging,
     create_api_info_router, create_database_pool, DatabaseConfig,
+    RedisPool, RedisCacheService, CacheService, InMemoryCache,
+    RedisConfig, config::CacheConfig,
 };
 use api::ApiState;
 
@@ -28,7 +31,6 @@ async fn main() -> Result<()> {
 
     init_logging("topems-hrm");
 
-    // 设置search_path环境变量（供lib使用）
     env::set_var("SEARCH_PATH", "shared, hrm, public");
 
     let db_config = DatabaseConfig {
@@ -47,6 +49,9 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    let cache = init_cache().await;
+    tracing::info!("🗄️ 缓存服务初始化完成");
+
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
@@ -55,6 +60,7 @@ async fn main() -> Result<()> {
         auth_state: AuthState::from_env(),
         metrics: metrics.clone(),
         start_time,
+        cache,
     };
 
     let cors = create_cors_layer();
@@ -71,6 +77,7 @@ async fn main() -> Result<()> {
             encoder.encode(&metrics, &mut buffer).unwrap();
             String::from_utf8(buffer).unwrap()
         }))
+        .route("/api-docs/openapi.json", get(serve_openapi_json))
         .with_state(api_state.clone());
 
     let protected_routes = api::create_routes()
@@ -98,6 +105,30 @@ async fn main() -> Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+async fn init_cache() -> Arc<dyn CacheService + Send + Sync> {
+    match env::var("REDIS_URL") {
+        Ok(_) => {
+            let redis_config = RedisConfig::default();
+            match RedisPool::new(&redis_config).await {
+                Ok(pool) => {
+                    tracing::info!("✅ 使用 Redis 缓存");
+                    Arc::new(RedisCacheService::new(Arc::new(pool)))
+                }
+                Err(e) => {
+                    tracing::warn!("⚠️ Redis 连接失败，回退到内存缓存: {}", e);
+                    let cache_config = CacheConfig::default();
+                    Arc::new(InMemoryCache::new(cache_config))
+                }
+            }
+        }
+        Err(_) => {
+            tracing::info!("⚠️ REDIS_URL 未设置，使用内存缓存");
+            let cache_config = CacheConfig::default();
+            Arc::new(InMemoryCache::new(cache_config))
+        }
+    }
 }
 
 async fn health_check_detailed(
@@ -217,4 +248,8 @@ async fn check_iam_health() -> DependencyHealth {
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
+}
+
+async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+    axum::Json(api::openapi::ApiDoc::openapi())
 }

@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "lib",
+    "svc/file",
     "svc/iam",
     "svc/doc",
     "svc/flow",

@@ -31,7 +31,7 @@ impl PdfParser {
     }
 
     /// 同步提取文本（必须在 blocking 线程中调用）
-    fn extract_text_sync(file_path: &str) -> Result<String, String> {
+    pub fn extract_text_sync(file_path: &str) -> Result<String, String> {
         // 使用 pdf-extract 提取文本
         match pdf_extract::extract_text(file_path) {
             Ok(text) => {

@@ -1,4 +1,4 @@
-use crate::config::RedisConfig;
+use crate::config::enhanced::RedisConfig;
 use crate::error::TopemsError;
 use crate::Result;
 use redis::{Client, Connection, RedisResult};

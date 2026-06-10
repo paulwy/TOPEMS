@@ -18,12 +18,13 @@ Password: topems_secret
 
 ## Schema划分策略
 
-每个微服务使用独立的Schema，确保服务间数据隔离。
+采用Schema隔离策略，每个微服务使用独立的Schema，同时引入共享Schema用于跨服务的共享实体。
 
 ### 核心平台Schema
 | Schema | 服务 | 描述 |
 |-------|------|------|
 | `public` | 共享 | 系统共享表 |
+| `shared` | 所有服务 | 跨服务共享实体（公司、部门、员工） |
 | `iam` | topems-iam | IAM身份认证 |
 | `doc` | topems-doc | 文档管理 |
 | `flow` | topems-flow | 工作流引擎 |
@@ -53,6 +54,7 @@ Password: topems_secret
 | `pdm` | topems-pdm | 产品数据管理 |
 | `integration` | topems-integration | 系统集成 |
 | `portal` | topems-portal | 企业门户 |
+| `pm` | topems-pm | 项目管理 |
 
 ## 表设计规范
 
@@ -78,6 +80,75 @@ Password: topems_secret
 | `is_deleted` | BOOLEAN | 逻辑删除 | 可选 |
 
 ## 核心表结构示例
+
+### 共享Schema (shared)
+
+```sql
+-- 公司表
+CREATE TABLE shared.companies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    short_name VARCHAR(100),
+    code VARCHAR(50) UNIQUE,
+    address VARCHAR(500),
+    phone VARCHAR(50),
+    email VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 部门表
+CREATE TABLE shared.departments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL,
+    company_id UUID REFERENCES shared.companies(id) ON DELETE SET NULL,
+    parent_id UUID REFERENCES shared.departments(id) ON DELETE SET NULL,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(50),
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 员工表
+CREATE TABLE shared.employees (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL,
+    company_id UUID REFERENCES shared.companies(id) ON DELETE SET NULL,
+    department_id UUID REFERENCES shared.departments(id) ON DELETE SET NULL,
+    position_id UUID,
+    employee_number VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    gender VARCHAR(10),
+    birth_date DATE,
+    hire_date DATE,
+    position VARCHAR(100),
+    job_title VARCHAR(100),
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    emergency_contact_name VARCHAR(255),
+    emergency_contact_phone VARCHAR(50),
+    address VARCHAR(500),
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 索引
+CREATE INDEX idx_shared_companies_organization_id ON shared.companies(organization_id);
+CREATE INDEX idx_shared_companies_name ON shared.companies(name);
+CREATE INDEX idx_shared_departments_organization_id ON shared.departments(organization_id);
+CREATE INDEX idx_shared_departments_company_id ON shared.departments(company_id);
+CREATE INDEX idx_shared_departments_parent_id ON shared.departments(parent_id);
+CREATE INDEX idx_shared_employees_organization_id ON shared.employees(organization_id);
+CREATE INDEX idx_shared_employees_company_id ON shared.employees(company_id);
+CREATE INDEX idx_shared_employees_department_id ON shared.employees(department_id);
+CREATE INDEX idx_shared_employees_employee_number ON shared.employees(employee_number);
+CREATE INDEX idx_shared_employees_name ON shared.employees(name);
+```
 
 ### IAM Schema (iam)
 

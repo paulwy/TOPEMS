@@ -34,6 +34,29 @@ export interface EmailTemplate {
   updated_at: string;
 }
 
+export interface Attachment {
+  id: string;
+  email_id?: string;
+  filename: string;
+  original_filename: string;
+  file_path: string;
+  file_size: number;
+  content_type: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AttachmentListItem {
+  id: string;
+  email_id?: string;
+  filename: string;
+  original_filename: string;
+  file_size: number;
+  content_type: string;
+  created_at: string;
+}
+
 export interface SendEmailRequest {
   subject: string;
   to_addresses: string[];
@@ -44,6 +67,7 @@ export interface SendEmailRequest {
   priority?: string;
   template_id?: string;
   template_data?: Record<string, any>;
+  attachment_ids?: string[];
 }
 
 export interface SendEmailWithTemplateRequest {
@@ -192,3 +216,82 @@ export const STATUS_OPTIONS = [
   { value: 'sent', label: '已发送' },
   { value: 'failed', label: '发送失败' },
 ];
+
+// Attachment API
+export interface AttachmentParams {
+  email_id?: string;
+  page?: number;
+  page_size?: number;
+}
+
+// Direct axios import for file upload
+import axios from 'axios';
+
+export const attachmentApi = {
+  async list(params?: AttachmentParams): Promise<ApiResponse<AttachmentListItem[]>> {
+    const searchParams = new URLSearchParams();
+    if (params?.email_id) searchParams.set('email_id', params.email_id);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+
+    const queryString = searchParams.toString();
+    return apiClient.mail.get(`/api/v1/mail/attachments${queryString ? '?' + queryString : ''}`);
+  },
+
+  async get(id: string): Promise<ApiResponse<Attachment>> {
+    return apiClient.mail.get(`/api/v1/mail/attachments/${id}`);
+  },
+
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return apiClient.mail.delete(`/api/v1/mail/attachments/${id}`);
+  },
+
+  async getEmailAttachments(emailId: string): Promise<ApiResponse<Attachment[]>> {
+    return apiClient.mail.get(`/api/v1/mail/attachments/email/${emailId}`);
+  },
+
+  async upload(file: File): Promise<ApiResponse<Attachment>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('original_filename', file.name);
+    formData.append('content_type', file.type);
+
+    const token = localStorage.getItem('token');
+    const response = await axios.post('/api/v1/mail/attachments', formData, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined,
+        'Content-Type': 'multipart/form-data',
+      },
+      baseURL: 'http://localhost:8054',
+    });
+    return response.data;
+  },
+};
+
+// Helper function to format file size
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Common file types for display
+export const FILE_TYPE_ICONS: Record<string, string> = {
+  'application/pdf': '📄',
+  'image/jpeg': '🖼️',
+  'image/png': '🖼️',
+  'image/gif': '🖼️',
+  'application/vnd.ms-excel': '📊',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '📊',
+  'application/msword': '📝',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📝',
+  'application/zip': '📦',
+  'application/x-rar-compressed': '📦',
+  'text/plain': '📃',
+};
+
+export function getFileIcon(contentType: string): string {
+  return FILE_TYPE_ICONS[contentType] || '📎';
+}

@@ -29,6 +29,9 @@ pub mod cache;
 pub mod query_optimizer;
 pub mod service_bootstrap;
 pub mod service_discovery;
+pub mod vector_store;
+pub mod embedding;
+pub mod ollama_client;
 
 pub use config::{Config, AppConfig, ServiceConfig, ServiceRegistry, get_default_port, CacheConfig};
 pub use config::enhanced::{
@@ -185,3 +188,25 @@ pub use service_bootstrap::{
     ServiceBootstrap, BootstrapConfig, AppState as BootstrapAppState,
     quick_bootstrap, quick_bootstrap_with_db,
 };
+
+// 向量存储模块
+pub use vector_store::{
+    VectorStore, RedisVectorStore, VectorMetadata, SearchResult,
+    create_vector_store,
+};
+
+// 嵌入服务模块
+pub use embedding::{
+    EmbeddingConfig, EmbeddingResult, EmbeddingUsage,
+    create_embedding_service, preprocess_text,
+};
+
+// Ollama 客户端模块
+pub use ollama_client::{
+    OllamaConfig, OllamaClient, OllamaEmbedder, MockEmbedder,
+    Embedder, create_ollama_client, create_embedder,
+};
+
+// File 服务客户端模块
+pub mod file_client;
+pub use file_client::{FileServiceClient, UploadResponse};

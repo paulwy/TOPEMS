@@ -414,6 +414,77 @@
 **数据模型**:
 - Notification（通知）
 
+### 3.3 邮件服务 (topems-mail)
+
+**服务地址**: `http://localhost:8054`
+
+| API端点 | HTTP方法 | 功能描述 |
+|---------|---------|---------|
+| `/api/v1/mail/emails` | GET | 获取邮件列表 |
+| `/api/v1/mail/emails` | POST | 发送邮件 |
+| `/api/v1/mail/emails/{id}` | GET | 获取邮件详情 |
+| `/api/v1/mail/emails/{id}` | DELETE | 删除邮件 |
+| `/api/v1/mail/emails/send-with-template` | POST | 使用模板发送邮件 |
+| `/api/v1/mail/emails/resend` | POST | 批量重发邮件 |
+| `/api/v1/mail/emails/stats` | GET | 获取邮件统计 |
+| `/api/v1/mail/templates` | GET | 获取邮件模板列表 |
+| `/api/v1/mail/templates/{id}` | GET | 获取邮件模板详情 |
+| `/api/v1/mail/templates` | POST | 创建邮件模板 |
+| `/api/v1/mail/templates/{id}` | PUT | 更新邮件模板 |
+| `/api/v1/mail/templates/{id}` | DELETE | 删除邮件模板 |
+| `/api/v1/mail/attachments` | GET | 获取附件列表 |
+| `/api/v1/mail/attachments` | POST | 上传附件 |
+| `/api/v1/mail/attachments/{id}` | GET | 获取附件详情 |
+| `/api/v1/mail/attachments/{id}` | DELETE | 删除附件 |
+| `/api/v1/mail/attachments/{id}/download` | GET | 下载附件 |
+| `/api/v1/mail/attachments/email/{email_id}` | GET | 获取邮件的所有附件 |
+| `/health` | GET | 健康检查 |
+| `/api/v1/health/detailed` | GET | 详细健康检查 |
+| `/api/v1/metrics` | GET | 服务指标 |
+
+**权限说明**:
+- `email_read`: 读取邮件和模板
+- `email_write`: 发送和管理邮件
+- `template_read`: 读取模板
+- `template_write`: 创建/更新/删除模板
+- `attachment_read`: 读取附件
+- `attachment_write`: 上传/删除附件
+
+**请求示例 - 发送邮件**:
+```bash
+curl -X POST http://localhost:8054/api/v1/mail/emails \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "to_addresses": ["recipient@example.com"],
+    "cc_addresses": ["cc@example.com"],
+    "subject": "邮件主题",
+    "body": "邮件正文",
+    "priority": "normal"
+  }'
+```
+
+**请求示例 - 使用模板发送**:
+```bash
+curl -X POST http://localhost:8054/api/v1/mail/emails/send-with-template \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "to_addresses": ["recipient@example.com"],
+    "template_code": "workflow_approval",
+    "template_data": {
+      "user_name": "张三",
+      "process_name": "请假申请",
+      "approval_status": "已通过"
+    },
+    "priority": "high"
+  }'
+```
+
+**数据模型**:
+- Email（邮件）
+- EmailTemplate（邮件模板）
+
 ---
 
 ## 4. 统一规范
