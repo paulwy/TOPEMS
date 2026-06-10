@@ -8,7 +8,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::time::Instant;
 
@@ -16,7 +15,8 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, build_health_response, create_api_info_router
+    ServiceHealth, build_health_response, create_api_info_router,
+    create_database_pool, DatabaseConfig,
 };
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -55,6 +55,9 @@ async fn main() -> Result<()> {
     init_logging("topems-srm");
     START_TIME.get_or_init(Instant::now);
 
+    // 设置search_path环境变量（供lib使用）
+    env::set_var("SEARCH_PATH", "srm, shared, public");
+
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
     let custom_gauge = Gauge::new(
         "topems_srm_custom_metric",
@@ -66,13 +69,15 @@ async fn main() -> Result<()> {
 
     tracing::info!("🚀 TOPEMS-SRM 供应商关系管理系统启动中...");
 
-    let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let db_config = DatabaseConfig {
+        url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
+        max_connections: 10,
+        min_connections: Some(2),
+        connect_timeout: Some(30),
+        idle_timeout: Some(60),
+    };
 
-    let pool = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await?;
+    let pool = create_database_pool(&db_config).await?;
 
     tracing::info!("🔗 数据库连接成功");
 

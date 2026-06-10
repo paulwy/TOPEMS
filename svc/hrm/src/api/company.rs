@@ -49,11 +49,17 @@ async fn list_companies(
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
+    // 验证连接状态
+    let conn_test = sqlx::query("SHOW search_path")
+        .fetch_one(&state.db)
+        .await;
+    tracing::debug!("Connection search_path: {:?}", conn_test);
+
     let result = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
                contact_phone, email, website, description, status, created_at, updated_at
-        FROM hrm.companies
+        FROM "shared"."companies"
         WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR email ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -71,7 +77,7 @@ async fn list_companies(
         Ok(companies) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.companies
+                SELECT COUNT(*) FROM "shared"."companies"
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR email ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -134,7 +140,7 @@ async fn create_company(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        INSERT INTO hrm.companies (
+        INSERT INTO shared.companies (
             id, organization_id, name, short_name, registration_number, tax_number, address,
             contact_phone, email, website, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
@@ -209,7 +215,7 @@ async fn get_company(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
                contact_phone, email, website, description, status, created_at, updated_at
-        FROM hrm.companies WHERE id = $1
+        FROM shared.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -246,7 +252,7 @@ async fn update_company(
     let existing = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
-               contact_phone, email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1
+               contact_phone, email, website, description, status, created_at, updated_at FROM shared.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -275,7 +281,7 @@ async fn update_company(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        UPDATE hrm.companies SET
+        UPDATE shared.companies SET
             name = $2, short_name = $3, registration_number = $4, tax_number = $5,
             address = $6, contact_phone = $7, email = $8, website = $9,
             description = $10, status = $11, updated_at = $12
@@ -351,7 +357,7 @@ async fn delete_company(
     let existing = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
-               contact_phone, email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1
+               contact_phone, email, website, description, status, created_at, updated_at FROM shared.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -360,7 +366,7 @@ async fn delete_company(
 
     match existing {
         Ok(Some(company)) => {
-            let result = sqlx::query("DELETE FROM hrm.companies WHERE id = $1")
+            let result = sqlx::query("DELETE FROM shared.companies WHERE id = $1")
                 .bind(id)
                 .execute(&state.db)
                 .await;

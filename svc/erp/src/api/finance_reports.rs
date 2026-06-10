@@ -649,8 +649,8 @@ async fn budget_summary(
         SELECT d.name as department_name, 
                COALESCE(SUM(b.total_budget), 0.0) as total_budget, 
                COALESCE(SUM(b.used_amount), 0.0) as used_amount
-        FROM departments d
-        LEFT JOIN budgets b ON d.id = b.department_id
+        FROM shared.departments d
+        LEFT JOIN erp.budgets b ON d.id = b.department_id
         WHERE b.fiscal_year = $1 OR b.fiscal_year IS NULL
         GROUP BY d.id, d.name
         ORDER BY d.name
@@ -690,8 +690,8 @@ async fn employee_summary(
         SELECT e.department_id, d.name as department_name, 
                COUNT(*) as employee_count, 
                AVG(EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.hire_date))) as avg_tenure
-        FROM employees e
-        LEFT JOIN departments d ON e.department_id = d.id
+        FROM shared.employees e
+        LEFT JOIN shared.departments d ON e.department_id = d.id
         WHERE e.status = 'active'
         GROUP BY e.department_id, d.name
         "#,

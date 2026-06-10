@@ -10,7 +10,6 @@ use axum::{
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
-use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
@@ -18,7 +17,8 @@ use std::time::Instant;
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
     ServiceHealth, HealthStatus, DependencyHealth,
-    SystemMetrics, check_http_health, create_api_info_router
+    SystemMetrics, check_http_health, create_api_info_router,
+    create_database_pool, DatabaseConfig,
 };
 
 #[tokio::main]
@@ -27,13 +27,18 @@ async fn main() -> Result<()> {
 
     init_logging("topems-mes");
 
-    let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://xingzhai@localhost:5432/topems".to_string());
+    // 设置search_path环境变量（供lib使用）
+    env::set_var("SEARCH_PATH", "mes, shared, public");
 
-    let pool = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await?;
+    let db_config = DatabaseConfig {
+        url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
+        max_connections: 10,
+        min_connections: Some(2),
+        connect_timeout: Some(30),
+        idle_timeout: Some(60),
+    };
+
+    let pool = create_database_pool(&db_config).await?;
 
     tracing::info!("🔗 数据库连接成功");
 

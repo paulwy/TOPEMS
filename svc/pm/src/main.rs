@@ -13,11 +13,11 @@ use topems_shared::{
     test_database_connection,
     AuthState,
     auth_middleware,
-    Config,
     Result,
     ServiceHealth,
     build_health_response,
     create_api_info_router,
+    DatabaseConfig,
 };
 use utoipa::OpenApi;
 use axum_prometheus::PrometheusMetricLayer;
@@ -29,6 +29,9 @@ async fn main() -> Result<()> {
 
     init_logging("topems-pm");
 
+    // 设置search_path环境变量（供lib使用）
+    std::env::set_var("SEARCH_PATH", "pm, shared, public");
+
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
     let custom_gauge = Gauge::new(
         "topems_pm_custom_metric",
@@ -38,9 +41,13 @@ async fn main() -> Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    let config = Config::load().await?;
-    let db_config = config.get_database().await;
-    tracing::info!("Configuration loaded, environment: {}", config.env());
+    let db_config = DatabaseConfig {
+        url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
+        max_connections: 10,
+        min_connections: Some(2),
+        connect_timeout: Some(30),
+        idle_timeout: Some(60),
+    };
 
     let pool = create_database_pool(&db_config).await?;
     test_database_connection(&pool).await?;
@@ -72,7 +79,7 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = config.get_server().await.port;
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8024".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-PM 统一项目管理系统启动中...");

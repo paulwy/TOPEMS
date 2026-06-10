@@ -40,6 +40,9 @@ async fn main() -> Result<()> {
 
     init_logging("topems-lims");
 
+    // 设置search_path环境变量（供lib使用）
+    env::set_var("SEARCH_PATH", "lims, shared, public");
+
     let config = Config::load().await?;
     tracing::info!("Configuration loaded, environment: {}", config.env());
 

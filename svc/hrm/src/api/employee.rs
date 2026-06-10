@@ -52,7 +52,7 @@ async fn list_employees(
                position, job_title, email, phone,
                emergency_contact_name, emergency_contact_phone, address, status,
                created_at, updated_at
-        FROM hrm.employees
+        FROM shared.employees
         WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR department_id = $3)
@@ -74,11 +74,11 @@ async fn list_employees(
         Ok(employees) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.employees
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR department_id = $3)
-                  AND ($4::uuid IS NULL OR company_id = $4)
+                SELECT COUNT(*) FROM shared.employees AS e
+                WHERE ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
+                  AND ($2::text IS NULL OR e.status = $2)
+                  AND ($3::uuid IS NULL OR e.department_id = $3)
+                  AND ($4::uuid IS NULL OR e.company_id = $4)
                 "#,
             )
             .bind(&search_pattern)
@@ -125,7 +125,7 @@ async fn create_employee(
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        INSERT INTO hrm.employees (
+        INSERT INTO shared.employees (
             id, organization_id, company_id, department_id, position_id,
             employee_number, name, gender, birth_date, hire_date,
             position, job_title, email, phone,
@@ -213,7 +213,7 @@ async fn get_employee(
                position, job_title, email, phone,
                emergency_contact_name, emergency_contact_phone, address, status,
                created_at, updated_at
-        FROM hrm.employees WHERE id = $1
+        FROM shared.employees WHERE id = $1
         "#,
     )
     .bind(id)
@@ -242,7 +242,7 @@ async fn update_employee(
                employee_number, name, gender, birth_date, hire_date,
                position, job_title, email, phone,
                emergency_contact_name, emergency_contact_phone, address, status,
-               created_at, updated_at FROM hrm.employees WHERE id = $1
+               created_at, updated_at FROM shared.employees WHERE id = $1
         "#,
     )
     .bind(id)
@@ -277,7 +277,7 @@ async fn update_employee(
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        UPDATE hrm.employees SET
+        UPDATE shared.employees SET
             organization_id = $2, company_id = $3, department_id = $4, position_id = $5,
             name = $6, gender = $7, birth_date = $8, hire_date = $9,
             position = $10, job_title = $11, email = $12, phone = $13,
@@ -357,7 +357,7 @@ async fn delete_employee(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.employees WHERE id = $1")
+    let result = sqlx::query("DELETE FROM shared.employees WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

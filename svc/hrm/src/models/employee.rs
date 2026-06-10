@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -13,8 +13,8 @@ pub struct Employee {
     pub employee_number: String,
     pub name: String,
     pub gender: Option<String>,
-    pub birth_date: Option<DateTime<Utc>>,
-    pub hire_date: Option<DateTime<Utc>>,
+    pub birth_date: Option<NaiveDate>,
+    pub hire_date: Option<NaiveDate>,
     pub position: Option<String>,
     pub job_title: Option<String>,
     pub email: Option<String>,
@@ -36,8 +36,8 @@ pub struct CreateEmployeeRequest {
     pub employee_number: String,
     pub name: String,
     pub gender: Option<String>,
-    pub birth_date: Option<DateTime<Utc>>,
-    pub hire_date: Option<DateTime<Utc>>,
+    pub birth_date: Option<NaiveDate>,
+    pub hire_date: Option<NaiveDate>,
     pub position: Option<String>,
     pub job_title: Option<String>,
     pub email: Option<String>,
@@ -54,8 +54,8 @@ pub struct UpdateEmployeeRequest {
     pub position_id: Option<Uuid>,
     pub name: Option<String>,
     pub gender: Option<String>,
-    pub birth_date: Option<DateTime<Utc>>,
-    pub hire_date: Option<DateTime<Utc>>,
+    pub birth_date: Option<NaiveDate>,
+    pub hire_date: Option<NaiveDate>,
     pub position: Option<String>,
     pub job_title: Option<String>,
     pub email: Option<String>,
@@ -87,7 +87,7 @@ mod tests {
             name: "John Doe".to_string(),
             gender: Some("male".to_string()),
             birth_date: None,
-            hire_date: Some(created_at),
+            hire_date: Some(NaiveDate::from_ymd_opt(2024, 1, 15).unwrap()),
             position: Some("Software Engineer".to_string()),
             job_title: Some("Senior Engineer".to_string()),
             email: Some("john@example.com".to_string()),
@@ -136,11 +136,13 @@ mod tests {
     #[test]
     fn test_update_employee_request() {
         let request = UpdateEmployeeRequest {
+            company_id: None,
+            department_id: None,
+            position_id: None,
             name: Some("Jane Updated".to_string()),
             gender: None,
             birth_date: None,
             hire_date: None,
-            department_id: None,
             position: Some("Senior Designer".to_string()),
             job_title: None,
             email: None,

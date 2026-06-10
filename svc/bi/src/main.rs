@@ -18,6 +18,7 @@ use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims, init_logging,
     ServiceHealth, build_health_response, create_api_info_router,
     HealthStatus, DependencyHealth, check_http_health,
+    create_database_pool, DatabaseConfig,
 };
 use crate::services::permission::{check_permission, BIPermission};
 
@@ -226,13 +227,19 @@ impl FromRef<AppState> for AuthState {
 
 impl AppState {
     async fn new(auth_state: AuthState) -> Result<Self> {
+        // 设置search_path环境变量（供lib使用）
+        std::env::set_var("SEARCH_PATH", "bi, shared, public");
+
         // 初始化数据库连接池
-        let database_url = env::var("DATABASE_URL")
-            .expect("DATABASE_URL must be set");
-        
-        let db_pool = PgPool::connect(&database_url)
-            .await
-            .expect("Failed to connect to database");
+        let db_config = DatabaseConfig {
+            url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
+            max_connections: 10,
+            min_connections: Some(2),
+            connect_timeout: Some(30),
+            idle_timeout: Some(60),
+        };
+
+        let db_pool = create_database_pool(&db_config).await?;
 
         Ok(AppState {
             db_pool,

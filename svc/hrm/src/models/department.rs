@@ -75,7 +75,7 @@ mod tests {
     fn test_create_department_request() {
         let org_id = Uuid::new_v4();
         let request = CreateDepartmentRequest {
-            organization_id: org_id,
+            organization_id: Some(org_id),
             company_id: None,
             name: "HR Department".to_string(),
             code: Some("HR".to_string()),
@@ -91,6 +91,7 @@ mod tests {
     #[test]
     fn test_update_department_request() {
         let request = UpdateDepartmentRequest {
+            company_id: None,
             name: Some("Updated HR Department".to_string()),
             code: None,
             parent_id: None,
