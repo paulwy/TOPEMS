@@ -1,9 +1,5 @@
 use utoipa::OpenApi;
 use crate::models::{Employee, CreateEmployeeRequest, UpdateEmployeeRequest};
-use crate::api::ApiState;
-use axum::extract::State;
-use axum::Json;
-use topems_shared::ApiResponse;
 
 #[derive(OpenApi)]
 #[openapi(

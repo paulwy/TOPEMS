@@ -2,11 +2,10 @@ use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{CreateProductionOrderRequest, ProductionOrder, UpdateProductionOrderRequest};

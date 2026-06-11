@@ -2,13 +2,12 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    routing::{delete, get, post, put},
+    routing::{delete, get, post},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-use crate::models::{Permission, Role, User};
+use crate::models::{Permission, Role};
 use crate::AppState;
 use topems_shared::ApiResponse;
 

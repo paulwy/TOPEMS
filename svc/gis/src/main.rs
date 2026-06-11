@@ -17,7 +17,7 @@ use prometheus::{default_registry, Gauge};
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, build_health_response, create_api_info_router,
+    ServiceHealth, create_api_info_router,
     HealthStatus, DependencyHealth, check_http_health,
 };
 use topems_shared::auth::Claims;
@@ -1165,7 +1165,7 @@ async fn import_warehouse_location_row(
     headers: &csv::StringRecord,
 ) -> Result<(), String> {
     let name = get_field(record, headers, "name").ok_or("缺少name字段")?;
-    let code = get_field(record, headers, "code").unwrap_or_default();
+    let _code = get_field(record, headers, "code").unwrap_or_default();
     let zone = get_field(record, headers, "zone");
     let lat_str = get_field(record, headers, "latitude").ok_or("缺少latitude字段")?;
     let lng_str = get_field(record, headers, "longitude").ok_or("缺少longitude字段")?;

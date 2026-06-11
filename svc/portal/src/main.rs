@@ -1,23 +1,20 @@
 use axum::{
-    extract::{FromRef, Path, Query, State},
+    extract::{FromRef, Path, State},
     routing::{delete, get, post},
     Json,
     Router,
 };
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
-use tokio::sync::RwLock;
 use tower_cookies::CookieManagerLayer;
 
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, build_health_response, create_api_info_router, ServiceInfo, ServiceCategory,
+    ServiceHealth, build_health_response, create_api_info_router,
     ServiceRegistryStatus, LocalServiceRegistry, PortalServiceAggregator,
 };
 

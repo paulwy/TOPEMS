@@ -4,14 +4,11 @@ mod services;
 
 use anyhow::Result;
 use axum::{
-    routing::get,
-    serve, Json, Router,
+    routing::get, Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
-use tokio::net::TcpListener;
-use socket2::{Socket, Domain, Type, Protocol};
 use std::sync::Arc;
 use std::time::Instant;
 use std::env;

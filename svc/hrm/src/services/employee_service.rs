@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 

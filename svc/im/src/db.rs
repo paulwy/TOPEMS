@@ -11,6 +11,6 @@ pub async fn create_pool(database_url: &str) -> Result<PgPool> {
     Ok(pool)
 }
 
-pub async fn run_migrations(pool: &PgPool) -> Result<()> {
+pub async fn run_migrations(_pool: &PgPool) -> Result<()> {
     Ok(())
 }

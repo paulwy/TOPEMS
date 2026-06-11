@@ -7,7 +7,7 @@ import { ContactDetailModal } from '../components/addressbook/ContactDetailModal
 import { addressbookApi } from '../api/addressbook';
 import type { AddressbookEntry, AddressbookDetail, DepartmentNode } from '../types/addressbook';
 
-export const AddressbookPage: React.FC = () => {
+const AddressbookPage: React.FC = () => {
   const [contacts, setContacts] = useState<AddressbookEntry[]>([]);
   const [departments, setDepartments] = useState<DepartmentNode[]>([]);
   const [loading, setLoading] = useState(false);
@@ -122,3 +122,5 @@ export const AddressbookPage: React.FC = () => {
     </div>
   );
 };
+
+export default AddressbookPage;

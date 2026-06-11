@@ -8,8 +8,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::models::{Permission, Role};
-use crate::db::RepositoryError;
+use crate::models::Permission;
 use crate::AppState;
 use topems_shared::ApiResponse;
 

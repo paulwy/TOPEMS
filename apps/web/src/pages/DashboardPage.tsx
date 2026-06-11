@@ -4,20 +4,10 @@ import {
   FileText,
   GitBranch,
   Bot,
-  Brain,
-  FlaskConical,
-  ClipboardList,
-  Shield,
-  AlertCircle,
   Users,
   Package,
-  LogOut,
   User,
   Activity,
-  Clock,
-  Database,
-  X,
-  Key,
   Building,
   Folder,
   BarChart3,
@@ -32,16 +22,14 @@ import {
   DollarSign,
   BookOpen,
   HelpCircle,
-  FileText as FileTemplate,
-  Settings,
-  CheckCircle,
-  XCircle,
-  ChevronRight,
-  Bell,
-  Book,
-  Mail,
-  FolderKanban,
   FileCheck,
+  FlaskConical,
+  ClipboardList,
+  Shield,
+  AlertCircle,
+  Clock,
+  Database,
+  X,
   Link,
   Factory,
   AlertTriangle,
@@ -51,26 +39,37 @@ import {
   Map,
   MessageCircle,
   BarChart2,
+  Mail,
+  ChevronRight,
+  Book,
+  FolderKanban,
+  Settings,
+  CheckCircle,
 } from 'lucide-react';
 import { authApi } from '../api/iam';
 import { docApi } from '../api/doc';
-import { aiApi } from '../api/ai';
 import { flowApi } from '../api/flow';
 import { erpApi } from '../api/erp';
 import { hrmApi } from '../api/hrm';
 import { mobileApi } from '../api/mobile';
-import { notificationServiceApi } from '../api/notification';
-import { rsApi } from '../api/rs';
 import MobileNav from '../components/MobileNav';
 import MobileHeader from '../components/MobileHeader';
 import { usePermission } from '../hooks/usePermission';
-import { useRole } from '../hooks/useRole';
 import { useAuth } from '../hooks/useAuth';
-import { NotificationBell } from '../components/notifications';
-import { ModeToggle } from '../components/ModeToggle';
 import { StatsChart } from '../components/StatsChart';
 import { MetricCard } from '../components/MetricCard';
 import { useAppStore } from '../store';
+import {
+  DashboardHeader,
+  DashboardQuickActions,
+  defaultQuickActions,
+  ModuleCard,
+  type ModuleItem,
+  ServiceStatusMonitor,
+  RecentActivities,
+  type ActivityItem,
+  MobileMenu,
+} from '../components/dashboard';
 
 interface DashboardPageProps {
   onLogout?: () => void;
@@ -79,15 +78,14 @@ interface DashboardPageProps {
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout: authLogout, isAuthenticated, hasPermission, permissions } = useAuth();
+  const { user, logout: authLogout, isAuthenticated, hasPermission } = useAuth();
   const shortcuts = useAppStore((state) => state.shortcuts);
   const [loading, setLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [stats, setStats] = useState({
     fileCount: 0,
     workflowCount: 0,
     docCount: 0,
-    notificationCount: 0,
+    notificationCount: 5,
   });
   const [moduleStats, setModuleStats] = useState({
     qms: { total: 25, active: 23 },
@@ -116,8 +114,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     bi: false,
     integration: false,
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
 
-  // 模块到服务的映射
   const moduleToService: Record<string, keyof typeof serviceStatuses> = {
     rs: 'rs',
     lims: 'lims',
@@ -147,27 +146,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     report: 'report',
     contract: 'hrm',
   };
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [recentActivities, setRecentActivities] = useState<
-    Array<{
-      id: string;
-      title: string;
-      type: string;
-      time: string;
-      icon: React.ReactNode;
-    }>
-  >([]);
 
-  const { getRoleName } = useRole();
   const initialized = useRef(false);
 
-  // 检查单个服务状态
   const checkServiceStatus = useCallback(async (serviceKey: string, port: number) => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-      // 通过代理路径访问服务，而不是直接访问端口
       const response = await fetch(`/${serviceKey}/health`, {
         signal: controller.signal,
         method: 'GET',
@@ -179,7 +164,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     }
   }, []);
 
-  // 检查所有服务状态
   const checkAllServicesStatus = useCallback(async () => {
     const services = [
       { key: 'iam', port: 8000 },
@@ -238,7 +222,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   }, []);
 
   const loadRecentActivities = useCallback(async () => {
-    const activities = [
+    const activities: ActivityItem[] = [
       { id: '1', title: '成功登录系统', type: '系统', time: '刚刚', icon: <User className='w-4 h-4' /> },
       {
         id: '2',
@@ -260,15 +244,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     setRecentActivities(activities);
   }, []);
 
-  // 检查权限和服务状态
   const shouldShowModule = useCallback(
     (module: { permission?: string | null; module?: string | null }): boolean => {
       const hasAccess = !module.permission || (user?.is_superuser ? true : hasPermission(module.permission));
-
       if (!hasAccess) return false;
-
       if (!module.module) return true;
-
       const serviceKey = moduleToService[module.module];
       return serviceStatuses[serviceKey];
     },
@@ -288,13 +268,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
     const init = async () => {
       try {
-        // 初始检查所有服务状态
         await checkAllServicesStatus();
-
         await loadStats().catch((err) => {
           console.warn('加载统计数据失败:', err);
         });
-
         await loadRecentActivities().catch((err) => {
           console.warn('加载最近活动失败:', err);
         });
@@ -307,7 +284,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
     init();
 
-    // 每30秒检查一次服务状态
     const intervalId = setInterval(() => {
       checkAllServicesStatus();
     }, 30000);
@@ -315,28 +291,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     return () => clearInterval(intervalId);
   }, [navigate, isAuthenticated, checkAllServicesStatus, loadStats, loadRecentActivities]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   const handleLogout = useCallback(() => {
     authLogout();
     navigate('/login');
-  }, [authLogout, navigate]);
+    onLogout?.();
+  }, [authLogout, navigate, onLogout]);
 
-  const handleQuickAccess = useCallback(
-    (path: string) => {
-      navigate(path);
-    },
-    [navigate]
-  );
+  const handleQuickAccess = useCallback((path: string) => {
+    navigate(path);
+  }, [navigate]);
 
-  // 核心功能模块
   const coreModules = useMemo(
-    () =>
+    (): ModuleItem[] =>
       [
         {
           title: '文档管理',
@@ -392,9 +358,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     [shouldShowModule]
   );
 
-  // 系统服务模块 - 包含系统管理、集成、报表、模板、帮助等综合服务
   const systemServicesModules = useMemo(
-    () =>
+    (): ModuleItem[] =>
       [
         {
           title: '系统管理',
@@ -431,7 +396,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         },
         {
           title: '模板管理',
-          icon: FileTemplate,
+          icon: FileText,
           description: '文档模板、流程模板管理',
           path: '/templates',
           color: 'bg-violet-500',
@@ -453,9 +418,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     [shouldShowModule]
   );
 
-  // 业务模块 - 按企业管理自然流程排序
   const businessModules = useMemo(
-    () =>
+    (): ModuleItem[] =>
       [
         {
           title: '公司管理',
@@ -680,87 +644,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     [shouldShowModule]
   );
 
-  const systemManagementModules = useMemo(
-    () =>
-      [
-        {
-          title: '系统管理',
-          icon: Settings,
-          description: '用户、角色、权限、系统设置管理',
-          path: '/system',
-          color: 'bg-slate-600',
-          status: 'online' as const,
-          permission: 'system:admin',
-          module: 'iam',
-          adminOnly: true,
-        },
-        {
-          title: '系统集成',
-          icon: Link,
-          description: 'LIMS-QMS/MES-ERP/WMS-SCM 等系统间数据同步',
-          path: '/integration',
-          color: 'bg-blue-500',
-          status: 'online' as const,
-          permission: 'system:admin',
-          module: 'integration',
-          adminOnly: true,
-        },
-        {
-          title: '报表中心',
-          icon: BarChart3,
-          description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
-          path: '/reports',
-          color: 'bg-emerald-500',
-          status: 'online' as const,
-          permission: 'system:admin',
-          module: 'iam',
-          adminOnly: true,
-        },
-        {
-          title: '模板管理',
-          icon: FileTemplate,
-          description: '文档模板、流程模板管理',
-          path: '/templates',
-          color: 'bg-violet-500',
-          status: 'online' as const,
-          permission: 'doc:admin',
-          module: 'doc',
-          adminOnly: true,
-        },
-        {
-          title: '帮助中心',
-          icon: HelpCircle,
-          description: '使用指南、视频教程、常见问题',
-          path: '/help',
-          color: 'bg-amber-500',
-          status: 'online' as const,
-          permission: null,
-        },
-      ].filter((module) => shouldShowModule(module)),
-    [shouldShowModule]
-  );
-
-  const quickActions = useMemo(
-    () => [
-      { label: '上传文件', icon: FileText, path: '/documents', color: 'text-blue-500', service: 'doc' },
-      { label: 'AI 问答', icon: Brain, path: '/ai', color: 'text-purple-500', service: 'ai' },
-      { label: '发起流程', icon: GitBranch, path: '/workflows', color: 'text-green-500', service: 'flow' },
-      { label: '我的待办', icon: Clock, path: '/flow/approvals', color: 'text-orange-500', service: 'flow' },
-      { label: '通知中心', icon: Bell, path: '/notifications', color: 'text-yellow-500', service: 'notification' },
-      { label: '个人中心', icon: User, path: '/profile', color: 'text-indigo-500', service: null },
-    ],
-    []
-  );
-
-  // 检查快速操作是否应该显示
-  const shouldShowQuickAction = useCallback(
-    (action: { service?: string | null }): boolean => {
-      if (!action.service) return true;
-      return serviceStatuses[action.service];
-    },
-    [serviceStatuses]
-  );
-
   if (loading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
@@ -772,154 +655,46 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const onlineServices = Object.values(serviceStatuses).filter(Boolean).length;
   const currentPage = location.pathname.replace('/', '') || 'dashboard';
 
+  const getGreeting = (): string => {
+    const hour = new Date().getHours();
+    if (hour < 12) return '上午好';
+    if (hour < 18) return '下午好';
+    return '晚上好';
+  };
+
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 to-slate-100'>
       <MobileHeader title='TOPEMS' onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)} />
 
-      {mobileMenuOpen && (
-        <div className='fixed inset-0 bg-black/50 z-40 mobile-only' onClick={() => setMobileMenuOpen(false)}>
-          <div
-            className='absolute top-14 left-0 right-0 bg-white max-h-[70vh] overflow-y-auto'
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className='p-4'>
-              <div className='flex items-center justify-between mb-6'>
-                <h2 className='text-lg font-semibold'>菜单</h2>
-                <button onClick={() => setMobileMenuOpen(false)} className='p-2 hover:bg-slate-100 rounded-lg'>
-                  <X size={20} />
-                </button>
-              </div>
-              <div className='space-y-2'>
-                {[
-                  { id: 'dashboard', label: '首页', icon: Activity },
-                  { id: 'pm', label: '项目管理', icon: FolderKanban, path: '/pm/projects' },
-                  { id: 'addressbook', label: '通讯录', icon: Book },
-                  { id: 'documents', label: '文档管理', icon: FileText },
-                  { id: 'ai', label: 'AI 知识库', icon: Bot },
-                  { id: 'workflows', label: '工作流', icon: GitBranch },
-                  { id: 'system', label: '系统管理', icon: Settings, adminOnly: true },
-                  { id: 'companies', label: '公司管理', icon: Building, adminOnly: true },
-                  { id: 'departments', label: '部门管理', icon: Folder, adminOnly: true },
-                  { id: 'employees', label: '员工管理', icon: Users, adminOnly: true },
-                  { id: 'documents', label: '文档中心', icon: BookOpen },
-                  { id: 'bi', label: '商业智能', icon: BarChart3, path: '/bi/dashboard' },
-                  { id: 'help', label: '帮助中心', icon: HelpCircle },
-                ]
-                  .filter((item) => !item.adminOnly || user?.is_superuser || hasPermission('iam:admin'))
-                  .map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          if (item.path) {
-                            navigate(item.path);
-                          } else {
-                            const pathMap: Record<string, string> = {
-                              dashboard: '/dashboard',
-                              addressbook: '/addressbook',
-                              documents: '/documents',
-                              ai: '/ai',
-                              workflows: '/workflows',
-                              system: '/system',
-                              companies: '/hrm/companies',
-                              departments: '/hrm/departments',
-                              employees: '/hrm/employees',
-                              help: '/help',
-                            };
-                            navigate(pathMap[item.id] || `/${item.id}`);
-                          }
-                          setMobileMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors ${
-                          currentPage === item.id ? 'bg-blue-50 text-blue-600' : 'text-slate-700'
-                        }`}
-                      >
-                        <Icon className='w-5 h-5' />
-                        <span className='font-medium'>{item.label}</span>
-                      </button>
-                    );
-                  })}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <MobileMenu
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        currentPage={currentPage}
+        onNavigate={navigate}
+      />
 
       <div className='desktop-only'>
-        <header className='bg-white shadow-sm border-b border-slate-200 sticky top-0 z-30'>
-          <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-            <div className='flex justify-between items-center h-16'>
-              <div className='flex items-center space-x-4'>
-                <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'>
-                  TOPEMS
-                </h1>
-                <span className='text-sm text-slate-500 hidden md:inline'>化工新材料数字化平台</span>
-              </div>
-
-              <div className='flex items-center space-x-4'>
-                <div className='hidden md:flex items-center space-x-2 text-sm text-slate-600'>
-                  <Clock className='w-4 h-4' />
-                  <span>{currentTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-
-                <NotificationBell />
-                <ModeToggle />
-
-                <div className='flex items-center space-x-2 pl-4 border-l border-slate-200'>
-                  <div className='w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium'>
-                    {user?.username?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div className='hidden md:block'>
-                    <div className='text-sm font-medium text-slate-900'>{user?.full_name || user?.username}</div>
-                    <div className='text-xs text-slate-500'>{getRoleName()}</div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleLogout}
-                  className='p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 hover:text-red-600'
-                  title='退出登录'
-                >
-                  <LogOut className='w-5 h-5' />
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
+        <DashboardHeader onLogout={handleLogout} />
 
         <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-          {/* Mobile Quick Access Grid */}
           <div className='mobile-only mb-6'>
             <div className='grid grid-cols-4 gap-2 mb-4'>
-              {coreModules.slice(0, 4).map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={item.title}
-                    className='bg-white rounded-lg p-3 cursor-pointer'
-                    onClick={() => navigate(item.path)}
-                  >
-                    <div className={`w-10 h-10 ${item.color} rounded-lg flex items-center justify-center mb-2`}>
-                      <item.icon className='w-5 h-5 text-white' />
-                    </div>
-                    <h4 className='font-medium text-slate-900 text-sm'>{item.title}</h4>
-                    <StatusBadgeMobile status={item.status} />
+              {coreModules.slice(0, 4).map((item) => (
+                <div key={item.title} className='bg-white rounded-lg p-3 cursor-pointer' onClick={() => navigate(item.path)}>
+                  <div className={`w-10 h-10 ${item.color} rounded-lg flex items-center justify-center mb-2`}>
+                    <item.icon className='w-5 h-5 text-white' />
                   </div>
-                );
-              })}
+                  <h4 className='font-medium text-slate-900 text-sm'>{item.title}</h4>
+                </div>
+              ))}
             </div>
 
             <h3 className='text-lg font-semibold text-slate-900 mb-3'>快速操作</h3>
             <div className='grid grid-cols-4 gap-2 mb-6'>
-              {quickActions.filter(shouldShowQuickAction).map((action) => {
+              {defaultQuickActions.map((action) => {
                 const Icon = action.icon;
                 return (
-                  <button
-                    key={action.label}
-                    onClick={() => handleQuickAccess(action.path)}
-                    className='flex flex-col items-center p-2 bg-white rounded-lg'
-                  >
+                  <button key={action.label} onClick={() => handleQuickAccess(action.path)} className='flex flex-col items-center p-2 bg-white rounded-lg'>
                     <Icon className='w-5 h-5 text-slate-600 mb-1' />
                     <span className='text-xs text-slate-700'>{action.label}</span>
                   </button>
@@ -942,77 +717,34 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 { name: '报表服务', status: serviceStatuses.report },
                 { name: '移动服务', status: serviceStatuses.mobile },
               ].map((service) => (
-                <div
-                  key={service.name}
-                  className='flex items-center justify-between py-2 border-b border-slate-100 last:border-0'
-                >
+                <div key={service.name} className='flex items-center justify-between py-2 border-b border-slate-100 last:border-0'>
                   <span className='text-sm text-slate-700'>{service.name}</span>
                   <div className={`w-2.5 h-2.5 rounded-full ${service.status ? 'bg-green-500' : 'bg-red-500'}`} />
                 </div>
               ))}
             </div>
           </div>
-          {/* Welcome Section */}
+
           <div className='mb-8'>
             <h2 className='text-3xl font-bold text-slate-900 mb-2'>
               👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
             </h2>
-            <p className='text-slate-600'>
-              {getGreeting()}，今天有 {quickActions.length} 个待处理事项
-            </p>
+            <p className='text-slate-600'>{getGreeting()}，今天有 {defaultQuickActions.length} 个待处理事项</p>
           </div>
 
-          {/* Quick Actions */}
-          <div className='mb-8 bg-white rounded-xl shadow-sm p-6'>
-            <h3 className='text-lg font-semibold text-slate-900 mb-4'>⚡ 快速操作</h3>
-            <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'>
-              {quickActions.filter(shouldShowQuickAction).map((action) => {
-                const Icon = action.icon;
-                return (
-                  <button
-                    key={action.label}
-                    onClick={() => handleQuickAccess(action.path)}
-                    className='flex flex-col items-center space-y-2 p-4 bg-gradient-to-br from-slate-50 to-slate-100 hover:from-blue-50 hover:to-blue-100 rounded-xl transition-all group hover:shadow-md'
-                  >
-                    <div
-                      className={`w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center ${action.color} group-hover:scale-110 transition-transform`}
-                    >
-                      <Icon className='w-5 h-5' />
-                    </div>
-                    <span className='text-sm font-medium text-slate-700 group-hover:text-blue-700'>{action.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <DashboardQuickActions
+            quickActions={defaultQuickActions}
+            serviceStatuses={serviceStatuses}
+            onQuickAccess={handleQuickAccess}
+          />
 
-          {/* Stats Cards */}
           <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-8'>
-            <MetricCard title='用户角色' value={getRoleName()} icon={<User className='w-6 h-6' />} color='blue' />
-            <MetricCard
-              title='在线服务'
-              value={String(onlineServices)}
-              icon={<Activity className='w-6 h-6' />}
-              color='green'
-              change={onlineServices > 5 ? 10 : -5}
-            />
-            <MetricCard
-              title='文件数量'
-              value={String(stats.fileCount)}
-              icon={<FileText className='w-6 h-6' />}
-              color='purple'
-              change={8}
-            />
-            <MetricCard
-              title='工作流'
-              value={String(stats.workflowCount)}
-              icon={<GitBranch className='w-6 h-6' />}
-              color='orange'
-              change={-3}
-            />
+            <MetricCard title='在线服务' value={String(onlineServices)} icon={<Activity className='w-6 h-6' />} color='green' change={onlineServices > 5 ? 10 : -5} />
+            <MetricCard title='文件数量' value={String(stats.fileCount)} icon={<FileText className='w-6 h-6' />} color='purple' change={8} />
+            <MetricCard title='工作流' value={String(stats.workflowCount)} icon={<GitBranch className='w-6 h-6' />} color='orange' change={-3} />
+            <MetricCard title='待处理' value={String(stats.notificationCount)} icon={<Clock className='w-6 h-6' />} color='blue' />
           </div>
 
-          {/* Module Statistics Charts */}
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
             <StatsChart
               type='pie'
@@ -1049,7 +781,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             />
           </div>
 
-          {/* Module Status Overview */}
           <div className='grid grid-cols-1 md:grid-cols-5 gap-4 mb-8'>
             <div className='bg-white rounded-xl shadow-sm p-4'>
               <div className='flex items-center space-x-3'>
@@ -1098,280 +829,39 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             </div>
           </div>
 
-          {/* Core Modules */}
           <div className='mb-8'>
             <h3 className='text-xl font-semibold text-slate-900 mb-4'>🚀 核心功能</h3>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
               {coreModules.map((item) => (
-                <div
-                  key={item.title}
-                  className='bg-white rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer group'
-                  onClick={() => navigate(item.path)}
-                >
-                  <div className='p-6'>
-                    <div className='flex items-start justify-between mb-4'>
-                      <div
-                        className={`w-14 h-14 ${item.color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
-                      >
-                        <item.icon className='w-7 h-7 text-white' />
-                      </div>
-                      <StatusBadge status={item.status} />
-                    </div>
-                    <h4 className='text-xl font-semibold text-slate-900 mb-2'>{item.title}</h4>
-                    <p className='text-slate-600 text-sm mb-4'>{item.description}</p>
-                    <div className='flex items-center text-blue-600 text-sm font-medium group-hover:text-blue-700'>
-                      立即体验 →
-                    </div>
-                  </div>
-                </div>
+                <ModuleCard key={item.title} item={item} onClick={() => navigate(item.path)} size='large' />
               ))}
             </div>
           </div>
 
-          {/* Business Modules */}
           <div className='mb-8'>
             <h3 className='text-xl font-semibold text-slate-900 mb-4'>📊 业务模块</h3>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
               {businessModules.map((item) => (
-                <div
-                  key={item.title}
-                  className='bg-white rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer group opacity-75 hover:opacity-100'
-                  onClick={() => navigate(item.path)}
-                >
-                  <div className='p-6'>
-                    <div className='flex items-start justify-between mb-4'>
-                      <div
-                        className={`w-12 h-12 ${item.color} rounded-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}
-                      >
-                        <item.icon className='w-6 h-6 text-white' />
-                      </div>
-                      <StatusBadge status={item.status} />
-                    </div>
-                    <h4 className='text-lg font-semibold text-slate-900 mb-2'>{item.title}</h4>
-                    <p className='text-slate-600 text-sm'>{item.description}</p>
-                  </div>
-                </div>
+                <ModuleCard key={item.title} item={item} onClick={() => navigate(item.path)} size='small' />
               ))}
             </div>
           </div>
 
-          {/* System Services Section */}
           {systemServicesModules.length > 0 && (
             <div className='mb-8'>
               <h3 className='text-xl font-semibold text-slate-900 mb-4'>⚙️ 系统服务</h3>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
                 {systemServicesModules.map((item) => (
-                  <div
-                    key={item.title}
-                    className='bg-white rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer group border border-slate-100'
-                    onClick={() => navigate(item.path)}
-                  >
-                    <div className='p-6'>
-                      <div className='flex items-start justify-between mb-4'>
-                        <div className='w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform'>
-                          <item.icon className='w-7 h-7 text-blue-600' />
-                        </div>
-                        <StatusBadge status={item.status} />
-                      </div>
-                      <h4 className='text-xl font-semibold text-slate-900 mb-2'>{item.title}</h4>
-                      <p className='text-slate-600 text-sm mb-4'>{item.description}</p>
-                      <div className='flex items-center text-blue-600 text-sm font-medium group-hover:text-blue-700'>
-                        进入管理 →
-                      </div>
-                    </div>
-                  </div>
+                  <ModuleCard key={item.title} item={item} onClick={() => navigate(item.path)} size='medium' />
                 ))}
               </div>
             </div>
           )}
 
-          {/* Service Status */}
-          <div className='bg-white rounded-xl shadow-sm p-6'>
-            <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-semibold text-slate-900 flex items-center'>
-                <Activity className='w-5 h-5 mr-2 text-green-500' />
-                服务端口监控
-              </h3>
-              <button
-                onClick={checkAllServicesStatus}
-                className='text-sm text-blue-600 hover:text-blue-800 flex items-center'
-              >
-                <Activity className='w-4 h-4 mr-1' />
-                刷新状态
-              </button>
-            </div>
+          <ServiceStatusMonitor serviceStatuses={serviceStatuses} onRefresh={checkAllServicesStatus} />
 
-            {/* 核心服务 */}
-            <div className='mb-6'>
-              <h4 className='text-sm font-medium text-slate-500 mb-3'>核心服务</h4>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                {[
-                  { name: '身份认证', service: 'IAM', port: 8000, key: 'iam', icon: Shield },
-                  { name: '文档管理', service: 'DOC', port: 8001, key: 'doc', icon: Database },
-                  { name: '项目管理', service: 'PM', port: 8002, key: 'pm', icon: FolderKanban },
-                  { name: '通知服务', service: 'NOTIFICATION', port: 8003, key: 'notification', icon: Bell },
-                  { name: '系统集成', service: 'INTEGRATION', port: 8004, key: 'integration', icon: Link },
-                  { name: '统一门户', service: 'PORTAL', port: 8005, key: 'portal', icon: Building },
-                  { name: '流程引擎', service: 'FLOW', port: 8006, key: 'flow', icon: GitBranch },
-                ].map((service) => (
-                  <ServiceStatusCard
-                    key={service.key}
-                    name={service.name}
-                    service={service.service}
-                    port={service.port}
-                    status={serviceStatuses[service.key]}
-                    icon={service.icon}
-                  />
-                ))}
-              </div>
-            </div>
+          <RecentActivities activities={recentActivities} />
 
-            {/* 业务运营 */}
-            <div className='mb-6'>
-              <h4 className='text-sm font-medium text-slate-500 mb-3'>业务运营</h4>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                {[
-                  { name: '企业资源', service: 'ERP', port: 8010, key: 'erp', icon: Building },
-                  { name: '人力资源', service: 'HRM', port: 8011, key: 'hrm', icon: Users },
-                  { name: '客户关系', service: 'CRM', port: 8012, key: 'crm', icon: Users },
-                ].map((service) => (
-                  <ServiceStatusCard
-                    key={service.key}
-                    name={service.name}
-                    service={service.service}
-                    port={service.port}
-                    status={serviceStatuses[service.key]}
-                    icon={service.icon}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* 研发管理 */}
-            <div className='mb-6'>
-              <h4 className='text-sm font-medium text-slate-500 mb-3'>研发管理</h4>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                {[
-                  { name: 'AI 服务', service: 'AI', port: 8013, key: 'ai', icon: Bot },
-                  { name: '研发管理', service: 'RS', port: 8020, key: 'rs', icon: FlaskConical },
-                  { name: '实验室管理', service: 'LIMS', port: 8022, key: 'lims', icon: ClipboardList },
-                  { name: '产品数据管理', service: 'PDM', port: 8023, key: 'pdm', icon: FileText },
-                ].map((service) => (
-                  <ServiceStatusCard
-                    key={service.key}
-                    name={service.name}
-                    service={service.service}
-                    port={service.port}
-                    status={serviceStatuses[service.key]}
-                    icon={service.icon}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* 生产管理 */}
-            <div className='mb-6'>
-              <h4 className='text-sm font-medium text-slate-500 mb-3'>生产管理</h4>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                {[
-                  { name: '制造执行', service: 'MES', port: 8030, key: 'mes', icon: Factory },
-                  { name: '质量管理', service: 'QMS', port: 8031, key: 'qms', icon: ClipboardList },
-                  { name: '环境安全', service: 'EHS', port: 8032, key: 'ehs', icon: AlertTriangle },
-                ].map((service) => (
-                  <ServiceStatusCard
-                    key={service.key}
-                    name={service.name}
-                    service={service.service}
-                    port={service.port}
-                    status={serviceStatuses[service.key]}
-                    icon={service.icon}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* 供应链 */}
-            <div className='mb-6'>
-              <h4 className='text-sm font-medium text-slate-500 mb-3'>供应链</h4>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                {[
-                  { name: '供应链管理', service: 'SCM', port: 8040, key: 'scm', icon: Truck },
-                  { name: '供应商管理', service: 'SRM', port: 8041, key: 'srm', icon: ShoppingCart },
-                  { name: '仓库管理', service: 'WMS', port: 8042, key: 'wms', icon: Warehouse },
-                ].map((service) => (
-                  <ServiceStatusCard
-                    key={service.key}
-                    name={service.name}
-                    service={service.service}
-                    port={service.port}
-                    status={serviceStatuses[service.key]}
-                    icon={service.icon}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* 专业服务 */}
-            <div className='mb-6'>
-              <h4 className='text-sm font-medium text-slate-500 mb-3'>专业服务</h4>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                {[
-                  { name: '地理信息', service: 'GIS', port: 8050, key: 'gis', icon: Map },
-                  { name: '即时通讯', service: 'IM', port: 8051, key: 'im', icon: MessageCircle },
-                  { name: '数据分析', service: 'BI', port: 8052, key: 'bi', icon: BarChart2 },
-                  { name: '报表服务', service: 'REPORT', port: 8053, key: 'report', icon: BarChart3 },
-                  { name: '邮件服务', service: 'MAIL', port: 8054, key: 'mail', icon: Mail },
-                  { name: '移动服务', service: 'MOBILE', port: 8055, key: 'mobile', icon: Smartphone },
-                ].map((service) => (
-                  <ServiceStatusCard
-                    key={service.key}
-                    name={service.name}
-                    service={service.service}
-                    port={service.port}
-                    status={serviceStatuses[service.key]}
-                    icon={service.icon}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activities */}
-          <div className='mt-8 bg-white rounded-xl shadow-sm p-6'>
-            <h3 className='text-lg font-semibold text-slate-900 mb-4 flex items-center justify-between'>
-              <span className='flex items-center'>
-                <Clock className='w-5 h-5 mr-2 text-blue-500' />
-                最近活动
-              </span>
-              <button className='text-sm text-blue-600 hover:text-blue-700 flex items-center'>
-                查看全部 <ChevronRight className='w-4 h-4 ml-1' />
-              </button>
-            </h3>
-            <div className='space-y-4'>
-              {recentActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className='flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer'
-                >
-                  <div className='w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600'>
-                    {activity.icon}
-                  </div>
-                  <div className='flex-1'>
-                    <p className='text-sm font-medium text-slate-900'>{activity.title}</p>
-                    <div className='flex items-center space-x-2 mt-1'>
-                      <span className='text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full'>
-                        {activity.type}
-                      </span>
-                      <span className='text-xs text-slate-400'>{activity.time}</span>
-                    </div>
-                  </div>
-                  <ChevronRight className='w-4 h-4 text-slate-400' />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Footer */}
           <div className='mt-8 text-center text-sm text-slate-500'>
             <p>TOPEMS v2.0 | 化工新材料企业数字化平台</p>
             <p className='mt-1'>© 2026 TOPEMS Team. All rights reserved.</p>
@@ -1383,116 +873,5 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     </div>
   );
 };
-
-interface StatCardProps {
-  title: string;
-  value: string;
-  icon: any;
-  color: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color }) => {
-  const colors = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    purple: 'bg-purple-50 text-purple-600',
-    orange: 'bg-orange-50 text-orange-600',
-  };
-
-  return (
-    <div className='bg-white rounded-xl shadow-sm p-6'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <p className='text-sm text-slate-600 mb-1'>{title}</p>
-          <p className={`text-3xl font-bold ${colors[color as keyof typeof colors].split(' ')[1]}`}>{value}</p>
-        </div>
-        <div
-          className={`w-12 h-12 rounded-lg flex items-center justify-center ${colors[color as keyof typeof colors]}`}
-        >
-          {Icon}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-interface StatusBadgeProps {
-  status: 'online' | 'beta' | 'plan' | 'new';
-}
-
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-  const releaseStyles = {
-    online: 'bg-green-100 text-green-700',
-    beta: 'bg-yellow-100 text-yellow-700',
-    plan: 'bg-slate-100 text-slate-700',
-    new: 'bg-blue-100 text-blue-700',
-  };
-
-  const releaseLabels = {
-    online: '✓ 上线',
-    beta: 'β 测试',
-    plan: '📋 规划',
-    new: '✨ 新功能',
-  };
-
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${releaseStyles[status]}`}>
-      {releaseLabels[status]}
-    </span>
-  );
-};
-
-const StatusBadgeMobile: React.FC<StatusBadgeProps> = ({ status }) => {
-  const releaseStyles = {
-    online: 'bg-green-100 text-green-700',
-    beta: 'bg-yellow-100 text-yellow-700',
-    plan: 'bg-slate-100 text-slate-700',
-    new: 'bg-blue-100 text-blue-700',
-  };
-
-  const releaseLabels = {
-    online: '上线',
-    beta: '测试',
-    plan: '规划',
-    new: '新功能',
-  };
-
-  return <span className={`px-1.5 py-0.5 rounded-full text-xs ${releaseStyles[status]}`}>{releaseLabels[status]}</span>;
-};
-
-interface ServiceStatusCardProps {
-  name: string;
-  service: string;
-  port: number;
-  status: boolean;
-  icon: any;
-}
-
-const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({ name, service, port, status, icon: Icon }) => {
-  const statusColor = status ? 'bg-green-500' : 'bg-red-500';
-
-  return (
-    <div className='bg-slate-50 rounded-lg p-4'>
-      <div className='flex items-center justify-between mb-2'>
-        <div className='flex items-center space-x-2'>
-          <Icon className='w-4 h-4 text-slate-500' />
-          <span className='font-medium text-slate-900'>{name}</span>
-        </div>
-        <div className={`w-3 h-3 rounded-full ${statusColor}`} />
-      </div>
-      <div className='flex items-center justify-between text-xs text-slate-500'>
-        <span>{service}</span>
-        <span>:{port}</span>
-      </div>
-    </div>
-  );
-};
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return '上午好';
-  if (hour < 18) return '下午好';
-  return '晚上好';
-}
 
 export default DashboardPage;

@@ -1,4 +1,4 @@
-import.meta.env = {
+Object.assign(globalThis.__vitest_worker__?.metaEnv ?? import.meta.env, {
   VITE_API_BASE_URL: '/api',
   VITE_API_TIMEOUT: '30000',
   VITE_WS_URL: 'ws://localhost:8080',
@@ -51,8 +51,7 @@ import.meta.env = {
   VITE_SESSION_TIMEOUT: '120',
   VITE_SENTRY_DSN: '',
   VITE_GA_TRACKING_ID: '',
-  ...import.meta.env,
-};
+});
 
 globalThis.fetch = () =>
   Promise.resolve({

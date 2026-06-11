@@ -171,6 +171,24 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                         </button>
                       </div>
                     </FormControl>
+                    <FormDescription className='flex flex-wrap gap-2 text-xs'>
+                      <span className='flex items-center gap-1'>
+                        <span className={`w-2 h-2 rounded-full ${form.watch('password')?.match(/[A-Z]/) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                        大写字母
+                      </span>
+                      <span className='flex items-center gap-1'>
+                        <span className={`w-2 h-2 rounded-full ${form.watch('password')?.match(/[a-z]/) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                        小写字母
+                      </span>
+                      <span className='flex items-center gap-1'>
+                        <span className={`w-2 h-2 rounded-full ${form.watch('password')?.match(/[0-9]/) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                        数字
+                      </span>
+                      <span className='flex items-center gap-1'>
+                        <span className={`w-2 h-2 rounded-full ${form.watch('password')?.match(/[^a-zA-Z0-9]/) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                        特殊字符
+                      </span>
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -5,7 +5,7 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::user::{
-    ChangePasswordRequest, LoginRequest, RefreshTokenRequest, RegisterRequest,
+    ChangePasswordRequest, RegisterRequest,
     UpdateAvatarRequest, UpdatePreferencesRequest, UpdateUserRequest,
 };
 use crate::services::auth_service::AuthService;

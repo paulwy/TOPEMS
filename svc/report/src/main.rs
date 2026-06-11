@@ -4,7 +4,6 @@ use axum::{
     Json, Router,
 };
 use anyhow::Result;
-use chrono::Utc;
 use sqlx::PgPool;
 use std::env;
 use axum_prometheus::PrometheusMetricLayer;
@@ -12,7 +11,7 @@ use prometheus::{default_registry, Gauge};
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, SimpleHealthConfig, simple_health_check, create_api_info_router,
+    ServiceHealth, SimpleHealthConfig, create_api_info_router,
     HealthStatus, DependencyHealth, check_http_health,
 };
 

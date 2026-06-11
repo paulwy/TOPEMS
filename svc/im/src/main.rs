@@ -13,7 +13,7 @@ use prometheus::{default_registry, Gauge};
 
 use topems_shared::{
     AuthState, auth_middleware, create_cors_layer,
-    init_logging, ServiceHealth, build_health_response, create_api_info_router,
+    init_logging, ServiceHealth, create_api_info_router,
     ApiResponse, HealthStatus, DependencyHealth, check_http_health,
 };
 
@@ -189,7 +189,7 @@ async fn main() -> Result<()> {
     let database_url = env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set");
 
-    let jwt_secret = env::var("JWT_SECRET")
+    let _jwt_secret = env::var("JWT_SECRET")
         .unwrap_or_else(|_| {
             tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
             "topems-default-jwt-secret-change-me-in-production".to_string()

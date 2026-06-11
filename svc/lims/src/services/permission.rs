@@ -1,5 +1,4 @@
 use sqlx::PgPool;
-use uuid::Uuid;
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 use topems_shared::permission::{ModulePermission as SharedModulePermission, check_module_permission};

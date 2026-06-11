@@ -16,7 +16,7 @@ use prometheus::{default_registry, Gauge};
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims, init_logging,
-    ServiceHealth, build_health_response, create_api_info_router,
+    ServiceHealth, create_api_info_router,
     HealthStatus, DependencyHealth, check_http_health,
     create_database_pool, DatabaseConfig,
 };

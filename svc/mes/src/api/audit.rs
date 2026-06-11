@@ -8,7 +8,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::models::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+use crate::models::AuditLog;
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {

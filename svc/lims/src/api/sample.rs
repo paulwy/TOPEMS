@@ -12,7 +12,6 @@ use uuid::Uuid;
 use utoipa::{ToSchema, IntoParams};
 
 use crate::models::{CreateSampleRequest, Sample, UpdateSampleRequest};
-use crate::services::permission::{check_permission, ModulePermission};
 use crate::api::ApiState;
 use topems_shared::auth::Claims;
 use topems_shared::{Result, ApiResponse, PaginationParams};

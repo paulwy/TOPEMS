@@ -398,7 +398,7 @@ pub mod pgvector_store {
 pub async fn create_vector_store(
     redis_url: &str,
     use_pgvector: bool,
-    pool: Option<sqlx::PgPool>,
+    _pool: Option<sqlx::PgPool>,
 ) -> Result<Arc<dyn VectorStore>> {
     if use_pgvector {
         #[cfg(feature = "pgvector")]

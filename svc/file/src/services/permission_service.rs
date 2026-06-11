@@ -3,9 +3,9 @@ use sqlx::PgPool;
 use tracing::{debug, warn};
 use uuid::Uuid;
 
-use crate::models::file::{FileRecord, Visibility};
+use crate::models::file::FileRecord;
 use crate::models::permission::{
-    FilePermission, Permission, PermissionCheckResult, Principal, PrincipalType,
+    FilePermission, Permission, PermissionCheckResult,
     ShareFileRequest,
 };
 
@@ -113,7 +113,7 @@ impl PermissionService {
     /// 检查用户角色是否有权限
     async fn check_role_permission(
         &self,
-        file_id: Uuid,
+        _file_id: Uuid,
         user_id: Uuid,
         _required_permission: &Permission,
     ) -> Result<bool> {
