@@ -29,8 +29,8 @@ impl UserRepository {
     pub async fn find_by_username(&self, username: &str) -> Result<Option<User>, RepositoryError> {
         let user = sqlx::query_as::<_, User>(
             r#"
-            SELECT id, username, email, password_hash, full_name, avatar_url, 
-                   is_active, is_superuser, created_at, updated_at, last_login_at
+            SELECT id, username, email, password_hash, full_name, role, 
+                   is_active, is_superuser, created_at, updated_at, avatar_url
             FROM iam.users
             WHERE username = $1
             "#
@@ -45,8 +45,8 @@ impl UserRepository {
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, RepositoryError> {
         let user = sqlx::query_as::<_, User>(
             r#"
-            SELECT id, username, email, password_hash, full_name, avatar_url, 
-                   is_active, is_superuser, created_at, updated_at, last_login_at
+            SELECT id, username, email, password_hash, full_name, role, 
+                   is_active, is_superuser, created_at, updated_at, avatar_url
             FROM iam.users
             WHERE id = $1
             "#
@@ -61,11 +61,11 @@ impl UserRepository {
     pub async fn create(&self, user: &User) -> Result<User, RepositoryError> {
         let created_user = sqlx::query_as::<_, User>(
             r#"
-            INSERT INTO iam.users (id, username, email, password_hash, full_name, avatar_url, 
-                                  is_active, is_superuser, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING id, username, email, password_hash, full_name, avatar_url, 
-                      is_active, is_superuser, created_at, updated_at, last_login_at
+            INSERT INTO iam.users (id, username, email, password_hash, full_name, role, 
+                                  is_active, is_superuser, created_at, updated_at, avatar_url)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING id, username, email, password_hash, full_name, role, 
+                      is_active, is_superuser, created_at, updated_at, avatar_url
             "#
         )
         .bind(user.id)
@@ -73,11 +73,12 @@ impl UserRepository {
         .bind(&user.email)
         .bind(&user.password_hash)
         .bind(&user.full_name)
-        .bind(&user.avatar_url)
+        .bind(&user.role)
         .bind(user.is_active)
         .bind(user.is_superuser)
         .bind(user.created_at)
         .bind(user.updated_at)
+        .bind(&user.avatar_url)
         .fetch_one(&self.pool)
         .await?;
 
@@ -88,20 +89,21 @@ impl UserRepository {
         let updated_user = sqlx::query_as::<_, User>(
             r#"
             UPDATE iam.users
-            SET email = $2, password_hash = $3, full_name = $4, avatar_url = $5, 
-                is_active = $6, updated_at = $7
+            SET email = $2, password_hash = $3, full_name = $4, role = $5,
+                is_active = $6, updated_at = $7, avatar_url = $8
             WHERE id = $1
-            RETURNING id, username, email, password_hash, full_name, avatar_url, 
-                      is_active, is_superuser, created_at, updated_at, last_login_at
+            RETURNING id, username, email, password_hash, full_name, role, 
+                      is_active, is_superuser, created_at, updated_at, avatar_url
             "#
         )
         .bind(user.id)
         .bind(&user.email)
         .bind(&user.password_hash)
         .bind(&user.full_name)
-        .bind(&user.avatar_url)
+        .bind(&user.role)
         .bind(user.is_active)
         .bind(user.updated_at)
+        .bind(&user.avatar_url)
         .fetch_one(&self.pool)
         .await?;
 
@@ -110,7 +112,7 @@ impl UserRepository {
 
     pub async fn update_last_login(&self, id: Uuid) -> Result<(), RepositoryError> {
         sqlx::query(
-            "UPDATE iam.users SET last_login_at = $1, updated_at = $1 WHERE id = $2"
+            "UPDATE iam.users SET updated_at = $1 WHERE id = $2"
         )
         .bind(Utc::now())
         .bind(id)
@@ -122,8 +124,8 @@ impl UserRepository {
     pub async fn list_all(&self, limit: i64, offset: i64) -> Result<Vec<User>, RepositoryError> {
         let users = sqlx::query_as::<_, User>(
             r#"
-            SELECT id, username, email, password_hash, full_name, avatar_url, 
-                   is_active, is_superuser, created_at, updated_at, last_login_at
+            SELECT id, username, email, password_hash, full_name, role, 
+                   is_active, is_superuser, created_at, updated_at, avatar_url
             FROM iam.users
             ORDER BY created_at DESC
             LIMIT $1 OFFSET $2
@@ -159,7 +161,7 @@ impl RoleRepository {
 
     pub async fn find_by_name(&self, name: &str) -> Result<Option<Role>, RepositoryError> {
         let role = sqlx::query_as::<_, Role>(
-            "SELECT id, name, description, created_at FROM iam.roles WHERE name = $1"
+            "SELECT id, code, name, description, is_system, is_active, created_at, updated_at FROM iam.roles WHERE name = $1"
         )
         .bind(name)
         .fetch_optional(&self.pool)
@@ -170,7 +172,7 @@ impl RoleRepository {
 
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Role>, RepositoryError> {
         let role = sqlx::query_as::<_, Role>(
-            "SELECT id, name, description, created_at FROM iam.roles WHERE id = $1"
+            "SELECT id, code, name, description, is_system, is_active, created_at, updated_at FROM iam.roles WHERE id = $1"
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -182,7 +184,7 @@ impl RoleRepository {
     pub async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<Role>, RepositoryError> {
         let roles = sqlx::query_as::<_, Role>(
             r#"
-            SELECT r.id, r.name, r.description, r.created_at
+            SELECT r.id, r.code, r.name, r.description, r.is_system, r.is_active, r.created_at, r.updated_at
             FROM iam.roles r
             INNER JOIN iam.user_roles ur ON r.id = ur.role_id
             WHERE ur.user_id = $1
@@ -198,15 +200,19 @@ impl RoleRepository {
     pub async fn create(&self, role: &Role) -> Result<Role, RepositoryError> {
         let created_role = sqlx::query_as::<_, Role>(
             r#"
-            INSERT INTO iam.roles (id, name, description, created_at)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id, name, description, created_at
+            INSERT INTO iam.roles (id, code, name, description, is_system, is_active, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id, code, name, description, is_system, is_active, created_at, updated_at
             "#
         )
         .bind(role.id)
+        .bind(&role.code)
         .bind(&role.name)
         .bind(&role.description)
+        .bind(role.is_system)
+        .bind(role.is_active)
         .bind(role.created_at)
+        .bind(role.updated_at)
         .fetch_one(&self.pool)
         .await?;
 
@@ -216,7 +222,7 @@ impl RoleRepository {
     pub async fn list_all(&self) -> Result<Vec<Role>, RepositoryError> {
         let roles = sqlx::query_as::<_, Role>(
             r#"
-            SELECT id, name, description, created_at
+            SELECT id, code, name, description, is_system, is_active, created_at, updated_at
             FROM iam.roles
             ORDER BY created_at DESC
             "#
@@ -274,7 +280,7 @@ impl PermissionRepository {
 
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Permission>, RepositoryError> {
         let permission = sqlx::query_as::<_, Permission>(
-            "SELECT id, name, resource, action, description FROM iam.permissions WHERE id = $1"
+            "SELECT id, code, name, description, category, module, created_at, updated_at FROM iam.permissions WHERE id = $1"
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -285,7 +291,7 @@ impl PermissionRepository {
 
     pub async fn find_by_name(&self, name: &str) -> Result<Option<Permission>, RepositoryError> {
         let permission = sqlx::query_as::<_, Permission>(
-            "SELECT id, name, resource, action, description FROM iam.permissions WHERE name = $1"
+            "SELECT id, code, name, description, category, module, created_at, updated_at FROM iam.permissions WHERE name = $1"
         )
         .bind(name)
         .fetch_optional(&self.pool)
@@ -297,7 +303,7 @@ impl PermissionRepository {
     pub async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<Permission>, RepositoryError> {
         let permissions = sqlx::query_as::<_, Permission>(
             r#"
-            SELECT DISTINCT p.id, p.name, p.resource, p.action, p.description
+            SELECT DISTINCT p.id, p.code, p.name, p.description, p.category, p.module, p.created_at, p.updated_at
             FROM iam.permissions p
             INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id
             INNER JOIN iam.user_roles ur ON rp.role_id = ur.role_id
@@ -314,7 +320,7 @@ impl PermissionRepository {
     pub async fn find_by_role_id(&self, role_id: Uuid) -> Result<Vec<Permission>, RepositoryError> {
         let permissions = sqlx::query_as::<_, Permission>(
             r#"
-            SELECT p.id, p.name, p.resource, p.action, p.description
+            SELECT p.id, p.code, p.name, p.description, p.category, p.module, p.created_at, p.updated_at
             FROM iam.permissions p
             INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id
             WHERE rp.role_id = $1
@@ -330,16 +336,19 @@ impl PermissionRepository {
     pub async fn create(&self, permission: &Permission) -> Result<Permission, RepositoryError> {
         let created_permission = sqlx::query_as::<_, Permission>(
             r#"
-            INSERT INTO iam.permissions (id, name, resource, action, description)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id, name, resource, action, description
+            INSERT INTO iam.permissions (id, code, name, description, category, module, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id, code, name, description, category, module, created_at, updated_at
             "#
         )
         .bind(permission.id)
+        .bind(&permission.code)
         .bind(&permission.name)
-        .bind(&permission.resource)
-        .bind(&permission.action)
         .bind(&permission.description)
+        .bind(&permission.category)
+        .bind(&permission.module)
+        .bind(permission.created_at)
+        .bind(permission.updated_at)
         .fetch_one(&self.pool)
         .await?;
 
@@ -349,9 +358,9 @@ impl PermissionRepository {
     pub async fn list_all(&self) -> Result<Vec<Permission>, RepositoryError> {
         let permissions = sqlx::query_as::<_, Permission>(
             r#"
-            SELECT id, name, resource, action, description
+            SELECT id, code, name, description, category, module, created_at, updated_at
             FROM iam.permissions
-            ORDER BY resource, action
+            ORDER BY category, code
             "#
         )
         .fetch_all(&self.pool)

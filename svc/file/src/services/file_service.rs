@@ -1,6 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
+use tokio::io::AsyncRead;
 use tracing::{debug, info};
 use uuid::Uuid;
 
@@ -102,6 +103,86 @@ impl FileService {
         .await?;
 
         info!("File uploaded: {} -> {}", filename, storage_path);
+
+        Ok(FileMetadata::from(record))
+    }
+
+    /// 流式上传文件（边收边传）
+    pub async fn upload_file_streaming(
+        &self,
+        owner_id: Uuid,
+        owner_department_id: Option<Uuid>,
+        filename: &str,
+        reader: Box<dyn AsyncRead + Send + Unpin>,
+        size: u64,
+        content_type: &str,
+        external_id: Option<Uuid>,
+        file_type: Option<String>,
+        category: Option<String>,
+        visibility: Option<String>,
+    ) -> Result<FileMetadata> {
+        let file_id = external_id.unwrap_or_else(Uuid::new_v4);
+
+        // 生成存储路径
+        let now = Utc::now();
+        let storage_path = format!(
+            "files/{}/{}/{}/{}",
+            now.format("%Y"),
+            now.format("%m"),
+            now.format("%d"),
+            file_id
+        );
+
+        // 流式上传到存储后端
+        self.storage.upload_stream(&storage_path, reader, size).await?;
+
+        // 确定文件类型
+        let determined_file_type = file_type.unwrap_or_else(|| {
+            if content_type.starts_with("image/") {
+                "image".to_string()
+            } else if content_type.starts_with("video/") {
+                "video".to_string()
+            } else {
+                "document".to_string()
+            }
+        });
+
+        // 确定可见性
+        let determined_visibility = visibility.unwrap_or_else(|| "private".to_string());
+
+        // 确定向量化状态
+        let vector_status = if should_vectorize_for_event(content_type) {
+            "pending".to_string()
+        } else {
+            "none".to_string()
+        };
+
+        // 插入数据库
+        let record = sqlx::query_as::<_, FileRecord>(
+            r#"
+            INSERT INTO storage.files (
+                id, owner_id, owner_department_id, filename, storage_path,
+                file_size, content_type, file_type, category, vector_status, visibility
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING *
+            "#,
+        )
+        .bind(file_id)
+        .bind(owner_id)
+        .bind(owner_department_id)
+        .bind(filename)
+        .bind(&storage_path)
+        .bind(size as i64)
+        .bind(content_type)
+        .bind(&determined_file_type)
+        .bind(&category)
+        .bind(&vector_status)
+        .bind(&determined_visibility)
+        .fetch_one(&self.pool)
+        .await?;
+
+        info!("File streamed uploaded: {} -> {}", filename, storage_path);
 
         Ok(FileMetadata::from(record))
     }

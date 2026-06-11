@@ -379,10 +379,13 @@ pub async fn quick_bootstrap_with_db(
         default_port,
         database: DatabaseConfig {
             url: database_url,
-            max_connections: 10,
-            min_connections: Some(2),
+            max_connections: 20,
+            min_connections: Some(5),
             connect_timeout: Some(30),
-            idle_timeout: Some(600),
+            idle_timeout: Some(300),
+            max_lifetime: Some(1800),
+            test_interval: Some(60),
+            enable_connection_reuse: Some(true),
         },
         ..Default::default()
     };

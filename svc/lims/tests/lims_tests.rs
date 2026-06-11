@@ -16,7 +16,7 @@ mod sample_tests {
         id: Uuid,
         name: String,
         code: String,
-        type: String,
+        sample_type: String,
         status: String,
         source: Option<String>,
         collection_date: NaiveDate,
@@ -31,7 +31,7 @@ mod sample_tests {
             id: Uuid::new_v4(),
             name: "样品A".to_string(),
             code: "SMP-001".to_string(),
-            type: "raw_material".to_string(),
+            sample_type: "raw_material".to_string(),
             status: "pending".to_string(),
             source: Some("供应商A".to_string()),
             collection_date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
@@ -41,7 +41,7 @@ mod sample_tests {
         };
 
         assert_eq!(sample.name, "样品A");
-        assert_eq!(sample.type, "raw_material");
+        assert_eq!(sample.sample_type, "raw_material");
         assert_eq!(sample.status, "pending");
     }
 
@@ -54,7 +54,7 @@ mod sample_tests {
                 id: Uuid::new_v4(),
                 name: "样品".to_string(),
                 code: "SMP-001".to_string(),
-                type: "material".to_string(),
+                sample_type: "material".to_string(),
                 status: status.to_string(),
                 source: None,
                 collection_date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
@@ -76,7 +76,7 @@ mod sample_tests {
                 id: Uuid::new_v4(),
                 name: "样品".to_string(),
                 code: "SMP-001".to_string(),
-                type: type_name.to_string(),
+                sample_type: type_name.to_string(),
                 status: "pending".to_string(),
                 source: None,
                 collection_date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
@@ -85,7 +85,7 @@ mod sample_tests {
                 unit: "kg".to_string(),
             };
 
-            assert_eq!(sample.type, type_name);
+            assert_eq!(sample.sample_type, type_name);
         }
     }
 }
@@ -101,7 +101,7 @@ mod instrument_tests {
         id: Uuid,
         name: String,
         code: String,
-        type: String,
+        instrument_type: String,
         status: String,
         manufacturer: Option<String>,
         purchase_date: NaiveDate,
@@ -116,7 +116,7 @@ mod instrument_tests {
             id: Uuid::new_v4(),
             name: "光谱分析仪".to_string(),
             code: "INST-001".to_string(),
-            type: "analysis".to_string(),
+            instrument_type: "analysis".to_string(),
             status: "available".to_string(),
             manufacturer: Some("厂家A".to_string()),
             purchase_date: NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
@@ -126,7 +126,7 @@ mod instrument_tests {
         };
 
         assert_eq!(instrument.name, "光谱分析仪");
-        assert_eq!(instrument.type, "analysis");
+        assert_eq!(instrument.instrument_type, "analysis");
         assert_eq!(instrument.status, "available");
     }
 
@@ -139,7 +139,7 @@ mod instrument_tests {
                 id: Uuid::new_v4(),
                 name: "仪器".to_string(),
                 code: "INST-001".to_string(),
-                type: "test".to_string(),
+                instrument_type: "test".to_string(),
                 status: status.to_string(),
                 manufacturer: None,
                 purchase_date: NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
@@ -161,7 +161,7 @@ mod instrument_tests {
             id: Uuid::new_v4(),
             name: "需要校准的仪器".to_string(),
             code: "INST-001".to_string(),
-            type: "analysis".to_string(),
+            instrument_type: "analysis".to_string(),
             status: "calibration".to_string(),
             manufacturer: None,
             purchase_date: NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),

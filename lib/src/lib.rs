@@ -176,7 +176,8 @@ pub use schema::{
     portal_table,
 };
 pub use cache::{
-    InMemoryCache, CacheManager, CacheStatistics, EvictionPolicy
+    InMemoryCache, CacheManager, CacheStatistics, EvictionPolicy,
+    MultiLevelCacheManager, MultiLevelCacheStatistics
 };
 pub use query_optimizer::{
     IndexRecommendation, QueryOptimizationSuggestion,

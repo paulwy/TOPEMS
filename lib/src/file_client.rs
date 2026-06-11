@@ -10,6 +10,8 @@ use crate::response::ApiResponse;
 pub struct FileServiceClient {
     base_url: String,
     client: Client,
+    /// 可选的 Authorization token
+    auth_token: Option<String>,
 }
 
 /// 文件元数据响应
@@ -36,15 +38,28 @@ pub struct FileMetadataResponse {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
-/// 上传响应
+/// 上传响应（与 File 服务的 FileMetadata 匹配）
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UploadResponse {
-    pub file_id: Uuid,
-    pub storage_path: String,
+    pub id: Uuid,
     pub filename: String,
+    pub storage_path: String,
     pub file_size: i64,
     pub content_type: String,
+    pub owner_id: Uuid,
+    pub owner_department_id: Option<Uuid>,
+    pub file_type: String,
+    pub category: Option<String>,
+    pub version: i32,
+    pub parent_id: Option<Uuid>,
     pub vector_status: String,
+    pub vector_document_id: Option<Uuid>,
+    pub is_shared: bool,
+    pub visibility: String,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 impl FileServiceClient {
@@ -53,6 +68,22 @@ impl FileServiceClient {
         Self {
             base_url: base_url.trim_end_matches('/').to_string(),
             client: Client::new(),
+            auth_token: None,
+        }
+    }
+
+    /// 设置 Authorization token
+    pub fn with_token(mut self, token: &str) -> Self {
+        self.auth_token = Some(token.to_string());
+        self
+    }
+
+    /// 添加 Authorization header 到请求
+    fn add_auth_header(&self, request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        if let Some(ref token) = self.auth_token {
+            request.header("Authorization", format!("Bearer {}", token))
+        } else {
+            request
         }
     }
 
@@ -70,14 +101,23 @@ impl FileServiceClient {
 
         let form = reqwest::multipart::Form::new().part("file", part);
 
-        let response = self
+        let request = self
             .client
             .post(format!("{}/api/v1/files/upload", self.base_url))
-            .multipart(form)
-            .send()
-            .await?;
+            .multipart(form);
 
-        let api_response: ApiResponse<UploadResponse> = response.json().await?;
+        let response = self.add_auth_header(request).send().await?;
+        
+        // 获取原始响应文本用于调试
+        let status = response.status();
+        let text = response.text().await?;
+        
+        if !status.is_success() {
+            return Err(anyhow::anyhow!("File service returned status {}: {}", status, text));
+        }
+        
+        let api_response: ApiResponse<UploadResponse> = serde_json::from_str(&text)
+            .map_err(|e| anyhow::anyhow!("Failed to parse response: {}, raw: {}", e, text))?;
         api_response.data.ok_or_else(|| anyhow::anyhow!("Empty response data"))
     }
 
@@ -98,12 +138,12 @@ impl FileServiceClient {
             .text("external_id", external_id.to_string())
             .part("file", part);
 
-        let response = self
+        let request = self
             .client
             .post(format!("{}/api/v1/files/upload", self.base_url))
-            .multipart(form)
-            .send()
-            .await?;
+            .multipart(form);
+
+        let response = self.add_auth_header(request).send().await?;
 
         let api_response: ApiResponse<UploadResponse> = response.json().await?;
         api_response.data.ok_or_else(|| anyhow::anyhow!("Empty response data"))
@@ -111,11 +151,11 @@ impl FileServiceClient {
 
     /// 获取文件元数据
     pub async fn get_file(&self, file_id: Uuid) -> anyhow::Result<FileMetadataResponse> {
-        let response = self
+        let request = self
             .client
-            .get(format!("{}/api/v1/files/{}", self.base_url, file_id))
-            .send()
-            .await?;
+            .get(format!("{}/api/v1/files/{}", self.base_url, file_id));
+
+        let response = self.add_auth_header(request).send().await?;
 
         let api_response: ApiResponse<FileMetadataResponse> = response.json().await?;
         api_response.data.ok_or_else(|| anyhow::anyhow!("Empty response data"))
@@ -123,11 +163,11 @@ impl FileServiceClient {
 
     /// 下载文件
     pub async fn download_file(&self, file_id: Uuid) -> anyhow::Result<Vec<u8>> {
-        let response = self
+        let request = self
             .client
-            .get(format!("{}/api/v1/files/{}/download", self.base_url, file_id))
-            .send()
-            .await?;
+            .get(format!("{}/api/v1/files/{}/download", self.base_url, file_id));
+
+        let response = self.add_auth_header(request).send().await?;
 
         let bytes = response.bytes().await?;
         Ok(bytes.to_vec())
@@ -135,11 +175,11 @@ impl FileServiceClient {
 
     /// 删除文件
     pub async fn delete_file(&self, file_id: Uuid) -> anyhow::Result<()> {
-        let response = self
+        let request = self
             .client
-            .delete(format!("{}/api/v1/files/{}", self.base_url, file_id))
-            .send()
-            .await?;
+            .delete(format!("{}/api/v1/files/{}", self.base_url, file_id));
+
+        let response = self.add_auth_header(request).send().await?;
 
         if response.status().is_success() {
             Ok(())

@@ -252,6 +252,10 @@ class ApiClient {
     return this.clients.mail;
   }
 
+  get file() {
+    return this.clients.file;
+  }
+
   get scm() {
     return this.clients.scm;
   }

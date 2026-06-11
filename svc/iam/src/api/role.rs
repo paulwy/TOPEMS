@@ -2,12 +2,14 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
+    routing::{delete, get, post, put},
+    Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::models::{Permission, Role};
+use crate::AppState;
 use topems_shared::ApiResponse;
 
 // ============ 请求/响应模型 ============
@@ -52,8 +54,8 @@ pub struct RoleDetailResponse {
 pub struct PermissionInfo {
     pub id: String,
     pub name: String,
-    pub resource: String,
-    pub action: String,
+    pub code: String,
+    pub category: String,
     pub description: Option<String>,
 }
 
@@ -78,11 +80,11 @@ pub async fn list_roles(
 ) -> Result<Json<ApiResponse<ListRolesResponse>>, impl IntoResponse> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let offset = ((page - 1) * page_size) as i64;
 
     let result = sqlx::query_as::<_, Role>(
         r#"
-        SELECT id, name, description, created_at
+        SELECT id, code, name, description, is_system, is_active, created_at, updated_at
         FROM iam.roles
         WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%')
         ORDER BY created_at DESC
@@ -90,7 +92,7 @@ pub async fn list_roles(
         "#
     )
     .bind(&params.name)
-    .bind(page_size)
+    .bind(page_size as i64)
     .bind(offset)
     .fetch_all(&state.db)
     .await;
@@ -132,24 +134,33 @@ pub async fn create_role(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateRoleRequest>,
 ) -> Result<Json<ApiResponse<RoleResponse>>, impl IntoResponse> {
+    let now = chrono::Utc::now();
     let role = Role {
         id: Uuid::new_v4(),
+        code: req.name.to_lowercase().replace(" ", "_"),
         name: req.name.clone(),
         description: req.description.clone(),
-        created_at: chrono::Utc::now(),
+        is_system: false,
+        is_active: true,
+        created_at: now,
+        updated_at: now,
     };
 
     let result = sqlx::query_as::<_, Role>(
         r#"
-        INSERT INTO iam.roles (id, name, description, created_at)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, name, description, created_at
+        INSERT INTO iam.roles (id, code, name, description, is_system, is_active, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, code, name, description, is_system, is_active, created_at, updated_at
         "#
     )
     .bind(role.id)
+    .bind(&role.code)
     .bind(&role.name)
     .bind(&role.description)
+    .bind(role.is_system)
+    .bind(role.is_active)
     .bind(role.created_at)
+    .bind(role.updated_at)
     .fetch_one(&state.db)
     .await;
 
@@ -215,11 +226,11 @@ pub async fn get_role(
     // 查询角色的权限列表
     let permissions_result = sqlx::query_as::<_, Permission>(
         r#"
-        SELECT p.id, p.name, p.resource, p.action, p.description
+        SELECT p.id, p.name, p.code, p.category, p.description
         FROM iam.permissions p
         INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id
         WHERE rp.role_id = $1
-        ORDER BY p.resource, p.action
+        ORDER BY p.category, p.code
         "#
     )
     .bind(&role_id)
@@ -232,8 +243,8 @@ pub async fn get_role(
             .map(|p| PermissionInfo {
                 id: p.id.to_string(),
                 name: p.name,
-                resource: p.resource,
-                action: p.action,
+                code: p.code,
+                category: p.category,
                 description: p.description,
             })
             .collect(),
@@ -471,4 +482,16 @@ pub async fn remove_permission_from_role(
             ))
         }
     }
+}
+
+pub fn create_role_routes(state: AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/v1/roles", get(list_roles))
+        .route("/api/v1/roles", post(create_role))
+        .route("/api/v1/roles/{role_id}", get(get_role))
+        .route("/api/v1/roles/{role_id}", put(update_role))
+        .route("/api/v1/roles/{role_id}", delete(delete_role))
+        .route("/api/v1/roles/{role_id}/permissions", post(assign_permissions_to_role))
+        .route("/api/v1/roles/{role_id}/permissions/{permission_id}", delete(remove_permission_from_role))
+        .with_state(state)
 }

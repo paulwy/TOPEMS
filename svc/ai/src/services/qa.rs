@@ -120,8 +120,8 @@ impl QAService {
         let history = rows
             .iter()
             .map(|row| {
-                let sources_value: serde_json::Value = row.get("sources");
-                let sources = serde_json::from_value(sources_value).ok();
+                let sources_value: Option<serde_json::Value> = row.try_get("sources").ok();
+                let sources = sources_value.and_then(|v| serde_json::from_value(v).ok());
                 QAHistory {
                     id: row.get("id"),
                     question: row.get("question"),

@@ -20,6 +20,7 @@ use topems_shared::{
     ApiResponse,
     AuthState,
     auth_middleware,
+    config::enhanced::DatabaseConfig,
     create_cors_layer,
     init_logging,
     create_database_pool,
@@ -44,9 +45,16 @@ async fn main() -> Result<()> {
     env::set_var("SEARCH_PATH", "lims, shared, public");
 
     let config = Config::load().await?;
+    let db_config = DatabaseConfig {
+        url: env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string()),
+        max_connections: 10,
+        min_connections: Some(2),
+        connect_timeout: Some(30),
+        idle_timeout: Some(60),
+    };
     tracing::info!("Configuration loaded, environment: {}", config.env());
 
-    let pool = create_database_pool(&config.get_database().await).await?;
+    let pool = create_database_pool(&db_config).await?;
     test_database_connection(&pool).await?;
 
     if let Err(e) = init_db(&pool).await {

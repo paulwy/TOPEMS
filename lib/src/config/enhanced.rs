@@ -23,6 +23,15 @@ pub struct DatabaseConfig {
     
     /// 空闲超时（秒）
     pub idle_timeout: Option<u64>,
+    
+    /// 连接最大生命周期（秒）
+    pub max_lifetime: Option<u64>,
+    
+    /// 连接测试间隔（秒）
+    pub test_interval: Option<u64>,
+    
+    /// 是否启用连接复用
+    pub enable_connection_reuse: Option<bool>,
 }
 
 impl Default for DatabaseConfig {
@@ -30,10 +39,13 @@ impl Default for DatabaseConfig {
         Self {
             url: env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string()),
-            max_connections: 10,
-            min_connections: Some(2),
+            max_connections: 20,
+            min_connections: Some(5),
             connect_timeout: Some(30),
-            idle_timeout: Some(600),
+            idle_timeout: Some(300),
+            max_lifetime: Some(1800),
+            test_interval: Some(60),
+            enable_connection_reuse: Some(true),
         }
     }
 }
@@ -47,7 +59,7 @@ impl DatabaseConfig {
             max_connections: env::var("DB_MAX_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok())
-                .unwrap_or(10),
+                .unwrap_or(20),
             min_connections: env::var("DB_MIN_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok()),
@@ -55,6 +67,15 @@ impl DatabaseConfig {
                 .ok()
                 .and_then(|s| s.parse().ok()),
             idle_timeout: env::var("DB_IDLE_TIMEOUT")
+                .ok()
+                .and_then(|s| s.parse().ok()),
+            max_lifetime: env::var("DB_MAX_LIFETIME")
+                .ok()
+                .and_then(|s| s.parse().ok()),
+            test_interval: env::var("DB_TEST_INTERVAL")
+                .ok()
+                .and_then(|s| s.parse().ok()),
+            enable_connection_reuse: env::var("DB_ENABLE_CONNECTION_REUSE")
                 .ok()
                 .and_then(|s| s.parse().ok()),
         })
@@ -565,7 +586,9 @@ mod tests {
     fn test_database_config_default() {
         let config = DatabaseConfig::default();
         assert!(!config.url.is_empty());
-        assert_eq!(config.max_connections, 10);
+        assert_eq!(config.max_connections, 20);
+        assert_eq!(config.min_connections, Some(5));
+        assert_eq!(config.idle_timeout, Some(300));
     }
     
     #[test]

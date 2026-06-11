@@ -1,0 +1,14 @@
+[development]
+database_url = "postgres://topems:topems_secret@localhost:5432/topems"
+timezone = "UTC"
+max_connections = 10
+
+[production]
+database_url = "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}"
+timezone = "UTC"
+max_connections = 50
+
+[test]
+database_url = "postgres://topems:topems_secret@localhost:5433/topems_test"
+timezone = "UTC"
+max_connections = 5

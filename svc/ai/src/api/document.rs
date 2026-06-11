@@ -189,6 +189,30 @@ impl DocumentApi {
         ))
     }
 
+    /// POST /api/v1/documents/vectorize-from-file - 从 File 服务向量化文档
+    pub async fn vectorize_from_file(
+        State(state): State<AppState>,
+        Json(req): Json<VectorizeFromFileRequest>,
+    ) -> Json<ApiResponse<VectorizeFromFileResponse>> {
+        match state.document_service.vectorize_from_file_service(req.file_id).await {
+            Ok(result) => {
+                Json(ApiResponse::success(
+                    VectorizeFromFileResponse {
+                        document_id: result.document_id,
+                        file_id: result.file_id,
+                        chunks_count: result.chunks_count,
+                        message: format!("文档向量化成功，共 {} 个分块", result.chunks_count),
+                    },
+                    "Success",
+                ))
+            }
+            Err(e) => {
+                tracing::error!("从 File 服务向量化失败: {}", e);
+                Json(ApiResponse::<VectorizeFromFileResponse>::error(500, &e))
+            }
+        }
+    }
+
     /// POST /api/v1/documents/:id/summarize - 生成文档摘要
     pub async fn summarize(
         State(_state): State<AppState>,

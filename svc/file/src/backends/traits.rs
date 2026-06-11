@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use std::time::Duration;
 use thiserror::Error;
+use tokio::io::AsyncRead;
 
 #[derive(Error, Debug)]
 pub enum StorageError {
@@ -35,6 +36,9 @@ pub struct FileMetadata {
 pub trait FileStorage: Send + Sync {
     /// 上传文件
     async fn upload(&self, path: &str, data: &[u8]) -> Result<StorageResult, StorageError>;
+
+    /// 流式上传文件（边收边传）
+    async fn upload_stream(&self, path: &str, reader: Box<dyn AsyncRead + Send + Unpin>, size: u64) -> Result<StorageResult, StorageError>;
 
     /// 下载文件
     async fn download(&self, path: &str) -> Result<Vec<u8>, StorageError>;

@@ -76,6 +76,13 @@ pub struct CacheConfig {
     pub memory_cache_size: usize,
     pub eviction_policy: String,
     pub write_through: bool,
+    
+    pub enable_multi_level: bool,
+    pub l1_ttl: u64,
+    pub l2_ttl: u64,
+    pub enable_cache_warming: bool,
+    pub warming_concurrency: usize,
+    pub stats_interval: u64,
 }
 
 impl Default for CacheConfig {
@@ -86,6 +93,12 @@ impl Default for CacheConfig {
             memory_cache_size: default_cache_memory_size(),
             eviction_policy: default_cache_eviction_policy(),
             write_through: default_cache_write_through(),
+            enable_multi_level: true,
+            l1_ttl: 60,
+            l2_ttl: 3600,
+            enable_cache_warming: true,
+            warming_concurrency: 4,
+            stats_interval: 60,
         }
     }
 }
@@ -557,6 +570,12 @@ impl From<DevEnv> for AppConfig {
                 memory_cache_size: env.cache_memory_size,
                 eviction_policy: env.cache_eviction_policy,
                 write_through: env.cache_write_through,
+                enable_multi_level: true,
+                l1_ttl: 60,
+                l2_ttl: 3600,
+                enable_cache_warming: true,
+                warming_concurrency: 4,
+                stats_interval: 60,
             },
             storage: StorageConfig {
                 upload_dir: env.upload_dir,
@@ -641,6 +660,12 @@ impl From<TestEnv> for AppConfig {
                 memory_cache_size: env.cache_memory_size,
                 eviction_policy: env.cache_eviction_policy,
                 write_through: env.cache_write_through,
+                enable_multi_level: true,
+                l1_ttl: 60,
+                l2_ttl: 3600,
+                enable_cache_warming: true,
+                warming_concurrency: 4,
+                stats_interval: 60,
             },
             storage: StorageConfig {
                 upload_dir: env.upload_dir,
@@ -725,6 +750,12 @@ impl From<ProductionEnv> for AppConfig {
                 memory_cache_size: env.cache_memory_size,
                 eviction_policy: env.cache_eviction_policy,
                 write_through: env.cache_write_through,
+                enable_multi_level: true,
+                l1_ttl: 60,
+                l2_ttl: 3600,
+                enable_cache_warming: true,
+                warming_concurrency: 4,
+                stats_interval: 60,
             },
             storage: StorageConfig {
                 upload_dir: env.upload_dir,

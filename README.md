@@ -2,7 +2,7 @@
 
 > 统一身份认证与授权管理、文档管理、AI协作、流程自动化、数据分析、质量管理、供应链管理
 
-![Version](https://img.shields.io/badge/version-2.2.0-blue)
+![Version](https://img.shields.io/badge/version-2.4.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)
 ![React](https://img.shields.io/badge/react-18-blue)
@@ -11,18 +11,19 @@
 
 ### 核心服务
 - 🔐 **身份认证** - IAM 身份认证，统一权限管理，安全审计
-- 📄 **文档管理** - 智能文档管理，版本控制，协作编辑
+- 📄 **文档管理** - 智能文档管理，版本控制，协作编辑，集成文件存储服务
+- 🤖 **AI 服务** - 智能问答，文档摘要，自动化建议，RAG检索增强
+- 📁 **文件服务** - 统一文件存储，流式上传，多后端支持
 - 🔀 **流程自动化** - 可视化流程设计，审批工作流
 - 📢 **通知服务** - 实时通知，消息推送
 
 ### 业务服务
-- 🤖 **AI 服务** - 智能问答，文档摘要，自动化建议
 - 📊 **数据分析** - 实时报表，数据可视化
 - 🏭 **质量管控** - QMS质量管理，EHS安全环保
 - 💼 **资源规划** - ERP企业资源，MES制造执行
 - 📦 **供应链** - SCM供应链，SRM供应商，CRM客户关系
 - 📦 **仓储物流** - WMS仓库管理
-- 👥 **人力资源** - HRM人力资源管理
+- 👥 **人力资源** - HRM人力资源管理（共享Schema）
 - 🔬 **实验室** - LIMS实验室管理
 - 🔬 **研发管理** - RS科研研发
 - 🌍 **地理信息** - GIS服务
@@ -43,7 +44,9 @@
 - 🎯 **微服务架构** - 20+个独立服务，灵活扩展
 - 🔄 **统一架构** - 统一的认证保护和架构规范化
 - 🏗️ **Cargo Workspace** - 增量编译，共享依赖缓存
-- 🤖 **AI 增强** - Ollama 本地 LLM + 向量搜索
+- 🤖 **AI 增强** - Ollama 本地 LLM + 向量搜索（pgvector）
+- 📦 **统一文件存储** - DOC-File服务整合
+- 🗄️ **共享Schema** - 跨服务数据统一管理
 
 ## 📁 项目结构
 
@@ -336,18 +339,54 @@ bash scripts/start-local.sh
 - **相似度搜索** - 员工/技能匹配
 - **RAG** - 检索增强生成
 
-## 脚本工具
+## 🚀 统一服务管理
+
+### 主脚本
+
+TOPEMS 提供统一的服务管理脚本 `scripts/topems.sh`，简化服务管理操作：
+
+```bash
+# 启动核心服务（IAM, HRM, Mail, File）
+./scripts/topems.sh start
+
+# 启动所有服务
+./scripts/topems.sh start-all
+
+# 停止所有服务
+./scripts/topems.sh stop
+
+# 查看服务状态
+./scripts/topems.sh status
+
+# 编译所有服务
+./scripts/topems.sh build
+
+# 检查编译状态
+./scripts/topems.sh check
+
+# 查看服务日志
+./scripts/topems.sh logs <服务名> [行数]
+
+# 清理资源
+./scripts/topems.sh clean
+```
+
+### 脚本工具列表
 
 | 脚本 | 说明 |
 |------|------|
+| `topems.sh` | **统一服务管理脚本**（推荐使用） |
 | `start-local.sh` | 启动核心服务（自动初始化数据库） |
 | `start-all.sh` | 启动所有服务（需要 Docker） |
+| `start-services.sh` | 启动服务脚本 |
+| `start-production.sh` | 生产环境部署脚本 |
 | `stop-all.sh` | 停止所有服务 |
 | `init-db-unified.sh` | 统一数据库初始化 |
 | `init-vector-index.sh` | Redis 向量索引初始化 |
 | `install-pgvector.sh` | 安装配置 pgvector |
 | `rebuild-postgres.sh` | 重建 PostgreSQL 容器 |
 | `manage-services.sh` | 管理所有服务 |
+| `build-all-services.sh` | 构建所有服务镜像 |
 | `cleanup.sh` | 清理环境 |
 | `deploy.sh` | 离线部署 |
 

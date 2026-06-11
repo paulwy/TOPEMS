@@ -1,7 +1,8 @@
 use async_trait::async_trait;
+use md5;
 use std::path::{Path, PathBuf};
 use tokio::fs;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tracing::{debug, info};
 
 use super::traits::{FileMetadata, FileStorage, StorageError, StorageResult};
@@ -37,7 +38,7 @@ impl LocalStorage {
         Ok(full_path)
     }
 
-    fn ensure_parent_dir(&self, path: &Path) -> Result<(), StorageError> {
+    async fn ensure_parent_dir(&self, path: &Path) -> Result<(), StorageError> {
         if let Some(parent) = path.parent() {
             if !parent.exists() {
                 fs::create_dir_all(parent).await
@@ -75,6 +76,44 @@ impl FileStorage for LocalStorage {
             path: path.to_string(),
             size,
             etag: Some(etag),
+        })
+    }
+
+    async fn upload_stream(&self, path: &str, mut reader: Box<dyn AsyncRead + Send + Unpin>, _size: u64) -> Result<StorageResult, StorageError> {
+        let full_path = self.resolve_path(path)?;
+
+        // 确保父目录存在
+        self.ensure_parent_dir(&full_path).await?;
+
+        // 创建文件
+        let mut file = fs::File::create(&full_path).await
+            .map_err(|e| StorageError::Io(e))?;
+
+        // 使用流式写入
+        let mut written: u64 = 0;
+        let mut buffer = vec![0u8; 81920]; // 80KB buffer
+
+        loop {
+            let bytes_read = reader.read(&mut buffer).await
+                .map_err(|e| StorageError::Io(e))?;
+            if bytes_read == 0 {
+                break;
+            }
+            file.write_all(&buffer[..bytes_read]).await
+                .map_err(|e| StorageError::Io(e))?;
+            written += bytes_read as u64;
+        }
+
+        file.flush().await
+            .map_err(|e| StorageError::Io(e))?;
+
+        // 对于流式上传，跳过 etag 计算
+        debug!("Uploaded file stream to {} ({} bytes)", path, written);
+
+        Ok(StorageResult {
+            path: path.to_string(),
+            size: written,
+            etag: None,
         })
     }
 

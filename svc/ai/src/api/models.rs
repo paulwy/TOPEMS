@@ -304,3 +304,18 @@ pub struct VectorStats {
     pub total_vectors: usize,
     pub vector_dimension: usize,
 }
+
+/// 从 File 服务向量化请求
+#[derive(Debug, Deserialize)]
+pub struct VectorizeFromFileRequest {
+    pub file_id: Uuid,
+}
+
+/// 从 File 服务向量化响应
+#[derive(Debug, Serialize)]
+pub struct VectorizeFromFileResponse {
+    pub document_id: Uuid,
+    pub file_id: Uuid,
+    pub chunks_count: usize,
+    pub message: String,
+}

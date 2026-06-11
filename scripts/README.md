@@ -1,13 +1,54 @@
 # TOPEMS 脚本工具
 
-## 管理脚本
+## 🚀 统一服务管理脚本
 
-### 核心服务脚本
+### 主脚本：topems.sh
+
+推荐使用统一的服务管理脚本，整合所有服务管理功能：
+
+```bash
+# 启动核心服务（IAM, HRM, Mail, File）
+./scripts/topems.sh start
+
+# 启动所有服务（包含文档服务）
+./scripts/topems.sh start-all
+
+# 停止所有服务
+./scripts/topems.sh stop
+
+# 停止数据库容器
+./scripts/topems.sh stop-db
+
+# 查看服务状态
+./scripts/topems.sh status
+
+# 编译所有服务
+./scripts/topems.sh build
+
+# 检查编译状态
+./scripts/topems.sh check
+
+# 查看服务日志
+./scripts/topems.sh logs <服务名> [行数]
+
+# 清理资源
+./scripts/topems.sh clean
+
+# 显示帮助
+./scripts/topems.sh help
+```
+
+### 脚本工具列表
+
+#### 核心服务脚本
 
 | 脚本 | 说明 |
 |------|------|
+| `topems.sh` | **统一服务管理脚本**（推荐使用） |
 | `start-local.sh` | 启动核心服务（IAM + HRM + Mail），不依赖 Docker |
 | `start-all.sh` | 启动所有服务（需要 Docker） |
+| `start-services.sh` | 启动服务脚本 |
+| `start-production.sh` | 生产环境部署脚本 |
 | `stop-all.sh` | 停止所有服务 |
 
 ### 数据库脚本

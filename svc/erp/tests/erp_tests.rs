@@ -4,7 +4,6 @@
 use uuid::Uuid;
 use chrono::{DateTime, Utc, NaiveDate};
 use serde::{Deserialize, Serialize};
-use bigdecimal::BigDecimal;
 
 // ============ 资产管理测试 ============
 
@@ -20,7 +19,7 @@ mod asset_tests {
         category: String,
         status: String,
         purchase_date: NaiveDate,
-        purchase_price: BigDecimal,
+        purchase_price: f64,
         location: Option<String>,
         responsible_person: Option<Uuid>,
     }
@@ -34,7 +33,7 @@ mod asset_tests {
             category: "IT设备".to_string(),
             status: "in_use".to_string(),
             purchase_date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
-            purchase_price: BigDecimal::from(5000),
+            purchase_price: 5000.0,
             location: Some("办公室A".to_string()),
             responsible_person: Some(Uuid::new_v4()),
         };
@@ -56,7 +55,7 @@ mod asset_tests {
                 category: "设备".to_string(),
                 status: status.to_string(),
                 purchase_date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
-                purchase_price: BigDecimal::from(1000),
+                purchase_price: 1000.0,
                 location: None,
                 responsible_person: None,
             };
@@ -77,7 +76,7 @@ mod asset_tests {
                 category: category.to_string(),
                 status: "in_use".to_string(),
                 purchase_date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
-                purchase_price: BigDecimal::from(1000),
+                purchase_price: 1000.0,
                 location: None,
                 responsible_person: None,
             };
@@ -96,9 +95,9 @@ mod finance_tests {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct FinancialRecord {
         id: Uuid,
-        type: String,
+        record_type: String,
         category: String,
-        amount: BigDecimal,
+        amount: f64,
         date: NaiveDate,
         description: Option<String>,
         status: String,
@@ -109,16 +108,16 @@ mod finance_tests {
     fn test_financial_record_creation() {
         let record = FinancialRecord {
             id: Uuid::new_v4(),
-            type: "expense".to_string(),
+            record_type: "expense".to_string(),
             category: "办公用品".to_string(),
-            amount: BigDecimal::from(1000),
+            amount: 1000.0,
             date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
             description: Some("购买办公用品".to_string()),
             status: "approved".to_string(),
             approved_by: Some(Uuid::new_v4()),
         };
 
-        assert_eq!(record.type, "expense");
+        assert_eq!(record.record_type, "expense");
         assert_eq!(record.category, "办公用品");
         assert_eq!(record.status, "approved");
     }
@@ -130,16 +129,16 @@ mod finance_tests {
         for type_name in types {
             let record = FinancialRecord {
                 id: Uuid::new_v4(),
-                type: type_name.to_string(),
+                record_type: type_name.to_string(),
                 category: "分类".to_string(),
-                amount: BigDecimal::from(100),
+                amount: 100.0,
                 date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
                 description: None,
                 status: "draft".to_string(),
                 approved_by: None,
             };
 
-            assert_eq!(record.type, type_name);
+            assert_eq!(record.record_type, type_name);
         }
     }
 
@@ -150,9 +149,9 @@ mod finance_tests {
         for status in statuses {
             let record = FinancialRecord {
                 id: Uuid::new_v4(),
-                type: "expense".to_string(),
+                record_type: "expense".to_string(),
                 category: "分类".to_string(),
-                amount: BigDecimal::from(100),
+                amount: 100.0,
                 date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
                 description: None,
                 status: status.to_string(),
@@ -256,7 +255,7 @@ mod announcement_tests {
         id: Uuid,
         title: String,
         content: String,
-        type: String,
+        announcement_type: String,
         priority: String,
         publisher: Uuid,
         publish_time: DateTime<Utc>,
@@ -271,7 +270,7 @@ mod announcement_tests {
             id: Uuid::new_v4(),
             title: "公司重要通知".to_string(),
             content: "请全体员工注意...".to_string(),
-            type: "important".to_string(),
+            announcement_type: "important".to_string(),
             priority: "high".to_string(),
             publisher: Uuid::new_v4(),
             publish_time: Utc::now(),
@@ -281,7 +280,7 @@ mod announcement_tests {
         };
 
         assert_eq!(announcement.title, "公司重要通知");
-        assert_eq!(announcement.type, "important");
+        assert_eq!(announcement.announcement_type, "important");
         assert_eq!(announcement.priority, "high");
     }
 
@@ -294,7 +293,7 @@ mod announcement_tests {
                 id: Uuid::new_v4(),
                 title: "公告".to_string(),
                 content: "内容".to_string(),
-                type: type_name.to_string(),
+                announcement_type: type_name.to_string(),
                 priority: "medium".to_string(),
                 publisher: Uuid::new_v4(),
                 publish_time: Utc::now(),
@@ -303,7 +302,7 @@ mod announcement_tests {
                 target_audience: None,
             };
 
-            assert_eq!(announcement.type, type_name);
+            assert_eq!(announcement.announcement_type, type_name);
         }
     }
 
@@ -316,7 +315,7 @@ mod announcement_tests {
                 id: Uuid::new_v4(),
                 title: "公告".to_string(),
                 content: "内容".to_string(),
-                type: "normal".to_string(),
+                announcement_type: "normal".to_string(),
                 priority: "medium".to_string(),
                 publisher: Uuid::new_v4(),
                 publish_time: Utc::now(),

@@ -556,6 +556,12 @@ case "$1" in
         echo -e "  ❌ $name ($port) - 未运行"
       fi
     done
+    # 显示 File 服务状态
+    if check_port 8055; then
+      echo -e "  ✅ file (8055)"
+    else
+      echo -e "  ❌ file (8055) - 未运行"
+    fi
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     exit 0
     ;;
@@ -634,6 +640,12 @@ start_service "mail" "8054"
 # 等待 Mail 就绪
 wait_for_service "Mail" "8054" 30 "/health"
 
+# 启动 File
+start_service "file" "8055"
+
+# 等待 File 就绪
+wait_for_service "File" "8055" 30 "/health"
+
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "              服务状态                      "
@@ -655,6 +667,15 @@ for service in "${CORE_SERVICES[@]}"; do
   fi
 done
 
+# 显示 File 服务状态
+total=$((total + 1))
+if check_port 8055; then
+  echo -e "  ✅ file (http://localhost:8055)"
+  success=$((success + 1))
+else
+  echo -e "  ❌ file (端口 8055)"
+fi
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if [ "$success" -eq $total ]; then
@@ -665,12 +686,13 @@ echo -e "${GREEN}✅ 所有核心服务已成功启动！${NC}"
   echo "  - IAM:    http://localhost:8000"
   echo "  - HRM:    http://localhost:8011"
   echo "  - Mail:   http://localhost:8054"
+  echo "  - File:   http://localhost:8055"
   echo "  - API:    http://localhost:8011/api/v1"
   echo "  - 文档:   http://localhost:8011/api-docs/openapi.json"
   echo "  - Ollama: http://localhost:$OLLAMA_PORT"
   echo ""
   echo "日志目录: $PROJECT_ROOT/logs"
-  echo "  - iam.log, hrm.log, mail.log"
+  echo "  - iam.log, hrm.log, mail.log, file.log"
 else
   echo -e "${YELLOW}⚠️  部分服务启动失败 ($success/$total)${NC}"
 fi

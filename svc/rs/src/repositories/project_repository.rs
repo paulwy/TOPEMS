@@ -224,6 +224,7 @@ impl ProjectRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::ProjectType;
     use chrono::Utc;
     use sqlx::PgPool;
 
