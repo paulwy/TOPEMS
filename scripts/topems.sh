@@ -22,17 +22,18 @@ NC='\033[0m'
 # 服务配置
 CORE_SERVICES=(
   "iam:8000"
+  "doc:8001"
+  "notification:8003"
   "hrm:8011"
   "mail:8054"
   "file:8055"
-  "doc:8001"
   "ai:8013"
 )
 
 ALL_SERVICES=(
   "iam:8000"
   "doc:8001"
-  "pm:8002"
+  "pm:8024"
   "notification:8003"
   "integration:8004"
   "portal:8005"

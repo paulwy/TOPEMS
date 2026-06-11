@@ -51,6 +51,9 @@ async fn main() -> Result<()> {
         min_connections: Some(2),
         connect_timeout: Some(30),
         idle_timeout: Some(60),
+        max_lifetime: Some(1800),
+        test_interval: Some(60),
+        enable_connection_reuse: Some(true),
     };
     tracing::info!("Configuration loaded, environment: {}", config.env());
 
