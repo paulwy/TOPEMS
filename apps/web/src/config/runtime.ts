@@ -73,6 +73,7 @@ const config: RuntimeConfig = {
     mail: getEnv('VITE_MAIL_SERVICE_URL', '/mail'),
     pm: getEnv('VITE_PM_SERVICE_URL', '/pm'),
     migration: getEnv('VITE_MIGRATION_SERVICE_URL', 'http://localhost:8787'),
+    file: getEnv('VITE_FILE_SERVICE_URL', '/file'),
   },
   features: {
     debugMode: getEnvBool('VITE_ENABLE_DEBUG_MODE', false),

@@ -47,7 +47,7 @@ pub struct AuthState {
 }
 
 #[derive(Debug, Clone)]
-pub struct OptionalClaims(pub Claims);
+pub struct OptionalClaims(pub Claims, pub Option<String>); // (claims, raw_token)
 
 #[allow(dead_code)]
 pub async fn auth_middleware(
@@ -57,7 +57,8 @@ pub async fn auth_middleware(
 ) -> Response {
     let auth_header = req.headers()
         .get(header::AUTHORIZATION)
-        .and_then(|v| v.to_str().ok());
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
 
     if let Some(auth_header) = auth_header {
         if auth_header.starts_with("Bearer ") {
@@ -66,7 +67,9 @@ pub async fn auth_middleware(
             match validate_token(token, &state.jwt_secret) {
                 Ok(claims) => {
                     if !claims.is_expired() {
+                        // 存储 claims 和原始 token
                         req.extensions_mut().insert(claims);
+                        req.extensions_mut().insert(token.to_string());
                         return next.run(req).await;
                     } else {
                         tracing::debug!("Token expired");
@@ -104,27 +107,36 @@ pub async fn optional_auth_middleware(
     mut req: Request,
     next: Next,
 ) -> Response {
-    let claims = if let Some(auth_header) = req.headers()
+    let (claims, token) = if let Some(auth_header) = req.headers()
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
     {
+        tracing::debug!("🔑 Auth header found: {}...", &auth_header[..50.min(auth_header.len())]);
         if auth_header.starts_with("Bearer ") {
             let token = &auth_header[7..];
             
-            if let Ok(claims) = validate_token(token, &state.jwt_secret) {
-                if !claims.is_expired() {
-                    Some(claims)
-                } else {
-                    None
+            match validate_token(token, &state.jwt_secret) {
+                Ok(claims) => {
+                    if !claims.is_expired() {
+                        tracing::debug!("✅ Token validated successfully for user: {}", claims.username);
+                        (Some(claims), Some(token.to_string()))
+                    } else {
+                        tracing::debug!("⚠️ Token expired");
+                        (None, None)
+                    }
                 }
-            } else {
-                None
+                Err(e) => {
+                    tracing::debug!("❌ Token validation failed: {}", e);
+                    (None, None)
+                }
             }
         } else {
-            None
+            tracing::debug!("⚠️ Auth header does not start with Bearer");
+            (None, None)
         }
     } else {
-        None
+        tracing::debug!("⚠️ No auth header found");
+        (None, None)
     };
     
     let final_claims = claims.unwrap_or_else(|| Claims {
@@ -136,7 +148,7 @@ pub async fn optional_auth_middleware(
         iat: Utc::now().timestamp() as usize,
     });
     
-    req.extensions_mut().insert(OptionalClaims(final_claims));
+    req.extensions_mut().insert(OptionalClaims(final_claims, token));
     
     next.run(req).await
 }
@@ -174,6 +186,6 @@ where
                 roles: vec![],
                 exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
                 iat: Utc::now().timestamp() as usize,
-            })))
+            }, None)))
     }
 }

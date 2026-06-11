@@ -69,7 +69,7 @@ impl From<PrincipalType> for String {
 }
 
 /// 权限主体
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Principal {
     pub principal_type: PrincipalType,
     pub principal_id: Uuid,
@@ -89,7 +89,7 @@ pub struct FilePermissionRecord {
 }
 
 /// API 响应用的权限信息
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct FilePermission {
     pub id: Uuid,
     pub file_id: Uuid,

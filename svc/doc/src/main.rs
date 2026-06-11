@@ -25,6 +25,7 @@ mod api;
 use db::repository::{FileRepository, FolderRepository, FileVersionRepository, TemplateRepository, TemplateCategoryRepository, ArchiveCategoryRepository, ArchiveRepository};
 use models::{FileMetadata, Permission};
 use services::storage_service::StorageService;
+use services::doc_storage_service::DocStorageService;
 use services::conversion_service::ConversionService;
 use services::permission_service::PermissionService;
 use middleware::auth::{AuthState, optional_auth_middleware, OptionalClaims};
@@ -80,6 +81,7 @@ pub struct AppState {
     template_repo: TemplateRepository,
     template_category_repo: TemplateCategoryRepository,
     storage_service: StorageService,
+    doc_storage_service: DocStorageService,
     conversion_service: ConversionService,
     permission_service: PermissionService,
 }
@@ -267,6 +269,8 @@ struct ApiDoc;
 async fn connect_db() -> sqlx::PgPool {
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+
+    std::env::set_var("SEARCH_PATH", "doc_service, shared, public");
 
     tracing::info!("🔌 正在连接数据库: {}", database_url);
 
@@ -493,6 +497,10 @@ async fn upload_file(
 
     tracing::debug!("用户 {} 已通过身份验证，允许上传文件", claims.0.username);
 
+    // 获取 token 用于调用 File 服务
+    let token = claims.1.clone();
+    tracing::info!("🔑 Token for File service: {:?}", token.as_ref().map(|t| format!("{}...", &t[..50.min(t.len())])));
+
     let mut file_name = "uploaded_file.txt".to_string();
     let mut file_size: i64 = 0;
     let mut content_type = "text/plain".to_string();
@@ -538,18 +546,27 @@ async fn upload_file(
     }
 
     let now = Utc::now();
-    let id = Uuid::new_v4();
     let uploader = claims.0.username.clone();
 
-    match state.storage_service.save_file(&id, &file_content).await {
-        Ok(storage_path) => {
+    // 创建带 token 的 DocStorageService
+    let doc_storage = if let Some(ref t) = token {
+        state.doc_storage_service.clone().with_token(t)
+    } else {
+        state.doc_storage_service.clone()
+    };
+
+    // 调用 File 服务上传文件
+    match doc_storage.upload_to_file_service(&file_name, file_content.clone(), &content_type).await {
+        Ok(response) => {
+            tracing::info!("文件上传到 File 服务成功: file_id={}, storage_path={}", response.id, response.storage_path);
+            
             let file = models::FileMetadata {
-                id,
+                id: response.id,
                 name: file_name.clone(),
                 folder_id,
-                size: file_size,
-                content_type,
-                storage_path,
+                size: response.file_size,
+                content_type: response.content_type,
+                storage_path: response.storage_path,
                 created_at: now,
                 updated_at: now,
                 created_by: uploader.clone(),
@@ -557,19 +574,22 @@ async fn upload_file(
 
             match state.file_repo.create(file.clone()).await {
                 Ok(saved_file) => {
-                    let _ = save_file_version(&state, id, 1, file_content.clone(), uploader).await;
+                    // 保存文件版本到本地存储（用于版本控制）
+                    let _version_id = Uuid::new_v4();
+                    let _ = save_file_version(&state, response.id, 1, file_content.clone(), uploader).await;
                     return Json(ApiResponse::success(saved_file, "文件上传成功"));
                 }
                 Err(e) => {
                     tracing::error!("保存文件到数据库失败: {:?}", e);
-                    let _ = state.storage_service.delete_file(&id).await;
+                    // 尝试从 File 服务删除已上传的文件
+                    let _ = doc_storage.delete_from_file_service(response.id).await;
                     return Json(ApiResponse::error(500, "保存文件失败"));
                 }
             }
         }
         Err(e) => {
-            tracing::error!("保存文件到存储失败: {:?}", e);
-            return Json(ApiResponse::error(500, "保存文件失败"));
+            tracing::error!("上传文件到 File 服务失败: {:?}", e);
+            return Json(ApiResponse::error(500, &format!("上传失败: {}", e)));
         }
     }
 }
@@ -2013,7 +2033,7 @@ async fn main() {
     dotenv::dotenv().ok();
 
     let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "topems_secret_key_for_jwt_signing_2024".to_string());
+        .unwrap_or_else(|_| "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256".to_string());
 
     let pool = connect_db().await;
 
@@ -2030,6 +2050,14 @@ async fn main() {
         Err(e) => {
             tracing::error!("❌ 存储服务初始化失败: {}", e);
             panic!("无法初始化存储服务: {}", e);
+        }
+    };
+
+    let doc_storage_service = match DocStorageService::from_env().await {
+        Ok(service) => service,
+        Err(e) => {
+            tracing::error!("❌ DocStorageService 初始化失败: {}", e);
+            panic!("无法初始化 DocStorageService: {}", e);
         }
     };
 
@@ -2054,6 +2082,7 @@ async fn main() {
         template_repo,
         template_category_repo,
         storage_service,
+        doc_storage_service,
         conversion_service,
         permission_service,
     };

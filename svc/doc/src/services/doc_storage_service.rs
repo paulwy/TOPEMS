@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use thiserror::Error;
 use tracing::{debug, info};
 use uuid::Uuid;
@@ -22,6 +22,8 @@ pub struct DocStorageService {
     file_client: FileServiceClient,
     /// 本地缓存路径（用于临时文件）
     cache_path: PathBuf,
+    /// Authorization token
+    auth_token: Option<String>,
 }
 
 impl DocStorageService {
@@ -30,7 +32,15 @@ impl DocStorageService {
         Self {
             file_client: FileServiceClient::new(file_service_url),
             cache_path: PathBuf::from("./storage/doc_cache"),
+            auth_token: None,
         }
+    }
+
+    /// 设置 Authorization token
+    pub fn with_token(mut self, token: &str) -> Self {
+        self.auth_token = Some(token.to_string());
+        self.file_client = self.file_client.with_token(token);
+        self
     }
 
     /// 从环境变量创建
@@ -52,6 +62,7 @@ impl DocStorageService {
         Ok(Self {
             file_client: FileServiceClient::new(&file_service_url),
             cache_path,
+            auth_token: None,
         })
     }
 

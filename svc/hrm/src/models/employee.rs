@@ -188,7 +188,7 @@ mod tests {
         
         let employee = Employee {
             id,
-            organization_id: org_id,
+            organization_id: Some(org_id),
             company_id: None,
             department_id: None,
             position_id: None,
@@ -220,7 +220,7 @@ mod tests {
     fn test_create_employee_request() {
         let org_id = Uuid::new_v4();
         let request = CreateEmployeeRequest {
-            organization_id: org_id,
+            organization_id: Some(org_id),
             company_id: None,
             department_id: None,
             position_id: None,

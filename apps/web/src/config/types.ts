@@ -37,6 +37,7 @@ export interface ServicesConfig {
   mail: string;
   pm: string;
   migration: string;
+  file: string;
 }
 
 export interface FeaturesConfig {

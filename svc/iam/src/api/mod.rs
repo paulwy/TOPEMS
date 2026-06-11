@@ -1,4 +1,4 @@
-pub mod handlers;
+pub mod auth;
 pub mod permission;
 pub mod role;
 pub mod user_permission;

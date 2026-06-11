@@ -237,7 +237,7 @@ pub struct UploadFileRequest {
 }
 
 /// 文件列表查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct ListFilesQuery {
     pub owner_id: Option<Uuid>,
     pub file_type: Option<String>,

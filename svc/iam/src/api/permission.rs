@@ -2,13 +2,15 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
+    routing::{delete, get, post, put},
+    Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::models::{Permission, Role};
 use crate::db::RepositoryError;
+use crate::AppState;
 use topems_shared::ApiResponse;
 
 // ============ 请求/响应模型 ============
@@ -23,35 +25,37 @@ pub struct ListPermissionsQuery {
 
 #[derive(Debug, Deserialize)]
 pub struct CreatePermissionRequest {
+    pub code: String,
     pub name: String,
-    pub resource: String,
-    pub action: String,
     pub description: Option<String>,
+    pub category: String,
+    pub module: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdatePermissionRequest {
     pub name: Option<String>,
-    pub resource: Option<String>,
-    pub action: Option<String>,
     pub description: Option<String>,
+    pub category: Option<String>,
+    pub module: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct PermissionResponse {
     pub id: String,
+    pub code: String,
     pub name: String,
-    pub resource: String,
-    pub action: String,
     pub description: Option<String>,
+    pub category: String,
+    pub module: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ListPermissionsResponse {
     pub permissions: Vec<PermissionResponse>,
     pub total: u64,
-    pub page: u32,
-    pub page_size: u32,
+    pub page: i64,
+    pub page_size: i64,
 }
 
 // ============ Handler 实现 ============
@@ -60,17 +64,17 @@ pub async fn list_permissions(
     State(state): State<crate::AppState>,
     Query(params): Query<ListPermissionsQuery>,
 ) -> Result<Json<ApiResponse<ListPermissionsResponse>>, impl IntoResponse> {
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
+    let page = params.page.unwrap_or(1).max(1) as i64;
+    let page_size = params.page_size.unwrap_or(20).min(100) as i64;
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, Permission>(
         r#"
-        SELECT id, name, resource, action, description
+        SELECT id, code, name, description, category, module, created_at, updated_at
         FROM iam.permissions
-        WHERE ($1::text IS NULL OR resource = $1)
-          AND ($2::text IS NULL OR action = $2)
-        ORDER BY resource, action
+        WHERE ($1::text IS NULL OR module = $1)
+          AND ($2::text IS NULL OR code = $2)
+        ORDER BY module, code
         LIMIT $3 OFFSET $4
         "#
     )
@@ -88,10 +92,11 @@ pub async fn list_permissions(
                 .into_iter()
                 .map(|p| PermissionResponse {
                     id: p.id.to_string(),
+                    code: p.code,
                     name: p.name,
-                    resource: p.resource,
-                    action: p.action,
                     description: p.description,
+                    category: p.category,
+                    module: p.module,
                 })
                 .collect();
 
@@ -119,26 +124,33 @@ pub async fn create_permission(
     State(state): State<crate::AppState>,
     Json(req): Json<CreatePermissionRequest>,
 ) -> Result<Json<ApiResponse<PermissionResponse>>, impl IntoResponse> {
+    let now = chrono::Utc::now();
     let permission = Permission {
         id: Uuid::new_v4(),
+        code: req.code.clone(),
         name: req.name.clone(),
-        resource: req.resource.clone(),
-        action: req.action.clone(),
         description: req.description.clone(),
+        category: req.category.clone(),
+        module: req.module.clone(),
+        created_at: now,
+        updated_at: now,
     };
 
     let result = sqlx::query_as::<_, Permission>(
         r#"
-        INSERT INTO iam.permissions (id, name, resource, action, description)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, name, resource, action, description
+        INSERT INTO iam.permissions (id, code, name, description, category, module, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, code, name, description, category, module, created_at, updated_at
         "#
     )
     .bind(permission.id)
+    .bind(&permission.code)
     .bind(&permission.name)
-    .bind(&permission.resource)
-    .bind(&permission.action)
     .bind(&permission.description)
+    .bind(&permission.category)
+    .bind(&permission.module)
+    .bind(&permission.created_at)
+    .bind(&permission.updated_at)
     .fetch_one(&state.db)
     .await;
 
@@ -148,10 +160,11 @@ pub async fn create_permission(
             Ok(Json(ApiResponse::success(
                 PermissionResponse {
                     id: created.id.to_string(),
+                    code: created.code,
                     name: created.name,
-                    resource: created.resource,
-                    action: created.action,
                     description: created.description,
+                    category: created.category,
+                    module: created.module,
                 },
                 "创建权限成功",
             )))
@@ -178,7 +191,7 @@ pub async fn get_permission(
     Path(permission_id): Path<String>,
 ) -> Result<Json<ApiResponse<PermissionResponse>>, impl IntoResponse> {
     let result = sqlx::query_as::<_, Permission>(
-        "SELECT id, name, resource, action, description FROM iam.permissions WHERE id = $1"
+        "SELECT id, code, name, description, category, module, created_at, updated_at FROM iam.permissions WHERE id = $1"
     )
     .bind(&permission_id)
     .fetch_optional(&state.db)
@@ -188,10 +201,11 @@ pub async fn get_permission(
         Ok(Some(permission)) => Ok(Json(ApiResponse::success(
             PermissionResponse {
                 id: permission.id.to_string(),
+                code: permission.code,
                 name: permission.name,
-                resource: permission.resource,
-                action: permission.action,
                 description: permission.description,
+                category: permission.category,
+                module: permission.module,
             },
             "获取权限成功",
         ))),
@@ -214,9 +228,8 @@ pub async fn update_permission(
     Path(permission_id): Path<String>,
     Json(req): Json<UpdatePermissionRequest>,
 ) -> Result<Json<ApiResponse<PermissionResponse>>, impl IntoResponse> {
-    // 先查询权限是否存在
     let existing = sqlx::query_as::<_, Permission>(
-        "SELECT id, name, resource, action, description FROM iam.permissions WHERE id = $1"
+        "SELECT id, code, name, description, category, module, created_at, updated_at FROM iam.permissions WHERE id = $1"
     )
     .bind(&permission_id)
     .fetch_optional(&state.db)
@@ -240,23 +253,24 @@ pub async fn update_permission(
     };
 
     let name = req.name.unwrap_or(existing_permission.name);
-    let resource = req.resource.unwrap_or(existing_permission.resource);
-    let action = req.action.unwrap_or(existing_permission.action);
     let description = req.description.or(existing_permission.description);
+    let category = req.category.unwrap_or(existing_permission.category);
+    let module = req.module.unwrap_or(existing_permission.module);
 
     let result = sqlx::query_as::<_, Permission>(
         r#"
         UPDATE iam.permissions
-        SET name = $2, resource = $3, action = $4, description = $5
+        SET name = $2, description = $3, category = $4, module = $5, updated_at = $6
         WHERE id = $1
-        RETURNING id, name, resource, action, description
+        RETURNING id, code, name, description, category, module, created_at, updated_at
         "#
     )
     .bind(&permission_id)
     .bind(&name)
-    .bind(&resource)
-    .bind(&action)
     .bind(&description)
+    .bind(&category)
+    .bind(&module)
+    .bind(&chrono::Utc::now())
     .fetch_one(&state.db)
     .await;
 
@@ -266,10 +280,11 @@ pub async fn update_permission(
             Ok(Json(ApiResponse::success(
                 PermissionResponse {
                     id: updated.id.to_string(),
+                    code: updated.code,
                     name: updated.name,
-                    resource: updated.resource,
-                    action: updated.action,
                     description: updated.description,
+                    category: updated.category,
+                    module: updated.module,
                 },
                 "更新权限成功",
             )))
@@ -313,4 +328,14 @@ pub async fn delete_permission(
             ))
         }
     }
+}
+
+pub fn create_permission_routes(state: AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/v1/permissions", get(list_permissions))
+        .route("/api/v1/permissions", post(create_permission))
+        .route("/api/v1/permissions/{permission_id}", get(get_permission))
+        .route("/api/v1/permissions/{permission_id}", put(update_permission))
+        .route("/api/v1/permissions/{permission_id}", delete(delete_permission))
+        .with_state(state)
 }

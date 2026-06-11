@@ -19,12 +19,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-topems_secret}
       POSTGRES_DB: ${POSTGRES_DB:-topems}
       PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: UTC
+      PGTZ: UTC
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
-      - ../scripts/init-database.sh:/docker-entrypoint-initdb.d/99-init-database.sh:ro
     networks:
       - topems-network
     healthcheck:
@@ -146,4 +147,3 @@ services:
 networks:
   topems-network:
     driver: bridge
-    name: topems-network

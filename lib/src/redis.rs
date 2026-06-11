@@ -5,6 +5,7 @@ use redis::{Client, Connection, RedisResult};
 use std::sync::Arc;
 use async_trait::async_trait;
 
+#[derive(Debug)]
 pub struct RedisPool {
     client: Arc<Client>,
 }
@@ -45,6 +46,7 @@ pub trait CacheService {
     async fn flush_db(&self) -> Result<()>;
 }
 
+#[derive(Debug)]
 pub struct RedisCacheService {
     pool: Arc<RedisPool>,
 }

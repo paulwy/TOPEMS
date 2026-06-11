@@ -11,11 +11,13 @@ use axum::{
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use serde::Serialize;
+use std::env;
 use std::sync::Arc;
 use std::time::Instant;
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware,
+    config::enhanced::DatabaseConfig,
     create_cors_layer,
     create_database_pool,
     init_logging,
@@ -47,15 +49,16 @@ async fn main() -> Result<()> {
     tracing::info!("✅ Prometheus 监控已初始化");
 
     let config = Config::load().await?;
-    let db_config = config.get_database().await;
+    let db_config = DatabaseConfig {
+        url: env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string()),
+        max_connections: 10,
+        min_connections: Some(2),
+        connect_timeout: Some(30),
+        idle_timeout: Some(60),
+    };
     tracing::info!("Configuration loaded, environment: {}", config.env());
     tracing::info!("=== DB Config ===");
     tracing::info!("Database URL: {}", db_config.url);
-    tracing::info!("Database Name: {}", db_config.name);
-    tracing::info!("Database Host: {}", db_config.host);
-    tracing::info!("Database Port: {}", db_config.port);
-    tracing::info!("Database User: {}", db_config.user);
-    tracing::info!("Database Password: {}", db_config.password);
 
     let pool = create_database_pool(&db_config).await?;
     test_database_connection(&pool).await?;

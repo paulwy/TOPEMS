@@ -65,6 +65,12 @@ export const PERMISSION_MAPPING: Record<string, { name: string; resource: string
   '00000008-0000-0000-0000-000000000003': { name: 'doc:delete', resource: 'doc', action: 'delete' },
   '00000008-0000-0000-0000-000000000004': { name: 'doc:admin', resource: 'doc', action: 'admin' },
 
+  // File
+  '00000016-0000-0000-0000-000000000001': { name: 'file:read', resource: 'file', action: 'read' },
+  '00000016-0000-0000-0000-000000000002': { name: 'file:write', resource: 'file', action: 'write' },
+  '00000016-0000-0000-0000-000000000003': { name: 'file:delete', resource: 'file', action: 'delete' },
+  '00000016-0000-0000-0000-000000000004': { name: 'file:admin', resource: 'file', action: 'admin' },
+
   // AI
   '00000009-0000-0000-0000-000000000001': { name: 'ai:read', resource: 'ai', action: 'read' },
   '00000009-0000-0000-0000-000000000002': { name: 'ai:write', resource: 'ai', action: 'write' },

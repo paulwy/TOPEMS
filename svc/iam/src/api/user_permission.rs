@@ -2,22 +2,24 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
+    routing::{delete, get, post, put},
+    Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::models::{Permission, Role, User};
+use crate::AppState;
 use topems_shared::ApiResponse;
 
 // ============ 请求/响应模型 ============
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct PermissionInfo {
     pub id: String,
     pub name: String,
-    pub resource: String,
-    pub action: String,
+    pub code: String,
+    pub category: String,
     pub description: Option<String>,
 }
 
@@ -88,11 +90,11 @@ pub async fn get_user_direct_permissions(
     // 查询用户的直接权限
     let result = sqlx::query_as::<_, Permission>(
         r#"
-        SELECT p.id, p.name, p.resource, p.action, p.description
+        SELECT p.id, p.name, p.code, p.category, p.description
         FROM iam.permissions p
         INNER JOIN iam.user_direct_permissions udp ON p.id = udp.permission_id
         WHERE udp.user_id = $1
-        ORDER BY p.resource, p.action
+        ORDER BY p.category, p.code
         "#
     )
     .bind(&user_id)
@@ -107,8 +109,8 @@ pub async fn get_user_direct_permissions(
                 .map(|p| PermissionInfo {
                     id: p.id.to_string(),
                     name: p.name,
-                    resource: p.resource,
-                    action: p.action,
+                    code: p.code,
+                    category: p.category,
                     description: p.description,
                 })
                 .collect();
@@ -392,11 +394,11 @@ pub async fn get_effective_permissions(
     // 获取用户的直接权限
     let direct_permissions_result = sqlx::query_as::<_, Permission>(
         r#"
-        SELECT p.id, p.name, p.resource, p.action, p.description
+        SELECT p.id, p.name, p.code, p.category, p.description
         FROM iam.permissions p
         INNER JOIN iam.user_direct_permissions udp ON p.id = udp.permission_id
         WHERE udp.user_id = $1
-        ORDER BY p.resource, p.action
+        ORDER BY p.category, p.code
         "#
     )
     .bind(&user_id)
@@ -409,8 +411,8 @@ pub async fn get_effective_permissions(
             .map(|p| PermissionInfo {
                 id: p.id.to_string(),
                 name: p.name,
-                resource: p.resource,
-                action: p.action,
+                code: p.code,
+                category: p.category,
                 description: p.description,
             })
             .collect::<Vec<_>>(),
@@ -426,12 +428,12 @@ pub async fn get_effective_permissions(
     // 获取用户的角色权限
     let role_permissions_result = sqlx::query_as::<_, Permission>(
         r#"
-        SELECT DISTINCT p.id, p.name, p.resource, p.action, p.description
+        SELECT DISTINCT p.id, p.name, p.code, p.category, p.description
         FROM iam.permissions p
         INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id
         INNER JOIN iam.user_roles ur ON rp.role_id = ur.role_id
         WHERE ur.user_id = $1
-        ORDER BY p.resource, p.action
+        ORDER BY p.category, p.code
         "#
     )
     .bind(&user_id)
@@ -444,8 +446,8 @@ pub async fn get_effective_permissions(
             .map(|p| PermissionInfo {
                 id: p.id.to_string(),
                 name: p.name,
-                resource: p.resource,
-                action: p.action,
+                code: p.code,
+                category: p.category,
                 description: p.description,
             })
             .collect::<Vec<_>>(),
@@ -480,4 +482,16 @@ pub async fn get_effective_permissions(
         },
         "获取用户有效权限成功",
     )))
+}
+
+pub fn create_user_permission_routes(state: AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/v1/users/{user_id}/permissions", get(get_user_direct_permissions))
+        .route("/api/v1/users/{user_id}/permissions", post(assign_direct_permissions))
+        .route("/api/v1/users/{user_id}/permissions/{permission_id}", delete(remove_direct_permission))
+        .route("/api/v1/users/{user_id}/roles", get(get_user_roles))
+        .route("/api/v1/users/{user_id}/roles", post(assign_roles_to_user))
+        .route("/api/v1/users/{user_id}/roles/{role_id}", delete(remove_user_role))
+        .route("/api/v1/users/{user_id}/effective-permissions", get(get_effective_permissions))
+        .with_state(state)
 }

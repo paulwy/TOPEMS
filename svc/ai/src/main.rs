@@ -439,13 +439,17 @@ fn split_into_chunks(content: &str, chunk_size: usize, overlap: usize) -> Vec<St
         return chunks;
     }
     
+    let mut chunks = Vec::new();
+    let chars: Vec<char> = content.chars().collect();
+    let char_count = chars.len();
     let mut start = 0;
-    while start < content_len {
-        let end = std::cmp::min(start + chunk_size, content_len);
-        let chunk = content[start..end].to_string();
+    
+    while start < char_count {
+        let end = std::cmp::min(start + chunk_size, char_count);
+        let chunk: String = chars[start..end].iter().collect();
         chunks.push(chunk);
         
-        if end >= content_len {
+        if end >= char_count {
             break;
         }
         
@@ -1465,6 +1469,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
     
+    std::env::set_var("SEARCH_PATH", "ai_service, shared, public");
+    
     tracing::info!("🔌 连接数据库: {}", database_url.split('@').last().unwrap_or("..."));
     
     let db = Database::new(&database_url).await?;
@@ -1481,7 +1487,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 创建服务
     let vector_service = VectorService::new(db);
-    let document_service = DocumentService::new(vector_service.clone());
+    
+    // File 服务 URL（可选，用于从 File 服务获取文件）
+    let file_service_url = std::env::var("FILE_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8080".to_string());
+    
+    let document_service = if std::env::var("FILE_SERVICE_URL").is_ok() {
+        tracing::info!("🔗 连接 File 服务: {}", file_service_url);
+        DocumentService::with_file_client(vector_service.clone(), &file_service_url)
+    } else {
+        tracing::warn!("⚠️ FILE_SERVICE_URL 未设置，DocumentService 将以兼容模式运行");
+        DocumentService::new(vector_service.clone())
+    };
     
     // 创建 QA 和 Analysis 服务
     let qa_config = QAConfig {
@@ -1507,9 +1524,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     CHUNKS.set(Arc::new(Mutex::new(Vec::new()))).unwrap();
     
     // 后台索引文档（向后兼容）
-    tokio::spawn(async {
-        index_all_documents().await;
-    });
+    if std::env::var("DISABLE_AUTO_INDEX").is_err() {
+        tokio::spawn(async {
+            index_all_documents().await;
+        });
+    } else {
+        tracing::info!("⚠️ 自动文档索引已禁用");
+    }
     
     CLIENT.set(http_client.clone()).unwrap();
     CONFIG.set(config.clone()).unwrap();
@@ -1545,6 +1566,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // 文档处理 API - 使用 DocumentApi 模块
         .route("/api/v1/documents", get(DocumentApi::list))
         .route("/api/v1/documents/upload", post(DocumentApi::upload))
+        .route("/api/v1/documents/vectorize-from-file", post(DocumentApi::vectorize_from_file))
         .route("/api/v1/documents/{id}", get(DocumentApi::get))
         .route("/api/v1/documents/{id}", delete(DocumentApi::delete))
         .route("/api/v1/documents/{id}/process", post(DocumentApi::process))
