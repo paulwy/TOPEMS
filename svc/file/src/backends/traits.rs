@@ -50,7 +50,7 @@ pub trait FileStorage: Send + Sync {
     async fn exists(&self, path: &str) -> Result<bool, StorageError>;
 
     /// 生成预签名 URL（用于 S3/MinIO）
-    async fn presigned_url(&self, path: &str, _expires_in: Duration) -> Result<String, StorageError> {
+    async fn presigned_url(&self, _path: &str, _expires_in: Duration) -> Result<String, StorageError> {
         Err(StorageError::Backend("Presigned URL not supported for this backend".to_string()))
     }
 

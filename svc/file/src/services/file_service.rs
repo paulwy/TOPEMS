@@ -1,12 +1,12 @@
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use sqlx::PgPool;
 use tokio::io::AsyncRead;
 use tracing::{debug, info};
 use uuid::Uuid;
 
 use crate::backends::{FileStorage, LocalStorage};
-use crate::models::events::{should_vectorize_for_event, FileEvent};
+use crate::models::events::should_vectorize_for_event;
 use crate::models::file::{FileMetadata, FileRecord, ListFilesQuery};
 
 pub struct FileService {

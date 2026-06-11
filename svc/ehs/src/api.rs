@@ -1,12 +1,10 @@
 
-use anyhow::Result;
 use axum::{
-    extract::{Extension, FromRef, Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::get,
     Json, Router,
 };
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use crate::models::{
@@ -16,14 +14,13 @@ use crate::models::{
     CreateEmergencyPlanRequest, UpdateEmergencyPlanRequest,
     CreateDrillRecordRequest, UpdateDrillRecordRequest,
 };
-use crate::services::EhsService;
 use crate::services::permission::{
     check_hazard_permission, check_hazard_write_permission,
     check_safety_check_permission, check_safety_check_write_permission,
     check_emergency_plan_permission, check_emergency_plan_write_permission,
     check_drill_permission, check_drill_write_permission,
 };
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared::ApiResponse;
 use topems_shared::auth::Claims;
 
 // 声明子模块

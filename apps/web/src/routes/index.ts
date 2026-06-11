@@ -1,0 +1,14 @@
+export { authRoutes } from './auth';
+export { dashboardRoutes } from './dashboard';
+export { hrmRoutes } from './hrm';
+export { crmRoutes } from './crm';
+export { erpRoutes } from './erp';
+export { iamRoutes } from './iam';
+export { workflowRoutes } from './workflow';
+export { biRoutes } from './bi';
+export { pmRoutes } from './pm';
+export { notificationRoutes } from './notifications';
+export { docsRoutes } from './docs';
+export { aiRoutes } from './ai';
+export { professionalRoutes } from './professional';
+export { type RouteConfig, lazyWithRetry } from './utils';

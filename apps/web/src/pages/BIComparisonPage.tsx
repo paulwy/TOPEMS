@@ -287,7 +287,7 @@ const BIComparisonPage = () => {
               {chartType === 'bar' && <BarChart data={getComparisonData()} xKey='month' yKeys={yKeys} height={350} />}
               {chartType === 'line' && <LineChart data={getComparisonData()} xKey='month' yKeys={yKeys} height={350} />}
               {chartType === 'pie' && <PieChart data={getPieData()} height={350} />}
-              {chartType === 'radar' && <RadarChart data={getRadarData()} height={350} />}
+              {chartType === 'radar' && <RadarChart data={getRadarData()} dataKey='name' nameKey='subject' yKeys={yKeys} height={350} />}
             </CardContent>
           </Card>
 

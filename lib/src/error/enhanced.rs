@@ -183,7 +183,7 @@ impl SafeErrorHandler {
 #[macro_export]
 macro_rules! safe_result {
     // 处理 Option
-    ($option:expr, $msg:expr) => {
+    ($option:expr_2021, $msg:expr_2021) => {
         match $option {
             Some(v) => v,
             None => return Err($crate::error::TopemsError::Internal($msg.to_string())),
@@ -195,12 +195,12 @@ macro_rules! safe_result {
 #[macro_export]
 macro_rules! safe_unwrap {
     // 处理 Result
-    ($result:expr) => {
+    ($result:expr_2021) => {
         $result.map_err(|e| $crate::error::TopemsError::Internal(e.to_string()))?
     };
     
     // 处理 Result with custom message
-    ($result:expr, $msg:expr) => {
+    ($result:expr_2021, $msg:expr_2021) => {
         $result.map_err(|e| {
             $crate::error::TopemsError::Internal(format!("{}: {}", $msg, e))
         })?

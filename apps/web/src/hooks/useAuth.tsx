@@ -114,6 +114,9 @@ const AuthContext = createContext<
       hasAnyPermission: (permissions: string[]) => boolean;
       hasAllPermissions: (permissions: string[]) => boolean;
       refreshPermissions: () => Promise<void>;
+      refreshToken: () => Promise<boolean>;
+      isSessionExpiringSoon: () => boolean;
+      getTimeUntilExpiry: () => number;
     })
   | null
 >(null);
@@ -136,11 +139,83 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     permissions: [],
   });
 
+  // Token 过期时间戳（毫秒）
+  const [tokenExpiry, setTokenExpiry] = useState<number | null>(null);
+  const [lastActivity, setLastActivity] = useState<number>(Date.now());
+
   // Use refs to hold latest state values for stable callbacks
   const stateRef = useRef(state);
+  const tokenExpiryRef = useRef(tokenExpiry);
+  const lastActivityRef = useRef(lastActivity);
+
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    tokenExpiryRef.current = tokenExpiry;
+  }, [tokenExpiry]);
+
+  useEffect(() => {
+    lastActivityRef.current = lastActivity;
+  }, [lastActivity]);
+
+  // 会话即将过期检查（5分钟内）
+  const isSessionExpiringSoon = useCallback(() => {
+    if (!tokenExpiryRef.current) return false;
+    const now = Date.now();
+    const timeUntilExpiry = tokenExpiryRef.current - now;
+    // 5分钟 = 300000毫秒
+    return timeUntilExpiry > 0 && timeUntilExpiry < 5 * 60 * 1000;
+  }, []);
+
+  // 获取距离过期的剩余时间（秒）
+  const getTimeUntilExpiry = useCallback(() => {
+    if (!tokenExpiryRef.current) return 0;
+    const now = Date.now();
+    const timeUntilExpiry = tokenExpiryRef.current - now;
+    return Math.max(0, Math.floor(timeUntilExpiry / 1000));
+  }, []);
+
+  // 更新最后活动时间
+  const updateLastActivity = useCallback(() => {
+    setLastActivity(Date.now());
+  }, []);
+
+  // 用户活动监听器 - 检测鼠标、键盘、点击等活动
+  useEffect(() => {
+    if (!state.isAuthenticated) return;
+
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+
+    const handleActivity = () => {
+      updateLastActivity();
+    };
+
+    // 使用节流来避免过于频繁的更新
+    let throttleTimer: NodeJS.Timeout | null = null;
+    const throttledHandler = () => {
+      if (!throttleTimer) {
+        throttleTimer = setTimeout(() => {
+          handleActivity();
+          throttleTimer = null;
+        }, 60000); // 每分钟最多更新一次
+      }
+    };
+
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, throttledHandler, { passive: true });
+    });
+
+    return () => {
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, throttledHandler);
+      });
+      if (throttleTimer) {
+        clearTimeout(throttleTimer);
+      }
+    };
+  }, [state.isAuthenticated, updateLastActivity]);
 
   const refreshToken = useCallback(async () => {
     const refresh_token = localStorage.getItem('refresh_token');
@@ -154,6 +229,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { access_token } = response.data;
         localStorage.setItem('token', access_token);
         apiClient.setAuthToken(access_token);
+
+        // 设置新的过期时间（当前时间 + 1小时）
+        const newExpiry = Date.now() + 60 * 60 * 1000;
+        setTokenExpiry(newExpiry);
+        localStorage.setItem('token_expiry', newExpiry.toString());
+
         setState((prev) => ({ ...prev, token: access_token }));
         return true;
       }
@@ -164,6 +245,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.removeItem('user');
       localStorage.removeItem('roles');
       localStorage.removeItem('permissions');
+      localStorage.removeItem('token_expiry');
       window.location.href = '/login';
       return false;
     }
@@ -178,12 +260,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const userStr = localStorage.getItem('user');
       const rolesStr = localStorage.getItem('roles');
       const permissionsStr = localStorage.getItem('permissions');
+      const tokenExpiryStr = localStorage.getItem('token_expiry');
 
       if (token && userStr) {
         try {
           const user = JSON.parse(userStr);
           const roles = rolesStr ? JSON.parse(rolesStr) : [];
           const permissions = permissionsStr ? JSON.parse(permissionsStr) : [];
+
+          // 恢复 token 过期时间
+          if (tokenExpiryStr) {
+            const expiry = parseInt(tokenExpiryStr, 10);
+            setTokenExpiry(expiry);
+          } else {
+            // 如果没有过期时间，假设token会在1小时后过期
+            const newExpiry = Date.now() + 60 * 60 * 1000;
+            setTokenExpiry(newExpiry);
+            localStorage.setItem('token_expiry', newExpiry.toString());
+          }
 
           apiClient.setAuthToken(token);
 
@@ -196,9 +290,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             permissions,
           });
 
-          if (refreshInterval) {
-            clearInterval(refreshInterval);
-          }
+          // 每50分钟刷新一次 token
           refreshInterval = setInterval(
             async () => {
               console.log('Attempting to refresh token...');
@@ -237,6 +329,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         localStorage.setItem('user', JSON.stringify(user));
 
+        // 设置 token 过期时间（1小时后）
+        const expiry = Date.now() + 60 * 60 * 1000;
+        setTokenExpiry(expiry);
+        localStorage.setItem('token_expiry', expiry.toString());
+
         const roles = user.roles || [];
         const permissions = user.permissions || [];
 
@@ -270,6 +367,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('user');
     localStorage.removeItem('roles');
     localStorage.removeItem('permissions');
+    localStorage.removeItem('token_expiry');
+
+    setTokenExpiry(null);
 
     setState({
       user: null,
@@ -344,8 +444,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       hasAnyPermission,
       hasAllPermissions,
       refreshPermissions,
+      refreshToken,
+      isSessionExpiringSoon,
+      getTimeUntilExpiry,
     }),
-    [state, login, logout, hasPermission, hasRole, hasAnyPermission, hasAllPermissions, refreshPermissions]
+    [state, login, logout, hasPermission, hasRole, hasAnyPermission, hasAllPermissions, refreshPermissions, refreshToken, isSessionExpiringSoon, getTimeUntilExpiry]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

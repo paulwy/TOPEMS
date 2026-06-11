@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 description = "Shared library for TOPEMS microservices"
 
+[features]
+pgvector = []
+
 [dependencies]
 dotenv.workspace = true
 envy = "0.4"

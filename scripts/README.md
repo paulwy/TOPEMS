@@ -44,9 +44,10 @@
 
 | 脚本 | 说明 |
 |------|------|
-| `topems.sh` | **统一服务管理脚本**（推荐使用） |
-| `start-local.sh` | 启动核心服务（IAM + HRM + Mail），不依赖 Docker |
-| `start-all.sh` | 启动所有服务（需要 Docker） |
+| `topems.sh` | **统一服务管理脚本**（推荐使用，需要Docker） |
+| `start-local.sh` | 启动核心服务（IAM + HRM + Mail），需要Docker |
+| `start-all.sh` | 启动所有服务（需要Docker） |
+| `start-without-docker.sh` | **无Docker启动脚本**（推荐用于本地已安装PostgreSQL/Redis） |
 | `start-services.sh` | 启动服务脚本 |
 | `start-production.sh` | 生产环境部署脚本 |
 | `stop-all.sh` | 停止所有服务 |
@@ -56,6 +57,7 @@
 | 脚本 | 说明 |
 |------|------|
 | `init-db-unified.sh` | 统一数据库初始化（自动检测环境） |
+| `init-db-local.sh` | **无Docker数据库初始化脚本**（本地PostgreSQL环境） |
 | `init-vector-index.sh` | 初始化 Redis 向量索引 |
 | `install-pgvector.sh` | 安装配置 pgvector |
 | `rebuild-postgres.sh` | 重建支持 pgvector 的 PostgreSQL 容器 |
@@ -81,6 +83,36 @@
 
 ## 使用示例
 
+### 快速开始（无Docker模式）
+
+如果你本地已安装 PostgreSQL 和 Redis，可以使用以下方式快速启动：
+
+```bash
+# 1. 初始化数据库
+bash scripts/init-db-local.sh
+
+# 2. 加载环境变量
+source .env.local
+
+# 3. 启动核心服务
+bash scripts/start-without-docker.sh start
+
+# 4. 查看服务状态
+bash scripts/start-without-docker.sh status
+```
+
+### Docker 模式启动
+
+使用 Docker 容器运行 PostgreSQL 和 Redis：
+
+```bash
+# 1. 初始化数据库
+bash scripts/init-db-unified.sh
+
+# 2. 启动所有服务
+bash scripts/start-all.sh
+```
+
 ### 启动核心服务（推荐用于开发）
 
 ```bash
@@ -98,10 +130,11 @@ bash scripts/start-all.sh
 ### 数据库初始化
 
 ```bash
-# 方式一：使用 start-local.sh 自动初始化（推荐）
-bash scripts/start-local.sh
+# 方式一：无Docker模式（推荐用于本地开发）
+#   前提条件：本地已安装 PostgreSQL 和 Redis
+bash scripts/init-db-local.sh
 
-# 方式二：使用统一初始化脚本（交互式）
+# 方式二：使用统一初始化脚本（交互式，自动检测环境）
 bash scripts/init-db-unified.sh
 
 # 方式三：手动使用 psql
@@ -109,6 +142,39 @@ psql -U xingzhai -d postgres << 'EOF'
 CREATE ROLE topems WITH LOGIN PASSWORD 'topems_secret' CREATEDB SUPERUSER;
 CREATE DATABASE topems OWNER topems;
 EOF
+```
+
+#### 无Docker模式环境变量配置
+
+```bash
+# 可选配置（使用默认值可以跳过）
+export DB_NAME=topems
+export DB_USER=topems
+export DB_PASS=topems_secret
+export DB_HOST=localhost
+export DB_PORT=5432
+```
+
+#### 无Docker启动脚本命令
+
+```bash
+# 启动核心服务
+bash scripts/start-without-docker.sh start
+
+# 启动所有服务
+bash scripts/start-without-docker.sh start-all
+
+# 停止所有服务
+bash scripts/start-without-docker.sh stop
+
+# 查看服务状态
+bash scripts/start-without-docker.sh status
+
+# 查看服务日志
+bash scripts/start-without-docker.sh logs <服务名> [行数]
+
+# 查看帮助
+bash scripts/start-without-docker.sh help
 ```
 
 ### 配置 Ollama AI

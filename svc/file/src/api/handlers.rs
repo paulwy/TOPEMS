@@ -1,16 +1,14 @@
 use axum::{
     body::Body,
-    extract::{Path, Query, State},
-    http::{header, HeaderMap, StatusCode},
-    response::{AppendHeaders, IntoResponse, Response},
+    extract::State,
+    http::{header, StatusCode},
+    response::{AppendHeaders, IntoResponse},
     Json,
 };
-use bytes::Bytes;
 use chrono::Utc;
 use futures::{StreamExt, TryStreamExt};
 use sqlx::PgPool;
 use std::sync::Arc;
-use tokio::io::AsyncReadExt;
 use tracing::{error, info};
 use uuid::Uuid;
 
@@ -21,7 +19,7 @@ use crate::models::file::{FileMetadata, ListFilesQuery};
 use crate::models::permission::{ShareFileRequest};
 use crate::services::file_service::FileService;
 use crate::services::permission_service::PermissionService;
-use topems_shared::{AuthState, auth::Claims, api_error};
+use topems_shared::{AuthState, auth::Claims};
 
 #[derive(Clone)]
 pub struct AppState {

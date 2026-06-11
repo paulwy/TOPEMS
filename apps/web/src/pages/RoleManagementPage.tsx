@@ -424,7 +424,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
                       </div>
                       <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>{perm.description}</p>
                       <p className='text-xs text-gray-400 dark:text-gray-500'>
-                        资源: {perm.resource} | 操作: {perm.action}
+                        分类: {perm.category} | 权限码: {perm.code}
                       </p>
                     </div>
                     {hasPermission ? (

@@ -12,4 +12,3 @@ pub use inspection_task::{InspectionTask, CreateInspectionTaskRequest, UpdateIns
 pub use inspection_record::{InspectionRecord, CreateInspectionRecordRequest};
 pub use audit_log::AuditLog;
 pub use instrument::{Instrument, CreateInstrumentRequest, UpdateInstrumentRequest, MaintenanceRecord, CreateMaintenanceRecordRequest};
-pub use reagent::{Reagent, CreateReagentRequest, UpdateReagentRequest, ReagentUsageRequest};

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use chrono::Utc;
@@ -13,7 +13,6 @@ use uuid::Uuid;
 use crate::models::{
     Supplier, SupplierPerformance, SupplierProduct, SupplierContract,
     CreateSupplierRequest, UpdateSupplierRequest,
-    AuditLog,
 };
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;

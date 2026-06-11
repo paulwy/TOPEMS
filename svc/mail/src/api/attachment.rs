@@ -4,7 +4,7 @@ use axum::{
     extract::{Extension, Path, Query, State},
     http::{StatusCode, header::CONTENT_TYPE},
     response::Response,
-    routing::{delete, get},
+    routing::get,
     Json, Router,
 };
 use std::path::PathBuf;

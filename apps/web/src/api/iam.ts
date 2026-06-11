@@ -33,9 +33,11 @@ export interface Role {
 export interface Permission {
   id: string;
   name: string;
-  resource: string;
-  action: string;
+  code: string;
+  category: string;
   description?: string;
+  resource?: string;
+  action?: string;
 }
 
 export interface UserPreferences {
@@ -90,6 +92,34 @@ export interface AccessLog {
   created_at: string;
 }
 
+// 密码重置请求
+export interface ResetPasswordRequest {
+  email: string;
+}
+
+// 设置新密码请求
+export interface SetNewPasswordRequest {
+  token: string;
+  new_password: string;
+}
+
+// 批量操作请求
+export interface BatchOperationRequest {
+  user_ids: string[];
+}
+
+// 批量删除响应
+export interface BatchDeleteResponse {
+  deleted_count: number;
+  failed_ids: string[];
+}
+
+// 批量更新用户状态
+export interface BatchUpdateUsersRequest {
+  user_ids: string[];
+  is_active?: boolean;
+}
+
 export interface CreateAccessLogRequest {
   user_id: string;
   username: string;
@@ -104,8 +134,9 @@ export interface CreateAccessLogRequest {
 
 export interface CreatePermissionRequest {
   name: string;
-  resource: string;
-  action: string;
+  code: string;
+  category: string;
+  module: string;
   description?: string;
 }
 
@@ -205,7 +236,7 @@ export const authApi = {
   },
 
   addRolePermission: async (roleId: string, permissionId: string): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>(`/api/v1/roles/${roleId}/permissions/${permissionId}`);
+    return apiClient.iam.post<string>(`/api/v1/roles/${roleId}/permissions`, { permission_ids: [permissionId] });
   },
 
   removeRolePermission: async (roleId: string, permissionId: string): Promise<ApiResponse<string>> => {
@@ -318,5 +349,131 @@ export const authApi = {
     full_name?: string;
   }): Promise<ApiResponse<User>> => {
     return apiClient.iam.post<User>('/api/v1/users', data);
+  },
+
+  // 密码重置请求
+  requestPasswordReset: async (data: ResetPasswordRequest): Promise<ApiResponse<string>> => {
+    return apiClient.iam.post<string>('/api/v1/auth/reset-password', data);
+  },
+
+  // 确认密码重置（设置新密码）
+  confirmPasswordReset: async (data: SetNewPasswordRequest): Promise<ApiResponse<string>> => {
+    return apiClient.iam.post<string>('/api/v1/auth/set-new-password', data);
+  },
+
+  // 获取用户有效权限（角色权限 + 直接权限）
+  getEffectivePermissions: async (userId: string): Promise<ApiResponse<{
+    direct_permissions: Permission[];
+    role_permissions: Permission[];
+    all_permissions: Permission[];
+    total: number;
+  }>> => {
+    return apiClient.iam.get(`/api/v1/users/${userId}/effective-permissions`);
+  },
+
+  // 批量删除用户
+  batchDeleteUsers: async (data: BatchOperationRequest): Promise<ApiResponse<BatchDeleteResponse>> => {
+    return apiClient.iam.post<BatchDeleteResponse>('/api/v1/users/batch-delete', data);
+  },
+
+  // 批量更新用户状态
+  batchUpdateUsers: async (data: BatchUpdateUsersRequest): Promise<ApiResponse<{ updated_count: number }>> => {
+    return apiClient.iam.put<{ updated_count: number }>('/api/v1/users/batch-update', data);
+  },
+
+  // 验证邮箱是否可用
+  checkEmailAvailability: async (email: string): Promise<ApiResponse<{ available: boolean }>> => {
+    return apiClient.iam.get<{ available: boolean }>(`/api/v1/users/check-email?email=${encodeURIComponent(email)}`);
+  },
+
+  // 验证用户名是否可用
+  checkUsernameAvailability: async (username: string): Promise<ApiResponse<{ available: boolean }>> => {
+    return apiClient.iam.get<{ available: boolean }>(`/api/v1/users/check-username?username=${encodeURIComponent(username)}`);
+  },
+
+  // 获取密码策略
+  getPasswordPolicy: async (): Promise<ApiResponse<{
+    min_length: number;
+    require_uppercase: boolean;
+    require_lowercase: boolean;
+    require_numbers: boolean;
+    require_special: boolean;
+    max_age_days: number;
+    prevent_reuse: number;
+  }>> => {
+    return apiClient.iam.get('/api/v1/auth/password-policy');
+  },
+
+  // 更新密码策略
+  updatePasswordPolicy: async (data: {
+    min_length?: number;
+    require_uppercase?: boolean;
+    require_lowercase?: boolean;
+    require_numbers?: boolean;
+    require_special?: boolean;
+    max_age_days?: number;
+    prevent_reuse?: number;
+  }): Promise<ApiResponse<any>> => {
+    return apiClient.iam.put('/api/v1/auth/password-policy', data);
+  },
+
+  // 获取用户登录历史
+  getLoginHistory: async (userId: string, limit?: number): Promise<ApiResponse<{
+    logs: Array<{
+      id: string;
+      ip_address: string;
+      user_agent: string;
+      success: boolean;
+      created_at: string;
+    }>;
+    total: number;
+  }>> => {
+    const params = limit ? `?limit=${limit}` : '';
+    return apiClient.iam.get(`/api/v1/users/${userId}/login-history${params}`);
+  },
+
+  // 获取活跃会话列表
+  getActiveSessions: async (): Promise<ApiResponse<{
+    sessions: Array<{
+      id: string;
+      ip_address: string;
+      user_agent: string;
+      created_at: string;
+      expires_at: string;
+      is_current: boolean;
+    }>;
+    total: number;
+  }>> => {
+    return apiClient.iam.get('/api/v1/auth/sessions');
+  },
+
+  // 撤销会话
+  revokeSession: async (sessionId: string): Promise<ApiResponse<string>> => {
+    return apiClient.iam.delete(`/api/v1/auth/sessions/${sessionId}`);
+  },
+
+  // 撤销所有其他会话
+  revokeAllOtherSessions: async (): Promise<ApiResponse<{ revoked_count: number }>> => {
+    return apiClient.iam.post<{ revoked_count: number }>('/api/v1/auth/sessions/revoke-all');
+  },
+
+  // 获取安全设置
+  getSecuritySettings: async (): Promise<ApiResponse<{
+    mfa_enabled: boolean;
+    login_alerts: boolean;
+    ip_whitelist: string[];
+    session_timeout_minutes: number;
+  }>> => {
+    return apiClient.iam.get('/api/v1/auth/security-settings');
+  },
+
+  // 更新安全设置
+  updateSecuritySettings: async (data: {
+    mfa_enabled?: boolean;
+    login_alerts?: boolean;
+    ip_whitelist?: string[];
+    session_timeout_minutes?: number;
+  }): Promise<ApiResponse<any>> => {
+    return apiClient.iam.put('/api/v1/auth/security-settings', data);
   },
 };

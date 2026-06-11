@@ -5,21 +5,54 @@ use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use super::user_service::UserService;
+use crate::db::repository::AuditLogRepository;
 use crate::models::user::{LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResponse, RegisterRequest, User, UserInfo};
+use crate::models::AuditLog;
 use topems_shared::{ApiResponse, AuthState, Claims};
 
 pub struct AuthService {
     db: PgPool,
     auth_state: AuthState,
     user_service: UserService,
+    audit_repo: AuditLogRepository,
 }
 
 impl AuthService {
     pub fn new(db: PgPool) -> Self {
+        let audit_repo = AuditLogRepository::new(db.clone());
         AuthService {
             db: db.clone(),
             auth_state: AuthState::from_env(),
             user_service: UserService::new(db),
+            audit_repo,
+        }
+    }
+
+    /// 记录审计日志
+    async fn log_audit(
+        &self,
+        user_id: Option<Uuid>,
+        action: &str,
+        resource: Option<&str>,
+        resource_id: Option<Uuid>,
+        ip_address: &str,
+        user_agent: &str,
+        details: serde_json::Value,
+    ) {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            user_id,
+            action: action.to_string(),
+            resource: resource.map(|s| s.to_string()),
+            resource_id,
+            ip_address: ip_address.to_string(),
+            user_agent: user_agent.to_string(),
+            details,
+            created_at: Utc::now(),
+        };
+
+        if let Err(e) = self.audit_repo.create(&log).await {
+            tracing::error!("创建审计日志失败: {}", e);
         }
     }
 

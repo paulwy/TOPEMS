@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Users,
   Search,
@@ -12,10 +12,14 @@ import {
   ChevronLeft,
   UserPlus,
   UserMinus,
+  Loader2,
+  RefreshCw,
+  ChevronRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authApi, type User, type Role } from '../api/iam';
 import { useAppStore } from '../store';
+import { RoleBadge } from '@/components/PermissionGate';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 
@@ -27,6 +31,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface UserManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -41,38 +46,48 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRolesModal, setShowRolesModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userRoles, setUserRoles] = useState<Role[]>([]);
 
-  const [newUser, setNewUser] = useState({
-    username: '',
-    email: '',
-    password: '',
-    full_name: '',
-    role: '普通用户',
-  });
+  // 批量选择状态
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
-  const [currentPage] = useState(1);
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  // 防抖搜索
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // 搜索时重置到第一页
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     loadData();
-  }, [currentPage, searchQuery]);
+  }, [currentPage, debouncedSearch]);
 
   const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
       const [usersRes, rolesRes] = await Promise.all([
-        authApi.listUsers({ page: currentPage, page_size: pageSize, search: searchQuery || undefined }),
+        authApi.listUsers({ page: currentPage, page_size: pageSize, search: debouncedSearch || undefined }),
         authApi.listRoles(),
       ]);
 
       if (usersRes.success && usersRes.data) {
         setUsers(usersRes.data.users || []);
+        setTotalUsers(usersRes.data.total || 0);
       }
       if (rolesRes.success && rolesRes.data) {
         setRoles(rolesRes.data);
@@ -85,6 +100,113 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       setLoading(false);
     }
   };
+
+  // 批量选择处理
+  const handleSelectUser = useCallback((userId: string) => {
+    setSelectedUserIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectAll) {
+      setSelectedUserIds(new Set());
+    } else {
+      setSelectedUserIds(new Set(users.map((u) => u.id)));
+    }
+    setSelectAll(!selectAll);
+  }, [selectAll, users]);
+
+  // 批量启用/禁用用户
+  const handleBatchUpdateStatus = async (isActive: boolean) => {
+    if (selectedUserIds.size === 0) {
+      addNotification({ title: '提示', message: '请先选择要操作的用户', type: 'info' });
+      return;
+    }
+
+    try {
+      const res = await authApi.batchUpdateUsers({
+        user_ids: Array.from(selectedUserIds),
+        is_active: isActive,
+      });
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: `已${isActive ? '启用' : '禁用'} ${selectedUserIds.size} 个用户`,
+          type: 'success',
+        });
+        setSelectedUserIds(new Set());
+        setSelectAll(false);
+        loadData();
+      } else {
+        addNotification({ title: '失败', message: res.message || '操作失败', type: 'error' });
+      }
+    } catch (_err: any) {
+      addNotification({ title: '失败', message: _err.message || '操作失败', type: 'error' });
+    }
+  };
+
+  // 批量删除用户
+  const handleBatchDelete = async () => {
+    if (selectedUserIds.size === 0) {
+      addNotification({ title: '提示', message: '请先选择要删除的用户', type: 'info' });
+      return;
+    }
+
+    if (!confirm(`确定要删除选中的 ${selectedUserIds.size} 个用户吗？此操作不可恢复。`)) {
+      return;
+    }
+
+    try {
+      const res = await authApi.batchDeleteUsers({
+        user_ids: Array.from(selectedUserIds),
+      });
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: `已删除 ${selectedUserIds.size} 个用户`,
+          type: 'success',
+        });
+        setSelectedUserIds(new Set());
+        setSelectAll(false);
+        loadData();
+      } else {
+        addNotification({ title: '失败', message: res.message || '删除失败', type: 'error' });
+      }
+    } catch (_err: any) {
+      addNotification({ title: '失败', message: _err.message || '删除失败', type: 'error' });
+    }
+  };
+
+  // 计算总页数
+  const totalPages = Math.ceil(totalUsers / pageSize);
+
+  // 分页导航
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const [newUser, setNewUser] = useState({
+    username: '',
+    email: '',
+    password: '',
+    full_name: '',
+    role: '普通用户',
+  });
 
   const loadUserRoles = async (userId: string) => {
     try {
@@ -203,8 +325,26 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   const columns = useMemo<ColumnDef<User>[]>(
     () => [
       {
+        id: 'select',
+        header: () => (
+          <Checkbox
+            checked={selectAll && users.length > 0}
+            onCheckedChange={handleSelectAll}
+            aria-label='全选'
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={selectedUserIds.has(row.original.id)}
+            onCheckedChange={() => handleSelectUser(row.original.id)}
+            aria-label={`选择 ${row.original.username}`}
+          />
+        ),
+        enableSorting: false,
+      },
+      {
         accessorKey: 'username',
-        header: '姓名',
+        header: '用户',
         cell: ({ row }) => {
           const user = row.original;
           return (
@@ -229,7 +369,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           const user = row.original;
           return (
             <div className='flex items-center space-x-2'>
-              {getRoleBadge(user.role || '普通用户')}
+              <RoleBadge role={user.role || 'user'} size='sm' />
               {user.roles && user.roles.length > 1 && (
                 <span className='text-xs text-gray-500'>+{user.roles.length - 1}</span>
               )}
@@ -345,21 +485,50 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       </div>
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-        {/* Search */}
-        <div className='mb-6 flex items-center space-x-4'>
-          <div className='flex-1 relative'>
-            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
-            <Input
-              type='text'
-              placeholder='搜索用户名、邮箱...'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className='pl-10'
-            />
+        {/* Search and Batch Actions */}
+        <div className='mb-6'>
+          <div className='flex items-center space-x-4 mb-4'>
+            <div className='flex-1 relative'>
+              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
+              <Input
+                type='text'
+                placeholder='搜索用户名、邮箱...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className='pl-10'
+              />
+            </div>
+            <Button variant='secondary' onClick={loadData} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              刷新
+            </Button>
           </div>
-          <Button variant='secondary' onClick={loadData}>
-            刷新
-          </Button>
+
+          {/* Batch Actions Toolbar */}
+          {selectedUserIds.size > 0 && (
+            <div className='flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4'>
+              <div className='flex items-center space-x-2'>
+                <CheckCircle className='w-5 h-5 text-blue-600' />
+                <span className='text-sm font-medium text-blue-900 dark:text-blue-300'>
+                  已选择 {selectedUserIds.size} 个用户
+                </span>
+              </div>
+              <div className='flex items-center space-x-2'>
+                <Button size='sm' variant='outline' onClick={() => handleBatchUpdateStatus(true)}>
+                  批量启用
+                </Button>
+                <Button size='sm' variant='outline' onClick={() => handleBatchUpdateStatus(false)}>
+                  批量禁用
+                </Button>
+                <Button size='sm' variant='destructive' onClick={handleBatchDelete}>
+                  批量删除
+                </Button>
+                <Button size='sm' variant='ghost' onClick={() => { setSelectedUserIds(new Set()); setSelectAll(false); }}>
+                  取消选择
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Table */}
@@ -367,7 +536,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           <CardContent className='p-0'>
             {loading ? (
               <div className='p-8 text-center'>
-                <div className='inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent'></div>
+                <Loader2 className='w-8 h-8 animate-spin text-blue-600 mx-auto' />
                 <p className='mt-2 text-gray-500 dark:text-gray-400'>加载中...</p>
               </div>
             ) : error ? (
@@ -379,7 +548,29 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
                 </Button>
               </div>
             ) : (
-              <DataTable columns={columns} data={users} searchPlaceholder='搜索用户名、邮箱...' searchKey='username' />
+              <>
+                <DataTable columns={columns} data={users} searchPlaceholder='搜索用户名、邮箱...' searchKey='username' />
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className='flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700'>
+                    <div className='text-sm text-gray-500 dark:text-gray-400'>
+                      显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalUsers)} 共 {totalUsers} 条
+                    </div>
+                    <div className='flex items-center space-x-2'>
+                      <Button variant='outline' size='sm' onClick={goToPrevPage} disabled={currentPage === 1}>
+                        <ChevronLeft className='w-4 h-4' />
+                      </Button>
+                      <span className='text-sm px-2'>
+                        第 {currentPage} / {totalPages} 页
+                      </span>
+                      <Button variant='outline' size='sm' onClick={goToNextPage} disabled={currentPage === totalPages}>
+                        <ChevronRight className='w-4 h-4' />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

@@ -1,13 +1,10 @@
 use axum::{
-    extract::{Path, Query, State},
-    http::HeaderMap,
     routing::*,
     Json, Router,
 };
-use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
-use utoipa::{OpenApi, ToSchema};
+use utoipa::ToSchema;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use crate::api::audit::log_audit_event;

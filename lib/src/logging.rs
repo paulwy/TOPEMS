@@ -314,7 +314,7 @@ pub fn init_logging(service_name: &str) {
 // 性能日志宏
 #[macro_export]
 macro_rules! log_performance {
-    ($service:expr, $operation:expr, $duration_ms:expr) => {
+    ($service:expr_2021, $operation:expr_2021, $duration_ms:expr_2021) => {
         tracing::info!(
             service = $service,
             operation = $operation,
@@ -327,7 +327,7 @@ macro_rules! log_performance {
 // 业务日志宏
 #[macro_export]
 macro_rules! log_business {
-    ($service:expr, $action:expr, $($key:ident = $value:expr),*) => {
+    ($service:expr_2021, $action:expr_2021, $($key:ident = $value:expr_2021),*) => {
         tracing::info!(
             service = $service,
             action = $action,

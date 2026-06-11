@@ -5,7 +5,7 @@ mod services;
 
 use anyhow::Result;
 use axum::{
-    routing::{delete, get, post, put},
+    routing::{delete, get, post},
     Router,
 };
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};

@@ -28,8 +28,8 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({ onN
 
   const [newPermission, setNewPermission] = useState({
     name: '',
-    resource: '',
-    action: '',
+    code: '',
+    category: '',
     description: '',
   });
 
@@ -58,15 +58,16 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({ onN
     try {
       const res = await authApi.createPermission({
         name: newPermission.name,
-        resource: newPermission.resource,
-        action: newPermission.action,
+        code: newPermission.code,
+        category: newPermission.category,
+        module: newPermission.category,
         description: newPermission.description || undefined,
       });
 
       if (res.success) {
         addNotification({ title: '成功', message: '权限创建成功', type: 'success' });
         setShowCreateModal(false);
-        setNewPermission({ name: '', resource: '', action: '', description: '' });
+        setNewPermission({ name: '', code: '', category: '', description: '' });
         loadPermissions();
       } else {
         addNotification({ title: '失败', message: res.message || '创建权限失败', type: 'error' });
@@ -95,39 +96,32 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({ onN
   const filteredPermissions = permissions.filter(
     (perm) =>
       perm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      perm.resource.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      perm.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      perm.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      perm.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       perm.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getResourceBadge = (resource: string) => {
+  const getCategoryBadge = (category: string) => {
     const badges: Record<string, { variant: string; label: string }> = {
       doc: { variant: 'bg-blue-100 text-blue-700', label: '文档' },
       ai: { variant: 'bg-purple-100 text-purple-700', label: 'AI' },
-      flow: { variant: 'bg-green-100 text-green-700', label: '流程' },
-      user: { variant: 'bg-yellow-100 text-yellow-700', label: '用户' },
-      role: { variant: 'bg-indigo-100 text-indigo-700', label: '角色' },
-      permission: { variant: 'bg-pink-100 text-pink-700', label: '权限' },
+      workflow: { variant: 'bg-green-100 text-green-700', label: '流程' },
+      iam: { variant: 'bg-yellow-100 text-yellow-700', label: 'IAM' },
       rs: { variant: 'bg-orange-100 text-orange-700', label: '研发' },
       lims: { variant: 'bg-cyan-100 text-cyan-700', label: 'LIMS' },
       qms: { variant: 'bg-teal-100 text-teal-700', label: '质量' },
       ehs: { variant: 'bg-red-100 text-red-700', label: 'EHS' },
       srm: { variant: 'bg-violet-100 text-violet-700', label: '采购' },
+      pdm: { variant: 'bg-amber-100 text-amber-700', label: '产品' },
       gis: { variant: 'bg-emerald-100 text-emerald-700', label: 'GIS' },
       im: { variant: 'bg-rose-100 text-rose-700', label: '即时通讯' },
+      mail: { variant: 'bg-indigo-100 text-indigo-700', label: '邮件' },
+      system: { variant: 'bg-gray-100 text-gray-700', label: '系统' },
+      crm: { variant: 'bg-pink-100 text-pink-700', label: 'CRM' },
+      pm: { variant: 'bg-lime-100 text-lime-700', label: '项目' },
+      integration: { variant: 'bg-sky-100 text-sky-700', label: '集成' },
     };
-    const config = badges[resource] || { variant: 'bg-gray-100 text-gray-700', label: resource };
-    return <Badge className={config.variant}>{config.label}</Badge>;
-  };
-
-  const getActionBadge = (action: string) => {
-    const badges: Record<string, { variant: string; label: string }> = {
-      read: { variant: 'bg-green-100 text-green-700', label: '读取' },
-      write: { variant: 'bg-blue-100 text-blue-700', label: '写入' },
-      delete: { variant: 'bg-red-100 text-red-700', label: '删除' },
-      admin: { variant: 'bg-purple-100 text-purple-700', label: '管理' },
-    };
-    const config = badges[action] || { variant: 'bg-gray-100 text-gray-700', label: action };
+    const config = badges[category] || { variant: 'bg-gray-100 text-gray-700', label: category };
     return <Badge className={config.variant}>{config.label}</Badge>;
   };
 
@@ -212,13 +206,12 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({ onN
                         <div className='flex-1'>
                           <div className='flex items-center space-x-3 flex-wrap'>
                             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>{perm.name}</h3>
-                            {getResourceBadge(perm.resource)}
-                            {getActionBadge(perm.action)}
+                            {getCategoryBadge(perm.category)}
                           </div>
                           {perm.description && (
                             <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>{perm.description}</p>
                           )}
-                          <p className='text-xs text-gray-400 mt-2'>权限 ID: {perm.id}</p>
+                          <p className='text-xs text-gray-400 mt-2'>权限码: {perm.code}</p>
                         </div>
                       </div>
                       <div className='flex items-center space-x-2'>
@@ -278,29 +271,27 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({ onN
                   placeholder='例如：文档读取'
                 />
               </div>
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='create-resource'>资源 *</Label>
-                  <Input
-                    id='create-resource'
-                    type='text'
-                    required
-                    value={newPermission.resource}
-                    onChange={(e) => setNewPermission({ ...newPermission, resource: e.target.value })}
-                    placeholder='例如：doc'
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='create-action'>操作 *</Label>
-                  <Input
-                    id='create-action'
-                    type='text'
-                    required
-                    value={newPermission.action}
-                    onChange={(e) => setNewPermission({ ...newPermission, action: e.target.value })}
-                    placeholder='例如：read'
-                  />
-                </div>
+              <div className='space-y-2'>
+                <Label htmlFor='create-code'>权限码 *</Label>
+                <Input
+                  id='create-code'
+                  type='text'
+                  required
+                  value={newPermission.code}
+                  onChange={(e) => setNewPermission({ ...newPermission, code: e.target.value })}
+                  placeholder='例如：doc:read'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='create-category'>分类 *</Label>
+                <Input
+                  id='create-category'
+                  type='text'
+                  required
+                  value={newPermission.category}
+                  onChange={(e) => setNewPermission({ ...newPermission, category: e.target.value })}
+                  placeholder='例如：doc'
+                />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='create-description'>描述</Label>
@@ -320,7 +311,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({ onN
                 variant='secondary'
                 onClick={() => {
                   setShowCreateModal(false);
-                  setNewPermission({ name: '', resource: '', action: '', description: '' });
+                  setNewPermission({ name: '', code: '', category: '', description: '' });
                 }}
               >
                 取消

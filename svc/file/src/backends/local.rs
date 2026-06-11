@@ -3,9 +3,9 @@ use md5;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
-use tracing::{debug, info};
+use tracing::debug;
 
-use super::traits::{FileMetadata, FileStorage, StorageError, StorageResult};
+use super::traits::{FileStorage, StorageError, StorageResult};
 
 pub struct LocalStorage {
     base_path: PathBuf,

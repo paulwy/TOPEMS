@@ -207,6 +207,10 @@ pub use ollama_client::{
     OllamaConfig, OllamaClient, OllamaEmbedder, MockEmbedder,
     Embedder, create_ollama_client, create_embedder,
 };
+// 为了兼容性，提供 ollama 别名
+pub mod ollama {
+    pub use crate::ollama_client::*;
+}
 
 // File 服务客户端模块
 pub mod file_client;

@@ -21,6 +21,3 @@ topems-shared = { path = "../../lib" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 lettre = { version = "0.11", features = ["smtp-transport", "tokio1-native-tls", "builder"] }
-
-[profile.release]
-opt-level = 3

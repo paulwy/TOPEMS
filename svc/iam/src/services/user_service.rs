@@ -4,6 +4,43 @@ use uuid::Uuid;
 use crate::models::user::{ChangePasswordRequest, ListUsersResponse, UpdateAvatarRequest, UpdatePreferencesRequest, UpdateUserRequest, User, UserInfo};
 use topems_shared::ApiResponse;
 
+/// 验证密码强度
+/// - 长度至少8位
+/// - 至少包含一个大写字母
+/// - 至少包含一个小写字母
+/// - 至少包含一个数字
+/// - 至少包含一个特殊字符
+fn validate_password_strength(password: &str) -> Result<(), String> {
+    if password.len() < 8 {
+        return Err("密码长度至少为8位".to_string());
+    }
+
+    let has_uppercase = password.chars().any(|c| c.is_uppercase());
+    let has_lowercase = password.chars().any(|c| c.is_lowercase());
+    let has_number = password.chars().any(|c| c.is_numeric());
+    let has_special = password.chars().any(|c| !c.is_alphanumeric());
+
+    let mut errors = Vec::new();
+    if !has_uppercase {
+        errors.push("大写字母");
+    }
+    if !has_lowercase {
+        errors.push("小写字母");
+    }
+    if !has_number {
+        errors.push("数字");
+    }
+    if !has_special {
+        errors.push("特殊字符");
+    }
+
+    if !errors.is_empty() {
+        return Err(format!("密码必须包含至少一个{}", errors.join("、")));
+    }
+
+    Ok(())
+}
+
 pub struct UserService {
     db: PgPool,
 }
@@ -187,8 +224,14 @@ impl UserService {
                     return ApiResponse::error(401, "当前密码不正确");
                 }
 
-                if change_req.new_password.len() < 8 {
-                    return ApiResponse::error(400, "新密码长度至少为8位");
+                // 增强密码强度验证
+                if let Err(msg) = validate_password_strength(&change_req.new_password) {
+                    return ApiResponse::error(400, &msg);
+                }
+
+                // 检查新旧密码是否相同
+                if change_req.current_password == change_req.new_password {
+                    return ApiResponse::error(400, "新密码不能与当前密码相同");
                 }
 
                 let new_password_hash = bcrypt::hash(&change_req.new_password, bcrypt::DEFAULT_COST).unwrap();
@@ -335,6 +378,87 @@ impl UserService {
         match users {
             Ok(users) => {
                 let total = users.len();
+                let mut user_info_list = Vec::new();
+                for user in users {
+                    let (roles, permissions) = self.get_user_roles_and_permissions(&user.0).await;
+
+                    let role = roles.first().cloned().unwrap_or_default();
+                    let is_superuser = user.6 || role == "admin";
+
+                    let user_info = UserInfo {
+                        id: user.0.to_string(),
+                        username: user.1,
+                        email: user.2,
+                        full_name: user.3,
+                        role,
+                        roles,
+                        permissions,
+                        avatar_url: user.7,
+                        created_at: user.5.to_rfc3339(),
+                        is_superuser,
+                        is_active: user.4,
+                    };
+                    user_info_list.push(user_info);
+                }
+                ApiResponse::success(ListUsersResponse {
+                    users: user_info_list,
+                    total,
+                }, "Success")
+            }
+            Err(e) => {
+                tracing::error!("数据库查询错误: {}", e);
+                ApiResponse::error(500, "服务器内部错误")
+            }
+        }
+    }
+
+    pub async fn list_users_with_search(
+        &self,
+        search: Option<String>,
+        page: Option<u32>,
+        page_size: Option<u32>,
+    ) -> ApiResponse<ListUsersResponse> {
+        let page = page.unwrap_or(1).max(1) as i64;
+        let page_size = page_size.unwrap_or(20).min(100) as i64;
+        let offset = (page - 1) * page_size;
+
+        let search_pattern = search.as_ref().map(|s| format!("%{}%", s));
+
+        let count_result = sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM iam.users
+            WHERE ($1::text IS NULL OR username ILIKE $1 OR email ILIKE $1 OR full_name ILIKE $1)
+            "#
+        )
+        .bind(&search_pattern)
+        .fetch_one(&self.db)
+        .await;
+
+        let total = match count_result {
+            Ok(count) => count as usize,
+            Err(e) => {
+                tracing::error!("数据库计数错误: {}", e);
+                return ApiResponse::error(500, "服务器内部错误");
+            }
+        };
+
+        let users = sqlx::query_as::<_, (Uuid, String, String, Option<String>, bool, chrono::DateTime<chrono::Utc>, bool, Option<String>)>(
+            r#"
+            SELECT id, username, email, full_name, is_active, created_at, is_superuser, avatar_url
+            FROM iam.users
+            WHERE ($1::text IS NULL OR username ILIKE $1 OR email ILIKE $1 OR full_name ILIKE $1)
+            ORDER BY created_at DESC
+            LIMIT $2 OFFSET $3
+            "#
+        )
+        .bind(&search_pattern)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&self.db)
+        .await;
+
+        match users {
+            Ok(users) => {
                 let mut user_info_list = Vec::new();
                 for user in users {
                     let (roles, permissions) = self.get_user_roles_and_permissions(&user.0).await;

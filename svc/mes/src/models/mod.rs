@@ -9,7 +9,7 @@ pub use production_order::{ProductionOrder, CreateProductionOrderRequest, Update
 pub use production_process::{ProductionProcess, CreateProductionProcessRequest, UpdateProductionProcessRequest};
 pub use work_station::{WorkStation, CreateWorkStationRequest, UpdateWorkStationRequest};
 pub use production_record::{ProductionRecord, CreateProductionRecordRequest, UpdateProductionRecordRequest};
-pub use audit_log::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+pub use audit_log::AuditLog;
 pub use equipment::{
     InspectionRecord, CreateInspectionRecord,
     MaintenanceRecord, CreateMaintenanceRecord,

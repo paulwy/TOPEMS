@@ -402,6 +402,46 @@ pub async fn delete_role(
     }
 }
 
+pub async fn get_role_permissions(
+    State(state): State<crate::AppState>,
+    Path(role_id): Path<String>,
+) -> Result<Json<ApiResponse<Vec<PermissionInfo>>>, impl IntoResponse> {
+    let permissions_result = sqlx::query_as::<_, Permission>(
+        r#"
+        SELECT p.id, p.name, p.code, p.category, p.description
+        FROM iam.permissions p
+        INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id
+        WHERE rp.role_id = $1
+        ORDER BY p.category, p.code
+        "#
+    )
+    .bind(&role_id)
+    .fetch_all(&state.db)
+    .await;
+
+    let permissions = match permissions_result {
+        Ok(perms) => perms
+            .into_iter()
+            .map(|p| PermissionInfo {
+                id: p.id.to_string(),
+                name: p.name,
+                code: p.code,
+                category: p.category,
+                description: p.description,
+            })
+            .collect(),
+        Err(e) => {
+            tracing::error!("查询角色权限失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<()>::error(500, "服务器内部错误")),
+            ));
+        }
+    };
+
+    Ok(Json(ApiResponse::success(permissions, "获取角色权限成功")))
+}
+
 pub async fn assign_permissions_to_role(
     State(state): State<crate::AppState>,
     Path(role_id): Path<String>,
@@ -491,6 +531,7 @@ pub fn create_role_routes(state: AppState) -> Router<AppState> {
         .route("/api/v1/roles/{role_id}", get(get_role))
         .route("/api/v1/roles/{role_id}", put(update_role))
         .route("/api/v1/roles/{role_id}", delete(delete_role))
+        .route("/api/v1/roles/{role_id}/permissions", get(get_role_permissions))
         .route("/api/v1/roles/{role_id}/permissions", post(assign_permissions_to_role))
         .route("/api/v1/roles/{role_id}/permissions/{permission_id}", delete(remove_permission_from_role))
         .with_state(state)
