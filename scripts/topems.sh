@@ -37,7 +37,7 @@ SERVICES=(
   "hrm:8012"
   "crm:8013"
   "rs:8020"
-  "doc:8021"
+  "doc:8028"
   "lims:8022"
   "pdm:8023"
   "mes:8030"
@@ -57,12 +57,20 @@ SERVICES=(
 )
 
 # 检测当前使用的方案
+# 默认使用非Docker方案（无外网环境）
 detect_mode() {
-  if docker info >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-    echo "docker"
-  else
-    echo "standalone"
-  fi
+  echo "standalone"
+}
+
+# 设置环境变量
+set_env_vars() {
+  export DATABASE_URL="postgres://topems:topems_secret@localhost:5432/topems"
+  export REDIS_URL="redis://:topems_redis_secret@localhost:6379"
+  export JWT_SECRET="topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256"
+  export JWT_REFRESH_SECRET="topems-refresh-secret-key-must-be-at-least-32-characters-long"
+  export REFRESH_SECRET="topems-refresh-secret-key-must-be-at-least-32-characters-long"
+  export CORS_ORIGINS="http://localhost:3000,http://localhost:8000"
+  export RUST_LOG=info
 }
 
 # 启动单一服务
@@ -101,14 +109,8 @@ start_single_service() {
   info "启动 $name 服务 (端口 $port)..."
   
   # 设置环境变量
-  export DATABASE_URL="postgres://topems:topems_secret@localhost:5432/topems"
-  export REDIS_URL="redis://:topems_redis_secret@localhost:6379"
-  export JWT_SECRET="topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256"
-  export JWT_REFRESH_SECRET="topems-refresh-secret-key-must-be-at-least-32-characters-long-for-hs256"
-  export REFRESH_SECRET="topems-refresh-secret-key-must-be-at-least-32-characters-long-for-hs256"
-  export CORS_ORIGINS="http://localhost:3000,http://localhost:8000"
+  set_env_vars
   export SERVER_PORT="$port"
-  export RUST_LOG=info
   
   # 启动服务
   mkdir -p "$PROJECT_ROOT/logs"
@@ -376,6 +378,121 @@ list_services() {
   done
 }
 
+# 启动核心服务（优化：仅启动必要服务）
+start_core_services() {
+  local release_mode="${1:-false}"
+  
+  info "启动核心服务（优化模式）..."
+  echo ""
+  echo "核心服务: iam, portal, notification"
+  echo "预计内存占用: ~150 MB"
+  echo ""
+  
+  # 核心服务列表
+  local core_services=("iam:8000" "portal:8005" "notification:8004")
+  
+  # 设置环境变量
+  set_env_vars
+  
+  for service in "${core_services[@]}"; do
+    local name=$(echo "$service" | cut -d':' -f1)
+    local port=$(echo "$service" | cut -d':' -f2)
+    
+    if lsof -i ":$port" >/dev/null 2>&1; then
+      warning "$name 已在端口 $port 运行"
+      continue
+    fi
+    
+    info "启动 $name 服务..."
+    mkdir -p "$PROJECT_ROOT/logs"
+    
+    if [ "$release_mode" == "true" ]; then
+      cargo run --release --manifest-path "svc/$name/Cargo.toml" > "$PROJECT_ROOT/logs/$name.log" 2>&1 &
+    else
+      cargo run --manifest-path "svc/$name/Cargo.toml" > "$PROJECT_ROOT/logs/$name.log" 2>&1 &
+    fi
+    
+    sleep 1
+  done
+  
+  echo ""
+  success "核心服务启动完成"
+  echo ""
+  echo "访问地址:"
+  echo "  - Portal: http://localhost:8005"
+  echo "  - IAM API: http://localhost:8000"
+  echo "  - Notification API: http://localhost:8004"
+}
+
+# 启动模块服务
+start_module_services() {
+  local module="$1"
+  local release_mode="${2:-false}"
+  local services=""
+  
+  case "$module" in
+    core)
+      services="iam:8000 portal:8005 notification:8004 flow:8006 integration:8007"
+      ;;
+    erp)
+      services="erp:8010 hrm:8012 crm:8013"
+      ;;
+    plm)
+      services="rs:8020 doc:8028 lims:8022 pdm:8023"
+      ;;
+    mes)
+      services="mes:8030 qms:8031 ehs:8032"
+      ;;
+    scm)
+      services="scm:8040 srm:8041 wms:8042"
+      ;;
+    infra)
+      services="file:8050 mail:8051 im:8052 gis:8053"
+      ;;
+    analytics)
+      services="bi:8060 report:8061 ai:8062"
+      ;;
+    *)
+      error "未知模块: $module"
+      echo "可用模块: core, erp, plm, mes, scm, infra, analytics"
+      exit 1
+      ;;
+  esac
+  
+  info "启动 $module 模块服务..."
+  echo ""
+  echo "服务列表: $services"
+  echo ""
+  
+  set_env_vars
+  
+  local service_array=($services)
+  
+  for service in "${service_array[@]}"; do
+    local name=$(echo "$service" | cut -d':' -f1)
+    local port=$(echo "$service" | cut -d':' -f2)
+    
+    if lsof -i ":$port" >/dev/null 2>&1; then
+      warning "$name 已在端口 $port 运行"
+      continue
+    fi
+    
+    info "启动 $name 服务..."
+    mkdir -p "$PROJECT_ROOT/logs"
+    
+    if [ "$release_mode" == "true" ]; then
+      cargo run --release --manifest-path "svc/$name/Cargo.toml" > "$PROJECT_ROOT/logs/$name.log" 2>&1 &
+    else
+      cargo run --manifest-path "svc/$name/Cargo.toml" > "$PROJECT_ROOT/logs/$name.log" 2>&1 &
+    fi
+    
+    sleep 1
+  done
+  
+  echo ""
+  success "$module 模块服务启动完成"
+}
+
 # 显示帮助信息
 show_help() {
   echo "TOPEMS 统一启动脚本"
@@ -383,9 +500,12 @@ show_help() {
   echo "使用方法: $0 <命令> [参数]"
   echo ""
   echo "=== 服务管理 ==="
-  echo "  start           - 启动所有服务（自动检测方案）"
-  echo "  start-docker    - 使用Docker方案启动"
-  echo "  start-standalone - 使用非Docker方案启动"
+  echo "  start           - 启动所有服务（默认使用非Docker方案）"
+  echo "  start-docker    - 使用Docker方案启动（需要外网）"
+  echo "  start-standalone - 使用非Docker方案启动（无外网可用）"
+  echo "  start-core      - 仅启动核心服务（iam, portal, notification）"
+  echo "  start-module <模块名> - 启动指定模块服务"
+  echo "                     模块: core, erp, plm, mes, scm, infra, analytics"
   echo "  start-service <服务名> - 启动单一服务"
   echo "  stop            - 停止所有服务"
   echo "  stop-service <服务名> - 停止单一服务"
@@ -396,8 +516,9 @@ show_help() {
   echo "  list            - 列出所有服务"
   echo ""
   echo "=== 编译构建 ==="
-  echo "  build           - 编译所有服务"
+  echo "  build           - 编译所有服务（Release模式）"
   echo "  build <服务名>  - 编译单一服务"
+  echo "  build-debug     - 编译所有服务（Debug模式）"
   echo ""
   echo "=== 测试 ==="
   echo "  test            - 运行所有测试"
@@ -425,6 +546,10 @@ show_help() {
   echo "方案对比:"
   echo "  Docker方案:      一键启动，环境隔离，资源占用中等"
   echo "  非Docker方案:    资源占用低，需要手动安装依赖"
+  echo ""
+  echo "优化建议:"
+  echo "  开发环境: 使用 start-core 或 start-module 仅启动需要的服务"
+  echo "  生产环境: 使用 build 编译 Release 版本"
 }
 
 # 主入口
@@ -443,6 +568,17 @@ case "$1" in
     ;;
   start-standalone)
     "$SCRIPT_DIR/standalone/topems-standalone.sh" start
+    ;;
+  start-core)
+    start_core_services "$2"
+    ;;
+  start-module)
+    if [ -z "$2" ]; then
+      error "请指定模块名"
+      echo "可用模块: core, erp, plm, mes, scm, infra, analytics"
+      exit 1
+    fi
+    start_module_services "$2" "$3"
     ;;
   start-service)
     if [ -z "$2" ]; then
@@ -491,6 +627,11 @@ case "$1" in
     ;;
   build)
     build_service "$2"
+    ;;
+  build-debug)
+    info "编译所有服务（Debug模式）..."
+    cargo build --workspace
+    success "所有服务编译完成（Debug模式）"
     ;;
   test)
     run_tests "${2:-all}"

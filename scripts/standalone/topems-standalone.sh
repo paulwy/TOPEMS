@@ -46,6 +46,7 @@ load_config() {
     export REDIS_URL="redis://:topems_redis_secret@localhost:6379"
     export OLLAMA_HOST="http://localhost:11434"
     export JWT_SECRET="topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256"
+    export REFRESH_SECRET="topems-refresh-secret-key-must-be-at-least-32-characters-long"
     export CORS_ORIGINS="http://localhost:3000,http://localhost:8000"
     info "使用默认环境变量"
   fi

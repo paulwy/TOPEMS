@@ -59,6 +59,7 @@
 | iam | 8000 | `IAM_PORT` | 身份认证服务 | 已实现 |
 | gateway | 8001 | `GATEWAY_PORT` | API网关 | 预留 |
 | config | 8002 | `CONFIG_PORT` | 配置中心 | 预留 |
+| pm | 8002 | `PM_PORT` | 项目管理服务 | 已实现 |
 | discovery | 8003 | `DISCOVERY_PORT` | 服务发现 | 预留 |
 | notification | 8004 | `NOTIFICATION_PORT` | 通知服务 | 已实现 |
 | portal | 8005 | `PORTAL_PORT` | 统一门户 | 已实现 |
@@ -87,14 +88,14 @@
 | 服务名 | 端口 | 环境变量 | 说明 | 状态 |
 |--------|------|---------|------|------|
 | rs | 8020 | `RS_PORT` | 研发管理 | 已实现 |
-| doc | 8021 | `DOC_PORT` | 文档管理 | 已实现 |
+| doc | 8028 | `DOC_PORT` | 文档管理 | 已实现 |
 | lims | 8022 | `LIMS_PORT` | 实验室管理 | 已实现 |
 | pdm | 8023 | `PDM_PORT` | 产品数据管理 | 已实现 |
 | - | 8024 | - | 预留 | 预留 |
 | - | 8025 | - | 预留 | 预留 |
 | - | 8026 | - | 预留 | 预留 |
 | - | 8027 | - | 预留 | 预留 |
-| - | 8028 | - | 预留 | 预留 |
+| - | 8021 | - | 预留 | 预留 |
 | - | 8029 | - | 预留 | 预留 |
 
 #### 2.2.4 MES/生产服务 (8030-8039)
@@ -216,7 +217,7 @@ CRM_PORT=8013
 
 # PLM服务
 RS_PORT=8020
-DOC_PORT=8021
+DOC_PORT=8028
 LIMS_PORT=8022
 PDM_PORT=8023
 
@@ -361,6 +362,7 @@ MOBILE_PORT=8070
 | 端口 | 服务 | 模块 |
 |------|------|------|
 | 8000 | iam | 核心 |
+| 8002 | pm | 核心 |
 | 8004 | notification | 核心 |
 | 8005 | portal | 核心 |
 | 8006 | flow | 核心 |
@@ -369,7 +371,7 @@ MOBILE_PORT=8070
 | 8012 | hrm | ERP |
 | 8013 | crm | ERP |
 | 8020 | rs | PLM |
-| 8021 | doc | PLM |
+| 8028 | doc | PLM |
 | 8022 | lims | PLM |
 | 8023 | pdm | PLM |
 | 8030 | mes | MES |

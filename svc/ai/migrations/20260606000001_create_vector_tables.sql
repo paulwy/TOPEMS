@@ -15,6 +15,7 @@ CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA ai;
 -- =============================================================
 CREATE TABLE IF NOT EXISTS ai.documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
     knowledge_base_id UUID,
     title VARCHAR(500) NOT NULL,
     file_name VARCHAR(500) NOT NULL,
@@ -30,11 +31,13 @@ CREATE TABLE IF NOT EXISTS ai.documents (
     error_message TEXT,
     processed_at TIMESTAMP WITH TIME ZONE,
     created_by UUID,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Documents indexes
+CREATE INDEX IF NOT EXISTS idx_documents_organization_id ON ai.documents(organization_id);
 CREATE INDEX IF NOT EXISTS idx_documents_status ON ai.documents(status);
 CREATE INDEX IF NOT EXISTS idx_documents_category ON ai.documents(category);
 CREATE INDEX IF NOT EXISTS idx_documents_created_at ON ai.documents(created_at DESC);
@@ -48,6 +51,7 @@ CREATE INDEX IF NOT EXISTS idx_documents_kb_id ON ai.documents(knowledge_base_id
 -- =============================================================
 CREATE TABLE IF NOT EXISTS ai.document_chunks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
     document_id UUID NOT NULL REFERENCES ai.documents(id) ON DELETE CASCADE,
     knowledge_base_id UUID,
     chunk_index INTEGER NOT NULL DEFAULT 0,
@@ -64,6 +68,7 @@ CREATE TABLE IF NOT EXISTS ai.document_chunks (
 );
 
 -- Chunks indexes
+CREATE INDEX IF NOT EXISTS idx_document_chunks_organization_id ON ai.document_chunks(organization_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON ai.document_chunks(document_id);
 CREATE INDEX IF NOT EXISTS idx_document_chunks_kb_id ON ai.document_chunks(knowledge_base_id);
 CREATE INDEX IF NOT EXISTS idx_document_chunks_chunk_index ON ai.document_chunks(chunk_index);

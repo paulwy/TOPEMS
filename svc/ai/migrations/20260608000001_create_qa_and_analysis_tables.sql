@@ -11,6 +11,7 @@ CREATE SCHEMA IF NOT EXISTS ai;
 -- =============================================================
 CREATE TABLE IF NOT EXISTS ai.qa_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
     question TEXT NOT NULL,
     answer TEXT NOT NULL,
     context JSONB DEFAULT '{}',
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS ai.qa_history (
 );
 
 -- QA History indexes
+CREATE INDEX IF NOT EXISTS idx_qa_history_organization_id ON ai.qa_history(organization_id);
 CREATE INDEX IF NOT EXISTS idx_qa_history_created_at ON ai.qa_history(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_qa_history_rating ON ai.qa_history(rating);
 
@@ -30,6 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_qa_history_rating ON ai.qa_history(rating);
 -- =============================================================
 CREATE TABLE IF NOT EXISTS ai.analysis_results (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
     analysis_type VARCHAR(50) NOT NULL,
     input_text TEXT NOT NULL,
     result JSONB NOT NULL,
@@ -38,6 +41,7 @@ CREATE TABLE IF NOT EXISTS ai.analysis_results (
 );
 
 -- Analysis Results indexes
+CREATE INDEX IF NOT EXISTS idx_analysis_results_organization_id ON ai.analysis_results(organization_id);
 CREATE INDEX IF NOT EXISTS idx_analysis_type ON ai.analysis_results(analysis_type);
 CREATE INDEX IF NOT EXISTS idx_analysis_created_at ON ai.analysis_results(created_at DESC);
 
