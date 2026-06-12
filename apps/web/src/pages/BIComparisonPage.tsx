@@ -378,7 +378,6 @@ const BIComparisonPage = () => {
                 <RadarChart
                   data={getRadarData()}
                   dataKey="name"
-                  nameKey="subject"
                   yKeys={yKeys}
                   height={350}
                 />

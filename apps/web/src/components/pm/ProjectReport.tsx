@@ -215,7 +215,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [`${value} 个项目`, "数量"]}
+                    formatter={(value: unknown) => [`${value} 个项目`, "数量"]}
                   />
                   <Legend />
                 </PieChart>

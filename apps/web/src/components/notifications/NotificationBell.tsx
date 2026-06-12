@@ -15,7 +15,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 }) => {
   const [showPanel, setShowPanel] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const {
     notifications: _,
@@ -27,7 +27,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
     removeNotification: _____,
     fetchNotifications,
     fetchUnreadCount,
-  } = useNotificationState();
+  } = useNotificationState(isAuthenticated);
 
   const handleNewNotification = useCallback(
     (notification: Notification) => {
@@ -38,24 +38,26 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
     [addNotification],
   );
 
-  const userId = user?.id || "user_001";
+  const userId = user?.id;
 
   const {
     isConnected,
     error: _wsError,
     reconnect: _reconnect,
   } = useNotificationWebSocket({
-    userId,
+    userId: isAuthenticated && userId ? userId : "",
     onNotification: handleNewNotification,
     onUnreadCountChange: fetchUnreadCount,
     maxReconnectAttempts: 5,
-    autoConnect: true,
+    autoConnect: isAuthenticated,
   });
 
-  // Fetch initial data when component mounts
+  // Fetch initial data when component mounts and user is authenticated
   useEffect(() => {
-    fetchUnreadCount();
-  }, [fetchUnreadCount]);
+    if (isAuthenticated) {
+      fetchUnreadCount();
+    }
+  }, [isAuthenticated, fetchUnreadCount]);
 
   const handleBellClick = () => {
     setShowPanel(!showPanel);

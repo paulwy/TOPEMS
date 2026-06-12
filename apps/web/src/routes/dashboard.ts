@@ -8,14 +8,14 @@ const AddressbookPage = lazy(() => import("../pages/AddressbookPage"));
 export const dashboardRoutes: RouteConfig[] = [
   {
     path: "/dashboard",
-    element: React.createElement(DashboardPage),
+    element: DashboardPage,
   },
   {
     path: "/profile",
-    element: React.createElement(ProfilePage),
+    element: ProfilePage,
   },
   {
     path: "/addressbook",
-    element: React.createElement(AddressbookPage),
+    element: AddressbookPage,
   },
 ];

@@ -1,7 +1,7 @@
 ## TOPEMS-AI 配置指南
 
-**版本**: 1.2.0  
-**最后更新**: 2026-06-06
+**版本**: 2.1.0
+**最后更新**: 2026-06-13
 
 ## 功能介绍
 
@@ -13,138 +13,116 @@ TOPEMS-AI 现在支持真实 AI 服务！包括：
 - 任何兼容 OpenAI API 格式的服务
 - 内置模拟模式（无需 API Key）
 
-### 新增功能 (v1.2.0)
+### 默认配置
 
-- **AI 智能表单校验** - 自动检查数据完整性、格式和逻辑
-- **AI 数据智能补全** - 根据已有信息推测并补全相关字段
-- **AI 文本优化增强** - 支持关键词输入、多种优化风格、历史版本管理
-- **自动重试机制** - 网络波动时自动重试，提高稳定性
+TOPEMS 默认使用 Ollama 本地 AI，配置如下：
 
-## 配置步骤
+| 配置项 | 值 |
+|--------|-----|
+| OLLAMA_BASE_URL | http://localhost:11434/v1 |
+| OLLAMA_MODEL | qwen2.5:7b-instruct |
+| EMBEDDING_MODEL | nomic-embed-text |
 
-### 0. 推荐：使用 Ollama 本地 AI（免费，无需 API Key）
+### 模型分工说明
 
-这是最简单且免费的方式！
+TOPEMS-AI 使用两个模型，分别负责不同的任务：
 
-1. 安装 Ollama（如未安装）：
+#### 模型对比
 
-```bash
-   # macOS
-   brew install ollama
-   
-   # 或访问 https://ollama.com 下载
-   ```
+| 特性 | `qwen2.5:7b-instruct` | `nomic-embed-text` |
+|------|------------------------|---------------------|
+| **用途** | LLM (大语言模型) | Embedding (嵌入模型) |
+| **功能** | 生成式 AI 回答 | 文本向量化 |
+| **维度** | N/A | 1536 维向量 |
+| **API 端点** | `/chat/completions` | `/embeddings` |
+| **应用场景** | 聊天、摘要、校验、补全 | 文档搜索、相似度匹配 |
 
-1. 拉取模型（我们已经安装了 qwen2.5:7b-instruct）：
+#### 工作流程
 
-   ```bash
-   ollama pull qwen2.5:7b-instruct
-   ```
-
-2. 启动 Ollama 服务（如果没有运行）：
-
-   ```bash
-   ollama serve
-   # 或直接在后台运行（大多数情况下默认已启动）
-   ```
-
-3. 配置 TOPEMS-AI：
-
-   ```bash
-   cd /Users/xingzhai/TOPEMS/services/topems-ai/backend
-   # .env 文件已自动配置好
-   ```
-
-4. 启动服务：
-
-   ```bash
-   cargo run
-   ```
-
-5. 你会看到：
-
-```text
-   ✅ 使用 Ollama 本地 AI 服务 (模型: qwen2.5:7b-instruct)
-   ```
-
-### 1. 快速开始（模拟模式）
-
-无需任何配置，直接启动后端即可使用模拟 AI：
-
-```bash
-cd /Users/xingzhai/TOPEMS/services/topems-ai/backend
-cargo run
+```
+用户提问 "TOPEMS是什么？"
+        │
+        ▼
+┌───────────────────────────────────────┐
+│ 1. nomic-embed-text                    │
+│    将问题转换为向量                      │
+│    查询向量数据库 (pgvector)            │
+│    找到相关文档分块                      │
+└───────────────────────────────────────┘
+        │
+        ▼
+┌───────────────────────────────────────┐
+│ 2. qwen2.5:7b-instruct                │
+│    接收问题 + 相关文档内容               │
+│    生成自然语言回答                      │
+└───────────────────────────────────────┘
+        │
+        ▼
+     返回回答
 ```
 
-你会看到：
+#### 功能对应表
 
-```text
-⚠️  AI API 未配置，将使用模拟响应（设置 OPENAI_API_KEY 启用真实 AI）
-```
+| 功能 | 使用模型 |
+|------|---------|
+| 智能问答 (RAG) | nomic-embed-text + qwen2.5 |
+| 文档向量索引 | nomic-embed-text |
+| 内容生成 | qwen2.5 |
+| 智能摘要 | qwen2.5 |
+| 表单校验 | qwen2.5 |
+| 数据补全 | qwen2.5 |
+| 情感分析 | qwen2.5 |
+| 关键词提取 | qwen2.5 |
 
-### 2. 配置真实 AI 服务
+## 快速开始
 
-#### 方式一：OpenAI
-
-1. 访问 [OpenAI Platform](https://platform.openai.com/) 注册并获取 API Key
-2. 编辑配置文件：
+### 1. 启动 Ollama（如未运行）
 
 ```bash
-cd /Users/xingzhai/TOPEMS/services/topems-ai/backend
+ollama serve
 ```
 
-1. 在 `.env` 文件中添加：
+### 2. 安装模型（如未安装）
+
+```bash
+ollama pull qwen2.5:7b-instruct
+ollama pull nomic-embed-text
+```
+
+### 3. 查看状态
+
+```bash
+cd <项目目录>
+./scripts/topems.sh status
+```
+
+会显示：
+
+```
+🤖 AI/LLM 配置:
+   已安装模型:
+   • nomic-embed-text:latest
+   • qwen2.5:7b-instruct
+   当前配置:
+   • 提供商: 🖥️ Ollama 本地
+   • LLM: qwen2.5:7b-instruct
+   • 嵌入: nomic-embed-text
+   Ollama: ✅ 运行中
+   pgvector: ✅ 已安装
+```
+
+### 4. 环境变量配置
+
+在 `.env` 文件中配置：
 
 ```env
-OPENAI_API_KEY=sk-你的API密钥
+# AI 服务配置 (Ollama 本地 AI - 默认配置)
+OLLAMA_BASE_URL=http://localhost:11434/v1
+OLLAMA_MODEL=qwen2.5:7b-instruct
+EMBEDDING_MODEL=nomic-embed-text
 ```
 
-#### 方式二：阿里云通义千问（推荐国内用户）
-
-1. 访问 [阿里云百炼平台](https://bailian.console.aliyun.com/) 注册
-2. 获取 API Key
-3. 编辑 `.env` 文件：
-
-```env
-OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-OPENAI_API_KEY=sk-你的API密钥
-OPENAI_MODEL=qwen-turbo
-```
-
-#### 方式三：其他兼容服务
-
-只要是兼容 OpenAI API 格式的服务都可以：
-
-```env
-OPENAI_BASE_URL=https://你的服务商API地址
-OPENAI_API_KEY=sk-你的API密钥
-OPENAI_MODEL=模型名称
-```
-
-### 3. 启动服务
-
-重启后端服务：
-
-```bash
-cd /Users/xingzhai/TOPEMS/services/topems-ai/backend
-cargo run
-```
-
-看到这条日志表示配置成功：
-
-```text
-✅ AI API 已配置，使用真实 AI 服务
-```
-
-### 4. 启动前端
-
-```bash
-cd /Users/xingzhai/TOPEMS/services/topems-ai/frontend
-npm install
-npm run dev
-```
-
-访问 http://localhost:5175
+## 配置其他 AI 服务
 
 ## 知识库
 

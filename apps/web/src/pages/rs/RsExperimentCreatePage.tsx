@@ -80,14 +80,14 @@ const RsExperimentCreatePage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           {isEdit ? "编辑试验" : "新建试验"}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {isEdit ? "修改试验信息" : "创建新的研发试验记录"}
         </Typography>
-      </Box>
+      </div>
 
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={3}>

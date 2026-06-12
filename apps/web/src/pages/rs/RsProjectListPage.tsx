@@ -187,20 +187,20 @@ const RsProjectListPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面标题和操作栏 */}
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
         >
-          <Box>
+          <div>
             <Typography variant="h4" fontWeight="bold" gutterBottom>
               研发项目管理
             </Typography>
             <Typography variant="body2" color="text.secondary">
               管理研发项目、跟踪进度、分配资源
             </Typography>
-          </Box>
+          </div>
           <Stack direction="row" spacing={2}>
             <Button
               variant="outlined"
@@ -219,7 +219,7 @@ const RsProjectListPage: React.FC = () => {
             </Button>
           </Stack>
         </Stack>
-      </Box>
+      </div>
 
       {/* 搜索和筛选 */}
       <Paper sx={{ p: 2, mb: 3 }}>

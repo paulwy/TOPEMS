@@ -916,10 +916,7 @@ const HrmDepartmentPage: React.FC = () => {
               <Select
                 value={(formData as Department)?.parent_id || ""}
                 onValueChange={(value) =>
-                  handleInputChange(
-                    "parent_id",
-                    value === "none" ? undefined : value,
-                  )
+                  handleInputChange("parent_id", value === "none" ? "" : value)
                 }
               >
                 <SelectTrigger className="h-10">
@@ -1050,7 +1047,7 @@ const HrmDepartmentPage: React.FC = () => {
                   onValueChange={(value) =>
                     handleInputChange(
                       "company_id",
-                      value === "none" ? undefined : value,
+                      value === "none" ? "" : value,
                     )
                   }
                 >
@@ -1076,7 +1073,7 @@ const HrmDepartmentPage: React.FC = () => {
                   onValueChange={(value) =>
                     handleInputChange(
                       "parent_id",
-                      value === "none" ? undefined : value,
+                      value === "none" ? "" : value,
                     )
                   }
                 >

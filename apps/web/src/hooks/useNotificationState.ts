@@ -9,7 +9,7 @@ interface NotificationState {
   error: string | null;
 }
 
-export const useNotificationState = () => {
+export const useNotificationState = (enabled = true) => {
   const [state, setState] = useState<NotificationState>({
     notifications: [],
     unreadCount: 0,
@@ -104,9 +104,10 @@ export const useNotificationState = () => {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     fetchNotifications();
     fetchUnreadCount();
-  }, []);
+  }, [enabled]);
 
   return {
     ...state,

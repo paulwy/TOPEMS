@@ -510,7 +510,7 @@ const LimsSampleDetailPage: React.FC = () => {
                       <XAxis type="number" />
                       <YAxis type="category" dataKey="name" width={60} />
                       <Tooltip
-                        formatter={(value: number) => [`${value} 条`, "数量"]}
+                        formatter={(value: unknown) => [`${value} 条`, "数量"]}
                         contentStyle={{
                           backgroundColor: "white",
                           border: "1px solid #e2e8f0",

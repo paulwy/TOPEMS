@@ -35,11 +35,16 @@ const IntegrationPage: React.FC = () => {
           integrationApi.listEvents(),
         ]);
 
-      if (statsRes.success) setStats(statsRes.data);
-      if (limsQmsRes.success) setLimsQmsSyncs(limsQmsRes.data);
-      if (mesErpRes.success) setMesErpSyncs(mesErpRes.data);
-      if (wmsScmRes.success) setWmsScmSyncs(wmsScmRes.data);
-      if (eventsRes.success) setEvents(eventsRes.data);
+      if (statsRes.success && statsRes.data !== undefined)
+        setStats(statsRes.data);
+      if (limsQmsRes.success && limsQmsRes.data !== undefined)
+        setLimsQmsSyncs(limsQmsRes.data);
+      if (mesErpRes.success && mesErpRes.data !== undefined)
+        setMesErpSyncs(mesErpRes.data);
+      if (wmsScmRes.success && wmsScmRes.data !== undefined)
+        setWmsScmSyncs(wmsScmRes.data);
+      if (eventsRes.success && eventsRes.data !== undefined)
+        setEvents(eventsRes.data);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {

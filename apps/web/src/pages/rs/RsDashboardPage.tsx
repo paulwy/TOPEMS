@@ -119,14 +119,14 @@ const RsDashboardPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Box sx={{ mb: 4 }}>
+      <div style={{ marginBottom: 16 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           研发管理平台
         </Typography>
         <Typography variant="body2" color="text.secondary">
           科研项目管理、试验数据追踪、配方版本控制
         </Typography>
-      </Box>
+      </div>
 
       <motion.div
         variants={containerVariants}

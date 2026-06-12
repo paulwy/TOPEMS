@@ -143,9 +143,9 @@ const PmContractDetailPage: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-500">合同状态</p>
                 <span
-                  className={`inline-block px-2 py-1 text-sm rounded-full ${STATUS_COLORS[contract.status] || STATUS_COLORS.draft}`}
+                  className={`inline-block px-2 py-1 text-sm rounded-full ${STATUS_COLORS[contract.status || "draft"]}`}
                 >
-                  {STATUS_LABELS[contract.status] || contract.status}
+                  {STATUS_LABELS[contract.status || "draft"] || contract.status}
                 </span>
               </div>
             </div>

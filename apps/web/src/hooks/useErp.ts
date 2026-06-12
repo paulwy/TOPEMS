@@ -279,7 +279,7 @@ export function useAccountingSubjects() {
 }
 
 export function useVouchers() {
-  return useErpBase<FinancialVoucher>(voucherApi);
+  return useErpBase<FinancialVoucher>(voucherApi as any);
 }
 
 export function useOfficeSupplies() {

@@ -35,46 +35,121 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            const packageName = id.split('node_modules/')[1]?.split('/')[0];
-            if (!packageName) return 'vendor-shared';
-            if (['monaco-editor', '@monaco-editor'].includes(packageName)) return 'vendor-monaco';
-            if (['pdfjs-dist', 'react-pdf'].includes(packageName)) return 'vendor-pdf';
-            if (['xlsx', 'file-saver', 'xlsx-populate'].includes(packageName)) return 'vendor-excel';
-            if (['mapbox-gl', 'react-map-gl'].includes(packageName)) return 'vendor-map';
-            if (['clsx', 'tailwind-merge', 'class-variance-authority', 'isomorphic-dompurify', 'csstype', 'css-in-js-utils'].includes(packageName)) return 'vendor-utils';
-            if (['axios', 'follow-redirects'].includes(packageName)) return 'vendor-axios';
-            if (['zod', 'yup', 'property-expr', 'fast-deep-equal', 'tiny-invariant', 'get-nested-value'].includes(packageName)) return 'vendor-validation';
-            if (packageName === '@babel' || id.includes('@babel/runtime')) return 'vendor-babel';
-            if (['react', 'react-dom', 'scheduler', 'loose-envify', 'object-assign', 'prop-types'].includes(packageName)) return 'vendor-react';
-            if (['react-router', 'react-router-dom', 'history', 'path-to-regexp', 'query-string'].includes(packageName)) return 'vendor-router';
-            if (['@hookform/resolvers', 'react-hook-form'].includes(packageName)) return 'vendor-form';
-            if (packageName === '@radix-ui') return 'vendor-radix';
-            if (packageName === '@nextui-org') return 'vendor-nextui';
-            if (packageName === 'lucide-react') return 'vendor-icons';
-            if (['@testing-library', 'vitest', 'jsdom', 'faker'].includes(packageName)) return 'vendor-test';
-            return 'vendor-shared';
-          }
-          if (id.includes('pages/AIPage')) return 'page-ai';
-          if (id.includes('pages/GisPage')) return 'page-gis';
-          if (id.includes('pages/Limspage')) return 'page-lims';
-          if (id.includes('pages/Rspage')) return 'page-rs';
-          if (id.includes('pages/Qmspage')) return 'page-qms';
-          if (id.includes('pages/Ehspage')) return 'page-ehs';
-          if (id.includes('pages/CrmPage') || id.includes('pages/CRMDashboardPage')) return 'page-crm';
-          if (id.includes('pages/Hrm')) return 'page-hrm';
-          if (id.includes('routes/')) {
-            const routeName = id.split('routes/')[1]?.split('.')[0];
-            if (routeName) return `route-${routeName}`;
-          }
-          if (id.includes('src/api/')) {
-            const apiName = id.split('src/api/')[1]?.split('.')[0];
-            if (apiName) return `api-${apiName}`;
-          }
+          if (!id.includes('node_modules')) return;
+          
+          const packageName = id.split('node_modules/')[1]?.split('/')[0] || '';
+          const scopedPackage = id.split('node_modules/')[1]?.split('/').slice(0, 2).join('/') || '';
+          
+          // 核心框架 - 必须首先匹配
+          if (/^react$/.test(packageName)) return 'vendor-react';
+          if (/^react-dom$/.test(packageName)) return 'vendor-react';
+          if (/^scheduler$/.test(packageName)) return 'vendor-react';
+          if (/^loose-envify$/.test(packageName)) return 'vendor-react';
+          if (/^object-assign$/.test(packageName)) return 'vendor-react';
+          if (/^prop-types$/.test(packageName)) return 'vendor-react';
+          if (/^react-is$/.test(packageName)) return 'vendor-react';
+          
+          // 路由
+          if (/^react-router(-dom)?$/.test(packageName)) return 'vendor-router';
+          if (/^history$/.test(packageName)) return 'vendor-router';
+          if (/^path-to-regexp$/.test(packageName)) return 'vendor-router';
+          if (/^query-string$/.test(packageName)) return 'vendor-router';
+          
+          // UI 库
+          if (/^@emotion\/react$/.test(scopedPackage)) return 'vendor-emotion';
+          if (/^@emotion\/styled$/.test(scopedPackage)) return 'vendor-emotion';
+          if (/^@mui\/(material|icons-material|lab)$/.test(scopedPackage)) return 'vendor-mui';
+          if (/^@mui\/system$/.test(scopedPackage)) return 'vendor-mui';
+          if (/^@heroui\/(react|styles)$/.test(scopedPackage)) return 'vendor-heroui';
+          if (/^@nextui-org\/react$/.test(scopedPackage)) return 'vendor-nextui';
+          if (/^@radix-ui\//.test(scopedPackage)) return 'vendor-radix';
+          
+          // 图表
+          if (/^recharts$/.test(packageName)) return 'vendor-charts';
+          if (/^victory$/.test(packageName)) return 'vendor-charts';
+          if (/^nivo_/.test(packageName)) return 'vendor-charts';
+          
+          // 数据处理
+          if (/^(xlsx|xlsx-populate|exceljs|file-saver)$/.test(packageName)) return 'vendor-excel';
+          
+          // 状态管理
+          if (/^(zustand|jotai|recoil|valtio)$/.test(packageName)) return 'vendor-state';
+          
+          // 表单
+          if (/^@hookform\//.test(scopedPackage)) return 'vendor-form';
+          if (/^react-hook-form$/.test(packageName)) return 'vendor-form';
+          
+          // 验证
+          if (/^(yup|zod|joi|superstruct)$/.test(packageName)) return 'vendor-validation';
+          
+          // 工具库
+          if (/^(clsx|tailwind-merge|class-variance-authority)$/.test(packageName)) return 'vendor-utils';
+          if (/^(axios|follow-redirects)$/.test(packageName)) return 'vendor-axios';
+          if (/^(dayjs|date-fns|moment|luxon)$/.test(packageName)) return 'vendor-date';
+          if (/^i18next$/.test(packageName)) return 'vendor-i18n';
+          if (/^react-i18next$/.test(packageName)) return 'vendor-i18n';
+          if (/^lodash(-es)?$/.test(packageName)) return 'vendor-lodash';
+          
+          // 图标和动画
+          if (/^lucide-react$/.test(packageName)) return 'vendor-icons';
+          if (/^framer-motion$/.test(packageName)) return 'vendor-animation';
+          if (/^react-spring$/.test(packageName)) return 'vendor-animation';
+          
+          // 地图
+          if (/^leaflet$/.test(packageName)) return 'vendor-leaflet';
+          if (/^react-leaflet$/.test(packageName)) return 'vendor-leaflet';
+          if (/^leaflet-draw$/.test(packageName)) return 'vendor-leaflet';
+          if (/^leaflet-measure$/.test(packageName)) return 'vendor-leaflet';
+          
+          // 3D
+          if (/^three$/.test(packageName)) return 'vendor-three';
+          if (/^@react-three\//.test(scopedPackage)) return 'vendor-three';
+          
+          // 特殊功能
+          if (/^@monaco-editor\//.test(scopedPackage)) return 'vendor-monaco';
+          if (/^pdfjs-dist$/.test(packageName)) return 'vendor-pdf';
+          if (/^react-pdf$/.test(packageName)) return 'vendor-pdf';
+          if (/^mapbox-gl$/.test(packageName)) return 'vendor-map';
+          if (/^react-map-gl$/.test(packageName)) return 'vendor-map';
+          
+          // Markdown 相关
+          if (/^react-markdown$/.test(packageName)) return 'vendor-markdown';
+          if (/^remark-gfm$/.test(packageName)) return 'vendor-markdown';
+          if (/^react-syntax-highlighter$/.test(packageName)) return 'vendor-markdown';
+          
+          // Toast
+          if (/^react-toastify$/.test(packageName)) return 'vendor-toast';
+          
+          // Docx preview
+          if (/^docx-preview$/.test(packageName)) return 'vendor-docx';
+          
+          // TanStack
+          if (/^@tanstack\/react-query$/.test(scopedPackage)) return 'vendor-query';
+          if (/^@tanstack\/react-table$/.test(scopedPackage)) return 'vendor-table';
+          if (/^@tanstack\/react-virtual$/.test(scopedPackage)) return 'vendor-virtual';
+          
+          // 其他明确命名的包
+          if (/^@amap\/amap-jsapi-loader$/.test(scopedPackage)) return 'vendor-amap';
+          if (/^heatmap\.js$/.test(packageName)) return 'vendor-heatmap';
+          if (/^react-heatmap-grid$/.test(packageName)) return 'vendor-heatmap';
+          if (/^@dnd-kit\//.test(scopedPackage)) return 'vendor-dnd';
+          if (/^react-window$/.test(packageName)) return 'vendor-virtualization';
+          if (/^react-virtualized$/.test(packageName)) return 'vendor-virtualization';
+          
+          // 其余都归入 vendor-shared
+          return 'vendor-shared';
         },
       },
     },
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 1500,
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
   },
   server: {
     port: 3000,
@@ -87,29 +162,29 @@ export default defineConfig({
       protocol: 'ws',
     },
     proxy: {
-      '/api/v1/files': createServiceProxyConfig('doc', 'http://localhost:8028', true),
+      '/api/v1/files': createServiceProxyConfig('doc', 'http://localhost:8024', true),
       '/mail/api': createServiceProxyConfig('mail', 'http://localhost:8051'),
       '/mail/health': createServiceProxyConfig('mail', 'http://localhost:8051'),
-      '/hrm/api': createServiceProxyConfig('hrm', 'http://localhost:8012'),
-      '/hrm/health': createServiceProxyConfig('hrm', 'http://localhost:8012'),
+      '/hrm/api': createServiceProxyConfig('hrm', 'http://localhost:8011'),
+      '/hrm/health': createServiceProxyConfig('hrm', 'http://localhost:8011'),
       '/api': { target: 'http://localhost:8000', changeOrigin: true },
       '/health': { target: 'http://localhost:8000', changeOrigin: true },
       '/iam/api': { target: 'http://localhost:8000', changeOrigin: true, rewrite: (path) => path.replace(/^\/iam/, '') },
       '/iam/health': { target: 'http://localhost:8000', changeOrigin: true, rewrite: (path) => path.replace(/^\/iam/, '') },
-      '/doc/api': createServiceProxyConfig('doc', 'http://localhost:8028'),
-      '/doc/health': createServiceProxyConfig('doc', 'http://localhost:8028'),
-      '/flow/api': createServiceProxyConfig('flow', 'http://localhost:8006'),
-      '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8006'),
-      '/notification': { target: 'http://localhost:8004', changeOrigin: true, ws: true, secure: false, rewrite: (path: string) => path.replace(/^\/notification/, '') },
+      '/doc/api': createServiceProxyConfig('doc', 'http://localhost:8024'),
+      '/doc/health': createServiceProxyConfig('doc', 'http://localhost:8024'),
+      '/flow/api': createServiceProxyConfig('flow', 'http://localhost:8004'),
+      '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8004'),
+      '/notification': { target: 'http://localhost:8003', changeOrigin: true, ws: true, secure: false, rewrite: (path: string) => path.replace(/^\/notification/, '') },
       '/im/ws': { target: 'http://127.0.0.1:8052', changeOrigin: true, ws: true, secure: false, rewrite: (path) => path.replace(/^\/im/, '') },
-      '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8007'),
-      '/integration/health': createServiceProxyConfig('integration', 'http://localhost:8007'),
-      '/portal/api': createServiceProxyConfig('portal', 'http://localhost:8005'),
-      '/portal/health': createServiceProxyConfig('portal', 'http://localhost:8005'),
+      '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8005'),
+      '/integration/health': createServiceProxyConfig('integration', 'http://localhost:8005'),
+      '/portal/api': createServiceProxyConfig('portal', 'http://localhost:8003'),
+      '/portal/health': createServiceProxyConfig('portal', 'http://localhost:8003'),
       '/erp/api': createServiceProxyConfig('erp', 'http://localhost:8010'),
       '/erp/health': createServiceProxyConfig('erp', 'http://localhost:8010'),
-      '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8013'),
-      '/crm/health': createServiceProxyConfig('crm', 'http://localhost:8013'),
+      '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8012'),
+      '/crm/health': createServiceProxyConfig('crm', 'http://localhost:8012'),
       '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8062'),
       '/ai/health': createServiceProxyConfig('ai', 'http://localhost:8062'),
       '/rs/api': createServiceProxyConfig('rs', 'http://localhost:8020'),
@@ -130,8 +205,8 @@ export default defineConfig({
       '/srm/health': createServiceProxyConfig('srm', 'http://localhost:8041'),
       '/wms/api': createServiceProxyConfig('wms', 'http://localhost:8042'),
       '/wms/health': createServiceProxyConfig('wms', 'http://localhost:8042'),
-      '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8002'),
-      '/pm/health': createServiceProxyConfig('pm', 'http://localhost:8002'),
+      '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8001'),
+      '/pm/health': createServiceProxyConfig('pm', 'http://localhost:8001'),
       '/gis/api': createServiceProxyConfig('gis', 'http://localhost:8053'),
       '/gis/health': createServiceProxyConfig('gis', 'http://localhost:8053'),
       '/im/api': createServiceProxyConfig('im', 'http://localhost:8052'),

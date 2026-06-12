@@ -965,12 +965,15 @@ const FinanceReceivablePayablePage: React.FC = () => {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center">
-              {"customer_name" in selectedItem ? (
+              {selectedItem && "customer_name" in selectedItem ? (
                 <ArrowUpRight className="w-5 h-5 mr-2 text-indigo-600" />
               ) : (
                 <ArrowDownRight className="w-5 h-5 mr-2 text-indigo-600" />
               )}
-              {"customer_name" in selectedItem ? "应收账款" : "应付账款"}详情
+              {selectedItem && "customer_name" in selectedItem
+                ? "应收账款"
+                : "应付账款"}
+              详情
             </DialogTitle>
           </DialogHeader>
           {selectedItem && (

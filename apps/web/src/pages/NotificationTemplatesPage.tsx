@@ -172,6 +172,8 @@ const NotificationTemplatesPage: React.FC = () => {
             废弃
           </span>
         );
+      default:
+        return null;
     }
   };
 
@@ -363,11 +365,11 @@ const NotificationTemplatesPage: React.FC = () => {
                           {getStatusBadge(template.status)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {template.default_priority >= 4
+                          {(template.default_priority ?? 0) >= 4
                             ? "紧急"
-                            : template.default_priority >= 3
+                            : (template.default_priority ?? 0) >= 3
                               ? "高"
-                              : template.default_priority >= 2
+                              : (template.default_priority ?? 0) >= 2
                                 ? "中"
                                 : "低"}
                         </td>
@@ -457,7 +459,11 @@ const NotificationTemplatesPage: React.FC = () => {
       {showCreateModal && (
         <TemplateFormModal
           onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateTemplate}
+          onSubmit={
+            handleCreateTemplate as (
+              data: CreateTemplateRequest | UpdateTemplateRequest,
+            ) => void
+          }
         />
       )}
 

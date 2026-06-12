@@ -294,12 +294,12 @@ impl VectorService {
                 c.document_id,
                 c.id AS chunk_id,
                 c.content,
-                ts_rank_cd(to_tsvector('chinese', c.content), query) AS similarity,
+                ts_rank_cd(to_tsvector('simple', c.content), query) AS similarity,
                 d.title AS document_title
             FROM ai.document_chunks c
             JOIN ai.documents d ON c.document_id = d.id,
-                 to_tsquery('chinese', $1) query
-            WHERE to_tsvector('chinese', c.content) @@ query
+                 to_tsquery('simple', $1) query
+            WHERE to_tsvector('simple', c.content) @@ query
             ORDER BY similarity DESC
             LIMIT $2
             "#,

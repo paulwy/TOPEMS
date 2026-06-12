@@ -129,13 +129,13 @@ const RsExperimentDetailPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面头部 */}
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="flex-start"
         >
-          <Box>
+          <div>
             <Stack direction="row" alignItems="center" spacing={2}>
               <Typography variant="h4" fontWeight="bold">
                 {experiment.name}
@@ -154,7 +154,7 @@ const RsExperimentDetailPage: React.FC = () => {
               编码: {experiment.code} | 项目: {experiment.project_name} |
               实验员: {experiment.experimenter}
             </Typography>
-          </Box>
+          </div>
           <Stack direction="row" spacing={2}>
             <Button variant="outlined" startIcon={<EditIcon />}>
               编辑
@@ -164,7 +164,7 @@ const RsExperimentDetailPage: React.FC = () => {
             </Button>
           </Stack>
         </Stack>
-      </Box>
+      </div>
 
       {/* 试验概览 */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -251,7 +251,7 @@ const RsExperimentDetailPage: React.FC = () => {
           />
         </Tabs>
 
-        <Box sx={{ p: 3 }}>
+        <div style={{ padding: 12 }}>
           {/* 实验记录 */}
           <Timeline>
             {records.map((record) => (
@@ -269,7 +269,7 @@ const RsExperimentDetailPage: React.FC = () => {
                       justifyContent="space-between"
                       alignItems="center"
                     >
-                      <Box>
+                      <div>
                         <Chip label={record.type} size="small" sx={{ mb: 1 }} />
                         <Typography variant="body2">
                           {record.content}
@@ -278,14 +278,14 @@ const RsExperimentDetailPage: React.FC = () => {
                           记录人: {record.recorded_by} | 时间:{" "}
                           {record.recorded_at}
                         </Typography>
-                      </Box>
+                      </div>
                     </Stack>
                   </Paper>
                 </TimelineContent>
               </TimelineItem>
             ))}
           </Timeline>
-        </Box>
+        </div>
       </Paper>
     </Container>
   );

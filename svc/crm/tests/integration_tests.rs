@@ -115,16 +115,21 @@ mod tests {
         }
     }
 
+    fn test_org_id() -> Uuid {
+        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    }
+
     #[tokio::test]
     async fn test_create_customer() {
         let pool = setup_test_pool().await.unwrap();
+        let org_id = test_org_id();
 
         let customer_id = Uuid::new_v4();
         let customer_code = format!("CUST-{}", &customer_id.to_string()[..8]);
 
         let result = sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, code, name, customer_type, industry, contact, phone, email, status, created_at, updated_at)
+            INSERT INTO crm.customers (id, organization_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
@@ -133,11 +138,11 @@ mod tests {
             "#,
         )
         .bind(customer_id)
+        .bind(org_id)
         .bind(&customer_code)
         .bind(format!("测试客户-{}", &customer_id.to_string()[..6]))
         .bind("enterprise")
         .bind("制造业")
-        .bind("联系人")
         .bind("13800138000")
         .bind("test@example.com")
         .bind("active")
@@ -153,7 +158,7 @@ mod tests {
 
         let result = sqlx::query_as::<_, CustomerRow>(
             r#"
-            SELECT id, code, name, customer_type, industry, contact, phone, email, address, status, created_at, updated_at
+            SELECT id, code, name, customer_type, industry, phone, email, address, status, created_at, updated_at
             FROM crm.customers
             WHERE status = 'active'
             ORDER BY created_at DESC
@@ -176,6 +181,7 @@ mod tests {
     #[tokio::test]
     async fn test_customer_status_update() {
         let pool = setup_test_pool().await.unwrap();
+        let org_id = test_org_id();
 
         // 创建一个新的客户
         let customer_id = Uuid::new_v4();
@@ -183,16 +189,16 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, code, name, customer_type, industry, contact, phone, email, status, created_at, updated_at)
+            INSERT INTO crm.customers (id, organization_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             "#,
         )
         .bind(customer_id)
+        .bind(org_id)
         .bind(&customer_code)
         .bind("测试客户")
         .bind("enterprise")
         .bind("制造业")
-        .bind("联系人")
         .bind("13800138000")
         .bind("test@example.com")
         .bind("active")
@@ -239,6 +245,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_opportunity() {
         let pool = setup_test_pool().await.unwrap();
+        let org_id = test_org_id();
 
         // 先创建一个客户
         let customer_id = Uuid::new_v4();
@@ -246,11 +253,12 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, code, name, customer_type, industry, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+            INSERT INTO crm.customers (id, organization_id, code, name, customer_type, industry, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(customer_id)
+        .bind(org_id)
         .bind(&customer_code)
         .bind("测试客户")
         .bind("enterprise")
@@ -264,18 +272,19 @@ mod tests {
         let opportunity_id = Uuid::new_v4();
         let result = sqlx::query(
             r#"
-            INSERT INTO crm.opportunities (id, customer_id, name, stage, amount, probability, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO crm.opportunities (id, organization_id, customer_id, name, stage, value, probability, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
         .bind(opportunity_id)
+        .bind(org_id)
         .bind(customer_id)
         .bind(format!("测试商机-{}", &opportunity_id.to_string()[..6]))
         .bind("prospecting")
         .bind(100000.00)
         .bind(20)
         .bind("open")
-        .fetch_one(&pool)
+        .execute(&pool)
         .await;
 
         assert!(result.is_ok(), "商机创建应该成功");
@@ -321,7 +330,6 @@ struct CustomerRow {
     name: String,
     customer_type: Option<String>,
     industry: Option<String>,
-    contact: Option<String>,
     phone: Option<String>,
     email: Option<String>,
     address: Option<String>,

@@ -50,14 +50,14 @@ const RsReportPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           研发报表分析
         </Typography>
         <Typography variant="body2" color="text.secondary">
           研发项目统计分析、试验数据汇总、成果评估
         </Typography>
-      </Box>
+      </div>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
@@ -68,7 +68,7 @@ const RsReportPage: React.FC = () => {
                 justifyContent="space-between"
                 alignItems="flex-start"
               >
-                <Box>
+                <div>
                   <Typography
                     color="text.secondary"
                     variant="body2"
@@ -91,7 +91,7 @@ const RsReportPage: React.FC = () => {
                       color="success"
                     />
                   </Stack>
-                </Box>
+                </div>
                 <FolderIcon color="primary" fontSize="large" />
               </Stack>
             </CardContent>
@@ -106,7 +106,7 @@ const RsReportPage: React.FC = () => {
                 justifyContent="space-between"
                 alignItems="flex-start"
               >
-                <Box>
+                <div>
                   <Typography
                     color="text.secondary"
                     variant="body2"
@@ -128,7 +128,7 @@ const RsReportPage: React.FC = () => {
                       成功率 {reportData.experiments.successRate}%
                     </Typography>
                   </Stack>
-                </Box>
+                </div>
                 <ScienceIcon color="warning" fontSize="large" />
               </Stack>
             </CardContent>
@@ -143,7 +143,7 @@ const RsReportPage: React.FC = () => {
                 justifyContent="space-between"
                 alignItems="flex-start"
               >
-                <Box>
+                <div>
                   <Typography
                     color="text.secondary"
                     variant="body2"
@@ -166,7 +166,7 @@ const RsReportPage: React.FC = () => {
                       color="warning"
                     />
                   </Stack>
-                </Box>
+                </div>
                 <AnalyticsIcon color="info" fontSize="large" />
               </Stack>
             </CardContent>

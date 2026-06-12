@@ -6,6 +6,6 @@ const LoginPage = lazy(() => import("../pages/LoginPage"));
 export const authRoutes: RouteConfig[] = [
   {
     path: "/login",
-    element: React.createElement(LoginPage),
+    element: LoginPage,
   },
 ];

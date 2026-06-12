@@ -293,13 +293,13 @@ const RsProjectDetailPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面头部 */}
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="flex-start"
         >
-          <Box>
+          <div>
             <Stack direction="row" alignItems="center" spacing={2}>
               <Typography variant="h4" fontWeight="bold">
                 {project.name}
@@ -318,7 +318,7 @@ const RsProjectDetailPage: React.FC = () => {
               编码: {project.code} | 类型: {project.project_type} | 负责人:{" "}
               {project.leader}
             </Typography>
-          </Box>
+          </div>
           <Stack direction="row" spacing={2}>
             <Button
               variant="outlined"
@@ -337,7 +337,7 @@ const RsProjectDetailPage: React.FC = () => {
             </Button>
           </Stack>
         </Stack>
-      </Box>
+      </div>
 
       {/* 项目概览卡片 */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -353,64 +353,64 @@ const RsProjectDetailPage: React.FC = () => {
               <Divider sx={{ my: 2 }} />
               <Grid container spacing={2}>
                 <Grid item xs={6}>
-                  <Box
-                    sx={{
+                  <div
+                    style={{
                       display: "flex",
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 1,
+                      gap: 4,
                     }}
                   >
                     <ScheduleIcon color="action" />
                     <Typography variant="body2">
                       开始日期: {project.start_date}
                     </Typography>
-                  </Box>
+                  </div>
                 </Grid>
                 <Grid item xs={6}>
-                  <Box
-                    sx={{
+                  <div
+                    style={{
                       display: "flex",
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 1,
+                      gap: 4,
                     }}
                   >
                     <ScheduleIcon color="action" />
                     <Typography variant="body2">
                       结束日期: {project.end_date || "未设定"}
                     </Typography>
-                  </Box>
+                  </div>
                 </Grid>
                 <Grid item xs={6}>
-                  <Box
-                    sx={{
+                  <div
+                    style={{
                       display: "flex",
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 1,
+                      gap: 4,
                     }}
                   >
                     <MoneyIcon color="action" />
                     <Typography variant="body2">
                       预算: {(project.budget / 10000).toFixed(1)} 万元
                     </Typography>
-                  </Box>
+                  </div>
                 </Grid>
                 <Grid item xs={6}>
-                  <Box
-                    sx={{
+                  <div
+                    style={{
                       display: "flex",
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 1,
+                      gap: 4,
                     }}
                   >
                     <PeopleIcon color="action" />
                     <Typography variant="body2">
                       团队成员: {project.team_members.length} 人
                     </Typography>
-                  </Box>
+                  </div>
                 </Grid>
               </Grid>
             </CardContent>
@@ -423,7 +423,9 @@ const RsProjectDetailPage: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 项目进度
               </Typography>
-              <Box sx={{ textAlign: "center", py: 2 }}>
+              <div
+                style={{ textAlign: "center", paddingTop: 8, paddingBottom: 8 }}
+              >
                 <Typography variant="h3" fontWeight="bold" color="primary">
                   {project.progress}%
                 </Typography>
@@ -432,11 +434,11 @@ const RsProjectDetailPage: React.FC = () => {
                   value={project.progress}
                   sx={{ mt: 2, height: 10, borderRadius: 5 }}
                 />
-              </Box>
+              </div>
               <Divider sx={{ my: 2 }} />
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <Box
-                  sx={{
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div
+                  style={{
                     display: "flex",
                     flexDirection: "row",
                     justifyContent: "space-between",
@@ -447,9 +449,9 @@ const RsProjectDetailPage: React.FC = () => {
                     {phases.filter((p) => p.status === "已完成").length}/
                     {phases.length}
                   </Typography>
-                </Box>
-                <Box
-                  sx={{
+                </div>
+                <div
+                  style={{
                     display: "flex",
                     flexDirection: "row",
                     justifyContent: "space-between",
@@ -460,9 +462,9 @@ const RsProjectDetailPage: React.FC = () => {
                     {milestones.filter((m) => m.status === "已完成").length}/
                     {milestones.length}
                   </Typography>
-                </Box>
-                <Box
-                  sx={{
+                </div>
+                <div
+                  style={{
                     display: "flex",
                     flexDirection: "row",
                     justifyContent: "space-between",
@@ -472,8 +474,8 @@ const RsProjectDetailPage: React.FC = () => {
                   <Typography variant="body2" fontWeight="bold">
                     {experiments.length}
                   </Typography>
-                </Box>
-              </Box>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </Grid>
@@ -493,7 +495,7 @@ const RsProjectDetailPage: React.FC = () => {
           />
         </Tabs>
 
-        <Box sx={{ p: 3 }}>
+        <div style={{ padding: 12 }}>
           {/* 项目阶段 */}
           {activeTab === 0 && (
             <TableContainer>
@@ -519,8 +521,12 @@ const RsProjectDetailPage: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
                         >
                           <LinearProgress
                             variant="determinate"
@@ -530,7 +536,7 @@ const RsProjectDetailPage: React.FC = () => {
                           <Typography variant="body2">
                             {phase.progress}%
                           </Typography>
-                        </Box>
+                        </div>
                       </TableCell>
                       <TableCell>{phase.start_date}</TableCell>
                       <TableCell>{phase.end_date || "-"}</TableCell>
@@ -692,7 +698,7 @@ const RsProjectDetailPage: React.FC = () => {
               </ListItem>
             </List>
           )}
-        </Box>
+        </div>
       </Paper>
     </Container>
   );

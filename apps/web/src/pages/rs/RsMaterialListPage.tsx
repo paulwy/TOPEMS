@@ -131,25 +131,25 @@ const RsMaterialListPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
         >
-          <Box>
+          <div>
             <Typography variant="h4" fontWeight="bold" gutterBottom>
               物料管理
             </Typography>
             <Typography variant="body2" color="text.secondary">
               管理研发物料、库存监控、物料申请
             </Typography>
-          </Box>
+          </div>
           <Button variant="contained" startIcon={<AddIcon />}>
             新增物料
           </Button>
         </Stack>
-      </Box>
+      </div>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={4}>
@@ -160,14 +160,14 @@ const RsMaterialListPage: React.FC = () => {
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Box>
+                <div>
                   <Typography color="text.secondary" variant="body2">
                     物料总数
                   </Typography>
                   <Typography variant="h4" fontWeight="bold">
                     {stats.total}
                   </Typography>
-                </Box>
+                </div>
                 <InventoryIcon color="primary" fontSize="large" />
               </Stack>
             </CardContent>
@@ -181,7 +181,7 @@ const RsMaterialListPage: React.FC = () => {
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Box>
+                <div>
                   <Typography color="text.secondary" variant="body2">
                     库存充足
                   </Typography>
@@ -192,7 +192,7 @@ const RsMaterialListPage: React.FC = () => {
                   >
                     {stats.sufficient}
                   </Typography>
-                </Box>
+                </div>
                 <InventoryIcon color="success" fontSize="large" />
               </Stack>
             </CardContent>
@@ -206,14 +206,14 @@ const RsMaterialListPage: React.FC = () => {
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Box>
+                <div>
                   <Typography color="text.secondary" variant="body2">
                     库存不足
                   </Typography>
                   <Typography variant="h4" fontWeight="bold" color="error.main">
                     {stats.low}
                   </Typography>
-                </Box>
+                </div>
                 <InventoryIcon color="error" fontSize="large" />
               </Stack>
             </CardContent>

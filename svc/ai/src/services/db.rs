@@ -33,10 +33,18 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
-        // 创建 vector 扩展到 ai schema
-        sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA ai;"#)
+        // 创建 vector 扩展到 ai schema（可选，如果不可用则继续运行）
+        let vector_result = sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA ai;"#)
             .execute(&self.pool)
-            .await?;
+            .await;
+
+        match vector_result {
+            Ok(_) => tracing::info!("✅ pgvector 扩展已启用"),
+            Err(e) => {
+                tracing::warn!("⚠️ pgvector 扩展不可用，AI 向量搜索功能将被禁用: {}", e);
+                tracing::warn!("💡 如需启用向量功能，请安装 pgvector 扩展");
+            }
+        }
 
         // 创建文档表
         sqlx::query(
@@ -135,7 +143,7 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_chunks_content_search ON ai.document_chunks USING gin(to_tsvector('chinese', content));"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_chunks_content_search ON ai.document_chunks USING gin(to_tsvector('simple', content));"#)
             .execute(&self.pool)
             .await?;
 

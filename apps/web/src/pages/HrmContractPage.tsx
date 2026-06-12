@@ -201,14 +201,14 @@ export default function ContractManagementPage() {
           page: currentPage,
           page_size: 20,
         });
-        if (result.code === 0) {
+        if (result.code === 0 && result.data) {
           setData(result.data);
         } else {
           showNotification("error", result.message || "获取即将到期合同失败");
         }
       } else {
         const result = await contractApi.list(params);
-        if (result.code === 0) {
+        if (result.code === 0 && result.data) {
           setData(result.data);
         } else {
           showNotification("error", result.message || "获取合同列表失败");
@@ -224,7 +224,7 @@ export default function ContractManagementPage() {
   const loadEmployees = async () => {
     try {
       const result = await employeeApi.list({ page: 1, page_size: 100 });
-      if (result.code === 0) {
+      if (result.code === 0 && result.data) {
         setEmployees(result.data.items);
       }
     } catch (error) {
@@ -285,7 +285,7 @@ export default function ContractManagementPage() {
     setModalType("view");
     setCurrentContract(contract);
     const result = await contractRenewalApi.list({ contract_id: contract.id });
-    if (result.code === 0) {
+    if (result.code === 0 && result.data) {
       setRenewals(result.data.items);
     }
     setShowRenewals(false);

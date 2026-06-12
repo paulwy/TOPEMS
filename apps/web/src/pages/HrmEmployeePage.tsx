@@ -1185,7 +1185,7 @@ const HrmEmployeePage: React.FC = () => {
                     onValueChange={(value) =>
                       handleInputChange(
                         "department_id",
-                        value === "none" ? undefined : value,
+                        value === "none" ? "" : value,
                       )
                     }
                   >
@@ -1345,7 +1345,7 @@ const HrmEmployeePage: React.FC = () => {
                       onValueChange={(value) =>
                         handleInputChange(
                           "department_id",
-                          value === "none" ? undefined : value,
+                          value === "none" ? "" : value,
                         )
                       }
                     >

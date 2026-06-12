@@ -661,8 +661,8 @@ const Ehspage: React.FC = () => {
                 result: item["结果"] || item["result"] || "",
                 issues: (item["发现问题"] || item["issues"] || "")
                   .split(";")
-                  .map((s) => s.trim())
-                  .filter((s) => s),
+                  .map((s: string) => s.trim())
+                  .filter((s: string) => s),
                 status: item["状态"] || item["status"] || "in_progress",
               };
               await ehsApi.createCheck(req);
@@ -683,8 +683,8 @@ const Ehspage: React.FC = () => {
                   ""
                 )
                   .split(";")
-                  .map((s) => s.trim())
-                  .filter((s) => s),
+                  .map((s: string) => s.trim())
+                  .filter((s: string) => s),
                 contact_info: item["联系方式"] || item["contact_info"] || null,
                 status: item["状态"] || item["status"] || "active",
               };
@@ -696,8 +696,8 @@ const Ehspage: React.FC = () => {
                 drill_name: item["演练名称"] || item["drill_name"] || "",
                 participants: (item["参与人员"] || item["participants"] || "")
                   .split(";")
-                  .map((s) => s.trim())
-                  .filter((s) => s),
+                  .map((s: string) => s.trim())
+                  .filter((s: string) => s),
                 duration_hours: parseFloat(
                   item["时长(小时)"] || item["duration_hours"] || "1",
                 ),

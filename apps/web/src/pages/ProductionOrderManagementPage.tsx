@@ -341,13 +341,13 @@ const ProductionOrderManagementPage: React.FC = () => {
                       <TableCell>{order.quantity}</TableCell>
                       <TableCell>
                         {new Date(
-                          order.scheduled_start_date,
+                          order.scheduled_start_date || "",
                         ).toLocaleDateString("zh-CN")}
                       </TableCell>
                       <TableCell>
-                        {new Date(order.scheduled_end_date).toLocaleDateString(
-                          "zh-CN",
-                        )}
+                        {new Date(
+                          order.scheduled_end_date || "",
+                        ).toLocaleDateString("zh-CN")}
                       </TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
                       <TableCell className="text-right">
@@ -558,16 +558,16 @@ const ProductionOrderManagementPage: React.FC = () => {
                   <Label className="text-muted-foreground">计划开始时间</Label>
                   <p>
                     {new Date(
-                      selectedOrder.scheduled_start_date,
+                      selectedOrder.scheduled_start_date || "",
                     ).toLocaleString("zh-CN")}
                   </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">计划结束时间</Label>
                   <p>
-                    {new Date(selectedOrder.scheduled_end_date).toLocaleString(
-                      "zh-CN",
-                    )}
+                    {new Date(
+                      selectedOrder.scheduled_end_date || "",
+                    ).toLocaleString("zh-CN")}
                   </p>
                 </div>
                 <div>

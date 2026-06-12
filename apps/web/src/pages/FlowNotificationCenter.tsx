@@ -51,7 +51,7 @@ const FlowNotificationCenter: React.FC = () => {
         setNotifications(notificationList);
 
         // Count unread
-        const unread = notificationList.filter((n) => !n.is_read).length;
+        const unread = notificationList.filter((n: any) => !n.is_read).length;
         setUnreadCount(unread);
       } else {
         setNotifications([]);

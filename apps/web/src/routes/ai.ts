@@ -6,7 +6,7 @@ const AIPage = lazy(() => import("../pages/AIPage"));
 export const aiRoutes: RouteConfig[] = [
   {
     path: "/ai",
-    element: React.createElement(AIPage),
+    element: AIPage,
     requiredPermissions: ["ai:read"],
     module: "ai",
     action: "read",
