@@ -4,17 +4,23 @@
 
 ### 主脚本：topems.sh
 
-推荐使用统一的服务管理脚本，支持 Docker 和非 Docker 两种方案：
+推荐使用统一的服务管理脚本，默认使用非 Docker 方案（适合无外网环境）：
 
 ```bash
-# 启动所有服务（自动检测方案）
+# 启动所有服务（默认使用非Docker方案）
 ./scripts/topems.sh start
 
-# 使用Docker方案启动
+# 使用Docker方案启动（需要外网）
 ./scripts/topems.sh start-docker
 
-# 使用非Docker方案启动
+# 使用非Docker方案启动（无外网可用）
 ./scripts/topems.sh start-standalone
+
+# ⚡ 优化启动（推荐开发环境）
+./scripts/topems.sh start-core              # 仅核心服务（~150 MB）
+./scripts/topems.sh start-module erp        # ERP 模块（~120 MB）
+./scripts/topems.sh start-module plm        # PLM 模块（~180 MB）
+./scripts/topems.sh start-module analytics  # 数据分析模块（~200 MB）
 
 # 停止所有服务
 ./scripts/topems.sh stop
@@ -32,6 +38,31 @@
 # 显示帮助
 ./scripts/topems.sh help
 ```
+
+### ⚡ 优化启动命令
+
+| 命令 | 内存占用 | 进程数 | 适用场景 |
+|------|---------|--------|---------|
+| `start` | ~800 MB | 26 个 | 生产环境、完整测试 |
+| `start-core` | ~150 MB | 3 个 | 开发核心功能 |
+| `start-module erp` | ~120 MB | 3 个 | 开发 ERP 模块 |
+| `start-module plm` | ~180 MB | 4 个 | 开发 PLM 模块 |
+| `start-module mes` | ~100 MB | 3 个 | 开发 MES 模块 |
+| `start-module scm` | ~100 MB | 3 个 | 开发 SCM 模块 |
+| `start-module infra` | ~150 MB | 4 个 | 开发基础设施 |
+| `start-module analytics` | ~200 MB | 3 个 | 开发数据分析 |
+
+### 可用模块列表
+
+| 模块 | 服务 | 端口 |
+|------|------|------|
+| `core` | iam, portal, notification, flow, integration | 8000-8007 |
+| `erp` | erp, hrm, crm | 8010-8013 |
+| `plm` | rs, doc, lims, pdm | 8020-8028 |
+| `mes` | mes, qms, ehs | 8030-8032 |
+| `scm` | scm, srm, wms | 8040-8042 |
+| `infra` | file, mail, im, gis | 8050-8053 |
+| `analytics` | bi, report, ai | 8060-8062 |
 
 ### 脚本架构
 
@@ -217,7 +248,7 @@ bash scripts/docker/topems-docker.sh stop
 | | hrm | 8012 |
 | | crm | 8013 |
 | PLM服务 | rs | 8020 |
-| | doc | 8021 |
+| | doc | 8028 |
 | | lims | 8022 |
 | | pdm | 8023 |
 | MES服务 | mes | 8030 |

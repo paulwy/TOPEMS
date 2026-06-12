@@ -343,6 +343,18 @@ async fn get_file_by_id(state: &AppState, id: Uuid) -> Option<FileMetadata> {
 }
 
 async fn get_file_content(state: &AppState, id: Uuid) -> Option<Vec<u8>> {
+    // 首先尝试从 File 服务获取文件内容
+    match state.doc_storage_service.download_from_file_service(id).await {
+        Ok(content) => {
+            tracing::debug!("从 File 服务获取文件内容成功: {}", id);
+            return Some(content);
+        }
+        Err(e) => {
+            tracing::warn!("从 File 服务获取文件失败: {}, 尝试本地存储", e);
+        }
+    }
+    
+    // 如果 File 服务不可用，回退到本地存储
     state.storage_service.load_file(&id).await.ok()
 }
 

@@ -82,7 +82,7 @@ topems/
 │   ├── lims/                    # 实验室系统 (8022)
 │   ├── pdm/                     # 产品数据管理 (8023)
 │   ├── pm/                      # 项目管理
-│   ├── doc/                     # 文档管理服务 (8021)
+│   ├── doc/                     # 文档管理服务 (8028)
 │   ├── mes/                     # 制造执行系统 (8030)
 │   ├── qms/                     # 质量管理系统 (8031)
 │   ├── ehs/                     # 安全管理系统 (8032)
@@ -112,10 +112,56 @@ topems/
 
 ## 🚀 快速开始
 
+> **注意**：项目默认使用非 Docker 方案（适合无外网环境），如需使用 Docker 方案请使用 `start-docker` 命令。
+
+### 非 Docker 方案（默认，推荐）
+
+```bash
+# 1. 安装依赖（首次使用）
+bash scripts/topems.sh install-db   # 安装数据库（PostgreSQL + Redis）
+bash scripts/topems.sh install-dev  # 安装开发环境（Rust + Node.js）
+
+# 2. 启动服务
+bash scripts/topems.sh start        # 启动所有服务
+```
+
+### ⚡ 优化启动（推荐开发环境）
+
+```bash
+# 仅启动核心服务（内存占用 ~150 MB）
+bash scripts/topems.sh start-core
+
+# 按模块启动服务
+bash scripts/topems.sh start-module erp       # ERP 模块
+bash scripts/topems.sh start-module plm       # PLM 模块
+bash scripts/topems.sh start-module analytics # 数据分析模块
+
+# 可用模块: core, erp, plm, mes, scm, infra, analytics
+```
+
+### 📊 资源占用对比
+
+| 启动方式 | 内存占用 | 进程数 | 适用场景 |
+|---------|---------|--------|---------|
+| `start` | ~800 MB | 26 个 | 生产环境、完整测试 |
+| `start-core` | ~150 MB | 3 个 | 开发核心功能 |
+| `start-module erp` | ~120 MB | 3 个 | 开发 ERP 模块 |
+| `start-module plm` | ~180 MB | 4 个 | 开发 PLM 模块 |
+
+### Docker 方案（需要外网）
+
+```bash
+# 启动所有服务（需要从外网拉取镜像）
+bash scripts/topems.sh start-docker
+
+# 访问应用
+open http://localhost:3000
+```
+
 ### 前端开发
 
 ```bash
-cd frontend
+cd apps/web
 npm install
 npm run dev
 ```

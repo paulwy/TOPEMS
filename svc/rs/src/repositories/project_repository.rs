@@ -142,8 +142,14 @@ impl ProjectRepository {
             .map(|s| s.to_string())
             .unwrap_or(existing.status.clone());
         let progress = req.progress.unwrap_or(existing.progress);
-        let project_config = req.project_config.clone().or(existing.project_config.clone());
-        let benefit_target = req.benefit_target.clone().or(existing.benefit_target.clone());
+        let project_config = req
+            .project_config
+            .clone()
+            .or(existing.project_config.clone());
+        let benefit_target = req
+            .benefit_target
+            .clone()
+            .or(existing.benefit_target.clone());
         let risk_level = req.risk_level.clone().or(existing.risk_level.clone());
         let priority = req.priority.or(existing.priority);
         let tags = req.tags.clone().or(existing.tags.clone());

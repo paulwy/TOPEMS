@@ -26,6 +26,18 @@ success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
+# 检查并处理容器名称冲突
+check_container_conflict() {
+  local container_name=$1
+  if docker inspect "$container_name" >/dev/null 2>&1; then
+    warning "检测到同名容器 '$container_name' 已存在"
+    info "正在停止并移除旧容器..."
+    docker stop "$container_name" >/dev/null 2>&1 || true
+    docker rm "$container_name" >/dev/null 2>&1 || true
+    success "旧容器 '$container_name' 已移除"
+  fi
+}
+
 # 检查Docker是否运行
 check_docker() {
   info "检查Docker服务状态..."
@@ -74,6 +86,12 @@ EOF
 # 启动数据库服务
 start_database() {
   info "启动数据库服务..."
+  
+  # 检查并处理容器名称冲突
+  info "检查容器名称冲突..."
+  check_container_conflict "topems-postgres"
+  check_container_conflict "topems-redis"
+  
   $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" up -d postgres redis
   
   # 等待数据库就绪

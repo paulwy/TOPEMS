@@ -247,12 +247,14 @@ EOF
   # 创建独立运行环境变量文件
   if [ ! -f "$PROJECT_ROOT/config/standalone.env" ]; then
     cat > "$PROJECT_ROOT/config/standalone.env" << EOF
-# TOPEMS 独立运行环境变量
+# TOPEMS 独立运行环境变量（非 Docker 方案）
 DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
 REDIS_URL=redis://:topems_redis_secret@localhost:6379
 OLLAMA_HOST=http://localhost:11434
 JWT_SECRET=topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256
+REFRESH_SECRET=topems-refresh-secret-key-must-be-at-least-32-characters-long
 CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+RUST_LOG=info
 EOF
   fi
   
