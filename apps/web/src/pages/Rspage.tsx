@@ -12,7 +12,6 @@ import {
   X,
   CheckCircle,
   Beaker,
-  Eye,
   Download,
   Upload,
   FileCode,
@@ -1095,27 +1094,6 @@ const Rspage: React.FC = () => {
     } catch (err) {
       showNotification("error", "批量创建失败");
       console.error("批量创建失败:", err);
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const _handleExport = async () => {
-    try {
-      setCreating(true);
-      const blob = await rsApi.exportProjects();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `projects_${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      showNotification("success", "导出成功");
-    } catch (err) {
-      showNotification("error", "导出失败");
-      console.error("导出失败:", err);
     } finally {
       setCreating(false);
     }

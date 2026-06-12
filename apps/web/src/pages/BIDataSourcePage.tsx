@@ -5,27 +5,24 @@ import {
   Plus,
   Search,
   Filter,
-  Settings,
   RefreshCw,
-  CheckCircle,
   XCircle,
   Clock,
   Trash2,
   Edit,
   Eye,
   MoreVertical,
-  Activity,
   Server,
   HardDrive,
   Wifi,
   WifiOff,
   Grid3X3,
   List,
+  Activity,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Badge } from "../components/ui/badge";
 import { Skeleton } from "../components/ui/skeleton";
 import { EmptyState } from "../components/EmptyState";
 import {
@@ -34,12 +31,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import {
-  fetchDashboards,
-  createDashboard,
-  deleteDashboard,
-  type Dashboard,
-} from "../api/bi";
 
 interface DataSource {
   id: string;

@@ -7,7 +7,6 @@ import {
   LineChart,
   TrendingUp,
   TrendingDown,
-  Calendar,
   Users,
   Activity,
   Clock,

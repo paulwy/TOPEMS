@@ -104,6 +104,8 @@ start_single_service() {
   export DATABASE_URL="postgres://topems:topems_secret@localhost:5432/topems"
   export REDIS_URL="redis://:topems_redis_secret@localhost:6379"
   export JWT_SECRET="topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256"
+  export JWT_REFRESH_SECRET="topems-refresh-secret-key-must-be-at-least-32-characters-long-for-hs256"
+  export REFRESH_SECRET="topems-refresh-secret-key-must-be-at-least-32-characters-long-for-hs256"
   export CORS_ORIGINS="http://localhost:3000,http://localhost:8000"
   export SERVER_PORT="$port"
   export RUST_LOG=info

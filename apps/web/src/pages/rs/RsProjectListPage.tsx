@@ -4,9 +4,6 @@ import {
   Box,
   Container,
   Typography,
-  Card,
-  CardContent,
-  CardActionArea,
   Chip,
   LinearProgress,
   Table,
@@ -38,8 +35,6 @@ import {
   Visibility as ViewIcon,
   FilterList as FilterIcon,
   Download as DownloadIcon,
-  MoreVert as MoreIcon,
-  Folder as FolderIcon,
 } from "@mui/icons-material";
 
 interface Project {
