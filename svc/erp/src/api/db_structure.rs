@@ -8,10 +8,10 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::models::{DbChange, TableInfo, ColumnInfo};
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
 use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
+use crate::models::{ColumnInfo, DbChange, TableInfo};
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct TableQueryParams {
@@ -46,7 +46,10 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/v1/db/tables/{name}", get(get_table_detail))
         .route("/api/v1/db/columns/preview", post(preview_add_column))
         .route("/api/v1/db/columns", post(execute_add_column))
-        .route("/api/v1/db/columns/{table}/{column}", put(execute_modify_column).delete(execute_drop_column))
+        .route(
+            "/api/v1/db/columns/{table}/{column}",
+            put(execute_modify_column).delete(execute_drop_column),
+        )
         .route("/api/v1/db/changes", get(list_db_changes))
 }
 
@@ -116,12 +119,10 @@ async fn get_table_detail(
         return Json(api_error(404, "表不存在"));
     }
 
-    let row_count = match sqlx::query_scalar(&format!("SELECT COUNT(*) FROM \"{}\"", table_name))
+    let row_count = sqlx::query_scalar(&format!("SELECT COUNT(*) FROM \"{}\"", table_name))
         .fetch_one(&state.db)
-        .await {
-        Ok(count) => Some(count),
-        Err(_) => None,
-    };
+        .await
+        .ok();
 
     let detail = TableDetail {
         table_name: table_name.clone(),
@@ -138,11 +139,20 @@ async fn preview_add_column(
     Json(req): Json<crate::models::AddColumnRequest>,
 ) -> Json<ApiResponse<SqlPreview>> {
     let column = &req.column;
-    
-    let data_type = build_data_type(&column.data_type, column.max_length, column.numeric_precision, column.numeric_scale);
-    
-    let null_clause = if column.is_nullable { "NULL" } else { "NOT NULL" };
-    
+
+    let data_type = build_data_type(
+        &column.data_type,
+        column.max_length,
+        column.numeric_precision,
+        column.numeric_scale,
+    );
+
+    let null_clause = if column.is_nullable {
+        "NULL"
+    } else {
+        "NOT NULL"
+    };
+
     let default_clause = match &column.default_value {
         Some(default) => format!("DEFAULT {}", default),
         None => String::new(),
@@ -150,11 +160,7 @@ async fn preview_add_column(
 
     let sql = format!(
         "ALTER TABLE \"{}\" ADD COLUMN \"{}\" {} {} {}",
-        req.table_name,
-        column.column_name,
-        data_type,
-        null_clause,
-        default_clause
+        req.table_name, column.column_name, data_type, null_clause, default_clause
     );
 
     let warning = if !column.is_nullable && column.default_value.is_none() {
@@ -163,30 +169,32 @@ async fn preview_add_column(
         None
     };
 
-    Json(ApiResponse::success(SqlPreview { sql, warning }, "SQL预览生成成功"))
+    Json(ApiResponse::success(
+        SqlPreview { sql, warning },
+        "SQL预览生成成功",
+    ))
 }
 
-fn build_data_type(base_type: &str, max_length: Option<i32>, precision: Option<i32>, scale: Option<i32>) -> String {
+fn build_data_type(
+    base_type: &str,
+    max_length: Option<i32>,
+    precision: Option<i32>,
+    scale: Option<i32>,
+) -> String {
     match base_type.to_lowercase().as_str() {
-        "varchar" | "character varying" => {
-            match max_length {
-                Some(len) => format!("VARCHAR({})", len),
-                None => "VARCHAR".to_string(),
-            }
-        }
-        "char" | "character" => {
-            match max_length {
-                Some(len) => format!("CHAR({})", len),
-                None => "CHAR(1)".to_string(),
-            }
-        }
-        "numeric" | "decimal" => {
-            match (precision, scale) {
-                (Some(p), Some(s)) => format!("NUMERIC({}, {})", p, s),
-                (Some(p), None) => format!("NUMERIC({})", p),
-                _ => "NUMERIC".to_string(),
-            }
-        }
+        "varchar" | "character varying" => match max_length {
+            Some(len) => format!("VARCHAR({})", len),
+            None => "VARCHAR".to_string(),
+        },
+        "char" | "character" => match max_length {
+            Some(len) => format!("CHAR({})", len),
+            None => "CHAR(1)".to_string(),
+        },
+        "numeric" | "decimal" => match (precision, scale) {
+            (Some(p), Some(s)) => format!("NUMERIC({}, {})", p, s),
+            (Some(p), None) => format!("NUMERIC({})", p),
+            _ => "NUMERIC".to_string(),
+        },
         _ => base_type.to_uppercase(),
     }
 }
@@ -197,11 +205,20 @@ async fn execute_add_column(
     Json(req): Json<crate::models::AddColumnRequest>,
 ) -> Json<ApiResponse<String>> {
     let column = &req.column;
-    
-    let data_type = build_data_type(&column.data_type, column.max_length, column.numeric_precision, column.numeric_scale);
-    
-    let null_clause = if column.is_nullable { "NULL" } else { "NOT NULL" };
-    
+
+    let data_type = build_data_type(
+        &column.data_type,
+        column.max_length,
+        column.numeric_precision,
+        column.numeric_scale,
+    );
+
+    let null_clause = if column.is_nullable {
+        "NULL"
+    } else {
+        "NOT NULL"
+    };
+
     let default_clause = match &column.default_value {
         Some(default) => format!("DEFAULT {}", default),
         None => String::new(),
@@ -209,21 +226,15 @@ async fn execute_add_column(
 
     let sql = format!(
         "ALTER TABLE \"{}\" ADD COLUMN \"{}\" {} {} {}",
-        req.table_name,
-        column.column_name,
-        data_type,
-        null_clause,
-        default_clause
+        req.table_name, column.column_name, data_type, null_clause, default_clause
     );
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let new_definition = serde_json::to_value(column).ok();
 
-    let result = sqlx::query(&sql)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(&sql).execute(&state.db).await;
 
     let (response, status, error_msg) = match &result {
         Ok(_) => (
@@ -259,16 +270,18 @@ async fn execute_add_column(
 
     log_audit_event(
         &state.db,
-        "db_change".to_string(),
-        "add_column".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        serde_json::to_value(&req).ok(),
-        Some(serde_json::json!({ "sql": sql })),
-        status,
-        error_msg,
+        AuditEventParams {
+            action: "db_change".to_string(),
+            entity_type: "add_column".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: serde_json::to_value(&req).ok(),
+            response_details: Some(serde_json::json!({ "sql": sql })),
+            status,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -283,11 +296,20 @@ async fn execute_modify_column(
     Json(req): Json<crate::models::ModifyColumnRequest>,
 ) -> Json<ApiResponse<String>> {
     let column = &req.column;
-    
-    let data_type = build_data_type(&column.data_type, column.max_length, column.numeric_precision, column.numeric_scale);
-    
-    let null_clause = if column.is_nullable { "NULL" } else { "NOT NULL" };
-    
+
+    let data_type = build_data_type(
+        &column.data_type,
+        column.max_length,
+        column.numeric_precision,
+        column.numeric_scale,
+    );
+
+    let null_clause = if column.is_nullable {
+        "NULL"
+    } else {
+        "NOT NULL"
+    };
+
     let default_clause = match &column.default_value {
         Some(default) => format!("DEFAULT {}", default),
         None => String::new(),
@@ -306,12 +328,10 @@ async fn execute_modify_column(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let new_definition = serde_json::to_value(column).ok();
 
-    let result = sqlx::query(&sql)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(&sql).execute(&state.db).await;
 
     let (response, status, error_msg) = match &result {
         Ok(_) => (
@@ -347,16 +367,18 @@ async fn execute_modify_column(
 
     log_audit_event(
         &state.db,
-        "db_change".to_string(),
-        "modify_column".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        serde_json::to_value(&req).ok(),
-        Some(serde_json::json!({ "sql": sql })),
-        status,
-        error_msg,
+        AuditEventParams {
+            action: "db_change".to_string(),
+            entity_type: "modify_column".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: serde_json::to_value(&req).ok(),
+            response_details: Some(serde_json::json!({ "sql": sql })),
+            status,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -371,16 +393,13 @@ async fn execute_drop_column(
 ) -> Json<ApiResponse<String>> {
     let sql = format!(
         "ALTER TABLE \"{}\" DROP COLUMN \"{}\"",
-        table_name,
-        column_name
+        table_name, column_name
     );
 
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query(&sql)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(&sql).execute(&state.db).await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(_) => (
@@ -415,16 +434,18 @@ async fn execute_drop_column(
 
     log_audit_event(
         &state.db,
-        "db_change".to_string(),
-        "drop_column".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        Some(serde_json::json!({ "sql": sql })),
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "db_change".to_string(),
+            entity_type: "drop_column".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: Some(serde_json::json!({ "sql": sql })),
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

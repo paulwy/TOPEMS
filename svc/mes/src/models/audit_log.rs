@@ -1,1 +1,1 @@
-pub use topems_shared::audit::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
+pub use topems_shared::audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};

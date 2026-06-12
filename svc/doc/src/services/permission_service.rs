@@ -1,5 +1,9 @@
-use crate::db::repository::{FilePermissionRepository, FolderPermissionRepository, FolderRepository, FileRepository};
-use crate::models::{Permission, FilePermission, FolderPermission};
+#![allow(dead_code)]
+
+use crate::db::repository::{
+    FilePermissionRepository, FileRepository, FolderPermissionRepository, FolderRepository,
+};
+use crate::models::{FilePermission, FolderPermission, Permission};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -50,9 +54,13 @@ impl PermissionService {
             let ancestors = self.folder_repo.get_ancestors(folder_id).await?;
             folder_ids.extend(ancestors);
 
-            let folder_perms = self.folder_perm_repo.list_for_folder_hierarchy(&folder_ids).await?;
-            let inherited_perms: Vec<FolderPermission> = folder_perms.into_iter().filter(|p| p.inherit).collect();
-            
+            let folder_perms = self
+                .folder_perm_repo
+                .list_for_folder_hierarchy(&folder_ids)
+                .await?;
+            let inherited_perms: Vec<FolderPermission> =
+                folder_perms.into_iter().filter(|p| p.inherit).collect();
+
             if has_inherited_folder_permission(&inherited_perms, user_id, user_roles, required) {
                 return Ok(true);
             }
@@ -82,8 +90,11 @@ impl PermissionService {
         let ancestors = self.folder_repo.get_ancestors(folder_id).await?;
         folder_ids.extend(ancestors);
 
-        let folder_perms = self.folder_perm_repo.list_for_folder_hierarchy(&folder_ids).await?;
-        
+        let folder_perms = self
+            .folder_perm_repo
+            .list_for_folder_hierarchy(&folder_ids)
+            .await?;
+
         if has_inherited_folder_permission(&folder_perms, user_id, user_roles, required) {
             return Ok(true);
         }

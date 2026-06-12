@@ -7,14 +7,17 @@ use axum::{
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::models::{CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest};
-use topems_shared::{ApiResponse, PaginationParams, api_error};
-use crate::api::audit::log_audit_event;
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use crate::models::{CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest};
+use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/purchase-orders", get(list_orders).post(create_order))
+        .route(
+            "/api/v1/purchase-orders",
+            get(list_orders).post(create_order),
+        )
         .route(
             "/api/v1/purchase-orders/{id}",
             get(get_order).put(update_order),
@@ -114,14 +117,14 @@ async fn create_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "采购订单创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
             (
                 Json(api_error(500, "采购订单创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -144,8 +147,9 @@ async fn create_order(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -181,7 +185,7 @@ async fn update_order(
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, PurchaseOrder>(
         "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM purchase_orders WHERE id = $1",
     )
@@ -224,14 +228,14 @@ async fn update_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "采购订单更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
             (
                 Json(api_error(500, "采购订单更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -254,8 +258,9 @@ async fn update_order(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

@@ -23,11 +23,11 @@ mod tests {
     #[tokio::test]
     async fn test_warehouse_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'wms' AND table_name = 'warehouses')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -42,11 +42,11 @@ mod tests {
     #[tokio::test]
     async fn test_inventory_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'wms' AND table_name = 'inventory')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -61,11 +61,11 @@ mod tests {
     #[tokio::test]
     async fn test_inbound_order_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'wms' AND table_name = 'inbound_orders')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -80,11 +80,11 @@ mod tests {
     #[tokio::test]
     async fn test_outbound_order_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'wms' AND table_name = 'outbound_orders')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -99,11 +99,11 @@ mod tests {
     #[tokio::test]
     async fn test_location_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'wms' AND table_name = 'locations')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -118,11 +118,11 @@ mod tests {
     #[tokio::test]
     async fn test_stock_take_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'wms' AND table_name = 'stock_takes')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -137,11 +137,11 @@ mod tests {
     #[tokio::test]
     async fn test_transfer_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'wms' AND table_name = 'transfers')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -156,10 +156,10 @@ mod tests {
     #[tokio::test]
     async fn test_create_warehouse() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let warehouse_id = Uuid::new_v4();
         let warehouse_code = format!("WH-{}", &warehouse_id.to_string()[..8]);
-        
+
         let result = sqlx::query(
             r#"
             INSERT INTO wms.warehouses (id, code, name, type, status, address, manager, created_at, updated_at)
@@ -179,14 +179,14 @@ mod tests {
         .bind("仓库管理员")
         .fetch_one(&pool)
         .await;
-        
+
         assert!(result.is_ok(), "仓库创建应该成功");
     }
 
     #[tokio::test]
     async fn test_list_warehouses() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query_as::<_, WarehouseRow>(
             r#"
             SELECT id, code, name, type, status, address, manager, contact, phone, capacity, current_stock, created_at, updated_at
@@ -198,7 +198,7 @@ mod tests {
         )
         .fetch_all(&pool)
         .await;
-        
+
         match result {
             Ok(warehouses) => {
                 assert!(warehouses.len() <= 10, "返回的仓库数量应该不超过10条");
@@ -212,11 +212,11 @@ mod tests {
     #[tokio::test]
     async fn test_inventory_transaction() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         // 创建测试仓库
         let warehouse_id = Uuid::new_v4();
         let warehouse_code = format!("WH-TEST-{}", &warehouse_id.to_string()[..6]);
-        
+
         sqlx::query(
             r#"
             INSERT INTO wms.warehouses (id, code, name, type, status, created_at, updated_at)
@@ -231,7 +231,7 @@ mod tests {
         .execute(&pool)
         .await
         .expect("创建测试仓库失败");
-        
+
         // 创建测试库位
         let location_id = Uuid::new_v4();
         sqlx::query(
@@ -251,11 +251,11 @@ mod tests {
         .execute(&pool)
         .await
         .expect("创建测试库位失败");
-        
+
         // 创建入库单
         let inbound_id = Uuid::new_v4();
         let inbound_no = format!("IN-{}", &inbound_id.to_string()[..10]);
-        
+
         let inbound_result = sqlx::query(
             r#"
             INSERT INTO wms.inbound_orders (id, order_no, warehouse_id, order_type, status, supplier, expected_arrival_date, created_at, updated_at)
@@ -271,9 +271,9 @@ mod tests {
         .bind(chrono::Utc::now())
         .execute(&pool)
         .await;
-        
+
         assert!(inbound_result.is_ok(), "入库单创建应该成功");
-        
+
         // 清理测试数据
         let _ = sqlx::query("DELETE FROM wms.inbound_orders WHERE id = $1")
             .bind(inbound_id)
@@ -292,11 +292,11 @@ mod tests {
     #[tokio::test]
     async fn test_audit_log_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'wms' AND table_name = 'wms_audit_logs')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);

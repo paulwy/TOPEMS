@@ -1,9 +1,9 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tenant {
@@ -200,13 +200,8 @@ impl TenantContext {
                 "data:write".to_string(),
                 "data:delete".to_string(),
             ],
-            TenantRole::Member => vec![
-                "data:read".to_string(),
-                "data:write".to_string(),
-            ],
-            TenantRole::Guest => vec![
-                "data:read".to_string(),
-            ],
+            TenantRole::Member => vec!["data:read".to_string(), "data:write".to_string()],
+            TenantRole::Guest => vec!["data:read".to_string()],
         }
     }
 
@@ -286,7 +281,12 @@ impl TenantManager {
         }
     }
 
-    pub async fn create_tenant(&self, name: String, slug: String, plan: TenantPlan) -> Result<Tenant, TenantError> {
+    pub async fn create_tenant(
+        &self,
+        name: String,
+        slug: String,
+        plan: TenantPlan,
+    ) -> Result<Tenant, TenantError> {
         let mut by_slug = self.tenants_by_slug.write().await;
         if by_slug.contains_key(&slug) {
             return Err(TenantError::SlugAlreadyExists);
@@ -318,7 +318,11 @@ impl TenantManager {
         tenants.values().cloned().collect()
     }
 
-    pub async fn update_tenant(&self, id: Uuid, updates: TenantUpdate) -> Result<Tenant, TenantError> {
+    pub async fn update_tenant(
+        &self,
+        id: Uuid,
+        updates: TenantUpdate,
+    ) -> Result<Tenant, TenantError> {
         let mut tenants = self.tenants.write().await;
         let tenant = tenants.get_mut(&id).ok_or(TenantError::TenantNotFound)?;
 
@@ -353,7 +357,13 @@ impl TenantManager {
         Ok(())
     }
 
-    pub async fn add_user_to_tenant(&self, tenant_id: Uuid, user_id: Uuid, email: String, role: TenantRole) -> Result<TenantUser, TenantError> {
+    pub async fn add_user_to_tenant(
+        &self,
+        tenant_id: Uuid,
+        user_id: Uuid,
+        email: String,
+        role: TenantRole,
+    ) -> Result<TenantUser, TenantError> {
         let tenants = self.tenants.read().await;
         if !tenants.contains_key(&tenant_id) {
             return Err(TenantError::TenantNotFound);
@@ -371,7 +381,10 @@ impl TenantManager {
         };
 
         let mut users = self.tenant_users.write().await;
-        users.entry(tenant_id).or_insert_with(Vec::new).push(tenant_user.clone());
+        users
+            .entry(tenant_id)
+            .or_insert_with(Vec::new)
+            .push(tenant_user.clone());
 
         Ok(tenant_user)
     }
@@ -394,14 +407,15 @@ impl TenantManager {
     pub async fn get_current_tenant(&self, user_id: Uuid) -> Option<Tenant> {
         let contexts = self.tenant_contexts.read().await;
         let tenant_id = contexts.get(&user_id)?.tenant_id;
-        
+
         let tenants = self.tenants.read().await;
         tenants.get(&tenant_id).cloned()
     }
 
     pub async fn validate_feature_access(&self, tenant_id: Uuid, feature: &str) -> bool {
         let tenants = self.tenants.read().await;
-        tenants.get(&tenant_id)
+        tenants
+            .get(&tenant_id)
             .map(|t| t.can_use_feature(feature))
             .unwrap_or(false)
     }
@@ -440,16 +454,16 @@ pub struct TenantUpdate {
 pub enum TenantError {
     #[error("Tenant not found")]
     TenantNotFound,
-    
+
     #[error("Slug already exists")]
     SlugAlreadyExists,
-    
+
     #[error("User not found")]
     UserNotFound,
-    
+
     #[error("Permission denied")]
     PermissionDenied,
-    
+
     #[error("Usage limit exceeded")]
     UsageLimitExceeded(String),
 }
@@ -461,13 +475,16 @@ mod tests {
     #[tokio::test]
     async fn test_create_tenant() {
         let manager = TenantManager::new();
-        
-        let tenant = manager.create_tenant(
-            "Test Company".to_string(),
-            "test-company".to_string(),
-            TenantPlan::Professional,
-        ).await.unwrap();
-        
+
+        let tenant = manager
+            .create_tenant(
+                "Test Company".to_string(),
+                "test-company".to_string(),
+                TenantPlan::Professional,
+            )
+            .await
+            .unwrap();
+
         assert_eq!(tenant.name, "Test Company");
         assert_eq!(tenant.plan, TenantPlan::Professional);
         assert!(matches!(tenant.status, TenantStatus::Trial));
@@ -476,13 +493,16 @@ mod tests {
     #[tokio::test]
     async fn test_get_tenant_by_slug() {
         let manager = TenantManager::new();
-        
-        manager.create_tenant(
-            "Test Company".to_string(),
-            "test-company".to_string(),
-            TenantPlan::Basic,
-        ).await.unwrap();
-        
+
+        manager
+            .create_tenant(
+                "Test Company".to_string(),
+                "test-company".to_string(),
+                TenantPlan::Basic,
+            )
+            .await
+            .unwrap();
+
         let found = manager.get_tenant_by_slug("test-company").await;
         assert!(found.is_some());
         assert_eq!(found.unwrap().name, "Test Company");
@@ -490,12 +510,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_tenant_permissions() {
-        let context = TenantContext::new(
-            Uuid::new_v4(),
-            Uuid::new_v4(),
-            TenantRole::Admin,
-        );
-        
+        let context = TenantContext::new(Uuid::new_v4(), Uuid::new_v4(), TenantRole::Admin);
+
         assert!(context.has_permission("data:read"));
         assert!(context.has_permission("tenant:users"));
         assert!(!context.has_permission("tenant:billing"));
@@ -510,7 +526,7 @@ mod tests {
             api_requests_today: 50000,
             updated_at: Utc::now(),
         };
-        
+
         let settings = TenantSettings {
             max_users: 10,
             max_storage_gb: 20,
@@ -530,7 +546,7 @@ mod tests {
                 session_timeout_minutes: 60,
             },
         };
-        
+
         let exceeded = metrics.check_limits(&settings);
         assert_eq!(exceeded.len(), 3);
     }

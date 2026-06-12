@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { Building2, Users, User } from "lucide-react";
 import {
   Select,
@@ -43,6 +43,10 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
     loadEmployees,
   } = useOrganization();
 
+  // 使用 ref 存储 onChange 回调，避免 useEffect 依赖项问题
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   useEffect(() => {
     loadCompanies();
   }, [loadCompanies]);
@@ -50,20 +54,24 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
   useEffect(() => {
     if (value.companyId) {
       loadDepartments(value.companyId);
-      onChange({ ...value, departmentId: undefined, employeeId: undefined });
+      onChangeRef.current({
+        ...value,
+        departmentId: undefined,
+        employeeId: undefined,
+      });
     } else {
       loadDepartments();
     }
-  }, [value.companyId, loadDepartments, onChange]);
+  }, [value.companyId, loadDepartments]);
 
   useEffect(() => {
     if (value.departmentId) {
       loadEmployees(value.departmentId);
-      onChange({ ...value, employeeId: undefined });
+      onChangeRef.current({ ...value, employeeId: undefined });
     } else {
       loadEmployees();
     }
-  }, [value.departmentId, loadEmployees, onChange]);
+  }, [value.departmentId, loadEmployees]);
 
   const filteredDepartments = useMemo(() => {
     if (!value.companyId) return departments;

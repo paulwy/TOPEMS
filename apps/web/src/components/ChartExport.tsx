@@ -57,7 +57,7 @@ export const ChartExport = ({
       const canvas = chartRef.current.querySelector("canvas");
 
       if (canvas) {
-        const blob = await new Promise<Blob>((resolve) =>
+        const blob = await new Promise<Blob | null>((resolve) =>
           canvas.toBlob(resolve, "image/png"),
         );
         if (blob) {

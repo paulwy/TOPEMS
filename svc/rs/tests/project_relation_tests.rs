@@ -26,7 +26,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(&format!("{}/api/v1/projects", base_url))
+            .post(format!("{}/api/v1/projects", base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Phase Test Project",
@@ -49,7 +49,7 @@ mod tests {
 
         println!("1. Testing create phase...");
         let create_response = client
-            .post(&format!(
+            .post(format!(
                 "{}/api/v1/projects/{}/phases",
                 base_url, project_id
             ))
@@ -74,7 +74,7 @@ mod tests {
 
         println!("\n2. Testing get project phases...");
         let list_response = client
-            .get(&format!(
+            .get(format!(
                 "{}/api/v1/projects/{}/phases",
                 base_url, project_id
             ))
@@ -87,7 +87,7 @@ mod tests {
 
         println!("\n3. Testing update phase...");
         let update_response = client
-            .put(&format!("{}/api/v1/phases/{}", base_url, phase_id))
+            .put(format!("{}/api/v1/phases/{}", base_url, phase_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Requirements Gathering Phase",
@@ -102,7 +102,7 @@ mod tests {
 
         println!("\n4. Testing delete phase...");
         let delete_response = client
-            .delete(&format!("{}/api/v1/phases/{}", base_url, phase_id))
+            .delete(format!("{}/api/v1/phases/{}", base_url, phase_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -111,7 +111,7 @@ mod tests {
         assert_eq!(delete_response.status(), 200);
 
         client
-            .delete(&format!("{}/api/v1/projects/{}", base_url, project_id))
+            .delete(format!("{}/api/v1/projects/{}", base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -120,6 +120,7 @@ mod tests {
         println!("\n✅ Project Phase CRUD tests passed!");
     }
 
+    #[allow(dead_code)]
     async fn test_project_milestone_crud() {
         let base_url = "http://localhost:8020";
         let client = reqwest::Client::new();
@@ -144,7 +145,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(&format!("{}/api/v1/projects", base_url))
+            .post(format!("{}/api/v1/projects", base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Milestone Test Project",
@@ -167,7 +168,7 @@ mod tests {
 
         println!("1. Testing create milestone...");
         let create_response = client
-            .post(&format!(
+            .post(format!(
                 "{}/api/v1/projects/{}/milestones",
                 base_url, project_id
             ))
@@ -190,7 +191,7 @@ mod tests {
 
         println!("\n2. Testing get project milestones...");
         let list_response = client
-            .get(&format!(
+            .get(format!(
                 "{}/api/v1/projects/{}/milestones",
                 base_url, project_id
             ))
@@ -203,7 +204,7 @@ mod tests {
 
         println!("\n3. Testing update milestone...");
         let update_response = client
-            .put(&format!("{}/api/v1/milestones/{}", base_url, milestone_id))
+            .put(format!("{}/api/v1/milestones/{}", base_url, milestone_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "status": "ACHIEVED",
@@ -217,7 +218,7 @@ mod tests {
 
         println!("\n4. Testing delete milestone...");
         let delete_response = client
-            .delete(&format!("{}/api/v1/milestones/{}", base_url, milestone_id))
+            .delete(format!("{}/api/v1/milestones/{}", base_url, milestone_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -226,7 +227,7 @@ mod tests {
         assert_eq!(delete_response.status(), 200);
 
         client
-            .delete(&format!("{}/api/v1/projects/{}", base_url, project_id))
+            .delete(format!("{}/api/v1/projects/{}", base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -235,6 +236,7 @@ mod tests {
         println!("\n✅ Project Milestone CRUD tests passed!");
     }
 
+    #[allow(dead_code)]
     async fn test_project_member_crud() {
         let base_url = "http://localhost:8020";
         let client = reqwest::Client::new();
@@ -259,7 +261,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(&format!("{}/api/v1/projects", base_url))
+            .post(format!("{}/api/v1/projects", base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Member Test Project",
@@ -282,7 +284,7 @@ mod tests {
 
         println!("1. Testing create member...");
         let create_response = client
-            .post(&format!(
+            .post(format!(
                 "{}/api/v1/projects/{}/members",
                 base_url, project_id
             ))
@@ -307,7 +309,7 @@ mod tests {
 
         println!("\n2. Testing get project members...");
         let list_response = client
-            .get(&format!(
+            .get(format!(
                 "{}/api/v1/projects/{}/members",
                 base_url, project_id
             ))
@@ -320,10 +322,7 @@ mod tests {
 
         println!("\n3. Testing update member...");
         let update_response = client
-            .put(&format!(
-                "{}/api/v1/project-members/{}",
-                base_url, member_id
-            ))
+            .put(format!("{}/api/v1/project-members/{}", base_url, member_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "role": "TECH_LEAD",
@@ -337,10 +336,7 @@ mod tests {
 
         println!("\n4. Testing delete member...");
         let delete_response = client
-            .delete(&format!(
-                "{}/api/v1/project-members/{}",
-                base_url, member_id
-            ))
+            .delete(format!("{}/api/v1/project-members/{}", base_url, member_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -349,7 +345,7 @@ mod tests {
         assert_eq!(delete_response.status(), 200);
 
         client
-            .delete(&format!("{}/api/v1/projects/{}", base_url, project_id))
+            .delete(format!("{}/api/v1/projects/{}", base_url, project_id))
             .bearer_auth(token)
             .send()
             .await

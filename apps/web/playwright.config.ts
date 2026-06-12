@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, chromium } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
@@ -11,12 +11,16 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: 'off',
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'system-chrome',
+      use: {
+        ...devices['Desktop Chrome'],
+        browserName: 'chromium',
+        channel: 'chrome',
+      },
     },
   ],
   webServer: {

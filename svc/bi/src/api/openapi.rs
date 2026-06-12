@@ -1,5 +1,7 @@
-use utoipa::{OpenApi, ToSchema};
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
+use utoipa::{OpenApi, ToSchema};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct RsSummary {

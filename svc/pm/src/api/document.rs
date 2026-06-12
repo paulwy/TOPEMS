@@ -2,8 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
@@ -11,22 +10,34 @@ use topems_shared::ApiResponse;
 use uuid::Uuid;
 
 use crate::models::document::{
-    ProjectDocument,
-    DocumentVersion,
-    DocumentFolder,
-    CreateDocumentRequest,
-    CreateDocumentVersionRequest,
-    CreateFolderRequest,
-    UpdateDocumentRequest,
+    CreateDocumentRequest, CreateDocumentVersionRequest, CreateFolderRequest, DocumentFolder,
+    DocumentVersion, ProjectDocument, UpdateDocumentRequest,
 };
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/documents", get(get_project_documents).post(create_document))
-        .route("/api/v1/documents/{id}", get(get_document).put(update_document).delete(delete_document))
-        .route("/api/v1/documents/{id}/versions", get(get_document_versions).post(create_document_version))
-        .route("/api/v1/projects/{project_id}/folders", get(get_project_folders).post(create_folder))
-        .route("/api/v1/folders/{id}", get(get_folder).put(update_folder).delete(delete_folder))
+        .route(
+            "/api/v1/projects/{project_id}/documents",
+            get(get_project_documents).post(create_document),
+        )
+        .route(
+            "/api/v1/documents/{id}",
+            get(get_document)
+                .put(update_document)
+                .delete(delete_document),
+        )
+        .route(
+            "/api/v1/documents/{id}/versions",
+            get(get_document_versions).post(create_document_version),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/folders",
+            get(get_project_folders).post(create_folder),
+        )
+        .route(
+            "/api/v1/folders/{id}",
+            get(get_folder).put(update_folder).delete(delete_folder),
+        )
         .with_state(pool)
 }
 
@@ -34,16 +45,21 @@ async fn get_project_documents(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectDocument>>> {
-    let documents = sqlx::query_as::<_, ProjectDocument>("SELECT * FROM pm.project_documents WHERE project_id = $1 ORDER BY created_at DESC")
-        .bind(project_id)
-        .fetch_all(&pool)
-        .await;
+    let documents = sqlx::query_as::<_, ProjectDocument>(
+        "SELECT * FROM pm.project_documents WHERE project_id = $1 ORDER BY created_at DESC",
+    )
+    .bind(project_id)
+    .fetch_all(&pool)
+    .await;
 
     match documents {
         Ok(d) => Json(ApiResponse::success(d, "获取文档列表成功")),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取文档失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取文档失败",
+            ))
         }
     }
 }
@@ -52,17 +68,24 @@ async fn get_document(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDocument>> {
-    let document = sqlx::query_as::<_, ProjectDocument>("SELECT * FROM pm.project_documents WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let document =
+        sqlx::query_as::<_, ProjectDocument>("SELECT * FROM pm.project_documents WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await;
 
     match document {
         Ok(d) => Json(ApiResponse::success(d, "获取文档详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "文档不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "文档不存在",
+        )),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取文档失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取文档失败",
+            ))
         }
     }
 }
@@ -74,7 +97,7 @@ async fn create_document(
 ) -> Json<ApiResponse<ProjectDocument>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let document = sqlx::query_as::<_, ProjectDocument>(
         "INSERT INTO pm.project_documents (id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1, 'active', $9, $10, $11, $12, $13) RETURNING *"
@@ -99,7 +122,10 @@ async fn create_document(
         Ok(d) => Json(ApiResponse::success(d, "创建文档成功")),
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建文档失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建文档失败",
+            ))
         }
     }
 }
@@ -117,7 +143,7 @@ async fn update_document(
             description = COALESCE($4, description),
             tags = COALESCE($5, tags),
             updated_at = $6
-        WHERE id = $7 RETURNING *"
+        WHERE id = $7 RETURNING *",
     )
     .bind(req.document_name)
     .bind(req.document_type)
@@ -131,10 +157,16 @@ async fn update_document(
 
     match document {
         Ok(d) => Json(ApiResponse::success(d, "更新文档成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "文档不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "文档不存在",
+        )),
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新文档失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新文档失败",
+            ))
         }
     }
 }
@@ -150,10 +182,16 @@ async fn delete_document(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除文档成功")),
-        Ok(_) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "文档不存在")),
+        Ok(_) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "文档不存在",
+        )),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "删除文档失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "删除文档失败",
+            ))
         }
     }
 }
@@ -162,16 +200,21 @@ async fn get_document_versions(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<DocumentVersion>>> {
-    let versions = sqlx::query_as::<_, DocumentVersion>("SELECT * FROM pm.document_versions WHERE document_id = $1 ORDER BY version DESC")
-        .bind(id)
-        .fetch_all(&pool)
-        .await;
+    let versions = sqlx::query_as::<_, DocumentVersion>(
+        "SELECT * FROM pm.document_versions WHERE document_id = $1 ORDER BY version DESC",
+    )
+    .bind(id)
+    .fetch_all(&pool)
+    .await;
 
     match versions {
         Ok(v) => Json(ApiResponse::success(v, "获取版本列表成功")),
         Err(e) => {
             tracing::error!("获取版本失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取版本失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取版本失败",
+            ))
         }
     }
 }
@@ -181,19 +224,26 @@ async fn create_document_version(
     Path(id): Path<Uuid>,
     Json(req): Json<CreateDocumentVersionRequest>,
 ) -> Json<ApiResponse<DocumentVersion>> {
-    let doc_result = sqlx::query_as::<_, ProjectDocument>("SELECT * FROM pm.project_documents WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let doc_result =
+        sqlx::query_as::<_, ProjectDocument>("SELECT * FROM pm.project_documents WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await;
 
     let document = match doc_result {
         Ok(d) => d,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "文档不存在"));
+            return Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "文档不存在",
+            ));
         }
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            return Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取文档失败"));
+            return Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取文档失败",
+            ));
         }
     };
 
@@ -201,7 +251,7 @@ async fn create_document_version(
     let version_id = Uuid::new_v4();
     let now = Utc::now();
     let file_hash = req.file_hash.clone();
-    
+
     let version = sqlx::query_as::<_, DocumentVersion>(
         "INSERT INTO pm.document_versions (id, document_id, version, file_path, file_hash, change_note, created_by, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
@@ -232,7 +282,10 @@ async fn create_document_version(
         Ok(v) => Json(ApiResponse::success(v, "创建版本成功")),
         Err(e) => {
             tracing::error!("创建版本失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建版本失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建版本失败",
+            ))
         }
     }
 }
@@ -241,16 +294,21 @@ async fn get_project_folders(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<DocumentFolder>>> {
-    let folders = sqlx::query_as::<_, DocumentFolder>("SELECT * FROM pm.document_folders WHERE project_id = $1 ORDER BY folder_name")
-        .bind(project_id)
-        .fetch_all(&pool)
-        .await;
+    let folders = sqlx::query_as::<_, DocumentFolder>(
+        "SELECT * FROM pm.document_folders WHERE project_id = $1 ORDER BY folder_name",
+    )
+    .bind(project_id)
+    .fetch_all(&pool)
+    .await;
 
     match folders {
         Ok(f) => Json(ApiResponse::success(f, "获取文件夹列表成功")),
         Err(e) => {
             tracing::error!("获取文件夹失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取文件夹失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取文件夹失败",
+            ))
         }
     }
 }
@@ -259,17 +317,24 @@ async fn get_folder(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DocumentFolder>> {
-    let folder = sqlx::query_as::<_, DocumentFolder>("SELECT * FROM pm.document_folders WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let folder =
+        sqlx::query_as::<_, DocumentFolder>("SELECT * FROM pm.document_folders WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await;
 
     match folder {
         Ok(f) => Json(ApiResponse::success(f, "获取文件夹详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "文件夹不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "文件夹不存在",
+        )),
         Err(e) => {
             tracing::error!("获取文件夹失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取文件夹失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取文件夹失败",
+            ))
         }
     }
 }
@@ -281,7 +346,7 @@ async fn create_folder(
 ) -> Json<ApiResponse<DocumentFolder>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let folder = sqlx::query_as::<_, DocumentFolder>(
         "INSERT INTO pm.document_folders (id, project_id, parent_id, folder_name, description, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
@@ -301,7 +366,10 @@ async fn create_folder(
         Ok(f) => Json(ApiResponse::success(f, "创建文件夹成功")),
         Err(e) => {
             tracing::error!("创建文件夹失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建文件夹失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建文件夹失败",
+            ))
         }
     }
 }
@@ -316,7 +384,7 @@ async fn update_folder(
             folder_name = COALESCE($1, folder_name),
             description = COALESCE($2, description),
             updated_at = $3
-        WHERE id = $4 RETURNING *"
+        WHERE id = $4 RETURNING *",
     )
     .bind(req.folder_name)
     .bind(req.description)
@@ -327,18 +395,21 @@ async fn update_folder(
 
     match folder {
         Ok(f) => Json(ApiResponse::success(f, "更新文件夹成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "文件夹不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "文件夹不存在",
+        )),
         Err(e) => {
             tracing::error!("更新文件夹失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新文件夹失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新文件夹失败",
+            ))
         }
     }
 }
 
-async fn delete_folder(
-    State(pool): State<PgPool>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+async fn delete_folder(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
     let result = sqlx::query("DELETE FROM pm.document_folders WHERE id = $1")
         .bind(id)
         .execute(&pool)
@@ -346,10 +417,16 @@ async fn delete_folder(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除文件夹成功")),
-        Ok(_) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "文件夹不存在")),
+        Ok(_) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "文件夹不存在",
+        )),
         Err(e) => {
             tracing::error!("删除文件夹失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "删除文件夹失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "删除文件夹失败",
+            ))
         }
     }
 }

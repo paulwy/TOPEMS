@@ -11,8 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
-    SupplierContract, ContractTerm,
-    CreateSupplierContractRequest, UpdateSupplierContractRequest,
+    ContractTerm, CreateSupplierContractRequest, SupplierContract, UpdateSupplierContractRequest,
 };
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
@@ -36,12 +35,20 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/v1/supplier-contracts", get(list_contracts).post(create_contract))
+        .route(
+            "/api/v1/supplier-contracts",
+            get(list_contracts).post(create_contract),
+        )
         .route(
             "/api/v1/supplier-contracts/{id}",
-            get(get_contract).put(update_contract).delete(delete_contract),
+            get(get_contract)
+                .put(update_contract)
+                .delete(delete_contract),
         )
-        .route("/api/v1/supplier-contracts/{id}/terms", get(get_contract_terms))
+        .route(
+            "/api/v1/supplier-contracts/{id}/terms",
+            get(get_contract_terms),
+        )
         .with_state(state);
 
     Ok(app)
@@ -55,7 +62,7 @@ async fn list_contracts(
     Query(params): Query<ContractQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -65,7 +72,10 @@ async fn list_contracts(
 
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let supplier_id_filter = params.supplier_id.clone().and_then(|s| Uuid::parse_str(&s).ok());
+    let supplier_id_filter = params
+        .supplier_id
+        .clone()
+        .and_then(|s| Uuid::parse_str(&s).ok());
     let contract_type_filter = params.contract_type.clone();
 
     let result = sqlx::query_as::<_, SupplierContract>(
@@ -121,7 +131,10 @@ async fn list_contracts(
         }
         Err(e) => {
             tracing::error!("获取供应商合同列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商合同列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取供应商合同列表失败",
+            ))
         }
     }
 }
@@ -132,71 +145,95 @@ async fn create_contract(
     Json(req): Json<CreateSupplierContractRequest>,
 ) -> Json<ApiResponse<SupplierContract>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 数据验证
     if req.contract_no.is_empty() || req.title.is_empty() {
-        return Json(ApiResponse::<SupplierContract>::error(400, "合同编号和标题不能为空"));
+        return Json(ApiResponse::<SupplierContract>::error(
+            400,
+            "合同编号和标题不能为空",
+        ));
     }
 
     // 验证供应商ID
     let supplier_uuid = Uuid::parse_str(&req.supplier_id);
     if supplier_uuid.is_err() {
-        return Json(ApiResponse::<SupplierContract>::error(400, "供应商ID格式错误"));
+        return Json(ApiResponse::<SupplierContract>::error(
+            400,
+            "供应商ID格式错误",
+        ));
     }
 
     let supplier_id = supplier_uuid.unwrap();
 
     // 检查供应商是否存在
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'"
+        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
     )
     .bind(supplier_id)
     .fetch_one(&state.db)
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<SupplierContract>::error(400, "供应商不存在或已删除"));
+        return Json(ApiResponse::<SupplierContract>::error(
+            400,
+            "供应商不存在或已删除",
+        ));
     }
 
     // 检查合同编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE contract_no = $1"
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE contract_no = $1",
     )
     .bind(&req.contract_no)
     .fetch_one(&state.db)
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<SupplierContract>::error(400, "合同编号已存在"));
+        return Json(ApiResponse::<SupplierContract>::error(
+            400,
+            "合同编号已存在",
+        ));
     }
 
     // 验证金额
     if let Some(amount) = req.total_amount {
         if amount < 0.0 {
-            return Json(ApiResponse::<SupplierContract>::error(400, "合同金额不能为负数"));
+            return Json(ApiResponse::<SupplierContract>::error(
+                400,
+                "合同金额不能为负数",
+            ));
         }
     }
 
     // 解析日期
     let sign_date = req.sign_date.as_ref().and_then(|s| {
-        chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))
+        chrono::DateTime::parse_from_rfc3339(s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
     });
 
     let start_date = req.start_date.as_ref().and_then(|s| {
-        chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))
+        chrono::DateTime::parse_from_rfc3339(s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
     });
 
     let end_date = req.end_date.as_ref().and_then(|s| {
-        chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))
+        chrono::DateTime::parse_from_rfc3339(s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
     });
 
     // 验证日期逻辑
     if let (Some(start), Some(end)) = (start_date, end_date) {
         if start > end {
-            return Json(ApiResponse::<SupplierContract>::error(400, "合同开始日期不能晚于结束日期"));
+            return Json(ApiResponse::<SupplierContract>::error(
+                400,
+                "合同开始日期不能晚于结束日期",
+            ));
         }
     }
 
@@ -234,7 +271,10 @@ async fn create_contract(
         Ok(contract) => Json(ApiResponse::success(contract, "供应商合同创建成功")),
         Err(e) => {
             tracing::error!("创建供应商合同失败: {}", e);
-            Json(ApiResponse::<SupplierContract>::error(500, "供应商合同创建失败"))
+            Json(ApiResponse::<SupplierContract>::error(
+                500,
+                "供应商合同创建失败",
+            ))
         }
     }
 }
@@ -245,7 +285,7 @@ async fn get_contract(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierContract>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -261,10 +301,16 @@ async fn get_contract(
 
     match result {
         Ok(Some(contract)) => Json(ApiResponse::success(contract, "获取供应商合同成功")),
-        Ok(None) => Json(ApiResponse::<SupplierContract>::error(404, "供应商合同不存在")),
+        Ok(None) => Json(ApiResponse::<SupplierContract>::error(
+            404,
+            "供应商合同不存在",
+        )),
         Err(e) => {
             tracing::error!("获取供应商合同失败: {}", e);
-            Json(ApiResponse::<SupplierContract>::error(500, "获取供应商合同失败"))
+            Json(ApiResponse::<SupplierContract>::error(
+                500,
+                "获取供应商合同失败",
+            ))
         }
     }
 }
@@ -276,7 +322,7 @@ async fn update_contract(
     Json(req): Json<UpdateSupplierContractRequest>,
 ) -> Json<ApiResponse<SupplierContract>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -289,28 +335,44 @@ async fn update_contract(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::<SupplierContract>::error(404, "供应商合同不存在")),
-        Err(e) => return Json(ApiResponse::<SupplierContract>::error(500, &format!("查询供应商合同失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::<SupplierContract>::error(
+                404,
+                "供应商合同不存在",
+            ))
+        }
+        Err(e) => {
+            return Json(ApiResponse::<SupplierContract>::error(
+                500,
+                &format!("查询供应商合同失败: {}", e),
+            ))
+        }
     };
 
     // 验证供应商ID（如果更新）
     let supplier_id = if let Some(supplier_id_str) = &req.supplier_id {
         let supplier_uuid = Uuid::parse_str(supplier_id_str);
         if supplier_uuid.is_err() {
-            return Json(ApiResponse::<SupplierContract>::error(400, "供应商ID格式错误"));
+            return Json(ApiResponse::<SupplierContract>::error(
+                400,
+                "供应商ID格式错误",
+            ));
         }
 
         let supplier_uuid_val = supplier_uuid.unwrap();
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'"
+            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
         )
         .bind(supplier_uuid_val)
         .fetch_one(&state.db)
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierContract>::error(400, "供应商不存在或已删除"));
+            return Json(ApiResponse::<SupplierContract>::error(
+                400,
+                "供应商不存在或已删除",
+            ));
         }
 
         supplier_uuid_val
@@ -321,7 +383,10 @@ async fn update_contract(
     // 验证金额
     if let Some(amount) = req.total_amount {
         if amount < 0.0 {
-            return Json(ApiResponse::<SupplierContract>::error(400, "合同金额不能为负数"));
+            return Json(ApiResponse::<SupplierContract>::error(
+                400,
+                "合同金额不能为负数",
+            ));
         }
     }
 
@@ -333,7 +398,10 @@ async fn update_contract(
     // 验证日期逻辑
     if let (Some(start), Some(end)) = (start_date, end_date) {
         if start > end {
-            return Json(ApiResponse::<SupplierContract>::error(400, "合同开始日期不能晚于结束日期"));
+            return Json(ApiResponse::<SupplierContract>::error(
+                400,
+                "合同开始日期不能晚于结束日期",
+            ));
         }
     }
 
@@ -376,7 +444,10 @@ async fn update_contract(
         Ok(contract) => Json(ApiResponse::success(contract, "供应商合同更新成功")),
         Err(e) => {
             tracing::error!("更新供应商合同失败: {}", e);
-            Json(ApiResponse::<SupplierContract>::error(500, "供应商合同更新失败"))
+            Json(ApiResponse::<SupplierContract>::error(
+                500,
+                "供应商合同更新失败",
+            ))
         }
     }
 }
@@ -387,7 +458,7 @@ async fn delete_contract(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -397,7 +468,9 @@ async fn delete_contract(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "供应商合同删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "供应商合同删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<String>::error(404, "供应商合同不存在")),
         Err(e) => {
             tracing::error!("删除供应商合同失败: {}", e);
@@ -414,17 +487,16 @@ async fn get_contract_terms(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ContractTerm>>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 验证合同是否存在
-    let contract_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_one(&state.db)
-    .await;
+    let contract_exists =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts WHERE id = $1")
+            .bind(id)
+            .fetch_one(&state.db)
+            .await;
 
     if contract_exists.unwrap_or(0) == 0 {
         return Json(ApiResponse::<Vec<ContractTerm>>::error(404, "合同不存在"));
@@ -446,7 +518,10 @@ async fn get_contract_terms(
         Ok(terms) => Json(ApiResponse::success(terms, "获取合同条款成功")),
         Err(e) => {
             tracing::error!("获取合同条款失败: {}", e);
-            Json(ApiResponse::<Vec<ContractTerm>>::error(500, "获取合同条款失败"))
+            Json(ApiResponse::<Vec<ContractTerm>>::error(
+                500,
+                "获取合同条款失败",
+            ))
         }
     }
 }

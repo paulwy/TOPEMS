@@ -148,10 +148,7 @@ impl VectorStore for RedisVectorStore {
         let full_key = self.make_key(key);
 
         // 序列化向量为字节
-        let vector_bytes: Vec<u8> = vector
-            .iter()
-            .flat_map(|f| f.to_le_bytes())
-            .collect();
+        let vector_bytes: Vec<u8> = vector.iter().flat_map(|f| f.to_le_bytes()).collect();
 
         // 序列化元数据
         let metadata_json = serde_json::to_string(&metadata)?;
@@ -166,23 +163,20 @@ impl VectorStore for RedisVectorStore {
         Ok(())
     }
 
-    async fn store_batch(
-        &self,
-        items: Vec<(&str, &[f32], VectorMetadata)>,
-    ) -> Result<()> {
+    async fn store_batch(&self, items: Vec<(&str, &[f32], VectorMetadata)>) -> Result<()> {
         let mut conn = self.conn.clone();
         let mut pipe = redis::pipe();
 
         for (key, vector, metadata) in items {
             let full_key = self.make_key(key);
-            let vector_bytes: Vec<u8> = vector
-                .iter()
-                .flat_map(|f| f.to_le_bytes())
-                .collect();
+            let vector_bytes: Vec<u8> = vector.iter().flat_map(|f| f.to_le_bytes()).collect();
             let metadata_json = serde_json::to_string(&metadata)?;
 
-            pipe.hset(&full_key, "embedding", vector_bytes)
-                .hset(&full_key, "metadata", metadata_json);
+            pipe.hset(&full_key, "embedding", vector_bytes).hset(
+                &full_key,
+                "metadata",
+                metadata_json,
+            );
         }
 
         let _: () = pipe.query_async(&mut conn).await?;
@@ -193,17 +187,11 @@ impl VectorStore for RedisVectorStore {
         let mut conn = self.conn.clone();
 
         // 序列化查询向量
-        let vector_bytes: Vec<u8> = vector
-            .iter()
-            .flat_map(|f| f.to_le_bytes())
-            .collect();
+        let vector_bytes: Vec<u8> = vector.iter().flat_map(|f| f.to_le_bytes()).collect();
 
         // 使用 KNN 搜索
         let index_name = format!("{}:index", self.prefix);
-        let query = format!(
-            "*=>[KNN {} @embedding $vector AS score]",
-            limit
-        );
+        let query = format!("*=>[KNN {} @embedding $vector AS score]", limit);
 
         let results: Vec<(String, f32, String)> = redis::cmd("FT.SEARCH")
             .arg(&index_name)
@@ -295,7 +283,14 @@ pub mod pgvector_store {
     #[async_trait]
     impl VectorStore for PgVectorStore {
         async fn store(&self, key: &str, vector: &[f32], metadata: VectorMetadata) -> Result<()> {
-            let vector_str = format!("[{}]", vector.iter().map(|f| f.to_string()).collect::<Vec<_>>().join(","));
+            let vector_str = format!(
+                "[{}]",
+                vector
+                    .iter()
+                    .map(|f| f.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            );
 
             sqlx::query!(
                 r#"
@@ -323,7 +318,14 @@ pub mod pgvector_store {
         }
 
         async fn search(&self, vector: &[f32], limit: usize) -> Result<Vec<SearchResult>> {
-            let vector_str = format!("[{}]", vector.iter().map(|f| f.to_string()).collect::<Vec<_>>().join(","));
+            let vector_str = format!(
+                "[{}]",
+                vector
+                    .iter()
+                    .map(|f| f.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            );
 
             let rows = sqlx::query!(
                 r#"
@@ -383,11 +385,10 @@ pub mod pgvector_store {
         }
 
         async fn exists(&self, key: &str) -> Result<bool> {
-            let result: Option<(i64,)> =
-                sqlx::query_as("SELECT 1 FROM hrm.vectors WHERE key = $1")
-                    .bind(key)
-                    .fetch_optional(&self.pool)
-                    .await?;
+            let result: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM hrm.vectors WHERE key = $1")
+                .bind(key)
+                .fetch_optional(&self.pool)
+                .await?;
 
             Ok(result.is_some())
         }

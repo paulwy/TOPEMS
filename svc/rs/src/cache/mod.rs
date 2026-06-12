@@ -1,9 +1,9 @@
 // 重新导出共享库的缓存模块
 
+use once_cell::sync::Lazy;
 use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;
 use tokio::sync::RwLock;
-use once_cell::sync::Lazy;
 
 mod memory;
 
@@ -49,9 +49,9 @@ pub async fn invalidate_project_cache(project_id: &str) {
         .filter(|entry| entry.key().contains(project_id))
         .map(|entry| entry.key().to_string())
         .collect();
-    
+
     drop(cache);
-    
+
     let cache = CACHE.write().await;
     for key in keys_to_remove {
         cache.remove(&key);

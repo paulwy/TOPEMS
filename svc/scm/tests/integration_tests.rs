@@ -1,4 +1,5 @@
 // SCM 服务集成测试
+#![allow(dead_code)]
 
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
@@ -22,11 +23,11 @@ mod tests {
     #[tokio::test]
     async fn test_purchase_order_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'purchase_orders')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -41,11 +42,11 @@ mod tests {
     #[tokio::test]
     async fn test_purchase_item_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'purchase_items')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -60,11 +61,11 @@ mod tests {
     #[tokio::test]
     async fn test_supplier_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'suppliers')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -79,11 +80,11 @@ mod tests {
     #[tokio::test]
     async fn test_supplier_evaluation_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'supplier_evaluations')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -98,10 +99,10 @@ mod tests {
     #[tokio::test]
     async fn test_create_purchase_order() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let order_id = Uuid::new_v4();
         let order_no = format!("PO-{}", &order_id.to_string()[..10]);
-        
+
         let result = sqlx::query(
             r#"
             INSERT INTO scm.purchase_orders (id, order_no, supplier_id, status, order_date, expected_date, total_amount, created_by, created_at, updated_at)
@@ -122,14 +123,14 @@ mod tests {
         .bind("admin")
         .fetch_one(&pool)
         .await;
-        
+
         assert!(result.is_ok(), "采购订单创建应该成功");
     }
 
     #[tokio::test]
     async fn test_list_purchase_orders() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query_as::<_, PurchaseOrderRow>(
             r#"
             SELECT id, order_no, supplier_id, status, order_date, expected_date, actual_date, total_amount, discount_amount, final_amount, payment_status, created_by, created_at, updated_at
@@ -140,7 +141,7 @@ mod tests {
         )
         .fetch_all(&pool)
         .await;
-        
+
         match result {
             Ok(orders) => {
                 assert!(orders.len() <= 10, "返回的订单数量应该不超过10条");
@@ -154,11 +155,11 @@ mod tests {
     #[tokio::test]
     async fn test_purchase_order_status_update() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         // 创建一个新的采购订单
         let order_id = Uuid::new_v4();
         let order_no = format!("PO-TEST-{}", &order_id.to_string()[..8]);
-        
+
         sqlx::query(
             r#"
             INSERT INTO scm.purchase_orders (id, order_no, supplier_id, status, order_date, expected_date, total_amount, created_by, created_at, updated_at)
@@ -176,7 +177,7 @@ mod tests {
         .execute(&pool)
         .await
         .expect("创建测试数据失败");
-        
+
         // 更新状态为已确认
         let update_result = sqlx::query(
             r#"
@@ -187,17 +188,16 @@ mod tests {
         .bind(order_id)
         .execute(&pool)
         .await;
-        
+
         assert!(update_result.is_ok(), "状态更新应该成功");
-        
+
         // 验证状态已更新
-        let check_result = sqlx::query_scalar::<_, String>(
-            "SELECT status FROM scm.purchase_orders WHERE id = $1"
-        )
-        .bind(order_id)
-        .fetch_one(&pool)
-        .await;
-        
+        let check_result =
+            sqlx::query_scalar::<_, String>("SELECT status FROM scm.purchase_orders WHERE id = $1")
+                .bind(order_id)
+                .fetch_one(&pool)
+                .await;
+
         match check_result {
             Ok(status) => {
                 assert_eq!(status, "confirmed", "状态应该更新为 confirmed");
@@ -206,7 +206,7 @@ mod tests {
                 panic!("查询状态失败: {}", e);
             }
         }
-        
+
         // 清理测试数据
         let _ = sqlx::query("DELETE FROM scm.purchase_orders WHERE id = $1")
             .bind(order_id)
@@ -217,10 +217,10 @@ mod tests {
     #[tokio::test]
     async fn test_create_supplier() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let supplier_id = Uuid::new_v4();
         let supplier_code = format!("SUP-{}", &supplier_id.to_string()[..8]);
-        
+
         let result = sqlx::query(
             r#"
             INSERT INTO scm.suppliers (id, code, name, contact_person, phone, email, address, status, rating, created_at, updated_at)
@@ -242,18 +242,18 @@ mod tests {
         .bind(4.5)
         .fetch_one(&pool)
         .await;
-        
+
         assert!(result.is_ok(), "供应商创建应该成功");
     }
 
     #[tokio::test]
     async fn test_audit_log_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'scm_audit_logs')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);

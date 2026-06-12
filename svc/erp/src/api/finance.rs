@@ -8,15 +8,14 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
 use crate::models::{
-    Expense, CreateExpenseRequest, UpdateExpenseRequest,
-    Budget, CreateBudgetRequest, UpdateBudgetRequest,
-    Receivable, CreateReceivableRequest, UpdateReceivableRequest,
-    Payable, CreatePayableRequest, UpdatePayableRequest,
+    Budget, CreateBudgetRequest, CreateExpenseRequest, CreatePayableRequest,
+    CreateReceivableRequest, Expense, Payable, Receivable, UpdateBudgetRequest,
+    UpdateExpenseRequest, UpdatePayableRequest, UpdateReceivableRequest,
 };
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
-use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -29,13 +28,30 @@ pub struct PaginationParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/expenses", get(list_expenses).post(create_expense))
-        .route("/api/v1/expenses/{id}", get(get_expense).put(update_expense).delete(delete_expense))
+        .route(
+            "/api/v1/expenses/{id}",
+            get(get_expense).put(update_expense).delete(delete_expense),
+        )
         .route("/api/v1/budgets", get(list_budgets).post(create_budget))
-        .route("/api/v1/budgets/{id}", get(get_budget).put(update_budget).delete(delete_budget))
-        .route("/api/v1/receivables", get(list_receivables).post(create_receivable))
-        .route("/api/v1/receivables/{id}", get(get_receivable).put(update_receivable).delete(delete_receivable))
+        .route(
+            "/api/v1/budgets/{id}",
+            get(get_budget).put(update_budget).delete(delete_budget),
+        )
+        .route(
+            "/api/v1/receivables",
+            get(list_receivables).post(create_receivable),
+        )
+        .route(
+            "/api/v1/receivables/{id}",
+            get(get_receivable)
+                .put(update_receivable)
+                .delete(delete_receivable),
+        )
         .route("/api/v1/payables", get(list_payables).post(create_payable))
-        .route("/api/v1/payables/{id}", get(get_payable).put(update_payable).delete(delete_payable))
+        .route(
+            "/api/v1/payables/{id}",
+            get(get_payable).put(update_payable).delete(delete_payable),
+        )
 }
 
 async fn list_expenses(
@@ -148,16 +164,18 @@ async fn create_expense(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "expense".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "expense".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -271,16 +289,18 @@ async fn update_expense(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "expense".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "expense".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -327,16 +347,18 @@ async fn delete_expense(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "expense".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "expense".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -456,16 +478,18 @@ async fn create_budget(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "budget".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "budget".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -525,7 +549,11 @@ async fn update_budget(
     let used_amount = req.used_amount.unwrap_or(existing.used_amount);
     let status = req.status.unwrap_or(existing.status);
     let remaining_amount = total_budget - used_amount;
-    let usage_rate = if total_budget > 0.0 { (used_amount / total_budget) * 100.0 } else { 0.0 };
+    let usage_rate = if total_budget > 0.0 {
+        (used_amount / total_budget) * 100.0
+    } else {
+        0.0
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Budget>(
@@ -573,16 +601,18 @@ async fn update_budget(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "budget".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "budget".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -629,16 +659,18 @@ async fn delete_budget(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "budget".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "budget".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -754,16 +786,18 @@ async fn create_receivable(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "receivable".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "receivable".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -869,16 +903,18 @@ async fn update_receivable(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "receivable".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "receivable".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -925,16 +961,18 @@ async fn delete_receivable(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "receivable".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "receivable".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -1050,16 +1088,18 @@ async fn create_payable(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "payable".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "payable".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -1165,16 +1205,18 @@ async fn update_payable(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "payable".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "payable".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -1221,16 +1263,18 @@ async fn delete_payable(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "payable".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "payable".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

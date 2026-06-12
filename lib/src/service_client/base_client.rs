@@ -12,12 +12,14 @@ pub struct BaseServiceClient {
 impl BaseServiceClient {
     pub fn new(base_url: impl Into<String>) -> ServiceClientResult<Self> {
         let base_url = base_url.into();
-        
+
         // 验证 URL 有效性
         if base_url.is_empty() {
-            return Err(ServiceClientError::InvalidUrl("Base URL cannot be empty".into()));
+            return Err(ServiceClientError::InvalidUrl(
+                "Base URL cannot be empty".into(),
+            ));
         }
-        
+
         let client = Client::builder()
             .timeout(Duration::from_secs(30))
             .connect_timeout(Duration::from_secs(5))
@@ -79,7 +81,7 @@ impl BaseServiceClient {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".into());
-            
+
             return Err(ServiceClientError::ServiceError {
                 status_code,
                 message: error_message,
@@ -109,7 +111,7 @@ impl BaseServiceClient {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".into());
-            
+
             return Err(ServiceClientError::ServiceError {
                 status_code,
                 message: error_message,
@@ -119,4 +121,3 @@ impl BaseServiceClient {
         Ok(())
     }
 }
-

@@ -22,7 +22,9 @@ impl fmt::Display for WorkflowEngineError {
             WorkflowEngineError::WorkflowNotActive => write!(f, "Workflow is not active"),
             WorkflowEngineError::InstanceNotFound => write!(f, "Workflow instance not found"),
             WorkflowEngineError::NodeNotFound(node_id) => write!(f, "Node not found: {}", node_id),
-            WorkflowEngineError::InvalidWorkflowDefinition(msg) => write!(f, "Invalid workflow definition: {}", msg),
+            WorkflowEngineError::InvalidWorkflowDefinition(msg) => {
+                write!(f, "Invalid workflow definition: {}", msg)
+            }
             WorkflowEngineError::DatabaseError(e) => write!(f, "Database error: {}", e),
             WorkflowEngineError::ConditionFailed => write!(f, "Condition check failed"),
         }
@@ -52,7 +54,10 @@ impl From<WorkflowEngineError> for topems_shared::error::TopemsError {
                 topems_shared::error::TopemsError::ResourceNotFound(format!("节点不存在: {}", msg))
             }
             WorkflowEngineError::InvalidWorkflowDefinition(msg) => {
-                topems_shared::error::TopemsError::ValidationFailed(format!("工作流定义无效: {}", msg))
+                topems_shared::error::TopemsError::ValidationFailed(format!(
+                    "工作流定义无效: {}",
+                    msg
+                ))
             }
             WorkflowEngineError::DatabaseError(e) => {
                 topems_shared::error::TopemsError::DatabaseQuery(e.to_string())
@@ -73,83 +78,137 @@ impl WorkflowEngine {
     pub fn new(repo: WorkflowRepository) -> Self {
         Self { repo }
     }
-    
+
     async fn get_workflow(&self, id: Uuid) -> Result<Option<Workflow>, sqlx::Error> {
         self.repo.get_workflow(id).await
     }
-    
+
     async fn create_workflow(&self, req: CreateWorkflowRequest) -> Result<Workflow, sqlx::Error> {
         self.repo.create_workflow(req).await
     }
-    
-    async fn list_workflows(&self, is_active: Option<bool>, limit: i64, offset: i64) -> Result<PaginatedResult<Workflow>, sqlx::Error> {
+
+    async fn list_workflows(
+        &self,
+        is_active: Option<bool>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<PaginatedResult<Workflow>, sqlx::Error> {
         self.repo.list_workflows(is_active, limit, offset).await
     }
-    
-    async fn update_workflow(&self, id: Uuid, req: UpdateWorkflowRequest) -> Result<Option<Workflow>, sqlx::Error> {
+
+    async fn update_workflow(
+        &self,
+        id: Uuid,
+        req: UpdateWorkflowRequest,
+    ) -> Result<Option<Workflow>, sqlx::Error> {
         self.repo.update_workflow(id, req).await
     }
-    
+
     async fn delete_workflow(&self, id: Uuid) -> Result<bool, sqlx::Error> {
         self.repo.delete_workflow(id).await
     }
-    
-    async fn create_instance(&self, req: CreateWorkflowInstanceRequest) -> Result<WorkflowInstance, sqlx::Error> {
+
+    async fn create_instance(
+        &self,
+        req: CreateWorkflowInstanceRequest,
+    ) -> Result<WorkflowInstance, sqlx::Error> {
         self.repo.create_instance(req).await
     }
-    
+
     async fn get_instance(&self, id: Uuid) -> Result<Option<WorkflowInstance>, sqlx::Error> {
         self.repo.get_instance(id).await
     }
-    
-    async fn list_instances(&self, workflow_id: Option<Uuid>, status: Option<String>, initiator_id: Option<Uuid>, limit: i64, offset: i64) -> Result<Vec<WorkflowInstance>, sqlx::Error> {
-        self.repo.list_instances(workflow_id, status, initiator_id, limit, offset).await
+
+    async fn list_instances(
+        &self,
+        workflow_id: Option<Uuid>,
+        status: Option<String>,
+        initiator_id: Option<Uuid>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<WorkflowInstance>, sqlx::Error> {
+        self.repo
+            .list_instances(workflow_id, status, initiator_id, limit, offset)
+            .await
     }
-    
-    async fn update_instance(&self, id: Uuid, status: Option<String>, current_node: Option<String>, data: Option<Value>) -> Result<Option<WorkflowInstance>, sqlx::Error> {
-        self.repo.update_instance(id, status, current_node, data).await
+
+    async fn update_instance(
+        &self,
+        id: Uuid,
+        status: Option<String>,
+        current_node: Option<String>,
+        data: Option<Value>,
+    ) -> Result<Option<WorkflowInstance>, sqlx::Error> {
+        self.repo
+            .update_instance(id, status, current_node, data)
+            .await
     }
-    
+
     async fn create_approval(&self, req: CreateApprovalRequest) -> Result<Approval, sqlx::Error> {
         self.repo.create_approval(req).await
     }
-    
+
     async fn get_approval(&self, id: Uuid) -> Result<Option<Approval>, sqlx::Error> {
         self.repo.get_approval(id).await
     }
-    
-    async fn list_approvals(&self, instance_id: Option<Uuid>, assignee_id: Option<Uuid>, status: Option<String>, limit: i64, offset: i64) -> Result<Vec<Approval>, sqlx::Error> {
-        self.repo.list_approvals(instance_id, assignee_id, status, limit, offset).await
+
+    async fn list_approvals(
+        &self,
+        instance_id: Option<Uuid>,
+        assignee_id: Option<Uuid>,
+        status: Option<String>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<Approval>, sqlx::Error> {
+        self.repo
+            .list_approvals(instance_id, assignee_id, status, limit, offset)
+            .await
     }
-    
+
     async fn get_approvals_by_instance(&self, id: Uuid) -> Result<Vec<Approval>, sqlx::Error> {
         self.repo.get_approvals_by_instance(id).await
     }
-    
+
     async fn get_approval_records(&self, id: Uuid) -> Result<Vec<ApprovalRecord>, sqlx::Error> {
         self.repo.get_approval_records(id).await
     }
-    
-    async fn list_approval_records(&self, approval_id: Option<Uuid>, actor_id: Option<Uuid>, limit: i64, offset: i64) -> Result<Vec<ApprovalRecord>, sqlx::Error> {
-        self.repo.list_approval_records(approval_id, actor_id, limit, offset).await
+
+    async fn list_approval_records(
+        &self,
+        approval_id: Option<Uuid>,
+        actor_id: Option<Uuid>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<ApprovalRecord>, sqlx::Error> {
+        self.repo
+            .list_approval_records(approval_id, actor_id, limit, offset)
+            .await
     }
-    
-    async fn create_notification(&self, req: CreateNotificationRequest) -> Result<Notification, sqlx::Error> {
+
+    async fn create_notification(
+        &self,
+        req: CreateNotificationRequest,
+    ) -> Result<Notification, sqlx::Error> {
         self.repo.create_notification(req).await
     }
-    
-    async fn get_notifications_by_user(&self, id: Uuid, limit: i64, offset: i64) -> Result<Vec<Notification>, sqlx::Error> {
+
+    async fn get_notifications_by_user(
+        &self,
+        id: Uuid,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<Notification>, sqlx::Error> {
         self.repo.get_notifications_by_user(id, limit, offset).await
     }
-    
+
     async fn mark_notifications_as_read(&self, id: Uuid) -> Result<usize, sqlx::Error> {
         self.repo.mark_notifications_as_read(id).await
     }
-    
+
     async fn get_unread_count(&self, id: Uuid) -> Result<i64, sqlx::Error> {
         self.repo.get_unread_count(id).await
     }
-    
+
     async fn get_expired_approvals(&self) -> Result<Vec<Approval>, sqlx::Error> {
         self.repo.get_expired_approvals().await
     }
@@ -190,18 +249,20 @@ impl WorkflowEngine {
         approval_id: Uuid,
         req: ProcessApprovalRequest,
     ) -> Result<(Approval, Option<WorkflowInstance>), WorkflowEngineError> {
-        let approval = self
-            .repo.process_approval(approval_id, req.clone())
-            .await?;
+        let approval = self.repo.process_approval(approval_id, req.clone()).await?;
         let approval = approval.ok_or(WorkflowEngineError::InstanceNotFound)?;
 
-        let instance_id = approval.workflow_instance_id.ok_or(WorkflowEngineError::InstanceNotFound)?;
+        let instance_id = approval
+            .workflow_instance_id
+            .ok_or(WorkflowEngineError::InstanceNotFound)?;
         let mut instance = self
             .get_instance(instance_id)
             .await?
             .ok_or(WorkflowEngineError::InstanceNotFound)?;
 
-        let workflow_id = instance.workflow_id.ok_or(WorkflowEngineError::WorkflowNotFound)?;
+        let workflow_id = instance
+            .workflow_id
+            .ok_or(WorkflowEngineError::WorkflowNotFound)?;
         let workflow = self
             .get_workflow(workflow_id)
             .await?
@@ -227,12 +288,7 @@ impl WorkflowEngine {
                             .await?;
                     } else {
                         instance = self
-                            .update_instance(
-                                instance.id,
-                                Some("completed".to_string()),
-                                None,
-                                None,
-                            )
+                            .update_instance(instance.id, Some("completed".to_string()), None, None)
                             .await?
                             .ok_or(WorkflowEngineError::InstanceNotFound)?;
                     }
@@ -296,11 +352,16 @@ impl WorkflowEngine {
 
             if approvals.is_empty() && !node.approvers.is_empty() {
                 return Err(WorkflowEngineError::InvalidWorkflowDefinition(
-                    "No valid approvers found for node".to_string()),
-                );
+                    "No valid approvers found for node".to_string(),
+                ));
             }
 
-            if !approvals.is_empty() || node.approvers.is_empty() && self.get_next_node(instance, definition, &current_node_id).is_none() {
+            if !approvals.is_empty()
+                || node.approvers.is_empty()
+                    && self
+                        .get_next_node(instance, definition, &current_node_id)
+                        .is_none()
+            {
                 if approvals.is_empty() && node.approvers.is_empty() {
                     return self
                         .update_instance(
@@ -346,21 +407,28 @@ impl WorkflowEngine {
                         node_id: Some(node.node_id.clone()),
                         task_name: node.name.clone(),
                         assignee_id: Some(approver_id),
-                        approval_type: Some(serde_json::to_string(&node.approval_type).unwrap_or_else(|_| "single".to_string())),
+                        approval_type: Some(
+                            serde_json::to_string(&node.approval_type)
+                                .unwrap_or_else(|_| "single".to_string()),
+                        ),
                         timeout_hours: node.timeout_hours,
                     })
                     .await?;
                 approvals.push(approval);
             } else if approver_str.starts_with("role:") {
                 let _role_name = approver_str.strip_prefix("role:").unwrap_or(approver_str);
-                let default_user_id = Uuid::parse_str("550e8400-e29b-41d4-a716-446655440001").unwrap_or_default();
+                let default_user_id =
+                    Uuid::parse_str("550e8400-e29b-41d4-a716-446655440001").unwrap_or_default();
                 let approval = self
                     .create_approval(CreateApprovalRequest {
                         workflow_instance_id: instance.id,
                         node_id: Some(node.node_id.clone()),
                         task_name: node.name.clone(),
                         assignee_id: Some(default_user_id),
-                        approval_type: Some(serde_json::to_string(&node.approval_type).unwrap_or_else(|_| "single".to_string())),
+                        approval_type: Some(
+                            serde_json::to_string(&node.approval_type)
+                                .unwrap_or_else(|_| "single".to_string()),
+                        ),
                         timeout_hours: node.timeout_hours,
                     })
                     .await?;
@@ -420,7 +488,9 @@ impl WorkflowEngine {
                 }
                 "contains" => field_value_str.contains(&condition_value_str),
                 "in" => {
-                    if let Ok(values) = serde_json::from_value::<Vec<String>>(condition.value.clone()) {
+                    if let Ok(values) =
+                        serde_json::from_value::<Vec<String>>(condition.value.clone())
+                    {
                         values.contains(&field_value_str)
                     } else {
                         false
@@ -444,9 +514,7 @@ impl WorkflowEngine {
             .collect();
 
         match node.approval_type {
-            ApprovalType::Single => {
-                node_approvals.iter().any(|a| a.status == "approved")
-            }
+            ApprovalType::Single => node_approvals.iter().any(|a| a.status == "approved"),
             ApprovalType::Counter => {
                 let approved_count = node_approvals
                     .iter()
@@ -454,9 +522,7 @@ impl WorkflowEngine {
                     .count();
                 approved_count >= (node.approvers.len() + 1) / 2
             }
-            ApprovalType::Or => {
-                node_approvals.iter().any(|a| a.status == "approved")
-            }
+            ApprovalType::Or => node_approvals.iter().any(|a| a.status == "approved"),
         }
     }
 
@@ -466,7 +532,10 @@ impl WorkflowEngine {
         definition: &WorkflowDefinition,
         current_node_id: &str,
     ) -> Option<String> {
-        let current_node = definition.nodes.iter().find(|n| n.node_id == current_node_id)?;
+        let current_node = definition
+            .nodes
+            .iter()
+            .find(|n| n.node_id == current_node_id)?;
 
         match &current_node.next_nodes {
             Some(next_nodes) => {
@@ -474,7 +543,9 @@ impl WorkflowEngine {
                     return None;
                 }
                 for next_node_id in next_nodes {
-                    if let Some(next_node) = definition.nodes.iter().find(|n| n.node_id == *next_node_id) {
+                    if let Some(next_node) =
+                        definition.nodes.iter().find(|n| n.node_id == *next_node_id)
+                    {
                         if self.check_conditions(&instance.data, &next_node.conditions) {
                             return Some(next_node_id.clone());
                         }

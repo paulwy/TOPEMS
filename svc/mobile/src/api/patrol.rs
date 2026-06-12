@@ -1,6 +1,6 @@
 use axum::{
-    extract::{State, Json, Path},
-    http::{StatusCode, HeaderMap},
+    extract::{Json, Path, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PatrolRecord {
@@ -55,7 +55,10 @@ pub async fn get_all_patrol_records(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -76,7 +79,10 @@ pub async fn get_all_patrol_records(
         }
     };
 
-    (StatusCode::OK, axum::Json(ApiResponse::success(records, "获取巡逻记录成功")))
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success(records, "获取巡逻记录成功")),
+    )
 }
 
 pub async fn get_patrol_record(
@@ -88,7 +94,10 @@ pub async fn get_patrol_record(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -112,7 +121,10 @@ pub async fn get_patrol_record(
         }
     };
 
-    (StatusCode::OK, axum::Json(ApiResponse::success(record, "获取巡逻记录成功")))
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success(record, "获取巡逻记录成功")),
+    )
 }
 
 pub async fn create_patrol_record(
@@ -124,7 +136,10 @@ pub async fn create_patrol_record(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -166,7 +181,10 @@ pub async fn create_patrol_record(
         created_at: Utc::now(),
     };
 
-    (StatusCode::CREATED, axum::Json(ApiResponse::success(record, "创建巡逻记录成功")))
+    (
+        StatusCode::CREATED,
+        axum::Json(ApiResponse::success(record, "创建巡逻记录成功")),
+    )
 }
 
 pub async fn update_patrol_record(
@@ -179,7 +197,10 @@ pub async fn update_patrol_record(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -230,7 +251,10 @@ pub async fn update_patrol_record(
         return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "更新失败")));
     }
 
-    (StatusCode::OK, axum::Json(ApiResponse::success((), "更新成功")))
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success((), "更新成功")),
+    )
 }
 
 pub async fn delete_patrol_record(
@@ -242,7 +266,10 @@ pub async fn delete_patrol_record(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -253,11 +280,20 @@ pub async fn delete_patrol_record(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, axum::Json(ApiResponse::success((), "删除成功"))),
-        Ok(_) => (StatusCode::NOT_FOUND, axum::Json(ApiResponse::error(404, "巡逻记录不存在或无权删除"))),
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            axum::Json(ApiResponse::success((), "删除成功")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            axum::Json(ApiResponse::error(404, "巡逻记录不存在或无权删除")),
+        ),
         Err(e) => {
             tracing::error!("删除巡逻记录失败: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "删除失败")))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(500, "删除失败")),
+            )
         }
     }
 }

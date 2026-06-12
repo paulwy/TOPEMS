@@ -8,19 +8,18 @@ use axum::{
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::models::{CreateProductionRecordRequest, ProductionRecord, UpdateProductionRecordRequest};
-use topems_shared::{ApiResponse, PaginationParams, api_error};
 use crate::api::audit::log_audit_event;
+use crate::models::{
+    CreateProductionRecordRequest, ProductionRecord, UpdateProductionRecordRequest,
+};
+use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 use super::ApiState;
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/records", get(list_records).post(create_record))
-        .route(
-            "/api/v1/records/{id}",
-            get(get_record).put(update_record),
-        );
+        .route("/api/v1/records/{id}", get(get_record).put(update_record));
 
     Ok(app)
 }
@@ -114,14 +113,14 @@ async fn create_record(
         Ok(record) => (
             Json(ApiResponse::success(record.clone(), "生产记录创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建生产记录失败: {}", e);
             (
                 Json(api_error(500, "生产记录创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -144,8 +143,9 @@ async fn create_record(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -182,7 +182,7 @@ async fn update_record(
 ) -> Json<ApiResponse<ProductionRecord>> {
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, ProductionRecord>(
         "SELECT id, order_id, process_id, work_station_id, operator, quantity_completed, quantity_rejected, start_time, end_time, status, notes, created_at, updated_at FROM production_records WHERE id = $1",
     )
@@ -196,7 +196,9 @@ async fn update_record(
         Err(e) => return Json(api_error(500, &format!("查询生产记录失败: {}", e))),
     };
 
-    let quantity_completed = req.quantity_completed.unwrap_or(existing.quantity_completed);
+    let quantity_completed = req
+        .quantity_completed
+        .unwrap_or(existing.quantity_completed);
     let quantity_rejected = req.quantity_rejected.or(existing.quantity_rejected);
     let end_time = req.end_time.or(existing.end_time);
     let status = req.status.unwrap_or(existing.status);
@@ -225,14 +227,14 @@ async fn update_record(
         Ok(record) => (
             Json(ApiResponse::success(record.clone(), "生产记录更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新生产记录失败: {}", e);
             (
                 Json(api_error(500, "生产记录更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -255,8 +257,9 @@ async fn update_record(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

@@ -1,13 +1,10 @@
 // AI 服务权限定义
-use axum::{
-    extract::Request,
-    http::StatusCode,
-    http::header::AUTHORIZATION,
-};
+use axum::{extract::Request, http::header::AUTHORIZATION, http::StatusCode};
+use topems_shared::auth::{verify_jwt_token, Claims};
 use topems_shared::permission::ModulePermission;
-use topems_shared::auth::{Claims, verify_jwt_token};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum AiPermission {
     // 向量操作
     VectorRead,
@@ -69,14 +66,13 @@ impl ModulePermission for AiPermission {
 }
 
 /// 从请求中解析 JWT 并检查权限
-pub async fn check_request_permission<P>(
+#[allow(dead_code)]
+pub async fn check_request_permission(
     req: Request,
-) -> Result<(Claims, Request), (StatusCode, axum::Json<topems_shared::ApiResponse<()>>)>
-where
-    P: ModulePermission + std::fmt::Display + Clone,
-{
+) -> Result<(Claims, Request), (StatusCode, axum::Json<topems_shared::ApiResponse<()>>)> {
     // 获取 Authorization header
-    let auth_header = req.headers()
+    let auth_header = req
+        .headers()
         .get(AUTHORIZATION)
         .and_then(|v| v.to_str().ok());
 
@@ -106,7 +102,10 @@ where
 }
 
 /// 检查 AI 权限
-pub fn check_ai_permission<P>(claims: &Claims) -> Result<(), (StatusCode, axum::Json<topems_shared::ApiResponse<()>>)>
+#[allow(dead_code)]
+pub fn check_ai_permission<P>(
+    claims: &Claims,
+) -> Result<(), (StatusCode, axum::Json<topems_shared::ApiResponse<()>>)>
 where
     P: ModulePermission + std::fmt::Display,
 {

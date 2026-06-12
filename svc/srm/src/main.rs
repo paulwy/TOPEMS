@@ -1,3 +1,16 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(clippy::manual_range_contains)]
+#![allow(clippy::map_flatten)]
+#![allow(dead_code)]
+
 mod api;
 mod models;
 mod services;
@@ -14,9 +27,8 @@ use std::time::Instant;
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, build_health_response, create_api_info_router,
-    create_database_pool, DatabaseConfig,
+    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
+    create_database_pool, init_logging, ApiResponse, AuthState, DatabaseConfig, ServiceHealth,
 };
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -26,8 +38,8 @@ fn get_uptime() -> u64 {
 }
 
 use api::{
-    create_supplier_routes, create_category_routes, create_evaluation_routes,
-    create_contract_routes, create_product_routes,
+    create_category_routes, create_contract_routes, create_evaluation_routes,
+    create_product_routes, create_supplier_routes,
 };
 
 #[derive(Clone)]
@@ -62,8 +74,11 @@ async fn main() -> Result<()> {
     let custom_gauge = Gauge::new(
         "topems_srm_custom_metric",
         "This is a custom metric for TOPEMS-SRM",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -98,7 +113,10 @@ async fn main() -> Result<()> {
     let health_router = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
@@ -184,9 +202,15 @@ async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiRespons
     };
     dependencies.push(db_health);
 
-    let status = if dependencies.iter().all(|d| d.status == HealthStatus::Healthy) {
+    let status = if dependencies
+        .iter()
+        .all(|d| d.status == HealthStatus::Healthy)
+    {
         HealthStatus::Healthy
-    } else if dependencies.iter().any(|d| d.status == HealthStatus::Unhealthy) {
+    } else if dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Unhealthy)
+    {
         HealthStatus::Unhealthy
     } else {
         HealthStatus::Degraded
@@ -211,48 +235,60 @@ fn create_statistics_routes(db: sqlx::PgPool) -> Router {
     Router::new()
         .route("/api/v1/statistics", get(get_statistics))
         .route("/api/v1/statistics/detailed", get(get_detailed_statistics))
-        .route("/api/v1/suppliers-with-stats", get(get_suppliers_with_stats))
+        .route(
+            "/api/v1/suppliers-with-stats",
+            get(get_suppliers_with_stats),
+        )
         .with_state(db)
 }
 
-async fn get_statistics(
-    State(pool): State<sqlx::PgPool>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let total_suppliers = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+async fn get_statistics(State(pool): State<sqlx::PgPool>) -> Json<ApiResponse<serde_json::Value>> {
+    let total_suppliers = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
 
-    let active_suppliers = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let active_suppliers =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'")
+            .fetch_one(&pool)
+            .await
+            .unwrap_or(0);
 
-    let total_evaluations = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_evaluations")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let total_evaluations =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_evaluations")
+            .fetch_one(&pool)
+            .await
+            .unwrap_or(0);
 
-    let avg_score = sqlx::query_scalar::<_, Option<f64>>("SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(None)
-        .unwrap_or(0.0);
+    let avg_score = sqlx::query_scalar::<_, Option<f64>>(
+        "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(None)
+    .unwrap_or(0.0);
 
-    let total_contracts = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let total_contracts =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts")
+            .fetch_one(&pool)
+            .await
+            .unwrap_or(0);
 
-    let active_contracts = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let active_contracts = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
 
-    let total_products = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_products WHERE status = 'active'")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let total_products = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM srm.supplier_products WHERE status = 'active'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
 
     let stats = serde_json::json!({
         "total_suppliers": total_suppliers,
@@ -271,45 +307,56 @@ async fn get_detailed_statistics(
     State(pool): State<sqlx::PgPool>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     // 基础统计
-    let total_suppliers = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let total_suppliers = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
 
-    let active_suppliers = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let active_suppliers =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'")
+            .fetch_one(&pool)
+            .await
+            .unwrap_or(0);
 
-    let total_evaluations = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_evaluations")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let total_evaluations =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_evaluations")
+            .fetch_one(&pool)
+            .await
+            .unwrap_or(0);
 
-    let avg_score = sqlx::query_scalar::<_, Option<f64>>("SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(None)
-        .unwrap_or(0.0);
+    let avg_score = sqlx::query_scalar::<_, Option<f64>>(
+        "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(None)
+    .unwrap_or(0.0);
 
-    let total_contracts = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let total_contracts =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts")
+            .fetch_one(&pool)
+            .await
+            .unwrap_or(0);
 
-    let active_contracts = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let active_contracts = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
 
-    let total_products = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_products WHERE status = 'active'")
-        .fetch_one(&pool)
-        .await
-        .unwrap_or(0);
+    let total_products = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM srm.supplier_products WHERE status = 'active'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
 
     // 按类别统计
     let supplier_by_category = sqlx::query_as::<_, (String, i64)>(
-        "SELECT category, COUNT(*) FROM srm.suppliers WHERE status != 'deleted' GROUP BY category"
+        "SELECT category, COUNT(*) FROM srm.suppliers WHERE status != 'deleted' GROUP BY category",
     )
     .fetch_all(&pool)
     .await
@@ -320,7 +367,7 @@ async fn get_detailed_statistics(
 
     // 按状态统计
     let supplier_by_status = sqlx::query_as::<_, (String, i64)>(
-        "SELECT status, COUNT(*) FROM srm.suppliers GROUP BY status"
+        "SELECT status, COUNT(*) FROM srm.suppliers GROUP BY status",
     )
     .fetch_all(&pool)
     .await
@@ -331,7 +378,7 @@ async fn get_detailed_statistics(
 
     // 合同按状态统计
     let contract_by_status = sqlx::query_as::<_, (String, i64)>(
-        "SELECT status, COUNT(*) FROM srm.supplier_contracts GROUP BY status"
+        "SELECT status, COUNT(*) FROM srm.supplier_contracts GROUP BY status",
     )
     .fetch_all(&pool)
     .await
@@ -373,7 +420,7 @@ async fn get_suppliers_with_stats(
 
             for supplier in suppliers {
                 let product_count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM srm.supplier_products WHERE supplier_id = $1"
+                    "SELECT COUNT(*) FROM srm.supplier_products WHERE supplier_id = $1",
                 )
                 .bind(supplier.id)
                 .fetch_one(&pool)
@@ -381,7 +428,7 @@ async fn get_suppliers_with_stats(
                 .unwrap_or(0);
 
                 let contract_count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM srm.supplier_contracts WHERE supplier_id = $1"
+                    "SELECT COUNT(*) FROM srm.supplier_contracts WHERE supplier_id = $1",
                 )
                 .bind(supplier.id)
                 .fetch_one(&pool)
@@ -389,7 +436,7 @@ async fn get_suppliers_with_stats(
                 .unwrap_or(0);
 
                 let eval_count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE supplier_id = $1"
+                    "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE supplier_id = $1",
                 )
                 .bind(supplier.id)
                 .fetch_one(&pool)
@@ -419,7 +466,10 @@ async fn get_suppliers_with_stats(
         }
         Err(e) => {
             tracing::error!("获取供应商统计数据失败: {}", e);
-            Json(ApiResponse::<Vec<serde_json::Value>>::error(500, "获取供应商统计数据失败"))
+            Json(ApiResponse::<Vec<serde_json::Value>>::error(
+                500,
+                "获取供应商统计数据失败",
+            ))
         }
     }
 }

@@ -1,8 +1,10 @@
-use sqlx::postgres::PgPool;
+#![allow(dead_code)]
+
 use crate::models::*;
-use uuid::Uuid;
 use chrono::Utc;
+use sqlx::postgres::PgPool;
 use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Error, Debug)]
 pub enum RepositoryError {
@@ -33,7 +35,7 @@ impl UserRepository {
                    is_active, is_superuser, created_at, updated_at, avatar_url
             FROM iam.users
             WHERE username = $1
-            "#
+            "#,
         )
         .bind(username)
         .fetch_optional(&self.pool)
@@ -49,7 +51,7 @@ impl UserRepository {
                    is_active, is_superuser, created_at, updated_at, avatar_url
             FROM iam.users
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -66,7 +68,7 @@ impl UserRepository {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id, username, email, password_hash, full_name, role, 
                       is_active, is_superuser, created_at, updated_at, avatar_url
-            "#
+            "#,
         )
         .bind(user.id)
         .bind(&user.username)
@@ -94,7 +96,7 @@ impl UserRepository {
             WHERE id = $1
             RETURNING id, username, email, password_hash, full_name, role, 
                       is_active, is_superuser, created_at, updated_at, avatar_url
-            "#
+            "#,
         )
         .bind(user.id)
         .bind(&user.email)
@@ -111,13 +113,11 @@ impl UserRepository {
     }
 
     pub async fn update_last_login(&self, id: Uuid) -> Result<(), RepositoryError> {
-        sqlx::query(
-            "UPDATE iam.users SET updated_at = $1 WHERE id = $2"
-        )
-        .bind(Utc::now())
-        .bind(id)
-        .execute(&self.pool)
-        .await?;
+        sqlx::query("UPDATE iam.users SET updated_at = $1 WHERE id = $2")
+            .bind(Utc::now())
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
 
@@ -129,7 +129,7 @@ impl UserRepository {
             FROM iam.users
             ORDER BY created_at DESC
             LIMIT $1 OFFSET $2
-            "#
+            "#,
         )
         .bind(limit)
         .bind(offset)
@@ -225,7 +225,7 @@ impl RoleRepository {
             SELECT id, code, name, description, is_system, is_active, created_at, updated_at
             FROM iam.roles
             ORDER BY created_at DESC
-            "#
+            "#,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -245,7 +245,7 @@ impl RoleRepository {
     pub async fn add_user_role(&self, user_id: Uuid, role_id: Uuid) -> Result<(), RepositoryError> {
         sqlx::query(
             "INSERT INTO iam.user_roles (user_id, role_id, created_at) VALUES ($1, $2, $3)
-             ON CONFLICT (user_id, role_id) DO NOTHING"
+             ON CONFLICT (user_id, role_id) DO NOTHING",
         )
         .bind(user_id)
         .bind(role_id)
@@ -255,14 +255,16 @@ impl RoleRepository {
         Ok(())
     }
 
-    pub async fn remove_user_role(&self, user_id: Uuid, role_id: Uuid) -> Result<bool, RepositoryError> {
-        let result = sqlx::query(
-            "DELETE FROM iam.user_roles WHERE user_id = $1 AND role_id = $2"
-        )
-        .bind(user_id)
-        .bind(role_id)
-        .execute(&self.pool)
-        .await?;
+    pub async fn remove_user_role(
+        &self,
+        user_id: Uuid,
+        role_id: Uuid,
+    ) -> Result<bool, RepositoryError> {
+        let result = sqlx::query("DELETE FROM iam.user_roles WHERE user_id = $1 AND role_id = $2")
+            .bind(user_id)
+            .bind(role_id)
+            .execute(&self.pool)
+            .await?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -361,7 +363,7 @@ impl PermissionRepository {
             SELECT id, code, name, description, category, module, created_at, updated_at
             FROM iam.permissions
             ORDER BY category, code
-            "#
+            "#,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -378,10 +380,14 @@ impl PermissionRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn add_role_permission(&self, role_id: Uuid, permission_id: Uuid) -> Result<(), RepositoryError> {
+    pub async fn add_role_permission(
+        &self,
+        role_id: Uuid,
+        permission_id: Uuid,
+    ) -> Result<(), RepositoryError> {
         sqlx::query(
             "INSERT INTO iam.role_permissions (role_id, permission_id) VALUES ($1, $2)
-             ON CONFLICT (role_id, permission_id) DO NOTHING"
+             ON CONFLICT (role_id, permission_id) DO NOTHING",
         )
         .bind(role_id)
         .bind(permission_id)
@@ -390,9 +396,13 @@ impl PermissionRepository {
         Ok(())
     }
 
-    pub async fn remove_role_permission(&self, role_id: Uuid, permission_id: Uuid) -> Result<bool, RepositoryError> {
+    pub async fn remove_role_permission(
+        &self,
+        role_id: Uuid,
+        permission_id: Uuid,
+    ) -> Result<bool, RepositoryError> {
         let result = sqlx::query(
-            "DELETE FROM iam.role_permissions WHERE role_id = $1 AND permission_id = $2"
+            "DELETE FROM iam.role_permissions WHERE role_id = $1 AND permission_id = $2",
         )
         .bind(role_id)
         .bind(permission_id)
@@ -436,7 +446,11 @@ impl AuditLogRepository {
         Ok(created_log)
     }
 
-    pub async fn list_all(&self, limit: i64, offset: i64) -> Result<Vec<AuditLog>, RepositoryError> {
+    pub async fn list_all(
+        &self,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<AuditLog>, RepositoryError> {
         let logs = sqlx::query_as::<_, AuditLog>(
             r#"
             SELECT id, user_id, action, resource, resource_id, ip_address, user_agent, details, created_at
@@ -453,7 +467,12 @@ impl AuditLogRepository {
         Ok(logs)
     }
 
-    pub async fn find_by_user_id(&self, user_id: Uuid, limit: i64, offset: i64) -> Result<Vec<AuditLog>, RepositoryError> {
+    pub async fn find_by_user_id(
+        &self,
+        user_id: Uuid,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<AuditLog>, RepositoryError> {
         let logs = sqlx::query_as::<_, AuditLog>(
             r#"
             SELECT id, user_id, action, resource, resource_id, ip_address, user_agent, details, created_at

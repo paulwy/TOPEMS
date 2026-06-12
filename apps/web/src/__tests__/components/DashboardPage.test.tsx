@@ -1,15 +1,15 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import DashboardPage from '../../pages/DashboardPage';
-import { AuthProvider } from '../../hooks/useAuth';
-import { ThemeProvider } from '../../components/ThemeProvider';
-import { ToastProvider } from '../../components/ToastProvider';
-import { LoadingProvider } from '../../components/LoadingProvider';
-import ErrorBoundary from '../../components/ErrorBoundary';
+import React from "react";
+import { render } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import DashboardPage from "../../pages/DashboardPage";
+import { AuthProvider } from "../../hooks/useAuth";
+import { ThemeProvider } from "../../components/ThemeProvider";
+import { ToastProvider } from "../../components/ToastProvider";
+import { LoadingProvider } from "../../components/LoadingProvider";
+import ErrorBoundary from "../../components/ErrorBoundary";
 
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
+vi.mock("react-router-dom", async () => ({
+  ...(await vi.importActual("react-router-dom")),
   useNavigate: () => vi.fn(),
 }));
 
@@ -25,7 +25,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
-    </ErrorBoundary>
+    </ErrorBoundary>,
   );
 };
 
@@ -33,13 +33,13 @@ const renderDashboardPage = () => {
   return renderWithProviders(<DashboardPage />);
 };
 
-describe('DashboardPage', () => {
+describe("DashboardPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
   });
 
-  test('renders dashboard page component', () => {
+  test("renders dashboard page component", () => {
     renderDashboardPage();
     expect(true).toBe(true);
   });

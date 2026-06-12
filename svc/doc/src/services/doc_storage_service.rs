@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::path::PathBuf;
 use thiserror::Error;
 use tracing::{debug, info};
@@ -46,7 +48,7 @@ impl DocStorageService {
     /// 从环境变量创建
     pub async fn from_env() -> Result<Self, DocStorageError> {
         let file_service_url = std::env::var("FILE_SERVICE_URL")
-            .unwrap_or_else(|_| "http://localhost:8055".to_string());
+            .unwrap_or_else(|_| "http://localhost:8050".to_string());
 
         let cache_path = std::env::var("DOC_CACHE_PATH")
             .map(PathBuf::from)
@@ -57,7 +59,10 @@ impl DocStorageService {
             std::fs::create_dir_all(&cache_path)?;
         }
 
-        info!("Using DocStorageService with File service at: {}", file_service_url);
+        info!(
+            "Using DocStorageService with File service at: {}",
+            file_service_url
+        );
 
         Ok(Self {
             file_client: FileServiceClient::new(&file_service_url),
@@ -98,7 +103,10 @@ impl DocStorageService {
     }
 
     /// 从 File 服务下载文件
-    pub async fn download_from_file_service(&self, file_id: Uuid) -> Result<Vec<u8>, DocStorageError> {
+    pub async fn download_from_file_service(
+        &self,
+        file_id: Uuid,
+    ) -> Result<Vec<u8>, DocStorageError> {
         debug!("Downloading file from File service: {}", file_id);
 
         self.file_client

@@ -9,12 +9,40 @@ use crate::backends::{FileStorage, LocalStorage};
 use crate::models::events::should_vectorize_for_event;
 use crate::models::file::{FileMetadata, FileRecord, ListFilesQuery};
 
+/// 文件上传请求参数
+pub struct UploadFileRequest<'a> {
+    pub owner_id: Uuid,
+    pub owner_department_id: Option<Uuid>,
+    pub filename: &'a str,
+    pub data: Vec<u8>,
+    pub content_type: &'a str,
+    pub external_id: Option<Uuid>,
+    pub file_type: Option<String>,
+    pub category: Option<String>,
+    pub visibility: Option<String>,
+}
+
+/// 流式文件上传请求参数
+pub struct UploadFileStreamRequest<'a> {
+    pub owner_id: Uuid,
+    pub owner_department_id: Option<Uuid>,
+    pub filename: &'a str,
+    pub reader: Box<dyn AsyncRead + Send + Unpin>,
+    pub size: u64,
+    pub content_type: &'a str,
+    pub external_id: Option<Uuid>,
+    pub file_type: Option<String>,
+    pub category: Option<String>,
+    pub visibility: Option<String>,
+}
+
 pub struct FileService {
     pool: PgPool,
     storage: Box<dyn FileStorage>,
 }
 
 impl FileService {
+    #[allow(dead_code)]
     pub fn new(pool: PgPool, storage: Box<dyn FileStorage>) -> Self {
         Self { pool, storage }
     }
@@ -28,20 +56,9 @@ impl FileService {
     }
 
     /// 上传文件
-    pub async fn upload_file(
-        &self,
-        owner_id: Uuid,
-        owner_department_id: Option<Uuid>,
-        filename: &str,
-        data: Vec<u8>,
-        content_type: &str,
-        external_id: Option<Uuid>,
-        file_type: Option<String>,
-        category: Option<String>,
-        visibility: Option<String>,
-    ) -> Result<FileMetadata> {
-        let file_id = external_id.unwrap_or_else(Uuid::new_v4);
-        let file_size = data.len() as i64;
+    pub async fn upload_file(&self, req: UploadFileRequest<'_>) -> Result<FileMetadata> {
+        let file_id = req.external_id.unwrap_or_else(Uuid::new_v4);
+        let file_size = req.data.len() as i64;
 
         // 生成存储路径
         let now = Utc::now();
@@ -54,13 +71,13 @@ impl FileService {
         );
 
         // 上传到存储后端
-        self.storage.upload(&storage_path, &data).await?;
+        self.storage.upload(&storage_path, &req.data).await?;
 
         // 确定文件类型
-        let determined_file_type = file_type.unwrap_or_else(|| {
-            if content_type.starts_with("image/") {
+        let determined_file_type = req.file_type.unwrap_or_else(|| {
+            if req.content_type.starts_with("image/") {
                 "image".to_string()
-            } else if content_type.starts_with("video/") {
+            } else if req.content_type.starts_with("video/") {
                 "video".to_string()
             } else {
                 "document".to_string()
@@ -68,10 +85,10 @@ impl FileService {
         });
 
         // 确定可见性
-        let determined_visibility = visibility.unwrap_or_else(|| "private".to_string());
+        let determined_visibility = req.visibility.unwrap_or_else(|| "private".to_string());
 
         // 确定向量化状态
-        let vector_status = if should_vectorize_for_event(content_type) {
+        let vector_status = if should_vectorize_for_event(req.content_type) {
             "pending".to_string()
         } else {
             "none".to_string()
@@ -89,39 +106,31 @@ impl FileService {
             "#,
         )
         .bind(file_id)
-        .bind(owner_id)
-        .bind(owner_department_id)
-        .bind(filename)
+        .bind(req.owner_id)
+        .bind(req.owner_department_id)
+        .bind(req.filename)
         .bind(&storage_path)
         .bind(file_size)
-        .bind(content_type)
+        .bind(req.content_type)
         .bind(&determined_file_type)
-        .bind(&category)
+        .bind(&req.category)
         .bind(&vector_status)
         .bind(&determined_visibility)
         .fetch_one(&self.pool)
         .await?;
 
-        info!("File uploaded: {} -> {}", filename, storage_path);
+        info!("File uploaded: {} -> {}", req.filename, storage_path);
 
         Ok(FileMetadata::from(record))
     }
 
     /// 流式上传文件（边收边传）
+    #[allow(dead_code)]
     pub async fn upload_file_streaming(
         &self,
-        owner_id: Uuid,
-        owner_department_id: Option<Uuid>,
-        filename: &str,
-        reader: Box<dyn AsyncRead + Send + Unpin>,
-        size: u64,
-        content_type: &str,
-        external_id: Option<Uuid>,
-        file_type: Option<String>,
-        category: Option<String>,
-        visibility: Option<String>,
+        req: UploadFileStreamRequest<'_>,
     ) -> Result<FileMetadata> {
-        let file_id = external_id.unwrap_or_else(Uuid::new_v4);
+        let file_id = req.external_id.unwrap_or_else(Uuid::new_v4);
 
         // 生成存储路径
         let now = Utc::now();
@@ -134,13 +143,15 @@ impl FileService {
         );
 
         // 流式上传到存储后端
-        self.storage.upload_stream(&storage_path, reader, size).await?;
+        self.storage
+            .upload_stream(&storage_path, req.reader, req.size)
+            .await?;
 
         // 确定文件类型
-        let determined_file_type = file_type.unwrap_or_else(|| {
-            if content_type.starts_with("image/") {
+        let determined_file_type = req.file_type.unwrap_or_else(|| {
+            if req.content_type.starts_with("image/") {
                 "image".to_string()
-            } else if content_type.starts_with("video/") {
+            } else if req.content_type.starts_with("video/") {
                 "video".to_string()
             } else {
                 "document".to_string()
@@ -148,10 +159,10 @@ impl FileService {
         });
 
         // 确定可见性
-        let determined_visibility = visibility.unwrap_or_else(|| "private".to_string());
+        let determined_visibility = req.visibility.unwrap_or_else(|| "private".to_string());
 
         // 确定向量化状态
-        let vector_status = if should_vectorize_for_event(content_type) {
+        let vector_status = if should_vectorize_for_event(req.content_type) {
             "pending".to_string()
         } else {
             "none".to_string()
@@ -169,20 +180,23 @@ impl FileService {
             "#,
         )
         .bind(file_id)
-        .bind(owner_id)
-        .bind(owner_department_id)
-        .bind(filename)
+        .bind(req.owner_id)
+        .bind(req.owner_department_id)
+        .bind(req.filename)
         .bind(&storage_path)
-        .bind(size as i64)
-        .bind(content_type)
+        .bind(req.size as i64)
+        .bind(req.content_type)
         .bind(&determined_file_type)
-        .bind(&category)
+        .bind(&req.category)
         .bind(&vector_status)
         .bind(&determined_visibility)
         .fetch_one(&self.pool)
         .await?;
 
-        info!("File streamed uploaded: {} -> {}", filename, storage_path);
+        info!(
+            "File streamed uploaded: {} -> {}",
+            req.filename, storage_path
+        );
 
         Ok(FileMetadata::from(record))
     }
@@ -214,10 +228,12 @@ impl FileService {
 
     /// 删除文件（软删除）
     pub async fn delete_file(&self, file_id: Uuid) -> Result<()> {
-        sqlx::query("UPDATE storage.files SET status = 'deleted', deleted_at = NOW() WHERE id = $1")
-            .bind(file_id)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            "UPDATE storage.files SET status = 'deleted', deleted_at = NOW() WHERE id = $1",
+        )
+        .bind(file_id)
+        .execute(&self.pool)
+        .await?;
 
         info!("File deleted: {}", file_id);
         Ok(())
@@ -295,6 +311,7 @@ impl FileService {
     }
 
     /// 更新向量化状态
+    #[allow(dead_code)]
     pub async fn update_vector_status(
         &self,
         file_id: Uuid,

@@ -5,15 +5,13 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    db::repository::{
-        ArchiveCategoryRepository, ArchiveRepository,
-    },
+    api::response::{ApiError, ApiResponse},
+    db::repository::{ArchiveCategoryRepository, ArchiveRepository},
     models::{
         Archive, ArchiveCategory, ArchiveCategoryResponse, ArchiveResponse,
         CreateArchiveCategoryRequest, CreateArchiveRequest, ListArchivesQuery,
         ListArchivesResponse, UpdateArchiveCategoryRequest, UpdateArchiveRequest,
     },
-    api::response::{ApiResponse, ApiError},
 };
 
 #[derive(Clone)]
@@ -45,16 +43,15 @@ pub async fn list_archive_categories(
 ) -> Result<Json<ApiResponse<Vec<ArchiveCategoryResponse>>>, ApiError> {
     tracing::debug!("Listing archive categories");
 
-    let categories = state
-        .category_repo
-        .list_tree()
-        .await
-        .map_err(|e| {
-            tracing::error!("Error listing archive categories: {:?}", e);
-            ApiError::InternalError
-        })?;
+    let categories = state.category_repo.list_tree().await.map_err(|e| {
+        tracing::error!("Error listing archive categories: {:?}", e);
+        ApiError::InternalError
+    })?;
 
-    Ok(Json(ApiResponse::success(categories, "获取档案分类列表成功")))
+    Ok(Json(ApiResponse::success(
+        categories,
+        "获取档案分类列表成功",
+    )))
 }
 
 pub async fn get_archive_category(
@@ -102,14 +99,10 @@ pub async fn delete_archive_category(
 ) -> Result<Json<ApiResponse<()>>, ApiError> {
     tracing::debug!("Deleting archive category: {}", id);
 
-    let deleted = state
-        .category_repo
-        .delete(id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Error deleting archive category: {:?}", e);
-            ApiError::InternalError
-        })?;
+    let deleted = state.category_repo.delete(id).await.map_err(|e| {
+        tracing::error!("Error deleting archive category: {:?}", e);
+        ApiError::InternalError
+    })?;
 
     if !deleted {
         return Err(ApiError::NotFound);
@@ -156,21 +149,20 @@ pub async fn list_archives(
 ) -> Result<Json<ApiResponse<ListArchivesResponse>>, ApiError> {
     tracing::debug!("Listing archives with query: {:?}", query);
 
-    let (archives, total) = state
-        .archive_repo
-        .list(query.clone())
-        .await
-        .map_err(|e| {
-            tracing::error!("Error listing archives: {:?}", e);
-            ApiError::InternalError
-        })?;
+    let (archives, total) = state.archive_repo.list(query.clone()).await.map_err(|e| {
+        tracing::error!("Error listing archives: {:?}", e);
+        ApiError::InternalError
+    })?;
 
-    Ok(Json(ApiResponse::success(ListArchivesResponse {
-        items: archives,
-        total,
-        page: query.page.unwrap_or(1),
-        page_size: query.page_size.unwrap_or(20),
-    }, "获取档案列表成功")))
+    Ok(Json(ApiResponse::success(
+        ListArchivesResponse {
+            items: archives,
+            total,
+            page: query.page.unwrap_or(1),
+            page_size: query.page_size.unwrap_or(20),
+        },
+        "获取档案列表成功",
+    )))
 }
 
 pub async fn get_archive(
@@ -237,14 +229,10 @@ pub async fn delete_archive(
 ) -> Result<Json<ApiResponse<()>>, ApiError> {
     tracing::debug!("Deleting archive: {}", id);
 
-    let deleted = state
-        .archive_repo
-        .delete(id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Error deleting archive: {:?}", e);
-            ApiError::InternalError
-        })?;
+    let deleted = state.archive_repo.delete(id).await.map_err(|e| {
+        tracing::error!("Error deleting archive: {:?}", e);
+        ApiError::InternalError
+    })?;
 
     if !deleted {
         return Err(ApiError::NotFound);

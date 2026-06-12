@@ -11,8 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
-    SupplierEvaluation,
-    CreateSupplierEvaluationRequest, UpdateSupplierEvaluationRequest,
+    CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest,
 };
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
@@ -37,12 +36,20 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/v1/supplier-evaluations", get(list_evaluations).post(create_evaluation))
+        .route(
+            "/api/v1/supplier-evaluations",
+            get(list_evaluations).post(create_evaluation),
+        )
         .route(
             "/api/v1/supplier-evaluations/{id}",
-            get(get_evaluation).put(update_evaluation).delete(delete_evaluation),
+            get(get_evaluation)
+                .put(update_evaluation)
+                .delete(delete_evaluation),
         )
-        .route("/api/v1/suppliers/{id}/evaluation-history", get(get_evaluation_history))
+        .route(
+            "/api/v1/suppliers/{id}/evaluation-history",
+            get(get_evaluation_history),
+        )
         .with_state(state);
 
     Ok(app)
@@ -56,7 +63,7 @@ async fn list_evaluations(
     Query(params): Query<EvaluationQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -66,14 +73,21 @@ async fn list_evaluations(
 
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let supplier_id_filter = params.supplier_id.clone().and_then(|s| Uuid::parse_str(&s).ok());
+    let supplier_id_filter = params
+        .supplier_id
+        .clone()
+        .and_then(|s| Uuid::parse_str(&s).ok());
 
     let start_date = params.start_date.clone().and_then(|s| {
-        chrono::DateTime::parse_from_rfc3339(&s).ok().map(|d| d.with_timezone(&Utc))
+        chrono::DateTime::parse_from_rfc3339(&s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
     });
 
     let end_date = params.end_date.clone().and_then(|s| {
-        chrono::DateTime::parse_from_rfc3339(&s).ok().map(|d| d.with_timezone(&Utc))
+        chrono::DateTime::parse_from_rfc3339(&s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
     });
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
@@ -133,7 +147,10 @@ async fn list_evaluations(
         }
         Err(e) => {
             tracing::error!("获取供应商评估列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商评估列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取供应商评估列表失败",
+            ))
         }
     }
 }
@@ -144,45 +161,57 @@ async fn create_evaluation(
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 数据验证
     if req.evaluation_no.is_empty() {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, "评估编号不能为空"));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            "评估编号不能为空",
+        ));
     }
 
     // 验证供应商ID
     let supplier_uuid = Uuid::parse_str(&req.supplier_id);
     if supplier_uuid.is_err() {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, "供应商ID格式错误"));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            "供应商ID格式错误",
+        ));
     }
 
     let supplier_id = supplier_uuid.unwrap();
 
     // 检查供应商是否存在
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'"
+        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
     )
     .bind(supplier_id)
     .fetch_one(&state.db)
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, "供应商不存在或已删除"));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            "供应商不存在或已删除",
+        ));
     }
 
     // 检查评估编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE evaluation_no = $1"
+        "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE evaluation_no = $1",
     )
     .bind(&req.evaluation_no)
     .fetch_one(&state.db)
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, "评估编号已存在"));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            "评估编号已存在",
+        ));
     }
 
     // 验证评分范围
@@ -244,7 +273,10 @@ async fn create_evaluation(
         Ok(evaluation) => Json(ApiResponse::success(evaluation, "供应商评估创建成功")),
         Err(e) => {
             tracing::error!("创建供应商评估失败: {}", e);
-            Json(ApiResponse::<SupplierEvaluation>::error(500, "供应商评估创建失败"))
+            Json(ApiResponse::<SupplierEvaluation>::error(
+                500,
+                "供应商评估创建失败",
+            ))
         }
     }
 }
@@ -255,7 +287,7 @@ async fn get_evaluation(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -271,10 +303,16 @@ async fn get_evaluation(
 
     match result {
         Ok(Some(evaluation)) => Json(ApiResponse::success(evaluation, "获取供应商评估成功")),
-        Ok(None) => Json(ApiResponse::<SupplierEvaluation>::error(404, "供应商评估不存在")),
+        Ok(None) => Json(ApiResponse::<SupplierEvaluation>::error(
+            404,
+            "供应商评估不存在",
+        )),
         Err(e) => {
             tracing::error!("获取供应商评估失败: {}", e);
-            Json(ApiResponse::<SupplierEvaluation>::error(500, "获取供应商评估失败"))
+            Json(ApiResponse::<SupplierEvaluation>::error(
+                500,
+                "获取供应商评估失败",
+            ))
         }
     }
 }
@@ -286,7 +324,7 @@ async fn update_evaluation(
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -299,28 +337,44 @@ async fn update_evaluation(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::<SupplierEvaluation>::error(404, "供应商评估不存在")),
-        Err(e) => return Json(ApiResponse::<SupplierEvaluation>::error(500, &format!("查询供应商评估失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::<SupplierEvaluation>::error(
+                404,
+                "供应商评估不存在",
+            ))
+        }
+        Err(e) => {
+            return Json(ApiResponse::<SupplierEvaluation>::error(
+                500,
+                &format!("查询供应商评估失败: {}", e),
+            ))
+        }
     };
 
     // 验证供应商ID（如果更新）
     let supplier_id = if let Some(supplier_id_str) = &req.supplier_id {
         let supplier_uuid = Uuid::parse_str(supplier_id_str);
         if supplier_uuid.is_err() {
-            return Json(ApiResponse::<SupplierEvaluation>::error(400, "供应商ID格式错误"));
+            return Json(ApiResponse::<SupplierEvaluation>::error(
+                400,
+                "供应商ID格式错误",
+            ));
         }
 
         let supplier_uuid_val = supplier_uuid.unwrap();
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'"
+            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
         )
         .bind(supplier_uuid_val)
         .fetch_one(&state.db)
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierEvaluation>::error(400, "供应商不存在或已删除"));
+            return Json(ApiResponse::<SupplierEvaluation>::error(
+                400,
+                "供应商不存在或已删除",
+            ));
         }
 
         supplier_uuid_val
@@ -392,7 +446,10 @@ async fn update_evaluation(
         Ok(evaluation) => Json(ApiResponse::success(evaluation, "供应商评估更新成功")),
         Err(e) => {
             tracing::error!("更新供应商评估失败: {}", e);
-            Json(ApiResponse::<SupplierEvaluation>::error(500, "供应商评估更新失败"))
+            Json(ApiResponse::<SupplierEvaluation>::error(
+                500,
+                "供应商评估更新失败",
+            ))
         }
     }
 }
@@ -403,7 +460,7 @@ async fn delete_evaluation(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -413,7 +470,9 @@ async fn delete_evaluation(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "供应商评估删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "供应商评估删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<String>::error(404, "供应商评估不存在")),
         Err(e) => {
             tracing::error!("删除供应商评估失败: {}", e);
@@ -430,20 +489,22 @@ async fn get_evaluation_history(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SupplierEvaluation>>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 验证供应商是否存在
-    let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_one(&state.db)
-    .await;
+    let supplier_exists =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE id = $1")
+            .bind(id)
+            .fetch_one(&state.db)
+            .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<Vec<SupplierEvaluation>>::error(404, "供应商不存在"));
+        return Json(ApiResponse::<Vec<SupplierEvaluation>>::error(
+            404,
+            "供应商不存在",
+        ));
     }
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
@@ -462,7 +523,10 @@ async fn get_evaluation_history(
         Ok(evaluations) => Json(ApiResponse::success(evaluations, "获取供应商评估历史成功")),
         Err(e) => {
             tracing::error!("获取供应商评估历史失败: {}", e);
-            Json(ApiResponse::<Vec<SupplierEvaluation>>::error(500, "获取供应商评估历史失败"))
+            Json(ApiResponse::<Vec<SupplierEvaluation>>::error(
+                500,
+                "获取供应商评估历史失败",
+            ))
         }
     }
 }

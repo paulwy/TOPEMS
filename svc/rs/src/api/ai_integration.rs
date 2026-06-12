@@ -166,7 +166,10 @@ async fn create_analysis(
     }
 }
 
-async fn get_analysis(State(state): State<super::ApiState>, Path(id): Path<Uuid>) -> impl IntoResponse {
+async fn get_analysis(
+    State(state): State<super::ApiState>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
     let result: Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
          FROM rs.ai_analyses WHERE id = $1"
@@ -247,7 +250,7 @@ async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Resul
     });
 
     match client
-        .post(&format!("{}/api/v1/ai/chat", url))
+        .post(format!("{}/api/v1/ai/chat", url))
         .json(&request_body)
         .timeout(std::time::Duration::from_secs(60))
         .send()

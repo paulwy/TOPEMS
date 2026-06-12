@@ -8,8 +8,9 @@ mod tests {
     // 测试数据库连接
     #[tokio::test]
     async fn test_database_connection() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -22,8 +23,9 @@ mod tests {
     // 测试厂区地图创建
     #[tokio::test]
     async fn test_create_factory_map() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -57,8 +59,9 @@ mod tests {
     // 测试设备位置创建
     #[tokio::test]
     async fn test_create_device_location() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -95,8 +98,9 @@ mod tests {
     // 测试管道创建
     #[tokio::test]
     async fn test_create_pipeline() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -135,8 +139,9 @@ mod tests {
     // 测试审计日志
     #[tokio::test]
     async fn test_audit_log() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -164,8 +169,9 @@ mod tests {
     // 测试GeoJSON导出
     #[tokio::test]
     async fn test_geojson_export() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -175,7 +181,7 @@ mod tests {
 
         // 获取所有设备位置
         let result = sqlx::query_as::<_, (Uuid, String, serde_json::Value)>(
-            "SELECT id, device_name, position FROM device_locations"
+            "SELECT id, device_name, position FROM device_locations",
         )
         .fetch_all(&pool)
         .await;

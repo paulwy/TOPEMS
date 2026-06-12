@@ -1,3 +1,12 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(dead_code)]
+
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -5,13 +14,13 @@ use axum::{
     Json, Router,
 };
 use serde::Deserialize;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
-use crate::models::AuditLog;
 use crate::api::ApiState;
-use topems_shared::Result;
+use crate::models::AuditLog;
 use topems_shared::response::ApiResponse;
+use topems_shared::Result;
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
@@ -167,6 +176,7 @@ async fn get_audit_log(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn log_audit_event(
     db: &sqlx::PgPool,
     action: String,

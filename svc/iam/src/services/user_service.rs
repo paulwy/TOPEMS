@@ -1,7 +1,12 @@
+#![allow(dead_code)]
+
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
-use crate::models::user::{ChangePasswordRequest, ListUsersResponse, UpdateAvatarRequest, UpdatePreferencesRequest, UpdateUserRequest, User, UserInfo};
+use crate::models::user::{
+    ChangePasswordRequest, ListUsersResponse, UpdateAvatarRequest, UpdatePreferencesRequest,
+    UpdateUserRequest, User, UserInfo,
+};
 use topems_shared::ApiResponse;
 
 /// 验证密码强度
@@ -78,11 +83,14 @@ impl UserService {
         }
     }
 
-    pub async fn get_user_roles_and_permissions(&self, user_id: &Uuid) -> (Vec<String>, Vec<String>) {
+    pub async fn get_user_roles_and_permissions(
+        &self,
+        user_id: &Uuid,
+    ) -> (Vec<String>, Vec<String>) {
         let roles_from_roles: Vec<String> = sqlx::query_scalar(
             "SELECT r.name FROM iam.roles r
              INNER JOIN iam.user_roles ur ON r.id = ur.role_id
-             WHERE ur.user_id = $1"
+             WHERE ur.user_id = $1",
         )
         .bind(user_id)
         .fetch_all(&self.db)
@@ -90,25 +98,37 @@ impl UserService {
         .unwrap_or_default();
 
         let roles_from_users: Vec<String> = sqlx::query_scalar(
-            "SELECT COALESCE(array_to_string(roles, ','), '') FROM iam.users WHERE id = $1"
+            "SELECT COALESCE(array_to_string(roles, ','), '') FROM iam.users WHERE id = $1",
         )
         .bind(user_id)
         .fetch_optional(&self.db)
         .await
         .ok()
         .flatten()
-        .map(|s: String| if s.is_empty() { vec![] } else { s.split(',').map(|x| x.to_string()).collect() })
+        .map(|s: String| {
+            if s.is_empty() {
+                vec![]
+            } else {
+                s.split(',').map(|x| x.to_string()).collect()
+            }
+        })
         .unwrap_or_default();
 
         let permissions_from_users: Vec<String> = sqlx::query_scalar(
-            "SELECT COALESCE(array_to_string(permissions, ','), '') FROM iam.users WHERE id = $1"
+            "SELECT COALESCE(array_to_string(permissions, ','), '') FROM iam.users WHERE id = $1",
         )
         .bind(user_id)
         .fetch_optional(&self.db)
         .await
         .ok()
         .flatten()
-        .map(|s: String| if s.is_empty() { vec![] } else { s.split(',').map(|x| x.to_string()).collect() })
+        .map(|s: String| {
+            if s.is_empty() {
+                vec![]
+            } else {
+                s.split(',').map(|x| x.to_string()).collect()
+            }
+        })
         .unwrap_or_default();
 
         let mut all_roles = roles_from_roles.clone();
@@ -122,22 +142,23 @@ impl UserService {
             all_roles.push("user".to_string());
         }
 
-        let english_roles: Vec<String> = all_roles.into_iter().map(|role| {
-            match role.as_str() {
+        let english_roles: Vec<String> = all_roles
+            .into_iter()
+            .map(|role| match role.as_str() {
                 "admin" | "管理员" => "admin".to_string(),
                 "manager" | "部门经理" => "manager".to_string(),
                 "user" | "普通员工" | "普通用户" => "user".to_string(),
                 "guest" | "访客" => "guest".to_string(),
                 _ => role,
-            }
-        }).collect();
+            })
+            .collect();
 
         let mut all_permissions = permissions_from_users;
         let permissions_from_roles: Vec<String> = sqlx::query_scalar(
             "SELECT DISTINCT p.name FROM iam.permissions p
              INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id
              INNER JOIN iam.user_roles ur ON rp.role_id = ur.role_id
-             WHERE ur.user_id = $1"
+             WHERE ur.user_id = $1",
         )
         .bind(user_id)
         .fetch_all(&self.db)
@@ -153,10 +174,14 @@ impl UserService {
         (english_roles, all_permissions)
     }
 
-    pub async fn update_user(&self, user_id: &Uuid, update_req: UpdateUserRequest) -> ApiResponse<UserInfo> {
+    pub async fn update_user(
+        &self,
+        user_id: &Uuid,
+        update_req: UpdateUserRequest,
+    ) -> ApiResponse<UserInfo> {
         if let Some(email) = &update_req.email {
             let exists = sqlx::query_scalar::<_, bool>(
-                "SELECT EXISTS(SELECT 1 FROM iam.users WHERE email = $1 AND id != $2)"
+                "SELECT EXISTS(SELECT 1 FROM iam.users WHERE email = $1 AND id != $2)",
             )
             .bind(email)
             .bind(user_id)
@@ -194,7 +219,9 @@ impl UserService {
                     roles,
                     permissions,
                     avatar_url: user.get::<Option<String>, _>("avatar_url"),
-                    created_at: user.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
+                    created_at: user
+                        .get::<chrono::DateTime<chrono::Utc>, _>("created_at")
+                        .to_rfc3339(),
                     is_active: user.get::<bool, _>("is_active"),
                     is_superuser,
                 };
@@ -210,13 +237,16 @@ impl UserService {
         }
     }
 
-    pub async fn change_password(&self, user_id: &Uuid, change_req: ChangePasswordRequest) -> ApiResponse<()> {
-        let result = sqlx::query_scalar::<_, String>(
-            "SELECT password_hash FROM iam.users WHERE id = $1"
-        )
-        .bind(user_id)
-        .fetch_optional(&self.db)
-        .await;
+    pub async fn change_password(
+        &self,
+        user_id: &Uuid,
+        change_req: ChangePasswordRequest,
+    ) -> ApiResponse<()> {
+        let result =
+            sqlx::query_scalar::<_, String>("SELECT password_hash FROM iam.users WHERE id = $1")
+                .bind(user_id)
+                .fetch_optional(&self.db)
+                .await;
 
         match result {
             Ok(Some(password_hash)) => {
@@ -234,10 +264,11 @@ impl UserService {
                     return ApiResponse::error(400, "新密码不能与当前密码相同");
                 }
 
-                let new_password_hash = bcrypt::hash(&change_req.new_password, bcrypt::DEFAULT_COST).unwrap();
+                let new_password_hash =
+                    bcrypt::hash(&change_req.new_password, bcrypt::DEFAULT_COST).unwrap();
 
                 let update_result = sqlx::query(
-                    "UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2"
+                    "UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
                 )
                 .bind(&new_password_hash)
                 .bind(user_id)
@@ -263,7 +294,11 @@ impl UserService {
         }
     }
 
-    pub async fn update_avatar(&self, user_id: &Uuid, update_req: UpdateAvatarRequest) -> ApiResponse<UserInfo> {
+    pub async fn update_avatar(
+        &self,
+        user_id: &Uuid,
+        update_req: UpdateAvatarRequest,
+    ) -> ApiResponse<UserInfo> {
         let result = sqlx::query(
             "UPDATE iam.users SET avatar_url = $1, updated_at = NOW() WHERE id = $2 RETURNING id, username, email, full_name, avatar_url, is_active, created_at"
         )
@@ -287,7 +322,9 @@ impl UserService {
                     roles,
                     permissions,
                     avatar_url: user.get::<Option<String>, _>("avatar_url"),
-                    created_at: user.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
+                    created_at: user
+                        .get::<chrono::DateTime<chrono::Utc>, _>("created_at")
+                        .to_rfc3339(),
                     is_active: user.get::<bool, _>("is_active"),
                     is_superuser,
                 };
@@ -316,7 +353,7 @@ impl UserService {
                 'shortcuts', '[]',
                 'language', 'zh-CN',
                 'timezone', 'Asia/Shanghai'
-            ))"
+            ))",
         )
         .bind(user_id)
         .fetch_one(&self.db)
@@ -331,7 +368,11 @@ impl UserService {
         }
     }
 
-    pub async fn update_preferences(&self, user_id: &Uuid, update_req: UpdatePreferencesRequest) -> ApiResponse<serde_json::Value> {
+    pub async fn update_preferences(
+        &self,
+        user_id: &Uuid,
+        update_req: UpdatePreferencesRequest,
+    ) -> ApiResponse<serde_json::Value> {
         let result = sqlx::query_scalar::<_, serde_json::Value>(
             "INSERT INTO iam.user_preferences (user_id, notification_settings, shortcuts, language, timezone, updated_at)
              VALUES ($1, COALESCE($2, '{}'::jsonb), COALESCE($3, '[]'::jsonb), COALESCE($4, 'zh-CN'), COALESCE($5, 'Asia/Shanghai'), NOW())
@@ -400,10 +441,13 @@ impl UserService {
                     };
                     user_info_list.push(user_info);
                 }
-                ApiResponse::success(ListUsersResponse {
-                    users: user_info_list,
-                    total,
-                }, "Success")
+                ApiResponse::success(
+                    ListUsersResponse {
+                        users: user_info_list,
+                        total,
+                    },
+                    "Success",
+                )
             }
             Err(e) => {
                 tracing::error!("数据库查询错误: {}", e);
@@ -428,7 +472,7 @@ impl UserService {
             r#"
             SELECT COUNT(*) FROM iam.users
             WHERE ($1::text IS NULL OR username ILIKE $1 OR email ILIKE $1 OR full_name ILIKE $1)
-            "#
+            "#,
         )
         .bind(&search_pattern)
         .fetch_one(&self.db)
@@ -442,14 +486,26 @@ impl UserService {
             }
         };
 
-        let users = sqlx::query_as::<_, (Uuid, String, String, Option<String>, bool, chrono::DateTime<chrono::Utc>, bool, Option<String>)>(
+        let users = sqlx::query_as::<
+            _,
+            (
+                Uuid,
+                String,
+                String,
+                Option<String>,
+                bool,
+                chrono::DateTime<chrono::Utc>,
+                bool,
+                Option<String>,
+            ),
+        >(
             r#"
             SELECT id, username, email, full_name, is_active, created_at, is_superuser, avatar_url
             FROM iam.users
             WHERE ($1::text IS NULL OR username ILIKE $1 OR email ILIKE $1 OR full_name ILIKE $1)
             ORDER BY created_at DESC
             LIMIT $2 OFFSET $3
-            "#
+            "#,
         )
         .bind(&search_pattern)
         .bind(page_size)
@@ -481,10 +537,13 @@ impl UserService {
                     };
                     user_info_list.push(user_info);
                 }
-                ApiResponse::success(ListUsersResponse {
-                    users: user_info_list,
-                    total,
-                }, "Success")
+                ApiResponse::success(
+                    ListUsersResponse {
+                        users: user_info_list,
+                        total,
+                    },
+                    "Success",
+                )
             }
             Err(e) => {
                 tracing::error!("数据库查询错误: {}", e);

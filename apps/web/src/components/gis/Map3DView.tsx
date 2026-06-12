@@ -1,13 +1,6 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import {
-  OrbitControls,
-  Sphere,
-  Box,
-  Line,
-  Text,
-  Html,
-} from "@react-three/drei";
+import { OrbitControls, Sphere, Box, Line, Html } from "@react-three/drei";
 import type * as THREE from "three";
 import type { DevicePoint, Pipeline, StorageLocation } from "../../api/gis";
 import { X, RotateCcw, Maximize2 } from "lucide-react";
@@ -49,12 +42,10 @@ function DeviceMarker({
   color: string;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const [hovered, setHovered] = useState(false);
+  const [hovered] = useState(false);
 
   useFrame(() => {
-    if (meshRef.current && hovered) {
-      meshRef.current.scale.setScalar(1.3);
-    } else if (meshRef.current) {
+    if (meshRef.current) {
       meshRef.current.scale.setScalar(1);
     }
   });
@@ -105,12 +96,10 @@ function StorageMarker({
   color: string;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const [hovered, setHovered] = useState(false);
+  const [hovered] = useState(false);
 
   useFrame(() => {
-    if (meshRef.current && hovered) {
-      meshRef.current.scale.setScalar(1.2);
-    } else if (meshRef.current) {
+    if (meshRef.current) {
       meshRef.current.scale.setScalar(1);
     }
   });
@@ -290,7 +279,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
   storageLocations,
   onClose,
 }) => {
-  const [rotation, setRotation] = useState([0, 0, 0]);
+  const [, setRotation] = useState([0, 0, 0]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   return (

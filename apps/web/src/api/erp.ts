@@ -1253,27 +1253,47 @@ export const openingBalanceApi = {
     return apiClient.erp.get(`/api/v1/finance/accounts/opening-balances/${id}`);
   },
 
-  async create(data: CreateOpeningBalanceRequest): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.post("/api/v1/finance/accounts/opening-balances", data);
+  async create(
+    data: CreateOpeningBalanceRequest,
+  ): Promise<ApiResponse<OpeningBalance>> {
+    return apiClient.erp.post(
+      "/api/v1/finance/accounts/opening-balances",
+      data,
+    );
   },
 
   async update(
     id: string,
     data: Partial<OpeningBalance>,
   ): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.put(`/api/v1/finance/accounts/opening-balances/${id}`, data);
+    return apiClient.erp.put(
+      `/api/v1/finance/accounts/opening-balances/${id}`,
+      data,
+    );
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/finance/accounts/opening-balances/${id}`);
+    return apiClient.erp.delete(
+      `/api/v1/finance/accounts/opening-balances/${id}`,
+    );
   },
 
-  async batchImport(data: CreateOpeningBalanceRequest[]): Promise<ApiResponse<Record<string, any>>> {
-    return apiClient.erp.post("/api/v1/finance/accounts/opening-balances/batch", data);
+  async batchImport(
+    data: CreateOpeningBalanceRequest[],
+  ): Promise<ApiResponse<Record<string, any>>> {
+    return apiClient.erp.post(
+      "/api/v1/finance/accounts/opening-balances/batch",
+      data,
+    );
   },
 
-  async carryForward(data: CarryForwardRequest): Promise<ApiResponse<Record<string, any>>> {
-    return apiClient.erp.post("/api/v1/finance/accounts/opening-balances/carry-forward", data);
+  async carryForward(
+    data: CarryForwardRequest,
+  ): Promise<ApiResponse<Record<string, any>>> {
+    return apiClient.erp.post(
+      "/api/v1/finance/accounts/opening-balances/carry-forward",
+      data,
+    );
   },
 };
 
@@ -1286,7 +1306,8 @@ export const fixedAssetApi = {
     if (params?.page_size)
       searchParams.set("page_size", params.page_size.toString());
     if (params?.search) searchParams.set("search", params.search);
-    if (params?.department_id) searchParams.set("department_id", params.department_id);
+    if (params?.department_id)
+      searchParams.set("department_id", params.department_id);
     if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
@@ -1314,7 +1335,9 @@ export const fixedAssetApi = {
     return apiClient.erp.delete(`/api/v1/fixed-assets/${id}`);
   },
 
-  async depreciate(data: DepreciateRequest): Promise<ApiResponse<DepreciationResult>> {
+  async depreciate(
+    data: DepreciateRequest,
+  ): Promise<ApiResponse<DepreciationResult>> {
     return apiClient.erp.post("/api/v1/fixed-assets/depreciate", data);
   },
 };
@@ -1359,7 +1382,10 @@ export const bankAccountApi = {
 
 export const bankTransactionApi = {
   async list(
-    params?: PaginationParams & { account_id?: string; transaction_date?: string },
+    params?: PaginationParams & {
+      account_id?: string;
+      transaction_date?: string;
+    },
   ): Promise<ApiResponse<PaginatedResult<BankTransaction>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", params.page.toString());
@@ -1367,7 +1393,8 @@ export const bankTransactionApi = {
       searchParams.set("page_size", params.page_size.toString());
     if (params?.search) searchParams.set("search", params.search);
     if (params?.account_id) searchParams.set("account_id", params.account_id);
-    if (params?.transaction_date) searchParams.set("transaction_date", params.transaction_date);
+    if (params?.transaction_date)
+      searchParams.set("transaction_date", params.transaction_date);
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
@@ -1379,7 +1406,9 @@ export const bankTransactionApi = {
     return apiClient.erp.get(`/api/v1/bank-transactions/${id}`);
   },
 
-  async create(data: CreateBankTransactionRequest): Promise<ApiResponse<BankTransaction>> {
+  async create(
+    data: CreateBankTransactionRequest,
+  ): Promise<ApiResponse<BankTransaction>> {
     return apiClient.erp.post("/api/v1/bank-transactions", data);
   },
 

@@ -4,20 +4,15 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 /// 文件类型枚举
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum FileType {
+    #[default]
     Document,
     Attachment,
     Image,
     Video,
     Archive,
-}
-
-impl Default for FileType {
-    fn default() -> Self {
-        FileType::Document
-    }
 }
 
 impl From<String> for FileType {
@@ -46,18 +41,13 @@ impl From<FileType> for String {
 }
 
 /// 可见性枚举
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Visibility {
+    #[default]
     Private,
     Department,
     Public,
-}
-
-impl Default for Visibility {
-    fn default() -> Self {
-        Visibility::Private
-    }
 }
 
 impl From<String> for Visibility {
@@ -81,19 +71,14 @@ impl From<Visibility> for String {
 }
 
 /// 向量化状态
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum VectorStatus {
+    #[default]
     Pending,
     Processing,
     Completed,
     Failed,
-}
-
-impl Default for VectorStatus {
-    fn default() -> Self {
-        VectorStatus::Pending
-    }
 }
 
 impl From<String> for VectorStatus {
@@ -119,18 +104,13 @@ impl From<VectorStatus> for String {
 }
 
 /// 文件状态
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum FileStatus {
+    #[default]
     Active,
     Deleted,
     Archived,
-}
-
-impl Default for FileStatus {
-    fn default() -> Self {
-        FileStatus::Active
-    }
 }
 
 impl From<String> for FileStatus {
@@ -229,6 +209,7 @@ impl From<FileRecord> for FileMetadata {
 
 /// 文件上传请求
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct UploadFileRequest {
     pub external_id: Option<Uuid>,
     pub category: Option<String>,
@@ -238,6 +219,7 @@ pub struct UploadFileRequest {
 
 /// 文件列表查询参数
 #[derive(Debug, Deserialize, Clone)]
+#[allow(dead_code)]
 pub struct ListFilesQuery {
     pub owner_id: Option<Uuid>,
     pub file_type: Option<String>,
@@ -249,6 +231,7 @@ pub struct ListFilesQuery {
 
 /// 文件统计
 #[derive(Debug, Serialize)]
+#[allow(dead_code)]
 pub struct FileStats {
     pub total_files: i64,
     pub total_size: i64,
@@ -257,18 +240,21 @@ pub struct FileStats {
 }
 
 #[derive(Debug, Serialize)]
+#[allow(dead_code)]
 pub struct TypeCount {
     pub file_type: String,
     pub count: i64,
 }
 
 #[derive(Debug, Serialize)]
+#[allow(dead_code)]
 pub struct StatusCount {
     pub status: String,
     pub count: i64,
 }
 
 /// 判断文件是否应该被向量化
+#[allow(dead_code)]
 pub fn should_vectorize(content_type: &str) -> bool {
     matches!(
         content_type,
@@ -284,12 +270,11 @@ pub fn should_vectorize(content_type: &str) -> bool {
 }
 
 /// 根据 content_type 判断文件类型
+#[allow(dead_code)]
 pub fn get_file_type_from_content_type(content_type: &str) -> FileType {
     if content_type.starts_with("image/") {
         FileType::Image
-    } else if content_type.starts_with("video/") {
-        FileType::Video
-    } else if content_type.starts_with("audio/") {
+    } else if content_type.starts_with("video/") || content_type.starts_with("audio/") {
         FileType::Video
     } else if content_type.contains("zip")
         || content_type.contains("tar")

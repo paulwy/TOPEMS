@@ -1,26 +1,23 @@
-use axum::{
-    extract::FromRef,
-    Router,
-};
+use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::{AuthState, Config};
 use topems_shared::SystemMetrics;
+use topems_shared::{AuthState, Config};
 
-pub mod auth;
-pub mod experiment;
-pub mod formula;
-pub mod project;
 pub mod ai_integration;
 pub mod audit;
+pub mod auth;
 pub mod doc_integration;
+pub mod experiment;
+pub mod formula;
 pub mod material;
+pub mod openapi;
+pub mod project;
 pub mod project_member;
 pub mod project_milestone;
 pub mod project_phase;
 pub mod project_report;
-pub mod openapi;
 
 #[derive(Clone)]
 pub struct ApiState {

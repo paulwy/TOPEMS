@@ -1,10 +1,10 @@
 use axum::{
-    Json,
     response::{IntoResponse, Response},
+    Json,
 };
+use chrono::Utc;
 use serde::Serialize;
 use thiserror::Error;
-use chrono::Utc;
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
@@ -59,6 +59,7 @@ pub enum ApiError {
     NotFound,
 
     #[error("Unauthorized")]
+    #[allow(dead_code)]
     Unauthorized,
 
     #[error("Bad request: {0}")]
@@ -71,10 +72,19 @@ pub enum ApiError {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
-            ApiError::NotFound => (axum::http::StatusCode::NOT_FOUND, "Resource not found".to_string()),
-            ApiError::Unauthorized => (axum::http::StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
+            ApiError::NotFound => (
+                axum::http::StatusCode::NOT_FOUND,
+                "Resource not found".to_string(),
+            ),
+            ApiError::Unauthorized => (
+                axum::http::StatusCode::UNAUTHORIZED,
+                "Unauthorized".to_string(),
+            ),
             ApiError::BadRequest(msg) => (axum::http::StatusCode::BAD_REQUEST, msg),
-            ApiError::InternalError => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string()),
+            ApiError::InternalError => (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
+            ),
         };
 
         let body = Json(ApiResponse::<()> {

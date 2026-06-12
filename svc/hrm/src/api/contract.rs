@@ -8,25 +8,42 @@ use chrono::{Duration, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::ApiState;
+use crate::api::audit::log_audit_event;
 use crate::models::{
     Contract, ContractPaginationParams, ContractRenewal, CreateContractRequest,
     CreateRenewalRequest, UpdateContractRequest,
 };
-use crate::api::audit::log_audit_event;
-use topems_shared::{ApiResponse, api_error};
-use super::ApiState;
+use topems_shared::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/contracts", get(list_contracts).post(create_contract))
-        .route("/api/v1/contracts/{id}", get(get_contract).put(update_contract).delete(delete_contract))
+        .route(
+            "/api/v1/contracts",
+            get(list_contracts).post(create_contract),
+        )
+        .route(
+            "/api/v1/contracts/{id}",
+            get(get_contract)
+                .put(update_contract)
+                .delete(delete_contract),
+        )
         .route("/api/v1/contracts/expiring", get(list_expiring_contracts))
         .route("/api/v1/contracts/{id}/renew", post(create_renewal))
         .route("/api/v1/contract-renewals", get(list_renewals))
-        .route("/api/v1/contract-renewals/{id}", get(get_renewal).put(update_renewal).delete(delete_renewal))
-        .route("/api/v1/contract-renewals/{id}/approve", put(approve_renewal))
+        .route(
+            "/api/v1/contract-renewals/{id}",
+            get(get_renewal).put(update_renewal).delete(delete_renewal),
+        )
+        .route(
+            "/api/v1/contract-renewals/{id}/approve",
+            put(approve_renewal),
+        )
         .route("/api/v1/contract-renewals/{id}/reject", put(reject_renewal))
-        .route("/api/v1/contract-renewals/{id}/execute", put(execute_renewal))
+        .route(
+            "/api/v1/contract-renewals/{id}/execute",
+            put(execute_renewal),
+        )
 }
 
 async fn list_contracts(
@@ -92,7 +109,10 @@ async fn list_contracts(
         }
         Err(e) => {
             tracing::error!("获取合同列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取合同列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取合同列表失败",
+            ))
         }
     }
 }
@@ -156,7 +176,10 @@ async fn list_expiring_contracts(
         }
         Err(e) => {
             tracing::error!("获取即将到期合同失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取即将到期合同失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取即将到期合同失败",
+            ))
         }
     }
 }
@@ -183,7 +206,13 @@ async fn create_contract(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let contract_no = req.contract_no.clone().unwrap_or_else(|| format!("HT{}{}", now.timestamp(), id.to_string().split('-').next().unwrap_or("")));
+    let contract_no = req.contract_no.clone().unwrap_or_else(|| {
+        format!(
+            "HT{}{}",
+            now.timestamp(),
+            id.to_string().split('-').next().unwrap_or("")
+        )
+    });
 
     let request_data = serde_json::to_value(&req).ok();
 
@@ -510,7 +539,10 @@ async fn create_renewal(
         Ok(renewal) => Json(ApiResponse::success(renewal, "续签申请提交成功")),
         Err(e) => {
             tracing::error!("提交续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(500, "提交续签申请失败"))
+            Json(ApiResponse::<ContractRenewal>::error(
+                500,
+                "提交续签申请失败",
+            ))
         }
     }
 }
@@ -573,7 +605,10 @@ async fn list_renewals(
         }
         Err(e) => {
             tracing::error!("获取续签记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取续签记录失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取续签记录失败",
+            ))
         }
     }
 }
@@ -607,7 +642,10 @@ async fn get_renewal(
         Ok(None) => Json(ApiResponse::<ContractRenewal>::error(404, "续签记录不存在")),
         Err(e) => {
             tracing::error!("获取续签记录失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(500, "获取续签记录失败"))
+            Json(ApiResponse::<ContractRenewal>::error(
+                500,
+                "获取续签记录失败",
+            ))
         }
     }
 }
@@ -646,10 +684,16 @@ async fn update_renewal(
 
     match result {
         Ok(Some(renewal)) => Json(ApiResponse::success(renewal, "续签申请更新成功")),
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::error(404, "续签申请不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
+            404,
+            "续签申请不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("更新续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(500, "更新续签申请失败"))
+            Json(ApiResponse::<ContractRenewal>::error(
+                500,
+                "更新续签申请失败",
+            ))
         }
     }
 }
@@ -658,14 +702,20 @@ async fn delete_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.contract_renewals WHERE id = $1 AND status = 'pending'")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("DELETE FROM hrm.contract_renewals WHERE id = $1 AND status = 'pending'")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "续签申请已取消")),
-        Ok(_) => Json(ApiResponse::<String>::error(404, "续签申请不存在或状态不正确")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "续签申请已取消"))
+        }
+        Ok(_) => Json(ApiResponse::<String>::error(
+            404,
+            "续签申请不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("取消续签申请失败: {}", e);
             Json(ApiResponse::<String>::error(500, "取消续签申请失败"))
@@ -698,10 +748,16 @@ async fn approve_renewal(
 
     match result {
         Ok(Some(renewal)) => Json(ApiResponse::success(renewal, "续签申请已批准")),
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::error(404, "续签申请不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
+            404,
+            "续签申请不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("批准续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(500, "批准续签申请失败"))
+            Json(ApiResponse::<ContractRenewal>::error(
+                500,
+                "批准续签申请失败",
+            ))
         }
     }
 }
@@ -733,10 +789,16 @@ async fn reject_renewal(
 
     match result {
         Ok(Some(renewal)) => Json(ApiResponse::success(renewal, "续签申请已拒绝")),
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::error(404, "续签申请不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
+            404,
+            "续签申请不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("拒绝续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(500, "拒绝续签申请失败"))
+            Json(ApiResponse::<ContractRenewal>::error(
+                500,
+                "拒绝续签申请失败",
+            ))
         }
     }
 }
@@ -764,16 +826,29 @@ async fn execute_renewal(
 
     let renewal = match renewal {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::<serde_json::Value>::error(404, "续签记录不存在")),
-        Err(e) => return Json(ApiResponse::<serde_json::Value>::error(500, &format!("查询续签记录失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::<serde_json::Value>::error(
+                404,
+                "续签记录不存在",
+            ))
+        }
+        Err(e) => {
+            return Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                &format!("查询续签记录失败: {}", e),
+            ))
+        }
     };
 
     if renewal.status != "approved" {
-        return Json(ApiResponse::<serde_json::Value>::error(400, "续签申请未批准，无法执行"));
+        return Json(ApiResponse::<serde_json::Value>::error(
+            400,
+            "续签申请未批准，无法执行",
+        ));
     }
 
     let now = Utc::now();
-    
+
     let update_result = sqlx::query(
         r#"
         UPDATE hrm.contracts SET
@@ -814,7 +889,10 @@ async fn execute_renewal(
         }
         Err(e) => {
             tracing::error!("执行合同续签失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "执行合同续签失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "执行合同续签失败",
+            ))
         }
     }
 }

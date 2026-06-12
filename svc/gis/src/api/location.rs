@@ -1,13 +1,13 @@
+use crate::models::Location;
+use crate::services::permission::{check_permission, GisPermission};
 use axum::{
-    extract::{Path, State, Extension},
+    extract::{Extension, Path, State},
     Json,
 };
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use sqlx::PgPool;
-use topems_shared::{ApiResponse, auth::Claims};
-use crate::models::Location;
-use crate::services::permission::{check_permission, GisPermission};
+use topems_shared::{auth::Claims, ApiResponse};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateLocation {
@@ -188,7 +188,7 @@ pub async fn search_locations(
     Json(payload): Json<SearchLocation>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let search_pattern = format!("%{}%", payload.query);
-    
+
     let query = if payload.location_type.is_some() {
         "SELECT * FROM gis.locations WHERE (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
     } else {
@@ -244,19 +244,21 @@ pub async fn nearby_locations(
                     }
                 })
                 .collect::<Vec<_>>();
-            
+
             // Sort by distance and limit
             let mut nearby_sorted = nearby;
             nearby_sorted.sort_by(|a, b| {
                 let dist_a = a.get("distance").and_then(|d| d.as_f64()).unwrap_or(0.0);
                 let dist_b = b.get("distance").and_then(|d| d.as_f64()).unwrap_or(0.0);
-                dist_a.partial_cmp(&dist_b).unwrap_or(std::cmp::Ordering::Equal)
+                dist_a
+                    .partial_cmp(&dist_b)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             });
-            
+
             if let Some(limit) = payload.limit {
                 nearby_sorted = nearby_sorted.into_iter().take(limit as usize).collect();
             }
-            
+
             Json(ApiResponse::success(
                 serde_json::json!({
                     "nearby": nearby_sorted,
@@ -274,11 +276,11 @@ fn calculate_distance_from_json(pos1: &serde_json::Value, pos2: &serde_json::Val
     // Extract coordinates from position JSON
     let (x1, y1) = extract_coords(pos1);
     let (x2, y2) = extract_coords(pos2);
-    
+
     // Calculate approximate distance in meters
     let dx = (x2 - x1) * 111000.0;
     let dy = (y2 - y1) * 111000.0;
-    
+
     (dx.powi(2) + dy.powi(2)).sqrt()
 }
 
@@ -308,28 +310,28 @@ pub async fn plan_route(
     // Simplified route planning - just return a straight line
     let (start_x, start_y) = extract_coords(&payload.start);
     let (end_x, end_y) = extract_coords(&payload.end);
-    
+
     let waypoints = payload.waypoints.unwrap_or_default();
-    
+
     // Build route coordinates
     let mut route_coords: Vec<Vec<f64>> = vec![vec![start_x, start_y]];
-    
+
     for waypoint in &waypoints {
         let (wp_x, wp_y) = extract_coords(waypoint);
         route_coords.push(vec![wp_x, wp_y]);
     }
-    
+
     route_coords.push(vec![end_x, end_y]);
-    
+
     // Calculate total distance
     let total_distance = calculate_route_distance(&route_coords);
-    
+
     // Create route geometry
     let route_geometry = serde_json::json!({
         "type": "LineString",
         "coordinates": route_coords
     });
-    
+
     Json(ApiResponse::success(
         serde_json::json!({
             "route": route_geometry,
@@ -343,18 +345,18 @@ pub async fn plan_route(
 
 fn calculate_route_distance(coords: &[Vec<f64>]) -> f64 {
     let mut total_distance = 0.0;
-    
+
     for i in 1..coords.len() {
         let x1 = coords[i - 1][0];
         let y1 = coords[i - 1][1];
         let x2 = coords[i][0];
         let y2 = coords[i][1];
-        
+
         let dx = (x2 - x1) * 111000.0;
         let dy = (y2 - y1) * 111000.0;
-        
+
         total_distance += (dx.powi(2) + dy.powi(2)).sqrt();
     }
-    
+
     total_distance
 }

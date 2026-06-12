@@ -1,15 +1,15 @@
 use axum::{
-    extract::{State, Json},
-    http::{StatusCode, HeaderMap},
+    extract::{Json, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row, postgres::PgRow};
+use sqlx::{postgres::PgRow, PgPool, Row};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BarcodeScanRequest {
@@ -103,12 +103,15 @@ pub async fn scan_barcode(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let scan_type = payload.scan_type.unwrap_or_else(|| "barcode".to_string());
-    
+
     let response = BarcodeScanResponse {
         barcode: payload.barcode.clone(),
         decoded_data: payload.barcode.clone(),
@@ -130,9 +133,13 @@ pub async fn scan_barcode(
         Some(serde_json::to_value(&response).unwrap()),
         payload.location_lat,
         payload.location_lng,
-    ).await;
+    )
+    .await;
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "条形码扫描成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "条形码扫描成功")),
+    )
 }
 
 pub async fn scan_qrcode(
@@ -144,15 +151,19 @@ pub async fn scan_qrcode(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
-    let (decoded_url, data_type) = if payload.qr_data.starts_with("http://") || payload.qr_data.starts_with("https://") {
-        (Some(payload.qr_data.clone()), "url".to_string())
-    } else {
-        (None, "text".to_string())
-    };
+    let (decoded_url, data_type) =
+        if payload.qr_data.starts_with("http://") || payload.qr_data.starts_with("https://") {
+            (Some(payload.qr_data.clone()), "url".to_string())
+        } else {
+            (None, "text".to_string())
+        };
 
     let response = QrCodeScanResponse {
         qr_data: payload.qr_data.clone(),
@@ -171,9 +182,13 @@ pub async fn scan_qrcode(
         Some(serde_json::to_value(&response).unwrap()),
         payload.location_lat,
         payload.location_lng,
-    ).await;
+    )
+    .await;
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "二维码扫描成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "二维码扫描成功")),
+    )
 }
 
 pub async fn image_ocr(
@@ -185,7 +200,10 @@ pub async fn image_ocr(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -218,9 +236,13 @@ pub async fn image_ocr(
         Some(serde_json::to_value(&response).unwrap()),
         payload.location_lat,
         payload.location_lng,
-    ).await;
+    )
+    .await;
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "OCR识别成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "OCR识别成功")),
+    )
 }
 
 async fn save_scan_record(

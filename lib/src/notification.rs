@@ -5,10 +5,11 @@ use uuid::Uuid;
 
 use crate::{config::ServiceConfig, Result, TopemsError};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum NotificationType {
     #[serde(rename = "info")]
+    #[default]
     Info,
     #[serde(rename = "success")]
     Success,
@@ -28,12 +29,6 @@ pub enum NotificationType {
     Message,
 }
 
-impl Default for NotificationType {
-    fn default() -> Self {
-        NotificationType::Info
-    }
-}
-
 impl From<&str> for NotificationType {
     fn from(s: &str) -> Self {
         match s.to_lowercase().as_str() {
@@ -51,18 +46,18 @@ impl From<&str> for NotificationType {
     }
 }
 
-impl ToString for NotificationType {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for NotificationType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NotificationType::Info => "info".to_string(),
-            NotificationType::Success => "success".to_string(),
-            NotificationType::Warning => "warning".to_string(),
-            NotificationType::Error => "error".to_string(),
-            NotificationType::System => "system".to_string(),
-            NotificationType::Workflow => "workflow".to_string(),
-            NotificationType::Reminder => "reminder".to_string(),
-            NotificationType::Alert => "alert".to_string(),
-            NotificationType::Message => "message".to_string(),
+            NotificationType::Info => write!(f, "info"),
+            NotificationType::Success => write!(f, "success"),
+            NotificationType::Warning => write!(f, "warning"),
+            NotificationType::Error => write!(f, "error"),
+            NotificationType::System => write!(f, "system"),
+            NotificationType::Workflow => write!(f, "workflow"),
+            NotificationType::Reminder => write!(f, "reminder"),
+            NotificationType::Alert => write!(f, "alert"),
+            NotificationType::Message => write!(f, "message"),
         }
     }
 }
@@ -206,7 +201,10 @@ impl NotificationServiceClient {
         }
     }
 
-    pub async fn create_notification(&self, req: CreateNotificationRequest) -> Result<Notification> {
+    pub async fn create_notification(
+        &self,
+        req: CreateNotificationRequest,
+    ) -> Result<Notification> {
         let response = self
             .client
             .post(format!("{}/api/v1/notifications", self.base_url))
@@ -227,7 +225,10 @@ impl NotificationServiceClient {
         }
     }
 
-    pub async fn create_template(&self, req: CreateTemplateRequest) -> Result<NotificationTemplate> {
+    pub async fn create_template(
+        &self,
+        req: CreateTemplateRequest,
+    ) -> Result<NotificationTemplate> {
         let response = self
             .client
             .post(format!("{}/api/v1/templates", self.base_url))
@@ -277,10 +278,11 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: crate::response::ApiResponse<NotificationStats> = response
-            .json()
-            .await
-            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: crate::response::ApiResponse<NotificationStats> =
+            response
+                .json()
+                .await
+                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         if let Some(data) = api_response.data {
             Ok(data)
@@ -297,10 +299,11 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: crate::response::ApiResponse<NotificationStats> = response
-            .json()
-            .await
-            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: crate::response::ApiResponse<NotificationStats> =
+            response
+                .json()
+                .await
+                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         if let Some(data) = api_response.data {
             Ok(data)
@@ -358,10 +361,11 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: crate::response::ApiResponse<serde_json::Value> = response
-            .json()
-            .await
-            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: crate::response::ApiResponse<serde_json::Value> =
+            response
+                .json()
+                .await
+                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         if let Some(data) = api_response.data {
             Ok(data)
@@ -371,7 +375,10 @@ impl NotificationServiceClient {
     }
 
     /// 获取通知列表
-    pub async fn list_notifications(&self, query: &NotificationListQuery) -> Result<NotificationListResponse> {
+    pub async fn list_notifications(
+        &self,
+        query: &NotificationListQuery,
+    ) -> Result<NotificationListResponse> {
         let mut url = format!("{}/api/v1/notifications?", self.base_url);
         if let Some(page) = query.page {
             url.push_str(&format!("page={}&", page));
@@ -380,7 +387,7 @@ impl NotificationServiceClient {
             url.push_str(&format!("page_size={}&", page_size));
         }
         if let Some(ref ntype) = query.notification_type {
-            url.push_str(&format!("notification_type={}&", ntype.to_string()));
+            url.push_str(&format!("notification_type={}&", ntype));
         }
 
         let response = self
@@ -395,7 +402,9 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 获取单个通知
@@ -412,14 +421,19 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 标记通知为已读
     pub async fn mark_as_read(&self, id: &Uuid) -> Result<Notification> {
         let response = self
             .client
-            .put(format!("{}/api/v1/notifications/{}/read", self.base_url, id))
+            .put(format!(
+                "{}/api/v1/notifications/{}/read",
+                self.base_url, id
+            ))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -429,7 +443,9 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 标记所有通知为已读
@@ -442,16 +458,24 @@ impl NotificationServiceClient {
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
         #[derive(Deserialize)]
-        struct CountResponse { count: i64 }
+        struct CountResponse {
+            count: i64,
+        }
         #[derive(Deserialize)]
-        struct ApiCountResponse { data: Option<CountResponse>, message: String }
+        struct ApiCountResponse {
+            data: Option<CountResponse>,
+            message: String,
+        }
 
         let api_response: ApiCountResponse = response
             .json()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.map(|c| c.count).ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .map(|c| c.count)
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 删除通知
@@ -464,16 +488,24 @@ impl NotificationServiceClient {
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
         #[derive(Deserialize)]
-        struct BoolResponse { success: bool }
+        struct BoolResponse {
+            success: bool,
+        }
         #[derive(Deserialize)]
-        struct ApiBoolResponse { data: Option<BoolResponse>, message: String }
+        struct ApiBoolResponse {
+            data: Option<BoolResponse>,
+            message: String,
+        }
 
         let api_response: ApiBoolResponse = response
             .json()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.map(|d| d.success).ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .map(|d| d.success)
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 获取未读通知
@@ -485,19 +517,25 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: crate::response::ApiResponse<Vec<Notification>> = response
-            .json()
-            .await
-            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: crate::response::ApiResponse<Vec<Notification>> =
+            response
+                .json()
+                .await
+                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 获取未读数量
     pub async fn get_unread_count(&self) -> Result<i64> {
         let response = self
             .client
-            .get(format!("{}/api/v1/notifications/unread-count", self.base_url))
+            .get(format!(
+                "{}/api/v1/notifications/unread-count",
+                self.base_url
+            ))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -507,7 +545,9 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 批量标记已读
@@ -525,14 +565,19 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 批量删除通知
     pub async fn bulk_delete(&self, ids: &[String]) -> Result<i64> {
         let response = self
             .client
-            .delete(format!("{}/api/v1/notifications/bulk/delete", self.base_url))
+            .delete(format!(
+                "{}/api/v1/notifications/bulk/delete",
+                self.base_url
+            ))
             .json(&BulkOperationRequest { ids: ids.to_vec() })
             .send()
             .await
@@ -543,7 +588,9 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 }
 

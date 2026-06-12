@@ -6,9 +6,7 @@ use anyhow::Result;
 use topems_shared::{
     embedding::{create_embedding_service, EmbeddingConfig},
     ollama::OllamaConfig,
-    vector_store::{create_vector_store, VectorMetadata, VectorStore},
 };
-use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -47,8 +45,16 @@ async fn main() -> Result<()> {
     println!("\n👥 模拟员工技能匹配测试...");
 
     let skills = vec![
-        ("employee:001", "张三", vec!["Rust", "PostgreSQL", "系统编程"]),
-        ("employee:002", "李四", vec!["Python", "数据分析", "机器学习"]),
+        (
+            "employee:001",
+            "张三",
+            vec!["Rust", "PostgreSQL", "系统编程"],
+        ),
+        (
+            "employee:002",
+            "李四",
+            vec!["Python", "数据分析", "机器学习"],
+        ),
         ("employee:003", "王五", vec!["Java", "Spring", "微服务"]),
         ("employee:004", "赵六", vec!["Rust", "WebAssembly", "前端"]),
         ("employee:005", "钱七", vec!["Go", "Kubernetes", "DevOps"]),
@@ -67,9 +73,14 @@ async fn main() -> Result<()> {
     println!("   搜索关键词: {:?}", search_skills);
 
     // 简单匹配（实际应使用向量相似度）
-    let matches: Vec<_> = skills.iter()
+    let matches: Vec<_> = skills
+        .iter()
         .filter(|(_, _, emp_skills)| {
-            emp_skills.iter().any(|s| search_skills.iter().any(|q| s.to_lowercase().contains(&q.to_lowercase())))
+            emp_skills.iter().any(|s| {
+                search_skills
+                    .iter()
+                    .any(|q| s.to_lowercase().contains(&q.to_lowercase()))
+            })
         })
         .collect();
 
@@ -78,8 +89,13 @@ async fn main() -> Result<()> {
     } else {
         println!("   ✅ 找到 {} 个匹配的员工:", matches.len());
         for (id, name, emp_skills) in matches {
-            let common: Vec<_> = emp_skills.iter()
-                .filter(|s| search_skills.iter().any(|q| s.to_lowercase().contains(&q.to_lowercase())))
+            let common: Vec<_> = emp_skills
+                .iter()
+                .filter(|s| {
+                    search_skills
+                        .iter()
+                        .any(|q| s.to_lowercase().contains(&q.to_lowercase()))
+                })
                 .collect();
             println!("      - {} ({}): 匹配技能 {:?}", id, name, common);
         }

@@ -1,9 +1,9 @@
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import HrmRecruitmentPage from '../../pages/HrmRecruitmentPage';
+import React from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import HrmRecruitmentPage from "../../pages/HrmRecruitmentPage";
 
-vi.mock('../../api/hrm', () => ({
+vi.mock("../../api/hrm", () => ({
   jobOpeningApi: {
     list: vi.fn().mockResolvedValue({
       code: 200,
@@ -27,7 +27,7 @@ vi.mock('../../api/hrm', () => ({
   },
 }));
 
-vi.mock('../../hooks/useNotification', () => ({
+vi.mock("../../hooks/useNotification", () => ({
   useNotification: vi.fn().mockReturnValue({
     success: vi.fn(),
     error: vi.fn(),
@@ -36,26 +36,26 @@ vi.mock('../../hooks/useNotification', () => ({
   }),
 }));
 
-vi.mock('../../components/NotificationContainer', () => ({
-  NotificationContainer: () => <div data-testid='notification-container' />,
+vi.mock("../../components/NotificationContainer", () => ({
+  NotificationContainer: () => <div data-testid="notification-container" />,
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
-describe('HrmRecruitmentPage', () => {
-  test('renders without crashing', async () => {
+describe("HrmRecruitmentPage", () => {
+  test("renders without crashing", async () => {
     renderWithProviders(<HrmRecruitmentPage />);
     await waitFor(() => {
-      expect(screen.getByTestId('notification-container')).toBeInTheDocument();
+      expect(screen.getByTestId("notification-container")).toBeInTheDocument();
     });
   });
 
-  test('renders header with title', async () => {
+  test("renders header with title", async () => {
     renderWithProviders(<HrmRecruitmentPage />);
     await waitFor(() => {
-      expect(screen.getByText('招聘管理')).toBeInTheDocument();
+      expect(screen.getByText("招聘管理")).toBeInTheDocument();
     });
   });
 });

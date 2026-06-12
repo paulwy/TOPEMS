@@ -244,7 +244,7 @@ function generateInitialsFromName(name: string, maxLength: number = 4): string {
 
 const codeRules = {
   department: {
-    examples: (name: string, seq: number, year: number) => {
+    examples: (name: string, _seq: number, year: number) => {
       const initials = generateInitialsFromName(name, 4);
       const shortInitials = initials.substring(0, Math.min(2, initials.length));
       const english = translateToEnglish(name);

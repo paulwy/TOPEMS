@@ -10,6 +10,7 @@ pub enum StorageError {
     #[error("File not found: {0}")]
     NotFound(String),
     #[error("Storage backend error: {0}")]
+    #[allow(dead_code)]
     Backend(String),
     #[error("Invalid path: {0}")]
     InvalidPath(String),
@@ -17,6 +18,7 @@ pub enum StorageError {
 
 /// 存储操作结果
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct StorageResult {
     pub path: String,
     pub size: u64,
@@ -25,6 +27,7 @@ pub struct StorageResult {
 
 /// 文件元数据
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct FileMetadata {
     pub path: String,
     pub size: u64,
@@ -33,12 +36,18 @@ pub struct FileMetadata {
 }
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait FileStorage: Send + Sync {
     /// 上传文件
     async fn upload(&self, path: &str, data: &[u8]) -> Result<StorageResult, StorageError>;
 
     /// 流式上传文件（边收边传）
-    async fn upload_stream(&self, path: &str, reader: Box<dyn AsyncRead + Send + Unpin>, size: u64) -> Result<StorageResult, StorageError>;
+    async fn upload_stream(
+        &self,
+        path: &str,
+        reader: Box<dyn AsyncRead + Send + Unpin>,
+        size: u64,
+    ) -> Result<StorageResult, StorageError>;
 
     /// 下载文件
     async fn download(&self, path: &str) -> Result<Vec<u8>, StorageError>;
@@ -50,8 +59,14 @@ pub trait FileStorage: Send + Sync {
     async fn exists(&self, path: &str) -> Result<bool, StorageError>;
 
     /// 生成预签名 URL（用于 S3/MinIO）
-    async fn presigned_url(&self, _path: &str, _expires_in: Duration) -> Result<String, StorageError> {
-        Err(StorageError::Backend("Presigned URL not supported for this backend".to_string()))
+    async fn presigned_url(
+        &self,
+        _path: &str,
+        _expires_in: Duration,
+    ) -> Result<String, StorageError> {
+        Err(StorageError::Backend(
+            "Presigned URL not supported for this backend".to_string(),
+        ))
     }
 
     /// 获取存储类型

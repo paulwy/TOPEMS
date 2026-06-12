@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State, Extension},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::get,
     Json, Router,
@@ -8,11 +8,11 @@ use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, api_error};
-use topems_shared::auth::Claims;
+use super::ApiState;
 use crate::models::AuditLog;
 use crate::services::permission::{check_permission, ModulePermission};
-use super::ApiState;
+use topems_shared::auth::Claims;
+use topems_shared::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -38,7 +38,7 @@ async fn list_audit_logs(
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::All).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -120,7 +120,7 @@ async fn get_audit_log(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
     match check_permission(&state.db, &claims, &ModulePermission::All).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 

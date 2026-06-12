@@ -1,8 +1,7 @@
 use axum::{
     extract::{FromRef, Path, State},
     routing::{delete, get, post},
-    Json,
-    Router,
+    Json, Router,
 };
 use reqwest::Client;
 use std::env;
@@ -13,9 +12,9 @@ use tower_cookies::CookieManagerLayer;
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, build_health_response, create_api_info_router,
-    ServiceRegistryStatus, LocalServiceRegistry, PortalServiceAggregator,
+    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
+    init_logging, ApiResponse, AuthState, LocalServiceRegistry, PortalServiceAggregator,
+    ServiceHealth, ServiceRegistryStatus,
 };
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -25,6 +24,7 @@ fn get_uptime() -> u64 {
 }
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct AppState {
     auth_state: AuthState,
     service_registry: Arc<LocalServiceRegistry>,
@@ -63,8 +63,11 @@ async fn main() -> anyhow::Result<()> {
     let custom_gauge = Gauge::new(
         "topems_portal_custom_metric",
         "This is a custom metric for TOPEMS-PORTAL",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -75,7 +78,10 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         .route("/", get(home));
 
     let protected_routes = Router::new()
@@ -92,7 +98,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/monitoring/logs", get(get_monitoring_logs))
         .route("/api/v1/notifications", get(get_notifications))
         .route("/api/v1/notifications/{id}", post(mark_notification_read))
-        .route("/api/v1/notifications/mark-all-read", post(mark_all_notifications_read))
+        .route(
+            "/api/v1/notifications/mark-all-read",
+            post(mark_all_notifications_read),
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -125,6 +134,7 @@ async fn health_check() -> ServiceHealth {
 }
 
 #[derive(Debug, Clone, serde::Serialize, PartialEq)]
+#[allow(dead_code)]
 enum HealthStatus {
     #[serde(rename = "healthy")]
     Healthy,
@@ -175,12 +185,16 @@ async fn home() -> Json<ApiResponse<&'static str>> {
 async fn list_services(State(state): State<AppState>) -> Json<ApiResponse<Vec<ServiceDto>>> {
     let services = state.service_aggregator.registry.list_all().await;
 
-    let service_dtos: Vec<ServiceDto> = services.into_iter().map(|s| {
-        ServiceDto {
+    let service_dtos: Vec<ServiceDto> = services
+        .into_iter()
+        .map(|s| ServiceDto {
             id: s.code,
             name: s.name,
             description: s.description,
-            url: s.url.map(|_| format!("http://localhost:{}", s.port)).unwrap_or_default(),
+            url: s
+                .url
+                .map(|_| format!("http://localhost:{}", s.port))
+                .unwrap_or_default(),
             icon: s.icon.unwrap_or_else(|| "App".to_string()),
             status: match s.status {
                 ServiceRegistryStatus::Active => "running".to_string(),
@@ -188,8 +202,8 @@ async fn list_services(State(state): State<AppState>) -> Json<ApiResponse<Vec<Se
                 ServiceRegistryStatus::Maintenance => "maintenance".to_string(),
             },
             category: format!("{:?}", s.category),
-        }
-    }).collect();
+        })
+        .collect();
 
     Json(ApiResponse::success(service_dtos, "服务列表获取成功"))
 }
@@ -284,27 +298,36 @@ async fn add_todo(Json(todo): Json<NewTodo>) -> Json<ApiResponse<Todo>> {
 }
 
 async fn complete_todo(Path(id): Path<String>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({
-        "id": id
-    }), "待办事项完成成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "id": id
+        }),
+        "待办事项完成成功",
+    ))
 }
 
 async fn delete_todo(Path(id): Path<String>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({
-        "id": id
-    }), "待办事项删除成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "id": id
+        }),
+        "待办事项删除成功",
+    ))
 }
 
 async fn get_user_info() -> Json<ApiResponse<UserInfo>> {
-    Json(ApiResponse::success(UserInfo {
-        id: "user-001".to_string(),
-        name: "张三".to_string(),
-        email: "zhangsan@topems.com".to_string(),
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=zhangsan".to_string(),
-        department: "研发部".to_string(),
-        role: "高级研究员".to_string(),
-        last_login: "2026-05-25 09:00:00".to_string(),
-    }, "用户信息获取成功"))
+    Json(ApiResponse::success(
+        UserInfo {
+            id: "user-001".to_string(),
+            name: "张三".to_string(),
+            email: "zhangsan@topems.com".to_string(),
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=zhangsan".to_string(),
+            department: "研发部".to_string(),
+            role: "高级研究员".to_string(),
+            last_login: "2026-05-25 09:00:00".to_string(),
+        },
+        "用户信息获取成功",
+    ))
 }
 
 async fn get_monitoring_services() -> Json<ApiResponse<Vec<MonitoringService>>> {
@@ -413,10 +436,13 @@ async fn get_monitoring_alerts() -> Json<ApiResponse<Vec<Alert>>> {
 }
 
 async fn acknowledge_alert(Path(id): Path<String>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({
-        "id": id,
-        "acknowledged": true
-    }), "告警已确认"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "id": id,
+            "acknowledged": true
+        }),
+        "告警已确认",
+    ))
 }
 
 async fn get_monitoring_logs() -> Json<ApiResponse<Vec<LogEntry>>> {
@@ -517,16 +543,22 @@ async fn get_notifications() -> Json<ApiResponse<Vec<Notification>>> {
 }
 
 async fn mark_notification_read(Path(id): Path<String>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({
-        "id": id,
-        "read": true
-    }), "通知已标记为已读"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "id": id,
+            "read": true
+        }),
+        "通知已标记为已读",
+    ))
 }
 
 async fn mark_all_notifications_read() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({
-        "count": 5
-    }), "所有通知已标记为已读"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "count": 5
+        }),
+        "所有通知已标记为已读",
+    ))
 }
 
 fn get_service_name(service_id: &str) -> String {

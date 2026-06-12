@@ -11,7 +11,7 @@ impl AppState {
     pub fn new(db: PgPool) -> Self {
         Self { db }
     }
-    
+
     pub fn arc(self) -> Arc<Self> {
         Arc::new(self)
     }
@@ -27,11 +27,11 @@ impl PaginationQuery {
     pub fn page(&self) -> i64 {
         self.page.unwrap_or(1).max(1)
     }
-    
+
     pub fn page_size(&self) -> i64 {
         self.page_size.unwrap_or(10).min(100)
     }
-    
+
     pub fn offset(&self) -> i64 {
         (self.page() - 1) * self.page_size()
     }

@@ -1,6 +1,6 @@
 use axum::{
-    extract::{State, Json},
-    http::{StatusCode, HeaderMap},
+    extract::{Json, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Shortcut {
@@ -59,14 +59,20 @@ pub async fn get_shortcuts(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id_uuid = match Uuid::parse_str(&user_id) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
@@ -85,7 +91,10 @@ pub async fn get_shortcuts(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(shortcuts, "获取快捷操作列表成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(shortcuts, "获取快捷操作列表成功")),
+    )
 }
 
 pub async fn create_shortcut(
@@ -97,14 +106,20 @@ pub async fn create_shortcut(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id_uuid = match Uuid::parse_str(&user_id) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
@@ -112,7 +127,9 @@ pub async fn create_shortcut(
         Some(v) => v,
         None => {
             #[derive(Debug, sqlx::FromRow)]
-            struct NextOrder { next_order: Option<i32> }
+            struct NextOrder {
+                next_order: Option<i32>,
+            }
             match sqlx::query_as::<_, NextOrder>(
                 "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM shortcuts WHERE user_id = $1"
             )
@@ -161,5 +178,8 @@ pub async fn create_shortcut(
         }
     };
 
-    (StatusCode::CREATED, Json(ApiResponse::success(shortcut, "创建快捷操作成功")))
+    (
+        StatusCode::CREATED,
+        Json(ApiResponse::success(shortcut, "创建快捷操作成功")),
+    )
 }

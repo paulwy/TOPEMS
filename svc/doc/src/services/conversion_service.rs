@@ -1,5 +1,5 @@
-use std::process::Command;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use tempfile::NamedTempFile;
 use tokio::fs;
 use tracing::{debug, error, info, warn};
@@ -17,20 +17,20 @@ impl ConversionService {
     /// 创建新的转换服务
     pub fn new() -> Self {
         let libreoffice_path = Self::find_libreoffice();
-        
+
         let temp_dir = std::env::temp_dir().join("topems-doc-conversion");
-        
+
         if !temp_dir.exists() {
             let _ = std::fs::create_dir_all(&temp_dir);
         }
-        
+
         if let Some(ref path) = libreoffice_path {
             info!("✅ LibreOffice conversion service available at: {}", path);
         } else {
             warn!("⚠️ LibreOffice conversion service not available (install LibreOffice for DOCX preview)");
             info!("💡 Tried paths: /Applications/LibreOffice.app/Contents/MacOS/soffice, /opt/homebrew/bin/soffice, etc.");
         }
-        
+
         ConversionService {
             libreoffice_path,
             temp_dir,
@@ -65,9 +65,7 @@ impl ConversionService {
         }
 
         debug!("Trying to find LibreOffice via 'which libreoffice'");
-        if let Ok(output) = Command::new("which")
-            .arg("libreoffice")
-            .output() {
+        if let Ok(output) = Command::new("which").arg("libreoffice").output() {
             if output.status.success() {
                 let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
                 if !path.is_empty() {
@@ -78,9 +76,7 @@ impl ConversionService {
         }
 
         debug!("Trying to find LibreOffice via 'which soffice'");
-        if let Ok(output) = Command::new("which")
-            .arg("soffice")
-            .output() {
+        if let Ok(output) = Command::new("which").arg("soffice").output() {
             if output.status.success() {
                 let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
                 if !path.is_empty() {
@@ -113,17 +109,32 @@ impl ConversionService {
             .unwrap_or("")
             .to_lowercase();
 
-        matches!(ext.as_str(), 
-            "doc" | "docx" | "odt" | "rtf" | "txt" |
-            "xls" | "xlsx" | "ods" |
-            "ppt" | "pptx" | "odp" |
-            "html" | "htm"
+        matches!(
+            ext.as_str(),
+            "doc"
+                | "docx"
+                | "odt"
+                | "rtf"
+                | "txt"
+                | "xls"
+                | "xlsx"
+                | "ods"
+                | "ppt"
+                | "pptx"
+                | "odp"
+                | "html"
+                | "htm"
         )
     }
 
     /// 将文件转换为 PDF
-    pub async fn convert_to_pdf(&self, input_content: &[u8], filename: &str) -> Result<Vec<u8>, String> {
-        let libreoffice_path = self.libreoffice_path
+    pub async fn convert_to_pdf(
+        &self,
+        input_content: &[u8],
+        filename: &str,
+    ) -> Result<Vec<u8>, String> {
+        let libreoffice_path = self
+            .libreoffice_path
             .as_ref()
             .ok_or_else(|| "LibreOffice not available".to_string())?;
 
@@ -131,15 +142,15 @@ impl ConversionService {
             .extension()
             .and_then(|e| e.to_str())
             .unwrap_or("tmp");
-        
-        let temp_input = NamedTempFile::new()
-            .map_err(|e| format!("Failed to create temp input file: {}", e))?;
-        
+
+        let temp_input =
+            NamedTempFile::new().map_err(|e| format!("Failed to create temp input file: {}", e))?;
+
         let temp_input_path = temp_input.path();
-        
+
         let mut temp_input_path_with_ext = temp_input_path.to_path_buf();
         temp_input_path_with_ext.set_extension(input_ext);
-        
+
         fs::write(&temp_input_path_with_ext, input_content)
             .await
             .map_err(|e| format!("Failed to write temp input file: {}", e))?;
@@ -180,8 +191,7 @@ impl ConversionService {
             }
         }
 
-        let output_pdf = output_pdf
-            .ok_or_else(|| "PDF file not generated".to_string())?;
+        let output_pdf = output_pdf.ok_or_else(|| "PDF file not generated".to_string())?;
 
         debug!("Generated PDF: {:?}", output_pdf);
 
@@ -189,7 +199,11 @@ impl ConversionService {
             .await
             .map_err(|e| format!("Failed to read PDF file: {}", e))?;
 
-        info!("Successfully converted {} to PDF ({} bytes)", filename, pdf_content.len());
+        info!(
+            "Successfully converted {} to PDF ({} bytes)",
+            filename,
+            pdf_content.len()
+        );
 
         Ok(pdf_content)
     }

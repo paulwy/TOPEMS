@@ -8,10 +8,10 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{CreatePurchaseItemRequest, PurchaseItem, UpdatePurchaseItemRequest};
-use topems_shared::{ApiResponse, api_error};
-use crate::api::audit::log_audit_event;
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use crate::models::{CreatePurchaseItemRequest, PurchaseItem, UpdatePurchaseItemRequest};
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct PurchaseItemQueryParams {
@@ -124,14 +124,14 @@ async fn create_item(
         Ok(item) => (
             Json(ApiResponse::success(item.clone(), "采购明细创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建采购明细失败: {}", e);
             (
                 Json(api_error(500, "采购明细创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -154,8 +154,9 @@ async fn create_item(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -191,7 +192,7 @@ async fn update_item(
     Json(req): Json<UpdatePurchaseItemRequest>,
 ) -> Json<ApiResponse<PurchaseItem>> {
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, PurchaseItem>(
         "SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at FROM purchase_items WHERE id = $1",
     )
@@ -238,14 +239,14 @@ async fn update_item(
         Ok(item) => (
             Json(ApiResponse::success(item.clone(), "采购明细更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新采购明细失败: {}", e);
             (
                 Json(api_error(500, "采购明细更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -268,8 +269,9 @@ async fn update_item(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

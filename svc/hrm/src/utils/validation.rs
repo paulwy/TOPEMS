@@ -26,7 +26,12 @@ pub fn validate_required_field(field: &str, value: &str) -> Result<(), String> {
 }
 
 #[allow(dead_code)]
-pub fn validate_string_length(field: &str, value: &str, min: usize, max: usize) -> Result<(), String> {
+pub fn validate_string_length(
+    field: &str,
+    value: &str,
+    min: usize,
+    max: usize,
+) -> Result<(), String> {
     let len = value.chars().count();
     if len < min {
         Err(format!("{}长度不能少于{}个字符", field, min))

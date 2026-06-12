@@ -1,9 +1,9 @@
 // DOC 服务单元测试
 // 测试文档管理、文件上传下载、版本管理、权限控制、模板管理等功能
 
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 // ============ 文件元数据测试 ============
 
@@ -53,7 +53,8 @@ mod file_metadata_tests {
             name: "document.docx".to_string(),
             folder_id: Some(folder_id),
             size: 2048,
-            content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document".to_string(),
+            content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                .to_string(),
             storage_path: "/storage/document.docx".to_string(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -122,7 +123,10 @@ mod file_metadata_tests {
             ("video.mp4", "video/mp4"),
             ("audio.mp3", "audio/mpeg"),
             ("text.txt", "text/plain"),
-            ("excel.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+            (
+                "excel.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ),
         ];
 
         for (name, expected_type) in content_types {
@@ -282,8 +286,8 @@ mod file_version_tests {
     #[test]
     fn test_version_numbering() {
         let file_id = Uuid::new_v4();
-        let versions: Vec<FileVersion> = (1..=5).map(|v| {
-            FileVersion {
+        let versions: Vec<FileVersion> = (1..=5)
+            .map(|v| FileVersion {
                 id: Uuid::new_v4(),
                 file_id,
                 version: v,
@@ -292,8 +296,8 @@ mod file_version_tests {
                 storage_path: format!("/storage/v{}", v),
                 created_at: Utc::now(),
                 created_by: "user".to_string(),
-            }
-        }).collect();
+            })
+            .collect();
 
         assert_eq!(versions.len(), 5);
         assert_eq!(versions[0].version, 1);
@@ -690,7 +694,6 @@ mod template_category_tests {
 
 #[cfg(test)]
 mod file_path_tests {
-    
 
     fn validate_file_name(name: &str) -> Result<(), String> {
         if name.is_empty() {
@@ -757,7 +760,6 @@ mod file_path_tests {
 
 #[cfg(test)]
 mod file_type_tests {
-    
 
     fn get_content_type(filename: &str) -> String {
         let extension = filename.rsplit('.').next().unwrap_or("");
@@ -775,14 +777,18 @@ mod file_type_tests {
             "mp3" => "audio/mpeg",
             "txt" => "text/plain",
             _ => "application/octet-stream",
-        }.to_string()
+        }
+        .to_string()
     }
 
     #[test]
     fn test_document_types() {
         assert_eq!(get_content_type("document.pdf"), "application/pdf");
         assert_eq!(get_content_type("document.doc"), "application/msword");
-        assert_eq!(get_content_type("document.docx"), "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        assert_eq!(
+            get_content_type("document.docx"),
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        );
     }
 
     #[test]
@@ -865,8 +871,7 @@ mod api_response_tests {
 
     #[test]
     fn test_response_with_file_metadata() {
-        #[derive(Serialize)]
-        #[derive(Clone)]
+        #[derive(Serialize, Clone)]
         struct FileMetadata {
             id: Uuid,
             name: String,

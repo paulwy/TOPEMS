@@ -115,7 +115,6 @@ export function DataTable<TData, TValue>({
       const visibleColumns = table
         .getAllLeafColumns()
         .filter((column) => column.getIsVisible());
-      const headers = visibleColumns.map((col) => col.id);
       const headerNames = visibleColumns.map(
         (col) => (col.columnDef.header as string) || col.id,
       );

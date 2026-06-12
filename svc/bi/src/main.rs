@@ -1,32 +1,30 @@
+use anyhow::Result;
 use axum::{
     extract::{Extension, FromRef, State},
     routing::{get, post, put},
-    Json,
-    Router,
+    Json, Router,
 };
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
-use std::env;
-use chrono::Utc;
-use serde_json::json;
-use reqwest::Client;
-use sqlx::PgPool;
 use axum_prometheus::PrometheusMetricLayer;
+use chrono::Utc;
 use prometheus::{default_registry, Gauge};
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use sqlx::PgPool;
+use std::env;
 use utoipa::OpenApi;
 
-use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims, init_logging,
-    ServiceHealth, create_api_info_router,
-    HealthStatus, DependencyHealth, check_http_health,
-    create_database_pool, DatabaseConfig,
-};
-use crate::services::permission::{check_permission, BIPermission};
 use crate::api::openapi::BiApiDoc;
+use crate::services::permission::{check_permission, BIPermission};
+use topems_shared::{
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
+    create_database_pool, init_logging, ApiResponse, AuthState, Claims, DatabaseConfig,
+    DependencyHealth, HealthStatus, ServiceHealth,
+};
 
-mod services;
-mod models;
 mod api;
+mod models;
+mod services;
 
 // 保留原有的数据结构定义（用于从其他服务获取数据）
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -250,19 +248,23 @@ impl AppState {
             db_pool,
             auth_state,
             http_client: Client::new(),
-            rs_service_url: env::var("RS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8020".to_string()),
-            lims_service_url: env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8021".to_string()),
-            qms_service_url: env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8031".to_string()),
-            ehs_service_url: env::var("EHS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8032".to_string()),
-            srm_service_url: env::var("SRM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8041".to_string()),
-            pdm_service_url: env::var("PDM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8023".to_string()),
+            rs_service_url: env::var("RS_SERVICE_URL")
+                .unwrap_or_else(|_| "http://localhost:8020".to_string()),
+            lims_service_url: env::var("LIMS_SERVICE_URL")
+                .unwrap_or_else(|_| "http://localhost:8022".to_string()),
+            qms_service_url: env::var("QMS_SERVICE_URL")
+                .unwrap_or_else(|_| "http://localhost:8031".to_string()),
+            ehs_service_url: env::var("EHS_SERVICE_URL")
+                .unwrap_or_else(|_| "http://localhost:8032".to_string()),
+            srm_service_url: env::var("SRM_SERVICE_URL")
+                .unwrap_or_else(|_| "http://localhost:8041".to_string()),
+            pdm_service_url: env::var("PDM_SERVICE_URL")
+                .unwrap_or_else(|_| "http://localhost:8023".to_string()),
         })
     }
 }
 
-async fn health_check(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<String>> {
+async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
     let database_health = check_database_health(&state.db_pool).await;
     let iam_health = check_iam_health().await;
 
@@ -287,9 +289,7 @@ async fn health_check(
     Json(ApiResponse::success(status_str, "健康检查"))
 }
 
-async fn health_check_detailed(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<ServiceHealth>> {
+async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
         check_database_health(&state.db_pool).await,
         check_iam_health().await,
@@ -322,17 +322,14 @@ async fn health_check_detailed(
         HealthStatus::Unhealthy => "存在关键服务故障",
     };
 
-    let health = ServiceHealth::healthy_with_message("topems-bi", message)
-        .with_dependencies(dependencies);
+    let health =
+        ServiceHealth::healthy_with_message("topems-bi", message).with_dependencies(dependencies);
 
     Json(ApiResponse::success(health, "详细健康检查"))
 }
 
 async fn check_database_health(pool: &PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -350,8 +347,8 @@ async fn check_database_health(pool: &PgPool) -> DependencyHealth {
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = std::env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {
@@ -556,7 +553,7 @@ async fn check_pdm_service_health(state: &AppState) -> DependencyHealth {
 async fn fetch_rs_project_stats(state: &AppState) -> Result<ProjectStats, reqwest::Error> {
     let url = format!("{}/api/v1/projects/stats", state.rs_service_url);
     let response = state.http_client.get(&url).send().await?;
-    
+
     if response.status().is_success() {
         let json_response: serde_json::Value = response.json().await?;
         let data = json_response["data"].clone();
@@ -579,7 +576,7 @@ async fn fetch_rs_project_stats(state: &AppState) -> Result<ProjectStats, reqwes
 async fn fetch_lims_sample_stats(state: &AppState) -> Result<SampleStats, reqwest::Error> {
     let url = format!("{}/api/v1/samples/stats", state.lims_service_url);
     let response = state.http_client.get(&url).send().await?;
-    
+
     if response.status().is_success() {
         let json_response: serde_json::Value = response.json().await?;
         let data = json_response["data"].clone();
@@ -602,7 +599,7 @@ async fn fetch_lims_sample_stats(state: &AppState) -> Result<SampleStats, reqwes
 async fn fetch_qms_quality_stats(state: &AppState) -> Result<QMSQualityStats, reqwest::Error> {
     let url = format!("{}/api/v1/quality/stats", state.qms_service_url);
     let response = state.http_client.get(&url).send().await?;
-    
+
     if response.status().is_success() {
         let json_response: serde_json::Value = response.json().await?;
         let data = json_response["data"].clone();
@@ -625,7 +622,7 @@ async fn fetch_qms_quality_stats(state: &AppState) -> Result<QMSQualityStats, re
 async fn fetch_pdm_batch_stats(state: &AppState) -> Result<PDMBatchStats, reqwest::Error> {
     let url = format!("{}/api/v1/batches/stats", state.pdm_service_url);
     let response = state.http_client.get(&url).send().await?;
-    
+
     if response.status().is_success() {
         let json_response: serde_json::Value = response.json().await?;
         let data = json_response["data"].clone();
@@ -650,21 +647,24 @@ async fn get_analytics_summary(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    Json(ApiResponse::success(json!({
-        "key_metrics": [
-            { "title": "生产效率", "value": 85.5, "unit": "%", "change": 2.3, "change_type": "increase", "icon": "📈" },
-            { "title": "质量合格率", "value": 98.2, "unit": "%", "change": 0.8, "change_type": "increase", "icon": "✅" },
-            { "title": "设备稼动率", "value": 92.3, "unit": "%", "change": -1.2, "change_type": "decrease", "icon": "⚙️" }
-        ],
-        "recent_activities": [
-            { "id": 1, "type": "production", "title": "完成生产订单 PO-2024-001", "time": "10分钟前" },
-            { "id": 2, "type": "quality", "title": "质量检验完成，批次 B-001", "time": "25分钟前" }
-        ],
-        "generated_at": Utc::now().to_rfc3339()
-    }), "获取分析摘要成功"))
+    Json(ApiResponse::success(
+        json!({
+            "key_metrics": [
+                { "title": "生产效率", "value": 85.5, "unit": "%", "change": 2.3, "change_type": "increase", "icon": "📈" },
+                { "title": "质量合格率", "value": 98.2, "unit": "%", "change": 0.8, "change_type": "increase", "icon": "✅" },
+                { "title": "设备稼动率", "value": 92.3, "unit": "%", "change": -1.2, "change_type": "decrease", "icon": "⚙️" }
+            ],
+            "recent_activities": [
+                { "id": 1, "type": "production", "title": "完成生产订单 PO-2024-001", "time": "10分钟前" },
+                { "id": 2, "type": "quality", "title": "质量检验完成，批次 B-001", "time": "25分钟前" }
+            ],
+            "generated_at": Utc::now().to_rfc3339()
+        }),
+        "获取分析摘要成功",
+    ))
 }
 
 async fn get_analytics_overview(
@@ -672,38 +672,46 @@ async fn get_analytics_overview(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    
-    let rs_data = fetch_rs_project_stats(&state).await.unwrap_or(ProjectStats {
-        total_projects: 120,
-        active_projects: 45,
-        completed_projects: 75,
-        avg_project_duration: 45.5,
-    });
-    
-    let lims_sample_data = fetch_lims_sample_stats(&state).await.unwrap_or(SampleStats {
-        total_samples: 2450,
-        pending_samples: 180,
-        completed_samples: 2150,
-        rejected_samples: 120,
-    });
-    
-    let qms_data = fetch_qms_quality_stats(&state).await.unwrap_or(QMSQualityStats {
-        total_inspections: 3250,
-        passed_inspections: 3180,
-        failed_inspections: 70,
-        pass_rate: 97.8,
-    });
-    
-    let pdm_batch_data = fetch_pdm_batch_stats(&state).await.unwrap_or(PDMBatchStats {
-        total_batches: 450,
-        completed_batches: 415,
-        in_progress_batches: 28,
-        cancelled_batches: 7,
-    });
-    
+
+    let rs_data = fetch_rs_project_stats(&state)
+        .await
+        .unwrap_or(ProjectStats {
+            total_projects: 120,
+            active_projects: 45,
+            completed_projects: 75,
+            avg_project_duration: 45.5,
+        });
+
+    let lims_sample_data = fetch_lims_sample_stats(&state)
+        .await
+        .unwrap_or(SampleStats {
+            total_samples: 2450,
+            pending_samples: 180,
+            completed_samples: 2150,
+            rejected_samples: 120,
+        });
+
+    let qms_data = fetch_qms_quality_stats(&state)
+        .await
+        .unwrap_or(QMSQualityStats {
+            total_inspections: 3250,
+            passed_inspections: 3180,
+            failed_inspections: 70,
+            pass_rate: 97.8,
+        });
+
+    let pdm_batch_data = fetch_pdm_batch_stats(&state)
+        .await
+        .unwrap_or(PDMBatchStats {
+            total_batches: 450,
+            completed_batches: 415,
+            in_progress_batches: 28,
+            cancelled_batches: 7,
+        });
+
     let overview = json!({
         "modules": {
             "rs": {
@@ -751,12 +759,14 @@ async fn get_analytics_overview(
         ],
         "generated_at": Utc::now().to_rfc3339()
     });
-    
+
     Json(ApiResponse::success(overview, "获取分析概览数据成功"))
 }
 
 async fn openapi_docs() -> Json<serde_json::Value> {
-    let openapi_json = BiApiDoc::openapi().to_json().unwrap_or_else(|_| "{}".to_string());
+    let openapi_json = BiApiDoc::openapi()
+        .to_json()
+        .unwrap_or_else(|_| "{}".to_string());
     let value: serde_json::Value = serde_json::from_str(&openapi_json).unwrap_or_default();
     Json(value)
 }
@@ -771,8 +781,11 @@ async fn main() -> Result<()> {
     let custom_gauge = Gauge::new(
         "topems_bi_custom_metric",
         "This is a custom metric for TOPEMS-BI",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -783,7 +796,10 @@ async fn main() -> Result<()> {
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         .route("/api-docs/openapi.json", get(openapi_docs))
         .with_state(app_state.clone());
 
@@ -800,7 +816,12 @@ async fn main() -> Result<()> {
     let report_routes = Router::new()
         .route("/create", post(api::report::create_report))
         .route("/", get(api::report::list_reports))
-        .route("/{id}", get(api::report::get_report).put(api::report::update_report).delete(api::report::delete_report))
+        .route(
+            "/{id}",
+            get(api::report::get_report)
+                .put(api::report::update_report)
+                .delete(api::report::delete_report),
+        )
         .route("/{id}/generate", post(api::report::generate_report))
         .route("/{id}/export", post(api::report::export_report))
         .route("/{id}/schedule", post(api::report::set_report_schedule));
@@ -809,16 +830,29 @@ async fn main() -> Result<()> {
     let dashboard_routes = Router::new()
         .route("/create", post(api::dashboard::create_dashboard))
         .route("/", get(api::dashboard::list_dashboards))
-        .route("/{id}", get(api::dashboard::get_dashboard).put(api::dashboard::update_dashboard).delete(api::dashboard::delete_dashboard))
+        .route(
+            "/{id}",
+            get(api::dashboard::get_dashboard)
+                .put(api::dashboard::update_dashboard)
+                .delete(api::dashboard::delete_dashboard),
+        )
         .route("/{id}/widgets", post(api::dashboard::add_widget))
-        .route("/{id}/widgets/{widget_id}", put(api::dashboard::update_widget).delete(api::dashboard::delete_widget))
+        .route(
+            "/{id}/widgets/{widget_id}",
+            put(api::dashboard::update_widget).delete(api::dashboard::delete_widget),
+        )
         .route("/{id}/data", get(api::dashboard::get_dashboard_data));
 
     // 数据源管理API路由
     let datasource_routes = Router::new()
         .route("/create", post(api::datasource::create_datasource))
         .route("/", get(api::datasource::list_datasources))
-        .route("/{id}", get(api::datasource::get_datasource).put(api::datasource::update_datasource).delete(api::datasource::delete_datasource))
+        .route(
+            "/{id}",
+            get(api::datasource::get_datasource)
+                .put(api::datasource::update_datasource)
+                .delete(api::datasource::delete_datasource),
+        )
         .route("/{id}/test", post(api::datasource::test_datasource))
         .route("/{id}/tables", get(api::datasource::get_datasource_tables))
         .route("/{id}/fields", get(api::datasource::get_datasource_fields));
@@ -827,29 +861,73 @@ async fn main() -> Result<()> {
     let visualization_routes = Router::new()
         .route("/create", post(api::visualization::create_visualization))
         .route("/", get(api::visualization::list_visualizations))
-        .route("/{id}", get(api::visualization::get_visualization).put(api::visualization::update_visualization).delete(api::visualization::delete_visualization))
-        .route("/{id}/data", post(api::visualization::get_visualization_data));
+        .route(
+            "/{id}",
+            get(api::visualization::get_visualization)
+                .put(api::visualization::update_visualization)
+                .delete(api::visualization::delete_visualization),
+        )
+        .route(
+            "/{id}/data",
+            post(api::visualization::get_visualization_data),
+        );
 
     // 模块数据分析API路由
     let module_routes = Router::new()
         .route("/rs/summary", get(api::module::get_rs_summary))
-        .route("/rs/project-timeline", get(api::module::get_rs_project_timeline))
-        .route("/rs/experiment-success-rate", get(api::module::get_rs_experiment_success_rate))
+        .route(
+            "/rs/project-timeline",
+            get(api::module::get_rs_project_timeline),
+        )
+        .route(
+            "/rs/experiment-success-rate",
+            get(api::module::get_rs_experiment_success_rate),
+        )
         .route("/lims/summary", get(api::module::get_lims_summary))
-        .route("/lims/sample-timeline", get(api::module::get_lims_sample_timeline))
-        .route("/lims/test-pass-rate", get(api::module::get_lims_test_pass_rate))
+        .route(
+            "/lims/sample-timeline",
+            get(api::module::get_lims_sample_timeline),
+        )
+        .route(
+            "/lims/test-pass-rate",
+            get(api::module::get_lims_test_pass_rate),
+        )
         .route("/qms/summary", get(api::module::get_qms_summary))
-        .route("/qms/quality-trend", get(api::module::get_qms_quality_trend))
-        .route("/qms/issue-distribution", get(api::module::get_qms_issue_distribution))
+        .route(
+            "/qms/quality-trend",
+            get(api::module::get_qms_quality_trend),
+        )
+        .route(
+            "/qms/issue-distribution",
+            get(api::module::get_qms_issue_distribution),
+        )
         .route("/ehs/summary", get(api::module::get_ehs_summary))
-        .route("/ehs/risk-distribution", get(api::module::get_ehs_risk_distribution))
-        .route("/ehs/incident-trend", get(api::module::get_ehs_incident_trend))
+        .route(
+            "/ehs/risk-distribution",
+            get(api::module::get_ehs_risk_distribution),
+        )
+        .route(
+            "/ehs/incident-trend",
+            get(api::module::get_ehs_incident_trend),
+        )
         .route("/srm/summary", get(api::module::get_srm_summary))
-        .route("/srm/supplier-ranking", get(api::module::get_srm_supplier_ranking))
-        .route("/srm/order-timeline", get(api::module::get_srm_order_timeline))
+        .route(
+            "/srm/supplier-ranking",
+            get(api::module::get_srm_supplier_ranking),
+        )
+        .route(
+            "/srm/order-timeline",
+            get(api::module::get_srm_order_timeline),
+        )
         .route("/pdm/summary", get(api::module::get_pdm_summary))
-        .route("/pdm/production-trend", get(api::module::get_pdm_production_trend))
-        .route("/pdm/batch-status-distribution", get(api::module::get_pdm_batch_status_distribution))
+        .route(
+            "/pdm/production-trend",
+            get(api::module::get_pdm_production_trend),
+        )
+        .route(
+            "/pdm/batch-status-distribution",
+            get(api::module::get_pdm_batch_status_distribution),
+        )
         .route("/{module_id}", get(api::module::get_module_detail));
 
     let protected_routes = Router::new()
@@ -876,7 +954,7 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8052".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8060".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-BI 数据大屏报表中台启动中...");

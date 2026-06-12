@@ -19,10 +19,7 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -30,7 +27,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(&format!("{}/api/v1/projects", rs_base_url))
+            .post(format!("{}/api/v1/projects", rs_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Contract Test Project",
@@ -53,7 +50,7 @@ mod tests {
 
         println!("1. Testing create contract...");
         let create_response = client
-            .post(&format!("{}/api/v1/contracts", erp_base_url))
+            .post(format!("{}/api/v1/contracts", erp_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "contract_no": "CT-2024-001",
@@ -75,16 +72,13 @@ mod tests {
 
         assert_eq!(create_response.status(), 200);
 
-        let contract_data = create_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let contract_data = create_response.json::<serde_json::Value>().await.unwrap();
         let contract_id = contract_data["id"].as_str().unwrap();
         println!("   Created contract with ID: {}", contract_id);
 
         println!("\n2. Testing get contract...");
         let get_response = client
-            .get(&format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
+            .get(format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -94,7 +88,7 @@ mod tests {
 
         println!("\n3. Testing list contracts...");
         let list_response = client
-            .get(&format!("{}/api/v1/contracts", erp_base_url))
+            .get(format!("{}/api/v1/contracts", erp_base_url))
             .bearer_auth(token.clone())
             .query(&[("project_id", project_id)])
             .send()
@@ -105,7 +99,7 @@ mod tests {
 
         println!("\n4. Testing update contract...");
         let update_response = client
-            .put(&format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
+            .put(format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "contract_amount": 180000.00,
@@ -121,7 +115,7 @@ mod tests {
 
         println!("\n5. Testing delete contract...");
         let delete_response = client
-            .delete(&format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
+            .delete(format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -130,7 +124,7 @@ mod tests {
         assert_eq!(delete_response.status(), 204);
 
         client
-            .delete(&format!("{}/api/v1/projects/{}", rs_base_url, project_id))
+            .delete(format!("{}/api/v1/projects/{}", rs_base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -156,10 +150,7 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -167,7 +158,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(&format!("{}/api/v1/projects", rs_base_url))
+            .post(format!("{}/api/v1/projects", rs_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Budget Test Project",
@@ -190,7 +181,7 @@ mod tests {
 
         println!("1. Testing create budget...");
         let create_response = client
-            .post(&format!("{}/api/v1/budgets", erp_base_url))
+            .post(format!("{}/api/v1/budgets", erp_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "project_id": project_id,
@@ -206,16 +197,16 @@ mod tests {
 
         assert_eq!(create_response.status(), 200);
 
-        let budget_data = create_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let budget_data = create_response.json::<serde_json::Value>().await.unwrap();
         let budget_id = budget_data["id"].as_str().unwrap();
         println!("   Created budget with ID: {}", budget_id);
 
         println!("\n2. Testing create budget items...");
         let create_item_response = client
-            .post(&format!("{}/api/v1/budgets/{}/items", erp_base_url, budget_id))
+            .post(format!(
+                "{}/api/v1/budgets/{}/items",
+                erp_base_url, budget_id
+            ))
             .bearer_auth(token.clone())
             .json(&json!({
                 "budget_id": budget_id,
@@ -238,7 +229,7 @@ mod tests {
 
         println!("\n3. Testing update budget...");
         let update_response = client
-            .put(&format!("{}/api/v1/budgets/{}", erp_base_url, budget_id))
+            .put(format!("{}/api/v1/budgets/{}", erp_base_url, budget_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "amount": 350000.00,
@@ -252,7 +243,7 @@ mod tests {
 
         println!("\n4. Testing delete budget item...");
         let delete_item_response = client
-            .delete(&format!("{}/api/v1/budget-items/{}", erp_base_url, item_id))
+            .delete(format!("{}/api/v1/budget-items/{}", erp_base_url, item_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -262,7 +253,7 @@ mod tests {
 
         println!("\n5. Testing delete budget...");
         let delete_response = client
-            .delete(&format!("{}/api/v1/budgets/{}", erp_base_url, budget_id))
+            .delete(format!("{}/api/v1/budgets/{}", erp_base_url, budget_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -271,7 +262,7 @@ mod tests {
         assert_eq!(delete_response.status(), 204);
 
         client
-            .delete(&format!("{}/api/v1/projects/{}", rs_base_url, project_id))
+            .delete(format!("{}/api/v1/projects/{}", rs_base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -297,10 +288,7 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -308,7 +296,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(&format!("{}/api/v1/projects", rs_base_url))
+            .post(format!("{}/api/v1/projects", rs_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Payment Schedule Test Project",
@@ -330,7 +318,7 @@ mod tests {
         let project_id = project_data["data"]["id"].as_str().unwrap();
 
         let create_contract_response = client
-            .post(&format!("{}/api/v1/contracts", erp_base_url))
+            .post(format!("{}/api/v1/contracts", erp_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "contract_no": "CT-PAYMENT-001",
@@ -356,7 +344,7 @@ mod tests {
 
         println!("1. Testing create payment schedule...");
         let create_response = client
-            .post(&format!("{}/api/v1/payment-schedules", erp_base_url))
+            .post(format!("{}/api/v1/payment-schedules", erp_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "contract_id": contract_id,
@@ -373,16 +361,16 @@ mod tests {
 
         assert_eq!(create_response.status(), 200);
 
-        let schedule_data = create_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let schedule_data = create_response.json::<serde_json::Value>().await.unwrap();
         let schedule_id = schedule_data["id"].as_str().unwrap();
         println!("   Created payment schedule with ID: {}", schedule_id);
 
         println!("\n2. Testing update payment schedule...");
         let update_response = client
-            .put(&format!("{}/api/v1/payment-schedules/{}", erp_base_url, schedule_id))
+            .put(format!(
+                "{}/api/v1/payment-schedules/{}",
+                erp_base_url, schedule_id
+            ))
             .bearer_auth(token.clone())
             .json(&json!({
                 "status": "PAID",
@@ -397,7 +385,10 @@ mod tests {
 
         println!("\n3. Testing delete payment schedule...");
         let delete_response = client
-            .delete(&format!("{}/api/v1/payment-schedules/{}", erp_base_url, schedule_id))
+            .delete(format!(
+                "{}/api/v1/payment-schedules/{}",
+                erp_base_url, schedule_id
+            ))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -406,14 +397,14 @@ mod tests {
         assert_eq!(delete_response.status(), 204);
 
         client
-            .delete(&format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
+            .delete(format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
             .bearer_auth(token.clone())
             .send()
             .await
             .expect("Cleanup contract failed");
 
         client
-            .delete(&format!("{}/api/v1/projects/{}", rs_base_url, project_id))
+            .delete(format!("{}/api/v1/projects/{}", rs_base_url, project_id))
             .bearer_auth(token)
             .send()
             .await

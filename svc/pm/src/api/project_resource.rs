@@ -1,21 +1,29 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::project_resource::{CreateResourceRequest, ProjectResource, UpdateResourceRequest};
+use crate::models::project_resource::{
+    CreateResourceRequest, ProjectResource, UpdateResourceRequest,
+};
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/resources", get(list_resources).post(add_resource))
-        .route("/api/v1/projects/{project_id}/resources/{id}", get(get_resource).put(update_resource).delete(remove_resource))
+        .route(
+            "/api/v1/projects/{project_id}/resources",
+            get(list_resources).post(add_resource),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/resources/{id}",
+            get(get_resource)
+                .put(update_resource)
+                .delete(remove_resource),
+        )
         .with_state(pool)
 }
 
@@ -33,7 +41,7 @@ async fn list_resources(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectResource>>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "SELECT * FROM pm.project_resources WHERE project_id = $1 ORDER BY resource_type ASC"
+        "SELECT * FROM pm.project_resources WHERE project_id = $1 ORDER BY resource_type ASC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -83,8 +91,8 @@ async fn add_resource(
     .bind(req.resource_id)
     .bind(&req.resource_service)
     .bind(&req.role)
-    .bind(&req.start_date)
-    .bind(&req.end_date)
+    .bind(req.start_date)
+    .bind(req.end_date)
     .bind(req.allocation_percent.unwrap_or(100))
     .bind(0)
     .bind(0.0)
@@ -119,7 +127,7 @@ async fn get_resource(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectResource>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "SELECT * FROM pm.project_resources WHERE project_id = $1 AND id = $2"
+        "SELECT * FROM pm.project_resources WHERE project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)
@@ -170,8 +178,8 @@ async fn update_resource(
         "#,
     )
     .bind(&req.role)
-    .bind(&req.start_date)
-    .bind(&req.end_date)
+    .bind(req.start_date)
+    .bind(req.end_date)
     .bind(req.allocation_percent)
     .bind(req.actual_hours)
     .bind(req.actual_cost)
@@ -206,13 +214,11 @@ async fn remove_resource(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query(
-        "DELETE FROM pm.project_resources WHERE project_id = $1 AND id = $2"
-    )
-    .bind(project_id)
-    .bind(id)
-    .execute(&pool)
-    .await;
+    let result = sqlx::query("DELETE FROM pm.project_resources WHERE project_id = $1 AND id = $2")
+        .bind(project_id)
+        .bind(id)
+        .execute(&pool)
+        .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

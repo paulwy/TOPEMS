@@ -1,8 +1,10 @@
 use sqlx::PgPool;
-use uuid::Uuid;
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, ModulePermission as SharedModulePermission,
+};
 use topems_shared::response::ApiResponse;
-use topems_shared::permission::{ModulePermission as SharedModulePermission, check_module_permission};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ModulePermission {
@@ -37,7 +39,7 @@ impl SharedModulePermission for ModulePermission {
     fn module_name() -> &'static str {
         "scm"
     }
-    
+
     fn all_permission() -> Self {
         ModulePermission::All
     }
@@ -68,5 +70,8 @@ pub async fn check_supplier_permission<T>(
         return Ok(());
     }
 
-    Err(axum::Json(ApiResponse::error(403, "权限不足：需要供应商管理权限")))
+    Err(axum::Json(ApiResponse::error(
+        403,
+        "权限不足：需要供应商管理权限",
+    )))
 }

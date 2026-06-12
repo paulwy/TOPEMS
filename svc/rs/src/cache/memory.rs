@@ -29,13 +29,13 @@ impl Default for MemoryCache {
 impl Cache for MemoryCache {
     fn get<T: DeserializeOwned>(&self, key: &str) -> Option<T> {
         let entry = self.data.get(key)?;
-        
+
         if entry.expires_at < Instant::now() {
             drop(entry);
             self.data.remove(key);
             return None;
         }
-        
+
         // 尝试反序列化
         serde_json::from_str(&entry.value).ok()
     }

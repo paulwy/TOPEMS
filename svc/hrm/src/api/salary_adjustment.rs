@@ -1,17 +1,17 @@
 use axum::{
     extract::{Path, Query, State},
-    Json, Router,
     routing::{get, put},
+    Json, Router,
 };
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{
-    SalaryAdjustment, CreateSalaryAdjustmentRequest, UpdateSalaryAdjustmentRequest,
-    ApproveSalaryAdjustmentRequest, RejectSalaryAdjustmentRequest,
-};
-use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
+use crate::models::{
+    ApproveSalaryAdjustmentRequest, CreateSalaryAdjustmentRequest, RejectSalaryAdjustmentRequest,
+    SalaryAdjustment, UpdateSalaryAdjustmentRequest,
+};
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct SalaryAdjustmentPaginationParams {
@@ -23,10 +23,22 @@ pub struct SalaryAdjustmentPaginationParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/salary-adjustments", get(list_salary_adjustments).post(create_salary_adjustment))
-        .route("/api/v1/salary-adjustments/{id}", get(get_salary_adjustment).put(update_salary_adjustment))
-        .route("/api/v1/salary-adjustments/{id}/approve", put(approve_salary_adjustment))
-        .route("/api/v1/salary-adjustments/{id}/reject", put(reject_salary_adjustment))
+        .route(
+            "/api/v1/salary-adjustments",
+            get(list_salary_adjustments).post(create_salary_adjustment),
+        )
+        .route(
+            "/api/v1/salary-adjustments/{id}",
+            get(get_salary_adjustment).put(update_salary_adjustment),
+        )
+        .route(
+            "/api/v1/salary-adjustments/{id}/approve",
+            put(approve_salary_adjustment),
+        )
+        .route(
+            "/api/v1/salary-adjustments/{id}/reject",
+            put(reject_salary_adjustment),
+        )
 }
 
 async fn list_salary_adjustments(

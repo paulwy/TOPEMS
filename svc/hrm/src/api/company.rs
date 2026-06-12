@@ -8,12 +8,12 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{Company, CreateCompanyRequest, UpdateCompanyRequest};
+use super::ApiState;
 use crate::api::audit::log_audit_event;
+use crate::models::{Company, CreateCompanyRequest, UpdateCompanyRequest};
 use crate::utils::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{ApiResponse, api_error};
-use super::ApiState;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -25,7 +25,10 @@ pub struct PaginationParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/companies", get(list_companies).post(create_company))
+        .route(
+            "/api/v1/companies",
+            get(list_companies).post(create_company),
+        )
         .route(
             "/api/v1/companies/{id}",
             get(get_company).put(update_company).delete(delete_company),
@@ -38,10 +41,10 @@ async fn list_companies(
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CompanyRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -50,9 +53,7 @@ async fn list_companies(
     let status_filter = params.status.clone();
 
     // 验证连接状态
-    let conn_test = sqlx::query("SHOW search_path")
-        .fetch_one(&state.db)
-        .await;
+    let conn_test = sqlx::query("SHOW search_path").fetch_one(&state.db).await;
     tracing::debug!("Connection search_path: {:?}", conn_test);
 
     let result = sqlx::query_as::<_, Company>(
@@ -110,12 +111,15 @@ async fn list_companies(
                 })
                 .collect();
 
-            Json(ApiResponse::success(serde_json::json!({
-                "items": items,
-                "total": total,
-                "page": page,
-                "page_size": page_size
-            }), "公司列表获取成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "公司列表获取成功",
+            ))
         }
         Err(e) => {
             tracing::error!("获取公司列表失败: {}", e);
@@ -131,10 +135,10 @@ async fn create_company(
     Json(req): Json<CreateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
     match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -167,10 +171,12 @@ async fn create_company(
     match result {
         Ok(company) => {
             // 记录审计日志
-            let user_id = headers.get("x-user-id")
+            let user_id = headers
+                .get("x-user-id")
                 .and_then(|v| v.to_str().ok())
                 .map(|s| s.to_string());
-            let user_name = headers.get("x-user-name")
+            let user_name = headers
+                .get("x-user-name")
                 .and_then(|v| v.to_str().ok())
                 .map(|s| s.to_string());
 
@@ -188,8 +194,9 @@ async fn create_company(
                 response_data,
                 "success".to_string(),
                 None,
-                &headers
-            ).await;
+                &headers,
+            )
+            .await;
 
             tracing::info!("创建公司成功: {}", company.name);
             Json(ApiResponse::success(company, "公司创建成功"))
@@ -207,10 +214,10 @@ async fn get_company(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Company>> {
     match check_permission(&state.db, &claims, &ModulePermission::CompanyRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    
+
     let result = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
@@ -223,12 +230,8 @@ async fn get_company(
     .await;
 
     match result {
-        Ok(Some(company)) => {
-            Json(ApiResponse::success(company, "公司信息获取成功"))
-        }
-        Ok(None) => {
-            Json(api_error(404, "公司不存在"))
-        }
+        Ok(Some(company)) => Json(ApiResponse::success(company, "公司信息获取成功")),
+        Ok(None) => Json(api_error(404, "公司不存在")),
         Err(e) => {
             tracing::error!("获取公司失败: {}", e);
             Json(api_error(500, &format!("获取公司失败: {}", e)))
@@ -244,10 +247,10 @@ async fn update_company(
     Json(req): Json<UpdateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
     match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    
+
     // 先检查公司是否存在
     let existing = sqlx::query_as::<_, Company>(
         r#"
@@ -308,10 +311,12 @@ async fn update_company(
     match result {
         Ok(company) => {
             // 记录审计日志
-            let user_id = headers.get("x-user-id")
+            let user_id = headers
+                .get("x-user-id")
                 .and_then(|v| v.to_str().ok())
                 .map(|s| s.to_string());
-            let user_name = headers.get("x-user-name")
+            let user_name = headers
+                .get("x-user-name")
                 .and_then(|v| v.to_str().ok())
                 .map(|s| s.to_string());
 
@@ -329,8 +334,9 @@ async fn update_company(
                 response_data,
                 "success".to_string(),
                 None,
-                &headers
-            ).await;
+                &headers,
+            )
+            .await;
 
             tracing::info!("更新公司成功: {}", company.name);
             Json(ApiResponse::success(company, "公司更新成功"))
@@ -349,10 +355,10 @@ async fn delete_company(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    
+
     // 先检查公司是否存在
     let existing = sqlx::query_as::<_, Company>(
         r#"
@@ -374,10 +380,12 @@ async fn delete_company(
             match result {
                 Ok(_) => {
                     // 记录审计日志
-                    let user_id = headers.get("x-user-id")
+                    let user_id = headers
+                        .get("x-user-id")
                         .and_then(|v| v.to_str().ok())
                         .map(|s| s.to_string());
-                    let user_name = headers.get("x-user-name")
+                    let user_name = headers
+                        .get("x-user-name")
                         .and_then(|v| v.to_str().ok())
                         .map(|s| s.to_string());
 
@@ -395,8 +403,9 @@ async fn delete_company(
                         response_data,
                         "success".to_string(),
                         None,
-                        &headers
-                    ).await;
+                        &headers,
+                    )
+                    .await;
 
                     tracing::info!("删除公司成功: {}", company.name);
                     Json(ApiResponse::success(company.id.to_string(), "公司删除成功"))
@@ -407,9 +416,7 @@ async fn delete_company(
                 }
             }
         }
-        Ok(None) => {
-            Json(api_error(404, "公司不存在"))
-        }
+        Ok(None) => Json(api_error(404, "公司不存在")),
         Err(e) => {
             tracing::error!("查询公司失败: {}", e);
             Json(api_error(500, &format!("查询公司失败: {}", e)))

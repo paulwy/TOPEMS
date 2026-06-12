@@ -4,32 +4,31 @@ use crate::Result;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
-use tracing::{info, error, debug};
+use tracing::{debug, error, info};
 
 pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
-    let search_path = std::env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
+    let search_path =
+        std::env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
     debug!("create_database_pool: search_path = {}", search_path);
-    
+
     let min_connections = config.min_connections.unwrap_or(5);
     let connect_timeout = config.connect_timeout.unwrap_or(30);
     let idle_timeout = config.idle_timeout.unwrap_or(300);
     let max_lifetime = config.max_lifetime.unwrap_or(1800);
-    
+
     let options = PgPoolOptions::new()
         .max_connections(config.max_connections)
         .min_connections(min_connections)
         .acquire_timeout(Duration::from_secs(connect_timeout))
         .idle_timeout(Duration::from_secs(idle_timeout))
         .max_lifetime(Duration::from_secs(max_lifetime));
-    
+
     let options = options.after_connect(move |conn, _meta| {
         let search_path = search_path.clone();
         Box::pin(async move {
             debug!("after_connect: setting search_path to {}", search_path);
             let query = format!("SET search_path TO {}", search_path);
-            let result = sqlx::query(&query)
-                .execute(conn)
-                .await;
+            let result = sqlx::query(&query).execute(conn).await;
             result.map_err(|e| {
                 error!("Failed to set search path: {}", e);
                 e
@@ -43,8 +42,10 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
         .await
         .map_err(|e| TopemsError::Database(format!("Failed to create database pool: {}", e)))?;
 
-    info!("✅ 数据库连接池创建成功 (max: {}, min: {}, timeout: {}s, lifetime: {}s)", 
-          config.max_connections, min_connections, connect_timeout, max_lifetime);
+    info!(
+        "✅ 数据库连接池创建成功 (max: {}, min: {}, timeout: {}s, lifetime: {}s)",
+        config.max_connections, min_connections, connect_timeout, max_lifetime
+    );
     Ok(pool)
 }
 
@@ -53,7 +54,7 @@ pub async fn test_database_connection(pool: &PgPool) -> Result<()> {
         .execute(pool)
         .await
         .map_err(|e| TopemsError::Database(format!("Database connection test failed: {}", e)))?;
-    
+
     info!("✅ 数据库连接测试通过");
     Ok(())
 }
@@ -67,7 +68,7 @@ pub struct HealthCheckResult {
 
 pub async fn check_pool_health(pool: &PgPool) -> HealthCheckResult {
     let start = std::time::Instant::now();
-    
+
     let result = match sqlx::query("SELECT 1").fetch_one(pool).await {
         Ok(_) => HealthCheckResult {
             healthy: true,
@@ -80,6 +81,6 @@ pub async fn check_pool_health(pool: &PgPool) -> HealthCheckResult {
             error: Some(e.to_string()),
         },
     };
-    
+
     result
 }

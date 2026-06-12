@@ -3,10 +3,10 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use std::collections::HashMap;
-use std::time::{Instant, Duration};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::RwLock;
 
 #[derive(Debug, Clone)]
 pub struct RateLimitConfig {
@@ -94,7 +94,7 @@ fn get_client_ip(req: &Request<axum::body::Body>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::http::{Request, HeaderValue};
+    use axum::http::{HeaderValue, Request};
 
     #[test]
     fn test_rate_limit_config() {
@@ -103,7 +103,7 @@ mod tests {
             requests: 10,
             window_secs: 60,
         };
-        
+
         assert!(config.enabled);
         assert_eq!(config.requests, 10);
         assert_eq!(config.window_secs, 60);
@@ -112,8 +112,11 @@ mod tests {
     #[test]
     fn test_client_ip_extraction() {
         let mut req = Request::get("/").body(axum::body::Body::empty()).unwrap();
-        req.headers_mut().insert("X-Forwarded-For", HeaderValue::from_static("192.168.1.1, 10.0.0.1"));
-        
+        req.headers_mut().insert(
+            "X-Forwarded-For",
+            HeaderValue::from_static("192.168.1.1, 10.0.0.1"),
+        );
+
         let ip = get_client_ip(&req);
         assert_eq!(ip, "192.168.1.1");
     }
@@ -121,7 +124,7 @@ mod tests {
     #[test]
     fn test_client_ip_fallback() {
         let req = Request::get("/").body(axum::body::Body::empty()).unwrap();
-        
+
         let ip = get_client_ip(&req);
         assert_eq!(ip, "unknown");
     }

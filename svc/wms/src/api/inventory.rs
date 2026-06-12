@@ -8,12 +8,12 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
 use crate::api::audit::log_audit_event;
 use crate::api::ApiState;
+use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{ApiResponse, api_error};
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct InventoryPaginationParams {
@@ -30,10 +30,15 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/v1/inventory", get(list_inventory).post(create_inventory))
+        .route(
+            "/api/v1/inventory",
+            get(list_inventory).post(create_inventory),
+        )
         .route(
             "/api/v1/inventory/{id}",
-            get(get_inventory).put(update_inventory).delete(delete_inventory),
+            get(get_inventory)
+                .put(update_inventory)
+                .delete(delete_inventory),
         )
 }
 
@@ -43,7 +48,7 @@ async fn list_inventory(
     Query(params): Query<InventoryPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
@@ -116,7 +121,7 @@ async fn create_inventory(
     Json(req): Json<CreateInventoryItemRequest>,
 ) -> Json<ApiResponse<InventoryItem>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -151,14 +156,14 @@ async fn create_inventory(
         Ok(item) => (
             Json(ApiResponse::success(item.clone(), "库存创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建库存失败: {}", e);
             (
                 Json(api_error(500, "库存创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -181,8 +186,9 @@ async fn create_inventory(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -193,7 +199,7 @@ async fn get_inventory(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InventoryItem>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, InventoryItem>(
@@ -225,12 +231,12 @@ async fn update_inventory(
     Json(req): Json<UpdateInventoryItemRequest>,
 ) -> Json<ApiResponse<InventoryItem>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, InventoryItem>(
         r#"
         SELECT id, sku, name, specification, unit, quantity, location_id, warehouse_id, 
@@ -289,14 +295,14 @@ async fn update_inventory(
         Ok(item) => (
             Json(ApiResponse::success(item.clone(), "库存更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新库存失败: {}", e);
             (
                 Json(api_error(500, "库存更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -319,8 +325,9 @@ async fn update_inventory(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -332,7 +339,7 @@ async fn delete_inventory(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query("DELETE FROM inventory_items WHERE id = $1")
@@ -344,19 +351,19 @@ async fn delete_inventory(
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success("".to_string(), "库存删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(api_error(404, "库存不存在")),
             "error",
-            Some("库存不存在".to_string())
+            Some("库存不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除库存失败: {}", e);
             (
                 Json(api_error(500, "库存删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -379,8 +386,9 @@ async fn delete_inventory(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

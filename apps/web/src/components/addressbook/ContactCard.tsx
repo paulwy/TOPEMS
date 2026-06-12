@@ -1,5 +1,4 @@
-import React from "react";
-import { User, Building, Users, Mail, Phone, MapPin } from "lucide-react";
+import { User, Building, Users, Mail, Phone } from "lucide-react";
 import type { AddressbookEntry } from "../../types/addressbook";
 
 interface ContactCardProps {
@@ -35,15 +34,6 @@ export const ContactCard: React.FC<ContactCardProps> = ({
       default:
         return "bg-gray-100 text-gray-600";
     }
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   return (

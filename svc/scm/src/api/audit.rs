@@ -8,9 +8,9 @@ use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
-use crate::models::AuditLog;
-use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
+use crate::models::AuditLog;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct ListAuditLogsQuery {

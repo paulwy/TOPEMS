@@ -1,9 +1,4 @@
-import React, {
-  useEffect,
-  useRef,
-  forwardRef,
-  useImperativeHandle,
-} from "react";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import AMapLoader from "@amap/amap-jsapi-loader";
 import type { DevicePoint, StorageLocation } from "../../api/gis";
 

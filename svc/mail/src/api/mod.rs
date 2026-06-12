@@ -1,8 +1,5 @@
 use anyhow::Result;
-use axum::{
-    extract::FromRef,
-    Router,
-};
+use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;

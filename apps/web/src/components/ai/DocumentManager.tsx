@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Upload,
   FileText,
@@ -8,11 +8,10 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -29,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Document } from "@/api/ai";
-import { aiApi, SearchResult } from "@/api/ai";
+import { aiApi } from "@/api/ai";
 import { useAppStore } from "@/store";
 
 export interface DocumentManagerProps {
@@ -70,7 +69,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
     try {
       setLoading(true);
       const response = await aiApi.listDocuments();
-      if (response.success) {
+      if (response.success && response.data) {
         setDocuments(response.data.items);
       }
     } catch (err) {
@@ -174,7 +173,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         limit: 10,
       });
 
-      if (response.success) {
+      if (response.success && response.data) {
         const results = response.data.documents.map(
           (doc: Document, index: number) => ({
             document_title: doc.title,

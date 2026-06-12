@@ -8,11 +8,11 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{CreateOfficeSupplyRequest, OfficeSupply, UpdateOfficeSupplyRequest};
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
-use crate::utils::validate_required_field;
 use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
+use crate::models::{CreateOfficeSupplyRequest, OfficeSupply, UpdateOfficeSupplyRequest};
+use crate::utils::validate_required_field;
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct SupplyQueryParams {
@@ -25,7 +25,10 @@ pub struct SupplyQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/office-supplies", get(list_supplies).post(create_supply))
+        .route(
+            "/api/v1/office-supplies",
+            get(list_supplies).post(create_supply),
+        )
         .route(
             "/api/v1/office-supplies/{id}",
             get(get_supply).put(update_supply).delete(delete_supply),
@@ -117,7 +120,7 @@ async fn create_supply(
     .bind(&req.category)
     .bind(req.quantity)
     .bind(&req.unit)
-    .bind(&req.price)
+    .bind(req.price)
     .bind(&req.location)
     .bind(now)
     .bind(now)
@@ -149,16 +152,18 @@ async fn create_supply(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "office_supply".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "office_supply".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -233,7 +238,7 @@ async fn update_supply(
     .bind(&category)
     .bind(quantity)
     .bind(&unit)
-    .bind(&price)
+    .bind(price)
     .bind(&location)
     .bind(&status)
     .bind(now)
@@ -264,16 +269,18 @@ async fn update_supply(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "office_supply".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "office_supply".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -320,16 +327,18 @@ async fn delete_supply(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "office_supply".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "office_supply".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

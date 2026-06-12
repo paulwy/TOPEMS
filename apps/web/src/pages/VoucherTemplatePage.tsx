@@ -7,19 +7,15 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
-  Search,
   RefreshCw,
   Trash2,
   Edit,
   Copy,
   Settings,
   FileText,
-  ArrowUpDown,
-  MoreHorizontal,
   Check,
   X,
   Play,
-  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +56,6 @@ export default function VoucherTemplatePage() {
   const { data: templatesData, isLoading, refetch } = useVoucherTemplates();
 
   // mutations
-  const createTemplate = useCreateVoucherTemplate();
   const deleteTemplate = useDeleteVoucherTemplate();
   const copyTemplate = useCopyVoucherTemplate();
   const toggleTemplate = useToggleVoucherTemplate();
@@ -69,8 +64,8 @@ export default function VoucherTemplatePage() {
   // 状态
   const [searchKeyword, setSearchKeyword] = useState("");
   const [filterType, setFilterType] = useState<VoucherTemplateType | "">("");
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<any>(null);
+  const [, setShowCreateModal] = useState(false);
+  const [, setEditingTemplate] = useState<any>(null);
 
   // 筛选模板
   const filteredTemplates = (templatesData?.data?.items || []).filter(

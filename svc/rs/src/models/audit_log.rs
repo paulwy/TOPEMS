@@ -23,6 +23,7 @@ pub struct AuditLog {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct CreateAuditLogRequest {
     pub action: String,
     pub entity_type: String,

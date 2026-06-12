@@ -15,27 +15,31 @@ echo "  TOPEMS 数据库初始化"
 echo "=============================================="
 echo ""
 
-# 检查 PostgreSQL 是否运行
+# 检查 PostgreSQL 是否运行 - 使用 Docker 检查
 echo "🔍 检查 PostgreSQL 服务..."
-if ! command -v psql &> /dev/null; then
-    echo -e "${RED}错误:${NC} PostgreSQL 客户端未安装"
+POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep topems-postgres)
+
+if [ -z "$POSTGRES_CONTAINER" ]; then
+    echo -e "${RED}错误:${NC} PostgreSQL 容器未运行"
+    echo "请先启动 Docker 容器: docker-compose up -d"
     exit 1
 fi
 
-# 尝试连接数据库
-echo "📦 检查数据库连接..."
-if ! psql -lqt > /dev/null 2>&1; then
-    echo -e "${YELLOW}警告:${NC} 无法连接到 PostgreSQL"
-    echo "请确保 PostgreSQL 正在运行"
-    exit 1
-fi
+echo -e "${GREEN}✅${NC} PostgreSQL 容器正在运行: $POSTGRES_CONTAINER"
 
-echo -e "${GREEN}✅${NC} PostgreSQL 连接正常"
+# 定义使用 Docker 执行 psql 的函数
+docker_psql() {
+    docker exec "$POSTGRES_CONTAINER" psql -U topems -d topems "$@"
+}
+
+docker_psql_as_postgres() {
+    docker exec "$POSTGRES_CONTAINER" psql -U postgres -d postgres "$@"
+}
 echo ""
 
 # 创建用户
 echo "👤 创建数据库用户..."
-psql -d postgres -c "CREATE USER IF NOT EXISTS topems WITH PASSWORD 'topems_secret';" 2>/dev/null
+docker_psql_as_postgres -c "CREATE USER topems WITH PASSWORD 'topems_secret';" 2>/dev/null
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅${NC} 用户 topems 已创建"
@@ -45,7 +49,7 @@ fi
 
 # 创建数据库
 echo "📦 创建数据库..."
-psql -d postgres -c "CREATE DATABASE IF NOT EXISTS topems OWNER topems;" 2>/dev/null
+docker_psql_as_postgres -c "CREATE DATABASE topems OWNER topems;" 2>/dev/null
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅${NC} 数据库 topems 已创建"
@@ -55,46 +59,79 @@ fi
 
 # 授予权限
 echo "🔐 授予权限..."
-psql -d topems -c "GRANT ALL PRIVILEGES ON SCHEMA public TO topems;" 2>/dev/null
-psql -d topems -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO topems;" 2>/dev/null
-psql -d topems -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO topems;" 2>/dev/null
+docker_psql -c "GRANT ALL PRIVILEGES ON SCHEMA public TO topems;" 2>/dev/null
+docker_psql -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO topems;" 2>/dev/null
+docker_psql -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO topems;" 2>/dev/null
 
 echo -e "${GREEN}✅${NC} 权限已授予"
 echo ""
 
-# 初始化权限表结构
-echo "🔐 初始化权限管理表结构..."
-PERMISSION_SCHEMA_FILE="../services/topems-iam/backend/db/permission_schema.sql"
+# 初始化 IAM schema
+echo "🔐 初始化 IAM 表结构..."
+IAM_SCHEMA_FILE="svc/iam/src/db/migrations/20260522000001_create_iam_schema.sql"
 
-if [ -f "$PERMISSION_SCHEMA_FILE" ]; then
-    psql -d topems -U topems -f "$PERMISSION_SCHEMA_FILE" > /dev/null 2>&1
-    
+if [ -f "$IAM_SCHEMA_FILE" ]; then
+    docker cp "$IAM_SCHEMA_FILE" "$POSTGRES_CONTAINER:/tmp/iam_schema.sql" > /dev/null 2>&1
+    docker exec "$POSTGRES_CONTAINER" psql -U topems -d topems -f "/tmp/iam_schema.sql" > /dev/null 2>&1
+
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅${NC} 权限表结构已创建"
+        echo -e "${GREEN}✅${NC} IAM 表结构已创建"
     else
-        echo -e "${YELLOW}⚠️${NC} 权限表结构可能已存在，继续..."
+        echo -e "${YELLOW}⚠️${NC} IAM 表结构可能已存在，继续..."
     fi
 else
-    echo -e "${YELLOW}⚠️${NC} 权限表结构文件不存在: $PERMISSION_SCHEMA_FILE"
-    echo "请确保文件路径正确"
+    echo -e "${YELLOW}⚠️${NC} IAM schema 文件不存在: $IAM_SCHEMA_FILE"
 fi
 
-# 初始化权限数据
-echo "🔑 初始化权限和角色数据..."
-PERMISSION_SEED_FILE="../services/topems-iam/backend/db/permission_seed.sql"
+# 初始化所有其他 schema
+echo "� 初始化所有服务的数据库 schema..."
+SCHEMA_FILES=(
+    "svc/shared/migrations/20260612000001_create_shared_schema.sql"
+    "svc/erp/migrations/20260612000001_create_consolidation_schema.sql"
+    "svc/erp/migrations/20260608100000_create_erp_schema.sql"
+    "svc/file/migrations/20260611000001_create_storage_schema.sql"
+    "svc/mobile/migrations/20260609100006_create_mobile_schema.sql"
+    "svc/integration/migrations/20260609100005_create_integration_schema.sql"
+    "svc/report/migrations/20260609100007_create_report_schema.sql"
+    "svc/wms/migrations/20260608100004_create_wms_schema.sql"
+    "svc/portal/migrations/20260609100004_create_portal_schema.sql"
+    "svc/mes/migrations/20260608100003_create_mes_schema.sql"
+    "svc/im/migrations/20260608100000_create_im_schema.sql"
+    "svc/gis/migrations/20260608100000_create_gis_schema.sql"
+    "svc/ehs/migrations/20260609100000_create_ehs_schema.sql"
+    "svc/srm/migrations/20260609100002_create_srm_schema.sql"
+    "svc/scm/migrations/20260609100001_create_scm_schema.sql"
+    "svc/pm/migrations/20260609100003_create_pm_schema.sql"
+    "svc/qms/migrations/20260608100002_create_qms_schema.sql"
+    "svc/lims/migrations/20260608100000_create_lims_schema.sql"
+    "svc/crm/migrations/20260608100001_create_crm_schema.sql"
+    "svc/hrm/migrations/20260609000000_create_initialization_schema.sql"
+    "svc/hrm/migrations/20260608100000_create_hrm_schema.sql"
+    "svc/doc/src/db/migrations/20260523000001_create_doc_schema.sql"
+    "svc/doc/src/db/migrations/20260527000001_create_templates_and_help_center_schema.sql"
+    "svc/doc/src/db/migrations/20260605000001_create_archive_schema.sql"
+    "svc/rs/migrations/20260601000000_projects.sql"
+    "svc/rs/migrations/20260601000001_project_phases.sql"
+    "svc/rs/migrations/20260601000002_project_milestones.sql"
+    "svc/rs/migrations/20260601000003_project_members.sql"
+)
 
-if [ -f "$PERMISSION_SEED_FILE" ]; then
-    psql -d topems -U topems -f "$PERMISSION_SEED_FILE" > /dev/null 2>&1
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅${NC} 权限和角色数据已初始化"
-    else
-        echo -e "${YELLOW}⚠️${NC} 权限数据可能已存在，继续..."
+initialized_count=0
+skipped_count=0
+
+for schema_file in "${SCHEMA_FILES[@]}"; do
+    if [ -f "$schema_file" ]; then
+        docker cp "$schema_file" "$POSTGRES_CONTAINER:/tmp/$(basename $schema_file)" > /dev/null 2>&1
+        docker exec "$POSTGRES_CONTAINER" psql -U topems -d topems -f "/tmp/$(basename $schema_file)" > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            ((initialized_count++))
+        else
+            ((skipped_count++))
+        fi
     fi
-else
-    echo -e "${YELLOW}⚠️${NC} 权限种子文件不存在: $PERMISSION_SEED_FILE"
-    echo "请确保文件路径正确"
-fi
+done
+
+echo -e "${GREEN}✅${NC} 已初始化 $initialized_count 个 schema, $skipped_count 个已存在"
 
 echo ""
 echo "=============================================="

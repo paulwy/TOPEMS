@@ -175,7 +175,7 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
-      if (onSelectionChange) {
+      if (onSelectionChange && selectionKey) {
         if (checked) {
           const allIds = table
             .getFilteredRowModel()
@@ -264,7 +264,7 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   const displayPageIndex = useMemo(() => {
     return enablePagination
       ? currentPage
-      : table.getState().pagination.pageIndex;
+      : (table.getState().pagination?.pageIndex ?? 0);
   }, [enablePagination, currentPage, table]);
 
   const pageButtons = useMemo(() => {
@@ -518,10 +518,15 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                     {enableSelection && (
                       <TableCell className="w-10">
                         <Checkbox
-                          checked={selectedIds.includes(
-                            String(row.original[selectionKey]),
-                          )}
+                          checked={
+                            selectionKey
+                              ? selectedIds.includes(
+                                  String(row.original[selectionKey]),
+                                )
+                              : false
+                          }
                           onCheckedChange={() =>
+                            selectionKey &&
                             handleSelectRow(String(row.original[selectionKey]))
                           }
                         />

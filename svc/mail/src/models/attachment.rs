@@ -6,7 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Attachment {
     pub id: Uuid,
-    pub email_id: Option<Uuid>,  // Optional: can exist without email (uploaded but not sent)
+    pub email_id: Option<Uuid>, // Optional: can exist without email (uploaded but not sent)
     pub filename: String,
     pub original_filename: String,
     pub file_path: String,
@@ -18,6 +18,7 @@ pub struct Attachment {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct AttachmentUploadResponse {
     pub id: Uuid,
     pub filename: String,
@@ -59,6 +60,7 @@ pub struct AttachmentParams {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct AttachEmailRequest {
     pub attachment_ids: Vec<Uuid>,
 }

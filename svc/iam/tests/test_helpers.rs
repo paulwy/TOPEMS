@@ -1,11 +1,11 @@
 // IAM 服务测试辅助函数
 // 提供测试数据准备、清理和辅助功能
 
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use jsonwebtoken::{encode, Header, EncodingKey, Algorithm};
 use bcrypt::{hash, DEFAULT_COST};
+use chrono::{DateTime, Utc};
+use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 // ============ 测试数据生成器 ============
 
@@ -34,7 +34,11 @@ impl TestDataGenerator {
 
     /// 生成测试用户名
     pub fn generate_test_username(prefix: &str) -> String {
-        format!("{}_{}", prefix, Uuid::new_v4().to_string().split('-').next().unwrap())
+        format!(
+            "{}_{}",
+            prefix,
+            Uuid::new_v4().to_string().split('-').next().unwrap()
+        )
     }
 
     /// 生成测试邮箱
@@ -392,7 +396,8 @@ impl TestTokenGenerator {
             &Header::new(Algorithm::HS256),
             &claims,
             &EncodingKey::from_secret(self.secret.as_ref()),
-        ).unwrap()
+        )
+        .unwrap()
     }
 
     pub fn generate_refresh_token(&self, user: &TestUser) -> String {
@@ -415,7 +420,8 @@ impl TestTokenGenerator {
             &Header::new(Algorithm::HS256),
             &claims,
             &EncodingKey::from_secret(self.secret.as_ref()),
-        ).unwrap()
+        )
+        .unwrap()
     }
 
     pub fn generate_expired_token(&self, user: &TestUser) -> String {
@@ -438,7 +444,8 @@ impl TestTokenGenerator {
             &Header::new(Algorithm::HS256),
             &claims,
             &EncodingKey::from_secret(self.secret.as_ref()),
-        ).unwrap()
+        )
+        .unwrap()
     }
 }
 
@@ -615,7 +622,11 @@ pub fn assert_valid_email(email: &str) {
 }
 
 pub fn assert_valid_timestamp(timestamp: &str) {
-    assert!(DateTime::parse_from_rfc3339(timestamp).is_ok(), "Invalid timestamp: {}", timestamp);
+    assert!(
+        DateTime::parse_from_rfc3339(timestamp).is_ok(),
+        "Invalid timestamp: {}",
+        timestamp
+    );
 }
 
 pub fn assert_valid_password_hash(hash: &str) {

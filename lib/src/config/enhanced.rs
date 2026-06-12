@@ -1,35 +1,35 @@
 // 配置管理模块 - 统一的配置加载和管理
 // =============================================================================
 
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
-use anyhow::{Result, Context};
 
 /// 数据库配置
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DatabaseConfig {
     /// 数据库连接 URL
     pub url: String,
-    
+
     /// 最大连接数
     pub max_connections: u32,
-    
+
     /// 最小连接数
     pub min_connections: Option<u32>,
-    
+
     /// 连接超时（秒）
     pub connect_timeout: Option<u64>,
-    
+
     /// 空闲超时（秒）
     pub idle_timeout: Option<u64>,
-    
+
     /// 连接最大生命周期（秒）
     pub max_lifetime: Option<u64>,
-    
+
     /// 连接测试间隔（秒）
     pub test_interval: Option<u64>,
-    
+
     /// 是否启用连接复用
     pub enable_connection_reuse: Option<bool>,
 }
@@ -37,8 +37,9 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            url: env::var("DATABASE_URL")
-                .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string()),
+            url: env::var("DATABASE_URL").unwrap_or_else(|_| {
+                "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+            }),
             max_connections: 20,
             min_connections: Some(5),
             connect_timeout: Some(30),
@@ -54,8 +55,7 @@ impl DatabaseConfig {
     /// 从环境变量加载
     pub fn from_env() -> Result<Self> {
         Ok(Self {
-            url: env::var("DATABASE_URL")
-                .context("DATABASE_URL 环境变量未设置")?,
+            url: env::var("DATABASE_URL").context("DATABASE_URL 环境变量未设置")?,
             max_connections: env::var("DB_MAX_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -80,23 +80,23 @@ impl DatabaseConfig {
                 .and_then(|s| s.parse().ok()),
         })
     }
-    
+
     /// 验证配置
     pub fn validate(&self) -> Result<()> {
         if self.url.is_empty() {
             return Err(anyhow::anyhow!("数据库 URL 不能为空"));
         }
-        
+
         if self.max_connections == 0 {
             return Err(anyhow::anyhow!("最大连接数必须大于 0"));
         }
-        
+
         if let Some(min) = self.min_connections {
             if min > self.max_connections {
                 return Err(anyhow::anyhow!("最小连接数不能大于最大连接数"));
             }
         }
-        
+
         Ok(())
     }
 }
@@ -106,25 +106,25 @@ impl DatabaseConfig {
 pub struct ServiceConfig {
     /// 服务名称
     pub name: String,
-    
+
     /// 服务端口
     pub port: u16,
-    
+
     /// 服务版本
     pub version: String,
-    
+
     /// 服务描述
     pub description: Option<String>,
-    
+
     /// 是否启用认证
     pub enable_auth: bool,
-    
+
     /// 是否启用 CORS
     pub enable_cors: bool,
-    
+
     /// 是否启用日志
     pub enable_logging: bool,
-    
+
     /// 日志级别
     pub log_level: String,
 }
@@ -154,8 +154,7 @@ impl ServiceConfig {
                 .ok()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(default_port),
-            version: env::var("SERVICE_VERSION")
-                .unwrap_or_else(|_| "0.1.0".to_string()),
+            version: env::var("SERVICE_VERSION").unwrap_or_else(|_| "0.1.0".to_string()),
             description: env::var("SERVICE_DESCRIPTION").ok(),
             enable_auth: env::var("ENABLE_AUTH")
                 .ok()
@@ -169,21 +168,20 @@ impl ServiceConfig {
                 .ok()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(true),
-            log_level: env::var("LOG_LEVEL")
-                .unwrap_or_else(|_| "info".to_string()),
+            log_level: env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()),
         })
     }
-    
+
     /// 验证配置
     pub fn validate(&self) -> Result<()> {
         if self.name.is_empty() {
             return Err(anyhow::anyhow!("服务名称不能为空"));
         }
-        
+
         if self.port == 0 {
             return Err(anyhow::anyhow!("服务端口不能为 0"));
         }
-        
+
         Ok(())
     }
 }
@@ -193,10 +191,10 @@ impl ServiceConfig {
 pub struct RedisConfig {
     /// Redis URL
     pub url: String,
-    
+
     /// 最大连接数
     pub max_connections: u32,
-    
+
     /// 连接超时（秒）
     pub connect_timeout: Option<u64>,
 }
@@ -204,8 +202,7 @@ pub struct RedisConfig {
 impl Default for RedisConfig {
     fn default() -> Self {
         Self {
-            url: env::var("REDIS_URL")
-                .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
+            url: env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string()),
             max_connections: 10,
             connect_timeout: Some(5),
         }
@@ -216,8 +213,7 @@ impl RedisConfig {
     /// 从环境变量加载
     pub fn from_env() -> Result<Self> {
         Ok(Self {
-            url: env::var("REDIS_URL")
-                .context("REDIS_URL 环境变量未设置")?,
+            url: env::var("REDIS_URL").context("REDIS_URL 环境变量未设置")?,
             max_connections: env::var("REDIS_MAX_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -234,10 +230,10 @@ impl RedisConfig {
 pub struct JwtConfig {
     /// JWT 密钥
     pub secret: String,
-    
+
     /// Token 过期时间（秒）
     pub expiration: u64,
-    
+
     /// 刷新 Token 过期时间（秒）
     pub refresh_expiration: u64,
 }
@@ -247,7 +243,7 @@ impl Default for JwtConfig {
         Self {
             secret: env::var("JWT_SECRET")
                 .unwrap_or_else(|_| "topems_jwt_secret_key_change_in_production".to_string()),
-            expiration: 3600, // 1小时
+            expiration: 3600,              // 1小时
             refresh_expiration: 86400 * 7, // 7天
         }
     }
@@ -257,8 +253,7 @@ impl JwtConfig {
     /// 从环境变量加载
     pub fn from_env() -> Result<Self> {
         Ok(Self {
-            secret: env::var("JWT_SECRET")
-                .context("JWT_SECRET 环境变量未设置")?,
+            secret: env::var("JWT_SECRET").context("JWT_SECRET 环境变量未设置")?,
             expiration: env::var("JWT_EXPIRATION")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -269,17 +264,17 @@ impl JwtConfig {
                 .unwrap_or(86400 * 7),
         })
     }
-    
+
     /// 验证配置
     pub fn validate(&self) -> Result<()> {
         if self.secret.len() < 32 {
             return Err(anyhow::anyhow!("JWT 密钥长度必须至少 32 个字符"));
         }
-        
+
         if self.expiration == 0 {
             return Err(anyhow::anyhow!("JWT 过期时间不能为 0"));
         }
-        
+
         Ok(())
     }
 }
@@ -289,25 +284,25 @@ impl JwtConfig {
 pub struct AIConfig {
     /// AI API 密钥
     pub api_key: Option<String>,
-    
+
     /// AI API 基础 URL
     pub base_url: String,
-    
+
     /// AI 模型名称
     pub model: String,
-    
+
     /// 是否使用 Ollama
     pub use_ollama: bool,
-    
+
     /// Embedding 模型
     pub embedding_model: String,
-    
+
     /// 文档目录
     pub docs_dir: String,
-    
+
     /// Chunk 大小
     pub chunk_size: usize,
-    
+
     /// Chunk 重叠
     pub chunk_overlap: usize,
 }
@@ -318,16 +313,14 @@ impl Default for AIConfig {
             api_key: env::var("OPENAI_API_KEY").ok(),
             base_url: env::var("OPENAI_BASE_URL")
                 .unwrap_or_else(|_| "http://localhost:11434/v1".to_string()),
-            model: env::var("OPENAI_MODEL")
-                .unwrap_or_else(|_| "qwen2.5:7b-instruct".to_string()),
+            model: env::var("OPENAI_MODEL").unwrap_or_else(|_| "qwen2.5:7b-instruct".to_string()),
             use_ollama: env::var("USE_OLLAMA")
                 .ok()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(true),
             embedding_model: env::var("EMBEDDING_MODEL")
                 .unwrap_or_else(|_| "all-minilm".to_string()),
-            docs_dir: env::var("AI_DOCS_DIR")
-                .unwrap_or_else(|_| "docs".to_string()),
+            docs_dir: env::var("AI_DOCS_DIR").unwrap_or_else(|_| "docs".to_string()),
             chunk_size: 512,
             chunk_overlap: 128,
         }
@@ -341,16 +334,14 @@ impl AIConfig {
             api_key: env::var("OPENAI_API_KEY").ok(),
             base_url: env::var("OPENAI_BASE_URL")
                 .unwrap_or_else(|_| "http://localhost:11434/v1".to_string()),
-            model: env::var("OPENAI_MODEL")
-                .unwrap_or_else(|_| "qwen2.5:7b-instruct".to_string()),
+            model: env::var("OPENAI_MODEL").unwrap_or_else(|_| "qwen2.5:7b-instruct".to_string()),
             use_ollama: env::var("USE_OLLAMA")
                 .ok()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(true),
             embedding_model: env::var("EMBEDDING_MODEL")
                 .unwrap_or_else(|_| "all-minilm".to_string()),
-            docs_dir: env::var("AI_DOCS_DIR")
-                .unwrap_or_else(|_| "docs".to_string()),
+            docs_dir: env::var("AI_DOCS_DIR").unwrap_or_else(|_| "docs".to_string()),
             chunk_size: env::var("AI_CHUNK_SIZE")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -368,13 +359,13 @@ impl AIConfig {
 pub struct CacheConfig {
     /// 缓存类型（memory/redis）
     pub cache_type: String,
-    
+
     /// 最大缓存大小
     pub max_size: usize,
-    
+
     /// 默认 TTL（秒）
     pub default_ttl: u64,
-    
+
     /// 淘汰策略
     pub eviction_policy: String,
 }
@@ -394,8 +385,7 @@ impl CacheConfig {
     /// 从环境变量加载
     pub fn from_env() -> Result<Self> {
         Ok(Self {
-            cache_type: env::var("CACHE_TYPE")
-                .unwrap_or_else(|_| "memory".to_string()),
+            cache_type: env::var("CACHE_TYPE").unwrap_or_else(|_| "memory".to_string()),
             max_size: env::var("CACHE_MAX_SIZE")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -415,19 +405,19 @@ impl CacheConfig {
 pub struct AppConfig {
     /// 服务配置
     pub service: ServiceConfig,
-    
+
     /// 数据库配置
     pub database: DatabaseConfig,
-    
+
     /// Redis 配置
     pub redis: Option<RedisConfig>,
-    
+
     /// JWT 配置
     pub jwt: JwtConfig,
-    
+
     /// AI 配置
     pub ai: Option<AIConfig>,
-    
+
     /// 缓存配置
     pub cache: CacheConfig,
 }
@@ -439,20 +429,20 @@ impl AppConfig {
         let database = DatabaseConfig::from_env()?;
         let jwt = JwtConfig::from_env()?;
         let cache = CacheConfig::from_env()?;
-        
+
         // 可选配置
         let redis = if env::var("REDIS_URL").is_ok() {
             Some(RedisConfig::from_env()?)
         } else {
             None
         };
-        
+
         let ai = if env::var("OPENAI_API_KEY").is_ok() || env::var("USE_OLLAMA").is_ok() {
             Some(AIConfig::from_env()?)
         } else {
             None
         };
-        
+
         Ok(Self {
             service,
             database,
@@ -462,35 +452,64 @@ impl AppConfig {
             cache,
         })
     }
-    
+
     /// 验证所有配置
     pub fn validate(&self) -> Result<()> {
         self.service.validate()?;
         self.database.validate()?;
         self.jwt.validate()?;
-        
+
         if let Some(redis) = &self.redis {
             if redis.url.is_empty() {
                 return Err(anyhow::anyhow!("Redis URL 不能为空"));
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// 打印配置信息（用于调试）
     pub fn print_summary(&self) {
         tracing::info!("📋 配置摘要:");
-        tracing::info!("  服务: {} (端口: {})", self.service.name, self.service.port);
-        tracing::info!("  数据库: {}", self.database.url.split('@').last().unwrap_or("unknown"));
-        tracing::info!("  认证: {}", if self.service.enable_auth { "已启用" } else { "未启用" });
-        tracing::info!("  CORS: {}", if self.service.enable_cors { "已启用" } else { "未启用" });
-        tracing::info!("  缓存: {} (类型: {})", self.cache.max_size, self.cache.cache_type);
-        
+        tracing::info!(
+            "  服务: {} (端口: {})",
+            self.service.name,
+            self.service.port
+        );
+        tracing::info!(
+            "  数据库: {}",
+            self.database
+                .url
+                .split('@')
+                .next_back()
+                .unwrap_or("unknown")
+        );
+        tracing::info!(
+            "  认证: {}",
+            if self.service.enable_auth {
+                "已启用"
+            } else {
+                "未启用"
+            }
+        );
+        tracing::info!(
+            "  CORS: {}",
+            if self.service.enable_cors {
+                "已启用"
+            } else {
+                "未启用"
+            }
+        );
+        tracing::info!(
+            "  缓存: {} (类型: {})",
+            self.cache.max_size,
+            self.cache.cache_type
+        );
+
         if self.redis.is_some() {
             tracing::info!("  Redis: 已配置");
         }
-        
+
         if self.ai.is_some() {
             tracing::info!("  AI: 已配置");
         }
@@ -507,12 +526,12 @@ impl ServiceRegistry {
     /// 创建新的服务注册表
     pub fn new() -> Self {
         let mut services = HashMap::new();
-        
+
         // 核心平台服务
         services.insert("iam".to_string(), 8001);
         services.insert("doc".to_string(), 8002);
         services.insert("flow".to_string(), 8003);
-        
+
         // 业务应用服务
         services.insert("hrm".to_string(), 8011);
         services.insert("erp".to_string(), 8012);
@@ -536,32 +555,29 @@ impl ServiceRegistry {
         services.insert("notification".to_string(), 8038);
         services.insert("portal".to_string(), 8039);
         services.insert("integration".to_string(), 8040);
-        
+
         Self { services }
     }
-    
+
     /// 获取服务端口
     pub fn get_port(&self, service_name: &str) -> Option<u16> {
         self.services.get(service_name).copied()
     }
-    
+
     /// 获取服务 URL
     pub fn get_url(&self, service_name: &str) -> Option<String> {
         self.get_port(service_name)
             .map(|port| format!("http://localhost:{}", port))
     }
-    
+
     /// 注册新服务
     pub fn register(&mut self, service_name: String, port: u16) {
         self.services.insert(service_name, port);
     }
-    
+
     /// 获取所有服务
     pub fn list_services(&self) -> Vec<(String, u16)> {
-        self.services
-            .iter()
-            .map(|(k, v)| (k.clone(), *v))
-            .collect()
+        self.services.iter().map(|(k, v)| (k.clone(), *v)).collect()
     }
 }
 
@@ -581,7 +597,7 @@ pub fn get_default_port(service_name: &str) -> u16 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_database_config_default() {
         let config = DatabaseConfig::default();
@@ -590,14 +606,14 @@ mod tests {
         assert_eq!(config.min_connections, Some(5));
         assert_eq!(config.idle_timeout, Some(300));
     }
-    
+
     #[test]
     fn test_service_config_default() {
         let config = ServiceConfig::default();
         assert_eq!(config.port, 8000);
         assert!(config.enable_auth);
     }
-    
+
     #[test]
     fn test_service_registry() {
         let registry = ServiceRegistry::new();
@@ -605,7 +621,7 @@ mod tests {
         assert_eq!(registry.get_port("hrm"), Some(8011));
         assert_eq!(registry.get_port("unknown"), None);
     }
-    
+
     #[test]
     fn test_get_default_port() {
         assert_eq!(get_default_port("iam"), 8001);

@@ -2,9 +2,12 @@ import type { RuntimeConfig } from "./types";
 
 // Safe access to import.meta.env with Jest fallback
 function getEnv(key: string, defaultValue: string = ""): string {
-  // First, check if we have a global mock (for Jest)
-  if (typeof global !== "undefined" && (global as any).import?.meta?.env) {
-    return (global as any).import.meta.env[key] || defaultValue;
+  // First, check if we have a globalThis mock (for Jest)
+  if (
+    typeof globalThis !== "undefined" &&
+    (globalThis as any).import?.meta?.env
+  ) {
+    return (globalThis as any).import.meta.env[key] || defaultValue;
   }
 
   // Then, check for Vite's import.meta.env - use a string check to avoid early syntax errors
@@ -49,33 +52,39 @@ const config: RuntimeConfig = {
   },
   services: {
     iam: getEnv("VITE_IAM_SERVICE_URL", "/iam"),
-    rs: getEnv("VITE_RS_SERVICE_URL", "/rs"),
-    lims: getEnv("VITE_LIMS_SERVICE_URL", "/lims"),
-    qms: getEnv("VITE_QMS_SERVICE_URL", "/qms"),
-    mes: getEnv("VITE_MES_SERVICE_URL", "/mes"),
-    erp: getEnv("VITE_ERP_SERVICE_URL", "/erp"),
-    scm: getEnv("VITE_SCM_SERVICE_URL", "/scm"),
-    wms: getEnv("VITE_WMS_SERVICE_URL", "/wms"),
-    crm: getEnv("VITE_CRM_SERVICE_URL", "/crm"),
-    hrm: getEnv("VITE_HRM_SERVICE_URL", "/hrm"),
-    gis: getEnv("VITE_GIS_SERVICE_URL", "/gis"),
-    bi: getEnv("VITE_BI_SERVICE_URL", "/bi"),
-    ehs: getEnv("VITE_EHS_SERVICE_URL", "/ehs"),
-    pdm: getEnv("VITE_PDM_SERVICE_URL", "/pdm"),
-    srm: getEnv("VITE_SRM_SERVICE_URL", "/srm"),
-    im: getEnv("VITE_IM_SERVICE_URL", "/im"),
+    rs: getEnv("VITE_RS_SERVICE_URL", "http://localhost:8020"),
+    lims: getEnv("VITE_LIMS_SERVICE_URL", "http://localhost:8022"),
+    qms: getEnv("VITE_QMS_SERVICE_URL", "http://localhost:8031"),
+    mes: getEnv("VITE_MES_SERVICE_URL", "http://localhost:8030"),
+    erp: getEnv("VITE_ERP_SERVICE_URL", "http://localhost:8010"),
+    scm: getEnv("VITE_SCM_SERVICE_URL", "http://localhost:8040"),
+    wms: getEnv("VITE_WMS_SERVICE_URL", "http://localhost:8042"),
+    crm: getEnv("VITE_CRM_SERVICE_URL", "http://localhost:8013"),
+    hrm: getEnv("VITE_HRM_SERVICE_URL", "http://localhost:8012"),
+    gis: getEnv("VITE_GIS_SERVICE_URL", "http://localhost:8053"),
+    bi: getEnv("VITE_BI_SERVICE_URL", "http://localhost:8060"),
+    ehs: getEnv("VITE_EHS_SERVICE_URL", "http://localhost:8032"),
+    pdm: getEnv("VITE_PDM_SERVICE_URL", "http://localhost:8023"),
+    srm: getEnv("VITE_SRM_SERVICE_URL", "http://localhost:8041"),
+    im: getEnv("VITE_IM_SERVICE_URL", "http://localhost:8052"),
     ai: getEnv("VITE_AI_SERVICE_URL", "/ai"),
-    mobile: getEnv("VITE_MOBILE_SERVICE_URL", "/mobile"),
-    integration: getEnv("VITE_INTEGRATION_SERVICE_URL", "/integration"),
-    portal: getEnv("VITE_PORTAL_SERVICE_URL", "/portal"),
-    doc: getEnv("VITE_DOC_SERVICE_URL", "/doc"),
-    flow: getEnv("VITE_FLOW_SERVICE_URL", "/flow"),
-    notification: getEnv("VITE_NOTIFICATION_SERVICE_URL", "/notification"),
-    report: getEnv("VITE_REPORT_SERVICE_URL", "/report"),
-    mail: getEnv("VITE_MAIL_SERVICE_URL", "/mail"),
-    pm: getEnv("VITE_PM_SERVICE_URL", "/pm"),
+    mobile: getEnv("VITE_MOBILE_SERVICE_URL", "http://localhost:8070"),
+    integration: getEnv(
+      "VITE_INTEGRATION_SERVICE_URL",
+      "http://localhost:8007",
+    ),
+    portal: getEnv("VITE_PORTAL_SERVICE_URL", "http://localhost:8005"),
+    doc: getEnv("VITE_DOC_SERVICE_URL", "http://localhost:8028"),
+    flow: getEnv("VITE_FLOW_SERVICE_URL", "http://localhost:8006"),
+    notification: getEnv(
+      "VITE_NOTIFICATION_SERVICE_URL",
+      "http://localhost:8004",
+    ),
+    report: getEnv("VITE_REPORT_SERVICE_URL", "http://localhost:8061"),
+    mail: getEnv("VITE_MAIL_SERVICE_URL", "http://localhost:8051"),
+    pm: getEnv("VITE_PM_SERVICE_URL", "http://localhost:8002"),
     migration: getEnv("VITE_MIGRATION_SERVICE_URL", "http://localhost:8787"),
-    file: getEnv("VITE_FILE_SERVICE_URL", "/file"),
+    file: getEnv("VITE_FILE_SERVICE_URL", "http://localhost:8050"),
   },
   features: {
     debugMode: getEnvBool("VITE_ENABLE_DEBUG_MODE", false),

@@ -1,9 +1,12 @@
-use axum::{extract::{State, Query}, Json};
+use axum::{
+    extract::{Query, State},
+    Json,
+};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::state::AppState;
 use crate::models::{AuditLog, AuditLogQuery, AuditLogResponse, CreateAuditLogRequest};
+use crate::state::AppState;
 use chrono::Utc;
 use topems_shared::ApiResponse;
 
@@ -12,7 +15,7 @@ pub async fn list_audit_logs(
     Query(query): Query<AuditLogQuery>,
 ) -> Json<ApiResponse<AuditLogResponse>> {
     let pool = state.repo.get_pool();
-    
+
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(20);
     let offset = (page - 1) * page_size;
@@ -82,7 +85,7 @@ pub async fn list_audit_logs(
             page,
             page_size,
         },
-        "审计日志查询成功"
+        "审计日志查询成功",
     ))
 }
 
@@ -92,13 +95,11 @@ pub async fn get_audit_log(
 ) -> Json<ApiResponse<AuditLog>> {
     let pool = state.repo.get_pool();
 
-    let log: Option<AuditLog> = sqlx::query_as(
-        "SELECT * FROM flow.audit_logs WHERE id = $1"
-    )
-    .bind(params.id)
-    .fetch_optional(pool)
-    .await
-    .unwrap_or(None);
+    let log: Option<AuditLog> = sqlx::query_as("SELECT * FROM flow.audit_logs WHERE id = $1")
+        .bind(params.id)
+        .fetch_optional(pool)
+        .await
+        .unwrap_or(None);
 
     if let Some(log) = log {
         Json(ApiResponse::success(log, "审计日志获取成功"))
@@ -120,7 +121,7 @@ pub async fn create_audit_log(
             id, action, resource_type, resource_id, actor_id, 
             actor_name, previous_state, new_state, details, 
             ip_address, user_agent, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
     )
     .bind(id)
     .bind(&request.action)

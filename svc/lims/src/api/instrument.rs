@@ -1,4 +1,5 @@
-use topems_shared::Result;
+#![allow(dead_code)]
+
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -7,11 +8,15 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared::Result;
 use uuid::Uuid;
 
-use crate::api::ApiState;
 use crate::api::audit::log_audit_event;
-use crate::models::{Instrument, CreateInstrumentRequest, UpdateInstrumentRequest, MaintenanceRecord, CreateMaintenanceRecordRequest};
+use crate::api::ApiState;
+use crate::models::{
+    CreateInstrumentRequest, CreateMaintenanceRecordRequest, Instrument, MaintenanceRecord,
+    UpdateInstrumentRequest,
+};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -32,14 +37,28 @@ pub struct CalibrationRecordRequest {
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/instruments", get(list_instruments).post(create_instrument))
+        .route(
+            "/api/v1/instruments",
+            get(list_instruments).post(create_instrument),
+        )
         .route(
             "/api/v1/instruments/{id}",
-            get(get_instrument).put(update_instrument).delete(delete_instrument),
+            get(get_instrument)
+                .put(update_instrument)
+                .delete(delete_instrument),
         )
-        .route("/api/v1/instruments/{id}/calibrations", get(get_calibrations).post(add_calibration))
-        .route("/api/v1/instruments/{id}/maintenance", get(list_maintenance_records).post(create_maintenance_record))
-        .route("/api/v1/maintenance/{id}", delete(delete_maintenance_record));
+        .route(
+            "/api/v1/instruments/{id}/calibrations",
+            get(get_calibrations).post(add_calibration),
+        )
+        .route(
+            "/api/v1/instruments/{id}/maintenance",
+            get(list_maintenance_records).post(create_maintenance_record),
+        )
+        .route(
+            "/api/v1/maintenance/{id}",
+            delete(delete_maintenance_record),
+        );
 
     Ok(app)
 }
@@ -78,7 +97,7 @@ async fn create_maintenance_record(
 ) -> Json<ApiResponse<MaintenanceRecord>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let request_data = serde_json::to_value(&req).ok();
 
     let result = sqlx::query_as::<_, MaintenanceRecord>(
@@ -121,9 +140,9 @@ async fn create_maintenance_record(
                 &headers,
             )
             .await;
-            
+
             Json(ApiResponse::success(record, "维护记录创建成功"))
-        },
+        }
         Err(e) => {
             tracing::error!("创建维护记录失败: {}", e);
             log_audit_event(
@@ -141,7 +160,7 @@ async fn create_maintenance_record(
                 &headers,
             )
             .await;
-            
+
             Json(ApiResponse::error(500, "创建维护记录失败"))
         }
     };
@@ -321,7 +340,7 @@ async fn create_instrument(
         Ok(instrument) => serde_json::to_value(instrument).ok(),
         Err(_) => None,
     };
-    
+
     let (response, status_str, error_msg) = match result {
         Ok(instrument) => (
             Json(ApiResponse::success(instrument, "仪器创建成功")),
@@ -444,7 +463,7 @@ async fn update_instrument(
         Ok(instrument) => serde_json::to_value(instrument).ok(),
         Err(_) => None,
     };
-    
+
     let (response, status_str, error_msg) = match result {
         Ok(instrument) => (
             Json(ApiResponse::success(instrument, "仪器更新成功")),
@@ -565,7 +584,10 @@ async fn get_calibrations(
     match result {
         Ok((calibrations,)) => {
             let calibrations = calibrations.unwrap_or(serde_json::json!([]));
-            Json(ApiResponse::success(calibrations.as_array().unwrap_or(&vec![]).clone(), "获取校准记录成功"))
+            Json(ApiResponse::success(
+                calibrations.as_array().unwrap_or(&vec![]).clone(),
+                "获取校准记录成功",
+            ))
         }
         Err(e) => {
             tracing::error!("获取校准记录失败: {}", e);
@@ -602,21 +624,21 @@ async fn add_calibration(
     match result {
         Ok(_) => {
             sqlx::query(
-            r#"
+                r#"
             UPDATE lims.instruments SET
                 calibration_date = $2,
                 next_calibration_date = $3,
                 updated_at = $4
             WHERE id = $1
             "#,
-        )
-        .bind(id)
-        .bind(&req.calibration_date.clone())
-        .bind(req.calibration_date.clone())
-        .bind(now)
-        .execute(&state.db)
-        .await
-        .ok();
+            )
+            .bind(id)
+            .bind(&req.calibration_date.clone())
+            .bind(req.calibration_date.clone())
+            .bind(now)
+            .execute(&state.db)
+            .await
+            .ok();
 
             Json(ApiResponse::success(
                 serde_json::json!({

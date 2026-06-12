@@ -2,8 +2,8 @@ use crate::services::pdf::PdfParser;
 use crate::services::vector::{CreateDocumentRequest, SaveChunkRequest, VectorService};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use uuid::Uuid;
 use topems_shared::file_client::FileServiceClient;
+use uuid::Uuid;
 
 const CHUNK_SIZE: usize = 512;
 const CHUNK_OVERLAP: usize = 128;
@@ -70,17 +70,14 @@ impl DocumentService {
 
         // 提取文本内容
         let content = match mime {
-            "text/plain" | "text/markdown" | "text/csv" => {
-                tokio::fs::read_to_string(&file_path)
-                    .await
-                    .map_err(|e| format!("读取文件失败: {}", e))?
-            }
-            "application/pdf" => {
-                self.pdf_parser
-                    .extract_text(&file_path)
-                    .await
-                    .map_err(|e| format!("解析 PDF 失败: {}", e))?
-            }
+            "text/plain" | "text/markdown" | "text/csv" => tokio::fs::read_to_string(&file_path)
+                .await
+                .map_err(|e| format!("读取文件失败: {}", e))?,
+            "application/pdf" => self
+                .pdf_parser
+                .extract_text(&file_path)
+                .await
+                .map_err(|e| format!("解析 PDF 失败: {}", e))?,
             _ => {
                 // 尝试作为纯文本读取
                 tokio::fs::read_to_string(&file_path)
@@ -175,7 +172,11 @@ impl DocumentService {
     }
 
     /// 保存分块和向量
-    async fn save_chunks_and_vectors(&self, doc_id: uuid::Uuid, chunks: &[String]) -> Result<(), String> {
+    async fn save_chunks_and_vectors(
+        &self,
+        doc_id: uuid::Uuid,
+        chunks: &[String],
+    ) -> Result<(), String> {
         let vs = self.vector_service.read().await;
 
         for (idx, content) in chunks.iter().enumerate() {
@@ -216,7 +217,10 @@ impl DocumentService {
     }
 
     /// 获取文档
-    pub async fn get_document(&self, id: uuid::Uuid) -> Result<Option<crate::services::vector::Document>, String> {
+    pub async fn get_document(
+        &self,
+        id: uuid::Uuid,
+    ) -> Result<Option<crate::services::vector::Document>, String> {
         let vs = self.vector_service.read().await;
         vs.get_document(id)
             .await
@@ -224,22 +228,32 @@ impl DocumentService {
     }
 
     /// 从 File 服务向量化文档
-    pub async fn vectorize_from_file_service(&self, file_id: Uuid) -> Result<VectorizeResult, String> {
-        let file_client = self.file_client.as_ref()
+    pub async fn vectorize_from_file_service(
+        &self,
+        file_id: Uuid,
+    ) -> Result<VectorizeResult, String> {
+        let file_client = self
+            .file_client
+            .as_ref()
             .ok_or_else(|| "File 服务客户端未初始化".to_string())?;
 
         // 1. 从 File 服务获取文件元数据
-        let file_metadata = file_client.get_file(file_id)
+        let file_metadata = file_client
+            .get_file(file_id)
             .await
             .map_err(|e| format!("获取文件元数据失败: {}", e))?;
 
         // 2. 从 File 服务下载文件
-        let file_data = file_client.download_file(file_id)
+        let file_data = file_client
+            .download_file(file_id)
             .await
             .map_err(|e| format!("下载文件失败: {}", e))?;
 
-        tracing::info!("📥 从 File 服务获取文件: {} ({} bytes)",
-            file_metadata.filename, file_metadata.file_size);
+        tracing::info!(
+            "📥 从 File 服务获取文件: {} ({} bytes)",
+            file_metadata.filename,
+            file_metadata.file_size
+        );
 
         // 3. 提取文本
         let text = self.extract_text_from_data(&file_metadata.filename, &file_data)?;
@@ -251,7 +265,11 @@ impl DocumentService {
             return Err("文档内容为空".to_string());
         }
 
-        tracing::info!("📄 文档 '{}' 分割为 {} 个块", file_metadata.filename, chunks.len());
+        tracing::info!(
+            "📄 文档 '{}' 分割为 {} 个块",
+            file_metadata.filename,
+            chunks.len()
+        );
 
         // 5. 保存分块
         let doc_id = Uuid::new_v4();
@@ -274,15 +292,13 @@ impl DocumentService {
 
         match ext.as_str() {
             "txt" | "md" | "csv" => {
-                String::from_utf8(data.to_vec())
-                    .map_err(|e| format!("文件编码错误: {}", e))
+                String::from_utf8(data.to_vec()).map_err(|e| format!("文件编码错误: {}", e))
             }
             "pdf" => {
                 // PDF 需要先保存到临时文件再解析
                 let temp_dir = std::env::temp_dir();
                 let temp_file = temp_dir.join(format!("{}.pdf", Uuid::new_v4()));
-                std::fs::write(&temp_file, data)
-                    .map_err(|e| format!("保存临时文件失败: {}", e))?;
+                std::fs::write(&temp_file, data).map_err(|e| format!("保存临时文件失败: {}", e))?;
                 // 使用 block_on 或直接使用同步方法
                 let text = PdfParser::extract_text_sync(temp_file.to_str().unwrap_or(""))
                     .map_err(|e| format!("解析 PDF 失败: {}", e))?;
@@ -291,8 +307,7 @@ impl DocumentService {
             }
             _ => {
                 // 尝试作为纯文本读取
-                String::from_utf8(data.to_vec())
-                    .map_err(|_| "[无法解析的文件内容]".to_string())
+                String::from_utf8(data.to_vec()).map_err(|_| "[无法解析的文件内容]".to_string())
             }
         }
     }

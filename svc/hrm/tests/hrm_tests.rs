@@ -1,10 +1,10 @@
 // HRM 服务单元测试和集成测试
 // 测试员工管理、部门管理、考勤管理、薪资管理等功能
 
-use uuid::Uuid;
-use chrono::{DateTime, Utc, NaiveDate, Datelike};
-use serde::{Deserialize, Serialize};
 use bigdecimal::BigDecimal;
+use chrono::{DateTime, Datelike, NaiveDate, Utc};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 // ============ 员工管理测试 ============
 
@@ -320,8 +320,8 @@ mod http_endpoint_tests {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
-        Router,
         routing::get,
+        Router,
     };
     use tower::ServiceExt;
 
@@ -538,13 +538,17 @@ mod shared_schema_integration_tests {
             name: "序列化测试公司".to_string(),
             short_name: Some("SERIAL".to_string()),
             status: "active".to_string(),
-            created_at: DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z").unwrap().with_timezone(&Utc),
-            updated_at: DateTime::parse_from_rfc3339("2024-01-02T12:00:00Z").unwrap().with_timezone(&Utc),
+            created_at: DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
+            updated_at: DateTime::parse_from_rfc3339("2024-01-02T12:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
         };
 
         let json = serde_json::to_string(&company).unwrap();
         let deserialized: SharedCompany = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.id, company.id);
         assert_eq!(deserialized.name, company.name);
         assert_eq!(deserialized.status, company.status);
@@ -590,7 +594,11 @@ mod schema_migration_tests {
 
         for status in migration_statuses {
             assert!(status.migrated, "{} should be migrated", status.table_name);
-            assert!(status.record_count > 0, "{} should have records", status.table_name);
+            assert!(
+                status.record_count > 0,
+                "{} should have records",
+                status.table_name
+            );
             assert_eq!(status.schema_name, "shared");
         }
     }

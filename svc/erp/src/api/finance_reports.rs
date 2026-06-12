@@ -7,8 +7,8 @@ use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 
-use topems_shared::ApiResponse;
 use super::ApiState;
+use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct ReportParams {
@@ -154,7 +154,7 @@ async fn balance_sheet(
 ) -> Json<ApiResponse<BalanceSheet>> {
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
-        format!("{}-{}", now.year(), format!("{:02}", now.month()))
+        format!("{}-{:02}", now.year(), now.month())
     });
 
     let result = sqlx::query(
@@ -182,60 +182,68 @@ async fn balance_sheet(
     .fetch_all(&state.db)
     .await;
 
-    let (asset_items, liability_items, equity_items, total_assets, total_liabilities, total_equity) = match result {
-        Ok(rows) => {
-            let mut assets = Vec::new();
-            let mut liabilities = Vec::new();
-            let mut equity = Vec::new();
-            let mut assets_total = 0.0;
-            let mut liabilities_total = 0.0;
-            let mut equity_total = 0.0;
+    let (asset_items, liability_items, equity_items, total_assets, total_liabilities, total_equity) =
+        match result {
+            Ok(rows) => {
+                let mut assets = Vec::new();
+                let mut liabilities = Vec::new();
+                let mut equity = Vec::new();
+                let mut assets_total = 0.0;
+                let mut liabilities_total = 0.0;
+                let mut equity_total = 0.0;
 
-            for row in rows {
-                let category: String = row.try_get("category").unwrap_or_default();
-                let code: String = row.try_get("code").unwrap_or_default();
-                let name: String = row.try_get("name").unwrap_or_default();
-                let amount: f64 = row.try_get("amount").unwrap_or(0.0);
+                for row in rows {
+                    let category: String = row.try_get("category").unwrap_or_default();
+                    let code: String = row.try_get("code").unwrap_or_default();
+                    let name: String = row.try_get("name").unwrap_or_default();
+                    let amount: f64 = row.try_get("amount").unwrap_or(0.0);
 
-                match category.as_str() {
-                    "assets" => {
-                        assets.push(BalanceItem {
-                            code,
-                            name,
-                            amount,
-                            percentage: 0.0,
-                        });
-                        assets_total += amount;
+                    match category.as_str() {
+                        "assets" => {
+                            assets.push(BalanceItem {
+                                code,
+                                name,
+                                amount,
+                                percentage: 0.0,
+                            });
+                            assets_total += amount;
+                        }
+                        "liabilities" => {
+                            liabilities.push(BalanceItem {
+                                code,
+                                name,
+                                amount,
+                                percentage: 0.0,
+                            });
+                            liabilities_total += amount;
+                        }
+                        "equity" => {
+                            equity.push(BalanceItem {
+                                code,
+                                name,
+                                amount,
+                                percentage: 0.0,
+                            });
+                            equity_total += amount;
+                        }
+                        _ => {}
                     }
-                    "liabilities" => {
-                        liabilities.push(BalanceItem {
-                            code,
-                            name,
-                            amount,
-                            percentage: 0.0,
-                        });
-                        liabilities_total += amount;
-                    }
-                    "equity" => {
-                        equity.push(BalanceItem {
-                            code,
-                            name,
-                            amount,
-                            percentage: 0.0,
-                        });
-                        equity_total += amount;
-                    }
-                    _ => {}
                 }
-            }
 
-            (assets, liabilities, equity, assets_total, liabilities_total, equity_total)
-        }
-        Err(e) => {
-            tracing::error!("获取资产负债表数据失败: {}", e);
-            return Json(ApiResponse::error(500, "获取资产负债表数据失败"));
-        }
-    };
+                (
+                    assets,
+                    liabilities,
+                    equity,
+                    assets_total,
+                    liabilities_total,
+                    equity_total,
+                )
+            }
+            Err(e) => {
+                tracing::error!("获取资产负债表数据失败: {}", e);
+                return Json(ApiResponse::error(500, "获取资产负债表数据失败"));
+            }
+        };
 
     let asset_items: Vec<BalanceItem> = asset_items
         .into_iter()
@@ -292,7 +300,7 @@ async fn income_statement(
 ) -> Json<ApiResponse<IncomeStatement>> {
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
-        format!("{}-{}", now.year(), format!("{:02}", now.month()))
+        format!("{}-{:02}", now.year(), now.month())
     });
 
     let result = sqlx::query(
@@ -374,7 +382,7 @@ async fn cash_flow(
 ) -> Json<ApiResponse<CashFlowStatement>> {
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
-        format!("{}-{}", now.year(), format!("{:02}", now.month()))
+        format!("{}-{:02}", now.year(), now.month())
     });
 
     let result = sqlx::query(
@@ -415,10 +423,22 @@ async fn cash_flow(
                 net += amount;
 
                 match category.as_str() {
-                    "operating" => op.push(CashFlowItem { description: name, amount }),
-                    "investing" => inv.push(CashFlowItem { description: name, amount }),
-                    "financing" => fin.push(CashFlowItem { description: name, amount }),
-                    _ => op.push(CashFlowItem { description: name, amount }),
+                    "operating" => op.push(CashFlowItem {
+                        description: name,
+                        amount,
+                    }),
+                    "investing" => inv.push(CashFlowItem {
+                        description: name,
+                        amount,
+                    }),
+                    "financing" => fin.push(CashFlowItem {
+                        description: name,
+                        amount,
+                    }),
+                    _ => op.push(CashFlowItem {
+                        description: name,
+                        amount,
+                    }),
                 }
             }
 
@@ -447,11 +467,21 @@ async fn voucher_summary(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
-        format!("{}-{}", now.year(), format!("{:02}", now.month()))
+        format!("{}-{:02}", now.year(), now.month())
     });
 
-    let page = params.project_id.as_ref().and_then(|p| p.parse::<i64>().ok()).unwrap_or(1).max(1);
-    let page_size = params.department_id.as_ref().and_then(|d| d.parse::<i64>().ok()).unwrap_or(20).min(100);
+    let page = params
+        .project_id
+        .as_ref()
+        .and_then(|p| p.parse::<i64>().ok())
+        .unwrap_or(1)
+        .max(1);
+    let page_size = params
+        .department_id
+        .as_ref()
+        .and_then(|d| d.parse::<i64>().ok())
+        .unwrap_or(20)
+        .min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query(
@@ -493,12 +523,11 @@ async fn voucher_summary(
         }
     };
 
-    let count_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM financial_vouchers WHERE period = $1",
-    )
-    .bind(&period)
-    .fetch_one(&state.db)
-    .await;
+    let count_result =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM financial_vouchers WHERE period = $1")
+            .bind(&period)
+            .fetch_one(&state.db)
+            .await;
 
     let total = count_result.unwrap_or(0);
 
@@ -519,7 +548,7 @@ async fn voucher_details(
 ) -> Json<ApiResponse<Vec<VoucherDetail>>> {
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
-        format!("{}-{}", now.year(), format!("{:02}", now.month()))
+        format!("{}-{:02}", now.year(), now.month())
     });
 
     let result = sqlx::query(
@@ -570,7 +599,10 @@ async fn receivables_report(
         let now = Utc::now();
         format!("{}-01-01", now.year())
     });
-    let end_date = params.end_date.clone().unwrap_or_else(|| Utc::now().to_rfc3339());
+    let end_date = params
+        .end_date
+        .clone()
+        .unwrap_or_else(|| Utc::now().to_rfc3339());
 
     let result = sqlx::query(
         "SELECT SUM(amount) as total, status FROM receivables WHERE due_date BETWEEN $1 AND $2 GROUP BY status",
@@ -608,7 +640,10 @@ async fn payables_report(
         let now = Utc::now();
         format!("{}-01-01", now.year())
     });
-    let end_date = params.end_date.clone().unwrap_or_else(|| Utc::now().to_rfc3339());
+    let end_date = params
+        .end_date
+        .clone()
+        .unwrap_or_else(|| Utc::now().to_rfc3339());
 
     let result = sqlx::query(
         "SELECT SUM(amount) as total, status FROM payables WHERE due_date BETWEEN $1 AND $2 GROUP BY status",
@@ -642,7 +677,9 @@ async fn budget_summary(
     State(state): State<ApiState>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<BudgetSummary>>> {
-    let fiscal_year = params.period.unwrap_or_else(|| Utc::now().year().to_string());
+    let fiscal_year = params
+        .period
+        .unwrap_or_else(|| Utc::now().year().to_string());
 
     let result = sqlx::query(
         r#"
@@ -724,7 +761,11 @@ async fn voucher_trend(
     State(state): State<ApiState>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<VoucherTrend>>> {
-    let limit = params.project_id.as_ref().and_then(|p| p.parse::<i64>().ok()).unwrap_or(12);
+    let limit = params
+        .project_id
+        .as_ref()
+        .and_then(|p| p.parse::<i64>().ok())
+        .unwrap_or(12);
 
     let result = sqlx::query(
         r#"
@@ -767,7 +808,7 @@ async fn category_summary(
 ) -> Json<ApiResponse<Vec<CategorySummary>>> {
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
-        format!("{}-{}", now.year(), format!("{:02}", now.month()))
+        format!("{}-{:02}", now.year(), now.month())
     });
 
     let result = sqlx::query(

@@ -2,8 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     routing::{get, post, put},
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
@@ -11,46 +10,73 @@ use topems_shared::ApiResponse;
 use uuid::Uuid;
 
 use crate::models::contract::{
-    Contract,
-    ContractMilestone,
-    ContractPaymentSchedule,
-    ContractTemplate,
-    CreateContractRequest,
-    CreateContractMilestoneRequest,
-    CreateContractTemplateRequest,
-    CreatePaymentScheduleRequest,
-    UpdateContractRequest,
+    Contract, ContractMilestone, ContractPaymentSchedule, ContractTemplate,
+    CreateContractMilestoneRequest, CreateContractRequest, CreateContractTemplateRequest,
+    CreatePaymentScheduleRequest, UpdateContractRequest,
 };
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/contracts", get(list_contracts).post(create_contract))
-        .route("/api/v1/contracts/{id}", get(get_contract).put(update_contract).delete(delete_contract))
+        .route(
+            "/api/v1/contracts",
+            get(list_contracts).post(create_contract),
+        )
+        .route(
+            "/api/v1/contracts/{id}",
+            get(get_contract)
+                .put(update_contract)
+                .delete(delete_contract),
+        )
         .route("/api/v1/contracts/{id}/submit", post(submit_contract))
         .route("/api/v1/contracts/{id}/approve", post(approve_contract))
         .route("/api/v1/contracts/{id}/reject", post(reject_contract))
-        .route("/api/v1/contracts/{id}/milestones", get(list_contract_milestones).post(create_contract_milestone))
-        .route("/api/v1/contracts/{id}/milestones/{milestone_id}", put(update_contract_milestone).delete(delete_contract_milestone))
-        .route("/api/v1/contracts/{id}/payments", get(list_payment_schedule).post(create_payment_schedule))
-        .route("/api/v1/contracts/{id}/payments/{payment_id}", put(update_payment_schedule).delete(delete_payment_schedule))
-        .route("/api/v1/contract-templates", get(list_templates).post(create_template))
-        .route("/api/v1/contract-templates/{id}", get(get_template).put(update_template).delete(delete_template))
-        .route("/api/v1/projects/{project_id}/contracts", get(get_project_contracts).post(create_project_contract))
+        .route(
+            "/api/v1/contracts/{id}/milestones",
+            get(list_contract_milestones).post(create_contract_milestone),
+        )
+        .route(
+            "/api/v1/contracts/{id}/milestones/{milestone_id}",
+            put(update_contract_milestone).delete(delete_contract_milestone),
+        )
+        .route(
+            "/api/v1/contracts/{id}/payments",
+            get(list_payment_schedule).post(create_payment_schedule),
+        )
+        .route(
+            "/api/v1/contracts/{id}/payments/{payment_id}",
+            put(update_payment_schedule).delete(delete_payment_schedule),
+        )
+        .route(
+            "/api/v1/contract-templates",
+            get(list_templates).post(create_template),
+        )
+        .route(
+            "/api/v1/contract-templates/{id}",
+            get(get_template)
+                .put(update_template)
+                .delete(delete_template),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/contracts",
+            get(get_project_contracts).post(create_project_contract),
+        )
         .with_state(pool)
 }
 
-async fn list_contracts(
-    State(pool): State<PgPool>,
-) -> Json<ApiResponse<Vec<Contract>>> {
-    let contracts = sqlx::query_as::<_, Contract>("SELECT * FROM pm.contracts ORDER BY created_at DESC")
-        .fetch_all(&pool)
-        .await;
+async fn list_contracts(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Contract>>> {
+    let contracts =
+        sqlx::query_as::<_, Contract>("SELECT * FROM pm.contracts ORDER BY created_at DESC")
+            .fetch_all(&pool)
+            .await;
 
     match contracts {
         Ok(c) => Json(ApiResponse::success(c, "获取合同列表成功")),
         Err(e) => {
             tracing::error!("获取合同列表失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取合同列表失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取合同列表失败",
+            ))
         }
     }
 }
@@ -66,10 +92,16 @@ async fn get_contract(
 
     match contract {
         Ok(c) => Json(ApiResponse::success(c, "获取合同详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "合同不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "合同不存在",
+        )),
         Err(e) => {
             tracing::error!("获取合同失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取合同失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取合同失败",
+            ))
         }
     }
 }
@@ -80,7 +112,7 @@ async fn create_contract(
 ) -> Json<ApiResponse<Contract>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let contract = sqlx::query_as::<_, Contract>(
         r#"INSERT INTO pm.contracts (
             id, project_id, contract_code, contract_name, contract_type, 
@@ -118,7 +150,10 @@ async fn create_contract(
         Ok(c) => Json(ApiResponse::success(c, "创建合同成功")),
         Err(e) => {
             tracing::error!("创建合同失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建合同失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建合同失败",
+            ))
         }
     }
 }
@@ -145,7 +180,7 @@ async fn update_contract(
             status = COALESCE($13, status),
             description = COALESCE($14, description),
             updated_at = $15
-        WHERE id = $16 RETURNING *"#
+        WHERE id = $16 RETURNING *"#,
     )
     .bind(req.contract_name)
     .bind(req.contract_category)
@@ -168,10 +203,16 @@ async fn update_contract(
 
     match contract {
         Ok(c) => Json(ApiResponse::success(c, "更新合同成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "合同不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "合同不存在",
+        )),
         Err(e) => {
             tracing::error!("更新合同失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新合同失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新合同失败",
+            ))
         }
     }
 }
@@ -187,10 +228,16 @@ async fn delete_contract(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除合同成功")),
-        Ok(_) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "合同不存在")),
+        Ok(_) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "合同不存在",
+        )),
         Err(e) => {
             tracing::error!("删除合同失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "删除合同失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "删除合同失败",
+            ))
         }
     }
 }
@@ -200,7 +247,7 @@ async fn submit_contract(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contract>> {
     let contract = sqlx::query_as::<_, Contract>(
-        "UPDATE pm.contracts SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *"
+        "UPDATE pm.contracts SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *",
     )
     .bind(Utc::now())
     .bind(id)
@@ -209,10 +256,16 @@ async fn submit_contract(
 
     match contract {
         Ok(c) => Json(ApiResponse::success(c, "提交审批成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "合同不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "合同不存在",
+        )),
         Err(e) => {
             tracing::error!("提交审批失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "提交审批失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "提交审批失败",
+            ))
         }
     }
 }
@@ -222,7 +275,7 @@ async fn approve_contract(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contract>> {
     let contract = sqlx::query_as::<_, Contract>(
-        "UPDATE pm.contracts SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *"
+        "UPDATE pm.contracts SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *",
     )
     .bind(Utc::now())
     .bind(id)
@@ -231,10 +284,16 @@ async fn approve_contract(
 
     match contract {
         Ok(c) => Json(ApiResponse::success(c, "批准合同成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "合同不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "合同不存在",
+        )),
         Err(e) => {
             tracing::error!("批准合同失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "批准合同失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "批准合同失败",
+            ))
         }
     }
 }
@@ -244,7 +303,7 @@ async fn reject_contract(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contract>> {
     let contract = sqlx::query_as::<_, Contract>(
-        "UPDATE pm.contracts SET status = 'rejected', updated_at = $1 WHERE id = $2 RETURNING *"
+        "UPDATE pm.contracts SET status = 'rejected', updated_at = $1 WHERE id = $2 RETURNING *",
     )
     .bind(Utc::now())
     .bind(id)
@@ -253,10 +312,16 @@ async fn reject_contract(
 
     match contract {
         Ok(c) => Json(ApiResponse::success(c, "拒绝合同成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "合同不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "合同不存在",
+        )),
         Err(e) => {
             tracing::error!("拒绝合同失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "拒绝合同失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "拒绝合同失败",
+            ))
         }
     }
 }
@@ -266,7 +331,7 @@ async fn list_contract_milestones(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ContractMilestone>>> {
     let milestones = sqlx::query_as::<_, ContractMilestone>(
-        "SELECT * FROM pm.contract_milestones WHERE contract_id = $1 ORDER BY target_date"
+        "SELECT * FROM pm.contract_milestones WHERE contract_id = $1 ORDER BY target_date",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -276,7 +341,10 @@ async fn list_contract_milestones(
         Ok(m) => Json(ApiResponse::success(m, "获取里程碑列表成功")),
         Err(e) => {
             tracing::error!("获取里程碑失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取里程碑失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取里程碑失败",
+            ))
         }
     }
 }
@@ -288,12 +356,12 @@ async fn create_contract_milestone(
 ) -> Json<ApiResponse<ContractMilestone>> {
     let milestone_id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let milestone = sqlx::query_as::<_, ContractMilestone>(
         r#"INSERT INTO pm.contract_milestones (
             id, contract_id, name, description, target_date, 
             payment_amount, payment_percent, project_milestone_id, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
     )
     .bind(milestone_id)
     .bind(id)
@@ -312,7 +380,10 @@ async fn create_contract_milestone(
         Ok(m) => Json(ApiResponse::success(m, "创建里程碑成功")),
         Err(e) => {
             tracing::error!("创建里程碑失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建里程碑失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建里程碑失败",
+            ))
         }
     }
 }
@@ -330,7 +401,7 @@ async fn update_contract_milestone(
             payment_amount = COALESCE($4, payment_amount),
             payment_percent = COALESCE($5, payment_percent),
             updated_at = $6
-        WHERE id = $7 AND contract_id = $8 RETURNING *"#
+        WHERE id = $7 AND contract_id = $8 RETURNING *"#,
     )
     .bind(&req.name)
     .bind(req.description)
@@ -345,10 +416,16 @@ async fn update_contract_milestone(
 
     match milestone {
         Ok(m) => Json(ApiResponse::success(m, "更新里程碑成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "里程碑不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "里程碑不存在",
+        )),
         Err(e) => {
             tracing::error!("更新里程碑失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新里程碑失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新里程碑失败",
+            ))
         }
     }
 }
@@ -357,18 +434,25 @@ async fn delete_contract_milestone(
     State(pool): State<PgPool>,
     Path((id, milestone_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM pm.contract_milestones WHERE id = $1 AND contract_id = $2")
-        .bind(milestone_id)
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result =
+        sqlx::query("DELETE FROM pm.contract_milestones WHERE id = $1 AND contract_id = $2")
+            .bind(milestone_id)
+            .bind(id)
+            .execute(&pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除里程碑成功")),
-        Ok(_) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "里程碑不存在")),
+        Ok(_) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "里程碑不存在",
+        )),
         Err(e) => {
             tracing::error!("删除里程碑失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "删除里程碑失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "删除里程碑失败",
+            ))
         }
     }
 }
@@ -378,7 +462,7 @@ async fn list_payment_schedule(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ContractPaymentSchedule>>> {
     let payments = sqlx::query_as::<_, ContractPaymentSchedule>(
-        "SELECT * FROM pm.contract_payment_schedule WHERE contract_id = $1 ORDER BY payment_number"
+        "SELECT * FROM pm.contract_payment_schedule WHERE contract_id = $1 ORDER BY payment_number",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -388,7 +472,10 @@ async fn list_payment_schedule(
         Ok(p) => Json(ApiResponse::success(p, "获取付款计划成功")),
         Err(e) => {
             tracing::error!("获取付款计划失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取付款计划失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取付款计划失败",
+            ))
         }
     }
 }
@@ -400,12 +487,12 @@ async fn create_payment_schedule(
 ) -> Json<ApiResponse<ContractPaymentSchedule>> {
     let payment_id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let payment = sqlx::query_as::<_, ContractPaymentSchedule>(
         r#"INSERT INTO pm.contract_payment_schedule (
             id, contract_id, payment_number, payment_name, payment_percent, 
             payment_amount, due_date, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *"#
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *"#,
     )
     .bind(payment_id)
     .bind(id)
@@ -423,7 +510,10 @@ async fn create_payment_schedule(
         Ok(p) => Json(ApiResponse::success(p, "创建付款计划成功")),
         Err(e) => {
             tracing::error!("创建付款计划失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建付款计划失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建付款计划失败",
+            ))
         }
     }
 }
@@ -440,7 +530,7 @@ async fn update_payment_schedule(
             payment_amount = COALESCE($3, payment_amount),
             due_date = COALESCE($4, due_date),
             updated_at = $5
-        WHERE id = $6 AND contract_id = $7 RETURNING *"#
+        WHERE id = $6 AND contract_id = $7 RETURNING *"#,
     )
     .bind(req.payment_name)
     .bind(req.payment_percent)
@@ -454,10 +544,16 @@ async fn update_payment_schedule(
 
     match payment {
         Ok(p) => Json(ApiResponse::success(p, "更新付款计划成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "付款计划不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "付款计划不存在",
+        )),
         Err(e) => {
             tracing::error!("更新付款计划失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新付款计划失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新付款计划失败",
+            ))
         }
     }
 }
@@ -466,34 +562,44 @@ async fn delete_payment_schedule(
     State(pool): State<PgPool>,
     Path((id, payment_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM pm.contract_payment_schedule WHERE id = $1 AND contract_id = $2")
-        .bind(payment_id)
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result =
+        sqlx::query("DELETE FROM pm.contract_payment_schedule WHERE id = $1 AND contract_id = $2")
+            .bind(payment_id)
+            .bind(id)
+            .execute(&pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除付款计划成功")),
-        Ok(_) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "付款计划不存在")),
+        Ok(_) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "付款计划不存在",
+        )),
         Err(e) => {
             tracing::error!("删除付款计划失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "删除付款计划失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "删除付款计划失败",
+            ))
         }
     }
 }
 
-async fn list_templates(
-    State(pool): State<PgPool>,
-) -> Json<ApiResponse<Vec<ContractTemplate>>> {
-    let templates = sqlx::query_as::<_, ContractTemplate>("SELECT * FROM pm.contract_templates WHERE is_active = true ORDER BY name")
-        .fetch_all(&pool)
-        .await;
+async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<ContractTemplate>>> {
+    let templates = sqlx::query_as::<_, ContractTemplate>(
+        "SELECT * FROM pm.contract_templates WHERE is_active = true ORDER BY name",
+    )
+    .fetch_all(&pool)
+    .await;
 
     match templates {
         Ok(t) => Json(ApiResponse::success(t, "获取模板列表成功")),
         Err(e) => {
             tracing::error!("获取模板失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取模板失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取模板失败",
+            ))
         }
     }
 }
@@ -502,17 +608,24 @@ async fn get_template(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ContractTemplate>> {
-    let template = sqlx::query_as::<_, ContractTemplate>("SELECT * FROM pm.contract_templates WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let template =
+        sqlx::query_as::<_, ContractTemplate>("SELECT * FROM pm.contract_templates WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await;
 
     match template {
         Ok(t) => Json(ApiResponse::success(t, "获取模板详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "模板不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "模板不存在",
+        )),
         Err(e) => {
             tracing::error!("获取模板失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取模板失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取模板失败",
+            ))
         }
     }
 }
@@ -523,7 +636,7 @@ async fn create_template(
 ) -> Json<ApiResponse<ContractTemplate>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let template = sqlx::query_as::<_, ContractTemplate>(
         "INSERT INTO pm.contract_templates (id, name, contract_type, description, content, created_by, created_at, updated_at) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
@@ -543,7 +656,10 @@ async fn create_template(
         Ok(t) => Json(ApiResponse::success(t, "创建模板成功")),
         Err(e) => {
             tracing::error!("创建模板失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建模板失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建模板失败",
+            ))
         }
     }
 }
@@ -560,7 +676,7 @@ async fn update_template(
             description = COALESCE($3, description),
             content = COALESCE($4, content),
             updated_at = $5
-        WHERE id = $6 RETURNING *"
+        WHERE id = $6 RETURNING *",
     )
     .bind(&req.name)
     .bind(&req.contract_type)
@@ -573,10 +689,16 @@ async fn update_template(
 
     match template {
         Ok(t) => Json(ApiResponse::success(t, "更新模板成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "模板不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "模板不存在",
+        )),
         Err(e) => {
             tracing::error!("更新模板失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新模板失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新模板失败",
+            ))
         }
     }
 }
@@ -592,10 +714,16 @@ async fn delete_template(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除模板成功")),
-        Ok(_) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "模板不存在")),
+        Ok(_) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "模板不存在",
+        )),
         Err(e) => {
             tracing::error!("删除模板失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "删除模板失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "删除模板失败",
+            ))
         }
     }
 }
@@ -604,16 +732,21 @@ async fn get_project_contracts(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Contract>>> {
-    let contracts = sqlx::query_as::<_, Contract>("SELECT * FROM pm.contracts WHERE project_id = $1 ORDER BY created_at DESC")
-        .bind(project_id)
-        .fetch_all(&pool)
-        .await;
+    let contracts = sqlx::query_as::<_, Contract>(
+        "SELECT * FROM pm.contracts WHERE project_id = $1 ORDER BY created_at DESC",
+    )
+    .bind(project_id)
+    .fetch_all(&pool)
+    .await;
 
     match contracts {
         Ok(c) => Json(ApiResponse::success(c, "获取项目合同列表成功")),
         Err(e) => {
             tracing::error!("获取项目合同失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取项目合同失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取项目合同失败",
+            ))
         }
     }
 }

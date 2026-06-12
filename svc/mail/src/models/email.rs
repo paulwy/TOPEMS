@@ -23,6 +23,7 @@ pub struct Email {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct SendEmailRequest {
     pub subject: String,
     pub to_addresses: Vec<String>,
@@ -105,7 +106,7 @@ mod tests {
         };
 
         assert!(!request.to_addresses.is_empty());
-        assert!(request.subject.len() > 0);
+        assert!(!request.subject.is_empty());
     }
 
     #[test]

@@ -1,10 +1,8 @@
 // 错误处理规范化模块 - 消除 unsafe unwrap，统一错误类型
 // =============================================================================
 
-use thiserror::Error;
-#[cfg(test)]
-use anyhow::Context;
 use std::result::Result as StdResult;
+use thiserror::Error;
 
 /// TOPEMS 统一错误类型
 #[derive(Error, Debug)]
@@ -12,129 +10,129 @@ pub enum TopemsError {
     // ========== 数据库错误 ==========
     #[error("数据库连接失败: {0}")]
     DatabaseConnection(String),
-    
+
     #[error("数据库查询失败: {0}")]
     DatabaseQuery(String),
-    
+
     #[error("数据库事务失败: {0}")]
     DatabaseTransaction(String),
-    
+
     #[error("数据库记录不存在: {0}")]
     DatabaseRecordNotFound(String),
-    
+
     // ========== 认证错误 ==========
     #[error("认证失败: {0}")]
     AuthenticationFailed(String),
-    
+
     #[error("Token 无效或已过期")]
     InvalidToken,
-    
+
     #[error("权限不足: 需要 {required} 权限")]
     PermissionDenied { required: String },
-    
+
     #[error("用户未登录")]
     Unauthorized,
-    
+
     // ========== 配置错误 ==========
     #[error("配置加载失败: {0}")]
     ConfigLoad(String),
-    
+
     #[error("配置验证失败: {0}")]
     ConfigValidation(String),
-    
+
     #[error("环境变量未设置: {0}")]
     EnvVarNotSet(String),
-    
+
     // ========== 业务逻辑错误 ==========
     #[error("数据验证失败: {0}")]
     ValidationFailed(String),
-    
+
     #[error("业务逻辑错误: {0}")]
     BusinessLogic(String),
-    
+
     #[error("资源不存在: {0}")]
     ResourceNotFound(String),
-    
+
     #[error("资源已存在: {0}")]
     ResourceAlreadyExists(String),
-    
+
     #[error("操作不允许: {0}")]
     OperationNotAllowed(String),
-    
+
     // ========== 网络错误 ==========
     #[error("网络请求失败: {0}")]
     NetworkRequest(String),
-    
+
     #[error("服务不可用: {0}")]
     ServiceUnavailable(String),
-    
+
     #[error("请求超时")]
     RequestTimeout,
-    
+
     // ========== 文件错误 ==========
     #[error("文件操作失败: {0}")]
     FileOperation(String),
-    
+
     #[error("文件不存在: {0}")]
     FileNotFound(String),
-    
+
     #[error("文件格式错误: {0}")]
     FileFormatError(String),
-    
+
     // ========== 缓存错误 ==========
     #[error("缓存操作失败: {0}")]
     CacheOperation(String),
-    
+
     // ========== 内部/通用错误 ==========
     #[error("内部错误: {0}")]
     Internal(String),
-    
+
     #[error("未知错误: {0}")]
     Unknown(String),
-    
+
     // ========== 兼容性别名变体 (为了兼容原有代码) ==========
     #[error("配置错误: {0}")]
     Config(String),
-    
+
     #[error("数据库错误: {0}")]
     Database(String),
-    
+
     #[error("认证错误: {0}")]
     Auth(String),
-    
+
     #[error("验证错误: {0}")]
     Validation(String),
-    
+
     #[error("未找到: {0}")]
     NotFound(String),
-    
+
     #[error("未授权: {0}")]
     UnauthorizedStr(String),
-    
+
     #[error("禁止访问: {0}")]
     ForbiddenStr(String),
-    
+
     #[error("IO错误")]
     Io(std::io::Error),
-    
+
     #[error("序列化错误: {0}")]
     Serialization(#[from] serde_json::Error),
-    
+
     #[error("SQL错误")]
     Sql(sqlx::Error),
-    
+
     #[error("HTTP请求错误: {0}")]
     HttpRequest(#[from] reqwest::Error),
-    
+
     #[error("服务未找到: {0}")]
     ServiceNotFound(String),
-    
+
     #[error("服务错误: {status_code} - {message}")]
     ServiceError { status_code: u16, message: String },
-    
+
     #[error("无效的URL: {0}")]
     InvalidUrl(String),
-    
+
     #[error("Redis错误: {0}")]
     RedisError(#[from] redis::RedisError),
 }
@@ -150,7 +148,7 @@ impl SafeErrorHandler {
     pub fn safe_unwrap_option<T>(option: Option<T>, error_msg: &str) -> Result<T> {
         option.ok_or_else(|| TopemsError::Internal(error_msg.to_string()))
     }
-    
+
     /// 安全地从 Result 获取值，避免 unwrap
     pub fn safe_unwrap_result<T, E: std::fmt::Display>(
         result: StdResult<T, E>,
@@ -158,24 +156,27 @@ impl SafeErrorHandler {
     ) -> Result<T> {
         result.map_err(|e| TopemsError::Internal(format!("{}: {}", error_msg, e)))
     }
-    
+
     /// 安全地从环境变量获取值
     pub fn safe_get_env(key: &str) -> Result<String> {
         std::env::var(key).map_err(|_| TopemsError::EnvVarNotSet(key.to_string()))
     }
-    
+
     /// 安全地解析字符串
     pub fn safe_parse<T: std::str::FromStr>(s: &str, error_msg: &str) -> Result<T> {
-        s.parse::<T>().map_err(|_| {
-            TopemsError::ValidationFailed(format!("{}: 无法解析 '{}'", error_msg, s))
-        })
+        s.parse::<T>()
+            .map_err(|_| TopemsError::ValidationFailed(format!("{}: 无法解析 '{}'", error_msg, s)))
     }
-    
+
     /// 安全地获取集合元素
-    pub fn safe_get_element<'a, T>(collection: &'a [T], index: usize, error_msg: &'a str) -> Result<&'a T> {
-        collection.get(index).ok_or_else(|| {
-            TopemsError::Internal(format!("{}: 索引 {} 超出范围", error_msg, index))
-        })
+    pub fn safe_get_element<'a, T>(
+        collection: &'a [T],
+        index: usize,
+        error_msg: &'a str,
+    ) -> Result<&'a T> {
+        collection
+            .get(index)
+            .ok_or_else(|| TopemsError::Internal(format!("{}: 索引 {} 超出范围", error_msg, index)))
     }
 }
 
@@ -198,12 +199,10 @@ macro_rules! safe_unwrap {
     ($result:expr_2021) => {
         $result.map_err(|e| $crate::error::TopemsError::Internal(e.to_string()))?
     };
-    
+
     // 处理 Result with custom message
     ($result:expr_2021, $msg:expr_2021) => {
-        $result.map_err(|e| {
-            $crate::error::TopemsError::Internal(format!("{}: {}", $msg, e))
-        })?
+        $result.map_err(|e| $crate::error::TopemsError::Internal(format!("{}: {}", $msg, e)))?
     };
 }
 
@@ -211,7 +210,9 @@ macro_rules! safe_unwrap {
 impl From<sqlx::Error> for TopemsError {
     fn from(error: sqlx::Error) -> Self {
         match error {
-            sqlx::Error::RowNotFound => TopemsError::DatabaseRecordNotFound("记录不存在".to_string()),
+            sqlx::Error::RowNotFound => {
+                TopemsError::DatabaseRecordNotFound("记录不存在".to_string())
+            }
             sqlx::Error::PoolTimedOut => TopemsError::DatabaseConnection("连接池超时".to_string()),
             sqlx::Error::PoolClosed => TopemsError::DatabaseConnection("连接池已关闭".to_string()),
             sqlx::Error::Io(e) => TopemsError::DatabaseConnection(format!("IO 错误: {}", e)),
@@ -224,11 +225,15 @@ impl From<sqlx::Error> for TopemsError {
 impl From<crate::event::EventError> for TopemsError {
     fn from(error: crate::event::EventError) -> Self {
         match error {
-            crate::event::EventError::RedisError(e) => TopemsError::CacheOperation(format!("Redis: {}", e)),
+            crate::event::EventError::RedisError(e) => {
+                TopemsError::CacheOperation(format!("Redis: {}", e))
+            }
             crate::event::EventError::SerializationError(e) => TopemsError::Serialization(e),
             crate::event::EventError::InvalidEventType(msg) => TopemsError::ValidationFailed(msg),
             crate::event::EventError::SubscriberNotFound(msg) => TopemsError::ResourceNotFound(msg),
-            crate::event::EventError::PublishTimeout => TopemsError::Internal("事件发布超时".to_string()),
+            crate::event::EventError::PublishTimeout => {
+                TopemsError::Internal("事件发布超时".to_string())
+            }
             crate::event::EventError::ConfigError(msg) => TopemsError::ConfigLoad(msg),
         }
     }
@@ -238,14 +243,25 @@ impl From<crate::event::EventError> for TopemsError {
 impl From<crate::service_client::ServiceClientError> for TopemsError {
     fn from(error: crate::service_client::ServiceClientError) -> Self {
         match error {
-            crate::service_client::ServiceClientError::HttpRequestError(e) => TopemsError::NetworkRequest(format!("HTTP: {}", e)),
-            crate::service_client::ServiceClientError::JsonError(e) => TopemsError::Serialization(e),
-            crate::service_client::ServiceClientError::ServiceNotFound(msg) => TopemsError::ServiceUnavailable(msg),
-            crate::service_client::ServiceClientError::ServiceError { status_code, message } => {
-                TopemsError::NetworkRequest(format!("Service error {}: {}", status_code, message))
+            crate::service_client::ServiceClientError::HttpRequestError(e) => {
+                TopemsError::NetworkRequest(format!("HTTP: {}", e))
             }
-            crate::service_client::ServiceClientError::InvalidUrl(msg) => TopemsError::ConfigLoad(msg),
-            crate::service_client::ServiceClientError::ConfigError(msg) => TopemsError::ConfigLoad(msg),
+            crate::service_client::ServiceClientError::JsonError(e) => {
+                TopemsError::Serialization(e)
+            }
+            crate::service_client::ServiceClientError::ServiceNotFound(msg) => {
+                TopemsError::ServiceUnavailable(msg)
+            }
+            crate::service_client::ServiceClientError::ServiceError {
+                status_code,
+                message,
+            } => TopemsError::NetworkRequest(format!("Service error {}: {}", status_code, message)),
+            crate::service_client::ServiceClientError::InvalidUrl(msg) => {
+                TopemsError::ConfigLoad(msg)
+            }
+            crate::service_client::ServiceClientError::ConfigError(msg) => {
+                TopemsError::ConfigLoad(msg)
+            }
         }
     }
 }
@@ -278,7 +294,7 @@ impl From<std::io::Error> for TopemsError {
 pub trait ErrorContext<T> {
     /// 添加上下文信息
     fn with_context(self, context: &str) -> Result<T>;
-    
+
     /// 添加详细的上下文信息
     fn with_detail_context(self, context: &str, detail: &str) -> Result<T>;
 }
@@ -287,11 +303,9 @@ impl<T, E: std::fmt::Display> ErrorContext<T> for StdResult<T, E> {
     fn with_context(self, context: &str) -> Result<T> {
         self.map_err(|e| TopemsError::Internal(format!("{}: {}", context, e)))
     }
-    
+
     fn with_detail_context(self, context: &str, detail: &str) -> Result<T> {
-        self.map_err(|e| {
-            TopemsError::Internal(format!("{} - {}: {}", context, detail, e))
-        })
+        self.map_err(|e| TopemsError::Internal(format!("{} - {}: {}", context, detail, e)))
     }
 }
 
@@ -312,7 +326,7 @@ impl ErrorRecovery {
             }
         }
     }
-    
+
     /// 尝试恢复，失败时记录错误并返回 None
     pub fn try_or_log<T, F>(f: F) -> Option<T>
     where
@@ -326,7 +340,7 @@ impl ErrorRecovery {
             }
         }
     }
-    
+
     /// 尝试恢复，失败时返回错误响应
     pub fn try_or_response<T, F>(f: F) -> crate::response::ApiResponse<T>
     where
@@ -375,7 +389,7 @@ impl ErrorLogger {
             }
         }
     }
-    
+
     /// 记录错误并返回
     pub fn log_and_return<T>(error: TopemsError) -> Result<T> {
         Self::log_error(&error);
@@ -384,23 +398,22 @@ impl ErrorLogger {
 }
 
 /// 错误统计工具
+#[derive(Default)]
 pub struct ErrorStatistics {
     error_counts: std::collections::HashMap<String, u64>,
 }
 
 impl ErrorStatistics {
     pub fn new() -> Self {
-        Self {
-            error_counts: std::collections::HashMap::new(),
-        }
+        Self::default()
     }
-    
+
     /// 记录错误
     pub fn record_error(&mut self, error: &TopemsError) {
         let key = error.to_string();
         *self.error_counts.entry(key).or_insert(0) += 1;
     }
-    
+
     /// 获取错误统计
     pub fn get_statistics(&self) -> Vec<(String, u64)> {
         self.error_counts
@@ -408,7 +421,7 @@ impl ErrorStatistics {
             .map(|(k, v)| (k.clone(), *v))
             .collect()
     }
-    
+
     /// 清空统计
     pub fn clear(&mut self) {
         self.error_counts.clear();
@@ -655,7 +668,10 @@ impl axum::response::IntoResponse for TopemsError {
                 format!("服务未找到: {}", msg),
                 Some("SERVICE_NOT_FOUND".to_string()),
             ),
-            TopemsError::ServiceError { status_code, message } => (
+            TopemsError::ServiceError {
+                status_code,
+                message,
+            } => (
                 StatusCode::from_u16(*status_code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
                 format!("服务错误: {}", message),
                 Some("SERVICE_ERROR".to_string()),
@@ -688,27 +704,27 @@ impl axum::response::IntoResponse for TopemsError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_safe_unwrap_option() {
         let some_value: Option<i32> = Some(42);
         let result = SafeErrorHandler::safe_unwrap_option(some_value, "值不存在");
         assert_eq!(result.unwrap(), 42);
-        
+
         let none_value: Option<i32> = None;
         let result = SafeErrorHandler::safe_unwrap_option(none_value, "值不存在");
         assert!(result.is_err());
     }
-    
+
     #[test]
     fn test_safe_parse() {
         let result = SafeErrorHandler::safe_parse::<i32>("42", "解析数字");
         assert_eq!(result.unwrap(), 42);
-        
+
         let result = SafeErrorHandler::safe_parse::<i32>("abc", "解析数字");
         assert!(result.is_err());
     }
-    
+
     #[test]
     fn test_error_context() {
         let result: StdResult<i32, &str> = Err("error");
@@ -716,20 +732,24 @@ mod tests {
         assert!(enhanced.is_err());
         assert!(enhanced.unwrap_err().to_string().contains("操作失败"));
     }
-    
+
     #[test]
     fn test_error_recovery() {
         let result = ErrorRecovery::try_or_default(|| Ok(42), 0);
         assert_eq!(result, 42);
-        
-        let result = ErrorRecovery::try_or_default(|| Err(TopemsError::Internal("test".to_string())), 0);
+
+        let result =
+            ErrorRecovery::try_or_default(|| Err(TopemsError::Internal("test".to_string())), 0);
         assert_eq!(result, 0);
     }
-    
+
     #[test]
     fn test_error_conversion() {
         let db_error = sqlx::Error::RowNotFound;
         let topems_error: TopemsError = db_error.into();
-        assert!(matches!(topems_error, TopemsError::DatabaseRecordNotFound(_)));
+        assert!(matches!(
+            topems_error,
+            TopemsError::DatabaseRecordNotFound(_)
+        ));
     }
 }

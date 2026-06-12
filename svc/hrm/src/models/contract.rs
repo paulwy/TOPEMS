@@ -111,7 +111,7 @@ mod tests {
         let employee_id = Uuid::new_v4();
         let created_at = Utc::now();
         let updated_at = Utc::now();
-        
+
         let contract = Contract {
             id,
             employee_id,
@@ -143,7 +143,7 @@ mod tests {
     fn test_create_contract_request() {
         let employee_id = Uuid::new_v4();
         let start_date = Utc::now();
-        
+
         let request = CreateContractRequest {
             employee_id,
             contract_no: Some("CONTRACT-002".to_string()),
@@ -195,7 +195,7 @@ mod tests {
         let created_at = Utc::now();
         let updated_at = Utc::now();
         let new_start_date = Utc::now();
-        
+
         let renewal = ContractRenewal {
             id,
             contract_id,

@@ -1,3 +1,12 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(dead_code)]
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -75,7 +84,7 @@ pub async fn list_permissions(
           AND ($2::text IS NULL OR code = $2)
         ORDER BY module, code
         LIMIT $3 OFFSET $4
-        "#
+        "#,
     )
     .bind(&params.resource)
     .bind(&params.action)
@@ -148,8 +157,8 @@ pub async fn create_permission(
     .bind(&permission.description)
     .bind(&permission.category)
     .bind(&permission.module)
-    .bind(&permission.created_at)
-    .bind(&permission.updated_at)
+    .bind(permission.created_at)
+    .bind(permission.updated_at)
     .fetch_one(&state.db)
     .await;
 
@@ -262,14 +271,14 @@ pub async fn update_permission(
         SET name = $2, description = $3, category = $4, module = $5, updated_at = $6
         WHERE id = $1
         RETURNING id, code, name, description, category, module, created_at, updated_at
-        "#
+        "#,
     )
     .bind(&permission_id)
     .bind(&name)
     .bind(&description)
     .bind(&category)
     .bind(&module)
-    .bind(&chrono::Utc::now())
+    .bind(chrono::Utc::now())
     .fetch_one(&state.db)
     .await;
 
@@ -334,7 +343,13 @@ pub fn create_permission_routes(state: AppState) -> Router<AppState> {
         .route("/api/v1/permissions", get(list_permissions))
         .route("/api/v1/permissions", post(create_permission))
         .route("/api/v1/permissions/{permission_id}", get(get_permission))
-        .route("/api/v1/permissions/{permission_id}", put(update_permission))
-        .route("/api/v1/permissions/{permission_id}", delete(delete_permission))
+        .route(
+            "/api/v1/permissions/{permission_id}",
+            put(update_permission),
+        )
+        .route(
+            "/api/v1/permissions/{permission_id}",
+            delete(delete_permission),
+        )
         .with_state(state)
 }

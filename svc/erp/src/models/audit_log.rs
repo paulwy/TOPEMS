@@ -22,6 +22,7 @@ pub struct AuditLog {
     pub created_at: DateTime<Utc>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateAuditLogRequest {
     pub action: String,
@@ -38,6 +39,7 @@ pub struct CreateAuditLogRequest {
     pub user_agent: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct AuditLogQuery {
     pub action: Option<String>,

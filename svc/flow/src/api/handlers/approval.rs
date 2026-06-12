@@ -3,12 +3,12 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::api::response::ApiResponse;
-use crate::state::AppState;
 use crate::models::*;
+use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct ListApprovalsQuery {
@@ -39,7 +39,8 @@ pub async fn list_approvals(
 ) -> (StatusCode, Json<ApiResponse<Vec<Approval>>>) {
     let limit = query.limit.unwrap_or(50);
     let offset = query.offset.unwrap_or(0);
-    match state.repo
+    match state
+        .repo
         .list_approvals(
             query.workflow_instance_id,
             query.assignee_id,
@@ -49,10 +50,7 @@ pub async fn list_approvals(
         )
         .await
     {
-        Ok(approvals) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(approvals)),
-        ),
+        Ok(approvals) => (StatusCode::OK, Json(ApiResponse::success(approvals))),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiResponse::error(e.to_string())),
@@ -67,7 +65,10 @@ pub async fn create_approval(
     match state.repo.create_approval(req).await {
         Ok(approval) => (
             StatusCode::CREATED,
-            Json(ApiResponse::success_with_message(approval, "Approval created successfully".to_string())),
+            Json(ApiResponse::success_with_message(
+                approval,
+                "Approval created successfully".to_string(),
+            )),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -81,10 +82,7 @@ pub async fn get_approval(
     Path(id): Path<Uuid>,
 ) -> (StatusCode, Json<ApiResponse<Approval>>) {
     match state.repo.get_approval(id).await {
-        Ok(Some(approval)) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(approval)),
-        ),
+        Ok(Some(approval)) => (StatusCode::OK, Json(ApiResponse::success(approval))),
         Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::error("Approval not found".to_string())),
@@ -111,7 +109,9 @@ pub async fn process_approval(
         ),
         Err(crate::services::WorkflowEngineError::InstanceNotFound) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error("Approval or instance not found".to_string())),
+            Json(ApiResponse::error(
+                "Approval or instance not found".to_string(),
+            )),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -126,11 +126,12 @@ pub async fn get_approval_records(
 ) -> (StatusCode, Json<ApiResponse<Vec<ApprovalRecord>>>) {
     let limit = query.limit.unwrap_or(50);
     let offset = query.offset.unwrap_or(0);
-    match state.repo.list_approval_records(query.approval_id, query.actor_id, limit, offset).await {
-        Ok(records) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(records)),
-        ),
+    match state
+        .repo
+        .list_approval_records(query.approval_id, query.actor_id, limit, offset)
+        .await
+    {
+        Ok(records) => (StatusCode::OK, Json(ApiResponse::success(records))),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiResponse::error(e.to_string())),
@@ -143,10 +144,7 @@ pub async fn get_records_by_approval(
     Path(approval_id): Path<Uuid>,
 ) -> (StatusCode, Json<ApiResponse<Vec<ApprovalRecord>>>) {
     match state.repo.get_approval_records(approval_id).await {
-        Ok(records) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(records)),
-        ),
+        Ok(records) => (StatusCode::OK, Json(ApiResponse::success(records))),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiResponse::error(e.to_string())),

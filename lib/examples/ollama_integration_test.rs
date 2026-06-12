@@ -3,9 +3,7 @@
 //! 运行: cargo run --example ollama_integration_test -p topems-shared
 
 use anyhow::Result;
-use topems_shared::{
-    OllamaClient, OllamaConfig,
-};
+use topems_shared::{OllamaClient, OllamaConfig};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -53,11 +51,7 @@ async fn main() -> Result<()> {
 
     // 3. 嵌入测试
     println!("\n🔢 步骤 3: 嵌入向量生成");
-    let test_texts = vec![
-        "Rust 编程语言专家",
-        "Python 数据分析",
-        "微服务架构设计",
-    ];
+    let test_texts = vec!["Rust 编程语言专家", "Python 数据分析", "微服务架构设计"];
 
     for text in &test_texts {
         let start = std::time::Instant::now();
@@ -67,7 +61,18 @@ async fn main() -> Result<()> {
                 println!("   ✅ '{}'", text);
                 println!("      - 维度: {}", embedding.len());
                 println!("      - 时间: {} ms", elapsed);
-                println!("      - 前 5 个值: {:.4}", embedding.iter().take(5).map(|x| *x as f64).collect::<Vec<_>>().iter().map(|x| x.to_string()).collect::<Vec<_>>().join(", "));
+                println!(
+                    "      - 前 5 个值: {:.4}",
+                    embedding
+                        .iter()
+                        .take(5)
+                        .map(|x| *x as f64)
+                        .collect::<Vec<_>>()
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                );
             }
             Err(e) => {
                 println!("   ❌ '{}': {}", text, e);
@@ -77,10 +82,7 @@ async fn main() -> Result<()> {
 
     // 4. 聊天测试
     println!("\n💬 步骤 4: 聊天功能测试");
-    let questions = vec![
-        "用一句话介绍 Rust 编程语言",
-        "什么是微服务架构",
-    ];
+    let questions = vec!["用一句话介绍 Rust 编程语言", "什么是微服务架构"];
 
     for question in &questions {
         let start = std::time::Instant::now();
@@ -88,7 +90,10 @@ async fn main() -> Result<()> {
             Ok(response) => {
                 let elapsed = start.elapsed().as_millis();
                 println!("   ✅ 问题: {}", question);
-                println!("      - 回答: {}", response.lines().collect::<Vec<_>>().join(" ").trim());
+                println!(
+                    "      - 回答: {}",
+                    response.lines().collect::<Vec<_>>().join(" ").trim()
+                );
                 println!("      - 时间: {} ms", elapsed);
             }
             Err(e) => {
@@ -144,7 +149,11 @@ async fn main() -> Result<()> {
 
 /// 计算余弦相似度
 fn cosine_similarity(a: &[f32], b: &[f32]) -> f64 {
-    let dot: f64 = a.iter().zip(b.iter()).map(|(x, y)| *x as f64 * *y as f64).sum();
+    let dot: f64 = a
+        .iter()
+        .zip(b.iter())
+        .map(|(x, y)| *x as f64 * *y as f64)
+        .sum();
     let norm_a: f64 = a.iter().map(|x| (*x as f64).powi(2)).sum::<f64>().sqrt();
     let norm_b: f64 = b.iter().map(|x| (*x as f64).powi(2)).sum::<f64>().sqrt();
 

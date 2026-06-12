@@ -1,7 +1,9 @@
+#![allow(dead_code)]
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use sqlx::FromRow;
+use uuid::Uuid;
 
 /// 数据源类型
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]

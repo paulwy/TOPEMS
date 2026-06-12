@@ -1,25 +1,35 @@
-use axum::{
-    Router,
-    extract::{FromRef, State},
-    Json,
-    routing::get,
-};
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(dead_code)]
+#![allow(unused_must_use)]
+
 use anyhow::Result;
-use std::env;
-use sqlx::PgPool;
-use tower_http::services::ServeDir;
+use axum::{
+    extract::{FromRef, State},
+    routing::get,
+    Json, Router,
+};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
+use sqlx::PgPool;
+use std::env;
+use tower_http::services::ServeDir;
 
 use topems_shared::{
-    AuthState, auth_middleware, create_cors_layer,
-    init_logging, ServiceHealth, create_api_info_router,
-    ApiResponse, HealthStatus, DependencyHealth, check_http_health,
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
+    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
 };
 
+mod api;
 mod db;
 mod models;
-mod api;
 
 // ==================== 应用状态 ====================
 
@@ -66,9 +76,7 @@ impl AppState {
 
 // ==================== 健康检查 ====================
 
-async fn health_check(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<String>> {
+async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
     let database_health = check_database_health(&state.pool).await;
     let iam_health = check_iam_health().await;
 
@@ -93,9 +101,7 @@ async fn health_check(
     Json(ApiResponse::success(status_str, "健康检查"))
 }
 
-async fn health_check_detailed(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<ServiceHealth>> {
+async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
         check_database_health(&state.pool).await,
         check_iam_health().await,
@@ -122,17 +128,14 @@ async fn health_check_detailed(
         HealthStatus::Unhealthy => "存在关键服务故障",
     };
 
-    let health = ServiceHealth::healthy_with_message("topems-im", message)
-        .with_dependencies(dependencies);
+    let health =
+        ServiceHealth::healthy_with_message("topems-im", message).with_dependencies(dependencies);
 
     Json(ApiResponse::success(health, "详细健康检查"))
 }
 
 async fn check_database_health(pool: &PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -150,8 +153,8 @@ async fn check_database_health(pool: &PgPool) -> DependencyHealth {
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = std::env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {
@@ -186,14 +189,12 @@ async fn main() -> Result<()> {
 
     init_logging("topems-im");
 
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    let _jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-            "topems-default-jwt-secret-change-me-in-production".to_string()
-        });
+    let _jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
+        tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
+        "topems-default-jwt-secret-change-me-in-production".to_string()
+    });
 
     // 创建数据库连接池
     let pool = db::create_pool(&database_url).await?;
@@ -211,8 +212,11 @@ async fn main() -> Result<()> {
     let custom_gauge = Gauge::new(
         "topems_im_custom_metric",
         "This is a custom metric for TOPEMS-IM",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -223,80 +227,200 @@ async fn main() -> Result<()> {
         // 健康检查
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
-        
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         // WebSocket连接
-        .route("/api/v1/ws/connect", axum::routing::get(api::ws_connect_handler))
-        
+        .route(
+            "/api/v1/ws/connect",
+            axum::routing::get(api::ws_connect_handler),
+        )
         // 聊天室列表（公开）
-        .route("/api/v1/chat-rooms", axum::routing::get(api::list_chat_rooms))
-        .route("/api/v1/chat-rooms/{id}", axum::routing::get(api::get_chat_room))
-        .route("/api/v1/chat-rooms/{id}/messages", axum::routing::get(api::get_chat_room_messages))
-        
+        .route(
+            "/api/v1/chat-rooms",
+            axum::routing::get(api::list_chat_rooms),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}",
+            axum::routing::get(api::get_chat_room),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}/messages",
+            axum::routing::get(api::get_chat_room_messages),
+        )
         // 消息搜索（公开）
-        .route("/api/v1/messages/search", axum::routing::get(api::search_messages))
-        .route("/api/v1/messages/unread", axum::routing::get(api::get_unread_messages))
-        
+        .route(
+            "/api/v1/messages/search",
+            axum::routing::get(api::search_messages),
+        )
+        .route(
+            "/api/v1/messages/unread",
+            axum::routing::get(api::get_unread_messages),
+        )
         // 用户在线状态（公开）
-        .route("/api/v1/users/{id}/online-status", axum::routing::get(api::get_user_online_status))
-        .route("/api/v1/users/online", axum::routing::get(api::list_online_users))
-        
+        .route(
+            "/api/v1/users/{id}/online-status",
+            axum::routing::get(api::get_user_online_status),
+        )
+        .route(
+            "/api/v1/users/online",
+            axum::routing::get(api::list_online_users),
+        )
         // 文件下载（公开）
-        .route("/api/v1/files/{id}/download", axum::routing::get(api::download_file))
-        .route("/api/v1/files/share/{share_link}/download", axum::routing::get(api::download_shared_file))
-        
+        .route(
+            "/api/v1/files/{id}/download",
+            axum::routing::get(api::download_file),
+        )
+        .route(
+            "/api/v1/files/share/{share_link}/download",
+            axum::routing::get(api::download_shared_file),
+        )
         // 静态文件服务
         .nest_service("/uploads", ServeDir::new(&upload_dir));
 
     // ==================== 受保护路由 ====================
     let protected_routes = Router::new()
         // 聊天室管理
-        .route("/api/v1/chat-rooms/create", axum::routing::post(api::create_chat_room))
-        .route("/api/v1/chat-rooms/{id}", axum::routing::put(api::update_chat_room))
-        .route("/api/v1/chat-rooms/{id}", axum::routing::delete(api::delete_chat_room))
-        .route("/api/v1/chat-rooms/{id}/members", axum::routing::post(api::add_chat_room_member))
-        .route("/api/v1/chat-rooms/{id}/members/{member_id}", axum::routing::delete(api::remove_chat_room_member))
-        .route("/api/v1/chat-rooms/{id}/mute", axum::routing::put(api::mute_chat_room))
-        .route("/api/v1/chat-rooms/{id}/unmute", axum::routing::put(api::unmute_chat_room))
-        .route("/api/v1/chat-rooms/{id}/pin", axum::routing::put(api::pin_chat_room))
-        .route("/api/v1/chat-rooms/{id}/unpin", axum::routing::put(api::unpin_chat_room))
-        
+        .route(
+            "/api/v1/chat-rooms/create",
+            axum::routing::post(api::create_chat_room),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}",
+            axum::routing::put(api::update_chat_room),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}",
+            axum::routing::delete(api::delete_chat_room),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}/members",
+            axum::routing::post(api::add_chat_room_member),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}/members/{member_id}",
+            axum::routing::delete(api::remove_chat_room_member),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}/mute",
+            axum::routing::put(api::mute_chat_room),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}/unmute",
+            axum::routing::put(api::unmute_chat_room),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}/pin",
+            axum::routing::put(api::pin_chat_room),
+        )
+        .route(
+            "/api/v1/chat-rooms/{id}/unpin",
+            axum::routing::put(api::unpin_chat_room),
+        )
         // 消息管理
-        .route("/api/v1/messages/send", axum::routing::post(api::send_message))
-        .route("/api/v1/messages/{id}", axum::routing::get(api::get_message))
-        .route("/api/v1/messages/{id}", axum::routing::put(api::update_message))
-        .route("/api/v1/messages/{id}", axum::routing::delete(api::delete_message))
-        .route("/api/v1/messages/{id}/read", axum::routing::post(api::mark_message_read))
-        .route("/api/v1/messages/{id}/reply", axum::routing::post(api::reply_message))
-        .route("/api/v1/messages/{id}/forward", axum::routing::post(api::forward_message))
-        
+        .route(
+            "/api/v1/messages/send",
+            axum::routing::post(api::send_message),
+        )
+        .route(
+            "/api/v1/messages/{id}",
+            axum::routing::get(api::get_message),
+        )
+        .route(
+            "/api/v1/messages/{id}",
+            axum::routing::put(api::update_message),
+        )
+        .route(
+            "/api/v1/messages/{id}",
+            axum::routing::delete(api::delete_message),
+        )
+        .route(
+            "/api/v1/messages/{id}/read",
+            axum::routing::post(api::mark_message_read),
+        )
+        .route(
+            "/api/v1/messages/{id}/reply",
+            axum::routing::post(api::reply_message),
+        )
+        .route(
+            "/api/v1/messages/{id}/forward",
+            axum::routing::post(api::forward_message),
+        )
         // 联系人管理
-        .route("/api/v1/contacts/add", axum::routing::post(api::add_contact))
+        .route(
+            "/api/v1/contacts/add",
+            axum::routing::post(api::add_contact),
+        )
         .route("/api/v1/contacts", axum::routing::get(api::list_contacts))
-        .route("/api/v1/contacts/{id}", axum::routing::get(api::get_contact))
-        .route("/api/v1/contacts/{id}", axum::routing::put(api::update_contact))
-        .route("/api/v1/contacts/{id}", axum::routing::delete(api::delete_contact))
-        .route("/api/v1/contacts/{id}/block", axum::routing::post(api::block_contact))
-        .route("/api/v1/contacts/{id}/unblock", axum::routing::post(api::unblock_contact))
-        .route("/api/v1/contacts/search", axum::routing::get(api::search_contacts))
-        .route("/api/v1/contacts/blocked", axum::routing::get(api::list_blocked_contacts))
-        
+        .route(
+            "/api/v1/contacts/{id}",
+            axum::routing::get(api::get_contact),
+        )
+        .route(
+            "/api/v1/contacts/{id}",
+            axum::routing::put(api::update_contact),
+        )
+        .route(
+            "/api/v1/contacts/{id}",
+            axum::routing::delete(api::delete_contact),
+        )
+        .route(
+            "/api/v1/contacts/{id}/block",
+            axum::routing::post(api::block_contact),
+        )
+        .route(
+            "/api/v1/contacts/{id}/unblock",
+            axum::routing::post(api::unblock_contact),
+        )
+        .route(
+            "/api/v1/contacts/search",
+            axum::routing::get(api::search_contacts),
+        )
+        .route(
+            "/api/v1/contacts/blocked",
+            axum::routing::get(api::list_blocked_contacts),
+        )
         // 联系人分组管理
-        .route("/api/v1/contact-groups", axum::routing::get(api::list_contact_groups))
-        .route("/api/v1/contact-groups/create", axum::routing::post(api::create_contact_group))
-        .route("/api/v1/contact-groups/{id}", axum::routing::put(api::update_contact_group))
-        .route("/api/v1/contact-groups/{id}", axum::routing::delete(api::delete_contact_group))
-        
+        .route(
+            "/api/v1/contact-groups",
+            axum::routing::get(api::list_contact_groups),
+        )
+        .route(
+            "/api/v1/contact-groups/create",
+            axum::routing::post(api::create_contact_group),
+        )
+        .route(
+            "/api/v1/contact-groups/{id}",
+            axum::routing::put(api::update_contact_group),
+        )
+        .route(
+            "/api/v1/contact-groups/{id}",
+            axum::routing::delete(api::delete_contact_group),
+        )
         // 文件传输
-        .route("/api/v1/files/upload", axum::routing::post(api::upload_file))
+        .route(
+            "/api/v1/files/upload",
+            axum::routing::post(api::upload_file),
+        )
         .route("/api/v1/files/{id}", axum::routing::get(api::get_file_info))
-        .route("/api/v1/files/{id}", axum::routing::delete(api::delete_file))
-        .route("/api/v1/files/{id}/share", axum::routing::post(api::share_file))
-        .route("/api/v1/files/history", axum::routing::get(api::get_file_history))
-        
+        .route(
+            "/api/v1/files/{id}",
+            axum::routing::delete(api::delete_file),
+        )
+        .route(
+            "/api/v1/files/{id}/share",
+            axum::routing::post(api::share_file),
+        )
+        .route(
+            "/api/v1/files/history",
+            axum::routing::get(api::get_file_history),
+        )
         // 用户状态管理
-        .route("/api/v1/users/{id}/status", axum::routing::put(api::update_user_status))
-        
+        .route(
+            "/api/v1/users/{id}/status",
+            axum::routing::put(api::update_user_status),
+        )
         // 添加认证中间件
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -313,7 +437,7 @@ async fn main() -> Result<()> {
 
     // ==================== 启动服务器 ====================
     let port = env::var("SERVER_PORT")
-        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8051".to_string()));
+        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8052".to_string()));
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-IM 即时通讯系统启动中...");

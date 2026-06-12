@@ -8,11 +8,11 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest};
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
-use crate::utils::validate_required_field;
 use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
+use crate::models::{Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest};
+use crate::utils::validate_required_field;
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct AnnouncementQueryParams {
@@ -25,13 +25,24 @@ pub struct AnnouncementQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/announcements", get(list_announcements).post(create_announcement))
+        .route(
+            "/api/v1/announcements",
+            get(list_announcements).post(create_announcement),
+        )
         .route(
             "/api/v1/announcements/{id}",
-            get(get_announcement).put(update_announcement).delete(delete_announcement),
+            get(get_announcement)
+                .put(update_announcement)
+                .delete(delete_announcement),
         )
-        .route("/api/v1/announcements/{id}/publish", post(publish_announcement))
-        .route("/api/v1/announcements/{id}/unpublish", post(unpublish_announcement))
+        .route(
+            "/api/v1/announcements/{id}/publish",
+            post(publish_announcement),
+        )
+        .route(
+            "/api/v1/announcements/{id}/unpublish",
+            post(unpublish_announcement),
+        )
 }
 
 async fn list_announcements(
@@ -123,7 +134,7 @@ async fn create_announcement(
     .bind(&req.content)
     .bind(&req.author)
     .bind(&req.priority)
-    .bind(&req.expire_at)
+    .bind(req.expire_at)
     .bind(now)
     .bind(now)
     .fetch_one(&state.db)
@@ -154,16 +165,18 @@ async fn create_announcement(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "announcement".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "announcement".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -267,16 +280,18 @@ async fn update_announcement(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "announcement".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "announcement".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -323,16 +338,18 @@ async fn delete_announcement(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "announcement".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "announcement".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -390,16 +407,18 @@ async fn publish_announcement(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "announcement".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "announcement".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -456,16 +475,18 @@ async fn unpublish_announcement(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "announcement".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "announcement".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

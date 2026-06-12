@@ -1,17 +1,17 @@
 use axum::{
-    extract::{State, Json},
-    http::{StatusCode, HeaderMap},
+    extract::{Json, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row, postgres::PgRow};
-use uuid::Uuid;
+use sqlx::{postgres::PgRow, PgPool, Row};
 use std::fs;
 use std::path::Path;
+use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserProfile {
@@ -92,14 +92,20 @@ pub async fn get_profile(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id = match Uuid::parse_str(&user_id_str) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
@@ -124,7 +130,10 @@ pub async fn get_profile(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(profile, "获取用户信息成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(profile, "获取用户信息成功")),
+    )
 }
 
 pub async fn update_profile(
@@ -136,14 +145,20 @@ pub async fn update_profile(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id = match Uuid::parse_str(&user_id_str) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
@@ -158,11 +173,20 @@ pub async fn update_profile(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, Json(ApiResponse::success((), "更新用户信息成功"))),
-        Ok(_) => (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "用户不存在"))),
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "更新用户信息成功")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "用户不存在")),
+        ),
         Err(e) => {
             tracing::error!("更新用户信息失败: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "内部服务器错误")))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "内部服务器错误")),
+            )
         }
     }
 }
@@ -181,20 +205,31 @@ pub async fn upload_avatar(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id = match Uuid::parse_str(&user_id_str) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
     let raw_bytes = match base64_decode(&payload.avatar_base64) {
         Ok(b) if !b.is_empty() => b,
-        _ => return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "缺少头像文件"))),
+        _ => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "缺少头像文件")),
+            )
+        }
     };
 
     let file_name = format!("{}_{}", Uuid::new_v4(), "avatar.jpg");
@@ -202,27 +237,40 @@ pub async fn upload_avatar(
 
     if let Err(e) = fs::create_dir_all("./uploads") {
         tracing::error!("创建上传目录失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "创建上传目录失败")));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::error(500, "创建上传目录失败")),
+        );
     }
 
     if let Err(e) = fs::write(&path, &raw_bytes) {
         tracing::error!("保存头像失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "保存头像失败")));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::error(500, "保存头像失败")),
+        );
     }
 
     let avatar_url = format!("/uploads/{}", file_name);
 
-    let result = sqlx::query("UPDATE mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2")
-        .bind(&avatar_url)
-        .bind(user_id)
-        .execute(&pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2")
+            .bind(&avatar_url)
+            .bind(user_id)
+            .execute(&pool)
+            .await;
 
     match result {
-        Ok(_) => (StatusCode::OK, Json(ApiResponse::success(avatar_url, "上传头像成功"))),
+        Ok(_) => (
+            StatusCode::OK,
+            Json(ApiResponse::success(avatar_url, "上传头像成功")),
+        ),
         Err(e) => {
             tracing::error!("更新头像URL失败: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "更新头像URL失败")))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "更新头像URL失败")),
+            )
         }
     }
 }
@@ -230,17 +278,38 @@ pub async fn upload_avatar(
 fn base64_decode(s: &str) -> Result<Vec<u8>, ()> {
     // 简单 base64 解码实现，避免额外依赖
     use std::collections::HashMap;
-    let chars: Vec<char> = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".chars().collect();
-    let map: HashMap<char, u8> = chars.iter().enumerate().map(|(i, c)| (*c, i as u8)).collect();
+    let chars: Vec<char> = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        .chars()
+        .collect();
+    let map: HashMap<char, u8> = chars
+        .iter()
+        .enumerate()
+        .map(|(i, c)| (*c, i as u8))
+        .collect();
 
-    let cleaned: String = s.chars().filter(|c| c != &'=' && c != &'\n' && c != &'\r' && c != &' ').collect();
+    let cleaned: String = s
+        .chars()
+        .filter(|c| c != &'=' && c != &'\n' && c != &'\r' && c != &' ')
+        .collect();
     let mut out = Vec::new();
     let bytes: Vec<char> = cleaned.chars().collect();
     for i in (0..bytes.len()).step_by(4) {
         let n1 = bytes.get(i).and_then(|c| map.get(c)).copied().unwrap_or(0);
-        let n2 = bytes.get(i + 1).and_then(|c| map.get(c)).copied().unwrap_or(0);
-        let n3 = bytes.get(i + 2).and_then(|c| map.get(c)).copied().unwrap_or(0);
-        let n4 = bytes.get(i + 3).and_then(|c| map.get(c)).copied().unwrap_or(0);
+        let n2 = bytes
+            .get(i + 1)
+            .and_then(|c| map.get(c))
+            .copied()
+            .unwrap_or(0);
+        let n3 = bytes
+            .get(i + 2)
+            .and_then(|c| map.get(c))
+            .copied()
+            .unwrap_or(0);
+        let n4 = bytes
+            .get(i + 3)
+            .and_then(|c| map.get(c))
+            .copied()
+            .unwrap_or(0);
         out.push((n1 << 2) | (n2 >> 4));
         if i + 2 < bytes.len() {
             out.push(((n2 & 0x0F) << 4) | (n3 >> 2));

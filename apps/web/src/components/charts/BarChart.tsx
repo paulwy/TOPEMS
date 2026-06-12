@@ -1,4 +1,3 @@
-import React from "react";
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -10,7 +9,7 @@ import {
   Legend,
   Cell,
 } from "recharts";
-import { BIChartColors, getChartColor } from "./chartTheme";
+import { getChartColor } from "./chartTheme";
 import { CustomTooltip } from "./CustomTooltip";
 
 interface BarChartProps {
@@ -112,7 +111,7 @@ export const BarChart: React.FC<BarChartProps> = ({
               animationEasing="ease-out"
             >
               {showValue &&
-                data.map((entry, i) => (
+                data.map((_, i) => (
                   <Cell
                     key={`cell-${i}`}
                     fill={yKey.color || getChartColor(index)}

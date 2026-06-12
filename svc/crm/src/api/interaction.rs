@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State, Extension},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::{get, post},
     Json, Router,
@@ -8,12 +8,12 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, api_error};
-use topems_shared::auth::Claims;
-use crate::models::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
-use crate::api::audit::log_audit_event;
-use crate::services::permission::{check_permission, ModulePermission};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use crate::models::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct InteractionPaginationParams {
@@ -32,11 +32,19 @@ pub struct BatchDeleteRequest {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/interactions", get(list_interactions).post(create_interaction))
-        .route("/api/v1/interactions/batch-delete", post(batch_delete_interactions))
+        .route(
+            "/api/v1/interactions",
+            get(list_interactions).post(create_interaction),
+        )
+        .route(
+            "/api/v1/interactions/batch-delete",
+            post(batch_delete_interactions),
+        )
         .route(
             "/api/v1/interactions/{id}",
-            get(get_interaction).put(update_interaction).delete(delete_interaction),
+            get(get_interaction)
+                .put(update_interaction)
+                .delete(delete_interaction),
         )
 }
 
@@ -46,7 +54,7 @@ async fn list_interactions(
     Query(params): Query<InteractionPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -124,7 +132,7 @@ async fn create_interaction(
     Json(req): Json<CreateInteractionRequest>,
 ) -> Json<ApiResponse<Interaction>> {
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -158,7 +166,10 @@ async fn create_interaction(
 
     let (response, status_str, error_msg) = match &result {
         Ok(interaction) => (
-            Json(ApiResponse::success(interaction.clone(), "交互记录创建成功")),
+            Json(ApiResponse::success(
+                interaction.clone(),
+                "交互记录创建成功",
+            )),
             "success".to_string(),
             None,
         ),
@@ -204,7 +215,7 @@ async fn get_interaction(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Interaction>> {
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -236,7 +247,7 @@ async fn update_interaction(
     Json(req): Json<UpdateInteractionRequest>,
 ) -> Json<ApiResponse<Interaction>> {
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -291,7 +302,10 @@ async fn update_interaction(
 
     let (response, status_str, error_msg) = match &result {
         Ok(interaction) => (
-            Json(ApiResponse::success(interaction.clone(), "交互记录更新成功")),
+            Json(ApiResponse::success(
+                interaction.clone(),
+                "交互记录更新成功",
+            )),
             "success".to_string(),
             None,
         ),
@@ -337,7 +351,7 @@ async fn delete_interaction(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -399,7 +413,7 @@ async fn batch_delete_interactions(
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -414,7 +428,10 @@ async fn batch_delete_interactions(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (
-            Json(ApiResponse::success("".to_string(), &format!("成功删除 {} 个交互记录", r.rows_affected()))),
+            Json(ApiResponse::success(
+                "".to_string(),
+                &format!("成功删除 {} 个交互记录", r.rows_affected()),
+            )),
             "success".to_string(),
             None,
         ),

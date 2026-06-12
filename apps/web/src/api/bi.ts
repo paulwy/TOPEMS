@@ -189,7 +189,7 @@ export async function fetchModuleAnalytics(moduleId: string) {
   return await apiClient.bi.get(`/api/v1/analytics/${moduleId}`);
 }
 
-export async function fetchModuleData(moduleId: string, type: string) {
+export async function fetchModuleData(moduleId: string) {
   const endpoints: Record<string, string> = {
     development: "/api/v1/bi/rs/summary",
     quality: "/api/v1/bi/qms/summary",

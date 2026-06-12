@@ -3,46 +3,17 @@
  * 包含资产负债表、利润表、现金流量表的展示组件
  */
 
-import React, { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { reportApi } from "@/api/finance";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
-import {
-  Download,
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  AlertCircle,
-} from "lucide-react";
+import { Loader2, Download, AlertCircle } from "lucide-react";
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -53,37 +24,15 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import {
+import type {
   BalanceSheet,
   IncomeStatement,
   CashFlowStatement,
-  BalanceSheetSection,
-  IncomeStatementSection,
-  CashFlowSection,
 } from "@/types/erp-finance";
 
 // ============================================
 // 一、通用组件
 // ============================================
-
-interface ReportCardProps {
-  title: string;
-  children: React.ReactNode;
-  actions?: React.ReactNode;
-  className?: string;
-}
-
-function ReportCard({ title, children, actions, className }: ReportCardProps) {
-  return (
-    <Card className={className}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-medium">{title}</CardTitle>
-        {actions && <div className="flex gap-2">{actions}</div>}
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
-  );
-}
 
 interface ReportTableProps {
   items: {
@@ -141,14 +90,9 @@ function ReportTable({ items, totalLabel, totalAmount }: ReportTableProps) {
 interface BalanceSheetViewerProps {
   data?: BalanceSheet;
   loading?: boolean;
-  onExport?: () => void;
 }
 
-export function BalanceSheetViewer({
-  data,
-  loading,
-  onExport,
-}: BalanceSheetViewerProps) {
+export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -246,7 +190,9 @@ export function BalanceSheetViewer({
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => value.toLocaleString()}
+                  formatter={(value) =>
+                    String((value as number).toLocaleString())
+                  }
                 />
                 <Legend />
               </PieChart>
@@ -274,7 +220,9 @@ export function BalanceSheetViewer({
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip
-                  formatter={(value: number) => value.toLocaleString()}
+                  formatter={(value) =>
+                    String((value as number).toLocaleString())
+                  }
                 />
                 <Bar dataKey="value" fill="#3b82f6" />
               </BarChart>
@@ -396,7 +344,6 @@ interface IncomeStatementViewerProps {
 export function IncomeStatementViewer({
   data,
   loading,
-  onExport,
 }: IncomeStatementViewerProps) {
   if (loading) {
     return (
@@ -503,7 +450,9 @@ export function IncomeStatementViewer({
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip
-                  formatter={(value: number) => value.toLocaleString()}
+                  formatter={(value) =>
+                    String((value as number).toLocaleString())
+                  }
                 />
                 <Bar dataKey="value" fill="#3b82f6" />
               </BarChart>
@@ -535,7 +484,9 @@ export function IncomeStatementViewer({
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => value.toLocaleString()}
+                  formatter={(value) =>
+                    String((value as number).toLocaleString())
+                  }
                 />
                 <Legend />
               </PieChart>
@@ -665,7 +616,6 @@ interface CashFlowStatementViewerProps {
 export function CashFlowStatementViewer({
   data,
   loading,
-  onExport,
 }: CashFlowStatementViewerProps) {
   if (loading) {
     return (
@@ -743,7 +693,11 @@ export function CashFlowStatementViewer({
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip formatter={(value: number) => value.toLocaleString()} />
+              <Tooltip
+                formatter={(value) =>
+                  String((value as number).toLocaleString())
+                }
+              />
               <Bar dataKey="value">
                 {flowData.map((entry, index) => (
                   <Cell
@@ -943,28 +897,21 @@ export function FinancialReportsViewer({
 
   const { data: balanceSheet, isLoading: balanceLoading } = useQuery({
     queryKey: ["balance-sheet", companyId, period],
-    queryFn: () => {
-      const { reportApi } = require("../api/finance");
-      return reportApi.getBalanceSheet({ company_id: companyId, period });
-    },
+    queryFn: () => reportApi.getBalanceSheet({ company_id: companyId, period }),
     enabled: activeReport === "balance",
   });
 
   const { data: incomeStatement, isLoading: incomeLoading } = useQuery({
     queryKey: ["income-statement", companyId, period],
-    queryFn: () => {
-      const { reportApi } = require("../api/finance");
-      return reportApi.getIncomeStatement({ company_id: companyId, period });
-    },
+    queryFn: () =>
+      reportApi.getIncomeStatement({ company_id: companyId, period }),
     enabled: activeReport === "income",
   });
 
   const { data: cashFlow, isLoading: cashLoading } = useQuery({
     queryKey: ["cash-flow", companyId, period],
-    queryFn: () => {
-      const { reportApi } = require("../api/finance");
-      return reportApi.getCashFlowStatement({ company_id: companyId, period });
-    },
+    queryFn: () =>
+      reportApi.getCashFlowStatement({ company_id: companyId, period }),
     enabled: activeReport === "cash",
   });
 
@@ -997,7 +944,6 @@ export function FinancialReportsViewer({
         <BalanceSheetViewer
           data={balanceSheet?.data}
           loading={balanceLoading}
-          onExport={handleExport}
         />
       </TabsContent>
 
@@ -1010,16 +956,8 @@ export function FinancialReportsViewer({
       </TabsContent>
 
       <TabsContent value="cash" className="mt-0">
-        <CashFlowStatementViewer
-          data={cashFlow?.data}
-          loading={cashLoading}
-          onExport={handleExport}
-        />
+        <CashFlowStatementViewer data={cashFlow?.data} loading={cashLoading} />
       </TabsContent>
     </div>
   );
 }
-
-// ============================================
-// 六、导出
-// ============================================

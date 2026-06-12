@@ -1,6 +1,6 @@
-use sqlx::{PgPool, Row};
 use crate::models::*;
 use chrono::Utc;
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 pub struct Repository;
@@ -14,7 +14,7 @@ impl Repository {
         page_size: usize,
     ) -> sqlx::Result<Vec<Notification>> {
         let offset = (page - 1) * page_size;
-        
+
         let rows = if let Some(nt) = ntype {
             sqlx::query(
                 "SELECT * FROM notifications WHERE user_id = $1 AND notification_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
@@ -35,7 +35,7 @@ impl Repository {
             .fetch_all(pool)
             .await?
         };
-        
+
         rows.iter().map(|row| Notification::from_row(row)).collect()
     }
 
@@ -46,7 +46,7 @@ impl Repository {
     ) -> sqlx::Result<usize> {
         if let Some(nt) = ntype {
             let count: (i64,) = sqlx::query_as(
-                "SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND notification_type = $2"
+                "SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND notification_type = $2",
             )
             .bind(user_id)
             .bind(nt.to_string())
@@ -54,12 +54,11 @@ impl Repository {
             .await?;
             Ok(count.0 as usize)
         } else {
-            let count: (i64,) = sqlx::query_as(
-                "SELECT COUNT(*) FROM notifications WHERE user_id = $1"
-            )
-            .bind(user_id)
-            .fetch_one(pool)
-            .await?;
+            let count: (i64,) =
+                sqlx::query_as("SELECT COUNT(*) FROM notifications WHERE user_id = $1")
+                    .bind(user_id)
+                    .fetch_one(pool)
+                    .await?;
             Ok(count.0 as usize)
         }
     }
@@ -77,12 +76,9 @@ impl Repository {
         rows.iter().map(|row| Notification::from_row(row)).collect()
     }
 
-    pub async fn get_unread_count(
-        pool: &PgPool,
-        user_id: &str,
-    ) -> sqlx::Result<usize> {
+    pub async fn get_unread_count(pool: &PgPool, user_id: &str) -> sqlx::Result<usize> {
         let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = FALSE"
+            "SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = FALSE",
         )
         .bind(user_id)
         .fetch_one(pool)
@@ -134,13 +130,13 @@ impl Repository {
     ) -> sqlx::Result<Option<Notification>> {
         let now = Utc::now();
         let result = sqlx::query(
-            "UPDATE notifications SET is_read = TRUE, read_at = $1 WHERE id = $2 RETURNING *"
+            "UPDATE notifications SET is_read = TRUE, read_at = $1 WHERE id = $2 RETURNING *",
         )
         .bind(now)
         .bind(notification_id)
         .fetch_optional(pool)
         .await?;
-        
+
         if let Some(row) = result {
             Ok(Some(Notification::from_row(&row)?))
         } else {
@@ -148,10 +144,7 @@ impl Repository {
         }
     }
 
-    pub async fn mark_all_as_read(
-        pool: &PgPool,
-        user_id: &str,
-    ) -> sqlx::Result<usize> {
+    pub async fn mark_all_as_read(pool: &PgPool, user_id: &str) -> sqlx::Result<usize> {
         let result = sqlx::query(
             "UPDATE notifications SET is_read = TRUE, read_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND is_read = FALSE"
         )
@@ -161,16 +154,11 @@ impl Repository {
         Ok(result.rows_affected() as usize)
     }
 
-    pub async fn delete_notification(
-        pool: &PgPool,
-        notification_id: &Uuid,
-    ) -> sqlx::Result<bool> {
-        let result = sqlx::query(
-            "DELETE FROM notifications WHERE id = $1"
-        )
-        .bind(notification_id)
-        .execute(pool)
-        .await?;
+    pub async fn delete_notification(pool: &PgPool, notification_id: &Uuid) -> sqlx::Result<bool> {
+        let result = sqlx::query("DELETE FROM notifications WHERE id = $1")
+            .bind(notification_id)
+            .execute(pool)
+            .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -191,12 +179,10 @@ impl Repository {
         pool: &PgPool,
         notification_ids: &[Uuid],
     ) -> sqlx::Result<usize> {
-        let result = sqlx::query(
-            "DELETE FROM notifications WHERE id = ANY($1)"
-        )
-        .bind(notification_ids)
-        .execute(pool)
-        .await?;
+        let result = sqlx::query("DELETE FROM notifications WHERE id = ANY($1)")
+            .bind(notification_ids)
+            .execute(pool)
+            .await?;
         Ok(result.rows_affected() as usize)
     }
 
@@ -204,12 +190,10 @@ impl Repository {
         pool: &PgPool,
         notification_id: &Uuid,
     ) -> sqlx::Result<Option<Notification>> {
-        let row = sqlx::query(
-            "SELECT * FROM notifications WHERE id = $1"
-        )
-        .bind(notification_id)
-        .fetch_optional(pool)
-        .await?;
+        let row = sqlx::query("SELECT * FROM notifications WHERE id = $1")
+            .bind(notification_id)
+            .fetch_optional(pool)
+            .await?;
         if let Some(r) = row {
             Ok(Some(Notification::from_row(&r)?))
         } else {
@@ -246,7 +230,7 @@ impl Repository {
             r#"INSERT INTO notification_templates 
                (id, name, description, notification_type, title_template, content_template, 
                 data_schema, default_priority, status, is_archived, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"#
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"#,
         )
         .bind(id)
         .bind(&template.name)
@@ -270,12 +254,10 @@ impl Repository {
         pool: &PgPool,
         template_id: &Uuid,
     ) -> sqlx::Result<Option<NotificationTemplate>> {
-        let row = sqlx::query(
-            "SELECT * FROM notification_templates WHERE id = $1"
-        )
-        .bind(template_id)
-        .fetch_optional(pool)
-        .await?;
+        let row = sqlx::query("SELECT * FROM notification_templates WHERE id = $1")
+            .bind(template_id)
+            .fetch_optional(pool)
+            .await?;
 
         if let Some(r) = row {
             Self::template_from_row(&r)
@@ -291,7 +273,7 @@ impl Repository {
         status: Option<TemplateStatus>,
     ) -> sqlx::Result<Vec<NotificationTemplate>> {
         let offset = (page - 1) * page_size;
-        
+
         let rows = if let Some(s) = status {
             sqlx::query(
                 "SELECT * FROM notification_templates WHERE status = $1 AND is_archived = FALSE ORDER BY created_at DESC LIMIT $2 OFFSET $3"
@@ -333,7 +315,7 @@ impl Repository {
             .await?
         } else {
             sqlx::query_scalar(
-                "SELECT COUNT(*) FROM notification_templates WHERE is_archived = FALSE"
+                "SELECT COUNT(*) FROM notification_templates WHERE is_archived = FALSE",
             )
             .fetch_one(pool)
             .await?
@@ -347,13 +329,13 @@ impl Repository {
         req: UpdateTemplateRequest,
     ) -> sqlx::Result<Option<NotificationTemplate>> {
         let now = Utc::now();
-        
+
         // 先获取现有模板
         let existing = match Self::get_template(pool, template_id).await? {
             Some(t) => t,
             None => return Ok(None),
         };
-        
+
         // 合并更新
         let name = req.name.unwrap_or(existing.name);
         let description = req.description.or(existing.description);
@@ -363,7 +345,7 @@ impl Repository {
         let data_schema = req.data_schema.or(existing.data_schema);
         let default_priority = req.default_priority.unwrap_or(existing.default_priority);
         let status = req.status.unwrap_or(existing.status);
-        
+
         // 更新数据库
         let row = sqlx::query(
             "UPDATE notification_templates 
@@ -371,7 +353,7 @@ impl Repository {
                  title_template = $4, content_template = $5, data_schema = $6, 
                  default_priority = $7, status = $8, updated_at = $9 
              WHERE id = $10 
-             RETURNING *"
+             RETURNING *",
         )
         .bind(&name)
         .bind(&description)
@@ -385,7 +367,7 @@ impl Repository {
         .bind(template_id)
         .fetch_optional(pool)
         .await?;
-        
+
         if let Some(r) = row {
             Self::template_from_row(&r)
         } else {
@@ -393,20 +375,18 @@ impl Repository {
         }
     }
 
-    pub async fn delete_template(
-        pool: &PgPool,
-        template_id: &Uuid,
-    ) -> sqlx::Result<bool> {
-        let result = sqlx::query(
-            "UPDATE notification_templates SET is_archived = TRUE WHERE id = $1"
-        )
-        .bind(template_id)
-        .execute(pool)
-        .await?;
+    pub async fn delete_template(pool: &PgPool, template_id: &Uuid) -> sqlx::Result<bool> {
+        let result =
+            sqlx::query("UPDATE notification_templates SET is_archived = TRUE WHERE id = $1")
+                .bind(template_id)
+                .execute(pool)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
-    fn template_from_row(row: &sqlx::postgres::PgRow) -> sqlx::Result<Option<NotificationTemplate>> {
+    fn template_from_row(
+        row: &sqlx::postgres::PgRow,
+    ) -> sqlx::Result<Option<NotificationTemplate>> {
         let id: Uuid = row.get("id");
         let name: String = row.get("name");
         let description: Option<String> = row.get("description");
@@ -449,7 +429,7 @@ impl Repository {
 
     fn render_template(template: &str, variables: &serde_json::Value) -> String {
         let mut result = template.to_string();
-        
+
         if let serde_json::Value::Object(map) = variables {
             for (key, value) in map {
                 let placeholder = format!("{{{{{}}}}}", key);
@@ -462,7 +442,7 @@ impl Repository {
                 result = result.replace(&placeholder, &replacement);
             }
         }
-        
+
         result
     }
 
@@ -497,10 +477,7 @@ impl Repository {
 
     // ==================== 归档方法 ====================
 
-    pub async fn archive_notification(
-        pool: &PgPool,
-        notification_id: &Uuid,
-    ) -> sqlx::Result<bool> {
+    pub async fn archive_notification(pool: &PgPool, notification_id: &Uuid) -> sqlx::Result<bool> {
         let notification = match Self::get_notification(pool, notification_id).await? {
             Some(n) => n,
             None => return Ok(false),
@@ -513,7 +490,7 @@ impl Repository {
             r#"INSERT INTO archived_notifications 
                (id, original_notification_id, user_id, notification_type, title, content, 
                 data, priority, created_at, read_at, archived_at)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#,
         )
         .bind(archived_id)
         .bind(&notification.id)
@@ -533,14 +510,10 @@ impl Repository {
         Ok(true)
     }
 
-    pub async fn get_archive_config(
-        pool: &PgPool,
-    ) -> sqlx::Result<ArchiveConfig> {
-        let row = sqlx::query(
-            "SELECT * FROM archive_config ORDER BY id DESC LIMIT 1"
-        )
-        .fetch_one(pool)
-        .await?;
+    pub async fn get_archive_config(pool: &PgPool) -> sqlx::Result<ArchiveConfig> {
+        let row = sqlx::query("SELECT * FROM archive_config ORDER BY id DESC LIMIT 1")
+            .fetch_one(pool)
+            .await?;
 
         let auto_archive_days: i32 = row.get("auto_archive_days");
         let retention_days: i32 = row.get("retention_days");
@@ -558,7 +531,7 @@ impl Repository {
         config: ArchiveConfig,
     ) -> sqlx::Result<ArchiveConfig> {
         let now = Utc::now();
-        
+
         sqlx::query(
             "UPDATE archive_config SET auto_archive_days = $1, retention_days = $2, enabled = $3, updated_at = $4"
         )
@@ -572,22 +545,19 @@ impl Repository {
         Self::get_archive_config(pool).await
     }
 
-    pub async fn auto_archive_old_notifications(
-        pool: &PgPool,
-    ) -> sqlx::Result<usize> {
+    pub async fn auto_archive_old_notifications(pool: &PgPool) -> sqlx::Result<usize> {
         let config = Self::get_archive_config(pool).await?;
         if !config.enabled {
             return Ok(0);
         }
 
         let threshold = Utc::now() - chrono::Duration::days(config.auto_archive_days as i64);
-        
-        let notifications_to_archive = sqlx::query(
-            "SELECT id FROM notifications WHERE created_at < $1"
-        )
-        .bind(threshold)
-        .fetch_all(pool)
-        .await?;
+
+        let notifications_to_archive =
+            sqlx::query("SELECT id FROM notifications WHERE created_at < $1")
+                .bind(threshold)
+                .fetch_all(pool)
+                .await?;
 
         let mut archived_count = 0;
         for row in notifications_to_archive {
@@ -600,18 +570,14 @@ impl Repository {
         Ok(archived_count)
     }
 
-    pub async fn clean_old_archived_notifications(
-        pool: &PgPool,
-    ) -> sqlx::Result<usize> {
+    pub async fn clean_old_archived_notifications(pool: &PgPool) -> sqlx::Result<usize> {
         let config = Self::get_archive_config(pool).await?;
         let threshold = Utc::now() - chrono::Duration::days(config.retention_days as i64);
 
-        let result = sqlx::query(
-            "DELETE FROM archived_notifications WHERE archived_at < $1"
-        )
-        .bind(threshold)
-        .execute(pool)
-        .await?;
+        let result = sqlx::query("DELETE FROM archived_notifications WHERE archived_at < $1")
+            .bind(threshold)
+            .execute(pool)
+            .await?;
 
         Ok(result.rows_affected() as usize)
     }
@@ -623,7 +589,7 @@ impl Repository {
         page_size: usize,
     ) -> sqlx::Result<Vec<ArchivedNotification>> {
         let offset = (page - 1) * page_size;
-        
+
         let rows = sqlx::query(
             "SELECT * FROM archived_notifications WHERE user_id = $1 ORDER BY archived_at DESC LIMIT $2 OFFSET $3"
         )
@@ -642,7 +608,9 @@ impl Repository {
         Ok(archived)
     }
 
-    fn archived_notification_from_row(row: &sqlx::postgres::PgRow) -> sqlx::Result<ArchivedNotification> {
+    fn archived_notification_from_row(
+        row: &sqlx::postgres::PgRow,
+    ) -> sqlx::Result<ArchivedNotification> {
         let id: Uuid = row.get("id");
         let original_notification_id: Uuid = row.get("original_notification_id");
         let user_id: String = row.get("user_id");
@@ -655,8 +623,8 @@ impl Repository {
         let read_at: Option<chrono::DateTime<Utc>> = row.get("read_at");
         let archived_at: chrono::DateTime<Utc> = row.get("archived_at");
 
-        let notification_type = NotificationType::from_str(&notification_type_str)
-            .unwrap_or(NotificationType::System);
+        let notification_type =
+            NotificationType::from_str(&notification_type_str).unwrap_or(NotificationType::System);
 
         Ok(ArchivedNotification {
             id,
@@ -680,33 +648,42 @@ impl Repository {
         user_id: Option<&str>,
     ) -> sqlx::Result<NotificationStats> {
         let (total, unread, read, archived) = if let Some(uid) = user_id {
-            let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE user_id = $1")
-                .bind(uid)
-                .fetch_one(pool)
-                .await?;
-            let unread: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = FALSE")
-                .bind(uid)
-                .fetch_one(pool)
-                .await?;
-            let read: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = TRUE")
-                .bind(uid)
-                .fetch_one(pool)
-                .await?;
-            let archived: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM archived_notifications WHERE user_id = $1")
-                .bind(uid)
-                .fetch_one(pool)
-                .await?;
+            let total: i64 =
+                sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE user_id = $1")
+                    .bind(uid)
+                    .fetch_one(pool)
+                    .await?;
+            let unread: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = FALSE",
+            )
+            .bind(uid)
+            .fetch_one(pool)
+            .await?;
+            let read: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = TRUE",
+            )
+            .bind(uid)
+            .fetch_one(pool)
+            .await?;
+            let archived: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM archived_notifications WHERE user_id = $1",
+            )
+            .bind(uid)
+            .fetch_one(pool)
+            .await?;
             (total, unread, read, archived)
         } else {
             let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM notifications")
                 .fetch_one(pool)
                 .await?;
-            let unread: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE is_read = FALSE")
-                .fetch_one(pool)
-                .await?;
-            let read: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE is_read = TRUE")
-                .fetch_one(pool)
-                .await?;
+            let unread: i64 =
+                sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE is_read = FALSE")
+                    .fetch_one(pool)
+                    .await?;
+            let read: i64 =
+                sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE is_read = TRUE")
+                    .fetch_one(pool)
+                    .await?;
             let archived: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM archived_notifications")
                 .fetch_one(pool)
                 .await?;
@@ -722,10 +699,12 @@ impl Repository {
                     .fetch_one(pool)
                     .await?
             } else {
-                sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = $1")
-                    .bind(nt)
-                    .fetch_one(pool)
-                    .await?
+                sqlx::query_scalar(
+                    "SELECT COUNT(*) FROM notifications WHERE notification_type = $1",
+                )
+                .bind(nt)
+                .fetch_one(pool)
+                .await?
             };
             notifications_by_type.insert(nt.to_string(), serde_json::json!(count));
         }
@@ -735,7 +714,7 @@ impl Repository {
             let date = Utc::now() - chrono::Duration::days(day_offset);
             let date_str = date.format("%Y-%m-%d").to_string();
             let next_date = date + chrono::Duration::days(1);
-            
+
             let count: i64 = if let Some(uid) = user_id {
                 sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND created_at >= $2 AND created_at < $3")
                     .bind(uid)
@@ -744,11 +723,13 @@ impl Repository {
                     .fetch_one(pool)
                     .await?
             } else {
-                sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE created_at >= $1 AND created_at < $2")
-                    .bind(date)
-                    .bind(next_date)
-                    .fetch_one(pool)
-                    .await?
+                sqlx::query_scalar(
+                    "SELECT COUNT(*) FROM notifications WHERE created_at >= $1 AND created_at < $2",
+                )
+                .bind(date)
+                .bind(next_date)
+                .fetch_one(pool)
+                .await?
             };
             notifications_by_day.insert(date_str, serde_json::json!(count));
         }

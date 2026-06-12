@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Sparkles, RefreshCw, Check, Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Sparkles, Check } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Label } from "../ui/label";

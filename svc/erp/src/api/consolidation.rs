@@ -32,29 +32,82 @@ pub struct PaginationParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         // 合并范围
-        .route("/api/v1/consolidation/scopes", get(list_scopes).post(create_scope))
-        .route("/api/v1/consolidation/scopes/:scopeId", get(get_scope).put(update_scope).delete(delete_scope))
+        .route(
+            "/api/v1/consolidation/scopes",
+            get(list_scopes).post(create_scope),
+        )
+        .route(
+            "/api/v1/consolidation/scopes/{scopeId}",
+            get(get_scope).put(update_scope).delete(delete_scope),
+        )
         // 合并范围公司
-        .route("/api/v1/consolidation/scopes/:scopeId/companies", get(list_scope_companies))
-        .route("/api/v1/consolidation/scopes/companies", post(add_scope_company))
-        .route("/api/v1/consolidation/scopes/companies/:companyId", put(update_scope_company).delete(remove_scope_company))
+        .route(
+            "/api/v1/consolidation/scopes/{scopeId}/companies",
+            get(list_scope_companies),
+        )
+        .route(
+            "/api/v1/consolidation/scopes/companies",
+            post(add_scope_company),
+        )
+        .route(
+            "/api/v1/consolidation/scopes/companies/{companyId}",
+            put(update_scope_company).delete(remove_scope_company),
+        )
         // 抵消规则
-        .route("/api/v1/consolidation/elimination-rules", get(list_elimination_rules).post(create_elimination_rule))
-        .route("/api/v1/consolidation/elimination-rules/:ruleId", get(get_elimination_rule).put(update_elimination_rule).delete(delete_elimination_rule))
+        .route(
+            "/api/v1/consolidation/elimination-rules",
+            get(list_elimination_rules).post(create_elimination_rule),
+        )
+        .route(
+            "/api/v1/consolidation/elimination-rules/{ruleId}",
+            get(get_elimination_rule)
+                .put(update_elimination_rule)
+                .delete(delete_elimination_rule),
+        )
         // 内部交易
-        .route("/api/v1/consolidation/internal-transactions", get(list_internal_transactions))
-        .route("/api/v1/consolidation/execute-elimination", post(execute_elimination))
+        .route(
+            "/api/v1/consolidation/internal-transactions",
+            get(list_internal_transactions),
+        )
+        .route(
+            "/api/v1/consolidation/execute-elimination",
+            post(execute_elimination),
+        )
         // 合并报表
-        .route("/api/v1/consolidation/reports", get(list_reports).post(generate_report))
-        .route("/api/v1/consolidation/reports/:reportId", get(get_report).delete(delete_report))
-        .route("/api/v1/consolidation/reports/:reportId/lines", get(get_report_lines))
-        .route("/api/v1/consolidation/reports/:reportId/approve", post(approve_report))
-        .route("/api/v1/consolidation/reports/:reportId/publish", post(publish_report))
+        .route(
+            "/api/v1/consolidation/reports",
+            get(list_reports).post(generate_report),
+        )
+        .route(
+            "/api/v1/consolidation/reports/{reportId}",
+            get(get_report).delete(delete_report),
+        )
+        .route(
+            "/api/v1/consolidation/reports/{reportId}/lines",
+            get(get_report_lines),
+        )
+        .route(
+            "/api/v1/consolidation/reports/{reportId}/approve",
+            post(approve_report),
+        )
+        .route(
+            "/api/v1/consolidation/reports/{reportId}/publish",
+            post(publish_report),
+        )
         // 公司关系
-        .route("/api/v1/consolidation/company-relations", get(list_company_relations).post(create_company_relation))
+        .route(
+            "/api/v1/consolidation/company-relations",
+            get(list_company_relations).post(create_company_relation),
+        )
         .route("/api/v1/consolidation/company-tree", get(get_company_tree))
-        .route("/api/v1/consolidation/company-relations/:relationId", put(update_company_relation).delete(delete_company_relation))
-        .route("/api/v1/consolidation/companies/:companyId/financial-data", get(get_company_financial_data))
+        .route(
+            "/api/v1/consolidation/company-relations/{relationId}",
+            put(update_company_relation).delete(delete_company_relation),
+        )
+        .route(
+            "/api/v1/consolidation/companies/{companyId}/financial-data",
+            get(get_company_financial_data),
+        )
 }
 
 // ==================== 合并范围 ====================
@@ -153,7 +206,13 @@ async fn create_scope(
 
     match result {
         Ok(scope) => {
-            log_audit!(&state.db, "create", "consolidation_scope", Some(id), &headers);
+            log_audit!(
+                &state.db,
+                "create",
+                "consolidation_scope",
+                Some(id),
+                &headers
+            );
             Json(ApiResponse::success(scope, "创建合并范围成功"))
         }
         Err(e) => {
@@ -191,7 +250,13 @@ async fn update_scope(
 
     match result {
         Ok(scope) => {
-            log_audit!(&state.db, "update", "consolidation_scope", Some(scope_id), &headers);
+            log_audit!(
+                &state.db,
+                "update",
+                "consolidation_scope",
+                Some(scope_id),
+                &headers
+            );
             Json(ApiResponse::success(scope, "更新合并范围成功"))
         }
         Err(e) => {
@@ -215,7 +280,13 @@ async fn delete_scope(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "合并范围不存在"))
             } else {
-                log_audit!(&state.db, "delete", "consolidation_scope", Some(scope_id), &headers);
+                log_audit!(
+                    &state.db,
+                    "delete",
+                    "consolidation_scope",
+                    Some(scope_id),
+                    &headers
+                );
                 Json(ApiResponse::success((), "删除合并范围成功"))
             }
         }
@@ -279,7 +350,13 @@ async fn add_scope_company(
 
     match result {
         Ok(company) => {
-            log_audit!(&state.db, "add_company", "consolidation_scope", Some(req.scope_id), &headers);
+            log_audit!(
+                &state.db,
+                "add_company",
+                "consolidation_scope",
+                Some(req.scope_id),
+                &headers
+            );
             Json(ApiResponse::success(company, "添加公司到合并范围成功"))
         }
         Err(e) => {
@@ -318,7 +395,13 @@ async fn update_scope_company(
 
     match result {
         Ok(company) => {
-            log_audit!(&state.db, "update", "consolidation_scope_company", Some(company_id), &headers);
+            log_audit!(
+                &state.db,
+                "update",
+                "consolidation_scope_company",
+                Some(company_id),
+                &headers
+            );
             Json(ApiResponse::success(company, "更新合并范围公司成功"))
         }
         Err(e) => {
@@ -342,7 +425,13 @@ async fn remove_scope_company(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "合并范围公司不存在"))
             } else {
-                log_audit!(&state.db, "remove_company", "consolidation_scope", Some(company_id), &headers);
+                log_audit!(
+                    &state.db,
+                    "remove_company",
+                    "consolidation_scope",
+                    Some(company_id),
+                    &headers
+                );
                 Json(ApiResponse::success((), "从合并范围移除公司成功"))
             }
         }
@@ -419,12 +508,10 @@ async fn get_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
 ) -> Json<ApiResponse<EliminationRule>> {
-    match sqlx::query_as::<_, EliminationRule>(
-        "SELECT * FROM erp.elimination_rules WHERE id = $1",
-    )
-    .bind(rule_id)
-    .fetch_optional(&state.db)
-    .await
+    match sqlx::query_as::<_, EliminationRule>("SELECT * FROM erp.elimination_rules WHERE id = $1")
+        .bind(rule_id)
+        .fetch_optional(&state.db)
+        .await
     {
         Ok(Some(rule)) => Json(ApiResponse::success(rule, "获取抵消规则成功")),
         Ok(None) => Json(api_error(404, "抵消规则不存在")),
@@ -441,8 +528,12 @@ async fn create_elimination_rule(
     Json(req): Json<CreateEliminationRuleRequest>,
 ) -> Json<ApiResponse<EliminationRule>> {
     let id = Uuid::new_v4();
-    let debit_codes = req.debit_account_codes.map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
-    let credit_codes = req.credit_account_codes.map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
+    let debit_codes = req
+        .debit_account_codes
+        .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
+    let credit_codes = req
+        .credit_account_codes
+        .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
 
     let result = sqlx::query_as::<_, EliminationRule>(
         r#"
@@ -486,8 +577,12 @@ async fn update_elimination_rule(
     _headers: HeaderMap,
     Json(req): Json<UpdateEliminationRuleRequest>,
 ) -> Json<ApiResponse<EliminationRule>> {
-    let debit_codes = req.debit_account_codes.map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
-    let credit_codes = req.credit_account_codes.map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
+    let debit_codes = req
+        .debit_account_codes
+        .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
+    let credit_codes = req
+        .credit_account_codes
+        .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
 
     let result = sqlx::query_as::<_, EliminationRule>(
         r#"
@@ -521,7 +616,13 @@ async fn update_elimination_rule(
 
     match result {
         Ok(rule) => {
-            log_audit!(&state.db, "update", "elimination_rule", Some(rule_id), &headers);
+            log_audit!(
+                &state.db,
+                "update",
+                "elimination_rule",
+                Some(rule_id),
+                &headers
+            );
             Json(ApiResponse::success(rule, "更新抵消规则成功"))
         }
         Err(e) => {
@@ -545,7 +646,13 @@ async fn delete_elimination_rule(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "抵消规则不存在"))
             } else {
-                log_audit!(&state.db, "delete", "elimination_rule", Some(rule_id), &headers);
+                log_audit!(
+                    &state.db,
+                    "delete",
+                    "elimination_rule",
+                    Some(rule_id),
+                    &headers
+                );
                 Json(ApiResponse::success((), "删除抵消规则成功"))
             }
         }
@@ -652,7 +759,8 @@ async fn execute_elimination(
         .await
         .unwrap_or_default();
 
-        let rule_total: f64 = transactions.iter()
+        let rule_total: f64 = transactions
+            .iter()
             .map(|t| t.amount.to_string().parse::<f64>().unwrap_or(0.0))
             .sum();
 
@@ -670,7 +778,8 @@ async fn execute_elimination(
             )
             .bind(tx.id)
             .execute(&state.db)
-            .await.ok();
+            .await
+            .ok();
         }
 
         results.push(RuleEliminationResult {
@@ -684,7 +793,13 @@ async fn execute_elimination(
         });
     }
 
-    log_audit!(&state.db, "execute_elimination", "internal_transaction", Some(req.scope_id), &headers);
+    log_audit!(
+        &state.db,
+        "execute_elimination",
+        "internal_transaction",
+        Some(req.scope_id),
+        &headers
+    );
 
     Json(ApiResponse::success(
         EliminationResult {
@@ -790,7 +905,11 @@ async fn generate_report(
     Json(req): Json<GenerateConsolidationReportRequest>,
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let id = Uuid::new_v4();
-    let report_no = format!("CR{}{:04}", chrono::Utc::now().format("%Y%m"), rand::random::<u16>() % 10000);
+    let report_no = format!(
+        "CR{}{:04}",
+        chrono::Utc::now().format("%Y%m"),
+        rand::random::<u16>() % 10000
+    );
     let (year, month) = req.period.split_once('-').unwrap_or(("2026", "01"));
     let year: i32 = year.parse().unwrap_or(2026);
     let month: i32 = month.parse().unwrap_or(1);
@@ -865,7 +984,13 @@ async fn generate_report(
 
     match updated_report {
         Ok(report) => {
-            log_audit!(&state.db, "generate", "consolidation_report", Some(id), &headers);
+            log_audit!(
+                &state.db,
+                "generate",
+                "consolidation_report",
+                Some(id),
+                &headers
+            );
             Json(ApiResponse::success(report, "生成合并报表成功"))
         }
         Err(e) => {
@@ -913,7 +1038,13 @@ async fn approve_report(
 
     match result {
         Ok(report) => {
-            log_audit!(&state.db, "approve", "consolidation_report", Some(report_id), &headers);
+            log_audit!(
+                &state.db,
+                "approve",
+                "consolidation_report",
+                Some(report_id),
+                &headers
+            );
             Json(ApiResponse::success(report, "审批合并报表成功"))
         }
         Err(e) => {
@@ -942,7 +1073,13 @@ async fn publish_report(
 
     match result {
         Ok(report) => {
-            log_audit!(&state.db, "publish", "consolidation_report", Some(report_id), &headers);
+            log_audit!(
+                &state.db,
+                "publish",
+                "consolidation_report",
+                Some(report_id),
+                &headers
+            );
             Json(ApiResponse::success(report, "发布合并报表成功"))
         }
         Err(e) => {
@@ -966,7 +1103,13 @@ async fn delete_report(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "合并报表不存在"))
             } else {
-                log_audit!(&state.db, "delete", "consolidation_report", Some(report_id), &headers);
+                log_audit!(
+                    &state.db,
+                    "delete",
+                    "consolidation_report",
+                    Some(report_id),
+                    &headers
+                );
                 Json(ApiResponse::success((), "删除合并报表成功"))
             }
         }
@@ -1018,7 +1161,11 @@ async fn get_company_tree(
     .unwrap_or_default();
 
     // 构建树形结构
-    fn build_tree(relations: &[CompanyRelation], parent_id: Option<uuid::Uuid>, level: i32) -> Vec<CompanyTreeNode> {
+    fn build_tree(
+        relations: &[CompanyRelation],
+        parent_id: Option<uuid::Uuid>,
+        level: i32,
+    ) -> Vec<CompanyTreeNode> {
         relations
             .iter()
             .filter(|r| r.parent_company_id == parent_id.unwrap_or(uuid::Uuid::nil()))
@@ -1027,7 +1174,9 @@ async fn get_company_tree(
                 name: r.child_company_name.clone().unwrap_or_default(),
                 code: String::new(),
                 level,
-                is_parent: relations.iter().any(|tr| tr.parent_company_id == r.child_company_id),
+                is_parent: relations
+                    .iter()
+                    .any(|tr| tr.parent_company_id == r.child_company_id),
                 relation_type: r.relation_type.clone(),
                 ownership_percentage: r.ownership_percentage.to_string().parse().unwrap_or(0.0),
                 children: build_tree(relations, Some(r.child_company_id), level + 1),
@@ -1100,14 +1249,24 @@ async fn update_company_relation(
     .bind(relation_id)
     .bind(req.ownership_percentage)
     .bind(req.control_percentage)
-    .bind(req.expiry_date.as_ref().and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
+    .bind(
+        req.expiry_date
+            .as_ref()
+            .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()),
+    )
     .bind(&req.status)
     .fetch_one(&state.db)
     .await;
 
     match result {
         Ok(relation) => {
-            log_audit!(&state.db, "update", "company_relation", Some(relation_id), &headers);
+            log_audit!(
+                &state.db,
+                "update",
+                "company_relation",
+                Some(relation_id),
+                &headers
+            );
             Json(ApiResponse::success(relation, "更新公司关系成功"))
         }
         Err(e) => {
@@ -1131,7 +1290,13 @@ async fn delete_company_relation(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "公司关系不存在"))
             } else {
-                log_audit!(&state.db, "delete", "company_relation", Some(relation_id), &headers);
+                log_audit!(
+                    &state.db,
+                    "delete",
+                    "company_relation",
+                    Some(relation_id),
+                    &headers
+                );
                 Json(ApiResponse::success((), "删除公司关系成功"))
             }
         }

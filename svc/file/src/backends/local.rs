@@ -17,8 +17,7 @@ impl LocalStorage {
 
         // 确保基础目录存在
         if !base_path.exists() {
-            std::fs::create_dir_all(&base_path)
-                .map_err(|e| StorageError::Io(e))?;
+            std::fs::create_dir_all(&base_path).map_err(StorageError::Io)?;
         }
 
         Ok(Self { base_path })
@@ -41,8 +40,7 @@ impl LocalStorage {
     async fn ensure_parent_dir(&self, path: &Path) -> Result<(), StorageError> {
         if let Some(parent) = path.parent() {
             if !parent.exists() {
-                fs::create_dir_all(parent).await
-                    .map_err(|e| StorageError::Io(e))?;
+                fs::create_dir_all(parent).await.map_err(StorageError::Io)?;
             }
         }
         Ok(())
@@ -58,14 +56,13 @@ impl FileStorage for LocalStorage {
         self.ensure_parent_dir(&full_path).await?;
 
         // 写入文件
-        let mut file = fs::File::create(&full_path).await
-            .map_err(|e| StorageError::Io(e))?;
+        let mut file = fs::File::create(&full_path)
+            .await
+            .map_err(StorageError::Io)?;
 
-        file.write_all(data).await
-            .map_err(|e| StorageError::Io(e))?;
+        file.write_all(data).await.map_err(StorageError::Io)?;
 
-        file.flush().await
-            .map_err(|e| StorageError::Io(e))?;
+        file.flush().await.map_err(StorageError::Io)?;
 
         let size = data.len() as u64;
         let etag = format!("{:x}", md5::compute(data));
@@ -79,33 +76,38 @@ impl FileStorage for LocalStorage {
         })
     }
 
-    async fn upload_stream(&self, path: &str, mut reader: Box<dyn AsyncRead + Send + Unpin>, _size: u64) -> Result<StorageResult, StorageError> {
+    async fn upload_stream(
+        &self,
+        path: &str,
+        mut reader: Box<dyn AsyncRead + Send + Unpin>,
+        _size: u64,
+    ) -> Result<StorageResult, StorageError> {
         let full_path = self.resolve_path(path)?;
 
         // 确保父目录存在
         self.ensure_parent_dir(&full_path).await?;
 
         // 创建文件
-        let mut file = fs::File::create(&full_path).await
-            .map_err(|e| StorageError::Io(e))?;
+        let mut file = fs::File::create(&full_path)
+            .await
+            .map_err(StorageError::Io)?;
 
         // 使用流式写入
         let mut written: u64 = 0;
         let mut buffer = vec![0u8; 81920]; // 80KB buffer
 
         loop {
-            let bytes_read = reader.read(&mut buffer).await
-                .map_err(|e| StorageError::Io(e))?;
+            let bytes_read = reader.read(&mut buffer).await.map_err(StorageError::Io)?;
             if bytes_read == 0 {
                 break;
             }
-            file.write_all(&buffer[..bytes_read]).await
-                .map_err(|e| StorageError::Io(e))?;
+            file.write_all(&buffer[..bytes_read])
+                .await
+                .map_err(StorageError::Io)?;
             written += bytes_read as u64;
         }
 
-        file.flush().await
-            .map_err(|e| StorageError::Io(e))?;
+        file.flush().await.map_err(StorageError::Io)?;
 
         // 对于流式上传，跳过 etag 计算
         debug!("Uploaded file stream to {} ({} bytes)", path, written);
@@ -124,8 +126,7 @@ impl FileStorage for LocalStorage {
             return Err(StorageError::NotFound(path.to_string()));
         }
 
-        let data = fs::read(&full_path).await
-            .map_err(|e| StorageError::Io(e))?;
+        let data = fs::read(&full_path).await.map_err(StorageError::Io)?;
 
         debug!("Downloaded file from {} ({} bytes)", path, data.len());
 
@@ -140,8 +141,9 @@ impl FileStorage for LocalStorage {
             return Ok(());
         }
 
-        fs::remove_file(&full_path).await
-            .map_err(|e| StorageError::Io(e))?;
+        fs::remove_file(&full_path)
+            .await
+            .map_err(StorageError::Io)?;
 
         debug!("Deleted file at {}", path);
 
@@ -149,7 +151,12 @@ impl FileStorage for LocalStorage {
         if let Some(parent) = full_path.parent() {
             if parent.starts_with(&self.base_path) && parent != self.base_path {
                 if let Ok(mut entries) = fs::read_dir(parent).await {
-                    if entries.next_entry().await.map_err(|e| StorageError::Io(e))?.is_none() {
+                    if entries
+                        .next_entry()
+                        .await
+                        .map_err(StorageError::Io)?
+                        .is_none()
+                    {
                         let _ = fs::remove_dir(parent).await;
                     }
                 }

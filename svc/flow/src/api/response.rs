@@ -15,7 +15,7 @@ impl<T> ApiResponse<T> {
             message: "Success".to_string(),
         }
     }
-    
+
     pub fn success_with_message(data: T, message: String) -> Self {
         Self {
             success: true,
@@ -23,7 +23,7 @@ impl<T> ApiResponse<T> {
             message,
         }
     }
-    
+
     pub fn error(message: String) -> Self {
         Self {
             success: false,
@@ -41,7 +41,7 @@ impl ApiResponse<()> {
             message: "Success".to_string(),
         }
     }
-    
+
     pub fn ok_with_message(message: String) -> Self {
         Self {
             success: true,

@@ -2,7 +2,7 @@ use anyhow::Result;
 use axum::{
     body::Body,
     extract::{Extension, Path, Query, State},
-    http::{StatusCode, header::CONTENT_TYPE},
+    http::{header::CONTENT_TYPE, StatusCode},
     response::Response,
     routing::get,
     Json, Router,
@@ -13,16 +13,26 @@ use uuid::Uuid;
 use crate::api::ApiState;
 use crate::models::{Attachment, AttachmentListItem, AttachmentParams};
 use crate::services::{check_permission, MailPermission};
-use topems_shared::{api_error, ApiResponse, auth::Claims};
+use topems_shared::{api_error, auth::Claims, ApiResponse};
 
+#[allow(dead_code)]
 const UPLOAD_DIR: &str = "./uploads/attachments";
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/mail/attachments", get(list_attachments))
-        .route("/api/v1/mail/attachments/{id}", get(get_attachment).delete(delete_attachment))
-        .route("/api/v1/mail/attachments/{id}/download", get(download_attachment))
-        .route("/api/v1/mail/attachments/email/{email_id}", get(get_email_attachments));
+        .route(
+            "/api/v1/mail/attachments/{id}",
+            get(get_attachment).delete(delete_attachment),
+        )
+        .route(
+            "/api/v1/mail/attachments/{id}/download",
+            get(download_attachment),
+        )
+        .route(
+            "/api/v1/mail/attachments/email/{email_id}",
+            get(get_email_attachments),
+        );
 
     Ok(app)
 }
@@ -59,7 +69,8 @@ async fn list_attachments(
 
     match attachments_result {
         Ok(attachments) => {
-            let items: Vec<AttachmentListItem> = attachments.into_iter().map(|a| a.into()).collect();
+            let items: Vec<AttachmentListItem> =
+                attachments.into_iter().map(|a| a.into()).collect();
             Json(ApiResponse::success(items, "获取成功"))
         }
         Err(e) => {
@@ -162,7 +173,10 @@ async fn download_attachment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Response<Body> {
-    if let Err(_) = check_permission::<()>(&state.db, &claims, &MailPermission::AttachmentRead).await {
+    if check_permission::<()>(&state.db, &claims, &MailPermission::AttachmentRead)
+        .await
+        .is_err()
+    {
         return Response::builder()
             .status(StatusCode::FORBIDDEN)
             .body(Body::empty())

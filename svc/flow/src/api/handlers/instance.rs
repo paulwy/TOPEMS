@@ -3,12 +3,12 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::api::response::ApiResponse;
-use crate::state::AppState;
 use crate::models::*;
+use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct ListInstancesQuery {
@@ -32,7 +32,8 @@ pub async fn list_instances(
 ) -> (StatusCode, Json<ApiResponse<Vec<WorkflowInstance>>>) {
     let limit = query.limit.unwrap_or(50);
     let offset = query.offset.unwrap_or(0);
-    match state.repo
+    match state
+        .repo
         .list_instances(
             query.workflow_id,
             query.status,
@@ -42,10 +43,7 @@ pub async fn list_instances(
         )
         .await
     {
-        Ok(instances) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(instances)),
-        ),
+        Ok(instances) => (StatusCode::OK, Json(ApiResponse::success(instances))),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiResponse::error(e.to_string())),
@@ -64,7 +62,10 @@ pub async fn start_instance(
     {
         Ok(instance) => (
             StatusCode::CREATED,
-            Json(ApiResponse::success_with_message(instance, "Workflow instance started successfully".to_string())),
+            Json(ApiResponse::success_with_message(
+                instance,
+                "Workflow instance started successfully".to_string(),
+            )),
         ),
         Err(crate::services::WorkflowEngineError::WorkflowNotFound) => (
             StatusCode::NOT_FOUND,
@@ -86,13 +87,12 @@ pub async fn get_instance(
     Path(id): Path<Uuid>,
 ) -> (StatusCode, Json<ApiResponse<WorkflowInstance>>) {
     match state.repo.get_instance(id).await {
-        Ok(Some(instance)) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(instance)),
-        ),
+        Ok(Some(instance)) => (StatusCode::OK, Json(ApiResponse::success(instance))),
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error("Workflow instance not found".to_string())),
+            Json(ApiResponse::error(
+                "Workflow instance not found".to_string(),
+            )),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -123,7 +123,9 @@ pub async fn get_instance_details(
         ),
         Err(crate::services::WorkflowEngineError::InstanceNotFound) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error("Workflow instance not found".to_string())),
+            Json(ApiResponse::error(
+                "Workflow instance not found".to_string(),
+            )),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -140,11 +142,16 @@ pub async fn update_instance_status(
     match state.repo.update_instance_status(id, req).await {
         Ok(Some(instance)) => (
             StatusCode::OK,
-            Json(ApiResponse::success_with_message(instance, "Instance status updated successfully".to_string())),
+            Json(ApiResponse::success_with_message(
+                instance,
+                "Instance status updated successfully".to_string(),
+            )),
         ),
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error("Workflow instance not found".to_string())),
+            Json(ApiResponse::error(
+                "Workflow instance not found".to_string(),
+            )),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,

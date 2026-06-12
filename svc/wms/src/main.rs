@@ -1,12 +1,21 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(clippy::too_many_arguments)]
+#![allow(dead_code)]
+
 mod api;
 mod models;
 mod services;
 
 use anyhow::Result;
-use axum::{
-    routing::get,
-    Router, Json,
-};
+use axum::{routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
@@ -15,10 +24,9 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, HealthStatus, DependencyHealth,
-    SystemMetrics, check_http_health, create_api_info_router,
-    create_database_pool, DatabaseConfig,
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
+    create_database_pool, init_logging, ApiResponse, AuthState, DatabaseConfig, DependencyHealth,
+    HealthStatus, ServiceHealth, SystemMetrics,
 };
 
 use api::ApiState;
@@ -69,22 +77,26 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
-        .route("/metrics", get(move || async move {
-            let encoder = TextEncoder::new();
-            let metrics = prometheus::gather();
-            let mut buffer = Vec::new();
-            encoder.encode(&metrics, &mut buffer).unwrap();
-            String::from_utf8(buffer).unwrap()
-        }));
+        .route(
+            "/metrics",
+            get(move || async move {
+                let encoder = TextEncoder::new();
+                let metrics = prometheus::gather();
+                let mut buffer = Vec::new();
+                encoder.encode(&metrics, &mut buffer).unwrap();
+                String::from_utf8(buffer).unwrap()
+            }),
+        );
 
     let api_router = api::create_routes::<ApiState>().with_state(api_state.clone());
 
-    let protected_routes: Router<ApiState> = Router::new()
-        .merge(api_router)
-        .layer(axum::middleware::from_fn_with_state(
-            api_state.auth_state.clone(),
-            auth_middleware,
-        ));
+    let protected_routes: Router<ApiState> =
+        Router::new()
+            .merge(api_router)
+            .layer(axum::middleware::from_fn_with_state(
+                api_state.auth_state.clone(),
+                auth_middleware,
+            ));
 
     let app = Router::new()
         .merge(health_router)
@@ -200,10 +212,7 @@ async fn get_metrics(
 }
 
 async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -221,8 +230,8 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {

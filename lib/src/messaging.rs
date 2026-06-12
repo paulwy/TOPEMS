@@ -1,7 +1,7 @@
+use crate::error::TopemsError;
+use crate::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use crate::Result;
-use crate::error::TopemsError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
@@ -48,7 +48,11 @@ pub trait MessageProducer {
 
 #[async_trait]
 pub trait MessageConsumer {
-    async fn subscribe(&self, topic: &str, handler: Box<dyn Fn(Message) -> Result<()> + Send + Sync + 'static>) -> Result<()>;
+    async fn subscribe(
+        &self,
+        topic: &str,
+        handler: Box<dyn Fn(Message) -> Result<()> + Send + Sync + 'static>,
+    ) -> Result<()>;
     async fn unsubscribe(&self, topic: &str) -> Result<()>;
     async fn start_consuming(&self) -> Result<()>;
 }
@@ -68,15 +72,19 @@ impl RedisMessageBroker {
 #[async_trait]
 impl MessageProducer for RedisMessageBroker {
     async fn publish(&self, topic: &str, payload: serde_json::Value) -> Result<()> {
-        let mut conn = self.client.get_connection()
+        let mut conn = self
+            .client
+            .get_connection()
             .map_err(|e| TopemsError::Config(format!("Failed to get Redis connection: {}", e)))?;
-        
-        let payload_str = serde_json::to_string(&payload)
-            .map_err(|e| TopemsError::Serialization(e))?;
-        
-        redis::cmd("PUBLISH").arg(topic).arg(payload_str).query::<()>(&mut conn)
+
+        let payload_str = serde_json::to_string(&payload).map_err(TopemsError::Serialization)?;
+
+        redis::cmd("PUBLISH")
+            .arg(topic)
+            .arg(payload_str)
+            .query::<()>(&mut conn)
             .map_err(|e| TopemsError::Config(format!("Redis PUBLISH failed: {}", e)))?;
-        
+
         Ok(())
     }
 
@@ -94,8 +102,16 @@ impl MessageProducer for RedisMessageBroker {
     }
 }
 
+type MessageHandler = Box<dyn Fn(Message) -> Result<()> + Send + Sync>;
+
 pub struct InMemoryMessageBroker {
-    subscribers: std::sync::RwLock<std::collections::HashMap<String, Vec<Box<dyn Fn(Message) -> Result<()> + Send + Sync + 'static>>>>,
+    subscribers: std::sync::RwLock<std::collections::HashMap<String, Vec<MessageHandler>>>,
+}
+
+impl Default for InMemoryMessageBroker {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl InMemoryMessageBroker {
@@ -126,22 +142,29 @@ impl MessageProducer for InMemoryMessageBroker {
     async fn publish_message(&self, message: Message) -> Result<()> {
         let topic = message.topic.clone();
         let subscribers = self.subscribers.read().unwrap();
-        
+
         if let Some(handlers) = subscribers.get(&topic) {
             for handler in handlers {
                 let _ = handler(message.clone());
             }
         }
-        
+
         Ok(())
     }
 }
 
 #[async_trait]
 impl MessageConsumer for InMemoryMessageBroker {
-    async fn subscribe(&self, topic: &str, handler: Box<dyn Fn(Message) -> Result<()> + Send + Sync + 'static>) -> Result<()> {
+    async fn subscribe(
+        &self,
+        topic: &str,
+        handler: Box<dyn Fn(Message) -> Result<()> + Send + Sync + 'static>,
+    ) -> Result<()> {
         let mut subscribers = self.subscribers.write().unwrap();
-        subscribers.entry(topic.to_string()).or_insert_with(Vec::new).push(handler);
+        subscribers
+            .entry(topic.to_string())
+            .or_default()
+            .push(handler);
         Ok(())
     }
 
@@ -164,7 +187,7 @@ mod tests {
     async fn test_in_memory_broker() {
         let broker = InMemoryMessageBroker::new();
         let received = std::sync::Arc::new(std::sync::Mutex::new(false));
-        
+
         let handler = {
             let received = received.clone();
             Box::new(move |msg: Message| {
@@ -175,7 +198,10 @@ mod tests {
         };
 
         broker.subscribe("test-topic", handler).await.unwrap();
-        broker.publish("test-topic", serde_json::json!({"key": "value"})).await.unwrap();
+        broker
+            .publish("test-topic", serde_json::json!({"key": "value"}))
+            .await
+            .unwrap();
 
         assert!(*received.lock().unwrap());
     }
@@ -183,7 +209,7 @@ mod tests {
     #[test]
     fn test_message_creation() {
         let message = Message::new("test", serde_json::json!({"data": "test"}));
-        
+
         assert_eq!(message.topic, "test");
         assert_eq!(message.payload["data"], "test");
         assert!(!message.id.is_empty());
@@ -194,7 +220,7 @@ mod tests {
         let message = Message::new("test", serde_json::json!({}))
             .with_header("key1", "value1")
             .with_header("key2", "value2");
-        
+
         assert_eq!(message.headers.get("key1"), Some(&"value1".to_string()));
         assert_eq!(message.headers.get("key2"), Some(&"value2".to_string()));
     }

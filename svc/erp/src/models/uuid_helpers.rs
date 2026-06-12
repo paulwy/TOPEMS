@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc, NaiveDate, NaiveDateTime};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use uuid::Uuid;
 
@@ -12,7 +12,9 @@ pub mod option_uuid {
         let s = Option::<String>::deserialize(deserializer)?;
         match s {
             Some(s) if s.trim().is_empty() => Ok(None),
-            Some(s) => Uuid::parse_str(&s).map(Some).map_err(serde::de::Error::custom),
+            Some(s) => Uuid::parse_str(&s)
+                .map(Some)
+                .map_err(serde::de::Error::custom),
             None => Ok(None),
         }
     }
@@ -65,6 +67,7 @@ pub mod option_uuid_vec {
 pub mod option_date_time {
     use super::*;
 
+    #[allow(dead_code)]
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
     where
         D: Deserializer<'de>,
@@ -76,22 +79,29 @@ pub mod option_date_time {
                 if let Ok(dt) = DateTime::parse_from_rfc3339(&s) {
                     return Ok(Some(dt.with_timezone(&Utc)));
                 }
-                
+
                 if let Ok(naive_dt) = NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S") {
-                    return Ok(Some(DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc)));
+                    return Ok(Some(DateTime::<Utc>::from_naive_utc_and_offset(
+                        naive_dt, Utc,
+                    )));
                 }
-                
+
                 if let Ok(naive_date) = NaiveDate::parse_from_str(&s, "%Y-%m-%d") {
-                    let naive_dt = naive_date.and_hms_opt(0, 0, 0).ok_or_else(|| serde::de::Error::custom("无效的日期"))?;
-                    return Ok(Some(DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc)));
+                    let naive_dt = naive_date
+                        .and_hms_opt(0, 0, 0)
+                        .ok_or_else(|| serde::de::Error::custom("无效的日期"))?;
+                    return Ok(Some(DateTime::<Utc>::from_naive_utc_and_offset(
+                        naive_dt, Utc,
+                    )));
                 }
-                
+
                 Err(serde::de::Error::custom(format!("无法解析日期: {}", s)))
             }
             None => Ok(None),
         }
     }
 
+    #[allow(dead_code)]
     pub fn serialize<S>(value: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,

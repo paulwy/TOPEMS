@@ -13,15 +13,16 @@ use tracing::{error, info};
 use uuid::Uuid;
 
 use crate::api::response::{ApiResponse, PagedResponse};
-use crate::backends::traits::FileStorage;
 use crate::backends::local::LocalStorage;
+use crate::backends::traits::FileStorage;
 use crate::models::file::{FileMetadata, ListFilesQuery};
-use crate::models::permission::{ShareFileRequest};
+use crate::models::permission::ShareFileRequest;
 use crate::services::file_service::FileService;
 use crate::services::permission_service::PermissionService;
-use topems_shared::{AuthState, auth::Claims};
+use topems_shared::{auth::Claims, AuthState};
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct AppState {
     pub db: PgPool,
     pub storage: Arc<LocalStorage>,
@@ -129,13 +130,11 @@ pub async fn upload_file(
             ));
         }
     };
-    
-    let owner_department_id = claims.department.map(|d| Uuid::parse_str(&d).ok()).flatten();
 
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+    let owner_department_id = claims.department.and_then(|d| Uuid::parse_str(&d).ok());
+
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     let total_size: usize = file_chunks.iter().map(|c| c.len()).sum();
     let mut file_data = Vec::with_capacity(total_size);
@@ -143,26 +142,35 @@ pub async fn upload_file(
         file_data.extend_from_slice(&chunk);
     }
 
-    match file_service.upload_file(
-        owner_id,
-        owner_department_id,
-        &filename,
-        file_data,
-        &content_type,
-        external_id,
-        None,
-        category,
-        visibility,
-    ).await {
+    match file_service
+        .upload_file(crate::services::file_service::UploadFileRequest {
+            owner_id,
+            owner_department_id,
+            filename: &filename,
+            data: file_data,
+            content_type: &content_type,
+            external_id,
+            file_type: None,
+            category,
+            visibility,
+        })
+        .await
+    {
         Ok(metadata) => {
-            info!("File uploaded successfully by user {}: {}", claims.sub, metadata.id);
+            info!(
+                "File uploaded successfully by user {}: {}",
+                claims.sub, metadata.id
+            );
             Ok(Json(ApiResponse::success(metadata, "文件上传成功")))
         }
         Err(e) => {
             error!("Failed to upload file: {}", e);
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<()>::internal_error(&format!("上传失败: {}", e))),
+                Json(ApiResponse::<()>::internal_error(&format!(
+                    "上传失败: {}",
+                    e
+                ))),
             ))
         }
     }
@@ -173,10 +181,8 @@ pub async fn get_file(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(file_id): axum::extract::Path<Uuid>,
 ) -> impl IntoResponse {
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     match file_service.get_file(file_id).await {
         Ok(Some(metadata)) => {
@@ -207,13 +213,11 @@ pub async fn download_file(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(file_id): axum::extract::Path<Uuid>,
 ) -> impl IntoResponse {
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     let metadata_result = file_service.get_file(file_id).await;
-    
+
     match metadata_result {
         Ok(Some(metadata)) => {
             if !has_file_access(&state.db, &claims, &metadata).await {
@@ -222,7 +226,7 @@ pub async fn download_file(
                     Json(ApiResponse::<()>::forbidden("无权下载此文件")),
                 ));
             }
-            
+
             match file_service.download_file(file_id).await {
                 Ok((metadata, data)) => {
                     let filename = &metadata.filename;
@@ -267,10 +271,8 @@ pub async fn delete_file(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(file_id): axum::extract::Path<Uuid>,
 ) -> impl IntoResponse {
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     match file_service.get_file(file_id).await {
         Ok(Some(metadata)) => {
@@ -280,7 +282,7 @@ pub async fn delete_file(
                     Json(ApiResponse::<()>::forbidden("无权删除此文件")),
                 ));
             }
-            
+
             match file_service.delete_file(file_id).await {
                 Ok(()) => Ok(Json(ApiResponse::success((), "删除成功"))),
                 Err(e) => {
@@ -311,13 +313,11 @@ pub async fn list_files(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<ListFilesQuery>,
 ) -> impl IntoResponse {
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     let mut effective_query = query.clone();
-    
+
     if !claims.is_superuser {
         let user_id = match Uuid::parse_str(&claims.sub) {
             Ok(id) => id,
@@ -358,10 +358,8 @@ pub async fn share_file(
     axum::extract::Path(file_id): axum::extract::Path<Uuid>,
     axum::extract::Json(request): axum::extract::Json<ShareFileRequest>,
 ) -> impl IntoResponse {
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     match file_service.get_file(file_id).await {
         Ok(Some(metadata)) => {
@@ -371,17 +369,22 @@ pub async fn share_file(
                     Json(ApiResponse::<()>::forbidden("无权分享此文件")),
                 ));
             }
-            
+
             let permission_service = PermissionService::new(state.db.clone());
             let granted_by = match Uuid::parse_str(&claims.sub) {
                 Ok(id) => id,
-                Err(_) => return Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::<()>::internal_error("用户ID无效")),
-                )),
+                Err(_) => {
+                    return Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::<()>::internal_error("用户ID无效")),
+                    ))
+                }
             };
 
-            match permission_service.share_file(file_id, request, granted_by).await {
+            match permission_service
+                .share_file(file_id, request, granted_by)
+                .await
+            {
                 Ok(permission) => Ok(Json(ApiResponse::success(permission, "分享成功"))),
                 Err(e) => {
                     error!("Failed to share file: {}", e);
@@ -410,10 +413,8 @@ pub async fn get_shared_files(
     axum::extract::State(state): axum::extract::State<AppState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
 ) -> impl IntoResponse {
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -424,9 +425,12 @@ pub async fn get_shared_files(
             ));
         }
     };
-    let user_department_id = claims.department.map(|d| Uuid::parse_str(&d).ok()).flatten();
+    let user_department_id = claims.department.and_then(|d| Uuid::parse_str(&d).ok());
 
-    match file_service.get_shared_with_me(user_id, user_department_id).await {
+    match file_service
+        .get_shared_with_me(user_id, user_department_id)
+        .await
+    {
         Ok(files) => Ok(Json(ApiResponse::success(files, "获取成功"))),
         Err(e) => {
             error!("Failed to get shared files: {}", e);
@@ -443,10 +447,8 @@ pub async fn get_file_permissions(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(file_id): axum::extract::Path<Uuid>,
 ) -> impl IntoResponse {
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     match file_service.get_file(file_id).await {
         Ok(Some(metadata)) => {
@@ -456,7 +458,7 @@ pub async fn get_file_permissions(
                     Json(ApiResponse::<()>::forbidden("无权访问此文件权限")),
                 ));
             }
-            
+
             let permission_service = PermissionService::new(state.db.clone());
             match permission_service.get_file_permissions(file_id).await {
                 Ok(permissions) => Ok(Json(ApiResponse::success(permissions, "获取成功"))),
@@ -486,12 +488,12 @@ pub async fn get_file_permissions(
 pub async fn revoke_permission(
     axum::extract::State(state): axum::extract::State<AppState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
-    axum::extract::Path((file_id, principal_type, principal_id, permission)): axum::extract::Path<(Uuid, String, Uuid, String)>,
+    axum::extract::Path((file_id, principal_type, principal_id, permission)): axum::extract::Path<
+        (Uuid, String, Uuid, String),
+    >,
 ) -> impl IntoResponse {
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     match file_service.get_file(file_id).await {
         Ok(Some(metadata)) => {
@@ -501,7 +503,7 @@ pub async fn revoke_permission(
                     Json(ApiResponse::<()>::forbidden("无权撤销此权限")),
                 ));
             }
-            
+
             let permission_service = PermissionService::new(state.db.clone());
             match permission_service
                 .revoke_permission(file_id, &principal_type, principal_id, &permission)
@@ -531,13 +533,9 @@ pub async fn revoke_permission(
     }
 }
 
-pub async fn get_stats(
-    State(state): State<AppState>,
-) -> impl IntoResponse {
-    let file_service = FileService::with_local_storage(
-        state.db.clone(),
-        state.storage.base_path(),
-    ).unwrap();
+pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
+    let file_service =
+        FileService::with_local_storage(state.db.clone(), state.storage.base_path()).unwrap();
 
     match file_service.get_stats(None).await {
         Ok(stats) => Ok(Json(ApiResponse::success(stats, "获取成功"))),
@@ -580,7 +578,16 @@ async fn has_file_access(db: &PgPool, claims: &Claims, metadata: &FileMetadata) 
     };
 
     let permission_service = PermissionService::new(db.clone());
-    permission_service.check_permission(metadata.id, user_id, None, crate::models::permission::Permission::Read).await.map(|r| r.allowed).unwrap_or(false)
+    permission_service
+        .check_permission(
+            metadata.id,
+            user_id,
+            None,
+            crate::models::permission::Permission::Read,
+        )
+        .await
+        .map(|r| r.allowed)
+        .unwrap_or(false)
 }
 
 fn is_file_owner(claims: &Claims, metadata: &FileMetadata) -> bool {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Settings,
   X,
@@ -8,8 +8,6 @@ import {
   MessageSquare,
   BookOpen,
   Sliders,
-  Database,
-  Zap,
   AlertCircle,
   CheckCircle,
 } from "lucide-react";

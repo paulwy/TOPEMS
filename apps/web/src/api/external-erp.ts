@@ -5,32 +5,22 @@
 
 import { apiClient } from "./client";
 import type {
-  // 连接配置
   KingdeeConnectionConfig,
   YonyouConnectionConfig,
   SapConnectionConfig,
-  ErpConnectionConfig,
   CompanyMapping,
-
-  // 映射规则
   AccountMappingRule,
   CustomerMappingRule,
   SupplierMappingRule,
   ProjectMappingRule,
   DepartmentMappingRule,
   EmployeeMappingRule,
-
-  // 同步
-  SyncLog,
   AccountSyncRequest,
   CustomerSyncRequest,
   SupplierSyncRequest,
   VoucherSyncRequest,
   InvoiceSyncRequest,
-
-  // 连接测试
   ConnectionTestRequest,
-  ConnectionTestResult,
 } from "../types/external-erp";
 
 // ============================================

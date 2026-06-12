@@ -1,21 +1,25 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::project_phase::{CreatePhaseRequest, ProjectPhase, UpdatePhaseRequest};
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/phases", get(list_phases).post(create_phase))
-        .route("/api/v1/projects/{project_id}/phases/{id}", get(get_phase).put(update_phase).delete(delete_phase))
+        .route(
+            "/api/v1/projects/{project_id}/phases",
+            get(list_phases).post(create_phase),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/phases/{id}",
+            get(get_phase).put(update_phase).delete(delete_phase),
+        )
         .with_state(pool)
 }
 
@@ -33,7 +37,7 @@ async fn list_phases(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
     let result = sqlx::query_as::<_, ProjectPhase>(
-        "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC"
+        "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -94,8 +98,8 @@ async fn create_phase(
     .bind(&req.name)
     .bind(&req.description)
     .bind(sequence_number)
-    .bind(&req.start_date)
-    .bind(&req.end_date)
+    .bind(req.start_date)
+    .bind(req.end_date)
     .bind(0)
     .bind("pending")
     .bind(&req.predecessor_ids)
@@ -128,7 +132,7 @@ async fn get_phase(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectPhase>> {
     let result = sqlx::query_as::<_, ProjectPhase>(
-        "SELECT * FROM pm.project_phases WHERE project_id = $1 AND id = $2"
+        "SELECT * FROM pm.project_phases WHERE project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)
@@ -182,8 +186,8 @@ async fn update_phase(
     .bind(&req.name)
     .bind(&req.description)
     .bind(req.sequence_number)
-    .bind(&req.start_date)
-    .bind(&req.end_date)
+    .bind(req.start_date)
+    .bind(req.end_date)
     .bind(req.progress)
     .bind(&req.status)
     .bind(&req.predecessor_ids)
@@ -217,13 +221,11 @@ async fn delete_phase(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query(
-        "DELETE FROM pm.project_phases WHERE project_id = $1 AND id = $2"
-    )
-    .bind(project_id)
-    .bind(id)
-    .execute(&pool)
-    .await;
+    let result = sqlx::query("DELETE FROM pm.project_phases WHERE project_id = $1 AND id = $2")
+        .bind(project_id)
+        .bind(id)
+        .execute(&pool)
+        .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

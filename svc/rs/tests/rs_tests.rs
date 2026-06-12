@@ -1,9 +1,9 @@
 // RS 服务单元测试和集成测试
 // 测试项目管理、实验管理、配方管理、项目进度等功能
 
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 // ============ 项目管理测试 ============
 
@@ -47,7 +47,13 @@ mod project_tests {
 
     #[test]
     fn test_project_statuses() {
-        let statuses = vec!["planning", "in_progress", "completed", "cancelled", "on_hold"];
+        let statuses = vec![
+            "planning",
+            "in_progress",
+            "completed",
+            "cancelled",
+            "on_hold",
+        ];
 
         for status in statuses {
             let project = Project {
@@ -369,8 +375,8 @@ mod http_endpoint_tests {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
-        Router,
         routing::get,
+        Router,
     };
     use tower::ServiceExt;
 

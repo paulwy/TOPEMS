@@ -1,20 +1,22 @@
 pub mod environment;
 pub mod health;
-pub mod safety;
 pub mod risk;
+pub mod safety;
 pub mod training;
 
-use sqlx::PgPool;
-use chrono::Utc;
-use uuid::Uuid;
 use crate::models::*;
 use anyhow::Result;
+use chrono::Utc;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 // 导出所有Repository
-pub use environment::{MonitoringPointRepository, EnvironmentalDataRepository, EnvironmentalAlertRepository};
-pub use health::{HealthRecordRepository, HealthCheckupRepository, VaccinationRecordRepository};
-pub use safety::{SafetyIncidentRepository, SafetyHazardNewRepository};
+pub use environment::{
+    EnvironmentalAlertRepository, EnvironmentalDataRepository, MonitoringPointRepository,
+};
+pub use health::{HealthCheckupRepository, HealthRecordRepository, VaccinationRecordRepository};
 pub use risk::{RiskAssessmentRepository, RiskControlRepository};
+pub use safety::{SafetyHazardNewRepository, SafetyIncidentRepository};
 pub use training::{TrainingProgramRepository, TrainingRecordRepository};
 
 // 保留原有的Repository（兼容现有代码）
@@ -72,7 +74,8 @@ impl<'a> SafetyHazardRepository<'a> {
     pub async fn create(&self, req: CreateSafetyHazardRequest) -> Result<SafetyHazard> {
         let id = Uuid::new_v4();
         let now = Utc::now();
-        let control_measures = serde_json::to_value(&req.control_measures).unwrap_or(serde_json::json!([]));
+        let control_measures =
+            serde_json::to_value(&req.control_measures).unwrap_or(serde_json::json!([]));
 
         let hazard = sqlx::query_as::<_, SafetyHazard>(
             r#"
@@ -114,7 +117,10 @@ impl<'a> SafetyHazardRepository<'a> {
     }
 
     pub async fn update(&self, id: Uuid, req: UpdateSafetyHazardRequest) -> Result<SafetyHazard> {
-        let existing = self.get(id).await?.ok_or_else(|| anyhow::anyhow!("危险源不存在"))?;
+        let existing = self
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("危险源不存在"))?;
 
         let hazard_no = req.hazard_no.unwrap_or(existing.hazard_no);
         let name = req.name.unwrap_or(existing.name);
@@ -123,7 +129,8 @@ impl<'a> SafetyHazardRepository<'a> {
         let description = req.description.or(existing.description);
         let location = req.location.or(existing.location);
         let risk_assessment = req.risk_assessment.or(existing.risk_assessment);
-        let control_measures = req.control_measures
+        let control_measures = req
+            .control_measures
             .map(|v| serde_json::to_value(&v).unwrap_or(existing.control_measures.clone()))
             .unwrap_or(existing.control_measures);
         let status = req.status.unwrap_or(existing.status);
@@ -219,7 +226,9 @@ impl<'a> SafetyCheckRepository<'a> {
         let id = Uuid::new_v4();
         let now = Utc::now();
         let issues = serde_json::to_value(&req.issues).unwrap_or(serde_json::json!([]));
-        let attachments = req.attachments.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let attachments = req
+            .attachments
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
 
         let check = sqlx::query_as::<_, SafetyCheck>(
             r#"
@@ -261,7 +270,10 @@ impl<'a> SafetyCheckRepository<'a> {
     }
 
     pub async fn update(&self, id: Uuid, req: UpdateSafetyCheckRequest) -> Result<SafetyCheck> {
-        let existing = self.get(id).await?.ok_or_else(|| anyhow::anyhow!("安全检查不存在"))?;
+        let existing = self
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("安全检查不存在"))?;
 
         let check_no = req.check_no.unwrap_or(existing.check_no);
         let check_type = req.check_type.unwrap_or(existing.check_type);
@@ -269,10 +281,12 @@ impl<'a> SafetyCheckRepository<'a> {
         let check_date = req.check_date.or(existing.check_date);
         let location = req.location.or(existing.location);
         let result = req.result.unwrap_or(existing.result);
-        let issues = req.issues
+        let issues = req
+            .issues
             .map(|v| serde_json::to_value(&v).unwrap_or(existing.issues.clone()))
             .unwrap_or(existing.issues);
-        let attachments = req.attachments
+        let attachments = req
+            .attachments
             .map(|v| Some(serde_json::to_value(&v).unwrap_or(serde_json::json!([]))))
             .unwrap_or(existing.attachments);
         let status = req.status.unwrap_or(existing.status);
@@ -367,7 +381,8 @@ impl<'a> EmergencyPlanRepository<'a> {
     pub async fn create(&self, req: CreateEmergencyPlanRequest) -> Result<EmergencyPlan> {
         let id = Uuid::new_v4();
         let now = Utc::now();
-        let responsible_persons = serde_json::to_value(&req.responsible_persons).unwrap_or(serde_json::json!([]));
+        let responsible_persons =
+            serde_json::to_value(&req.responsible_persons).unwrap_or(serde_json::json!([]));
 
         let plan = sqlx::query_as::<_, EmergencyPlan>(
             r#"
@@ -409,7 +424,10 @@ impl<'a> EmergencyPlanRepository<'a> {
     }
 
     pub async fn update(&self, id: Uuid, req: UpdateEmergencyPlanRequest) -> Result<EmergencyPlan> {
-        let existing = self.get(id).await?.ok_or_else(|| anyhow::anyhow!("应急预案不存在"))?;
+        let existing = self
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("应急预案不存在"))?;
 
         let plan_no = req.plan_no.unwrap_or(existing.plan_no);
         let name = req.name.unwrap_or(existing.name);
@@ -417,7 +435,8 @@ impl<'a> EmergencyPlanRepository<'a> {
         let scope = req.scope.or(existing.scope);
         let trigger_conditions = req.trigger_conditions.or(existing.trigger_conditions);
         let response_procedures = req.response_procedures.or(existing.response_procedures);
-        let responsible_persons = req.responsible_persons
+        let responsible_persons = req
+            .responsible_persons
             .map(|v| serde_json::to_value(&v).unwrap_or(existing.responsible_persons.clone()))
             .unwrap_or(existing.responsible_persons);
         let contact_info = req.contact_info.or(existing.contact_info);
@@ -509,7 +528,9 @@ impl<'a> DrillRecordRepository<'a> {
         let id = Uuid::new_v4();
         let now = Utc::now();
         let participants = serde_json::to_value(&req.participants).unwrap_or(serde_json::json!([]));
-        let attachments = req.attachments.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let attachments = req
+            .attachments
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
 
         let drill = sqlx::query_as::<_, DrillRecord>(
             r#"
@@ -553,13 +574,17 @@ impl<'a> DrillRecordRepository<'a> {
     }
 
     pub async fn update(&self, id: Uuid, req: UpdateDrillRecordRequest) -> Result<DrillRecord> {
-        let existing = self.get(id).await?.ok_or_else(|| anyhow::anyhow!("演练记录不存在"))?;
+        let existing = self
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("演练记录不存在"))?;
 
         let drill_no = req.drill_no.unwrap_or(existing.drill_no);
         let plan_id = req.plan_id.or(existing.plan_id);
         let drill_name = req.drill_name.unwrap_or(existing.drill_name);
         let drill_date = req.drill_date.or(existing.drill_date);
-        let participants = req.participants
+        let participants = req
+            .participants
             .map(|v| serde_json::to_value(&v).unwrap_or(existing.participants.clone()))
             .unwrap_or(existing.participants);
         let duration_hours = req.duration_hours.unwrap_or(existing.duration_hours);
@@ -567,7 +592,8 @@ impl<'a> DrillRecordRepository<'a> {
         let summary = req.summary.or(existing.summary);
         let issues_found = req.issues_found.or(existing.issues_found);
         let improvements = req.improvements.or(existing.improvements);
-        let attachments = req.attachments
+        let attachments = req
+            .attachments
             .map(|v| Some(serde_json::to_value(&v).unwrap_or(serde_json::json!([]))))
             .unwrap_or(existing.attachments);
         let now = Utc::now();

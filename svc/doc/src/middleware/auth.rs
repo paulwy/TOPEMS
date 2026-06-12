@@ -1,13 +1,15 @@
+#![allow(dead_code)]
+
 use axum::{
-    extract::{Request, FromRequestParts, State},
-    http::{request::Parts, StatusCode, header},
+    extract::{FromRequestParts, Request, State},
+    http::{header, request::Parts, StatusCode},
     middleware::Next,
-    response::{Response, IntoResponse},
+    response::{IntoResponse, Response},
 };
-use jsonwebtoken::{decode, Validation, DecodingKey, Algorithm};
+use chrono::{Duration, Utc};
+use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{Utc, Duration};
 
 use crate::api::response::ApiResponse;
 
@@ -55,15 +57,14 @@ pub async fn auth_middleware(
     mut req: Request,
     next: Next,
 ) -> Response {
-    let auth_header = req.headers()
+    let auth_header = req
+        .headers()
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
 
     if let Some(auth_header) = auth_header {
-        if auth_header.starts_with("Bearer ") {
-            let token = &auth_header[7..];
-            
+        if let Some(token) = auth_header.strip_prefix("Bearer ") {
             match validate_token(token, &state.jwt_secret) {
                 Ok(claims) => {
                     if !claims.is_expired() {
@@ -73,14 +74,16 @@ pub async fn auth_middleware(
                         return next.run(req).await;
                     } else {
                         tracing::debug!("Token expired");
-                        let mut resp = ApiResponse::<()>::error(401, "令牌已过期，请重新登录").into_response();
+                        let mut resp =
+                            ApiResponse::<()>::error(401, "令牌已过期，请重新登录").into_response();
                         *resp.status_mut() = StatusCode::UNAUTHORIZED;
                         return resp;
                     }
                 }
                 Err(e) => {
                     tracing::debug!("Token validation failed: {}", e);
-                    let mut resp = ApiResponse::<()>::error(401, &format!("认证失败: {}", e)).into_response();
+                    let mut resp =
+                        ApiResponse::<()>::error(401, &format!("认证失败: {}", e)).into_response();
                     *resp.status_mut() = StatusCode::UNAUTHORIZED;
                     return resp;
                 }
@@ -96,9 +99,9 @@ pub async fn auth_middleware(
 fn validate_token(token: &str, secret: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
     let decoding_key = DecodingKey::from_secret(secret.as_bytes());
     let validation = Validation::new(Algorithm::HS256);
-    
+
     let token_data = decode::<Claims>(token, &decoding_key, &validation)?;
-    
+
     Ok(token_data.claims)
 }
 
@@ -107,18 +110,23 @@ pub async fn optional_auth_middleware(
     mut req: Request,
     next: Next,
 ) -> Response {
-    let (claims, token) = if let Some(auth_header) = req.headers()
+    let (claims, token) = if let Some(auth_header) = req
+        .headers()
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
     {
-        tracing::debug!("🔑 Auth header found: {}...", &auth_header[..50.min(auth_header.len())]);
-        if auth_header.starts_with("Bearer ") {
-            let token = &auth_header[7..];
-            
+        tracing::debug!(
+            "🔑 Auth header found: {}...",
+            &auth_header[..50.min(auth_header.len())]
+        );
+        if let Some(token) = auth_header.strip_prefix("Bearer ") {
             match validate_token(token, &state.jwt_secret) {
                 Ok(claims) => {
                     if !claims.is_expired() {
-                        tracing::debug!("✅ Token validated successfully for user: {}", claims.username);
+                        tracing::debug!(
+                            "✅ Token validated successfully for user: {}",
+                            claims.username
+                        );
                         (Some(claims), Some(token.to_string()))
                     } else {
                         tracing::debug!("⚠️ Token expired");
@@ -138,7 +146,7 @@ pub async fn optional_auth_middleware(
         tracing::debug!("⚠️ No auth header found");
         (None, None)
     };
-    
+
     let final_claims = claims.unwrap_or_else(|| Claims {
         sub: "guest".to_string(),
         username: "guest".to_string(),
@@ -147,9 +155,10 @@ pub async fn optional_auth_middleware(
         exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
         iat: Utc::now().timestamp() as usize,
     });
-    
-    req.extensions_mut().insert(OptionalClaims(final_claims, token));
-    
+
+    req.extensions_mut()
+        .insert(OptionalClaims(final_claims, token));
+
     next.run(req).await
 }
 
@@ -179,13 +188,16 @@ where
             .extensions
             .get::<OptionalClaims>()
             .cloned()
-            .unwrap_or(OptionalClaims(Claims {
-                sub: "guest".to_string(),
-                username: "guest".to_string(),
-                role: "guest".to_string(),
-                roles: vec![],
-                exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
-                iat: Utc::now().timestamp() as usize,
-            }, None)))
+            .unwrap_or(OptionalClaims(
+                Claims {
+                    sub: "guest".to_string(),
+                    username: "guest".to_string(),
+                    role: "guest".to_string(),
+                    roles: vec![],
+                    exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
+                    iat: Utc::now().timestamp() as usize,
+                },
+                None,
+            )))
     }
 }

@@ -1,5 +1,4 @@
-import React from "react";
-import { Search, Download, Filter, Plus } from "lucide-react";
+import { Search, Download } from "lucide-react";
 
 interface AddressbookHeaderProps {
   searchQuery: string;

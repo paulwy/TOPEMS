@@ -4,26 +4,24 @@ mod services;
 mod utils;
 
 use anyhow::Result;
-use axum::{
-    routing::get,
-    Json, Router,
-};
+use axum::{routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
-use prometheus::{Encoder, TextEncoder, IntCounter, IntGauge, register_int_counter, register_int_gauge};
+use prometheus::{
+    register_int_counter, register_int_gauge, Encoder, IntCounter, IntGauge, TextEncoder,
+};
 use serde::Serialize;
-use utoipa::OpenApi;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use utoipa::OpenApi;
 
-use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer,
-    ServiceHealth, HealthStatus, DependencyHealth,
-    SystemMetrics, check_http_health, NotificationServiceClient,
-    create_hrm_client, init_logging, create_api_info_router,
-};
 use api::ApiState;
+use topems_shared::{
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
+    create_hrm_client, init_logging, ApiResponse, AuthState, DependencyHealth, HealthStatus,
+    NotificationServiceClient, ServiceHealth, SystemMetrics,
+};
 
 lazy_static::lazy_static! {
     pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").unwrap();
@@ -93,21 +91,21 @@ async fn main() -> Result<()> {
     // 初始化通知服务客户端
     let notification_service_url = env::var("NOTIFICATION_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8003".to_string());
-    let notification_client = Arc::new(NotificationServiceClient::with_base_url(notification_service_url));
+    let notification_client = Arc::new(NotificationServiceClient::with_base_url(
+        notification_service_url,
+    ));
 
     // 初始化 HRM 服务客户端
-    let hrm_client = create_hrm_client()
-        .map(Arc::new)
-        .unwrap_or_else(|e| {
-            tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
-            // 在实际生产中应该处理这个错误，但这里继续启动
-            // 但实际上 create_hrm_client 默认会返回错误，但系统会在访问时才真正调用
-            // 这里的 mock 逻辑放在后面添加了，我们可以直接创建：
-            // 实际上如果失败，我们可以创建一个默认的 URL 客户端
-            use topems_shared::service_client::HrmServiceClient;
-            let default_url = "http://localhost:8011".to_string();
-            Arc::new(HrmServiceClient::new(default_url).expect("默认HRM客户端创建失败"))
-        });
+    let hrm_client = create_hrm_client().map(Arc::new).unwrap_or_else(|e| {
+        tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
+        // 在实际生产中应该处理这个错误，但这里继续启动
+        // 但实际上 create_hrm_client 默认会返回错误，但系统会在访问时才真正调用
+        // 这里的 mock 逻辑放在后面添加了，我们可以直接创建：
+        // 实际上如果失败，我们可以创建一个默认的 URL 客户端
+        use topems_shared::service_client::HrmServiceClient;
+        let default_url = "http://localhost:8011".to_string();
+        Arc::new(HrmServiceClient::new(default_url).expect("默认HRM客户端创建失败"))
+    });
 
     let api_state = ApiState {
         db: pool.clone(),
@@ -126,13 +124,16 @@ async fn main() -> Result<()> {
     let health_router = Router::new()
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
-        .route("/metrics", get(move || async move {
-            let encoder = TextEncoder::new();
-            let metrics = prometheus::gather();
-            let mut buffer = Vec::new();
-            encoder.encode(&metrics, &mut buffer).unwrap();
-            String::from_utf8(buffer).unwrap()
-        }))
+        .route(
+            "/metrics",
+            get(move || async move {
+                let encoder = TextEncoder::new();
+                let metrics = prometheus::gather();
+                let mut buffer = Vec::new();
+                encoder.encode(&metrics, &mut buffer).unwrap();
+                String::from_utf8(buffer).unwrap()
+            }),
+        )
         .with_state(api_state.clone());
 
     let protected_routes = api::create_routes()
@@ -146,13 +147,16 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-erp"))
-        .route("/api-docs/openapi.json", get(|| async {
-            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap()
-        }))
+        .route(
+            "/api-docs/openapi.json",
+            get(|| async { serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap() }),
+        )
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = env::var("SERVER_PORT").or_else(|_| env::var("PORT")).unwrap_or_else(|_| "8009".to_string());
+    let port = env::var("SERVER_PORT")
+        .or_else(|_| env::var("PORT"))
+        .unwrap_or_else(|_| "8009".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-ERP 企业资源计划系统启动中...");
@@ -165,6 +169,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 async fn health_check(
     axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<String>> {
@@ -247,7 +252,7 @@ async fn get_metrics(
         request_count: state.metrics.get_request_count(),
         error_count: state.metrics.get_error_count(),
         active_connections: state.metrics.get_active_connections(),
-        database_pool_size: state.db.size() as u32,
+        database_pool_size: state.db.size(),
         database_pool_idle: state.db.num_idle(),
     };
 
@@ -267,10 +272,7 @@ struct ErpServiceMetrics {
 }
 
 async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -288,28 +290,37 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
 }
 
 async fn update_business_metrics(pool: &sqlx::PgPool) {
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM assets").fetch_one(pool).await {
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM assets")
+        .fetch_one(pool)
+        .await
+    {
         Ok(count) => ASSET_COUNT.set(count),
         Err(e) => tracing::warn!("Failed to update asset count: {}", e),
     }
 
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM financial_vouchers").fetch_one(pool).await {
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM financial_vouchers")
+        .fetch_one(pool)
+        .await
+    {
         Ok(count) => VOUCHER_COUNT.set(count),
         Err(e) => tracing::warn!("Failed to update voucher count: {}", e),
     }
 
     match sqlx::query_scalar::<_, i64>(
         "SELECT COUNT(*) FROM audit_logs 
-         WHERE created_at >= NOW() - INTERVAL '1 hour'"
-    ).fetch_one(pool).await {
+         WHERE created_at >= NOW() - INTERVAL '1 hour'",
+    )
+    .fetch_one(pool)
+    .await
+    {
         Ok(count) => ACTIVE_USERS.set(count),
         Err(e) => tracing::warn!("Failed to update active users: {}", e),
     }
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {

@@ -77,9 +77,11 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON ai.documents(category);"#)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON ai.documents(category);"#,
+        )
+        .execute(&self.pool)
+        .await?;
 
         sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_created_at ON ai.documents(created_at DESC);"#)
             .execute(&self.pool)
@@ -89,9 +91,11 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON ai.documents(deleted_at);"#)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            r#"CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON ai.documents(deleted_at);"#,
+        )
+        .execute(&self.pool)
+        .await?;
 
         // 创建文档块表
         sqlx::query(
@@ -201,13 +205,17 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_qa_history_rating ON ai.qa_history(rating);"#)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            r#"CREATE INDEX IF NOT EXISTS idx_qa_history_rating ON ai.qa_history(rating);"#,
+        )
+        .execute(&self.pool)
+        .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_qa_history_deleted_at ON ai.qa_history(deleted_at);"#)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            r#"CREATE INDEX IF NOT EXISTS idx_qa_history_deleted_at ON ai.qa_history(deleted_at);"#,
+        )
+        .execute(&self.pool)
+        .await?;
 
         // 创建分析结果表
         sqlx::query(

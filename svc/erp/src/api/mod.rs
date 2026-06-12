@@ -1,31 +1,28 @@
-use axum::{
-    extract::FromRef,
-    Router,
-};
+use crate::models;
+use crate::utils::InMemoryCache;
+use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::{AuthState, SystemMetrics, NotificationServiceClient, HrmServiceClient};
-use crate::utils::InMemoryCache;
-use crate::models;
+use topems_shared::{AuthState, HrmServiceClient, NotificationServiceClient, SystemMetrics};
 
+pub mod announcement;
 pub mod asset;
 pub mod audit;
 pub mod bank;
 pub mod consolidation;
-pub mod finance;
-pub mod fixed_asset;
-pub mod dict;
 pub mod db_structure;
-pub mod voucher;
+pub mod dict;
+pub mod finance;
 pub mod finance_reports;
+pub mod fixed_asset;
+pub mod health;
+pub mod hrm_integration_example;
+pub mod meeting_room;
 pub mod office_supplies;
 pub mod opening_balance;
-pub mod meeting_room;
 pub mod vehicles;
-pub mod announcement;
-pub mod hrm_integration_example;
-pub mod health;
+pub mod voucher;
 
 #[derive(Clone)]
 pub struct ApiState {

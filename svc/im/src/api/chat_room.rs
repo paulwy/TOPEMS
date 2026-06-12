@@ -3,11 +3,11 @@ use axum::{
     Json,
 };
 use chrono::Utc;
-use uuid::Uuid;
 use serde_json::json;
 use sqlx::PgPool;
+use uuid::Uuid;
 
-use crate::models::{ChatRoom, CreateChatRoom, UpdateChatRoom, AddChatRoomMember, ChatRoomMember};
+use crate::models::{AddChatRoomMember, ChatRoom, ChatRoomMember, CreateChatRoom, UpdateChatRoom};
 use topems_shared::ApiResponse;
 
 // ==================== 聊天室管理API ====================
@@ -47,9 +47,7 @@ pub async fn create_chat_room(
 }
 
 /// GET /api/v1/chat-rooms - 获取聊天室列表
-pub async fn list_chat_rooms(
-    State(pool): State<PgPool>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_chat_rooms(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, ChatRoom>(
         r#"
         SELECT id, name, room_type, members, created_by, last_message, last_message_time, is_muted, is_pinned, created_at, updated_at
@@ -61,10 +59,13 @@ pub async fn list_chat_rooms(
     .await;
 
     match result {
-        Ok(rooms) => Json(ApiResponse::success(json!({
-            "chat_rooms": rooms,
-            "total": rooms.len()
-        }), "获取聊天室列表成功")),
+        Ok(rooms) => Json(ApiResponse::success(
+            json!({
+                "chat_rooms": rooms,
+                "total": rooms.len()
+            }),
+            "获取聊天室列表成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to list chat rooms: {}", e);
             Json(ApiResponse::error(500, "获取聊天室列表失败"))
@@ -97,7 +98,7 @@ pub async fn get_chat_room(
                 FROM im.chat_room_members
                 WHERE chat_room_id = $1
                 ORDER BY joined_at ASC
-                "#
+                "#,
             )
             .bind(chat_id)
             .fetch_all(&pool)
@@ -105,11 +106,14 @@ pub async fn get_chat_room(
 
             let members = members_result.unwrap_or_default();
 
-            Json(ApiResponse::success(json!({
-                "chat_room": room,
-                "members": members,
-                "member_count": members.len()
-            }), "获取聊天室详情成功"))
+            Json(ApiResponse::success(
+                json!({
+                    "chat_room": room,
+                    "members": members,
+                    "member_count": members.len()
+                }),
+                "获取聊天室详情成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
         Err(e) => {
@@ -166,14 +170,17 @@ pub async fn delete_chat_room(
         DELETE FROM im.chat_rooms
         WHERE id = $1
         RETURNING id
-        "#
+        "#,
     )
     .bind(chat_id)
     .fetch_optional(&pool)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(json!({ "deleted": true }), "删除聊天室成功")),
+        Ok(Some(_)) => Json(ApiResponse::success(
+            json!({ "deleted": true }),
+            "删除聊天室成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "聊天室不存在")),
         Err(e) => {
             tracing::error!("Failed to delete chat room: {}", e);
@@ -200,7 +207,7 @@ pub async fn add_chat_room_member(
         ON CONFLICT (chat_room_id, user_id) 
         DO UPDATE SET role = $4, joined_at = $5
         RETURNING id, chat_room_id, user_id, role, joined_at, last_read_at
-        "#
+        "#,
     )
     .bind(id)
     .bind(chat_id)
@@ -219,7 +226,7 @@ pub async fn add_chat_room_member(
                 SET members = members || $1::jsonb,
                     updated_at = $2
                 WHERE id = $3
-                "#
+                "#,
             )
             .bind(json!([user_id]))
             .bind(now)
@@ -249,7 +256,7 @@ pub async fn remove_chat_room_member(
         DELETE FROM im.chat_room_members
         WHERE chat_room_id = $1 AND user_id = $2
         RETURNING id
-        "#
+        "#,
     )
     .bind(chat_id)
     .bind(&member_id)
@@ -265,7 +272,7 @@ pub async fn remove_chat_room_member(
                 SET members = members - $1,
                     updated_at = $2
                 WHERE id = $3
-                "#
+                "#,
             )
             .bind(&member_id)
             .bind(now)
@@ -273,7 +280,10 @@ pub async fn remove_chat_room_member(
             .execute(&pool)
             .await;
 
-            Json(ApiResponse::success(json!({ "removed": true }), "移除成员成功"))
+            Json(ApiResponse::success(
+                json!({ "removed": true }),
+                "移除成员成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(404, "成员不存在")),
         Err(e) => {
@@ -297,17 +307,20 @@ pub async fn get_chat_room_messages(
         WHERE chat_room_id = $1 AND is_deleted = FALSE
         ORDER BY created_at ASC
         LIMIT 100
-        "#
+        "#,
     )
     .bind(chat_id)
     .fetch_all(&pool)
     .await;
 
     match result {
-        Ok(messages) => Json(ApiResponse::success(json!({
-            "messages": messages,
-            "total": messages.len()
-        }), "获取聊天消息成功")),
+        Ok(messages) => Json(ApiResponse::success(
+            json!({
+                "messages": messages,
+                "total": messages.len()
+            }),
+            "获取聊天消息成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to get chat messages: {}", e);
             Json(ApiResponse::error(500, "获取聊天消息失败"))
@@ -327,7 +340,7 @@ pub async fn mute_chat_room(
         UPDATE im.chat_rooms
         SET is_muted = true, updated_at = $1
         WHERE id = $2
-        "#
+        "#,
     )
     .bind(now)
     .bind(chat_id)
@@ -335,7 +348,10 @@ pub async fn mute_chat_room(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({ "muted": true }), "已开启免打扰")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({ "muted": true }),
+            "已开启免打扰",
+        )),
         Err(e) => {
             tracing::error!("Failed to mute chat room: {}", e);
             Json(ApiResponse::error(500, "开启免打扰失败"))
@@ -355,7 +371,7 @@ pub async fn unmute_chat_room(
         UPDATE im.chat_rooms
         SET is_muted = false, updated_at = $1
         WHERE id = $2
-        "#
+        "#,
     )
     .bind(now)
     .bind(chat_id)
@@ -363,7 +379,10 @@ pub async fn unmute_chat_room(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({ "muted": false }), "已关闭免打扰")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({ "muted": false }),
+            "已关闭免打扰",
+        )),
         Err(e) => {
             tracing::error!("Failed to unmute chat room: {}", e);
             Json(ApiResponse::error(500, "关闭免打扰失败"))
@@ -383,7 +402,7 @@ pub async fn pin_chat_room(
         UPDATE im.chat_rooms
         SET is_pinned = true, updated_at = $1
         WHERE id = $2
-        "#
+        "#,
     )
     .bind(now)
     .bind(chat_id)
@@ -391,7 +410,10 @@ pub async fn pin_chat_room(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({ "pinned": true }), "已置顶会话")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({ "pinned": true }),
+            "已置顶会话",
+        )),
         Err(e) => {
             tracing::error!("Failed to pin chat room: {}", e);
             Json(ApiResponse::error(500, "置顶会话失败"))
@@ -411,7 +433,7 @@ pub async fn unpin_chat_room(
         UPDATE im.chat_rooms
         SET is_pinned = false, updated_at = $1
         WHERE id = $2
-        "#
+        "#,
     )
     .bind(now)
     .bind(chat_id)
@@ -419,7 +441,10 @@ pub async fn unpin_chat_room(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({ "pinned": false }), "已取消置顶")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({ "pinned": false }),
+            "已取消置顶",
+        )),
         Err(e) => {
             tracing::error!("Failed to unpin chat room: {}", e);
             Json(ApiResponse::error(500, "取消置顶失败"))

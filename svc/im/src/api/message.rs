@@ -1,13 +1,15 @@
 use axum::{
-    extract::{Path, State, Query},
+    extract::{Path, Query, State},
     Json,
 };
 use chrono::Utc;
-use uuid::Uuid;
 use serde_json::json;
 use sqlx::PgPool;
+use uuid::Uuid;
 
-use crate::models::{Message, SendMessage, UpdateMessage, ReplyMessage, ForwardMessage, MessageReadReceipt};
+use crate::models::{
+    ForwardMessage, Message, MessageReadReceipt, ReplyMessage, SendMessage, UpdateMessage,
+};
 use topems_shared::ApiResponse;
 
 // ==================== 消息管理API ====================
@@ -19,7 +21,7 @@ pub async fn send_message(
 ) -> Json<ApiResponse<Message>> {
     let id = Uuid::new_v4();
     let now = Utc::now().naive_utc();
-    
+
     let chat_room_id = payload.chat_room_id.and_then(|c| Uuid::parse_str(&c).ok());
     let reply_to_id = payload.reply_to_id.and_then(|r| Uuid::parse_str(&r).ok());
 
@@ -58,7 +60,7 @@ pub async fn send_message(
                     UPDATE im.chat_rooms
                     SET last_message = $1, last_message_time = $2, updated_at = $3
                     WHERE id = $4
-                    "#
+                    "#,
                 )
                 .bind(payload.content)
                 .bind(now)
@@ -67,7 +69,7 @@ pub async fn send_message(
                 .execute(&pool)
                 .await;
             }
-            
+
             Json(ApiResponse::success(message, "发送消息成功"))
         }
         Err(e) => {
@@ -89,7 +91,7 @@ pub async fn get_message(
                is_read, is_edited, is_deleted, created_at, updated_at
         FROM im.messages
         WHERE id = $1 AND is_deleted = FALSE
-        "#
+        "#,
     )
     .bind(message_id)
     .fetch_optional(&pool)
@@ -104,7 +106,7 @@ pub async fn get_message(
                 FROM im.message_read_receipts
                 WHERE message_id = $1
                 ORDER BY read_at ASC
-                "#
+                "#,
             )
             .bind(message_id)
             .fetch_all(&pool)
@@ -112,11 +114,14 @@ pub async fn get_message(
 
             let read_receipts = receipts_result.unwrap_or_default();
 
-            Json(ApiResponse::success(json!({
-                "message": message,
-                "read_receipts": read_receipts,
-                "read_count": read_receipts.len()
-            }), "获取消息详情成功"))
+            Json(ApiResponse::success(
+                json!({
+                    "message": message,
+                    "read_receipts": read_receipts,
+                    "read_count": read_receipts.len()
+                }),
+                "获取消息详情成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(404, "消息不存在")),
         Err(e) => {
@@ -142,7 +147,7 @@ pub async fn update_message(
         RETURNING id, chat_room_id, sender_id, sender_name, receiver_id, message_type, content, 
                   file_url, file_name, file_size, reply_to_id, forwarded_from_id, 
                   is_read, is_edited, is_deleted, created_at, updated_at
-        "#
+        "#,
     )
     .bind(payload.content.clone())
     .bind(now)
@@ -159,7 +164,7 @@ pub async fn update_message(
                     UPDATE im.chat_rooms
                     SET last_message = $1, updated_at = $2
                     WHERE id = $3
-                    "#
+                    "#,
                 )
                 .bind(payload.content)
                 .bind(now)
@@ -167,7 +172,7 @@ pub async fn update_message(
                 .execute(&pool)
                 .await;
             }
-            
+
             Json(ApiResponse::success(message, "更新消息成功"))
         }
         Ok(None) => Json(ApiResponse::error(404, "消息不存在")),
@@ -193,7 +198,7 @@ pub async fn delete_message(
                is_read, is_edited, is_deleted, created_at, updated_at
         FROM im.messages
         WHERE id = $1
-        "#
+        "#,
     )
     .bind(message_id)
     .fetch_optional(&pool)
@@ -206,7 +211,7 @@ pub async fn delete_message(
             UPDATE im.messages
             SET is_deleted = TRUE, updated_at = $1
             WHERE id = $2
-            "#
+            "#,
         )
         .bind(now)
         .bind(message_id)
@@ -222,7 +227,7 @@ pub async fn delete_message(
                         UPDATE im.chat_rooms
                         SET last_message = NULL, last_message_time = NULL, updated_at = $1
                         WHERE id = $2 AND last_message = $3
-                        "#
+                        "#,
                     )
                     .bind(now)
                     .bind(chat_id)
@@ -230,8 +235,11 @@ pub async fn delete_message(
                     .execute(&pool)
                     .await;
                 }
-                
-                Json(ApiResponse::success(json!({ "deleted": true }), "删除消息成功"))
+
+                Json(ApiResponse::success(
+                    json!({ "deleted": true }),
+                    "删除消息成功",
+                ))
             }
             Err(e) => {
                 tracing::error!("Failed to delete message: {}", e);
@@ -249,8 +257,11 @@ pub async fn mark_message_read(
     Path(message_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<MessageReadReceipt>> {
-    let user_id = payload.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
-    
+    let user_id = payload
+        .get("user_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+
     if user_id.is_empty() {
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
@@ -266,7 +277,7 @@ pub async fn mark_message_read(
         ON CONFLICT (message_id, user_id) 
         DO UPDATE SET read_at = $4
         RETURNING id, message_id, user_id, read_at
-        "#
+        "#,
     )
     .bind(id)
     .bind(message_id)
@@ -282,7 +293,7 @@ pub async fn mark_message_read(
             UPDATE im.messages
             SET is_read = TRUE
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(message_id)
         .execute(&pool)
@@ -304,7 +315,7 @@ pub async fn get_unread_messages(
     Query(params): Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let user_id = params.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
-    
+
     if user_id.is_empty() {
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
@@ -321,17 +332,20 @@ pub async fn get_unread_messages(
         AND is_read = FALSE AND is_deleted = FALSE
         ORDER BY created_at DESC
         LIMIT 50
-        "#
+        "#,
     )
     .bind(user_id)
     .fetch_all(&pool)
     .await;
 
     match result {
-        Ok(messages) => Json(ApiResponse::success(json!({
-            "unread_messages": messages,
-            "total": messages.len()
-        }), "获取未读消息成功")),
+        Ok(messages) => Json(ApiResponse::success(
+            json!({
+                "unread_messages": messages,
+                "total": messages.len()
+            }),
+            "获取未读消息成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to get unread messages: {}", e);
             Json(ApiResponse::error(500, "获取未读消息失败"))
@@ -353,7 +367,7 @@ pub async fn reply_message(
                is_read, is_edited, is_deleted, created_at, updated_at
         FROM im.messages
         WHERE id = $1 AND is_deleted = FALSE
-        "#
+        "#,
     )
     .bind(message_id)
     .fetch_optional(&pool)
@@ -397,7 +411,7 @@ pub async fn reply_message(
                             UPDATE im.chat_rooms
                             SET last_message = $1, last_message_time = $2, updated_at = $3
                             WHERE id = $4
-                            "#
+                            "#,
                         )
                         .bind(payload.content)
                         .bind(now)
@@ -406,7 +420,7 @@ pub async fn reply_message(
                         .execute(&pool)
                         .await;
                     }
-                    
+
                     Json(ApiResponse::success(reply, "回复消息成功"))
                 }
                 Err(e) => {
@@ -437,7 +451,7 @@ pub async fn forward_message(
                is_read, is_edited, is_deleted, created_at, updated_at
         FROM im.messages
         WHERE id = $1 AND is_deleted = FALSE
-        "#
+        "#,
     )
     .bind(message_id)
     .fetch_optional(&pool)
@@ -486,7 +500,7 @@ pub async fn forward_message(
                             UPDATE im.chat_rooms
                             SET last_message = $1, last_message_time = $2, updated_at = $3
                             WHERE id = $4
-                            "#
+                            "#,
                         )
                         .bind(original.content)
                         .bind(now)
@@ -495,7 +509,7 @@ pub async fn forward_message(
                         .execute(&pool)
                         .await;
                     }
-                    
+
                     Json(ApiResponse::success(forwarded, "转发消息成功"))
                 }
                 Err(e) => {
@@ -518,9 +532,12 @@ pub async fn search_messages(
     Query(params): Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
-    let chat_room_id = params.get("chat_room_id").and_then(|v| v.as_str()).and_then(|c| Uuid::parse_str(c).ok());
+    let chat_room_id = params
+        .get("chat_room_id")
+        .and_then(|v| v.as_str())
+        .and_then(|c| Uuid::parse_str(c).ok());
     let user_id = params.get("user_id").and_then(|v| v.as_str());
-    
+
     if keyword.is_empty() {
         return Json(ApiResponse::error(400, "搜索关键词不能为空"));
     }
@@ -535,7 +552,7 @@ pub async fn search_messages(
             WHERE chat_room_id = $1 AND content ILIKE $2 AND is_deleted = FALSE
             ORDER BY created_at DESC
             LIMIT 50
-            "#
+            "#,
         )
         .bind(chat_id)
         .bind(format!("%{}%", keyword))
@@ -554,7 +571,7 @@ pub async fn search_messages(
             AND content ILIKE $2 AND is_deleted = FALSE
             ORDER BY created_at DESC
             LIMIT 50
-            "#
+            "#,
         )
         .bind(uid)
         .bind(format!("%{}%", keyword))
@@ -570,7 +587,7 @@ pub async fn search_messages(
             WHERE content ILIKE $1 AND is_deleted = FALSE
             ORDER BY created_at DESC
             LIMIT 50
-            "#
+            "#,
         )
         .bind(format!("%{}%", keyword))
         .fetch_all(&pool)
@@ -578,11 +595,14 @@ pub async fn search_messages(
     };
 
     match result {
-        Ok(messages) => Json(ApiResponse::success(json!({
-            "messages": messages,
-            "total": messages.len(),
-            "keyword": keyword
-        }), "搜索消息成功")),
+        Ok(messages) => Json(ApiResponse::success(
+            json!({
+                "messages": messages,
+                "total": messages.len(),
+                "keyword": keyword
+            }),
+            "搜索消息成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to search messages: {}", e);
             Json(ApiResponse::error(500, "搜索消息失败"))

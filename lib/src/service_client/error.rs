@@ -22,4 +22,3 @@ pub enum ServiceClientError {
     #[error("Configuration error: {0}")]
     ConfigError(String),
 }
-

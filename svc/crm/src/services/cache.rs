@@ -16,7 +16,9 @@ impl<V> CacheEntry<V> {
     }
 
     fn is_expired(&self) -> bool {
-        self.expires_at.map(|exp| Instant::now() > exp).unwrap_or(false)
+        self.expires_at
+            .map(|exp| Instant::now() > exp)
+            .unwrap_or(false)
     }
 }
 
@@ -48,12 +50,21 @@ impl CrmCacheService {
     // 客户缓存
     pub async fn get_customer(&self, id: &str) -> Option<serde_json::Value> {
         let cache = self.customer_cache.read().await;
-        cache.get(id).and_then(|e| if e.is_expired() { None } else { Some(e.value.clone()) })
+        cache.get(id).and_then(|e| {
+            if e.is_expired() {
+                None
+            } else {
+                Some(e.value.clone())
+            }
+        })
     }
 
     pub async fn set_customer(&self, id: &str, customer: serde_json::Value) {
         let mut cache = self.customer_cache.write().await;
-        cache.insert(id.to_string(), CacheEntry::new(customer, Some(self.default_ttl)));
+        cache.insert(
+            id.to_string(),
+            CacheEntry::new(customer, Some(self.default_ttl)),
+        );
     }
 
     pub async fn delete_customer(&self, id: &str) {
@@ -64,29 +75,53 @@ impl CrmCacheService {
     // 联系人缓存
     pub async fn get_contact(&self, id: &str) -> Option<serde_json::Value> {
         let cache = self.contact_cache.read().await;
-        cache.get(id).and_then(|e| if e.is_expired() { None } else { Some(e.value.clone()) })
+        cache.get(id).and_then(|e| {
+            if e.is_expired() {
+                None
+            } else {
+                Some(e.value.clone())
+            }
+        })
     }
 
     pub async fn set_contact(&self, id: &str, contact: serde_json::Value) {
         let mut cache = self.contact_cache.write().await;
-        cache.insert(id.to_string(), CacheEntry::new(contact, Some(self.default_ttl)));
+        cache.insert(
+            id.to_string(),
+            CacheEntry::new(contact, Some(self.default_ttl)),
+        );
     }
 
     // 商机缓存
     pub async fn get_opportunity(&self, id: &str) -> Option<serde_json::Value> {
         let cache = self.opportunity_cache.read().await;
-        cache.get(id).and_then(|e| if e.is_expired() { None } else { Some(e.value.clone()) })
+        cache.get(id).and_then(|e| {
+            if e.is_expired() {
+                None
+            } else {
+                Some(e.value.clone())
+            }
+        })
     }
 
     pub async fn set_opportunity(&self, id: &str, opportunity: serde_json::Value) {
         let mut cache = self.opportunity_cache.write().await;
-        cache.insert(id.to_string(), CacheEntry::new(opportunity, Some(self.default_ttl)));
+        cache.insert(
+            id.to_string(),
+            CacheEntry::new(opportunity, Some(self.default_ttl)),
+        );
     }
 
     // 仪表盘缓存（较短 TTL）
     pub async fn get_dashboard(&self, key: &str) -> Option<serde_json::Value> {
         let cache = self.dashboard_cache.read().await;
-        cache.get(key).and_then(|e| if e.is_expired() { None } else { Some(e.value.clone()) })
+        cache.get(key).and_then(|e| {
+            if e.is_expired() {
+                None
+            } else {
+                Some(e.value.clone())
+            }
+        })
     }
 
     pub async fn set_dashboard(&self, key: &str, data: serde_json::Value) {

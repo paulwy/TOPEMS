@@ -21,11 +21,9 @@ impl PdfParser {
         }
 
         // 在阻塞线程中执行 PDF 解析
-        let result = tokio::task::spawn_blocking(move || {
-            Self::extract_text_sync(&file_path_owned)
-        })
-        .await
-        .map_err(|e| format!("PDF 解析任务失败: {}", e))?;
+        let result = tokio::task::spawn_blocking(move || Self::extract_text_sync(&file_path_owned))
+            .await
+            .map_err(|e| format!("PDF 解析任务失败: {}", e))?;
 
         result
     }
@@ -52,8 +50,7 @@ impl PdfParser {
 
     /// 使用 lopdf 提取文本（备用方法）
     fn extract_with_lopdf(file_path: &str) -> Result<String, String> {
-        let doc = lopdf::Document::load(file_path)
-            .map_err(|e| format!("加载 PDF 失败: {}", e))?;
+        let doc = lopdf::Document::load(file_path).map_err(|e| format!("加载 PDF 失败: {}", e))?;
 
         let mut full_text = String::new();
 

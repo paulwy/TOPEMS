@@ -1,4 +1,5 @@
 // MES 服务集成测试
+#![allow(dead_code)]
 
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
@@ -22,11 +23,11 @@ mod tests {
     #[tokio::test]
     async fn test_production_order_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mes' AND table_name = 'production_orders')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -41,11 +42,11 @@ mod tests {
     #[tokio::test]
     async fn test_production_process_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mes' AND table_name = 'production_processes')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -60,11 +61,11 @@ mod tests {
     #[tokio::test]
     async fn test_production_record_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mes' AND table_name = 'production_records')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -79,11 +80,11 @@ mod tests {
     #[tokio::test]
     async fn test_work_station_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mes' AND table_name = 'work_stations')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -98,11 +99,11 @@ mod tests {
     #[tokio::test]
     async fn test_equipment_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mes' AND table_name = 'equipment')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -117,10 +118,10 @@ mod tests {
     #[tokio::test]
     async fn test_create_production_order() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let order_id = Uuid::new_v4();
         let order_no = format!("PO-{}", &order_id.to_string()[..10]);
-        
+
         let result = sqlx::query(
             r#"
             INSERT INTO mes.production_orders (id, order_no, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
@@ -140,14 +141,14 @@ mod tests {
         .bind(chrono::Utc::now())
         .fetch_one(&pool)
         .await;
-        
+
         assert!(result.is_ok(), "生产订单创建应该成功");
     }
 
     #[tokio::test]
     async fn test_list_production_orders() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query_as::<_, ProductionOrderRow>(
             r#"
             SELECT id, order_no, product_name, quantity, status, planned_start_date, planned_end_date, actual_start_date, actual_end_date, created_at, updated_at
@@ -158,7 +159,7 @@ mod tests {
         )
         .fetch_all(&pool)
         .await;
-        
+
         match result {
             Ok(orders) => {
                 assert!(orders.len() <= 10, "返回的订单数量应该不超过10条");
@@ -172,11 +173,11 @@ mod tests {
     #[tokio::test]
     async fn test_production_order_status_update() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         // 创建一个新的生产订单
         let order_id = Uuid::new_v4();
         let order_no = format!("PO-TEST-{}", &order_id.to_string()[..8]);
-        
+
         sqlx::query(
             r#"
             INSERT INTO mes.production_orders (id, order_no, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
@@ -193,7 +194,7 @@ mod tests {
         .execute(&pool)
         .await
         .expect("创建测试数据失败");
-        
+
         // 更新状态为进行中
         let update_result = sqlx::query(
             r#"
@@ -204,17 +205,17 @@ mod tests {
         .bind(order_id)
         .execute(&pool)
         .await;
-        
+
         assert!(update_result.is_ok(), "状态更新应该成功");
-        
+
         // 验证状态已更新
         let check_result = sqlx::query_scalar::<_, String>(
-            "SELECT status FROM mes.production_orders WHERE id = $1"
+            "SELECT status FROM mes.production_orders WHERE id = $1",
         )
         .bind(order_id)
         .fetch_one(&pool)
         .await;
-        
+
         match check_result {
             Ok(status) => {
                 assert_eq!(status, "in_progress", "状态应该更新为 in_progress");
@@ -223,7 +224,7 @@ mod tests {
                 panic!("查询状态失败: {}", e);
             }
         }
-        
+
         // 清理测试数据
         let _ = sqlx::query("DELETE FROM mes.production_orders WHERE id = $1")
             .bind(order_id)
@@ -234,10 +235,10 @@ mod tests {
     #[tokio::test]
     async fn test_create_work_station() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let station_id = Uuid::new_v4();
         let station_code = format!("WS-{}", &station_id.to_string()[..8]);
-        
+
         let result = sqlx::query(
             r#"
             INSERT INTO mes.work_stations (id, code, name, location, status, capacity, current_load, created_at, updated_at)
@@ -257,18 +258,18 @@ mod tests {
         .bind(0)
         .fetch_one(&pool)
         .await;
-        
+
         assert!(result.is_ok(), "工位创建应该成功");
     }
 
     #[tokio::test]
     async fn test_audit_log_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mes' AND table_name = 'mes_audit_logs')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);

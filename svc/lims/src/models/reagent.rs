@@ -1,3 +1,7 @@
+#![allow(dead_code)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;

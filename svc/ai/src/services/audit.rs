@@ -3,10 +3,12 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 /// AI 服务审计日志操作
+#[allow(dead_code)]
 pub struct AiAuditService {
     pool: PgPool,
 }
 
+#[allow(dead_code)]
 impl AiAuditService {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
@@ -22,7 +24,7 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -54,7 +56,7 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -86,7 +88,7 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -118,7 +120,7 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -150,7 +152,7 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let entity_uuid = entity_id.and_then(|s| Uuid::parse_str(s).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
@@ -214,6 +216,7 @@ impl AiAuditService {
 
 /// 审计日志条目
 #[derive(Debug, Clone, sqlx::FromRow)]
+#[allow(dead_code)]
 pub struct AiAuditLogEntry {
     pub id: Uuid,
     pub action: String,

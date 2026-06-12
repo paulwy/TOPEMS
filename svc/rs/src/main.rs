@@ -4,10 +4,7 @@ mod models;
 mod repositories;
 mod services;
 
-use axum::{
-    routing::get,
-    Router, Json,
-};
+use axum::{routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use serde::Serialize;
@@ -16,20 +13,9 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware,
-    config::enhanced::DatabaseConfig,
-    create_cors_layer,
-    create_database_pool,
-    init_logging,
-    test_database_connection,
-    Config,
-    Result,
-    ServiceHealth,
-    HealthStatus,
-    DependencyHealth,
-    SystemMetrics,
-    check_http_health,
-    create_api_info_router,
+    auth_middleware, check_http_health, config::enhanced::DatabaseConfig, create_api_info_router,
+    create_cors_layer, create_database_pool, init_logging, test_database_connection, ApiResponse,
+    AuthState, Config, DependencyHealth, HealthStatus, Result, ServiceHealth, SystemMetrics,
 };
 use utoipa::OpenApi;
 
@@ -43,14 +29,19 @@ async fn main() -> Result<()> {
     let custom_gauge = Gauge::new(
         "topems_rs_custom_metric",
         "This is a custom metric for TOPEMS-RS",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
     let config = Config::load().await?;
     let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string()),
+        url: env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        }),
         max_connections: 10,
         min_connections: Some(2),
         connect_timeout: Some(30),
@@ -66,22 +57,33 @@ async fn main() -> Result<()> {
     let pool = create_database_pool(&db_config).await?;
     test_database_connection(&pool).await?;
 
-    let test_result = sqlx::query("SELECT current_database(), current_user").fetch_one(&pool).await;
+    let test_result = sqlx::query("SELECT current_database(), current_user")
+        .fetch_one(&pool)
+        .await;
     tracing::info!("Test query result: {:?}", test_result);
-    
+
     let search_path = sqlx::query("SHOW search_path").fetch_one(&pool).await;
     tracing::info!("Search path: {:?}", search_path);
-    
-    let schemas = sqlx::query("SELECT schema_name FROM information_schema.schemata ORDER BY schema_name").fetch_all(&pool).await;
+
+    let schemas =
+        sqlx::query("SELECT schema_name FROM information_schema.schemata ORDER BY schema_name")
+            .fetch_all(&pool)
+            .await;
     tracing::info!("All schemas: {:?}", schemas);
-    
+
     let schema_name = std::env::var("SCHEMA_NAME").unwrap_or_else(|_| "rs".to_string());
-    
-    let tables = sqlx::query(&format!("SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'", schema_name))
-        .fetch_all(&pool).await;
+
+    let tables = sqlx::query(&format!(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'",
+        schema_name
+    ))
+    .fetch_all(&pool)
+    .await;
     tracing::info!("{} tables: {:?}", schema_name.to_uppercase(), tables);
-    
-    let test_projects_direct = sqlx::query(&format!("SELECT * FROM {} LIMIT 1", schema_name)).fetch_one(&pool).await;
+
+    let test_projects_direct = sqlx::query(&format!("SELECT * FROM {} LIMIT 1", schema_name))
+        .fetch_one(&pool)
+        .await;
     tracing::info!("Test direct projects query: {:?}", test_projects_direct);
 
     if let Err(e) = init_db(&pool).await {
@@ -107,13 +109,15 @@ async fn main() -> Result<()> {
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        );
 
-    let protected_routes = api::create_routes()
-        .layer(axum::middleware::from_fn_with_state(
-            auth_state.clone(),
-            auth_middleware,
-        ));
+    let protected_routes = api::create_routes().layer(axum::middleware::from_fn_with_state(
+        auth_state.clone(),
+        auth_middleware,
+    ));
 
     let app = Router::new()
         .merge(public_routes)
@@ -221,7 +225,7 @@ async fn get_metrics(
         request_count: state.metrics.get_request_count(),
         error_count: state.metrics.get_error_count(),
         active_connections: state.metrics.get_active_connections(),
-        database_pool_size: state.db.size() as u32,
+        database_pool_size: state.db.size(),
         database_pool_idle: state.db.num_idle(),
     };
 
@@ -229,10 +233,7 @@ async fn get_metrics(
 }
 
 async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -250,8 +251,8 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = std::env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {

@@ -2,8 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
@@ -11,18 +10,20 @@ use topems_shared::ApiResponse;
 use uuid::Uuid;
 
 use crate::models::risk::{
-    ProjectRisk,
-    RiskEvent,
-    CreateRiskEventRequest,
-    CreateRiskRequest,
-    UpdateRiskRequest,
+    CreateRiskEventRequest, CreateRiskRequest, ProjectRisk, RiskEvent, UpdateRiskRequest,
 };
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/risks", get(get_project_risks).post(create_risk))
+        .route(
+            "/api/v1/projects/{project_id}/risks",
+            get(get_project_risks).post(create_risk),
+        )
         .route("/api/v1/risks/{id}", get(get_risk).put(update_risk))
-        .route("/api/v1/risks/{id}/events", get(get_risk_events).post(create_risk_event))
+        .route(
+            "/api/v1/risks/{id}/events",
+            get(get_risk_events).post(create_risk_event),
+        )
         .with_state(pool)
 }
 
@@ -30,16 +31,21 @@ async fn get_project_risks(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectRisk>>> {
-    let risks = sqlx::query_as::<_, ProjectRisk>("SELECT * FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC")
-        .bind(project_id)
-        .fetch_all(&pool)
-        .await;
+    let risks = sqlx::query_as::<_, ProjectRisk>(
+        "SELECT * FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC",
+    )
+    .bind(project_id)
+    .fetch_all(&pool)
+    .await;
 
     match risks {
         Ok(r) => Json(ApiResponse::success(r, "获取项目风险列表成功")),
         Err(e) => {
             tracing::error!("获取风险失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取风险失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取风险失败",
+            ))
         }
     }
 }
@@ -55,10 +61,16 @@ async fn get_risk(
 
     match risk {
         Ok(r) => Json(ApiResponse::success(r, "获取风险详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "风险不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "风险不存在",
+        )),
         Err(e) => {
             tracing::error!("获取风险失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取风险失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取风险失败",
+            ))
         }
     }
 }
@@ -70,7 +82,7 @@ async fn create_risk(
 ) -> Json<ApiResponse<ProjectRisk>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let risk = sqlx::query_as::<_, ProjectRisk>(
         "INSERT INTO pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'identified', $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *"
@@ -101,7 +113,10 @@ async fn create_risk(
         Ok(r) => Json(ApiResponse::success(r, "创建风险成功")),
         Err(e) => {
             tracing::error!("创建风险失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建风险失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建风险失败",
+            ))
         }
     }
 }
@@ -128,7 +143,7 @@ async fn update_risk(
             owner = COALESCE($13, owner),
             response_due_date = COALESCE($14, response_due_date),
             updated_at = $15
-        WHERE id = $16 RETURNING *"
+        WHERE id = $16 RETURNING *",
     )
     .bind(req.risk_name)
     .bind(req.risk_description)
@@ -151,10 +166,16 @@ async fn update_risk(
 
     match risk {
         Ok(r) => Json(ApiResponse::success(r, "更新风险成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "风险不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "风险不存在",
+        )),
         Err(e) => {
             tracing::error!("更新风险失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新风险失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新风险失败",
+            ))
         }
     }
 }
@@ -163,16 +184,21 @@ async fn get_risk_events(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<RiskEvent>>> {
-    let events = sqlx::query_as::<_, RiskEvent>("SELECT * FROM pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC")
-        .bind(id)
-        .fetch_all(&pool)
-        .await;
+    let events = sqlx::query_as::<_, RiskEvent>(
+        "SELECT * FROM pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC",
+    )
+    .bind(id)
+    .fetch_all(&pool)
+    .await;
 
     match events {
         Ok(e) => Json(ApiResponse::success(e, "获取风险事件列表成功")),
         Err(e) => {
             tracing::error!("获取风险事件失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取风险事件失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取风险事件失败",
+            ))
         }
     }
 }
@@ -184,7 +210,7 @@ async fn create_risk_event(
 ) -> Json<ApiResponse<RiskEvent>> {
     let event_id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let event = sqlx::query_as::<_, RiskEvent>(
         "INSERT INTO pm.risk_events (id, risk_id, event_type, event_description, occurred_at, reported_by, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $5) RETURNING *"
@@ -202,11 +228,17 @@ async fn create_risk_event(
         Ok(e) => Json(ApiResponse::success(e, "创建风险事件成功")),
         Err(e) => {
             tracing::error!("创建风险事件失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建风险事件失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建风险事件失败",
+            ))
         }
     }
 }
 
 fn parse_date_opt(date_str: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {
-    date_str.as_ref().and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&chrono::Utc))
+    date_str
+        .as_ref()
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|d| d.with_timezone(&chrono::Utc))
 }

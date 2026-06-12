@@ -46,7 +46,10 @@ impl ProjectService {
         self.repository.delete(id).await
     }
 
-    pub async fn batch_create_projects(&self, projects: &[CreateProjectRequest]) -> Result<Vec<Project>> {
+    pub async fn batch_create_projects(
+        &self,
+        projects: &[CreateProjectRequest],
+    ) -> Result<Vec<Project>> {
         self.repository.batch_create(projects).await
     }
 

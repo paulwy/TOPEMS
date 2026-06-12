@@ -3,7 +3,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 use uuid::Uuid;
@@ -60,9 +60,18 @@ pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
         .route("/api/v1/reports/projects/summary", get(get_project_summary))
         .route("/api/v1/reports/projects/trends", get(get_project_trends))
-        .route("/api/v1/reports/projects/types", get(get_project_type_stats))
-        .route("/api/v1/reports/projects/performance", get(get_performance_metrics))
-        .route("/api/v1/reports/projects/{id}/details", get(get_project_detail_report))
+        .route(
+            "/api/v1/reports/projects/types",
+            get(get_project_type_stats),
+        )
+        .route(
+            "/api/v1/reports/projects/performance",
+            get(get_performance_metrics),
+        )
+        .route(
+            "/api/v1/reports/projects/{id}/details",
+            get(get_project_detail_report),
+        )
 }
 
 pub async fn get_project_summary(
@@ -70,11 +79,14 @@ pub async fn get_project_summary(
     Query(query): Query<ReportQuery>,
 ) -> Json<ApiResponse<ProjectSummary>> {
     let start_date = query.start_date.clone().unwrap_or_else(|| {
-        (Utc::now() - Duration::days(30)).format("%Y-%m-%d").to_string()
+        (Utc::now() - Duration::days(30))
+            .format("%Y-%m-%d")
+            .to_string()
     });
-    let end_date = query.end_date.clone().unwrap_or_else(|| {
-        Utc::now().format("%Y-%m-%d").to_string()
-    });
+    let end_date = query
+        .end_date
+        .clone()
+        .unwrap_or_else(|| Utc::now().format("%Y-%m-%d").to_string());
 
     let result = sqlx::query(
         r#"
@@ -102,7 +114,7 @@ pub async fn get_project_summary(
                 SELECT COUNT(DISTINCT employee_id) as total_members
                 FROM rs.project_members
                 WHERE status = 'active'
-                "#
+                "#,
             )
             .fetch_one(&state.db)
             .await
@@ -115,7 +127,8 @@ pub async fn get_project_summary(
                 completed_projects: row.get("completed_projects"),
                 delayed_projects: row.get("delayed_projects"),
                 total_budget: row.get::<Option<i64>, _>("total_budget").unwrap_or(0) as f64,
-                total_actual_cost: row.get::<Option<i64>, _>("total_actual_cost").unwrap_or(0) as f64,
+                total_actual_cost: row.get::<Option<i64>, _>("total_actual_cost").unwrap_or(0)
+                    as f64,
                 avg_progress: row.get::<Option<f64>, _>("avg_progress").unwrap_or(0.0),
                 total_members: member_count,
             };
@@ -134,7 +147,9 @@ pub async fn get_project_trends(
     Query(query): Query<ReportQuery>,
 ) -> Json<ApiResponse<Vec<TrendData>>> {
     let start_date = query.start_date.clone().unwrap_or_else(|| {
-        (Utc::now() - Duration::days(90)).format("%Y-%m-%d").to_string()
+        (Utc::now() - Duration::days(90))
+            .format("%Y-%m-%d")
+            .to_string()
     });
 
     let result = sqlx::query(
@@ -150,7 +165,7 @@ pub async fn get_project_trends(
         WHERE created_at >= $1
         GROUP BY DATE_TRUNC('week', created_at)
         ORDER BY period ASC
-        "#
+        "#,
     )
     .bind(format!("{} 00:00:00", start_date))
     .fetch_all(&state.db)
@@ -161,7 +176,8 @@ pub async fn get_project_trends(
             let trends: Vec<TrendData> = rows
                 .into_iter()
                 .map(|row| TrendData {
-                    date: row.get::<Option<DateTime<Utc>>, _>("period")
+                    date: row
+                        .get::<Option<DateTime<Utc>>, _>("period")
                         .map(|p| p.format("%Y-%m-%d").to_string())
                         .unwrap_or_default(),
                     project_count: row.get("project_count"),
@@ -194,7 +210,7 @@ pub async fn get_project_type_stats(
         FROM rs.projects
         GROUP BY project_type
         ORDER BY count DESC
-        "#
+        "#,
     )
     .fetch_all(&state.db)
     .await;
@@ -230,7 +246,7 @@ pub async fn get_performance_metrics(
             SUM(CASE WHEN actual_end_date <= end_date THEN 1 ELSE 0 END) as on_time
         FROM rs.projects
         WHERE status = 'completed' AND end_date IS NOT NULL
-        "#
+        "#,
     )
     .fetch_one(&state.db)
     .await;
@@ -242,7 +258,7 @@ pub async fn get_performance_metrics(
             SUM(CASE WHEN actual_cost <= budget THEN 1 ELSE 0 END) as on_budget
         FROM rs.projects
         WHERE status = 'completed' AND budget IS NOT NULL AND actual_cost IS NOT NULL
-        "#
+        "#,
     )
     .fetch_one(&state.db)
     .await;
@@ -252,7 +268,7 @@ pub async fn get_performance_metrics(
         SELECT COALESCE(AVG(EXTRACT(DAY FROM (actual_end_date - start_date))), 0) as avg_days
         FROM rs.projects
         WHERE status = 'completed' AND start_date IS NOT NULL
-        "#
+        "#,
     )
     .fetch_one(&state.db)
     .await;
@@ -264,12 +280,17 @@ pub async fn get_performance_metrics(
             COUNT(*) as total_members
         FROM rs.project_members
         WHERE status = 'active'
-        "#
+        "#,
     )
     .fetch_one(&state.db)
     .await;
 
-    match (on_time_result, budget_result, duration_result, utilization_result) {
+    match (
+        on_time_result,
+        budget_result,
+        duration_result,
+        utilization_result,
+    ) {
         (Ok(on_time), Ok(budget), Ok(duration), Ok(utilization)) => {
             let total_on_time: i64 = on_time.get("total");
             let on_time_count: i64 = on_time.get("on_time");
@@ -291,14 +312,15 @@ pub async fn get_performance_metrics(
                 on_time_delivery_rate: on_time_rate,
                 budget_adherence_rate: budget_rate,
                 avg_completion_time_days: duration.get::<Option<f64>, _>("avg_days").unwrap_or(0.0),
-                resource_utilization_rate: utilization.get::<Option<f64>, _>("avg_allocation").unwrap_or(0.0) * 100.0,
+                resource_utilization_rate: utilization
+                    .get::<Option<f64>, _>("avg_allocation")
+                    .unwrap_or(0.0)
+                    * 100.0,
             };
 
             Json(ApiResponse::success(metrics, "获取绩效指标成功"))
         }
-        _ => {
-            Json(ApiResponse::error(500, "获取绩效指标失败"))
-        }
+        _ => Json(ApiResponse::error(500, "获取绩效指标失败")),
     }
 }
 
@@ -348,9 +370,7 @@ pub async fn get_project_detail_report(
     .await;
 
     match project {
-        Ok(Some(report)) => {
-            Json(ApiResponse::success(report, "获取项目详情报告成功"))
-        }
+        Ok(Some(report)) => Json(ApiResponse::success(report, "获取项目详情报告成功")),
         Ok(None) => Json(ApiResponse::error(404, "项目不存在")),
         Err(e) => {
             tracing::error!("获取项目详情报告失败: {}", e);

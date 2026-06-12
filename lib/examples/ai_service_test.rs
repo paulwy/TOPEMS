@@ -24,7 +24,10 @@ async fn main() -> Result<()> {
     // 聊天测试
     println!("\nChat test:");
     let response = client.chat("Say 'TOPEMS AI connected!' in Chinese").await?;
-    println!("  Response: {}", response.lines().take(3).collect::<Vec<_>>().join(" "));
+    println!(
+        "  Response: {}",
+        response.lines().take(3).collect::<Vec<_>>().join(" ")
+    );
 
     println!("\n✅ All tests passed!");
 

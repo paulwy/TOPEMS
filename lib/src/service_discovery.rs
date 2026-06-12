@@ -74,14 +74,23 @@ impl ServiceDiscoveryClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 按分类获取服务
-    pub async fn list_services_by_category(&self, category: ServiceCategory) -> Result<Vec<ServiceInfo>> {
+    pub async fn list_services_by_category(
+        &self,
+        category: ServiceCategory,
+    ) -> Result<Vec<ServiceInfo>> {
         let response = self
             .client
-            .get(format!("{}/api/v1/services?category={}", self.registry_url, serde_json::to_string(&category).unwrap_or_default()))
+            .get(format!(
+                "{}/api/v1/services?category={}",
+                self.registry_url,
+                serde_json::to_string(&category).unwrap_or_default()
+            ))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to fetch services: {}", e)))?;
@@ -91,7 +100,9 @@ impl ServiceDiscoveryClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 获取单个服务信息
@@ -108,14 +119,19 @@ impl ServiceDiscoveryClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 获取服务健康状态
     pub async fn get_service_health(&self, code: &str) -> Result<ServiceHealthStatus> {
         let response = self
             .client
-            .get(format!("{}/api/v1/services/{}/health", self.registry_url, code))
+            .get(format!(
+                "{}/api/v1/services/{}/health",
+                self.registry_url, code
+            ))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to fetch health: {}", e)))?;
@@ -125,25 +141,36 @@ impl ServiceDiscoveryClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 
     /// 批量获取服务健康状态
-    pub async fn batch_get_health(&self, codes: &[String]) -> Result<HashMap<String, ServiceHealthStatus>> {
+    pub async fn batch_get_health(
+        &self,
+        codes: &[String],
+    ) -> Result<HashMap<String, ServiceHealthStatus>> {
         let codes_param = codes.join(",");
         let response = self
             .client
-            .get(format!("{}/api/v1/services/health/batch?codes={}", self.registry_url, codes_param))
+            .get(format!(
+                "{}/api/v1/services/health/batch?codes={}",
+                self.registry_url, codes_param
+            ))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to fetch health: {}", e)))?;
 
-        let api_response: crate::response::ApiResponse<HashMap<String, ServiceHealthStatus>> = response
-            .json()
-            .await
-            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: crate::response::ApiResponse<HashMap<String, ServiceHealthStatus>> =
+            response
+                .json()
+                .await
+                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
-        api_response.data.ok_or_else(|| TopemsError::Internal(api_response.message))
+        api_response
+            .data
+            .ok_or_else(|| TopemsError::Internal(api_response.message))
     }
 }
 
@@ -316,18 +343,23 @@ impl PortalServiceAggregator {
         path: &str,
         method: &str,
     ) -> Result<String> {
-        let base_url = self.get_service_url(service_code).await
+        let base_url = self
+            .get_service_url(service_code)
+            .await
             .ok_or_else(|| TopemsError::Internal(format!("Service {} not found", service_code)))?;
 
         let url = format!("{}{}", base_url, path);
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .request(method.parse().unwrap_or(reqwest::Method::GET), &url)
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Request failed: {}", e)))?;
 
-        let body = response.text().await
+        let body = response
+            .text()
+            .await
             .map_err(|e| TopemsError::Internal(format!("Failed to read response: {}", e)))?;
 
         Ok(body)

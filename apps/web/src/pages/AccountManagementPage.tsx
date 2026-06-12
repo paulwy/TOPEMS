@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   Plus,
   Edit,
@@ -267,7 +267,9 @@ export default function AccountManagementPage() {
       accessorKey: "type",
       cell: ({ row }) => {
         const type = row.getValue<string>("type");
-        const config = ACCOUNT_TYPE_CONFIG[type as keyof typeof ACCOUNT_TYPE_CONFIG] || {
+        const config = ACCOUNT_TYPE_CONFIG[
+          type as keyof typeof ACCOUNT_TYPE_CONFIG
+        ] || {
           label: type,
           color: "bg-gray-100 text-gray-800",
         };
@@ -280,7 +282,9 @@ export default function AccountManagementPage() {
       accessorKey: "balance_direction",
       cell: ({ row }) => {
         const balanceDirection = row.getValue<string>("balance_direction");
-        const config = BALANCE_DIRECTION_CONFIG[balanceDirection as keyof typeof BALANCE_DIRECTION_CONFIG] || {
+        const config = BALANCE_DIRECTION_CONFIG[
+          balanceDirection as keyof typeof BALANCE_DIRECTION_CONFIG
+        ] || {
           label: balanceDirection,
           color: "bg-gray-100 text-gray-800",
         };
@@ -838,7 +842,10 @@ function AccountForm({
             <Select
               value={formData.balance_direction}
               onValueChange={(value) =>
-                setFormData({ ...formData, balance_direction: value as BalanceDirection })
+                setFormData({
+                  ...formData,
+                  balance_direction: value as BalanceDirection,
+                })
               }
             >
               <SelectTrigger>

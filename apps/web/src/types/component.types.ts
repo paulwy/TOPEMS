@@ -1,4 +1,3 @@
-import type { ColumnDef } from "@tanstack/react-table";
 import type { AxiosInstance } from "axios";
 
 export type FieldType =

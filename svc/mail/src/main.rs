@@ -3,27 +3,22 @@ mod models;
 mod services;
 
 use anyhow::Result;
-use axum::{
-    extract::FromRef,
-    routing::get,
-    Json,
-    Router,
-};
+use axum::{extract::FromRef, routing::get, Json, Router};
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{default_registry, Gauge};
 use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
-use axum_prometheus::PrometheusMetricLayer;
-use prometheus::{default_registry, Gauge};
 
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer,
-    ServiceHealth, HealthStatus, DependencyHealth,
-    SystemMetrics, check_http_health, init_logging, create_api_info_router,
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
+    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
 };
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct AppState {
     pool: sqlx::PgPool,
     auth_state: AuthState,
@@ -79,8 +74,11 @@ async fn main() -> Result<()> {
     let custom_gauge = Gauge::new(
         "topems_mail_custom_metric",
         "This is a custom metric for TOPEMS-Mail",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -88,11 +86,22 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
-        .merge(api::create_routes(pool.clone(), app_state.auth_state.clone(), metrics.clone(), start_time).await?)
+        .merge(
+            api::create_routes(
+                pool.clone(),
+                app_state.auth_state.clone(),
+                metrics.clone(),
+                start_time,
+            )
+            .await?,
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -105,7 +114,7 @@ async fn main() -> Result<()> {
         .layer(cors)
         .layer(prometheus_layer);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8054".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8051".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-Mail 邮件服务启动中...");
@@ -203,7 +212,7 @@ async fn get_metrics(
         request_count: state.metrics.get_request_count(),
         error_count: state.metrics.get_error_count(),
         active_connections: state.metrics.get_active_connections(),
-        database_pool_size: state.pool.size() as u32,
+        database_pool_size: state.pool.size(),
         database_pool_idle: state.pool.num_idle(),
     };
 
@@ -211,10 +220,7 @@ async fn get_metrics(
 }
 
 async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -232,8 +238,8 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {

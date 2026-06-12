@@ -158,8 +158,29 @@ export const useNotificationWebSocket = ({
 
     try {
       const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const notificationServicePath = config.services.notification;
-      const wsUrl = `${wsProtocol}://${window.location.host}${notificationServicePath}/ws/notifications`;
+      const notificationServiceUrl = config.services.notification;
+
+      // 解析服务 URL，提取主机和端口
+      let wsHost: string;
+      let wsPath = "/ws/notifications";
+
+      try {
+        const url = new URL(notificationServiceUrl);
+        // 从服务 URL 获取主机（包含端口）
+        wsHost = url.host;
+        // 如果服务 URL 有路径部分，保留路径
+        if (url.pathname && url.pathname !== "/") {
+          wsPath = `${url.pathname}${wsPath}`;
+        }
+      } catch {
+        // 如果解析失败，回退到当前主机
+        wsHost = window.location.host;
+        logger.warn(
+          "Failed to parse notification service URL, falling back to current host",
+        );
+      }
+
+      const wsUrl = `${wsProtocol}://${wsHost}${wsPath}`;
 
       logger.info("Attempting to connect to notification service:", wsUrl);
 

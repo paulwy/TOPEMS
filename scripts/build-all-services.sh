@@ -24,42 +24,49 @@ log_step() { echo -e "${BLUE}[STEP]${NC} $1"; }
 
 # ==================== 服务列表 ====================
 
-# 平台核心服务
+# 核心平台服务
 PLATFORM_SERVICES=(
-    "services/topems-iam/backend:iam-service"
-    "services/topems-doc/backend:doc-service"
-    "services/topems-flow/backend:flow-service"
+    "svc/iam:iam-service"
+    "svc/doc:doc-service"
+    "svc/flow:flow-service"
 )
 
 # 业务服务
 BUSINESS_SERVICES=(
-    "services/topems-pm/backend:pm-service"
-    "services/notification-service:notification-service"
-    "services/topems-integration/backend:integration-service"
-    "services/topems-portal/backend:portal-service"
-    "services/topems-erp/backend:erp-service"
-    "services/topems-hrm/backend:hrm-service"
-    "services/topems-crm/backend:crm-service"
-    "services/topems-ai/backend:ai-service"
-    "services/topems-rs/backend:rs-service"
-    "services/topems-lims/backend:lims-service"
-    "services/topems-pdm/backend:pdm-service"
-    "services/topems-mes/backend:mes-service"
-    "services/topems-qms/backend:qms-service"
-    "services/topems-ehs/backend:ehs-service"
-    "services/topems-scm/backend:scm-service"
-    "services/topems-srm/backend:srm-service"
-    "services/topems-wms/backend:wms-service"
-    "services/topems-gis/backend:gis-service"
-    "services/topems-im/backend:im-service"
-    "services/topems-bi/backend:bi-service"
-    "services/report-service:report-service"
-    "services/topems-mail/backend:mail-service"
-    "services/topems-mobile/backend:mobile-service"
+    "svc/iam:iam-service"
+    "svc/doc:doc-service"
+    "svc/flow:flow-service"
+    "svc/pm:pm-service"
+    "svc/notification:notification-service"
+    "svc/integration:integration-service"
+    "svc/portal:portal-service"
+    "svc/erp:erp-service"
+    "svc/hrm:hrm-service"
+    "svc/crm:crm-service"
+    "svc/ai:ai-service"
+    "svc/rs:rs-service"
+    "svc/lims:lims-service"
+    "svc/pdm:pdm-service"
+    "svc/mes:mes-service"
+    "svc/qms:qms-service"
+    "svc/ehs:ehs-service"
+    "svc/scm:scm-service"
+    "svc/srm:srm-service"
+    "svc/wms:wms-service"
+    "svc/gis:gis-service"
+    "svc/im:im-service"
+    "svc/bi:bi-service"
+    "svc/report:report-service"
+    "svc/mail:mail-service"
+    "svc/mobile:mobile-service"
+    "svc/file:file-service"
 )
 
 # 前端
-FRONTEND="frontend:frontend"
+FRONTEND="apps/web:frontend"
+
+# 共享库
+SHARED_LIB="lib:shared-lib"
 
 # ==================== 构建函数 ====================
 
@@ -232,7 +239,12 @@ case "${1:-build}" in
     list)
         log_step "📋 所有服务列表"
         echo ""
-        echo "平台服务 (3个):"
+        echo "共享库 (1个):"
+        name=$(echo $SHARED_LIB | cut -d: -f2)
+        echo "  📦 ${REGISTRY}/${name}:${TAG}"
+
+        echo ""
+        echo "平台服务 (${#PLATFORM_SERVICES[@]}个):"
         for item in "${PLATFORM_SERVICES[@]}"; do
             name=$(echo $item | cut -d: -f2)
             echo "  📦 ${REGISTRY}/${name}:${TAG}"

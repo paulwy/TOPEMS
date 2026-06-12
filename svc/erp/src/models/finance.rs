@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 use super::uuid_helpers::option_uuid;
 
@@ -177,19 +177,14 @@ pub struct VoucherImportResult {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ExpenseStatus {
+    #[default]
     Pending,
     Approved,
     Reimbursed,
     Rejected,
-}
-
-impl Default for ExpenseStatus {
-    fn default() -> Self {
-        ExpenseStatus::Pending
-    }
 }
 
 impl std::fmt::Display for ExpenseStatus {
@@ -216,19 +211,14 @@ impl From<String> for ExpenseStatus {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ReceivableStatus {
+    #[default]
     Pending,
     Partial,
     Paid,
     Overdue,
-}
-
-impl Default for ReceivableStatus {
-    fn default() -> Self {
-        ReceivableStatus::Pending
-    }
 }
 
 impl std::fmt::Display for ReceivableStatus {
@@ -255,19 +245,14 @@ impl From<String> for ReceivableStatus {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PayableStatus {
+    #[default]
     Pending,
     Partial,
     Paid,
     Overdue,
-}
-
-impl Default for PayableStatus {
-    fn default() -> Self {
-        PayableStatus::Pending
-    }
 }
 
 impl std::fmt::Display for PayableStatus {

@@ -1,4 +1,3 @@
-import { AxiosResponse, AxiosError } from "axios";
 import type { ApiResponse } from "./client";
 import { handleApiError, type AppError } from "../utils/errors";
 import createLogger from "../utils/logger";
@@ -35,7 +34,7 @@ export function handleResponse<T>(
     throw error;
   }
 
-  return response.data;
+  return response.data as T;
 }
 
 /**
@@ -91,5 +90,10 @@ export async function paginatedRequest<T>(
     };
   }
 
-  return response.data;
+  return response.data as unknown as {
+    items: T[];
+    total: number;
+    page: number;
+    page_size: number;
+  };
 }

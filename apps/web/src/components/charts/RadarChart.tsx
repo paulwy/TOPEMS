@@ -14,7 +14,6 @@ import { getChartColor } from "./chartTheme";
 interface RadarChartProps {
   data: any[];
   dataKey: string;
-  nameKey: string;
   yKeys: { key: string; name: string; color?: string }[];
   height?: number;
   showLegend?: boolean;
@@ -25,7 +24,6 @@ interface RadarChartProps {
 export const RadarChart: React.FC<RadarChartProps> = ({
   data,
   dataKey = "subject",
-  nameKey,
   yKeys,
   height = 300,
   showLegend = true,

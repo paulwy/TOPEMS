@@ -187,7 +187,10 @@ const exchangeApi = {
   // 消息发送
   sendMessage: (topic: string, message: any) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.post(`/api/v1/exchange/messages/${topic}`, message),
+      c.apiClient.integration.post(
+        `/api/v1/exchange/messages/${topic}`,
+        message,
+      ),
     ),
 
   publishEvent: (eventType: string, payload: any) =>
@@ -206,7 +209,10 @@ const exchangeApi = {
 
   triggerSync: (taskId: string, params?: { full_sync?: boolean }) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.post(`/api/v1/exchange/sync/tasks/${taskId}/trigger`, params),
+      c.apiClient.integration.post(
+        `/api/v1/exchange/sync/tasks/${taskId}/trigger`,
+        params,
+      ),
     ),
 
   getSyncHistory: (params?: {
@@ -267,7 +273,10 @@ const exchangeApi = {
 
   retryDeadLetter: (messageId: string) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.post(`/api/v1/exchange/dead-letter/${messageId}/retry`, {}),
+      c.apiClient.integration.post(
+        `/api/v1/exchange/dead-letter/${messageId}/retry`,
+        {},
+      ),
     ),
 };
 
@@ -578,6 +587,4 @@ export function useEventBus() {
 // 六、导出
 // ============================================
 
-export {
-  exchangeApi,
-};
+export { exchangeApi };

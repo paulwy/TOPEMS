@@ -4,18 +4,15 @@ import {
   RefreshCw,
   Copy,
   Check,
-  AlertCircle,
-  TrendingUp,
-  Tag,
-  Users,
-  BarChart3,
   ChevronDown,
   ChevronUp,
+  TrendingUp,
+  BarChart3,
+  Users,
+  Tag,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { aiApi } from "../../api/ai";
@@ -63,17 +60,6 @@ export interface Keyword {
   score: number;
   frequency: number;
 }
-
-const analysisTypes = [
-  {
-    id: "sentiment",
-    name: "情感分析",
-    icon: <TrendingUp className="w-4 h-4" />,
-  },
-  { id: "classify", name: "文本分类", icon: <BarChart3 className="w-4 h-4" /> },
-  { id: "entities", name: "实体提取", icon: <Users className="w-4 h-4" /> },
-  { id: "keywords", name: "关键词提取", icon: <Tag className="w-4 h-4" /> },
-];
 
 const sentimentColors: Record<
   string,

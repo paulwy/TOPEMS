@@ -4,19 +4,14 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PhaseStatus {
+    #[default]
     NotStarted,
     InProgress,
     Completed,
     Delayed,
-}
-
-impl Default for PhaseStatus {
-    fn default() -> Self {
-        PhaseStatus::NotStarted
-    }
 }
 
 impl std::fmt::Display for PhaseStatus {

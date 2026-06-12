@@ -8,10 +8,10 @@ use axum::{
 use chrono::Utc;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use crate::models::{CreateProductionOrderRequest, ProductionOrder, UpdateProductionOrderRequest};
 use crate::services::permission::{check_permission, ModulePermission};
-use topems_shared::{ApiResponse, PaginationParams, api_error, auth::Claims};
-use crate::api::audit::log_audit_event;
+use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
 
 use super::ApiState;
 
@@ -32,7 +32,7 @@ async fn list_orders(
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
@@ -99,7 +99,7 @@ async fn create_order(
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let id = Uuid::new_v4();
@@ -130,14 +130,14 @@ async fn create_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "生产工单创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建生产工单失败: {}", e);
             (
                 Json(api_error(500, "生产工单创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -161,8 +161,9 @@ async fn create_order(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -173,7 +174,7 @@ async fn get_order(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, ProductionOrder>(
@@ -204,12 +205,12 @@ async fn update_order(
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, ProductionOrder>(
         "SELECT id, order_number, product_name, product_code, quantity, unit, scheduled_start_date, scheduled_end_date, actual_start_date, actual_end_date, status, priority, created_at, updated_at FROM production_orders WHERE id = $1",
     )
@@ -262,14 +263,14 @@ async fn update_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "生产工单更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新生产工单失败: {}", e);
             (
                 Json(api_error(500, "生产工单更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -292,8 +293,9 @@ async fn update_order(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -305,7 +307,7 @@ async fn delete_order(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::ProductionOrderWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query("DELETE FROM production_orders WHERE id = $1")
@@ -317,19 +319,19 @@ async fn delete_order(
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success("".to_string(), "生产工单删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(api_error(404, "生产工单不存在")),
             "error",
-            Some("生产工单不存在".to_string())
+            Some("生产工单不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除生产工单失败: {}", e);
             (
                 Json(api_error(500, "生产工单删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -352,8 +354,9 @@ async fn delete_order(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

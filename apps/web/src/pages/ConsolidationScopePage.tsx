@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   Plus,
   Search,
@@ -207,7 +207,9 @@ export default function ConsolidationScopePage() {
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Building2 className="w-4 h-4 text-gray-400" />
-          <span className="font-mono text-sm">{row.getValue("company_code")}</span>
+          <span className="font-mono text-sm">
+            {row.getValue("company_code")}
+          </span>
         </div>
       ),
     },
@@ -230,7 +232,9 @@ export default function ConsolidationScopePage() {
       accessorKey: "control_type",
       cell: ({ row }) => {
         const controlType = row.getValue<string>("control_type");
-        const config = CONTROL_TYPE_CONFIG[controlType as keyof typeof CONTROL_TYPE_CONFIG] || {
+        const config = CONTROL_TYPE_CONFIG[
+          controlType as keyof typeof CONTROL_TYPE_CONFIG
+        ] || {
           label: controlType,
           color: "bg-gray-100 text-gray-800",
         };
@@ -242,7 +246,9 @@ export default function ConsolidationScopePage() {
       header: "持股比例",
       accessorKey: "ownership_percentage",
       cell: ({ row }) => (
-        <span className="font-mono">{row.getValue("ownership_percentage")}%</span>
+        <span className="font-mono">
+          {row.getValue("ownership_percentage")}%
+        </span>
       ),
     },
     {
@@ -250,7 +256,9 @@ export default function ConsolidationScopePage() {
       header: "合并比例",
       accessorKey: "consolidation_percentage",
       cell: ({ row }) => (
-        <span className="font-mono">{row.getValue("consolidation_percentage")}%</span>
+        <span className="font-mono">
+          {row.getValue("consolidation_percentage")}%
+        </span>
       ),
     },
     {

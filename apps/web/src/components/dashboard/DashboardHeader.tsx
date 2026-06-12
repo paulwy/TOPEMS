@@ -1,5 +1,5 @@
 import React from "react";
-import { Clock, LogOut, Bell } from "lucide-react";
+import { Clock, LogOut } from "lucide-react";
 import { NotificationBell } from "../notifications";
 import { ModeToggle } from "../ModeToggle";
 import { useAuth } from "../../hooks/useAuth";

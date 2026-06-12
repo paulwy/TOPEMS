@@ -8,8 +8,8 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{CreateExperimentRequest, Experiment, UpdateExperimentRequest};
 use crate::api::audit::log_audit_event;
+use crate::models::{CreateExperimentRequest, Experiment, UpdateExperimentRequest};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -707,7 +707,7 @@ async fn advance_phase(
     )
     .bind(id)
     .bind(new_phase)
-    .bind(&req.new_status.unwrap_or("in_progress".to_string()))
+    .bind(req.new_status.unwrap_or("in_progress".to_string()))
     .bind(Utc::now())
     .fetch_one(&state.db)
     .await;

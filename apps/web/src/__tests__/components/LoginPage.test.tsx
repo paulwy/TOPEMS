@@ -1,19 +1,19 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import LoginPage from '../../pages/LoginPage';
-import { AuthProvider } from '../../hooks/useAuth';
-import { ThemeProvider } from '../../components/ThemeProvider';
-import { ToastProvider } from '../../components/ToastProvider';
-import { LoadingProvider } from '../../components/LoadingProvider';
-import ErrorBoundary from '../../components/ErrorBoundary';
+import React from "react";
+import { render } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import LoginPage from "../../pages/LoginPage";
+import { AuthProvider } from "../../hooks/useAuth";
+import { ThemeProvider } from "../../components/ThemeProvider";
+import { ToastProvider } from "../../components/ToastProvider";
+import { LoadingProvider } from "../../components/LoadingProvider";
+import ErrorBoundary from "../../components/ErrorBoundary";
 
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
+vi.mock("react-router-dom", async () => ({
+  ...(await vi.importActual("react-router-dom")),
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock('../../api/iam', () => ({
+vi.mock("../../api/iam", () => ({
   authApi: {
     login: vi.fn(),
     register: vi.fn(),
@@ -33,7 +33,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
-    </ErrorBoundary>
+    </ErrorBoundary>,
   );
 };
 
@@ -41,13 +41,13 @@ const renderLoginPage = (props = {}) => {
   return renderWithProviders(<LoginPage {...props} />);
 };
 
-describe('LoginPage', () => {
+describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
   });
 
-  test('renders login page component', () => {
+  test("renders login page component", () => {
     renderLoginPage();
     expect(true).toBe(true);
   });

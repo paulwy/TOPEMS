@@ -1,6 +1,6 @@
 use axum::{
-    extract::{State, Path, Multipart},
-    http::{StatusCode, HeaderMap},
+    extract::{Multipart, Path, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
 };
@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct MediaFile {
@@ -42,7 +42,10 @@ pub async fn get_photos(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -63,7 +66,10 @@ pub async fn get_photos(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(photos, "获取照片成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(photos, "获取照片成功")),
+    )
 }
 
 pub async fn get_audio(
@@ -74,7 +80,10 @@ pub async fn get_audio(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -95,7 +104,10 @@ pub async fn get_audio(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(audio_files, "获取音频成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(audio_files, "获取音频成功")),
+    )
 }
 
 pub async fn get_video(
@@ -106,7 +118,10 @@ pub async fn get_video(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -127,7 +142,10 @@ pub async fn get_video(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(videos, "获取视频成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(videos, "获取视频成功")),
+    )
 }
 
 pub async fn upload_media(
@@ -140,13 +158,19 @@ pub async fn upload_media(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let valid_types = ["photo", "audio", "video"];
     if !valid_types.contains(&file_type.as_str()) {
-        return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的文件类型")));
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(ApiResponse::error(400, "无效的文件类型")),
+        );
     }
 
     let mut file_name = String::new();
@@ -156,7 +180,7 @@ pub async fn upload_media(
 
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap_or("");
-        
+
         if name == "file" {
             file_name = field.file_name().unwrap_or("unknown").to_string();
             let content_type = field.content_type().unwrap_or_default().to_string();
@@ -205,7 +229,10 @@ pub async fn upload_media(
         created_at: Utc::now(),
     };
 
-    (StatusCode::CREATED, Json(ApiResponse::success(media_file, "上传成功")))
+    (
+        StatusCode::CREATED,
+        Json(ApiResponse::success(media_file, "上传成功")),
+    )
 }
 
 pub async fn delete_media(
@@ -217,23 +244,36 @@ pub async fn delete_media(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
-    let result = sqlx::query("DELETE FROM media_files WHERE id = $1 AND file_type = $2 AND uploaded_by = $3")
-        .bind(id)
-        .bind(&file_type)
-        .bind(&user_id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(
+        "DELETE FROM media_files WHERE id = $1 AND file_type = $2 AND uploaded_by = $3",
+    )
+    .bind(id)
+    .bind(&file_type)
+    .bind(&user_id)
+    .execute(&pool)
+    .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, Json(ApiResponse::success((), "删除成功"))),
-        Ok(_) => (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "文件不存在或无权删除"))),
+        Ok(r) if r.rows_affected() > 0 => {
+            (StatusCode::OK, Json(ApiResponse::success((), "删除成功")))
+        }
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "文件不存在或无权删除")),
+        ),
         Err(e) => {
             tracing::error!("删除媒体文件失败: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "删除失败")))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "删除失败")),
+            )
         }
     }
 }

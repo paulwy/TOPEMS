@@ -17,6 +17,7 @@ NC='\033[0m'
 log() { echo -e "${GREEN}[TEST]${NC} $1"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+step() { echo -e "${BLUE}[STEP]${NC} $1"; }
 
 check_dependencies() {
     step "检查测试依赖..."

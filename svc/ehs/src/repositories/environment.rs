@@ -1,8 +1,8 @@
-use sqlx::PgPool;
-use chrono::Utc;
-use uuid::Uuid;
 use crate::models::*;
 use anyhow::Result;
+use chrono::Utc;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 pub struct MonitoringPointRepository<'a> {
     pool: &'a PgPool,
@@ -101,11 +101,19 @@ impl<'a> MonitoringPointRepository<'a> {
         Ok(point)
     }
 
-    pub async fn update(&self, id: Uuid, req: UpdateMonitoringPointRequest) -> Result<MonitoringPoint> {
-        let existing = self.get(id).await?.ok_or_else(|| anyhow::anyhow!("监测点不存在"))?;
+    pub async fn update(
+        &self,
+        id: Uuid,
+        req: UpdateMonitoringPointRequest,
+    ) -> Result<MonitoringPoint> {
+        let existing = self
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("监测点不存在"))?;
         let now = Utc::now();
 
-        let parameters = req.parameters
+        let parameters = req
+            .parameters
             .map(|v| serde_json::to_value(&v).unwrap_or(existing.parameters.clone()))
             .unwrap_or(existing.parameters);
 

@@ -5,14 +5,14 @@ use axum::{
     Json, Router,
 };
 use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
+use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::User;
 use crate::api::ApiState;
+use crate::models::User;
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 
@@ -88,12 +88,11 @@ async fn login(
         }
     };
 
-    let password_hash = sqlx::query_scalar::<_, String>(
-        "SELECT password_hash FROM rs.users WHERE id = $1",
-    )
-    .bind(user.id)
-    .fetch_optional(&state.db)
-    .await;
+    let password_hash =
+        sqlx::query_scalar::<_, String>("SELECT password_hash FROM rs.users WHERE id = $1")
+            .bind(user.id)
+            .fetch_optional(&state.db)
+            .await;
 
     let password_hash = match password_hash {
         Ok(Some(h)) => h,
@@ -197,10 +196,12 @@ async fn refresh_token(
     _headers: HeaderMap,
     Json(req): Json<RefreshRequest>,
 ) -> Json<ApiResponse<TokenResponse>> {
-    let result = sqlx::query(r#"SELECT user_id FROM rs.refresh_tokens WHERE token = $1 AND expires_at > NOW()"#)
-        .bind(req.refresh_token)
-        .fetch_optional(&state.db)
-        .await;
+    let result = sqlx::query(
+        r#"SELECT user_id FROM rs.refresh_tokens WHERE token = $1 AND expires_at > NOW()"#,
+    )
+    .bind(req.refresh_token)
+    .fetch_optional(&state.db)
+    .await;
 
     let row = match result {
         Ok(Some(r)) => r,
@@ -284,10 +285,7 @@ async fn refresh_token(
         ("bearer_auth" = [])
     )
 )]
-async fn logout(
-    State(state): State<ApiState>,
-    headers: HeaderMap,
-) -> Json<ApiResponse<String>> {
+async fn logout(State(state): State<ApiState>, headers: HeaderMap) -> Json<ApiResponse<String>> {
     let auth_header = headers
         .get(header::AUTHORIZATION)
         .and_then(|h| h.to_str().ok());
@@ -324,8 +322,8 @@ async fn logout(
 
     match result {
         Ok(_) => {
-            let request_data = serde_json::json!({ "user_id": user_id }).into();
-            let response_data = serde_json::json!({ "rows_affected": 1 }).into();
+            let request_data = serde_json::json!({ "user_id": user_id });
+            let response_data = serde_json::json!({ "rows_affected": 1 });
 
             crate::api::audit::log_audit_event(
                 &state.db,

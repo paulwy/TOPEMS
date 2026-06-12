@@ -3,10 +3,10 @@
 //! 测试员工-技能向量搜索功能
 
 use anyhow::Result;
-use topems_shared::{OllamaClient, OllamaConfig};
 use redis::{AsyncCommands, Client};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use topems_shared::{OllamaClient, OllamaConfig};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct EmployeeSkill {
@@ -26,10 +26,18 @@ struct SkillMatchResult {
 }
 
 fn cosine_similarity(a: &[f32], b: &[f32]) -> f64 {
-    let dot: f64 = a.iter().zip(b.iter()).map(|(x, y)| *x as f64 * *y as f64).sum();
+    let dot: f64 = a
+        .iter()
+        .zip(b.iter())
+        .map(|(x, y)| *x as f64 * *y as f64)
+        .sum();
     let norm_a: f64 = a.iter().map(|x| (*x as f64).powi(2)).sum::<f64>().sqrt();
     let norm_b: f64 = b.iter().map(|x| (*x as f64).powi(2)).sum::<f64>().sqrt();
-    if norm_a == 0.0 || norm_b == 0.0 { 0.0 } else { dot / (norm_a * norm_b) }
+    if norm_a == 0.0 || norm_b == 0.0 {
+        0.0
+    } else {
+        dot / (norm_a * norm_b)
+    }
 }
 
 #[tokio::main]
@@ -47,31 +55,51 @@ async fn main() -> Result<()> {
         EmployeeSkill {
             id: "emp:001".to_string(),
             name: "张三".to_string(),
-            skills: vec!["Rust".to_string(), "PostgreSQL".to_string(), "系统编程".to_string()],
+            skills: vec![
+                "Rust".to_string(),
+                "PostgreSQL".to_string(),
+                "系统编程".to_string(),
+            ],
             department: "技术部".to_string(),
         },
         EmployeeSkill {
             id: "emp:002".to_string(),
             name: "李四".to_string(),
-            skills: vec!["Python".to_string(), "数据分析".to_string(), "机器学习".to_string()],
+            skills: vec![
+                "Python".to_string(),
+                "数据分析".to_string(),
+                "机器学习".to_string(),
+            ],
             department: "数据部".to_string(),
         },
         EmployeeSkill {
             id: "emp:003".to_string(),
             name: "王五".to_string(),
-            skills: vec!["Java".to_string(), "Spring".to_string(), "微服务".to_string()],
+            skills: vec![
+                "Java".to_string(),
+                "Spring".to_string(),
+                "微服务".to_string(),
+            ],
             department: "后端部".to_string(),
         },
         EmployeeSkill {
             id: "emp:004".to_string(),
             name: "赵六".to_string(),
-            skills: vec!["Rust".to_string(), "WebAssembly".to_string(), "前端".to_string()],
+            skills: vec![
+                "Rust".to_string(),
+                "WebAssembly".to_string(),
+                "前端".to_string(),
+            ],
             department: "前端部".to_string(),
         },
         EmployeeSkill {
             id: "emp:005".to_string(),
             name: "钱七".to_string(),
-            skills: vec!["Go".to_string(), "Kubernetes".to_string(), "DevOps".to_string()],
+            skills: vec![
+                "Go".to_string(),
+                "Kubernetes".to_string(),
+                "DevOps".to_string(),
+            ],
             department: "运维部".to_string(),
         },
     ];
@@ -98,9 +126,7 @@ async fn main() -> Result<()> {
         let embedding = ollama.embed(&skills_text).await?;
 
         // 转换为字节存储
-        let vector_bytes: Vec<u8> = embedding.iter()
-            .flat_map(|f| f.to_le_bytes())
-            .collect();
+        let vector_bytes: Vec<u8> = embedding.iter().flat_map(|f| f.to_le_bytes()).collect();
 
         // 存储到 Redis
         let key = format!("vec:employee:{}", emp.id);
@@ -108,7 +134,8 @@ async fn main() -> Result<()> {
             "name": emp.name,
             "department": emp.department,
             "skills": emp.skills
-        }).to_string();
+        })
+        .to_string();
 
         let _: () = redis::pipe()
             .hset(&key, "embedding", vector_bytes)
@@ -121,7 +148,7 @@ async fn main() -> Result<()> {
 
     // 技能搜索测试
     println!("\n🔍 技能搜索测试:");
-    let search_skills = vec!["Rust", "系统编程"];
+    let search_skills = ["Rust", "系统编程"];
 
     // 生成搜索向量
     let search_text = format!("技能需求: {}", search_skills.join(", "));
@@ -147,8 +174,14 @@ async fn main() -> Result<()> {
                 let similarity = cosine_similarity(&query_vector, &stored_vector);
 
                 // 找出匹配的技能
-                let matched: Vec<_> = emp.skills.iter()
-                    .filter(|s| search_skills.iter().any(|q| s.to_lowercase().contains(&q.to_lowercase())))
+                let matched: Vec<_> = emp
+                    .skills
+                    .iter()
+                    .filter(|s| {
+                        search_skills
+                            .iter()
+                            .any(|q| s.to_lowercase().contains(&q.to_lowercase()))
+                    })
                     .cloned()
                     .collect();
 
@@ -170,7 +203,12 @@ async fn main() -> Result<()> {
 
     println!("\n📊 匹配结果:");
     for (i, result) in results.iter().enumerate() {
-        println!("  {}. {} ({})", i + 1, result.employee_name, result.department);
+        println!(
+            "  {}. {} ({})",
+            i + 1,
+            result.employee_name,
+            result.department
+        );
         println!("     相似度: {:.4}", result.similarity);
         println!("     匹配技能: {:?}", result.matched_skills);
     }

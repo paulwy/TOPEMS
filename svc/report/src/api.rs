@@ -2,14 +2,14 @@ use axum::{
     extract::{Path, Query, State},
     Json,
 };
+use chrono::Utc;
 use serde::Deserialize;
 use sqlx::PgPool;
 use uuid::Uuid;
-use chrono::Utc;
 
-use topems_shared::ApiResponse;
 use crate::models::*;
 use crate::services::*;
+use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationQuery {
@@ -150,14 +150,12 @@ pub async fn create_report(
 
     // 如果指定了模板，获取模板的列定义
     let columns: Option<serde_json::Value> = if let Some(tid) = template_id {
-        sqlx::query_scalar(
-            "SELECT columns FROM report.templates WHERE id = $1",
-        )
-        .bind(tid)
-        .fetch_optional(&pool)
-        .await
-        .ok()
-        .flatten()
+        sqlx::query_scalar("SELECT columns FROM report.templates WHERE id = $1")
+            .bind(tid)
+            .fetch_optional(&pool)
+            .await
+            .ok()
+            .flatten()
     } else {
         None
     };
@@ -221,9 +219,7 @@ pub async fn delete_report(
         .await;
 
     match result {
-        Ok(res) if res.rows_affected() > 0 => {
-            Json(ApiResponse::success((), "删除报表成功"))
-        }
+        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success((), "删除报表成功")),
         Ok(_) => Json(ApiResponse::error(404, "报表不存在")),
         Err(e) => Json(ApiResponse::error(500, &format!("删除报表失败: {}", e))),
     }
@@ -245,8 +241,8 @@ pub async fn export_report(
 
     match report {
         Ok(Some(report)) => {
-            let config: ReportConfig = serde_json::from_value(report.config.clone())
-                .unwrap_or(ReportConfig {
+            let config: ReportConfig =
+                serde_json::from_value(report.config.clone()).unwrap_or(ReportConfig {
                     report_type: "unknown".to_string(),
                     format: "excel".to_string(),
                     title: "报表".to_string(),
@@ -257,7 +253,8 @@ pub async fn export_report(
                 });
 
             let filename = req.custom_filename.unwrap_or_else(|| {
-                format!("{}_{}_{}.{}",
+                format!(
+                    "{}_{}_{}.{}",
                     config.report_type,
                     Utc::now().format("%Y%m%d%H%M%S"),
                     id,
@@ -379,9 +376,7 @@ pub async fn delete_template(
         .await;
 
     match result {
-        Ok(res) if res.rows_affected() > 0 => {
-            Json(ApiResponse::success((), "删除模板成功"))
-        }
+        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success((), "删除模板成功")),
         Ok(_) => Json(ApiResponse::error(404, "模板不存在")),
         Err(e) => Json(ApiResponse::error(500, &format!("删除模板失败: {}", e))),
     }
@@ -426,7 +421,12 @@ pub async fn export_stats_report(
     Json(req): Json<ExportStatsRequest>,
 ) -> Json<ApiResponse<ExportResult>> {
     let format = req.format.unwrap_or_else(|| "excel".to_string());
-    let filename = format!("{}_{}.{}", report_type, Utc::now().format("%Y%m%d%H%M%S"), format);
+    let filename = format!(
+        "{}_{}.{}",
+        report_type,
+        Utc::now().format("%Y%m%d%H%M%S"),
+        format
+    );
     let download_url = format!("/api/v1/downloads/{}", filename);
 
     let result = ExportResult {

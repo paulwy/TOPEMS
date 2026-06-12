@@ -1,15 +1,4 @@
-import React, { useRef, useEffect } from "react";
-import {
-  CheckSquare,
-  Square,
-  Trash2,
-  Download,
-  Upload,
-  RefreshCw,
-  ArrowRight,
-  MoreHorizontal,
-  Check,
-} from "lucide-react";
+import { useRef, useEffect } from "react";
 
 export interface BatchAction {
   id: string;
@@ -25,10 +14,8 @@ interface BatchOperationsProps {
   totalItems: number;
   onSelectAll: () => void;
   onDeselectAll: () => void;
-  onToggleSelect: (id: string) => void;
   actions: BatchAction[];
   onAction: (actionId: string) => void;
-  itemIdKey?: string;
 }
 
 const BatchOperations: React.FC<BatchOperationsProps> = ({
@@ -37,10 +24,8 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
   totalItems,
   onSelectAll,
   onDeselectAll,
-  onToggleSelect,
   actions,
   onAction,
-  itemIdKey = "id",
 }) => {
   const hasSelection = selectedIds.length > 0;
   const isIndeterminate = !allItemsSelected && hasSelection;

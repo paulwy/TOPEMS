@@ -13,7 +13,7 @@ use crate::api::audit::log_audit_event;
 use crate::models::{CreateQualityStandardRequest, QualityStandard, UpdateQualityStandardRequest};
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{ApiResponse, api_error};
+use topems_shared::{api_error, ApiResponse};
 
 use super::ApiState;
 
@@ -27,10 +27,15 @@ pub struct QualityStandardQueryParams {
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/standards", get(list_standards).post(create_standard))
+        .route(
+            "/api/v1/standards",
+            get(list_standards).post(create_standard),
+        )
         .route(
             "/api/v1/standards/{id}",
-            get(get_standard).put(update_standard).delete(delete_standard),
+            get(get_standard)
+                .put(update_standard)
+                .delete(delete_standard),
         );
 
     Ok(app)
@@ -42,7 +47,7 @@ async fn list_standards(
     Query(params): Query<QualityStandardQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::QualityRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
@@ -97,7 +102,10 @@ async fn list_standards(
         }
         Err(e) => {
             tracing::error!("获取质量标准列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取质量标准列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取质量标准列表失败",
+            ))
         }
     }
 }
@@ -197,7 +205,10 @@ async fn get_standard(
         Ok(None) => Json(ApiResponse::<QualityStandard>::error(404, "质量标准不存在")),
         Err(e) => {
             tracing::error!("获取质量标准失败: {}", e);
-            Json(ApiResponse::<QualityStandard>::error(500, "获取质量标准失败"))
+            Json(ApiResponse::<QualityStandard>::error(
+                500,
+                "获取质量标准失败",
+            ))
         }
     }
 }
@@ -217,7 +228,12 @@ async fn update_standard(
     let existing = match existing {
         Ok(Some(s)) => s,
         Ok(None) => return Json(ApiResponse::<QualityStandard>::error(404, "质量标准不存在")),
-        Err(e) => return Json(ApiResponse::<QualityStandard>::error(500, &format!("查询质量标准失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::<QualityStandard>::error(
+                500,
+                &format!("查询质量标准失败: {}", e),
+            ))
+        }
     };
 
     let name = req.name.unwrap_or(existing.name);
@@ -249,7 +265,10 @@ async fn update_standard(
         Ok(standard) => Json(ApiResponse::success(standard, "质量标准更新成功")),
         Err(e) => {
             tracing::error!("更新质量标准失败: {}", e);
-            Json(ApiResponse::<QualityStandard>::error(500, "质量标准更新失败"))
+            Json(ApiResponse::<QualityStandard>::error(
+                500,
+                "质量标准更新失败",
+            ))
         }
     }
 }

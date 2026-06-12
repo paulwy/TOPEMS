@@ -2,8 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     routing::{get, post, put},
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
@@ -11,26 +10,41 @@ use topems_shared::ApiResponse;
 use uuid::Uuid;
 
 use crate::models::acceptance::{
-    AcceptancePlan,
-    AcceptanceRecord,
-    AcceptanceItem,
-    CreateAcceptancePlanRequest,
-    CreateAcceptanceRecordRequest,
-    CreateAcceptanceItemRequest,
-    UpdateAcceptancePlanRequest,
-    UpdateAcceptanceRecordRequest,
-    UpdateAcceptanceItemRequest,
+    AcceptanceItem, AcceptancePlan, AcceptanceRecord, CreateAcceptanceItemRequest,
+    CreateAcceptancePlanRequest, CreateAcceptanceRecordRequest, UpdateAcceptanceItemRequest,
+    UpdateAcceptancePlanRequest, UpdateAcceptanceRecordRequest,
 };
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/acceptance-plans", get(get_project_plans).post(create_plan))
-        .route("/api/v1/acceptance-plans/{id}", get(get_plan).put(update_plan))
-        .route("/api/v1/acceptance-plans/{plan_id}/items", get(get_plan_items).post(create_plan_item))
-        .route("/api/v1/acceptance-items/{id}", put(update_plan_item).delete(delete_plan_item))
-        .route("/api/v1/projects/{project_id}/acceptance-records", get(get_project_records))
-        .route("/api/v1/acceptance-records/{id}", get(get_record).put(update_record))
-        .route("/api/v1/acceptance-plans/{plan_id}/records", post(create_record))
+        .route(
+            "/api/v1/projects/{project_id}/acceptance-plans",
+            get(get_project_plans).post(create_plan),
+        )
+        .route(
+            "/api/v1/acceptance-plans/{id}",
+            get(get_plan).put(update_plan),
+        )
+        .route(
+            "/api/v1/acceptance-plans/{plan_id}/items",
+            get(get_plan_items).post(create_plan_item),
+        )
+        .route(
+            "/api/v1/acceptance-items/{id}",
+            put(update_plan_item).delete(delete_plan_item),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/acceptance-records",
+            get(get_project_records),
+        )
+        .route(
+            "/api/v1/acceptance-records/{id}",
+            get(get_record).put(update_record),
+        )
+        .route(
+            "/api/v1/acceptance-plans/{plan_id}/records",
+            post(create_record),
+        )
         .with_state(pool)
 }
 
@@ -38,16 +52,21 @@ async fn get_project_plans(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptancePlan>>> {
-    let plans = sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM pm.acceptance_plans WHERE project_id = $1 ORDER BY expected_date")
-        .bind(project_id)
-        .fetch_all(&pool)
-        .await;
+    let plans = sqlx::query_as::<_, AcceptancePlan>(
+        "SELECT * FROM pm.acceptance_plans WHERE project_id = $1 ORDER BY expected_date",
+    )
+    .bind(project_id)
+    .fetch_all(&pool)
+    .await;
 
     match plans {
         Ok(p) => Json(ApiResponse::success(p, "获取验收计划列表成功")),
         Err(e) => {
             tracing::error!("获取验收计划失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取验收计划失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取验收计划失败",
+            ))
         }
     }
 }
@@ -56,17 +75,24 @@ async fn get_plan(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptancePlan>> {
-    let plan = sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM pm.acceptance_plans WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let plan =
+        sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM pm.acceptance_plans WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await;
 
     match plan {
         Ok(p) => Json(ApiResponse::success(p, "获取验收计划详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "验收计划不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "验收计划不存在",
+        )),
         Err(e) => {
             tracing::error!("获取验收计划失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取验收计划失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取验收计划失败",
+            ))
         }
     }
 }
@@ -78,7 +104,7 @@ async fn create_plan(
 ) -> Json<ApiResponse<AcceptancePlan>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let plan = sqlx::query_as::<_, AcceptancePlan>(
         "INSERT INTO pm.acceptance_plans (id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13, $14) RETURNING *"
@@ -104,7 +130,10 @@ async fn create_plan(
         Ok(p) => Json(ApiResponse::success(p, "创建验收计划成功")),
         Err(e) => {
             tracing::error!("创建验收计划失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建验收计划失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建验收计划失败",
+            ))
         }
     }
 }
@@ -124,7 +153,7 @@ async fn update_plan(
             participants = COALESCE($6, participants),
             documents_required = COALESCE($7, documents_required),
             updated_at = $8
-        WHERE id = $9 RETURNING *"
+        WHERE id = $9 RETURNING *",
     )
     .bind(req.plan_name)
     .bind(req.acceptance_type)
@@ -140,10 +169,16 @@ async fn update_plan(
 
     match plan {
         Ok(p) => Json(ApiResponse::success(p, "更新验收计划成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "验收计划不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "验收计划不存在",
+        )),
         Err(e) => {
             tracing::error!("更新验收计划失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新验收计划失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新验收计划失败",
+            ))
         }
     }
 }
@@ -152,16 +187,21 @@ async fn get_plan_items(
     State(pool): State<PgPool>,
     Path(plan_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptanceItem>>> {
-    let items = sqlx::query_as::<_, AcceptanceItem>("SELECT * FROM pm.acceptance_items WHERE plan_id = $1 ORDER BY created_at")
-        .bind(plan_id)
-        .fetch_all(&pool)
-        .await;
+    let items = sqlx::query_as::<_, AcceptanceItem>(
+        "SELECT * FROM pm.acceptance_items WHERE plan_id = $1 ORDER BY created_at",
+    )
+    .bind(plan_id)
+    .fetch_all(&pool)
+    .await;
 
     match items {
         Ok(i) => Json(ApiResponse::success(i, "获取验收项列表成功")),
         Err(e) => {
             tracing::error!("获取验收项失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取验收项失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取验收项失败",
+            ))
         }
     }
 }
@@ -173,7 +213,7 @@ async fn create_plan_item(
 ) -> Json<ApiResponse<AcceptanceItem>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let item = sqlx::query_as::<_, AcceptanceItem>(
         "INSERT INTO pm.acceptance_items (id, plan_id, item_code, item_name, item_description, required_standard, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
@@ -193,7 +233,10 @@ async fn create_plan_item(
         Ok(i) => Json(ApiResponse::success(i, "创建验收项成功")),
         Err(e) => {
             tracing::error!("创建验收项失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建验收项失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建验收项失败",
+            ))
         }
     }
 }
@@ -209,7 +252,7 @@ async fn update_plan_item(
             is_passed = COALESCE($2, is_passed),
             comments = COALESCE($3, comments),
             updated_at = $4
-        WHERE id = $5 RETURNING *"
+        WHERE id = $5 RETURNING *",
     )
     .bind(req.actual_result)
     .bind(req.is_passed)
@@ -221,10 +264,16 @@ async fn update_plan_item(
 
     match item {
         Ok(i) => Json(ApiResponse::success(i, "更新验收项成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "验收项不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "验收项不存在",
+        )),
         Err(e) => {
             tracing::error!("更新验收项失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新验收项失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新验收项失败",
+            ))
         }
     }
 }
@@ -240,10 +289,16 @@ async fn delete_plan_item(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除验收项成功")),
-        Ok(_) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "验收项不存在")),
+        Ok(_) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "验收项不存在",
+        )),
         Err(e) => {
             tracing::error!("删除验收项失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "删除验收项失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "删除验收项失败",
+            ))
         }
     }
 }
@@ -252,16 +307,21 @@ async fn get_project_records(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptanceRecord>>> {
-    let records = sqlx::query_as::<_, AcceptanceRecord>("SELECT * FROM pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC")
-        .bind(project_id)
-        .fetch_all(&pool)
-        .await;
+    let records = sqlx::query_as::<_, AcceptanceRecord>(
+        "SELECT * FROM pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC",
+    )
+    .bind(project_id)
+    .fetch_all(&pool)
+    .await;
 
     match records {
         Ok(r) => Json(ApiResponse::success(r, "获取验收记录列表成功")),
         Err(e) => {
             tracing::error!("获取验收记录失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取验收记录失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取验收记录失败",
+            ))
         }
     }
 }
@@ -270,17 +330,24 @@ async fn get_record(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
-    let record = sqlx::query_as::<_, AcceptanceRecord>("SELECT * FROM pm.acceptance_records WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let record =
+        sqlx::query_as::<_, AcceptanceRecord>("SELECT * FROM pm.acceptance_records WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await;
 
     match record {
         Ok(r) => Json(ApiResponse::success(r, "获取验收记录详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "验收记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "验收记录不存在",
+        )),
         Err(e) => {
             tracing::error!("获取验收记录失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取验收记录失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取验收记录失败",
+            ))
         }
     }
 }
@@ -290,26 +357,33 @@ async fn create_record(
     Path(plan_id): Path<Uuid>,
     Json(req): Json<CreateAcceptanceRecordRequest>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
-    let plan = sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM pm.acceptance_plans WHERE id = $1")
-        .bind(plan_id)
-        .fetch_one(&pool)
-        .await;
+    let plan =
+        sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM pm.acceptance_plans WHERE id = $1")
+            .bind(plan_id)
+            .fetch_one(&pool)
+            .await;
 
     let plan = match plan {
         Ok(p) => p,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "验收计划不存在"));
+            return Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "验收计划不存在",
+            ));
         }
         Err(e) => {
             tracing::error!("获取验收计划失败: {}", e);
-            return Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取验收计划失败"));
+            return Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取验收计划失败",
+            ));
         }
     };
 
     let id = Uuid::new_v4();
     let now = Utc::now();
     let acceptance_date = parse_date_opt(&Some(req.acceptance_date.clone())).unwrap_or(now);
-    
+
     let record = sqlx::query_as::<_, AcceptanceRecord>(
         "INSERT INTO pm.acceptance_records (id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *"
@@ -335,7 +409,10 @@ async fn create_record(
         Ok(r) => Json(ApiResponse::success(r, "创建验收记录成功")),
         Err(e) => {
             tracing::error!("创建验收记录失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建验收记录失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建验收记录失败",
+            ))
         }
     }
 }
@@ -354,7 +431,7 @@ async fn update_record(
             findings = COALESCE($5, findings),
             recommendations = COALESCE($6, recommendations),
             updated_at = $7
-        WHERE id = $8 RETURNING *"
+        WHERE id = $8 RETURNING *",
     )
     .bind(req.status)
     .bind(req.conclusion)
@@ -369,14 +446,23 @@ async fn update_record(
 
     match record {
         Ok(r) => Json(ApiResponse::success(r, "更新验收记录成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "验收记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "验收记录不存在",
+        )),
         Err(e) => {
             tracing::error!("更新验收记录失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新验收记录失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新验收记录失败",
+            ))
         }
     }
 }
 
 fn parse_date_opt(date_str: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {
-    date_str.as_ref().and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&chrono::Utc))
+    date_str
+        .as_ref()
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|d| d.with_timezone(&chrono::Utc))
 }

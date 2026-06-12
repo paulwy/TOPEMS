@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 // 凭证自动生成服务
 // 根据业务事件自动生成财务凭证
 
@@ -10,14 +12,14 @@ use uuid::Uuid;
 // 凭证来源类型
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum VoucherSourceType {
-    Expense,        // 费用报销
-    Payment,        // 付款单
-    Invoice,        // 发票
-    Payroll,        // 工资
-    Asset,         // 固定资产
-    Inventory,      // 库存
-    Contract,      // 合同结算
-    Manual,        // 手动生成
+    Expense,   // 费用报销
+    Payment,   // 付款单
+    Invoice,   // 发票
+    Payroll,   // 工资
+    Asset,     // 固定资产
+    Inventory, // 库存
+    Contract,  // 合同结算
+    Manual,    // 手动生成
 }
 
 // 凭证生成规则
@@ -79,7 +81,7 @@ pub struct InvoiceEventData {
     pub customer_name: String,
     pub amount: Decimal,
     pub tax_amount: Decimal,
-    pub is_output: bool,  // true: 销项发票, false: 进项发票
+    pub is_output: bool, // true: 销项发票, false: 进项发票
 }
 
 // 工资事件数据
@@ -182,16 +184,20 @@ impl ExpenseVoucherGenerator {
         ExpenseVoucherGenerator
     }
 
-    pub fn generate_voucher(&self, data: ExpenseEventData, _req: AutoGenerateVoucherRequest) -> AutoGenerateVoucherResponse {
+    pub fn generate_voucher(
+        &self,
+        data: ExpenseEventData,
+        _req: AutoGenerateVoucherRequest,
+    ) -> AutoGenerateVoucherResponse {
         // 根据费用类型确定会计科目
         let (debit_subject_code, credit_subject_code) = match data.expense_type.as_str() {
-            "travel" => ("660201", "100201"),      // 差旅费 -> 银行存款
-            "office" => ("660202", "100201"),      // 办公费 -> 银行存款
-            "entertainment" => ("660203", "100201"), // 业务招待费 -> 银行存款
-            "training" => ("660204", "100201"),    // 培训费 -> 银行存款
-            "communication" => ("660205", "100201"), // 通讯费 -> 银行存款
+            "travel" => ("660201", "100201"),         // 差旅费 -> 银行存款
+            "office" => ("660202", "100201"),         // 办公费 -> 银行存款
+            "entertainment" => ("660203", "100201"),  // 业务招待费 -> 银行存款
+            "training" => ("660204", "100201"),       // 培训费 -> 银行存款
+            "communication" => ("660205", "100201"),  // 通讯费 -> 银行存款
             "transportation" => ("660206", "100201"), // 交通费 -> 银行存款
-            "other" => ("660299", "100201"),      // 其他费用 -> 银行存款
+            "other" => ("660299", "100201"),          // 其他费用 -> 银行存款
             _ => ("660299", "100201"),
         };
 
@@ -224,7 +230,11 @@ impl ExpenseVoucherGenerator {
         AutoGenerateVoucherResponse {
             success: true,
             voucher_id: Some(Uuid::new_v4()),
-            voucher_number: Some(format!("VD{}{:04}", chrono::Utc::now().format("%Y%m%d"), rand::random::<u16>() % 10000)),
+            voucher_number: Some(format!(
+                "VD{}{:04}",
+                chrono::Utc::now().format("%Y%m%d"),
+                rand::random::<u16>() % 10000
+            )),
             message: "凭证生成成功".to_string(),
             error_details: None,
             entries,
@@ -246,17 +256,21 @@ impl PaymentVoucherGenerator {
         PaymentVoucherGenerator
     }
 
-    pub fn generate_voucher(&self, data: PaymentEventData, _req: AutoGenerateVoucherRequest) -> AutoGenerateVoucherResponse {
+    pub fn generate_voucher(
+        &self,
+        data: PaymentEventData,
+        _req: AutoGenerateVoucherRequest,
+    ) -> AutoGenerateVoucherResponse {
         // 根据付款类型确定会计科目
         let debit_subject_code = match data.payment_type.as_str() {
-            "supplier" => "200201",     // 应付账款
-            "tax" => "222101",          // 应交税费
-            "salary" => "660101",       // 工资
-            "expense" => "660299",      // 其他应付款
+            "supplier" => "200201", // 应付账款
+            "tax" => "222101",      // 应交税费
+            "salary" => "660101",   // 工资
+            "expense" => "660299",  // 其他应付款
             _ => "660299",
         };
 
-        let credit_subject_code = "100201";  // 银行存款
+        let credit_subject_code = "100201"; // 银行存款
         let summary = format!("付款-{}: {}", data.payee_name, data.description);
 
         // 生成凭证条目
@@ -286,7 +300,11 @@ impl PaymentVoucherGenerator {
         AutoGenerateVoucherResponse {
             success: true,
             voucher_id: Some(Uuid::new_v4()),
-            voucher_number: Some(format!("VD{}{:04}", chrono::Utc::now().format("%Y%m%d"), rand::random::<u16>() % 10000)),
+            voucher_number: Some(format!(
+                "VD{}{:04}",
+                chrono::Utc::now().format("%Y%m%d"),
+                rand::random::<u16>() % 10000
+            )),
             message: "凭证生成成功".to_string(),
             error_details: None,
             entries,
@@ -308,7 +326,11 @@ impl InvoiceVoucherGenerator {
         InvoiceVoucherGenerator
     }
 
-    pub fn generate_voucher(&self, data: InvoiceEventData, _req: AutoGenerateVoucherRequest) -> AutoGenerateVoucherResponse {
+    pub fn generate_voucher(
+        &self,
+        data: InvoiceEventData,
+        _req: AutoGenerateVoucherRequest,
+    ) -> AutoGenerateVoucherResponse {
         let summary = format!("发票-{}: {}", data.invoice_number, data.customer_name);
 
         if data.is_output {
@@ -353,7 +375,11 @@ impl InvoiceVoucherGenerator {
             AutoGenerateVoucherResponse {
                 success: true,
                 voucher_id: Some(Uuid::new_v4()),
-                voucher_number: Some(format!("VD{}{:04}", chrono::Utc::now().format("%Y%m%d"), rand::random::<u16>() % 10000)),
+                voucher_number: Some(format!(
+                    "VD{}{:04}",
+                    chrono::Utc::now().format("%Y%m%d"),
+                    rand::random::<u16>() % 10000
+                )),
                 message: "销项发票凭证生成成功".to_string(),
                 error_details: None,
                 entries,
@@ -400,7 +426,11 @@ impl InvoiceVoucherGenerator {
             AutoGenerateVoucherResponse {
                 success: true,
                 voucher_id: Some(Uuid::new_v4()),
-                voucher_number: Some(format!("VD{}{:04}", chrono::Utc::now().format("%Y%m%d"), rand::random::<u16>() % 10000)),
+                voucher_number: Some(format!(
+                    "VD{}{:04}",
+                    chrono::Utc::now().format("%Y%m%d"),
+                    rand::random::<u16>() % 10000
+                )),
                 message: "进项发票凭证生成成功".to_string(),
                 error_details: None,
                 entries,
@@ -423,10 +453,17 @@ impl PayrollVoucherGenerator {
         PayrollVoucherGenerator
     }
 
-    pub fn generate_voucher(&self, data: PayrollEventData, _req: AutoGenerateVoucherRequest) -> AutoGenerateVoucherResponse {
+    pub fn generate_voucher(
+        &self,
+        data: PayrollEventData,
+        _req: AutoGenerateVoucherRequest,
+    ) -> AutoGenerateVoucherResponse {
         // 工资凭证: 应付职工薪酬(借) -> 银行存款(贷), 应交税费-个人所得税(贷), 社保(贷)
         let summary = format!("发放{}月工资", data.payroll_period);
-        let net_salary = data.total_salary - data.total_social_security - data.total_housing_fund - data.total_tax;
+        let net_salary = data.total_salary
+            - data.total_social_security
+            - data.total_housing_fund
+            - data.total_tax;
 
         let entries = vec![
             GeneratedVoucherEntry {
@@ -474,7 +511,11 @@ impl PayrollVoucherGenerator {
         AutoGenerateVoucherResponse {
             success: true,
             voucher_id: Some(Uuid::new_v4()),
-            voucher_number: Some(format!("VD{}{:04}", chrono::Utc::now().format("%Y%m%d"), rand::random::<u16>() % 10000)),
+            voucher_number: Some(format!(
+                "VD{}{:04}",
+                chrono::Utc::now().format("%Y%m%d"),
+                rand::random::<u16>() % 10000
+            )),
             message: "工资凭证生成成功".to_string(),
             error_details: None,
             entries,
@@ -496,7 +537,11 @@ impl AssetVoucherGenerator {
         AssetVoucherGenerator
     }
 
-    pub fn generate_voucher(&self, data: AssetEventData, _req: AutoGenerateVoucherRequest) -> AutoGenerateVoucherResponse {
+    pub fn generate_voucher(
+        &self,
+        data: AssetEventData,
+        _req: AutoGenerateVoucherRequest,
+    ) -> AutoGenerateVoucherResponse {
         // 固定资产入账: 固定资产(借) -> 银行存款/应付账款(贷)
         let summary = format!("购入固定资产: {}", data.asset_name);
 
@@ -526,7 +571,11 @@ impl AssetVoucherGenerator {
         AutoGenerateVoucherResponse {
             success: true,
             voucher_id: Some(Uuid::new_v4()),
-            voucher_number: Some(format!("VD{}{:04}", chrono::Utc::now().format("%Y%m%d"), rand::random::<u16>() % 10000)),
+            voucher_number: Some(format!(
+                "VD{}{:04}",
+                chrono::Utc::now().format("%Y%m%d"),
+                rand::random::<u16>() % 10000
+            )),
             message: "固定资产凭证生成成功".to_string(),
             error_details: None,
             entries,
@@ -563,7 +612,8 @@ impl VoucherAutoGenerationService {
     pub fn generate_voucher(&self, req: AutoGenerateVoucherRequest) -> AutoGenerateVoucherResponse {
         match req.source_type {
             VoucherSourceType::Expense => {
-                if let Ok(data) = serde_json::from_value::<ExpenseEventData>(req.event_data.clone()) {
+                if let Ok(data) = serde_json::from_value::<ExpenseEventData>(req.event_data.clone())
+                {
                     self.expense_generator.generate_voucher(data, req)
                 } else {
                     AutoGenerateVoucherResponse {
@@ -575,9 +625,10 @@ impl VoucherAutoGenerationService {
                         entries: vec![],
                     }
                 }
-            },
+            }
             VoucherSourceType::Payment => {
-                if let Ok(data) = serde_json::from_value::<PaymentEventData>(req.event_data.clone()) {
+                if let Ok(data) = serde_json::from_value::<PaymentEventData>(req.event_data.clone())
+                {
                     self.payment_generator.generate_voucher(data, req)
                 } else {
                     AutoGenerateVoucherResponse {
@@ -589,9 +640,10 @@ impl VoucherAutoGenerationService {
                         entries: vec![],
                     }
                 }
-            },
+            }
             VoucherSourceType::Invoice => {
-                if let Ok(data) = serde_json::from_value::<InvoiceEventData>(req.event_data.clone()) {
+                if let Ok(data) = serde_json::from_value::<InvoiceEventData>(req.event_data.clone())
+                {
                     self.invoice_generator.generate_voucher(data, req)
                 } else {
                     AutoGenerateVoucherResponse {
@@ -603,9 +655,10 @@ impl VoucherAutoGenerationService {
                         entries: vec![],
                     }
                 }
-            },
+            }
             VoucherSourceType::Payroll => {
-                if let Ok(data) = serde_json::from_value::<PayrollEventData>(req.event_data.clone()) {
+                if let Ok(data) = serde_json::from_value::<PayrollEventData>(req.event_data.clone())
+                {
                     self.payroll_generator.generate_voucher(data, req)
                 } else {
                     AutoGenerateVoucherResponse {
@@ -617,7 +670,7 @@ impl VoucherAutoGenerationService {
                         entries: vec![],
                     }
                 }
-            },
+            }
             VoucherSourceType::Asset => {
                 if let Ok(data) = serde_json::from_value::<AssetEventData>(req.event_data.clone()) {
                     self.asset_generator.generate_voucher(data, req)
@@ -631,7 +684,7 @@ impl VoucherAutoGenerationService {
                         entries: vec![],
                     }
                 }
-            },
+            }
             _ => AutoGenerateVoucherResponse {
                 success: false,
                 voucher_id: None,
@@ -657,7 +710,7 @@ mod tests {
     #[test]
     fn test_expense_voucher_generation() {
         let service = VoucherAutoGenerationService::new();
-        
+
         let expense_data = ExpenseEventData {
             expense_id: Uuid::new_v4(),
             expense_number: "EXP001".to_string(),

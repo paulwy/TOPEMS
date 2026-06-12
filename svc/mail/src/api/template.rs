@@ -11,17 +11,28 @@ use crate::models::{
     CreateTemplateRequest, EmailTemplate, RenderTemplateRequest, TemplateListParams,
     UpdateTemplateRequest, UpdateTemplateStatusRequest,
 };
-use crate::services::{check_permission, TemplateService, MailPermission};
-use topems_shared::{api_error, ApiResponse, PaginatedResponse, auth::Claims};
+use crate::services::{check_permission, MailPermission, TemplateService};
+use topems_shared::{api_error, auth::Claims, ApiResponse, PaginatedResponse};
 
 use super::ApiState;
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/mail/templates", get(list_templates).post(create_template))
+        .route(
+            "/api/v1/mail/templates",
+            get(list_templates).post(create_template),
+        )
         .route("/api/v1/mail/templates/render", post(render_template))
-        .route("/api/v1/mail/templates/{id}", get(get_template).put(update_template).delete(delete_template))
-        .route("/api/v1/mail/templates/{id}/status", put(update_template_status));
+        .route(
+            "/api/v1/mail/templates/{id}",
+            get(get_template)
+                .put(update_template)
+                .delete(delete_template),
+        )
+        .route(
+            "/api/v1/mail/templates/{id}/status",
+            put(update_template_status),
+        );
 
     Ok(app)
 }
@@ -32,16 +43,22 @@ async fn list_templates(
     Query(params): Query<TemplateListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<EmailTemplate>>> {
     match check_permission(&state.db, &claims, &MailPermission::TemplateRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let template_service = TemplateService::new(state.db.clone());
-    
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
     match template_service
-        .list_templates(page, page_size, params.search, params.category, params.status)
+        .list_templates(
+            page,
+            page_size,
+            params.search,
+            params.category,
+            params.status,
+        )
         .await
     {
         Ok((templates, total)) => Json(ApiResponse::success(
@@ -61,11 +78,11 @@ async fn get_template(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<EmailTemplate>> {
     match check_permission(&state.db, &claims, &MailPermission::TemplateRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let template_service = TemplateService::new(state.db.clone());
-    
+
     match template_service.get_template(id).await {
         Some(template) => Json(ApiResponse::success(template, "获取模板成功")),
         None => Json(api_error(404, "模板不存在")),
@@ -78,11 +95,11 @@ async fn create_template(
     Json(req): Json<CreateTemplateRequest>,
 ) -> Json<ApiResponse<EmailTemplate>> {
     match check_permission(&state.db, &claims, &MailPermission::TemplateWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let template_service = TemplateService::new(state.db.clone());
-    
+
     match template_service
         .create_template(
             req.code,
@@ -111,11 +128,11 @@ async fn update_template(
     Json(req): Json<UpdateTemplateRequest>,
 ) -> Json<ApiResponse<EmailTemplate>> {
     match check_permission(&state.db, &claims, &MailPermission::TemplateWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let template_service = TemplateService::new(state.db.clone());
-    
+
     match template_service
         .update_template(
             id,
@@ -144,11 +161,11 @@ async fn delete_template(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &MailPermission::TemplateWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let template_service = TemplateService::new(state.db.clone());
-    
+
     match template_service.delete_template(id).await {
         Ok(true) => Json(ApiResponse::success("".to_string(), "模板删除成功")),
         Ok(false) => Json(api_error(404, "模板不存在")),
@@ -165,12 +182,15 @@ async fn render_template(
     Json(req): Json<RenderTemplateRequest>,
 ) -> Json<ApiResponse<Value>> {
     match check_permission(&state.db, &claims, &MailPermission::TemplateRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let template_service = TemplateService::new(state.db.clone());
-    
-    let template = match template_service.get_template_by_code(&req.template_code).await {
+
+    let template = match template_service
+        .get_template_by_code(&req.template_code)
+        .await
+    {
         Some(t) => t,
         None => return Json(api_error(404, "模板不存在")),
     };
@@ -193,11 +213,11 @@ async fn update_template_status(
     Json(req): Json<UpdateTemplateStatusRequest>,
 ) -> Json<ApiResponse<EmailTemplate>> {
     match check_permission(&state.db, &claims, &MailPermission::TemplateWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let template_service = TemplateService::new(state.db.clone());
-    
+
     match template_service
         .update_template_status(id, &req.status)
         .await

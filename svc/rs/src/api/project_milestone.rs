@@ -4,15 +4,15 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::{Error as SqlxError};
+use sqlx::Error as SqlxError;
 use std::time::Duration;
 use uuid::Uuid;
 
+use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use crate::models::project_milestone::{
     CreateMilestoneRequest, ProjectMilestone, UpdateMilestoneRequest,
 };
 use crate::services::project_progress;
-use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {
@@ -74,7 +74,7 @@ pub async fn create_milestone(
     match result {
         Ok(milestone) => {
             invalidate_project_cache(&milestone.project_id.to_string()).await;
-            
+
             tracing::info!(
                 request_id = %request_id,
                 milestone_id = %milestone.id,
@@ -154,9 +154,9 @@ pub async fn get_project_milestones(
                 duration_ms = duration.num_milliseconds(),
                 "获取项目里程碑列表成功"
             );
-            
+
             cache_set(&cache_key, milestones.clone(), Duration::from_secs(300)).await;
-            
+
             Json(ApiResponse::success(milestones, "获取项目里程碑列表成功"))
         }
         Err(e) => {
@@ -225,12 +225,18 @@ pub async fn update_milestone(
     match result {
         Ok(milestone) => {
             invalidate_project_cache(&milestone.project_id.to_string()).await;
-            
+
             if milestone.status == "achieved" {
-                let _ = project_progress::on_milestone_achieved(&state.db, milestone.project_id, milestone.id).await;
-                let _ = project_progress::update_project_progress(&state.db, milestone.project_id).await;
+                let _ = project_progress::on_milestone_achieved(
+                    &state.db,
+                    milestone.project_id,
+                    milestone.id,
+                )
+                .await;
+                let _ = project_progress::update_project_progress(&state.db, milestone.project_id)
+                    .await;
             }
-            
+
             tracing::info!(
                 request_id = %request_id,
                 milestone_id = %milestone.id,
@@ -283,13 +289,12 @@ pub async fn delete_milestone(
         milestone_id = %id,
         "删除项目里程碑请求开始"
     );
-    
-    let project_id_result = sqlx::query_scalar::<_, Uuid>(
-        "SELECT project_id FROM rs.project_milestones WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await;
+
+    let project_id_result =
+        sqlx::query_scalar::<_, Uuid>("SELECT project_id FROM rs.project_milestones WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.db)
+            .await;
 
     let result = sqlx::query(
         r#"
@@ -308,7 +313,7 @@ pub async fn delete_milestone(
             if let Ok(Some(project_id)) = project_id_result {
                 invalidate_project_cache(&project_id.to_string()).await;
             }
-            
+
             tracing::info!(
                 request_id = %request_id,
                 milestone_id = %id,

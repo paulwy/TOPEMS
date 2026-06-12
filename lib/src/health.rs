@@ -1,10 +1,4 @@
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::get, Router};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -99,7 +93,7 @@ impl ServiceMonitor {
         let start = Instant::now();
         let result = check_http_health(&self.health_url).await;
         let response_time = start.elapsed().as_millis() as u64;
-        
+
         self.response_times.push_back(response_time);
         if self.response_times.len() > 100 {
             self.response_times.pop_front();
@@ -250,13 +244,20 @@ impl HealthCheckResponse {
     pub fn new(services: Vec<ServiceHealth>) -> Self {
         let total_services = services.len();
         let overall_status = Self::calculate_overall_status(&services);
-        let healthy_count = services.iter().filter(|s| s.status == HealthStatus::Healthy).count();
-        let degraded_count = services.iter().filter(|s| s.status == HealthStatus::Degraded).count();
-        let unhealthy_count = services.iter().filter(|s| s.status == HealthStatus::Unhealthy).count();
-        
-        let total_response_time: u64 = services.iter()
-            .filter_map(|s| s.response_time_ms)
-            .sum();
+        let healthy_count = services
+            .iter()
+            .filter(|s| s.status == HealthStatus::Healthy)
+            .count();
+        let degraded_count = services
+            .iter()
+            .filter(|s| s.status == HealthStatus::Degraded)
+            .count();
+        let unhealthy_count = services
+            .iter()
+            .filter(|s| s.status == HealthStatus::Unhealthy)
+            .count();
+
+        let total_response_time: u64 = services.iter().filter_map(|s| s.response_time_ms).sum();
         let avg_response_time = if healthy_count + degraded_count > 0 {
             Some(total_response_time / (healthy_count + degraded_count) as u64)
         } else {
@@ -280,16 +281,14 @@ impl HealthCheckResponse {
             return HealthStatus::Healthy;
         }
 
-        let has_unhealthy = services.iter()
-            .any(|s| s.status == HealthStatus::Unhealthy);
-        
+        let has_unhealthy = services.iter().any(|s| s.status == HealthStatus::Unhealthy);
+
         if has_unhealthy {
             return HealthStatus::Unhealthy;
         }
 
-        let has_degraded = services.iter()
-            .any(|s| s.status == HealthStatus::Degraded);
-        
+        let has_degraded = services.iter().any(|s| s.status == HealthStatus::Degraded);
+
         if has_degraded {
             return HealthStatus::Degraded;
         }
@@ -300,8 +299,13 @@ impl HealthCheckResponse {
 
 pub async fn check_http_health(url: &str) -> Result<HealthStatus, String> {
     let client = reqwest::Client::new();
-    
-    match client.get(url).timeout(std::time::Duration::from_secs(5)).send().await {
+
+    match client
+        .get(url)
+        .timeout(std::time::Duration::from_secs(5))
+        .send()
+        .await
+    {
         Ok(response) => {
             if response.status().is_success() {
                 Ok(HealthStatus::Healthy)
@@ -309,14 +313,18 @@ pub async fn check_http_health(url: &str) -> Result<HealthStatus, String> {
                 Ok(HealthStatus::Degraded)
             }
         }
-        Err(e) => {
-            Err(format!("Failed to reach service: {}", e))
-        }
+        Err(e) => Err(format!("Failed to reach service: {}", e)),
     }
 }
 
 pub struct HealthChecker {
     monitors: HashMap<String, Arc<Mutex<ServiceMonitor>>>,
+}
+
+impl Default for HealthChecker {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl HealthChecker {
@@ -333,25 +341,27 @@ impl HealthChecker {
         );
     }
 
+    #[allow(clippy::await_holding_lock)]
     pub async fn check_all(&self) -> HealthCheckResponse {
         let mut results = Vec::new();
-        
-        for (_name, monitor) in &self.monitors {
-            let mut monitor = monitor.lock().unwrap();
-            let health = monitor.check_health().await;
+
+        for monitor in self.monitors.values() {
+            let health = monitor.lock().unwrap().check_health().await;
             results.push(health);
         }
-        
+
         HealthCheckResponse::new(results)
     }
 
     pub fn get_metrics(&self, service_name: &str) -> Option<ServiceMetrics> {
-        self.monitors.get(service_name)
+        self.monitors
+            .get(service_name)
             .map(|monitor| monitor.lock().unwrap().get_metrics())
     }
 
     pub fn get_all_metrics(&self) -> Vec<ServiceMetrics> {
-        self.monitors.values()
+        self.monitors
+            .values()
             .map(|monitor| monitor.lock().unwrap().get_metrics())
             .collect()
     }
@@ -362,6 +372,12 @@ pub struct SystemMetrics {
     request_count: Arc<Mutex<u64>>,
     error_count: Arc<Mutex<u64>>,
     active_connections: Arc<Mutex<u64>>,
+}
+
+impl Default for SystemMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SystemMetrics {
@@ -397,7 +413,10 @@ impl SystemMetrics {
         let minutes = (elapsed.as_secs() % 3600) / 60;
         let seconds = elapsed.as_secs() % 60;
 
-        format!("{} days, {} hours, {} minutes, {} seconds", days, hours, minutes, seconds)
+        format!(
+            "{} days, {} hours, {} minutes, {} seconds",
+            days, hours, minutes, seconds
+        )
     }
 
     pub fn get_request_count(&self) -> u64 {
@@ -457,31 +476,41 @@ impl IntoResponse for ServiceHealth {
 pub async fn standard_health_check(State(state): State<HealthState>) -> ServiceHealth {
     let start = Instant::now();
     let mut dependencies = Vec::new();
-    
+
     // 检查数据库健康状态
     if let Some(pool) = &state.db_pool {
         let db_health = check_database_health(pool).await;
         dependencies.push(db_health);
     }
-    
+
     let response_time = start.elapsed().as_millis() as u64;
     let uptime = format_uptime(state.start_time.elapsed());
-    
-    let overall_status = if dependencies.iter().any(|d| d.status == HealthStatus::Unhealthy) {
+
+    let overall_status = if dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Unhealthy)
+    {
         HealthStatus::Unhealthy
-    } else if dependencies.iter().any(|d| d.status == HealthStatus::Degraded) {
+    } else if dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Degraded)
+    {
         HealthStatus::Degraded
     } else {
         HealthStatus::Healthy
     };
-    
+
     ServiceHealth {
         service_name: state.service_name.clone(),
         status: overall_status,
         message: format!("{} is running", state.service_name),
         timestamp: Utc::now().to_rfc3339(),
         uptime: Some(uptime),
-        dependencies: if dependencies.is_empty() { None } else { Some(dependencies) },
+        dependencies: if dependencies.is_empty() {
+            None
+        } else {
+            Some(dependencies)
+        },
         response_time_ms: Some(response_time),
         last_check: Some(Utc::now().to_rfc3339()),
     }
@@ -516,7 +545,7 @@ fn format_uptime(duration: std::time::Duration) -> String {
     let hours = (secs % 86400) / 3600;
     let minutes = (secs % 3600) / 60;
     let seconds = secs % 60;
-    
+
     if days > 0 {
         format!("{}d {}h {}m {}s", days, hours, minutes, seconds)
     } else if hours > 0 {
@@ -535,7 +564,7 @@ pub fn create_health_router(service_name: &str, pool: Option<PgPool>) -> Router 
     } else {
         state
     };
-    
+
     Router::new()
         .route("/health", get(standard_health_check))
         .with_state(state)
@@ -552,17 +581,17 @@ pub async fn metrics_middleware(
     let start = Instant::now();
     let response = next.run(req).await;
     let elapsed = start.elapsed();
-    
+
     if response.status().is_server_error() {
         state.record_error();
     }
-    
+
     info!(
         "Request processed in {}ms, status: {}",
         elapsed.as_millis(),
         response.status()
     );
-    
+
     response
 }
 
@@ -581,7 +610,7 @@ async fn get_system_metrics(State(metrics): State<Arc<SystemMetrics>>) -> impl I
         error_count: u64,
         active_connections: u64,
     }
-    
+
     axum::Json(MetricsResponse {
         uptime: metrics.get_uptime(),
         uptime_seconds: metrics.get_uptime_seconds(),
@@ -608,7 +637,7 @@ impl SimpleHealthConfig {
             db_pool: None,
         }
     }
-    
+
     pub fn with_db(mut self, pool: PgPool) -> Self {
         self.db_pool = Some(pool);
         self
@@ -618,30 +647,40 @@ impl SimpleHealthConfig {
 pub async fn simple_health_check(config: &SimpleHealthConfig) -> ServiceHealth {
     let start = Instant::now();
     let mut dependencies = Vec::new();
-    
+
     if let Some(pool) = &config.db_pool {
         let db_health = check_database_health(pool).await;
         dependencies.push(db_health);
     }
-    
+
     let response_time = start.elapsed().as_millis() as u64;
     let uptime = format_uptime(config.start_time.elapsed());
-    
-    let overall_status = if dependencies.iter().any(|d| d.status == HealthStatus::Unhealthy) {
+
+    let overall_status = if dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Unhealthy)
+    {
         HealthStatus::Unhealthy
-    } else if dependencies.iter().any(|d| d.status == HealthStatus::Degraded) {
+    } else if dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Degraded)
+    {
         HealthStatus::Degraded
     } else {
         HealthStatus::Healthy
     };
-    
+
     ServiceHealth {
         service_name: config.service_name.clone(),
         status: overall_status,
         message: format!("{} is running", config.service_name),
         timestamp: Utc::now().to_rfc3339(),
         uptime: Some(uptime),
-        dependencies: if dependencies.is_empty() { None } else { Some(dependencies) },
+        dependencies: if dependencies.is_empty() {
+            None
+        } else {
+            Some(dependencies)
+        },
         response_time_ms: Some(response_time),
         last_check: Some(Utc::now().to_rfc3339()),
     }
@@ -651,8 +690,16 @@ pub async fn simple_health_check(config: &SimpleHealthConfig) -> ServiceHealth {
 pub fn build_health_response(service_name: &str, is_healthy: bool) -> ServiceHealth {
     ServiceHealth {
         service_name: service_name.to_string(),
-        status: if is_healthy { HealthStatus::Healthy } else { HealthStatus::Unhealthy },
-        message: format!("{} is {}", service_name, if is_healthy { "running" } else { "unhealthy" }),
+        status: if is_healthy {
+            HealthStatus::Healthy
+        } else {
+            HealthStatus::Unhealthy
+        },
+        message: format!(
+            "{} is {}",
+            service_name,
+            if is_healthy { "running" } else { "unhealthy" }
+        ),
         timestamp: Utc::now().to_rfc3339(),
         uptime: None,
         dependencies: None,

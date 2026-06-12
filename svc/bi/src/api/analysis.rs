@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrows_for_generic_args)]
+
 use axum::{
     extract::{Extension, Query, State},
     Json,
@@ -8,9 +10,9 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, Claims};
 use crate::models::analysis::*;
 use crate::services::permission::{check_permission, BIPermission};
+use topems_shared::{ApiResponse, Claims};
 
 /// 执行数据分析查询
 pub async fn execute_query(
@@ -19,13 +21,13 @@ pub async fn execute_query(
     Json(payload): Json<ExecuteAnalysisQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 查询分析配置
     let query_config = sqlx::query_as::<_, AnalysisQuery>(
-        "SELECT * FROM analysis_queries WHERE id = $1 AND is_active = true"
+        "SELECT * FROM analysis_queries WHERE id = $1 AND is_active = true",
     )
     .bind(payload.query_id)
     .fetch_optional(&pool)
@@ -35,7 +37,7 @@ pub async fn execute_query(
         Ok(Some(_config)) => {
             // 执行查询（这里简化实现，实际应该根据数据源类型执行不同的查询）
             let start_time = Utc::now();
-            
+
             // 模拟查询结果
             let result_data = json!({
                 "rows": [
@@ -72,7 +74,7 @@ pub async fn execute_query(
             .ok();
 
             Json(ApiResponse::success(result_data, "查询执行成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::error(404, "查询配置不存在")),
         Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
     }
@@ -85,14 +87,18 @@ pub async fn execute_aggregation(
     Json(payload): Json<AnalysisQueryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 创建聚合查询配置
     let query_id = Uuid::new_v4();
-    let aggregations_json = payload.aggregations.map(|a| serde_json::to_value(a).unwrap_or_default());
-    let time_range_json = payload.time_range.map(|t| serde_json::to_value(t).unwrap_or_default());
+    let aggregations_json = payload
+        .aggregations
+        .map(|a| serde_json::to_value(a).unwrap_or_default());
+    let time_range_json = payload
+        .time_range
+        .map(|t| serde_json::to_value(t).unwrap_or_default());
 
     let result = sqlx::query(
         "INSERT INTO analysis_queries (id, name, description, query_type, data_source_id, sql_query, filters, group_by, aggregations, time_range, created_by, created_at, updated_at, is_active)
@@ -139,7 +145,7 @@ pub async fn execute_aggregation(
             });
 
             Json(ApiResponse::success(aggregation_result, "聚合分析执行成功"))
-        },
+        }
         Err(e) => Json(ApiResponse::error(500, &format!("创建聚合查询失败: {}", e))),
     }
 }
@@ -151,7 +157,7 @@ pub async fn execute_comparison(
     Json(_payload): Json<AnalysisQueryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -197,7 +203,7 @@ pub async fn execute_trend(
     Json(_payload): Json<AnalysisQueryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -238,7 +244,7 @@ pub async fn get_history(
     Query(params): Query<HistoryQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -248,7 +254,7 @@ pub async fn get_history(
          WHERE ($1::uuid IS NULL OR query_id = $1)
          AND ($2::uuid IS NULL OR user_id = $2)
          ORDER BY executed_at DESC 
-         LIMIT $3 OFFSET $4"
+         LIMIT $3 OFFSET $4",
     )
     .bind(params.query_id)
     .bind(params.user_id)
@@ -258,12 +264,13 @@ pub async fn get_history(
     .await;
 
     match history {
-        Ok(records) => {
-            Json(ApiResponse::success(json!({
+        Ok(records) => Json(ApiResponse::success(
+            json!({
                 "history": records,
                 "total": records.len(),
-            }), "获取分析历史成功"))
-        },
+            }),
+            "获取分析历史成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("查询历史失败: {}", e))),
     }
 }
@@ -275,7 +282,7 @@ pub async fn save_result(
     Json(payload): Json<SaveAnalysisResult>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::AnalyticsWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -296,10 +303,13 @@ pub async fn save_result(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "result_id": result_id,
-            "saved_at": Utc::now().to_rfc3339(),
-        }), "保存分析结果成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "result_id": result_id,
+                "saved_at": Utc::now().to_rfc3339(),
+            }),
+            "保存分析结果成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("保存失败: {}", e))),
     }
 }

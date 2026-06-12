@@ -1,20 +1,29 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
 use uuid::Uuid;
 
-use crate::models::project_milestone::{CreateMilestoneRequest, ProjectMilestone, UpdateMilestoneRequest};
+use crate::models::project_milestone::{
+    CreateMilestoneRequest, ProjectMilestone, UpdateMilestoneRequest,
+};
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/milestones", get(list_milestones).post(create_milestone))
-        .route("/api/v1/projects/{project_id}/milestones/{id}", get(get_milestone).put(update_milestone).delete(delete_milestone))
+        .route(
+            "/api/v1/projects/{project_id}/milestones",
+            get(list_milestones).post(create_milestone),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/milestones/{id}",
+            get(get_milestone)
+                .put(update_milestone)
+                .delete(delete_milestone),
+        )
         .with_state(pool)
 }
 
@@ -32,7 +41,7 @@ async fn list_milestones(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
     let result = sqlx::query_as::<_, ProjectMilestone>(
-        "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC"
+        "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -79,7 +88,7 @@ async fn create_milestone(
     .bind(project_id)
     .bind(&req.name)
     .bind(&req.description)
-    .bind(&req.date)
+    .bind(req.date)
     .bind("pending")
     .bind(req.phase_id)
     .bind(&req.acceptance_criteria)
@@ -112,7 +121,7 @@ async fn get_milestone(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
     let result = sqlx::query_as::<_, ProjectMilestone>(
-        "SELECT * FROM pm.project_milestones WHERE project_id = $1 AND id = $2"
+        "SELECT * FROM pm.project_milestones WHERE project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)
@@ -163,7 +172,7 @@ async fn update_milestone(
     )
     .bind(&req.name)
     .bind(&req.description)
-    .bind(&req.date)
+    .bind(req.date)
     .bind(&req.status)
     .bind(req.phase_id)
     .bind(&req.acceptance_criteria)
@@ -197,13 +206,11 @@ async fn delete_milestone(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query(
-        "DELETE FROM pm.project_milestones WHERE project_id = $1 AND id = $2"
-    )
-    .bind(project_id)
-    .bind(id)
-    .execute(&pool)
-    .await;
+    let result = sqlx::query("DELETE FROM pm.project_milestones WHERE project_id = $1 AND id = $2")
+        .bind(project_id)
+        .bind(id)
+        .execute(&pool)
+        .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

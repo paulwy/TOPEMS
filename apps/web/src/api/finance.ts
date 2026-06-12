@@ -10,7 +10,6 @@ import type {
   AccountOpeningBalance,
   Voucher,
   CreateVoucherRequest,
-  VoucherEntry,
   VoucherQueryParams,
   Customer,
   Supplier,
@@ -154,14 +153,15 @@ export const accountApi = {
   /**
    * 结转期初余额
    */
-  carryForwardOpeningBalance: (
-    params: {
-      from_period: string;
-      to_period: string;
-      company_id?: string;
-    },
-  ): Promise<ApiResponse<void>> => {
-    return createApiClient().post("/api/v1/finance/accounts/opening-balance/carry-forward", params);
+  carryForwardOpeningBalance: (params: {
+    from_period: string;
+    to_period: string;
+    company_id?: string;
+  }): Promise<ApiResponse<void>> => {
+    return createApiClient().post(
+      "/api/v1/finance/accounts/opening-balance/carry-forward",
+      params,
+    );
   },
 };
 
@@ -648,10 +648,10 @@ export const reportApi = {
    * 导出现金流量表
    */
   exportCashFlowStatement: (params: ReportQueryParams): Promise<Blob> => {
-    return createApiClient().get(
-      "/api/v1/finance/reports/cash-flow/export",
-      { params, responseType: "blob" },
-    );
+    return createApiClient().get("/api/v1/finance/reports/cash-flow/export", {
+      params,
+      responseType: "blob",
+    });
   },
 };
 

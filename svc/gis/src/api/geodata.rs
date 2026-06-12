@@ -1,13 +1,15 @@
+#![allow(dead_code)]
+
+use crate::models::{GeoData, GeoFeature};
+use crate::services::permission::{check_permission, GisPermission};
 use axum::{
-    extract::{Path, State, Extension, Multipart},
+    extract::{Extension, Multipart, Path, State},
     Json,
 };
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use sqlx::PgPool;
-use topems_shared::{ApiResponse, auth::Claims};
-use crate::models::{GeoData, GeoFeature};
-use crate::services::permission::{check_permission, GisPermission};
+use topems_shared::{auth::Claims, ApiResponse};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateGeoData {
@@ -114,12 +116,17 @@ pub async fn upload_geodata(
     }
 }
 
-async fn insert_feature(pool: &PgPool, geodata_id: &Uuid, feature: &serde_json::Value) -> Result<(), sqlx::Error> {
+async fn insert_feature(
+    pool: &PgPool,
+    geodata_id: &Uuid,
+    feature: &serde_json::Value,
+) -> Result<(), sqlx::Error> {
     let empty_geometry = serde_json::json!({});
     let geometry = feature.get("geometry").unwrap_or(&empty_geometry);
     let properties = feature.get("properties");
-    
-    let feature_type = geometry.get("type")
+
+    let feature_type = geometry
+        .get("type")
         .and_then(|t| t.as_str())
         .unwrap_or("Unknown")
         .to_string();
@@ -290,7 +297,7 @@ pub async fn convert_geodata(
 
 fn convert_geojson_to_csv(geojson: &serde_json::Value) -> String {
     let mut csv_lines: Vec<String> = Vec::new();
-    
+
     if let Some(features) = geojson.get("features").and_then(|f| f.as_array()) {
         // Header
         if let Some(first_feature) = features.first() {
@@ -299,23 +306,24 @@ fn convert_geojson_to_csv(geojson: &serde_json::Value) -> String {
                 csv_lines.push(headers.join(","));
             }
         }
-        
+
         // Data rows
         for feature in features {
             if let Some(props) = feature.get("properties").and_then(|p| p.as_object()) {
-                let values: Vec<String> = props.values().map(|v| {
-                    match v {
+                let values: Vec<String> = props
+                    .values()
+                    .map(|v| match v {
                         serde_json::Value::String(s) => s.clone(),
                         serde_json::Value::Number(n) => n.to_string(),
                         serde_json::Value::Bool(b) => b.to_string(),
                         _ => String::new(),
-                    }
-                }).collect();
+                    })
+                    .collect();
                 csv_lines.push(values.join(","));
             }
         }
     }
-    
+
     csv_lines.join("\n")
 }
 
@@ -325,7 +333,7 @@ pub async fn list_geofeatures(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, GeoFeature>(
-        "SELECT * FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC"
+        "SELECT * FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC",
     )
     .bind(id)
     .fetch_all(&pool)

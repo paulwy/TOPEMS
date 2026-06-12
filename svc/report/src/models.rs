@@ -83,7 +83,9 @@ impl ExportFormat {
 
     pub fn content_type(&self) -> &'static str {
         match self {
-            ExportFormat::Excel => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ExportFormat::Excel => {
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            }
             ExportFormat::Pdf => "application/pdf",
             ExportFormat::Csv => "text/csv",
         }

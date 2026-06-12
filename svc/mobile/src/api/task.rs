@@ -1,15 +1,19 @@
+#![allow(dead_code)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+
 use axum::{
-    extract::{State, Json, Path},
-    http::{StatusCode, HeaderMap},
+    extract::{Json, Path, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool};
+use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct MobileTask {
@@ -67,7 +71,10 @@ pub async fn get_all_tasks(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -88,7 +95,10 @@ pub async fn get_all_tasks(
         }
     };
 
-    (StatusCode::OK, axum::Json(ApiResponse::success(tasks, "获取任务列表成功")))
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success(tasks, "获取任务列表成功")),
+    )
 }
 
 pub async fn get_task(
@@ -100,7 +110,10 @@ pub async fn get_task(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -124,7 +137,10 @@ pub async fn get_task(
         }
     };
 
-    (StatusCode::OK, axum::Json(ApiResponse::success(task, "获取任务成功")))
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success(task, "获取任务成功")),
+    )
 }
 
 pub async fn create_task(
@@ -136,7 +152,10 @@ pub async fn create_task(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -184,7 +203,10 @@ pub async fn create_task(
         updated_at: Utc::now(),
     };
 
-    (StatusCode::CREATED, axum::Json(ApiResponse::success(task, "创建任务成功")))
+    (
+        StatusCode::CREATED,
+        axum::Json(ApiResponse::success(task, "创建任务成功")),
+    )
 }
 
 pub async fn update_task(
@@ -197,7 +219,10 @@ pub async fn update_task(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -229,7 +254,11 @@ pub async fn update_task(
     let location_lat = payload.location_lat.or(current_task.location_lat);
     let location_lng = payload.location_lng.or(current_task.location_lng);
     let due_date = payload.due_date.or(current_task.due_date);
-    let completed_at = if status == "completed" && current_task.completed_at.is_none() { Some(Utc::now()) } else { current_task.completed_at };
+    let completed_at = if status == "completed" && current_task.completed_at.is_none() {
+        Some(Utc::now())
+    } else {
+        current_task.completed_at
+    };
 
     if let Err(e) = sqlx::query(
         "UPDATE mobile_tasks 
@@ -257,7 +286,10 @@ pub async fn update_task(
         return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "更新失败")));
     }
 
-    (StatusCode::OK, axum::Json(ApiResponse::success((), "更新成功")))
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success((), "更新成功")),
+    )
 }
 
 pub async fn update_task_status(
@@ -270,16 +302,23 @@ pub async fn update_task_status(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
-    let completed_at = if payload.status == "completed" { Some(Utc::now()) } else { None };
+    let completed_at = if payload.status == "completed" {
+        Some(Utc::now())
+    } else {
+        None
+    };
 
     let result = sqlx::query(
         "UPDATE mobile_tasks 
          SET status = $1, completed_at = $2, updated_at = $3 
-         WHERE id = $4 AND (assignee = $5 OR assignee IS NULL)"
+         WHERE id = $4 AND (assignee = $5 OR assignee IS NULL)",
     )
     .bind(&payload.status)
     .bind(&completed_at)
@@ -300,17 +339,29 @@ pub async fn update_task_status(
             .await;
 
             match task {
-                Ok(t) => (StatusCode::OK, axum::Json(ApiResponse::success(t, "状态更新成功"))),
+                Ok(t) => (
+                    StatusCode::OK,
+                    axum::Json(ApiResponse::success(t, "状态更新成功")),
+                ),
                 Err(e) => {
                     tracing::error!("查询任务失败: {}", e);
-                    (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "查询任务失败")))
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        axum::Json(ApiResponse::error(500, "查询任务失败")),
+                    )
                 }
             }
         }
-        Ok(_) => (StatusCode::NOT_FOUND, axum::Json(ApiResponse::error(404, "任务不存在或无权修改"))),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            axum::Json(ApiResponse::error(404, "任务不存在或无权修改")),
+        ),
         Err(e) => {
             tracing::error!("更新任务状态失败: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "更新失败")))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(500, "更新失败")),
+            )
         }
     }
 }
@@ -324,22 +375,36 @@ pub async fn delete_task(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, axum::Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
-    let result = sqlx::query("DELETE FROM mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)")
-        .bind(id)
-        .bind(&user_id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(
+        "DELETE FROM mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)",
+    )
+    .bind(id)
+    .bind(&user_id)
+    .execute(&pool)
+    .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, axum::Json(ApiResponse::success((), "删除成功"))),
-        Ok(_) => (StatusCode::NOT_FOUND, axum::Json(ApiResponse::error(404, "任务不存在或无权删除"))),
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            axum::Json(ApiResponse::success((), "删除成功")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            axum::Json(ApiResponse::error(404, "任务不存在或无权删除")),
+        ),
         Err(e) => {
             tracing::error!("删除任务失败: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "删除失败")))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(500, "删除失败")),
+            )
         }
     }
 }

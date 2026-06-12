@@ -1,9 +1,12 @@
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, ModulePermission as SharedModulePermission,
+};
 use topems_shared::response::ApiResponse;
-use topems_shared::permission::{ModulePermission as SharedModulePermission, check_module_permission};
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum MailPermission {
     EmailRead,
     EmailWrite,
@@ -40,7 +43,7 @@ impl SharedModulePermission for MailPermission {
     fn module_name() -> &'static str {
         "mail"
     }
-    
+
     fn all_permission() -> Self {
         MailPermission::All
     }

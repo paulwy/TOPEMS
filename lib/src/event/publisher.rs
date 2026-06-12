@@ -1,9 +1,9 @@
-use std::env;
+use super::error::EventResult;
+use super::event_types::{Event, EventType, HrmEmployeeCreatedPayload, PmProjectCreatedPayload};
 use redis::Client;
 use serde::Serialize;
+use std::env;
 use tracing::info;
-use super::error::EventResult;
-use super::event::{Event, EventType};
 
 /// Redis 事件发布者
 pub struct EventPublisher {
@@ -14,17 +14,17 @@ pub struct EventPublisher {
 impl EventPublisher {
     /// 创建新的事件发布者
     pub fn new(service_name: &str) -> EventResult<Self> {
-        let redis_url = env::var("REDIS_URL")
-            .unwrap_or_else(|_| "redis://localhost:6379".to_string());
-        
+        let redis_url =
+            env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+
         let redis_client = Client::open(redis_url)?;
-        
+
         Ok(Self {
             redis_client,
             service_name: service_name.to_string(),
         })
     }
-    
+
     /// 发布事件
     pub async fn publish_event(
         &self,
@@ -33,26 +33,26 @@ impl EventPublisher {
     ) -> EventResult<()> {
         let payload_json = serde_json::to_value(&payload)?;
         let event = Event::new(event_type, &self.service_name, payload_json);
-        
+
         let channel_name = format!("topems:events:{}", event_type);
         let event_json = serde_json::to_string(&event)?;
-        
+
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
-        
+
         let _: () = redis::cmd("PUBLISH")
             .arg(&channel_name)
             .arg(&event_json)
             .query_async(&mut con)
             .await?;
-        
+
         info!(
             "事件发布成功 - 类型: {:?}, 事件ID: {}, 频道: {}",
             event_type, event.event_id, channel_name
         );
-        
+
         Ok(())
     }
-    
+
     /// 发布 HRM 员工创建事件（便捷方法）
     pub async fn publish_hrm_employee_created(
         &self,
@@ -61,16 +61,17 @@ impl EventPublisher {
         email: &str,
         department_id: Option<uuid::Uuid>,
     ) -> EventResult<()> {
-        let payload = super::event::HrmEmployeeCreatedPayload {
+        let payload = HrmEmployeeCreatedPayload {
             employee_id,
             name: name.to_string(),
             email: email.to_string(),
             department_id,
         };
-        
-        self.publish_event(EventType::HrmEmployeeCreated, payload).await
+
+        self.publish_event(EventType::HrmEmployeeCreated, payload)
+            .await
     }
-    
+
     /// 发布 PM 项目创建事件（便捷方法）
     pub async fn publish_pm_project_created(
         &self,
@@ -78,12 +79,13 @@ impl EventPublisher {
         project_name: &str,
         owner_id: uuid::Uuid,
     ) -> EventResult<()> {
-        let payload = super::event::PmProjectCreatedPayload {
+        let payload = PmProjectCreatedPayload {
             project_id,
             project_name: project_name.to_string(),
             owner_id,
         };
-        
-        self.publish_event(EventType::PmProjectCreated, payload).await
+
+        self.publish_event(EventType::PmProjectCreated, payload)
+            .await
     }
 }

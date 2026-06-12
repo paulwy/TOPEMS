@@ -1,13 +1,11 @@
-
-
+use crate::error::TopemsError;
 use serde::Deserialize;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::error::TopemsError;
 
 pub mod enhanced;
 pub mod services;
-pub use services::{ServiceConfig, ServiceRegistry, get_default_port};
+pub use services::{get_default_port, ServiceConfig, ServiceRegistry};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AppConfig {
@@ -76,7 +74,7 @@ pub struct CacheConfig {
     pub memory_cache_size: usize,
     pub eviction_policy: String,
     pub write_through: bool,
-    
+
     pub enable_multi_level: bool,
     pub l1_ttl: u64,
     pub l2_ttl: u64,
@@ -152,7 +150,7 @@ impl Config {
     pub async fn load() -> Result<Self, TopemsError> {
         let env = std::env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let config = Self::load_config_for_env(&env).await?;
-        
+
         Ok(Self {
             inner: Arc::new(RwLock::new(config)),
             env,
@@ -580,7 +578,11 @@ impl From<DevEnv> for AppConfig {
             storage: StorageConfig {
                 upload_dir: env.upload_dir,
                 upload_max_size: env.upload_max_size,
-                allowed_file_types: env.allowed_file_types.split(',').map(|s| s.to_string()).collect(),
+                allowed_file_types: env
+                    .allowed_file_types
+                    .split(',')
+                    .map(|s| s.to_string())
+                    .collect(),
                 storage_provider: env.storage_provider,
             },
             mail: MailConfig {
@@ -670,7 +672,11 @@ impl From<TestEnv> for AppConfig {
             storage: StorageConfig {
                 upload_dir: env.upload_dir,
                 upload_max_size: env.upload_max_size,
-                allowed_file_types: env.allowed_file_types.split(',').map(|s| s.to_string()).collect(),
+                allowed_file_types: env
+                    .allowed_file_types
+                    .split(',')
+                    .map(|s| s.to_string())
+                    .collect(),
                 storage_provider: env.storage_provider,
             },
             mail: MailConfig {
@@ -760,7 +766,11 @@ impl From<ProductionEnv> for AppConfig {
             storage: StorageConfig {
                 upload_dir: env.upload_dir,
                 upload_max_size: env.upload_max_size,
-                allowed_file_types: env.allowed_file_types.split(',').map(|s| s.to_string()).collect(),
+                allowed_file_types: env
+                    .allowed_file_types
+                    .split(',')
+                    .map(|s| s.to_string())
+                    .collect(),
                 storage_provider: env.storage_provider,
             },
             mail: MailConfig {
@@ -792,85 +802,249 @@ impl From<ProductionEnv> for AppConfig {
     }
 }
 
-fn default_app_env() -> String { "development".to_string() }
-fn default_database_url() -> String { "postgres://topems:topems_dev@localhost:5432/topems_dev".to_string() }
-fn default_test_database_url() -> String { "postgres://topems_test:topems_test_secret@localhost:5432/topems_test".to_string() }
-fn default_db_host() -> String { "localhost".to_string() }
-fn default_db_port() -> u16 { 5432 }
-fn default_db_name() -> String { "topems_dev".to_string() }
-fn default_test_db_name() -> String { "topems_test".to_string() }
-fn default_db_user() -> String { "topems".to_string() }
-fn default_db_password() -> String { "topems_dev".to_string() }
-fn default_test_db_password() -> String { "topems_test_secret".to_string() }
-fn default_pool_max_size() -> u32 { 10 }
-fn default_test_pool_max_size() -> u32 { 5 }
-fn default_pool_min_size() -> u32 { 2 }
-fn default_test_pool_min_size() -> u32 { 1 }
-fn default_connect_timeout() -> u64 { 10 }
-fn default_test_connect_timeout() -> u64 { 5 }
-fn default_idle_timeout() -> u64 { 300 }
-fn default_test_idle_timeout() -> u64 { 60 }
-fn default_jwt_secret() -> String { "dev-jwt-secret-key-not-for-production-use".to_string() }
-fn default_test_jwt_secret() -> String { "test-jwt-secret-key-for-testing-only-32chars".to_string() }
-fn default_jwt_expiry_hours() -> u64 { 24 }
-fn default_test_jwt_expiry_hours() -> u64 { 1 }
-fn default_jwt_refresh_secret() -> String { "dev-refresh-secret-key-not-for-production".to_string() }
-fn default_test_jwt_refresh_secret() -> String { "test-refresh-secret-for-testing-only".to_string() }
-fn default_jwt_refresh_expiry_days() -> u64 { 7 }
-fn default_test_jwt_refresh_expiry_days() -> u64 { 1 }
-fn default_session_secret() -> String { "dev-session-secret-not-for-production".to_string() }
-fn default_test_session_secret() -> String { "test-session-secret-for-testing-only".to_string() }
-fn default_session_timeout_minutes() -> u64 { 240 }
-fn default_test_session_timeout_minutes() -> u64 { 30 }
-fn default_server_host() -> String { "localhost".to_string() }
-fn default_server_port() -> u16 { 8000 }
-fn default_test_server_port() -> u16 { 8000 }
-fn default_cors_origins() -> String { "http://localhost:5173,http://localhost:3000".to_string() }
-fn default_test_cors_origins() -> String { "http://localhost:3000".to_string() }
-fn default_cors_methods() -> String { "GET,POST,PUT,DELETE,PATCH,OPTIONS".to_string() }
-fn default_cors_credentials() -> bool { true }
-fn default_rate_limit_enabled() -> bool { false }
-fn default_test_rate_limit_enabled() -> bool { false }
-fn default_rate_limit_requests() -> u32 { 1000 }
-fn default_test_rate_limit_requests() -> u32 { 10000 }
-fn default_rate_limit_window() -> u64 { 60 }
-fn default_redis_url() -> String { "redis://localhost:6379".to_string() }
-fn default_test_redis_url() -> String { "redis://localhost:6379/1".to_string() }
-fn default_redis_host() -> String { "localhost".to_string() }
-fn default_redis_port() -> u16 { 6379 }
-fn default_redis_db() -> u8 { 0 }
-fn default_test_redis_db() -> u8 { 1 }
-fn default_redis_pool_max_size() -> u32 { 5 }
-fn default_upload_dir() -> String { "./uploads".to_string() }
-fn default_test_upload_dir() -> String { "./test_uploads".to_string() }
-fn default_upload_max_size() -> u64 { 104857600 }
-fn default_test_upload_max_size() -> u64 { 10485760 }
-fn default_allowed_file_types() -> String { "jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,zip,rar,txt,md".to_string() }
-fn default_test_allowed_file_types() -> String { "jpg,pdf,txt,csv".to_string() }
-fn default_storage_provider() -> String { "local".to_string() }
-fn default_smtp_host() -> String { "localhost".to_string() }
-fn default_smtp_port() -> u16 { 1025 }
-fn default_smtp_user() -> String { "".to_string() }
-fn default_smtp_password() -> String { "".to_string() }
-fn default_smtp_from() -> String { "topems@localhost".to_string() }
-fn default_smtp_from_name() -> String { "TOPEMS".to_string() }
-fn default_smtp_use_tls() -> bool { false }
-fn default_ollama_base_url() -> String { "http://localhost:11434".to_string() }
-fn default_ollama_model() -> String { "qwen2.5:7b-instruct".to_string() }
-fn default_ollama_timeout() -> u64 { 60 }
-fn default_test_ollama_timeout() -> u64 { 30 }
-fn default_rag_chunk_size() -> usize { 500 }
-fn default_rag_chunk_overlap() -> usize { 50 }
-fn default_rag_max_results() -> usize { 3 }
-fn default_log_level() -> String { "debug".to_string() }
-fn default_test_log_level() -> String { "warn".to_string() }
-fn default_log_format() -> String { "pretty".to_string() }
-fn default_log_file_enabled() -> bool { false }
-fn default_log_file_path() -> String { "./logs/app.log".to_string() }
-fn default_log_max_size() -> u64 { 50 }
-fn default_log_max_files() -> u32 { 5 }
-fn default_cache_prefix() -> String { "topems:".to_string() }
-fn default_cache_default_ttl() -> u64 { 3600 }
-fn default_cache_memory_size() -> usize { 1000 }
-fn default_cache_eviction_policy() -> String { "LRU".to_string() }
-fn default_cache_write_through() -> bool { false }
+fn default_app_env() -> String {
+    "development".to_string()
+}
+fn default_database_url() -> String {
+    "postgres://topems:topems_dev@localhost:5432/topems_dev".to_string()
+}
+fn default_test_database_url() -> String {
+    "postgres://topems_test:topems_test_secret@localhost:5432/topems_test".to_string()
+}
+fn default_db_host() -> String {
+    "localhost".to_string()
+}
+fn default_db_port() -> u16 {
+    5432
+}
+fn default_db_name() -> String {
+    "topems_dev".to_string()
+}
+fn default_test_db_name() -> String {
+    "topems_test".to_string()
+}
+fn default_db_user() -> String {
+    "topems".to_string()
+}
+fn default_db_password() -> String {
+    "topems_dev".to_string()
+}
+fn default_test_db_password() -> String {
+    "topems_test_secret".to_string()
+}
+fn default_pool_max_size() -> u32 {
+    10
+}
+fn default_test_pool_max_size() -> u32 {
+    5
+}
+fn default_pool_min_size() -> u32 {
+    2
+}
+fn default_test_pool_min_size() -> u32 {
+    1
+}
+fn default_connect_timeout() -> u64 {
+    10
+}
+fn default_test_connect_timeout() -> u64 {
+    5
+}
+fn default_idle_timeout() -> u64 {
+    300
+}
+fn default_test_idle_timeout() -> u64 {
+    60
+}
+fn default_jwt_secret() -> String {
+    "dev-jwt-secret-key-not-for-production-use".to_string()
+}
+fn default_test_jwt_secret() -> String {
+    "test-jwt-secret-key-for-testing-only-32chars".to_string()
+}
+fn default_jwt_expiry_hours() -> u64 {
+    24
+}
+fn default_test_jwt_expiry_hours() -> u64 {
+    1
+}
+fn default_jwt_refresh_secret() -> String {
+    "dev-refresh-secret-key-not-for-production".to_string()
+}
+fn default_test_jwt_refresh_secret() -> String {
+    "test-refresh-secret-for-testing-only".to_string()
+}
+fn default_jwt_refresh_expiry_days() -> u64 {
+    7
+}
+fn default_test_jwt_refresh_expiry_days() -> u64 {
+    1
+}
+fn default_session_secret() -> String {
+    "dev-session-secret-not-for-production".to_string()
+}
+fn default_test_session_secret() -> String {
+    "test-session-secret-for-testing-only".to_string()
+}
+fn default_session_timeout_minutes() -> u64 {
+    240
+}
+fn default_test_session_timeout_minutes() -> u64 {
+    30
+}
+fn default_server_host() -> String {
+    "localhost".to_string()
+}
+fn default_server_port() -> u16 {
+    8000
+}
+fn default_test_server_port() -> u16 {
+    8000
+}
+fn default_cors_origins() -> String {
+    "http://localhost:5173,http://localhost:3000".to_string()
+}
+fn default_test_cors_origins() -> String {
+    "http://localhost:3000".to_string()
+}
+fn default_cors_methods() -> String {
+    "GET,POST,PUT,DELETE,PATCH,OPTIONS".to_string()
+}
+fn default_cors_credentials() -> bool {
+    true
+}
+fn default_rate_limit_enabled() -> bool {
+    false
+}
+fn default_test_rate_limit_enabled() -> bool {
+    false
+}
+fn default_rate_limit_requests() -> u32 {
+    1000
+}
+fn default_test_rate_limit_requests() -> u32 {
+    10000
+}
+fn default_rate_limit_window() -> u64 {
+    60
+}
+fn default_redis_url() -> String {
+    "redis://localhost:6379".to_string()
+}
+fn default_test_redis_url() -> String {
+    "redis://localhost:6379/1".to_string()
+}
+fn default_redis_host() -> String {
+    "localhost".to_string()
+}
+fn default_redis_port() -> u16 {
+    6379
+}
+fn default_redis_db() -> u8 {
+    0
+}
+fn default_test_redis_db() -> u8 {
+    1
+}
+fn default_redis_pool_max_size() -> u32 {
+    5
+}
+fn default_upload_dir() -> String {
+    "./uploads".to_string()
+}
+fn default_test_upload_dir() -> String {
+    "./test_uploads".to_string()
+}
+fn default_upload_max_size() -> u64 {
+    104857600
+}
+fn default_test_upload_max_size() -> u64 {
+    10485760
+}
+fn default_allowed_file_types() -> String {
+    "jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,zip,rar,txt,md".to_string()
+}
+fn default_test_allowed_file_types() -> String {
+    "jpg,pdf,txt,csv".to_string()
+}
+fn default_storage_provider() -> String {
+    "local".to_string()
+}
+fn default_smtp_host() -> String {
+    "localhost".to_string()
+}
+fn default_smtp_port() -> u16 {
+    1025
+}
+fn default_smtp_user() -> String {
+    "".to_string()
+}
+fn default_smtp_password() -> String {
+    "".to_string()
+}
+fn default_smtp_from() -> String {
+    "topems@localhost".to_string()
+}
+fn default_smtp_from_name() -> String {
+    "TOPEMS".to_string()
+}
+fn default_smtp_use_tls() -> bool {
+    false
+}
+fn default_ollama_base_url() -> String {
+    "http://localhost:11434".to_string()
+}
+fn default_ollama_model() -> String {
+    "qwen2.5:7b-instruct".to_string()
+}
+fn default_ollama_timeout() -> u64 {
+    60
+}
+fn default_test_ollama_timeout() -> u64 {
+    30
+}
+fn default_rag_chunk_size() -> usize {
+    500
+}
+fn default_rag_chunk_overlap() -> usize {
+    50
+}
+fn default_rag_max_results() -> usize {
+    3
+}
+fn default_log_level() -> String {
+    "debug".to_string()
+}
+fn default_test_log_level() -> String {
+    "warn".to_string()
+}
+fn default_log_format() -> String {
+    "pretty".to_string()
+}
+fn default_log_file_enabled() -> bool {
+    false
+}
+fn default_log_file_path() -> String {
+    "./logs/app.log".to_string()
+}
+fn default_log_max_size() -> u64 {
+    50
+}
+fn default_log_max_files() -> u32 {
+    5
+}
+fn default_cache_prefix() -> String {
+    "topems:".to_string()
+}
+fn default_cache_default_ttl() -> u64 {
+    3600
+}
+fn default_cache_memory_size() -> usize {
+    1000
+}
+fn default_cache_eviction_policy() -> String {
+    "LRU".to_string()
+}
+fn default_cache_write_through() -> bool {
+    false
+}

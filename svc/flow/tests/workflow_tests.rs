@@ -1,9 +1,12 @@
 // FLOW 服务单元测试和集成测试
 // 测试工作流定义、流程实例、审批流程、版本控制等功能
+#![allow(clippy::needless_range_loop)]
+#![allow(clippy::useless_vec)]
+#![allow(dead_code)]
 
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 // ============ 工作流定义测试 ============
 
@@ -180,13 +183,7 @@ mod workflow_instance_tests {
 
     #[test]
     fn test_instance_status_transitions() {
-        let statuses = vec![
-            "pending",
-            "approved",
-            "rejected",
-            "completed",
-            "cancelled",
-        ];
+        let statuses = vec!["pending", "approved", "rejected", "completed", "cancelled"];
 
         for status in statuses {
             let instance = WorkflowInstance {
@@ -357,8 +354,8 @@ mod http_endpoint_tests {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
-        Router,
         routing::get,
+        Router,
     };
     use tower::ServiceExt;
 

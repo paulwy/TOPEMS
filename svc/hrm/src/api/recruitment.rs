@@ -9,9 +9,9 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::api::audit::log_audit_event;
-use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct JobOpening {
@@ -149,15 +149,42 @@ pub struct JobOpeningQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-    .route("/api/v1/job-openings", get(list_job_openings).post(create_job_opening))
-    .route("/api/v1/job-openings/{id}", get(get_job_opening).put(update_job_opening).delete(delete_job_opening))
-    .route("/api/v1/job-openings/{id}/publish", put(publish_job_opening))
-    .route("/api/v1/job-openings/{id}/close", put(close_job_opening))
-    .route("/api/v1/candidates", get(list_candidates).post(create_candidate))
-    .route("/api/v1/candidates/{id}", get(get_candidate).put(update_candidate).delete(delete_candidate))
-    .route("/api/v1/interviews", get(list_interviews).post(create_interview))
-    .route("/api/v1/interviews/{id}", get(get_interview).put(update_interview).delete(delete_interview))
-    .route("/api/v1/interviews/{id}/complete", put(complete_interview))
+        .route(
+            "/api/v1/job-openings",
+            get(list_job_openings).post(create_job_opening),
+        )
+        .route(
+            "/api/v1/job-openings/{id}",
+            get(get_job_opening)
+                .put(update_job_opening)
+                .delete(delete_job_opening),
+        )
+        .route(
+            "/api/v1/job-openings/{id}/publish",
+            put(publish_job_opening),
+        )
+        .route("/api/v1/job-openings/{id}/close", put(close_job_opening))
+        .route(
+            "/api/v1/candidates",
+            get(list_candidates).post(create_candidate),
+        )
+        .route(
+            "/api/v1/candidates/{id}",
+            get(get_candidate)
+                .put(update_candidate)
+                .delete(delete_candidate),
+        )
+        .route(
+            "/api/v1/interviews",
+            get(list_interviews).post(create_interview),
+        )
+        .route(
+            "/api/v1/interviews/{id}",
+            get(get_interview)
+                .put(update_interview)
+                .delete(delete_interview),
+        )
+        .route("/api/v1/interviews/{id}/complete", put(complete_interview))
 }
 
 async fn list_job_openings(
@@ -221,7 +248,10 @@ async fn list_job_openings(
         }
         Err(e) => {
             tracing::error!("查询职位列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询职位列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询职位列表失败",
+            ))
         }
     }
 }
@@ -380,12 +410,10 @@ async fn delete_job_opening(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "DELETE FROM hrm.job_openings WHERE id = $1 AND status = 'draft'"
-    )
-    .bind(id)
-    .execute(&state.db)
-    .await;
+    let result = sqlx::query("DELETE FROM hrm.job_openings WHERE id = $1 AND status = 'draft'")
+        .bind(id)
+        .execute(&state.db)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -454,7 +482,10 @@ async fn publish_job_opening(
 
     match result {
         Ok(Some(opening)) => Json(ApiResponse::success(opening, "职位已发布")),
-        Ok(None) => Json(ApiResponse::<JobOpening>::error(404, "职位不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<JobOpening>::error(
+            404,
+            "职位不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("发布职位失败: {}", e);
             Json(ApiResponse::<JobOpening>::error(500, "发布职位失败"))
@@ -483,7 +514,10 @@ async fn close_job_opening(
 
     match result {
         Ok(Some(opening)) => Json(ApiResponse::success(opening, "职位已关闭")),
-        Ok(None) => Json(ApiResponse::<JobOpening>::error(404, "职位不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<JobOpening>::error(
+            404,
+            "职位不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("关闭职位失败: {}", e);
             Json(ApiResponse::<JobOpening>::error(500, "关闭职位失败"))
@@ -552,7 +586,10 @@ async fn list_candidates(
         }
         Err(e) => {
             tracing::error!("查询候选人列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询候选人列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询候选人列表失败",
+            ))
         }
     }
 }
@@ -811,7 +848,10 @@ async fn list_interviews(
         }
         Err(e) => {
             tracing::error!("查询面试列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询面试列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询面试列表失败",
+            ))
         }
     }
 }
@@ -972,7 +1012,10 @@ async fn complete_interview(
 
     match result {
         Ok(Some(interview)) => Json(ApiResponse::success(interview, "面试已完成")),
-        Ok(None) => Json(ApiResponse::<Interview>::error(404, "面试不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<Interview>::error(
+            404,
+            "面试不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("完成面试失败: {}", e);
             Json(ApiResponse::<Interview>::error(500, "完成面试失败"))

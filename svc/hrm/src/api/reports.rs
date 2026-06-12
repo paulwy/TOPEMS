@@ -7,16 +7,22 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
+use topems_shared::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/reports/employee-summary", get(employee_summary))
-        .route("/api/v1/reports/department-summary", get(department_summary))
+        .route(
+            "/api/v1/reports/department-summary",
+            get(department_summary),
+        )
         .route("/api/v1/reports/contract-summary", get(contract_summary))
         .route("/api/v1/reports/training-summary", get(training_summary))
-        .route("/api/v1/reports/attendance-summary", get(attendance_summary))
+        .route(
+            "/api/v1/reports/attendance-summary",
+            get(attendance_summary),
+        )
         .route("/api/v1/reports/payroll-summary", get(payroll_summary))
 }
 
@@ -48,11 +54,9 @@ async fn employee_summary(
     let _start_date = params.start_date.clone();
     let _end_date = params.end_date.clone();
 
-    let total_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM shared.employees"#,
-    )
-    .fetch_one(&state.db)
-    .await;
+    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM shared.employees"#)
+        .fetch_one(&state.db)
+        .await;
 
     let active_result = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM shared.employees WHERE status = 'active'"#,
@@ -90,7 +94,7 @@ async fn employee_summary(
 
     let now = Utc::now();
     let current_month = now.format("%Y-%m").to_string();
-    
+
     let new_hires_result = sqlx::query_scalar::<_, i64>(
         r#"
         SELECT COUNT(*) FROM shared.employees 
@@ -112,22 +116,38 @@ async fn employee_summary(
     .fetch_one(&state.db)
     .await;
 
-    match (total_result, active_result, inactive_result, male_result, female_result, tenure_result, new_hires_result, terminations_result) {
-        (Ok(total), Ok(active), Ok(inactive), Ok(male), Ok(female), Ok(avg_tenure), Ok(new_hires), Ok(terminations)) => {
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "total_employees": total,
-                    "active_employees": active,
-                    "inactive_employees": inactive,
-                    "male_count": male,
-                    "female_count": female,
-                    "avg_tenure_days": avg_tenure.round(),
-                    "new_hires_this_month": new_hires,
-                    "terminations_this_month": terminations,
-                }),
-                "获取员工统计成功",
-            ))
-        }
+    match (
+        total_result,
+        active_result,
+        inactive_result,
+        male_result,
+        female_result,
+        tenure_result,
+        new_hires_result,
+        terminations_result,
+    ) {
+        (
+            Ok(total),
+            Ok(active),
+            Ok(inactive),
+            Ok(male),
+            Ok(female),
+            Ok(avg_tenure),
+            Ok(new_hires),
+            Ok(terminations),
+        ) => Json(ApiResponse::success(
+            serde_json::json!({
+                "total_employees": total,
+                "active_employees": active,
+                "inactive_employees": inactive,
+                "male_count": male,
+                "female_count": female,
+                "avg_tenure_days": avg_tenure.round(),
+                "new_hires_this_month": new_hires,
+                "terminations_this_month": terminations,
+            }),
+            "获取员工统计成功",
+        )),
         _ => {
             tracing::error!("获取员工统计失败");
             Json(api_error(500, "获取员工统计失败"))
@@ -152,9 +172,7 @@ struct DepartmentSummaryRow {
     active_count: Option<i64>,
 }
 
-async fn department_summary(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn department_summary(State(state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, DepartmentSummaryRow>(
         r#"
         SELECT 
@@ -207,18 +225,16 @@ pub struct ContractSummaryResponse {
     pub expiring_next_month: i64,
 }
 
-async fn contract_summary(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn contract_summary(State(state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
     let now = Utc::now();
     let current_month = now.format("%Y-%m").to_string();
-    let next_month = (now + chrono::Duration::days(30)).format("%Y-%m").to_string();
+    let next_month = (now + chrono::Duration::days(30))
+        .format("%Y-%m")
+        .to_string();
 
-    let total_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.contracts"#,
-    )
-    .fetch_one(&state.db)
-    .await;
+    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.contracts"#)
+        .fetch_one(&state.db)
+        .await;
 
     let active_result = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date > CURRENT_DATE"#,
@@ -246,7 +262,13 @@ async fn contract_summary(
     .fetch_one(&state.db)
     .await;
 
-    match (total_result, active_result, expired_result, expiring_this_month_result, expiring_next_month_result) {
+    match (
+        total_result,
+        active_result,
+        expired_result,
+        expiring_this_month_result,
+        expiring_next_month_result,
+    ) {
         (Ok(total), Ok(active), Ok(expired), Ok(this_month), Ok(next_month)) => {
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -278,14 +300,11 @@ pub struct TrainingSummaryResponse {
     pub avg_completion_rate: f64,
 }
 
-async fn training_summary(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let total_plans_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.training_plans"#,
-    )
-    .fetch_one(&state.db)
-    .await;
+async fn training_summary(State(state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
+    let total_plans_result =
+        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.training_plans"#)
+            .fetch_one(&state.db)
+            .await;
 
     let active_plans_result = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM hrm.training_plans WHERE status = 'active'"#,
@@ -293,11 +312,10 @@ async fn training_summary(
     .fetch_one(&state.db)
     .await;
 
-    let total_courses_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.training_courses"#,
-    )
-    .fetch_one(&state.db)
-    .await;
+    let total_courses_result =
+        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.training_courses"#)
+            .fetch_one(&state.db)
+            .await;
 
     let completed_courses_result = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM hrm.training_courses WHERE status = 'completed'"#,
@@ -305,11 +323,10 @@ async fn training_summary(
     .fetch_one(&state.db)
     .await;
 
-    let total_records_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.training_records"#,
-    )
-    .fetch_one(&state.db)
-    .await;
+    let total_records_result =
+        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.training_records"#)
+            .fetch_one(&state.db)
+            .await;
 
     let completed_records_result = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM hrm.training_records WHERE status = 'completed'"#,
@@ -317,8 +334,22 @@ async fn training_summary(
     .fetch_one(&state.db)
     .await;
 
-    match (total_plans_result, active_plans_result, total_courses_result, completed_courses_result, total_records_result, completed_records_result) {
-        (Ok(total_plans), Ok(active_plans), Ok(total_courses), Ok(completed_courses), Ok(total_records), Ok(completed_records)) => {
+    match (
+        total_plans_result,
+        active_plans_result,
+        total_courses_result,
+        completed_courses_result,
+        total_records_result,
+        completed_records_result,
+    ) {
+        (
+            Ok(total_plans),
+            Ok(active_plans),
+            Ok(total_courses),
+            Ok(completed_courses),
+            Ok(total_records),
+            Ok(completed_records),
+        ) => {
             let avg_completion_rate = if total_records > 0 {
                 (completed_records as f64 / total_records as f64) * 100.0
             } else {
@@ -361,11 +392,14 @@ async fn attendance_summary(
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let start_date = params.start_date.clone().unwrap_or_else(|| {
-        (Utc::now() - chrono::Duration::days(30)).format("%Y-%m-%d").to_string()
+        (Utc::now() - chrono::Duration::days(30))
+            .format("%Y-%m-%d")
+            .to_string()
     });
-    let end_date = params.end_date.clone().unwrap_or_else(|| {
-        Utc::now().format("%Y-%m-%d").to_string()
-    });
+    let end_date = params
+        .end_date
+        .clone()
+        .unwrap_or_else(|| Utc::now().format("%Y-%m-%d").to_string());
 
     let total_result = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2"#,
@@ -407,7 +441,13 @@ async fn attendance_summary(
     .fetch_one(&state.db)
     .await;
 
-    match (total_result, on_time_result, late_result, absent_result, leave_result) {
+    match (
+        total_result,
+        on_time_result,
+        late_result,
+        absent_result,
+        leave_result,
+    ) {
         (Ok(total), Ok(on_time), Ok(late), Ok(absent), Ok(leave)) => {
             let attendance_rate = if total > 0 {
                 ((total - absent) as f64 / total as f64) * 100.0
@@ -490,20 +530,32 @@ async fn payroll_summary(
     .fetch_one(&state.db)
     .await;
 
-    match (total_payroll_result, avg_salary_result, min_salary_result, max_salary_result, employee_count_result, bonus_total_result) {
-        (Ok(total_payroll), Ok(avg_salary), Ok(min_salary), Ok(max_salary), Ok(employee_count), Ok(bonus_total)) => {
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "total_payroll": total_payroll,
-                    "avg_salary": avg_salary,
-                    "min_salary": min_salary,
-                    "max_salary": max_salary,
-                    "employee_count": employee_count,
-                    "bonus_total": bonus_total,
-                }),
-                "获取薪资统计成功",
-            ))
-        }
+    match (
+        total_payroll_result,
+        avg_salary_result,
+        min_salary_result,
+        max_salary_result,
+        employee_count_result,
+        bonus_total_result,
+    ) {
+        (
+            Ok(total_payroll),
+            Ok(avg_salary),
+            Ok(min_salary),
+            Ok(max_salary),
+            Ok(employee_count),
+            Ok(bonus_total),
+        ) => Json(ApiResponse::success(
+            serde_json::json!({
+                "total_payroll": total_payroll,
+                "avg_salary": avg_salary,
+                "min_salary": min_salary,
+                "max_salary": max_salary,
+                "employee_count": employee_count,
+                "bonus_total": bonus_total,
+            }),
+            "获取薪资统计成功",
+        )),
         _ => {
             tracing::error!("获取薪资统计失败");
             Json(api_error(500, "获取薪资统计失败"))

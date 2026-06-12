@@ -7,18 +7,23 @@ use axum::{
 use chrono::Utc;
 use uuid::Uuid;
 
+use super::ApiState;
+use crate::api::audit::log_audit_event;
 use crate::models::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
 use crate::services::permission::{check_permission, ModulePermission};
-use topems_shared::{ApiResponse, PaginationParams, api_error, auth::Claims};
-use crate::api::audit::log_audit_event;
-use super::ApiState;
+use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/suppliers", get(list_suppliers).post(create_supplier))
+        .route(
+            "/api/v1/suppliers",
+            get(list_suppliers).post(create_supplier),
+        )
         .route(
             "/api/v1/suppliers/{id}",
-            get(get_supplier).put(update_supplier).delete(delete_supplier),
+            get(get_supplier)
+                .put(update_supplier)
+                .delete(delete_supplier),
         )
 }
 
@@ -28,7 +33,7 @@ async fn list_suppliers(
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
@@ -95,7 +100,7 @@ async fn create_supplier(
     Json(req): Json<CreateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -127,14 +132,14 @@ async fn create_supplier(
         Ok(supplier) => (
             Json(ApiResponse::success(supplier.clone(), "供应商创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建供应商失败: {}", e);
             (
                 Json(api_error(500, "供应商创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -157,8 +162,9 @@ async fn create_supplier(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -169,7 +175,7 @@ async fn get_supplier(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Supplier>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, Supplier>(
@@ -200,11 +206,11 @@ async fn update_supplier(
     Json(req): Json<UpdateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, Supplier>(
         "SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at FROM suppliers WHERE id = $1",
     )
@@ -255,14 +261,14 @@ async fn update_supplier(
         Ok(supplier) => (
             Json(ApiResponse::success(supplier.clone(), "供应商更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新供应商失败: {}", e);
             (
                 Json(api_error(500, "供应商更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -285,8 +291,9 @@ async fn update_supplier(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -298,7 +305,7 @@ async fn delete_supplier(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query("DELETE FROM suppliers WHERE id = $1")
@@ -310,19 +317,19 @@ async fn delete_supplier(
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success("".to_string(), "供应商删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(api_error(404, "供应商不存在")),
             "error",
-            Some("供应商不存在".to_string())
+            Some("供应商不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除供应商失败: {}", e);
             (
                 Json(api_error(500, "供应商删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -345,8 +352,9 @@ async fn delete_supplier(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

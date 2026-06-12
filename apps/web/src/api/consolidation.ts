@@ -125,7 +125,9 @@ export const removeCompanyFromScope = async (
 export const getEliminationRules = async (
   params: EliminationRuleQueryParams,
 ): Promise<PaginatedResponse<EliminationRule>> => {
-  return apiClient.erp.get("/api/v1/consolidation/elimination-rules", { params });
+  return apiClient.erp.get("/api/v1/consolidation/elimination-rules", {
+    params,
+  });
 };
 
 /**
@@ -165,7 +167,9 @@ export const updateEliminationRule = async (
 export const deleteEliminationRule = async (
   ruleId: string,
 ): Promise<ApiResponse<void>> => {
-  return apiClient.erp.delete(`/api/v1/consolidation/elimination-rules/${ruleId}`);
+  return apiClient.erp.delete(
+    `/api/v1/consolidation/elimination-rules/${ruleId}`,
+  );
 };
 
 /**
@@ -203,7 +207,10 @@ export const executeElimination = async (params: {
     total_eliminated: number;
   }>
 > => {
-  return apiClient.erp.post("/api/v1/consolidation/execute-elimination", params);
+  return apiClient.erp.post(
+    "/api/v1/consolidation/execute-elimination",
+    params,
+  );
 };
 
 // ============================================
@@ -252,7 +259,9 @@ export const getConsolidationReportLines = async (
 export const approveConsolidationReport = async (
   reportId: string,
 ): Promise<ApiResponse<ConsolidationReport>> => {
-  return apiClient.erp.post(`/api/v1/consolidation/reports/${reportId}/approve`);
+  return apiClient.erp.post(
+    `/api/v1/consolidation/reports/${reportId}/approve`,
+  );
 };
 
 /**
@@ -261,7 +270,9 @@ export const approveConsolidationReport = async (
 export const publishConsolidationReport = async (
   reportId: string,
 ): Promise<ApiResponse<ConsolidationReport>> => {
-  return apiClient.erp.post(`/api/v1/consolidation/reports/${reportId}/publish`);
+  return apiClient.erp.post(
+    `/api/v1/consolidation/reports/${reportId}/publish`,
+  );
 };
 
 /**
@@ -285,7 +296,9 @@ export const getCompanyRelations = async (params?: {
   relation_type?: string;
   keyword?: string;
 }): Promise<ApiResponse<CompanyRelation[]>> => {
-  return apiClient.erp.get("/api/v1/consolidation/company-relations", { params });
+  return apiClient.erp.get("/api/v1/consolidation/company-relations", {
+    params,
+  });
 };
 
 /**

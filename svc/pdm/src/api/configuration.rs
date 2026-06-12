@@ -1,14 +1,14 @@
 use axum::{
-    extract::{State, FromRef},
-    routing::{post},
+    extract::{FromRef, State},
+    routing::post,
     Json, Router,
 };
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
-use crate::models::{Configuration, CreateConfigurationRequest, CompareConfigurationRequest};
+use crate::models::{CompareConfigurationRequest, Configuration, CreateConfigurationRequest};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,7 +34,10 @@ pub fn create_router(pool: PgPool) -> Router {
     let state = ConfigurationApiState { pool };
     Router::new()
         .route("/api/v1/configurations/create", post(create_configuration))
-        .route("/api/v1/configurations/compare", post(compare_configurations))
+        .route(
+            "/api/v1/configurations/compare",
+            post(compare_configurations),
+        )
         .with_state(state)
 }
 
@@ -44,7 +47,7 @@ async fn create_configuration(
 ) -> Json<ApiResponse<Configuration>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let product_uuid = req.product_id.and_then(|pid| Uuid::parse_str(&pid).ok());
     let version_uuid = req.version_id.and_then(|vid| Uuid::parse_str(&vid).ok());
 
@@ -79,16 +82,26 @@ async fn compare_configurations(
 ) -> Json<ApiResponse<Vec<ConfigurationDiff>>> {
     let base_version_uuid = match Uuid::parse_str(&req.base_version_id) {
         Ok(u) => u,
-        Err(e) => return Json(ApiResponse::<Vec<ConfigurationDiff>>::error(400, &format!("Invalid base version ID: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::<Vec<ConfigurationDiff>>::error(
+                400,
+                &format!("Invalid base version ID: {}", e),
+            ))
+        }
     };
-    
+
     let target_version_uuid = match Uuid::parse_str(&req.target_version_id) {
         Ok(u) => u,
-        Err(e) => return Json(ApiResponse::<Vec<ConfigurationDiff>>::error(400, &format!("Invalid target version ID: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::<Vec<ConfigurationDiff>>::error(
+                400,
+                &format!("Invalid target version ID: {}", e),
+            ))
+        }
     };
 
     let base_configs = match sqlx::query_as::<_, Configuration>(
-        "SELECT * FROM configurations WHERE version_id = $1"
+        "SELECT * FROM configurations WHERE version_id = $1",
     )
     .bind(base_version_uuid)
     .fetch_all(&state.pool)
@@ -97,12 +110,15 @@ async fn compare_configurations(
         Ok(configs) => configs,
         Err(e) => {
             tracing::error!("Failed to fetch base configurations: {}", e);
-            return Json(ApiResponse::<Vec<ConfigurationDiff>>::error(500, &format!("Failed to fetch base configurations: {}", e)));
+            return Json(ApiResponse::<Vec<ConfigurationDiff>>::error(
+                500,
+                &format!("Failed to fetch base configurations: {}", e),
+            ));
         }
     };
 
     let target_configs = match sqlx::query_as::<_, Configuration>(
-        "SELECT * FROM configurations WHERE version_id = $1"
+        "SELECT * FROM configurations WHERE version_id = $1",
     )
     .bind(target_version_uuid)
     .fetch_all(&state.pool)
@@ -111,7 +127,10 @@ async fn compare_configurations(
         Ok(configs) => configs,
         Err(e) => {
             tracing::error!("Failed to fetch target configurations: {}", e);
-            return Json(ApiResponse::<Vec<ConfigurationDiff>>::error(500, &format!("Failed to fetch target configurations: {}", e)));
+            return Json(ApiResponse::<Vec<ConfigurationDiff>>::error(
+                500,
+                &format!("Failed to fetch target configurations: {}", e),
+            ));
         }
     };
 
@@ -133,7 +152,7 @@ async fn compare_configurations(
     for key in all_keys {
         let base_value = base_map.remove(&key);
         let target_value = target_map.remove(&key);
-        
+
         let diff_type = match (base_value.is_some(), target_value.is_some()) {
             (false, true) => "added",
             (true, false) => "removed",
@@ -151,5 +170,8 @@ async fn compare_configurations(
 
     diffs.sort_by(|a, b| a.config_key.cmp(&b.config_key));
 
-    Json(ApiResponse::success(diffs, "Configuration comparison completed successfully"))
+    Json(ApiResponse::success(
+        diffs,
+        "Configuration comparison completed successfully",
+    ))
 }

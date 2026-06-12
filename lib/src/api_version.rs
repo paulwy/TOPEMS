@@ -1,8 +1,4 @@
-use axum::{
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{response::IntoResponse, routing::get, Router};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,9 +31,7 @@ pub fn versioned_router<S: Clone + Send + Sync + 'static>(
 }
 
 /// 创建一个默认的 API 路由，同时支持 v1 和 /api 前缀（为了向后兼容）
-pub fn default_versioned_router<S: Clone + Send + Sync + 'static>(
-    router: Router<S>,
-) -> Router<S> {
+pub fn default_versioned_router<S: Clone + Send + Sync + 'static>(router: Router<S>) -> Router<S> {
     Router::new()
         // 主要的版本化路由
         .nest("/api/v1", router.clone())
@@ -66,7 +60,9 @@ pub async fn get_api_info_handler(service_name: &'static str) -> impl IntoRespon
 }
 
 /// 创建 API 信息路由（无状态版本，适合合并到有状态路由）
-pub fn create_api_info_router<S: Clone + Send + Sync + 'static>(service_name: &'static str) -> Router<S> {
+pub fn create_api_info_router<S: Clone + Send + Sync + 'static>(
+    service_name: &'static str,
+) -> Router<S> {
     Router::new()
         .route("/api", get(move || get_api_info_handler(service_name)))
         .route("/api/info", get(move || get_api_info_handler(service_name)))

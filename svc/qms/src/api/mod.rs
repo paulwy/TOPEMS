@@ -1,12 +1,10 @@
-use axum::{
-    Router,
-};
+use axum::Router;
 
-pub mod quality_standard;
+pub mod audit;
+pub mod corrective_action;
 pub mod quality_inspection;
 pub mod quality_issue;
-pub mod corrective_action;
-pub mod audit;
+pub mod quality_standard;
 
 // Re-export AppState from main.rs
 pub use crate::AppState as ApiState;

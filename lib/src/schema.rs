@@ -1,5 +1,5 @@
-/// TOPEMS 系统的 Schema 定义
-/// 为了确保数据库架构隔离，每个服务都应该只访问自己对应的 Schema
+//! TOPEMS 系统的 Schema 定义
+//! 为了确保数据库架构隔离，每个服务都应该只访问自己对应的 Schema
 
 pub const HRM_SCHEMA: &str = "hrm";
 pub const ERP_SCHEMA: &str = "erp";

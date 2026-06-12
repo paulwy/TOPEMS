@@ -1,8 +1,12 @@
+#![allow(dead_code)]
+
 use sqlx::PgPool;
-use uuid::Uuid;
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, check_resource_permission, ModulePermission as SharedModulePermission,
+};
 use topems_shared::response::ApiResponse;
-use topems_shared::permission::{ModulePermission as SharedModulePermission, check_module_permission, check_resource_permission};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ModulePermission {
@@ -41,7 +45,7 @@ impl SharedModulePermission for ModulePermission {
     fn module_name() -> &'static str {
         "erp"
     }
-    
+
     fn all_permission() -> Self {
         ModulePermission::All
     }

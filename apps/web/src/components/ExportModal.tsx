@@ -10,7 +10,6 @@ import {
   Columns,
 } from "lucide-react";
 import type { ReportData, ExportFormat } from "../api/report";
-import { ExportReportRequest } from "../api/report";
 
 interface ExportModalProps {
   report: ReportData;
@@ -164,17 +163,6 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  };
-
-  const getFormatIcon = (fmt: ExportFormat) => {
-    switch (fmt) {
-      case "excel":
-        return FileSpreadsheet;
-      case "pdf":
-        return File;
-      case "csv":
-        return FileText;
-    }
   };
 
   const getFormatColor = (color: string) => {

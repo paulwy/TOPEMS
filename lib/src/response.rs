@@ -57,7 +57,8 @@ where
     T: Serialize,
 {
     fn into_response(self) -> axum::response::Response {
-        let status = axum::http::StatusCode::from_u16(self.code).unwrap_or(axum::http::StatusCode::OK);
+        let status =
+            axum::http::StatusCode::from_u16(self.code).unwrap_or(axum::http::StatusCode::OK);
         let body = axum::Json(self);
         (status, body).into_response()
     }
@@ -95,7 +96,7 @@ pub struct PaginatedResponse<T> {
 impl<T> PaginatedResponse<T> {
     pub fn new(items: Vec<T>, total: i64, page: i64, page_size: i64) -> Self {
         let page = page.max(1);
-        let page_size = page_size.min(100).max(1);
+        let page_size = page_size.clamp(1, 100);
         let total_pages = (total + page_size - 1) / page_size;
         Self {
             items,

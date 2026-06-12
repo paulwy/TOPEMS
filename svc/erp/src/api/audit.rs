@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
-use crate::models::AuditLog;
 use super::ApiState;
+use crate::models::AuditLog;
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
@@ -19,6 +19,20 @@ pub struct ApiResponse<T> {
     pub data: Option<T>,
     pub message: String,
     pub timestamp: String,
+}
+
+#[derive(Debug)]
+pub struct AuditEventParams {
+    pub action: String,
+    pub entity_type: String,
+    pub entity_id: Option<Uuid>,
+    pub entity_ids: Option<serde_json::Value>,
+    pub user_id: Option<String>,
+    pub user_name: Option<String>,
+    pub request_details: Option<serde_json::Value>,
+    pub response_details: Option<serde_json::Value>,
+    pub status: String,
+    pub error_message: Option<String>,
 }
 
 impl<T> ApiResponse<T> {
@@ -163,20 +177,19 @@ async fn get_audit_log(
     }
 }
 
-pub async fn log_audit_event(
-    db: &PgPool,
-    action: String,
-    entity_type: String,
-    entity_id: Option<Uuid>,
-    entity_ids: Option<serde_json::Value>,
-    user_id: Option<String>,
-    user_name: Option<String>,
-    request_details: Option<serde_json::Value>,
-    response_details: Option<serde_json::Value>,
-    status: String,
-    error_message: Option<String>,
-    headers: &HeaderMap,
-) {
+pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &HeaderMap) {
+    let AuditEventParams {
+        action,
+        entity_type,
+        entity_id,
+        entity_ids,
+        user_id,
+        user_name,
+        request_details,
+        response_details,
+        status,
+        error_message,
+    } = params;
     let ip_address = headers
         .get("x-forwarded-for")
         .and_then(|h| h.to_str().ok())

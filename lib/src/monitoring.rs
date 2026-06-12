@@ -1,9 +1,9 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceHealth {
@@ -156,7 +156,7 @@ impl MonitoringState {
         let request_count = self.request_count.load(Ordering::Relaxed);
         let success_count = self.success_count.load(Ordering::Relaxed);
         let failure_count = self.failure_count.load(Ordering::Relaxed);
-        
+
         let times = self.response_times.read().await;
         let avg_response = if times.is_empty() {
             0
@@ -198,7 +198,7 @@ impl MonitoringState {
 
         let mut alerts = self.alerts.write().await;
         alerts.push(alert.clone());
-        
+
         // 保持最多100条告警记录
         if alerts.len() > 100 {
             alerts.remove(0);
@@ -227,7 +227,8 @@ impl MonitoringState {
 
     pub async fn get_active_alerts(&self) -> Vec<Alert> {
         let alerts = self.alerts.read().await;
-        alerts.iter()
+        alerts
+            .iter()
             .filter(|a| a.resolved_at.is_none())
             .cloned()
             .collect()
@@ -280,10 +281,10 @@ mod tests {
     #[tokio::test]
     async fn test_monitoring_state() {
         let state = MonitoringState::new();
-        
+
         state.record_request(true, 50).await;
         state.record_request(false, 100).await;
-        
+
         let metrics = state.get_metrics().await;
         assert_eq!(metrics.requests_total, 2);
         assert_eq!(metrics.requests_success, 1);
@@ -293,7 +294,7 @@ mod tests {
     #[tokio::test]
     async fn test_alert_lifecycle() {
         let state = MonitoringState::new();
-        
+
         let rule = AlertRule {
             name: "test_alert".to_string(),
             condition: AlertCondition {
@@ -305,11 +306,11 @@ mod tests {
             cooldown_seconds: 60,
             enabled: true,
         };
-        
+
         let alert = state.create_alert(&rule, "Test alert".to_string()).await;
         assert!(!alert.acknowledged);
         assert!(alert.resolved_at.is_none());
-        
+
         state.acknowledge_alert(&alert.id).await;
         let alerts = state.get_active_alerts().await;
         assert_eq!(alerts.len(), 1);

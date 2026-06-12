@@ -1,5 +1,5 @@
+use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use utoipa::OpenApi;
-use crate::models::{Employee, CreateEmployeeRequest, UpdateEmployeeRequest};
 
 #[derive(OpenApi)]
 #[openapi(

@@ -1,17 +1,28 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(dead_code)]
+
 use axum::{
+    extract::FromRef,
     extract::{Path, State},
     routing::{get, post},
     Json, Router,
-    extract::FromRef,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use chrono::{Utc, DateTime};
-use uuid::Uuid;
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
+use uuid::Uuid;
 
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, build_health_response,
+    auth_middleware, build_health_response, create_cors_layer, init_logging, ApiResponse,
+    AuthState, ServiceHealth,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -177,7 +188,8 @@ async fn main() {
         }
     };
 
-    let lims_url = std::env::var("LIMS_URL").unwrap_or_else(|_| "http://localhost:8022".to_string());
+    let lims_url =
+        std::env::var("LIMS_URL").unwrap_or_else(|_| "http://localhost:8022".to_string());
     let qms_url = std::env::var("QMS_URL").unwrap_or_else(|_| "http://localhost:8031".to_string());
     let mes_url = std::env::var("MES_URL").unwrap_or_else(|_| "http://localhost:8030".to_string());
     let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
@@ -209,7 +221,10 @@ async fn main() {
         .route("/api/v1/integration/lims-qms", get(list_lims_qms_sync))
         .route("/api/v1/integration/lims-qms", post(create_lims_qms_sync))
         .route("/api/v1/integration/lims-qms/{id}", get(get_lims_qms_sync))
-        .route("/api/v1/integration/lims-qms/{id}/sync", post(sync_lims_qms))
+        .route(
+            "/api/v1/integration/lims-qms/{id}/sync",
+            post(sync_lims_qms),
+        )
         .route("/api/v1/integration/mes-erp", get(list_mes_erp_sync))
         .route("/api/v1/integration/mes-erp", post(create_mes_erp_sync))
         .route("/api/v1/integration/mes-erp/{id}", get(get_mes_erp_sync))
@@ -235,7 +250,10 @@ async fn main() {
         .unwrap_or(8004);
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    tracing::info!("✅ TOPEMS Integration Service is running at http://{}", addr);
+    tracing::info!(
+        "✅ TOPEMS Integration Service is running at http://{}",
+        addr
+    );
     tracing::info!("🔒 Authentication protection enabled");
 
     axum::serve(listener, app.into_make_service())
@@ -253,7 +271,12 @@ async fn health() -> ServiceHealth {
 
 async fn check_service_health(url: &str) -> bool {
     let client = reqwest::Client::new();
-    match client.get(format!("{}/health", url)).timeout(std::time::Duration::from_secs(2)).send().await {
+    match client
+        .get(format!("{}/health", url))
+        .timeout(std::time::Duration::from_secs(2))
+        .send()
+        .await
+    {
         Ok(res) => res.status().is_success(),
         Err(_) => false,
     }
@@ -268,7 +291,7 @@ async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncS
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM lims_qms_sync"
+           FROM lims_qms_sync",
     )
     .fetch_one(&state.pool)
     .await;
@@ -286,7 +309,7 @@ async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncS
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM mes_erp_sync"
+           FROM mes_erp_sync",
     )
     .fetch_one(&state.pool)
     .await;
@@ -304,7 +327,7 @@ async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncS
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM wms_scm_sync"
+           FROM wms_scm_sync",
     )
     .fetch_one(&state.pool)
     .await;
@@ -325,12 +348,14 @@ async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncS
             SELECT MAX(last_synced_at) as last_synced_at FROM mes_erp_sync
             UNION ALL
             SELECT MAX(last_synced_at) as last_synced_at FROM wms_scm_sync
-        ) t"
+        ) t",
     )
     .fetch_one(&state.pool)
     .await;
 
-    let last_sync = last_sync_result.ok().and_then(|row| row.try_get("last_sync").ok());
+    let last_sync = last_sync_result
+        .ok()
+        .and_then(|row| row.try_get("last_sync").ok());
 
     let stats = SyncStats {
         lims_qms_total,
@@ -345,22 +370,31 @@ async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncS
         last_sync,
     };
 
-    Json(ApiResponse::success(stats, "Sync stats retrieved successfully"))
+    Json(ApiResponse::success(
+        stats,
+        "Sync stats retrieved successfully",
+    ))
 }
 
 async fn list_events(State(state): State<AppState>) -> Json<ApiResponse<Vec<IntegrationEvent>>> {
     match sqlx::query_as::<_, IntegrationEvent>(
         "SELECT id, source_system, target_system, event_type, source_record_id, 
                 target_record_id, payload, status, error_message, synced_at, created_at
-           FROM integration_events ORDER BY created_at DESC LIMIT 100"
+           FROM integration_events ORDER BY created_at DESC LIMIT 100",
     )
     .fetch_all(&state.pool)
     .await
     {
-        Ok(events) => Json(ApiResponse::success(events, "Events retrieved successfully")),
+        Ok(events) => Json(ApiResponse::success(
+            events,
+            "Events retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch events: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch events: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch events: {}", e),
+            ))
         }
     }
 }
@@ -377,7 +411,7 @@ async fn create_event(
             id, source_system, target_system, event_type, source_record_id, payload
         ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, source_system, target_system, event_type, source_record_id, 
-                  target_record_id, payload, status, error_message, synced_at, created_at"
+                  target_record_id, payload, status, error_message, synced_at, created_at",
     )
     .bind(id)
     .bind(req.source_system)
@@ -391,7 +425,10 @@ async fn create_event(
         Ok(event) => Json(ApiResponse::success(event, "Event created successfully")),
         Err(e) => {
             tracing::error!("Failed to create event: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to create event: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to create event: {}", e),
+            ))
         }
     }
 }
@@ -401,15 +438,21 @@ async fn list_lims_qms_sync(State(state): State<AppState>) -> Json<ApiResponse<V
         "SELECT id, lims_sample_id, qms_inspection_id, sample_name, inspection_result, 
                 inspection_notes, synced, sync_status, sync_error, last_synced_at, 
                 created_at, updated_at
-           FROM lims_qms_sync ORDER BY updated_at DESC LIMIT 100"
+           FROM lims_qms_sync ORDER BY updated_at DESC LIMIT 100",
     )
     .fetch_all(&state.pool)
     .await
     {
-        Ok(syncs) => Json(ApiResponse::success(syncs, "LIMS↔QMS syncs retrieved successfully")),
+        Ok(syncs) => Json(ApiResponse::success(
+            syncs,
+            "LIMS↔QMS syncs retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch LIMS↔QMS syncs: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch LIMS↔QMS syncs: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch LIMS↔QMS syncs: {}", e),
+            ))
         }
     }
 }
@@ -423,7 +466,12 @@ async fn create_lims_qms_sync(
 
     let lims_uuid = match Uuid::parse_str(&req.lims_sample_id) {
         Ok(u) => u,
-        Err(e) => return Json(ApiResponse::error(400, &format!("Invalid LIMS sample ID: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                400,
+                &format!("Invalid LIMS sample ID: {}", e),
+            ))
+        }
     };
 
     match sqlx::query_as::<_, LimsQmsSync>(
@@ -433,7 +481,7 @@ async fn create_lims_qms_sync(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, lims_sample_id, qms_inspection_id, sample_name, inspection_result, 
                   inspection_notes, synced, sync_status, sync_error, last_synced_at, 
-                  created_at, updated_at"
+                  created_at, updated_at",
     )
     .bind(id)
     .bind(lims_uuid)
@@ -447,10 +495,16 @@ async fn create_lims_qms_sync(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(sync) => Json(ApiResponse::success(sync, "LIMS↔QMS sync created successfully")),
+        Ok(sync) => Json(ApiResponse::success(
+            sync,
+            "LIMS↔QMS sync created successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to create LIMS↔QMS sync: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to create LIMS↔QMS sync: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to create LIMS↔QMS sync: {}", e),
+            ))
         }
     }
 }
@@ -463,7 +517,7 @@ async fn get_lims_qms_sync(
         "SELECT id, lims_sample_id, qms_inspection_id, sample_name, inspection_result, 
                 inspection_notes, synced, sync_status, sync_error, last_synced_at, 
                 created_at, updated_at
-           FROM lims_qms_sync WHERE id = $1"
+           FROM lims_qms_sync WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -473,7 +527,10 @@ async fn get_lims_qms_sync(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch sync: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch sync: {}", e),
+            ))
         }
     }
 }
@@ -489,7 +546,7 @@ async fn sync_lims_qms(
         "SELECT id, lims_sample_id, qms_inspection_id, sample_name, inspection_result, 
                 inspection_notes, synced, sync_status, sync_error, last_synced_at, 
                 created_at, updated_at
-           FROM lims_qms_sync WHERE id = $1"
+           FROM lims_qms_sync WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -499,7 +556,10 @@ async fn sync_lims_qms(
         Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            return Json(ApiResponse::error(500, &format!("Failed to fetch sync: {}", e)));
+            return Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch sync: {}", e),
+            ));
         }
     };
 
@@ -511,7 +571,7 @@ async fn sync_lims_qms(
          WHERE id = $1
          RETURNING id, lims_sample_id, qms_inspection_id, sample_name, inspection_result, 
                   inspection_notes, synced, sync_status, sync_error, last_synced_at, 
-                  created_at, updated_at"
+                  created_at, updated_at",
     )
     .bind(id)
     .bind(Some(qms_inspection_id))
@@ -525,26 +585,38 @@ async fn sync_lims_qms(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::error(500, &format!("Failed to update sync: {}", e)));
+            return Json(ApiResponse::error(
+                500,
+                &format!("Failed to update sync: {}", e),
+            ));
         }
     };
 
-    Json(ApiResponse::success(updated_sync, "LIMS↔QMS sync completed successfully"))
+    Json(ApiResponse::success(
+        updated_sync,
+        "LIMS↔QMS sync completed successfully",
+    ))
 }
 
 async fn list_mes_erp_sync(State(state): State<AppState>) -> Json<ApiResponse<Vec<MesErpSync>>> {
     match sqlx::query_as::<_, MesErpSync>(
         "SELECT id, mes_order_id, erp_order_id, order_number, product_name, quantity, 
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at
-           FROM mes_erp_sync ORDER BY updated_at DESC LIMIT 100"
+           FROM mes_erp_sync ORDER BY updated_at DESC LIMIT 100",
     )
     .fetch_all(&state.pool)
     .await
     {
-        Ok(syncs) => Json(ApiResponse::success(syncs, "MES↔ERP syncs retrieved successfully")),
+        Ok(syncs) => Json(ApiResponse::success(
+            syncs,
+            "MES↔ERP syncs retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔ERP syncs: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch MES↔ERP syncs: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch MES↔ERP syncs: {}", e),
+            ))
         }
     }
 }
@@ -558,7 +630,12 @@ async fn create_mes_erp_sync(
 
     let mes_uuid = match Uuid::parse_str(&req.mes_order_id) {
         Ok(u) => u,
-        Err(e) => return Json(ApiResponse::error(400, &format!("Invalid MES order ID: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                400,
+                &format!("Invalid MES order ID: {}", e),
+            ))
+        }
     };
 
     match sqlx::query_as::<_, MesErpSync>(
@@ -567,7 +644,7 @@ async fn create_mes_erp_sync(
             synced, sync_status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, mes_order_id, erp_order_id, order_number, product_name, quantity, 
-                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
+                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at",
     )
     .bind(id)
     .bind(mes_uuid)
@@ -581,10 +658,16 @@ async fn create_mes_erp_sync(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(sync) => Json(ApiResponse::success(sync, "MES↔ERP sync created successfully")),
+        Ok(sync) => Json(ApiResponse::success(
+            sync,
+            "MES↔ERP sync created successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to create MES↔ERP sync: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to create MES↔ERP sync: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to create MES↔ERP sync: {}", e),
+            ))
         }
     }
 }
@@ -596,7 +679,7 @@ async fn get_mes_erp_sync(
     match sqlx::query_as::<_, MesErpSync>(
         "SELECT id, mes_order_id, erp_order_id, order_number, product_name, quantity, 
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at
-           FROM mes_erp_sync WHERE id = $1"
+           FROM mes_erp_sync WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -606,7 +689,10 @@ async fn get_mes_erp_sync(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch sync: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch sync: {}", e),
+            ))
         }
     }
 }
@@ -624,7 +710,7 @@ async fn sync_mes_erp(
             sync_error = NULL, last_synced_at = $5, updated_at = $6
          WHERE id = $1
          RETURNING id, mes_order_id, erp_order_id, order_number, product_name, quantity, 
-                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
+                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at",
     )
     .bind(id)
     .bind(Some(erp_order_id))
@@ -638,26 +724,38 @@ async fn sync_mes_erp(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::error(500, &format!("Failed to update sync: {}", e)));
+            return Json(ApiResponse::error(
+                500,
+                &format!("Failed to update sync: {}", e),
+            ));
         }
     };
 
-    Json(ApiResponse::success(updated_sync, "MES↔ERP sync completed successfully"))
+    Json(ApiResponse::success(
+        updated_sync,
+        "MES↔ERP sync completed successfully",
+    ))
 }
 
 async fn list_wms_scm_sync(State(state): State<AppState>) -> Json<ApiResponse<Vec<WmsScmSync>>> {
     match sqlx::query_as::<_, WmsScmSync>(
         "SELECT id, wms_inventory_id, scm_supply_id, item_name, quantity, unit, 
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at
-           FROM wms_scm_sync ORDER BY updated_at DESC LIMIT 100"
+           FROM wms_scm_sync ORDER BY updated_at DESC LIMIT 100",
     )
     .fetch_all(&state.pool)
     .await
     {
-        Ok(syncs) => Json(ApiResponse::success(syncs, "WMS↔SCM syncs retrieved successfully")),
+        Ok(syncs) => Json(ApiResponse::success(
+            syncs,
+            "WMS↔SCM syncs retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch WMS↔SCM syncs: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch WMS↔SCM syncs: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch WMS↔SCM syncs: {}", e),
+            ))
         }
     }
 }
@@ -671,7 +769,12 @@ async fn create_wms_scm_sync(
 
     let wms_uuid = match Uuid::parse_str(&req.wms_inventory_id) {
         Ok(u) => u,
-        Err(e) => return Json(ApiResponse::error(400, &format!("Invalid WMS inventory ID: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                400,
+                &format!("Invalid WMS inventory ID: {}", e),
+            ))
+        }
     };
 
     match sqlx::query_as::<_, WmsScmSync>(
@@ -680,7 +783,7 @@ async fn create_wms_scm_sync(
             synced, sync_status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, wms_inventory_id, scm_supply_id, item_name, quantity, unit, 
-                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
+                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at",
     )
     .bind(id)
     .bind(wms_uuid)
@@ -694,10 +797,16 @@ async fn create_wms_scm_sync(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(sync) => Json(ApiResponse::success(sync, "WMS↔SCM sync created successfully")),
+        Ok(sync) => Json(ApiResponse::success(
+            sync,
+            "WMS↔SCM sync created successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to create WMS↔SCM sync: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to create WMS↔SCM sync: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to create WMS↔SCM sync: {}", e),
+            ))
         }
     }
 }
@@ -709,7 +818,7 @@ async fn get_wms_scm_sync(
     match sqlx::query_as::<_, WmsScmSync>(
         "SELECT id, wms_inventory_id, scm_supply_id, item_name, quantity, unit, 
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at
-           FROM wms_scm_sync WHERE id = $1"
+           FROM wms_scm_sync WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -719,7 +828,10 @@ async fn get_wms_scm_sync(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch sync: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch sync: {}", e),
+            ))
         }
     }
 }
@@ -737,7 +849,7 @@ async fn sync_wms_scm(
             sync_error = NULL, last_synced_at = $5, updated_at = $6
          WHERE id = $1
          RETURNING id, wms_inventory_id, scm_supply_id, item_name, quantity, unit, 
-                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
+                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at",
     )
     .bind(id)
     .bind(Some(scm_supply_id))
@@ -751,9 +863,15 @@ async fn sync_wms_scm(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::error(500, &format!("Failed to update sync: {}", e)));
+            return Json(ApiResponse::error(
+                500,
+                &format!("Failed to update sync: {}", e),
+            ));
         }
     };
 
-    Json(ApiResponse::success(updated_sync, "WMS↔SCM sync completed successfully"))
+    Json(ApiResponse::success(
+        updated_sync,
+        "WMS↔SCM sync completed successfully",
+    ))
 }

@@ -4,7 +4,7 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum MemberRole {
     ProjectManager,
@@ -15,13 +15,8 @@ pub enum MemberRole {
     Analyst,
     Consultant,
     Client,
+    #[default]
     Other,
-}
-
-impl Default for MemberRole {
-    fn default() -> Self {
-        MemberRole::Other
-    }
 }
 
 impl std::fmt::Display for MemberRole {
@@ -40,17 +35,12 @@ impl std::fmt::Display for MemberRole {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum MemberStatus {
+    #[default]
     Active,
     Inactive,
-}
-
-impl Default for MemberStatus {
-    fn default() -> Self {
-        MemberStatus::Active
-    }
 }
 
 impl std::fmt::Display for MemberStatus {
