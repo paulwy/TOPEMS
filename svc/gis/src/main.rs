@@ -10,7 +10,7 @@ use anyhow::Result;
 use axum::extract::FromRef;
 use std::env;
 use std::io::BufReader;
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use csv::ReaderBuilder;
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
@@ -246,6 +246,89 @@ async fn check_iam_health() -> DependencyHealth {
             }
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct GisStatistics {
+    device_points: i64,
+    pipelines: i64,
+    storage_locations: i64,
+    evidence_records: i64,
+    business_locations: i64,
+    factory_maps: i64,
+    active_devices: i64,
+    active_pipelines: i64,
+}
+
+async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<GisStatistics>> {
+    // Count device locations
+    let device_points: i64 = sqlx::query("SELECT COUNT(*) FROM device_locations")
+        .fetch_one(&state.pool)
+        .await
+        .map(|row| row.get::<i64, _>(0))
+        .unwrap_or(0);
+
+    // Count active devices
+    let active_devices: i64 = sqlx::query("SELECT COUNT(*) FROM device_locations WHERE status = 'active'")
+        .fetch_one(&state.pool)
+        .await
+        .map(|row| row.get::<i64, _>(0))
+        .unwrap_or(0);
+
+    // Count pipelines
+    let pipelines: i64 = sqlx::query("SELECT COUNT(*) FROM pipelines")
+        .fetch_one(&state.pool)
+        .await
+        .map(|row| row.get::<i64, _>(0))
+        .unwrap_or(0);
+
+    // Count active pipelines
+    let active_pipelines: i64 = sqlx::query("SELECT COUNT(*) FROM pipelines WHERE status = 'active'")
+        .fetch_one(&state.pool)
+        .await
+        .map(|row| row.get::<i64, _>(0))
+        .unwrap_or(0);
+
+    // Count warehouse locations
+    let storage_locations: i64 = sqlx::query("SELECT COUNT(*) FROM warehouse_locations")
+        .fetch_one(&state.pool)
+        .await
+        .map(|row| row.get::<i64, _>(0))
+        .unwrap_or(0);
+
+    // Count location photos (evidence records)
+    let evidence_records: i64 = sqlx::query("SELECT COUNT(*) FROM location_photos")
+        .fetch_one(&state.pool)
+        .await
+        .map(|row| row.get::<i64, _>(0))
+        .unwrap_or(0);
+
+    // Count business locations
+    let business_locations: i64 = sqlx::query("SELECT COUNT(*) FROM business_locations")
+        .fetch_one(&state.pool)
+        .await
+        .map(|row| row.get::<i64, _>(0))
+        .unwrap_or(0);
+
+    // Count factory maps
+    let factory_maps: i64 = sqlx::query("SELECT COUNT(*) FROM factory_maps")
+        .fetch_one(&state.pool)
+        .await
+        .map(|row| row.get::<i64, _>(0))
+        .unwrap_or(0);
+
+    let stats = GisStatistics {
+        device_points,
+        pipelines,
+        storage_locations,
+        evidence_records,
+        business_locations,
+        factory_maps,
+        active_devices,
+        active_pipelines,
+    };
+
+    Json(ApiResponse::success(stats, "获取GIS统计数据成功"))
 }
 
 async fn list_factory_maps(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
@@ -1759,6 +1842,7 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route("/api/v1/statistics", get(get_statistics))
         .route("/api/v1/factory-maps", axum::routing::get(list_factory_maps))
         .route("/api/v1/factory-maps/{id}", axum::routing::get(get_factory_map))
         .route("/api/v1/device-locations", axum::routing::get(list_device_locations))

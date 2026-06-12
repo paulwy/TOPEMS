@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext, useCallback } from 'react';
+import React, { useState, useContext, createContext, useCallback } from "react";
 
 export interface ChartSelection {
   chartId: string;
@@ -13,9 +13,13 @@ interface ChartLinkerContextType {
   isSelected: (chartId: string, dataItem: any) => boolean;
 }
 
-const ChartLinkerContext = createContext<ChartLinkerContextType | undefined>(undefined);
+const ChartLinkerContext = createContext<ChartLinkerContextType | undefined>(
+  undefined,
+);
 
-export const ChartLinkerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ChartLinkerProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [selections, setSelections] = useState<ChartSelection[]>([]);
 
   const selectData = useCallback((chartId: string, data: any[]) => {
@@ -42,9 +46,11 @@ export const ChartLinkerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     (chartId: string, dataItem: any) => {
       const selection = selections.find((s) => s.chartId === chartId);
       if (!selection) return false;
-      return selection.selectedData.some((d) => JSON.stringify(d) === JSON.stringify(dataItem));
+      return selection.selectedData.some(
+        (d) => JSON.stringify(d) === JSON.stringify(dataItem),
+      );
     },
-    [selections]
+    [selections],
   );
 
   return (
@@ -65,7 +71,7 @@ export const ChartLinkerProvider: React.FC<{ children: React.ReactNode }> = ({ c
 export const useChartLinker = () => {
   const context = useContext(ChartLinkerContext);
   if (context === undefined) {
-    throw new Error('useChartLinker must be used within a ChartLinkerProvider');
+    throw new Error("useChartLinker must be used within a ChartLinkerProvider");
   }
   return context;
 };

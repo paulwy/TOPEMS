@@ -1,18 +1,18 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import './index.css';
-import { createPermissionInterceptor } from './api/permissionInterceptor';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./index.css";
+import { createPermissionInterceptor } from "./api/permissionInterceptor";
 
 createPermissionInterceptor();
 
-window.addEventListener('permission-denied', (event: Event) => {
+window.addEventListener("permission-denied", (event: Event) => {
   const customEvent = event as CustomEvent;
-  console.warn('Permission denied:', customEvent.detail);
+  console.warn("Permission denied:", customEvent.detail);
 });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

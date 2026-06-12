@@ -1,257 +1,223 @@
-# TOPEMS AI 模块
+# AI模块技术文档
 
-## 功能概览
+## 1. 概述
 
-TOPEMS AI 模块提供了一系列智能功能，包括对话、文档生成、文本分析和向量搜索。
+AI（人工智能）模块是TOPEMS平台的核心模块之一，提供机器学习、深度学习、自然语言处理、计算机视觉等AI能力，帮助企业实现智能化决策和自动化流程。
 
-### 1. AI 聊天 (`/ai`)
+### 1.1 功能定位
 
-**功能特点：**
-- 多角色 AI 助手：通用助手、数据分析、文档助手、编程助手
-- 基于本地知识库的智能问答
-- Markdown 渲染和代码高亮
-- 对话历史本地存储
-- 支持复制代码片段
+| 功能类别 | 功能描述 |
+|----------|----------|
+| 预测分析 | 需求预测、销售预测、设备故障预测 |
+| 智能推荐 | 产品推荐、内容推荐、个性化服务 |
+| 图像识别 | 质检检测、目标识别、异常检测 |
+| 自然语言处理 | 文本分类、情感分析、智能问答 |
+| 模型管理 | 模型训练、模型部署、模型监控 |
 
-### 2. 文档生成
-
-**功能特点：**
-- 多种文档模板：会议纪要、职位描述等
-- AI 智能填充文档内容
-- 支持 Markdown 和 JSON 格式输出
-
-### 3. 文本分析
-
-**功能特点：**
-- **情感分析**：判断文本情感（积极/消极/中性），显示置信度和关键词
-- **文本分类**：自动分类文本，支持自定义分类类别
-- **实体提取**：识别文本中的人名、地名、机构等实体
-- **关键词提取**：提取文本核心关键词及权重
-
-### 4. 向量搜索
-
-**功能特点：**
-- 基于 Redis HNSW 的高性能向量存储
-- Ollama 本地嵌入生成（Qwen2.5:7b-instruct）
-- 员工/技能相似度匹配
-- RAG 检索增强生成
-
-## 技术架构
-
-### 技术栈
-
-| 组件 | 技术 | 说明 |
-|------|------|------|
-| AI 模型 | Ollama + Qwen2.5:7b | 本地部署，保护隐私 |
-| 向量存储 | Redis HNSW | 高性能相似度搜索 |
-| 嵌入服务 | Ollama API | 文本向量化 |
-| 后端 | Rust/Axum | 高性能 REST API |
-| 前端 | React 18 + TypeScript | 现代 Web 界面 |
-
-### 架构图
+### 1.2 架构设计
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      前端 (AIPage.tsx)                       │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-┌───────────────────────────▼─────────────────────────────────┐
-│                     AI 服务 (svc/ai)                         │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌────────────┐ │
-│  │  聊天 (chat)   │  │  文档 (doc)    │  │  分析      │ │
-│  │  问答 (qa)     │  │  生成 (gen)    │  │  (analysis)│ │
-│  └─────────────────┘  └─────────────────┘  └────────────┘ │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-┌───────────────────────────▼─────────────────────────────────┐
-│                    共享库 (lib)                              │
-│  ┌─────────────────┐  ┌─────────────────┐                   │
-│  │  向量存储       │  │  嵌入服务       │                   │
-│  │  (vector_store)│  │  (embedding)   │                   │
-│  │  Redis HNSW    │  │  Ollama/OpenAI  │                   │
-│  └─────────────────┘  └─────────────────┘                   │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-        ┌───────────────────┼───────────────────┐
-        ▼                   ▼                   ▼
-┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│    Redis      │  │  PostgreSQL   │  │    Ollama    │
-│  (向量存储)   │  │  (业务数据)   │  │  (LLM + 嵌入) │
-└───────────────┘  └───────────────┘  └───────────────┘
+│                      AI模块架构                             │
+├─────────────────────────────────────────────────────────────┤
+│  前端层 (React + TypeScript)                               │
+│  ├── pages/                                                │
+│  │   └── AiPage.tsx         # AI主页面                   │
+│  └── components/                                           │
+│      └── ai/                                               │
+│          ├── ModelCard.tsx   # 模型卡片                  │
+│          └── PredictionForm.tsx # 预测表单               │
+├─────────────────────────────────────────────────────────────┤
+│  API层 (TypeScript)                                        │
+│  └── ai.ts                # AI API客户端                   │
+├─────────────────────────────────────────────────────────────┤
+│  后端服务 (Rust + Python ML Services)                     │
+│  ├── main.rs              # 服务入口                       │
+│  ├── api/                 # API路由                       │
+│  │   ├── prediction.rs     # 预测服务                     │
+│  │   ├── recommendation.rs # 推荐服务                    │
+│  │   ├── image.rs          # 图像识别                    │
+│  │   └── nlp.rs            # 自然语言处理                 │
+│  └── models/              # 数据模型                      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 前端
+---
 
-- React 18 + TypeScript
-- Zustand 状态管理
-- Tailwind CSS UI
-- React Markdown 渲染
-- React Syntax Highlighter 代码高亮
+## 2. 核心功能详解
 
-### 后端 (Rust/Axum)
+### 2.1 预测分析
 
-- RESTful API
-- PostgreSQL 业务数据存储
-- Redis HNSW 向量存储
-- Ollama AI 模型支持（Qwen2.5:7b-instruct）
-- Token 认证
+**功能说明**：基于历史数据进行预测分析。
 
-## API 端点
+**数据模型**：
 
-### AI 对话
-- `POST /api/v1/ai/chat` - 聊天问答
-
-### 文档生成
-- `POST /api/v1/ai/generate` - AI内容生成
-- `GET /api/v1/ai/templates` - 获取模板列表
-
-### 文本分析
-- `POST /api/v1/analysis/sentiment` - 情感分析
-- `POST /api/v1/analysis/classify` - 文本分类
-- `POST /api/v1/analysis/entities` - 实体提取
-- `POST /api/v1/analysis/keywords` - 关键词提取
-
-### 文档管理
-- `GET /api/v1/documents` - 获取文档列表
-- `POST /api/v1/documents/upload` - 上传文档
-- `DELETE /api/v1/documents/delete` - 删除文档
-
-### 向量检索
-- `POST /api/v1/vectors/search` - 向量相似度搜索
-- `GET /api/v1/vectors/stats` - 向量统计信息
-
-### HRM 技能匹配
-- `POST /api/v1/employees/match-skills` - 技能匹配员工
-- `POST /api/v1/employees/:id/similar` - 查找相似员工
-- `GET /api/v1/skills/search` - 搜索技能
-
-## 环境配置
-
-### Ollama 配置
-
-```bash
-# 1. 安装 Ollama
-brew install ollama
-
-# 2. 启动服务并拉取模型
-ollama serve
-ollama pull qwen2.5:7b-instruct
-
-# 3. 验证安装
-curl http://localhost:11434/api/tags
-```
-
-### 后端环境变量
-
-```bash
-# AI 提供者配置
-AI_PROVIDER=ollama                    # ollama, openai, local, mock
-
-# Ollama 配置
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:7b-instruct
-OLLAMA_VECTOR_DIMENSION=3584
-
-# OpenAI 配置（可选）
-OPENAI_API_KEY=sk-xxx
-OPENAI_MODEL=text-embedding-3-small
-
-# Redis 向量存储
-REDIS_URL=redis://localhost:6379
-VECTOR_INDEX_PREFIX=topems
-
-# 数据库
-DATABASE_URL=postgres://user:pass@localhost:5432/topems
-```
-
-### 初始化向量存储
-
-```bash
-# 运行安装脚本
-bash scripts/install-pgvector.sh
-
-# 或手动初始化
-docker exec topems-redis redis-cli FT.CREATE employee_vectors \
-  ON HASH PREFIX 1 "vec:employee:" \
-  SCHEMA embedding VECTOR HNSW 6 DIM 3584 TYPE FLOAT32 DISTANCE COSINE
-```
-
-### 启动服务
-
-```bash
-# 启动 Ollama
-ollama serve
-
-# 后端
-cargo run -p topems-ai
-
-# 前端
-cd frontend && npm run dev
-```
-
-## 组件列表
-
-### AI 组件
-- `AIAnalyzer` - 文本分析组件
-- `AIDocumentGenerator` - 文档生成组件
-- `DocumentManager` - 文档管理组件
-- `AIHelperButton` - AI辅助按钮
-- `AIGenerateModal` - AI生成弹窗
-- `AICodeGenerator` - 代码生成器
-- `AITextOptimizer` - 文本优化器
-- `AIFormValidator` - 表单验证器
-- `AIDataCompleter` - 数据补全器
-- `AISummarizer` - 摘要生成器
-
-## 使用示例
-
-### 文本分析
 ```typescript
-import { aiApi } from '@/api/ai';
+interface Prediction {
+  id: string;                    // 预测ID
+  model_id: string;              // 模型ID
+  model_name: string;            // 模型名称
+  type: 'demand' | 'sales' | 'fault' | 'quality'; // 预测类型
+  input_data: Record<string, any>; // 输入数据
+  result: PredictionResult;      // 预测结果
+  confidence: number;            // 置信度(%)
+  created_at: string;            // 创建时间
+}
 
-// 情感分析
-const sentiment = await aiApi.analyzeSentiment({
-  text: '这个产品真的很好用，强烈推荐！'
-});
-
-// 文本分类
-const classification = await aiApi.classifyText({
-  text: '这是一段科技新闻内容',
-  categories: ['科技', '娱乐', '体育']
-});
-
-// 实体提取
-const entities = await aiApi.extractEntities({
-  text: '张三在北京大学工作'
-});
-
-// 关键词提取
-const keywords = await aiApi.extractKeywords({
-  text: '人工智能技术正在改变世界',
-  max_keywords: 5
-});
+interface PredictionResult {
+  value: number;                 // 预测值
+  unit: string;                  // 单位
+  range: [number, number];       // 预测范围
+  trend: 'up' | 'down' | 'stable'; // 趋势
+  explanation: string;           // 解释说明
+}
 ```
 
-### 文档管理
+### 2.2 智能推荐
+
+**功能说明**：基于用户行为和偏好提供个性化推荐。
+
+**数据模型**：
+
 ```typescript
-// 上传文档
-const doc = await aiApi.createDocument({
-  title: '产品手册',
-  content: '这是文档内容...',
-  filename: 'manual.pdf'
-});
+interface Recommendation {
+  id: string;                    // 推荐ID
+  user_id: string;               // 用户ID
+  type: 'product' | 'content' | 'service'; // 推荐类型
+  items: RecommendationItem[];   // 推荐项
+  strategy: string;              // 推荐策略
+  created_at: string;            // 创建时间
+}
 
-// 搜索文档
-const results = await aiApi.search({
-  query: '产品功能介绍',
-  limit: 10
-});
+interface RecommendationItem {
+  id: string;                    // 推荐项ID
+  item_id: string;               // 物品ID
+  item_name: string;             // 物品名称
+  score: number;                 // 推荐分数
+  reason: string;                // 推荐理由
+}
 ```
 
-## 注意事项
+### 2.3 图像识别
 
-1. AI 功能需要 Ollama 服务运行或配置 OpenAI API 密钥
-2. 向量存储依赖 Redis（Docker 内置），无需额外安装 pgvector
-3. 建议使用 HTTPS 连接保护 API 通信
-4. 大文件上传可能需要调整服务器超时设置
-5. Qwen2.5:7b 模型需要约 4GB 内存
+**功能说明**：基于图像进行目标检测和识别。
+
+**数据模型**：
+
+```typescript
+interface ImageAnalysis {
+  id: string;                    // 分析ID
+  image_url: string;             // 图像URL
+  type: 'quality' | 'object' | 'defect'; // 分析类型
+  results: DetectionResult[];    // 检测结果
+  confidence: number;            // 整体置信度
+  created_at: string;            // 创建时间
+}
+
+interface DetectionResult {
+  id: string;                    // 检测结果ID
+  label: string;                 // 标签
+  confidence: number;            // 置信度(%)
+  bounding_box: [number, number, number, number]; // 边界框 [x, y, width, height]
+  severity?: 'low' | 'medium' | 'high'; // 严重程度
+}
+```
+
+### 2.4 自然语言处理
+
+**功能说明**：处理和分析文本数据。
+
+**数据模型**：
+
+```typescript
+interface NlpAnalysis {
+  id: string;                    // 分析ID
+  text: string;                  // 输入文本
+  type: 'classification' | 'sentiment' | 'qa' | 'summary'; // 分析类型
+  result: NlpResult;             // 分析结果
+  created_at: string;            // 创建时间
+}
+
+interface NlpResult {
+  classification?: {
+    category: string;            // 分类类别
+    confidence: number;          // 置信度
+  };
+  sentiment?: {
+    score: number;               // 情感分数 (-1到1)
+    label: 'positive' | 'negative' | 'neutral'; // 情感标签
+  };
+  answer?: string;               // 问答答案
+  summary?: string;              // 摘要
+}
+```
+
+### 2.5 模型管理
+
+**功能说明**：管理AI模型的训练和部署。
+
+**数据模型**：
+
+```typescript
+interface Model {
+  id: string;                    // 模型ID
+  name: string;                  // 模型名称
+  type: 'classification' | 'regression' | 'clustering' | 'nlp'; // 模型类型
+  status: 'training' | 'trained' | 'deployed' | 'retired'; // 状态
+  accuracy: number;              // 准确率
+  last_trained_at: string;       // 最后训练时间
+  deployed_at?: string;          // 部署时间
+  created_at: string;            // 创建时间
+}
+```
+
+---
+
+## 3. API接口文档
+
+### 3.1 预测分析接口
+
+| 接口 | 方法 | 路径 |
+|------|------|------|
+| 创建预测 | POST | `/api/v1/ai/predictions` |
+| 获取预测结果 | GET | `/api/v1/ai/predictions/:id` |
+| 获取预测历史 | GET | `/api/v1/ai/predictions` |
+
+### 3.2 智能推荐接口
+
+| 接口 | 方法 | 路径 |
+|------|------|------|
+| 获取推荐 | GET | `/api/v1/ai/recommendations` |
+| 刷新推荐 | POST | `/api/v1/ai/recommendations/refresh` |
+
+### 3.3 图像识别接口
+
+| 接口 | 方法 | 路径 |
+|------|------|------|
+| 分析图像 | POST | `/api/v1/ai/image/analyze` |
+| 批量分析 | POST | `/api/v1/ai/image/batch` |
+
+### 3.4 自然语言处理接口
+
+| 接口 | 方法 | 路径 |
+|------|------|------|
+| 文本分类 | POST | `/api/v1/ai/nlp/classify` |
+| 情感分析 | POST | `/api/v1/ai/nlp/sentiment` |
+| 智能问答 | POST | `/api/v1/ai/nlp/qa` |
+| 文本摘要 | POST | `/api/v1/ai/nlp/summary` |
+
+### 3.5 模型管理接口
+
+| 接口 | 方法 | 路径 |
+|------|------|------|
+| 获取模型列表 | GET | `/api/v1/ai/models` |
+| 创建模型 | POST | `/api/v1/ai/models` |
+| 训练模型 | POST | `/api/v1/ai/models/:id/train` |
+| 部署模型 | PUT | `/api/v1/ai/models/:id/deploy` |
+| 删除模型 | DELETE | `/api/v1/ai/models/:id` |
+
+---
+
+**文档版本**: v1.0.0  
+**最后更新**: 2024-06-11  
+**作者**: TOPEMS开发团队

@@ -12,6 +12,7 @@ pub mod inventory;
 pub mod inbound_order;
 pub mod outbound_order;
 pub mod audit;
+pub mod openapi;
 
 #[derive(Clone)]
 pub struct ApiState {

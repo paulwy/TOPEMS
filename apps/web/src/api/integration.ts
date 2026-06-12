@@ -1,5 +1,5 @@
-import apiClient from './client';
-import type { ApiResponse } from './client';
+import apiClient from "./client";
+import type { ApiResponse } from "./client";
 
 // Integration 相关类型
 export interface IntegrationEvent {
@@ -107,46 +107,54 @@ export interface SyncStats {
 export const integrationApi = {
   // 同步统计
   getSyncStats: async (): Promise<ApiResponse<SyncStats>> => {
-    return apiClient.integration.get('/api/v1/integration/stats');
+    return apiClient.integration.get("/api/v1/integration/stats");
   },
 
   // 集成事件
   listEvents: async (): Promise<ApiResponse<IntegrationEvent[]>> => {
-    return apiClient.integration.get('/api/v1/integration/events');
+    return apiClient.integration.get("/api/v1/integration/events");
   },
 
-  createEvent: async (data: CreateIntegrationEventRequest): Promise<ApiResponse<IntegrationEvent>> => {
-    return apiClient.integration.post('/api/v1/integration/events', data);
+  createEvent: async (
+    data: CreateIntegrationEventRequest,
+  ): Promise<ApiResponse<IntegrationEvent>> => {
+    return apiClient.integration.post("/api/v1/integration/events", data);
   },
 
   // LIMS-QMS 同步
   listLimsQmsSyncs: async (): Promise<ApiResponse<LimsQmsSync[]>> => {
-    return apiClient.integration.get('/api/v1/integration/lims-qms');
+    return apiClient.integration.get("/api/v1/integration/lims-qms");
   },
 
   getLimsQmsSync: async (id: string): Promise<ApiResponse<LimsQmsSync>> => {
     return apiClient.integration.get(`/api/v1/integration/lims-qms/${id}`);
   },
 
-  createLimsQmsSync: async (data: CreateLimsQmsSyncRequest): Promise<ApiResponse<LimsQmsSync>> => {
-    return apiClient.integration.post('/api/v1/integration/lims-qms', data);
+  createLimsQmsSync: async (
+    data: CreateLimsQmsSyncRequest,
+  ): Promise<ApiResponse<LimsQmsSync>> => {
+    return apiClient.integration.post("/api/v1/integration/lims-qms", data);
   },
 
   syncLimsQms: async (id: string): Promise<ApiResponse<LimsQmsSync>> => {
-    return apiClient.integration.post(`/api/v1/integration/lims-qms/${id}/sync`);
+    return apiClient.integration.post(
+      `/api/v1/integration/lims-qms/${id}/sync`,
+    );
   },
 
   // MES-ERP 同步
   listMesErpSyncs: async (): Promise<ApiResponse<MesErpSync[]>> => {
-    return apiClient.integration.get('/api/v1/integration/mes-erp');
+    return apiClient.integration.get("/api/v1/integration/mes-erp");
   },
 
   getMesErpSync: async (id: string): Promise<ApiResponse<MesErpSync>> => {
     return apiClient.integration.get(`/api/v1/integration/mes-erp/${id}`);
   },
 
-  createMesErpSync: async (data: CreateMesErpSyncRequest): Promise<ApiResponse<MesErpSync>> => {
-    return apiClient.integration.post('/api/v1/integration/mes-erp', data);
+  createMesErpSync: async (
+    data: CreateMesErpSyncRequest,
+  ): Promise<ApiResponse<MesErpSync>> => {
+    return apiClient.integration.post("/api/v1/integration/mes-erp", data);
   },
 
   syncMesErp: async (id: string): Promise<ApiResponse<MesErpSync>> => {
@@ -155,15 +163,17 @@ export const integrationApi = {
 
   // WMS-SCM 同步
   listWmsScmSyncs: async (): Promise<ApiResponse<WmsScmSync[]>> => {
-    return apiClient.integration.get('/api/v1/integration/wms-scm');
+    return apiClient.integration.get("/api/v1/integration/wms-scm");
   },
 
   getWmsScmSync: async (id: string): Promise<ApiResponse<WmsScmSync>> => {
     return apiClient.integration.get(`/api/v1/integration/wms-scm/${id}`);
   },
 
-  createWmsScmSync: async (data: CreateWmsScmSyncRequest): Promise<ApiResponse<WmsScmSync>> => {
-    return apiClient.integration.post('/api/v1/integration/wms-scm', data);
+  createWmsScmSync: async (
+    data: CreateWmsScmSyncRequest,
+  ): Promise<ApiResponse<WmsScmSync>> => {
+    return apiClient.integration.post("/api/v1/integration/wms-scm", data);
   },
 
   syncWmsScm: async (id: string): Promise<ApiResponse<WmsScmSync>> => {
@@ -171,7 +181,7 @@ export const integrationApi = {
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.integration.get('/health');
+    return apiClient.integration.get("/health");
   },
 };
 

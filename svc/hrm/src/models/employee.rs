@@ -1,4 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -68,6 +69,30 @@ pub struct Employee {
     pub created_at: DateTime<Utc>,
     #[schema(example = "2024-01-15T12:00:00Z")]
     pub updated_at: DateTime<Utc>,
+}
+
+// 员工财务扩展字段
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct EmployeeFinance {
+    pub employee_id: Uuid,
+    pub base_salary: Option<Decimal>,           // 基本工资
+    pub bonus: Option<Decimal>,                // 奖金
+    pub allowance: Option<Decimal>,             // 补贴
+    pub social_security: Option<Decimal>,       // 社保个人部分
+    pub housing_fund: Option<Decimal>,          // 公积金个人部分
+    pub personal_income_tax: Option<Decimal>,  // 个人所得税
+    pub net_salary: Option<Decimal>,            // 实发工资
+    pub bank_account: Option<String>,           // 银行账号
+    pub bank_name: Option<String>,             // 开户银行
+    pub cost_center: Option<String>,            // 成本中心
+    pub payroll_bank_account: Option<String>, // 工资卡号
+    pub salary_payment_status: String,          // 工资发放状态
+    pub annual_salary: Option<Decimal>,         // 年薪
+    pub hourly_rate: Option<Decimal>,          // 时薪
+    pub tax_exempt_allowance: Option<Decimal>, // 免税补贴
+    pub social_security_company: Option<Decimal>, // 社保公司部分
+    pub housing_fund_company: Option<Decimal>,  // 公积金公司部分
+    pub total_compensation: Option<Decimal>,   // 总薪酬
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

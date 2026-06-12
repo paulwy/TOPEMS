@@ -13,6 +13,7 @@ pub mod contact;
 pub mod opportunity;
 pub mod interaction;
 pub mod audit;
+pub mod openapi;
 
 #[derive(Clone)]
 pub struct ApiState {

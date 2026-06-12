@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { Notification } from '../api/notification';
-import { getNotifications, getUnreadCount } from '../api/notification';
+import { useState, useCallback, useEffect } from "react";
+import type { Notification } from "../api/notification";
+import { getNotifications, getUnreadCount } from "../api/notification";
 
 interface NotificationState {
   notifications: Notification[];
@@ -33,7 +33,7 @@ export const useNotificationState = () => {
       setState((prev) => ({
         ...prev,
         loading: false,
-        error: 'Failed to fetch notifications',
+        error: "Failed to fetch notifications",
       }));
     }
   }, []);
@@ -48,8 +48,12 @@ export const useNotificationState = () => {
         }));
       }
     } catch (error: any) {
-      if (error.code !== 'ERR_CANCELED' && error.code !== 'ECONNABORTED' && error.name !== 'AbortError') {
-        console.error('Failed to fetch unread count:', error);
+      if (
+        error.code !== "ERR_CANCELED" &&
+        error.code !== "ECONNABORTED" &&
+        error.name !== "AbortError"
+      ) {
+        console.error("Failed to fetch unread count:", error);
       }
     }
   }, []);
@@ -58,20 +62,29 @@ export const useNotificationState = () => {
     setState((prev) => ({
       ...prev,
       notifications: [notification, ...prev.notifications],
-      unreadCount: notification.is_read ? prev.unreadCount : prev.unreadCount + 1,
+      unreadCount: notification.is_read
+        ? prev.unreadCount
+        : prev.unreadCount + 1,
     }));
   }, []);
 
   const updateNotification = useCallback((notification: Notification) => {
     setState((prev) => {
-      const oldNotification = prev.notifications.find((n) => n.id === notification.id);
+      const oldNotification = prev.notifications.find(
+        (n) => n.id === notification.id,
+      );
       const wasUnread = oldNotification && !oldNotification.is_read;
       const isUnread = !notification.is_read;
 
       return {
         ...prev,
-        notifications: prev.notifications.map((n) => (n.id === notification.id ? notification : n)),
-        unreadCount: wasUnread && !isUnread ? Math.max(0, prev.unreadCount - 1) : prev.unreadCount,
+        notifications: prev.notifications.map((n) =>
+          n.id === notification.id ? notification : n,
+        ),
+        unreadCount:
+          wasUnread && !isUnread
+            ? Math.max(0, prev.unreadCount - 1)
+            : prev.unreadCount,
       };
     });
   }, []);
@@ -82,7 +95,10 @@ export const useNotificationState = () => {
       return {
         ...prev,
         notifications: prev.notifications.filter((n) => n.id !== id),
-        unreadCount: notification && !notification.is_read ? Math.max(0, prev.unreadCount - 1) : prev.unreadCount,
+        unreadCount:
+          notification && !notification.is_read
+            ? Math.max(0, prev.unreadCount - 1)
+            : prev.unreadCount,
       };
     });
   }, []);

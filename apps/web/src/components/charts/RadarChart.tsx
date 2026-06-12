@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   RadarChart as RechartsRadarChart,
   Radar,
@@ -8,8 +8,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
-import { getChartColor } from './chartTheme';
+} from "recharts";
+import { getChartColor } from "./chartTheme";
 
 interface RadarChartProps {
   data: any[];
@@ -24,7 +24,7 @@ interface RadarChartProps {
 
 export const RadarChart: React.FC<RadarChartProps> = ({
   data,
-  dataKey = 'subject',
+  dataKey = "subject",
   nameKey,
   yKeys,
   height = 300,
@@ -38,34 +38,39 @@ export const RadarChart: React.FC<RadarChartProps> = ({
 
   return (
     <div style={{ height }}>
-      <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={0}>
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        minWidth={0}
+        minHeight={0}
+      >
         <RechartsRadarChart data={data}>
-          <PolarGrid stroke='#E2E8F0' />
+          <PolarGrid stroke="#E2E8F0" />
           <PolarAngleAxis
             dataKey={dataKey}
-            tick={{ fill: '#64748B', fontSize: 12 }}
+            tick={{ fill: "#64748B", fontSize: 12 }}
           />
           <PolarRadiusAxis
             angle={90}
-            domain={[0, 'auto']}
-            tick={{ fill: '#64748B', fontSize: 10 }}
-            stroke='#E2E8F0'
+            domain={[0, "auto"]}
+            tick={{ fill: "#64748B", fontSize: 10 }}
+            stroke="#E2E8F0"
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              border: '1px solid #E2E8F0',
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              border: "1px solid #E2E8F0",
+              borderRadius: "8px",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
             }}
           />
           {showLegend && (
             <Legend
-              wrapperStyle={{ paddingTop: '10px' }}
-              iconType='circle'
+              wrapperStyle={{ paddingTop: "10px" }}
+              iconType="circle"
               iconSize={8}
               formatter={(value) => (
-                <span className='text-sm text-slate-600'>{value}</span>
+                <span className="text-sm text-slate-600">{value}</span>
               )}
             />
           )}
@@ -79,9 +84,9 @@ export const RadarChart: React.FC<RadarChartProps> = ({
               fillOpacity={0.2}
               strokeWidth={2}
               onClick={handleClick}
-              cursor={onRadarClick ? 'pointer' : 'default'}
+              cursor={onRadarClick ? "pointer" : "default"}
               animationDuration={animate ? 800 + index * 100 : 0}
-              animationEasing='ease-out'
+              animationEasing="ease-out"
             />
           ))}
         </RechartsRadarChart>

@@ -1,14 +1,17 @@
-import apiClient from './client';
-import type { ApiResponse } from './client';
+import apiClient from "./client";
+import type { ApiResponse } from "./client";
 
 // ========== 类型定义 ==========
 
 export interface Sample {
   id: string;
+  sample_no?: string;
   name: string;
   description: string;
   status: string;
   project_id?: string;
+  location?: string;
+  responsible_person?: string;
   received_date: string;
   created_at: string;
   updated_at: string;
@@ -42,7 +45,9 @@ export interface InspectionProcess {
 
 export interface InspectionTask {
   id: string;
+  task_no?: string;
   sample_id: string;
+  sample_name?: string;
   process_id: string;
   current_step: number;
   status: string;
@@ -118,6 +123,7 @@ export interface Instrument {
   name: string;
   code: string;
   type: string;
+  category?: string;
   manufacturer?: string;
   model?: string;
   serial_number?: string;
@@ -176,7 +182,7 @@ export interface CreateMaintenanceRecordRequest {
 // ========== 通用工具函数 ==========
 
 function buildQueryString(params?: ListParams): string {
-  if (!params) return '';
+  if (!params) return "";
 
   const searchParams = new URLSearchParams();
 
@@ -187,7 +193,7 @@ function buildQueryString(params?: ListParams): string {
   });
 
   const queryString = searchParams.toString();
-  return queryString ? `?${queryString}` : '';
+  return queryString ? `?${queryString}` : "";
 }
 
 interface CrudOperations<T> {
@@ -224,27 +230,44 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 }
 
 export const instrumentApi = {
-  ...createCrudApi<Instrument>('/api/v1/instruments'),
+  ...createCrudApi<Instrument>("/api/v1/instruments"),
 
-  listInstruments: (params?: ListParams) => createCrudApi<Instrument>('/api/v1/instruments').list(params),
+  listInstruments: (params?: ListParams) =>
+    createCrudApi<Instrument>("/api/v1/instruments").list(params),
 
-  getInstrument: (id: string) => createCrudApi<Instrument>('/api/v1/instruments').get(id),
+  getInstrument: (id: string) =>
+    createCrudApi<Instrument>("/api/v1/instruments").get(id),
 
-  createInstrument: (data: CreateInstrumentRequest) => createCrudApi<Instrument>('/api/v1/instruments').create(data),
+  createInstrument: (data: CreateInstrumentRequest) =>
+    createCrudApi<Instrument>("/api/v1/instruments").create(data),
 
   updateInstrument: (id: string, data: CreateInstrumentRequest) =>
-    createCrudApi<Instrument>('/api/v1/instruments').update(id, data),
+    createCrudApi<Instrument>("/api/v1/instruments").update(id, data),
 
-  deleteInstrument: (id: string) => createCrudApi<Instrument>('/api/v1/instruments').delete(id),
+  deleteInstrument: (id: string) =>
+    createCrudApi<Instrument>("/api/v1/instruments").delete(id),
 };
 
 export const maintenanceApi = {
-  listByInstrument: async (instrumentId: string): Promise<ApiResponse<MaintenanceRecord[]>> => {
-    return apiClient.lims.get(`/api/v1/instruments/${instrumentId}/maintenance`);
+  listByInstrument: async (
+    instrumentId: string,
+  ): Promise<ApiResponse<MaintenanceRecord[]>> => {
+    return apiClient.lims.get(
+      `/api/v1/instruments/${instrumentId}/maintenance`,
+    );
   },
 
-  create: async (data: CreateMaintenanceRecordRequest): Promise<ApiResponse<MaintenanceRecord>> => {
-    return apiClient.lims.post('/api/v1/maintenance', data);
+  create: async (
+    data: CreateMaintenanceRecordRequest,
+  ): Promise<ApiResponse<MaintenanceRecord>> => {
+    return apiClient.lims.post("/api/v1/maintenance", data);
+  },
+
+  update: async (
+    id: string,
+    data: Partial<CreateMaintenanceRecordRequest>,
+  ): Promise<ApiResponse<MaintenanceRecord>> => {
+    return apiClient.lims.put(`/api/v1/maintenance/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<boolean>> => {
@@ -255,76 +278,106 @@ export const maintenanceApi = {
 // ========== LIMS API 模块 ==========
 
 export const sampleApi = {
-  ...createCrudApi<Sample>('/api/v1/samples'),
+  ...createCrudApi<Sample>("/api/v1/samples"),
 
-  listSamples: (params?: ListParams) => createCrudApi<Sample>('/api/v1/samples').list(params),
+  listSamples: (params?: ListParams) =>
+    createCrudApi<Sample>("/api/v1/samples").list(params),
 
-  getSample: (id: string) => createCrudApi<Sample>('/api/v1/samples').get(id),
+  getSample: (id: string) => createCrudApi<Sample>("/api/v1/samples").get(id),
 
-  createSample: (data: CreateSampleRequest) => createCrudApi<Sample>('/api/v1/samples').create(data),
+  createSample: (data: CreateSampleRequest) =>
+    createCrudApi<Sample>("/api/v1/samples").create(data),
 
-  updateSample: (id: string, data: CreateSampleRequest) => createCrudApi<Sample>('/api/v1/samples').update(id, data),
+  updateSample: (id: string, data: CreateSampleRequest) =>
+    createCrudApi<Sample>("/api/v1/samples").update(id, data),
 
-  deleteSample: (id: string) => createCrudApi<Sample>('/api/v1/samples').delete(id),
+  deleteSample: (id: string) =>
+    createCrudApi<Sample>("/api/v1/samples").delete(id),
 
-  batchCreateSamples: async (data: BatchCreateSamplesRequest): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.lims.post('/api/v1/samples/batch', data);
+  batchCreateSamples: async (
+    data: BatchCreateSamplesRequest,
+  ): Promise<ApiResponse<BatchOperationResult>> => {
+    return apiClient.lims.post("/api/v1/samples/batch", data);
   },
 
-  batchDeleteSamples: async (data: BatchDeleteSamplesRequest): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.lims.delete('/api/v1/samples/batch', { data });
+  batchDeleteSamples: async (
+    data: BatchDeleteSamplesRequest,
+  ): Promise<ApiResponse<BatchOperationResult>> => {
+    return apiClient.lims.delete("/api/v1/samples/batch", { data });
   },
 
   exportSamples: async (): Promise<Blob> => {
-    return apiClient.lims.get('/api/v1/samples/export', {
-      responseType: 'blob',
+    return apiClient.lims.get("/api/v1/samples/export", {
+      responseType: "blob",
     });
   },
 
-  importSamples: async (file: File): Promise<ApiResponse<BatchOperationResult>> => {
+  importSamples: async (
+    file: File,
+  ): Promise<ApiResponse<BatchOperationResult>> => {
     const content = await file.text();
-    return apiClient.lims.post('/api/v1/samples/import', content, {
+    return apiClient.lims.post("/api/v1/samples/import", content, {
       headers: {
-        'Content-Type': 'text/csv',
+        "Content-Type": "text/csv",
       },
     });
   },
 };
 
 export const processApi = {
-  ...createCrudApi<InspectionProcess>('/api/v1/processes'),
+  ...createCrudApi<InspectionProcess>("/api/v1/processes"),
 
-  listProcesses: (params?: ListParams) => createCrudApi<InspectionProcess>('/api/v1/processes').list(params),
+  listProcesses: (params?: ListParams) =>
+    createCrudApi<InspectionProcess>("/api/v1/processes").list(params),
 
-  getProcess: (id: string) => createCrudApi<InspectionProcess>('/api/v1/processes').get(id),
+  getProcess: (id: string) =>
+    createCrudApi<InspectionProcess>("/api/v1/processes").get(id),
 };
 
 export const taskApi = {
-  ...createCrudApi<InspectionTask>('/api/v1/tasks'),
+  ...createCrudApi<InspectionTask>("/api/v1/tasks"),
 
-  listTasks: (params?: ListParams) => createCrudApi<InspectionTask>('/api/v1/tasks').list(params),
+  listTasks: (params?: ListParams) =>
+    createCrudApi<InspectionTask>("/api/v1/tasks").list(params),
 
-  createTask: (data: CreateInspectionTaskRequest) => createCrudApi<InspectionTask>('/api/v1/tasks').create(data),
+  createTask: (data: CreateInspectionTaskRequest) =>
+    createCrudApi<InspectionTask>("/api/v1/tasks").create(data),
 
-  getTask: (id: string) => createCrudApi<InspectionTask>('/api/v1/tasks').get(id),
+  getTask: (id: string) =>
+    createCrudApi<InspectionTask>("/api/v1/tasks").get(id),
 
   updateTask: (id: string, data: CreateInspectionTaskRequest) =>
-    createCrudApi<InspectionTask>('/api/v1/tasks').update(id, data),
+    createCrudApi<InspectionTask>("/api/v1/tasks").update(id, data),
 
-  completeStep: async (id: string, data: CreateInspectionRecordRequest): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.lims.post(`/api/v1/tasks/${id}/complete_step`, data);
+  listTasksBySample: async (
+    sampleId: string,
+  ): Promise<ApiResponse<InspectionTask[]>> => {
+    return apiClient.lims.get(`/api/v1/tasks/sample/${sampleId}`);
+  },
+
+  completeStep: async (
+    id: string,
+    data: Omit<CreateInspectionRecordRequest, "task_id">,
+  ): Promise<ApiResponse<InspectionTask>> => {
+    return apiClient.lims.post(`/api/v1/tasks/${id}/complete_step`, {
+      ...data,
+      task_id: id,
+    });
   },
 };
 
 export const recordApi = {
-  ...createCrudApi<InspectionRecord>('/api/v1/records'),
+  ...createCrudApi<InspectionRecord>("/api/v1/records"),
 
-  listRecords: (params?: ListParams) => createCrudApi<InspectionRecord>('/api/v1/records').list(params),
+  listRecords: (params?: ListParams) =>
+    createCrudApi<InspectionRecord>("/api/v1/records").list(params),
 
   createRecord: (data: CreateInspectionRecordRequest) =>
-    createCrudApi<InspectionRecord>('/api/v1/records').create(data),
+    createCrudApi<InspectionRecord>("/api/v1/records").create(data),
 
-  listRecordsByTask: async (taskId: string): Promise<ApiResponse<InspectionRecord[]>> => {
+  listRecordsByTask: async (
+    taskId: string,
+  ): Promise<ApiResponse<InspectionRecord[]>> => {
     return apiClient.lims.get(`/api/v1/records/task/${taskId}`);
   },
 };
@@ -360,7 +413,7 @@ export interface AuditLog {
   user_name?: string;
   request_details?: any;
   response_details?: any;
-  status: 'success' | 'partial' | 'error';
+  status: "success" | "partial" | "error";
   error_message?: string;
   ip_address?: string;
   user_agent?: string;
@@ -378,9 +431,9 @@ export interface AuditLogQueryParams {
 
 export const auditLimsApi = {
   listAuditLogs: async (
-    params?: AuditLogQueryParams
+    params?: AuditLogQueryParams,
   ): Promise<ApiResponse<{ audit_logs: AuditLog[]; total: number }>> => {
-    let url = '/api/v1/audit-logs';
+    let url = "/api/v1/audit-logs";
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -430,6 +483,7 @@ export const limsApi = {
   getTask: taskApi.getTask,
   updateTask: taskApi.updateTask,
   completeStep: taskApi.completeStep,
+  listTasksBySample: taskApi.listTasksBySample,
 
   listRecords: recordApi.listRecords,
   createRecord: recordApi.createRecord,
@@ -443,14 +497,15 @@ export const limsApi = {
 
   listMaintenanceByInstrument: maintenanceApi.listByInstrument,
   createMaintenance: maintenanceApi.create,
+  updateMaintenance: maintenanceApi.update,
   deleteMaintenance: maintenanceApi.delete,
 
   getStatistics: async (): Promise<ApiResponse<LimsStatistics>> => {
-    return apiClient.lims.get('/api/v1/statistics');
+    return apiClient.lims.get("/api/v1/statistics");
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.lims.get('/health');
+    return apiClient.lims.get("/health");
   },
 };
 

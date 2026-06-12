@@ -29,6 +29,7 @@ pub mod health;
 pub mod safety;
 pub mod risk;
 pub mod training;
+pub mod openapi;
 
 #[derive(Debug, Deserialize)]
 pub struct ListQueryParams {

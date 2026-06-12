@@ -3,8 +3,12 @@
  * 供应链管理 API 客户端
  */
 
-import type { ApiResponse, PaginationParams, PaginatedResponse } from './client';
-import { apiClient } from './client';
+import type {
+  ApiResponse,
+  PaginationParams,
+  PaginatedResponse,
+} from "./client";
+import { apiClient } from "./client";
 
 // ==================== Types ====================
 
@@ -174,15 +178,19 @@ const supplierApi = {
   /**
    * 获取供应商列表
    */
-  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Supplier>>> => {
-    return apiClient.scm.get('/api/v1/suppliers', { params });
+  list: async (
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResponse<Supplier>>> => {
+    return apiClient.scm.get("/api/v1/suppliers", { params });
   },
 
   /**
    * 创建供应商
    */
-  create: async (data: CreateSupplierRequest): Promise<ApiResponse<Supplier>> => {
-    return apiClient.scm.post('/api/v1/suppliers', data);
+  create: async (
+    data: CreateSupplierRequest,
+  ): Promise<ApiResponse<Supplier>> => {
+    return apiClient.scm.post("/api/v1/suppliers", data);
   },
 
   /**
@@ -195,7 +203,10 @@ const supplierApi = {
   /**
    * 更新供应商
    */
-  update: async (id: string, data: UpdateSupplierRequest): Promise<ApiResponse<Supplier>> => {
+  update: async (
+    id: string,
+    data: UpdateSupplierRequest,
+  ): Promise<ApiResponse<Supplier>> => {
     return apiClient.scm.put(`/api/v1/suppliers/${id}`, data);
   },
 
@@ -213,15 +224,19 @@ const purchaseOrderApi = {
   /**
    * 获取采购订单列表
    */
-  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<PurchaseOrder>>> => {
-    return apiClient.scm.get('/api/v1/purchase-orders', { params });
+  list: async (
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResponse<PurchaseOrder>>> => {
+    return apiClient.scm.get("/api/v1/purchase-orders", { params });
   },
 
   /**
    * 创建采购订单
    */
-  create: async (data: CreatePurchaseOrderRequest): Promise<ApiResponse<PurchaseOrder>> => {
-    return apiClient.scm.post('/api/v1/purchase-orders', data);
+  create: async (
+    data: CreatePurchaseOrderRequest,
+  ): Promise<ApiResponse<PurchaseOrder>> => {
+    return apiClient.scm.post("/api/v1/purchase-orders", data);
   },
 
   /**
@@ -234,7 +249,10 @@ const purchaseOrderApi = {
   /**
    * 更新采购订单
    */
-  update: async (id: string, data: UpdatePurchaseOrderRequest): Promise<ApiResponse<PurchaseOrder>> => {
+  update: async (
+    id: string,
+    data: UpdatePurchaseOrderRequest,
+  ): Promise<ApiResponse<PurchaseOrder>> => {
     return apiClient.scm.put(`/api/v1/purchase-orders/${id}`, data);
   },
 };
@@ -245,15 +263,19 @@ const purchaseItemApi = {
   /**
    * 获取采购明细列表
    */
-  list: async (params?: PurchaseItemQueryParams): Promise<ApiResponse<PaginatedResponse<PurchaseItem>>> => {
-    return apiClient.scm.get('/api/v1/purchase-items', { params });
+  list: async (
+    params?: PurchaseItemQueryParams,
+  ): Promise<ApiResponse<PaginatedResponse<PurchaseItem>>> => {
+    return apiClient.scm.get("/api/v1/purchase-items", { params });
   },
 
   /**
    * 创建采购明细
    */
-  create: async (data: CreatePurchaseItemRequest): Promise<ApiResponse<PurchaseItem>> => {
-    return apiClient.scm.post('/api/v1/purchase-items', data);
+  create: async (
+    data: CreatePurchaseItemRequest,
+  ): Promise<ApiResponse<PurchaseItem>> => {
+    return apiClient.scm.post("/api/v1/purchase-items", data);
   },
 
   /**
@@ -266,7 +288,10 @@ const purchaseItemApi = {
   /**
    * 更新采购明细
    */
-  update: async (id: string, data: UpdatePurchaseItemRequest): Promise<ApiResponse<PurchaseItem>> => {
+  update: async (
+    id: string,
+    data: UpdatePurchaseItemRequest,
+  ): Promise<ApiResponse<PurchaseItem>> => {
     return apiClient.scm.put(`/api/v1/purchase-items/${id}`, data);
   },
 };
@@ -277,15 +302,19 @@ const supplierEvaluationApi = {
   /**
    * 获取供应商评估列表
    */
-  list: async (params?: SupplierEvaluationQueryParams): Promise<ApiResponse<PaginatedResponse<SupplierEvaluation>>> => {
-    return apiClient.scm.get('/api/v1/evaluations', { params });
+  list: async (
+    params?: SupplierEvaluationQueryParams,
+  ): Promise<ApiResponse<PaginatedResponse<SupplierEvaluation>>> => {
+    return apiClient.scm.get("/api/v1/evaluations", { params });
   },
 
   /**
    * 创建供应商评估
    */
-  create: async (data: CreateSupplierEvaluationRequest): Promise<ApiResponse<SupplierEvaluation>> => {
-    return apiClient.scm.post('/api/v1/evaluations', data);
+  create: async (
+    data: CreateSupplierEvaluationRequest,
+  ): Promise<ApiResponse<SupplierEvaluation>> => {
+    return apiClient.scm.post("/api/v1/evaluations", data);
   },
 
   /**
@@ -298,7 +327,10 @@ const supplierEvaluationApi = {
   /**
    * 更新供应商评估
    */
-  update: async (id: string, data: UpdateSupplierEvaluationRequest): Promise<ApiResponse<SupplierEvaluation>> => {
+  update: async (
+    id: string,
+    data: UpdateSupplierEvaluationRequest,
+  ): Promise<ApiResponse<SupplierEvaluation>> => {
     return apiClient.scm.put(`/api/v1/evaluations/${id}`, data);
   },
 };
@@ -318,6 +350,6 @@ export const scmApi = {
    * 健康检查
    */
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.scm.get('/health');
+    return apiClient.scm.get("/health");
   },
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Users,
   Search,
@@ -15,29 +15,37 @@ import {
   Loader2,
   RefreshCw,
   ChevronRight,
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { authApi, type User, type Role } from '../api/iam';
-import { useAppStore } from '../store';
-import { RoleBadge } from '@/components/PermissionGate';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/DataTable';
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { authApi, type User, type Role } from "../api/iam";
+import { useAppStore } from "../store";
+import { RoleBadge } from "@/components/PermissionGate";
+import type { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/DataTable";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ModeToggle } from '@/components/ModeToggle';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ModeToggle } from "@/components/ModeToggle";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface UserManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 
-const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _onNavigate }) => {
+const UserManagementPage: React.FC<UserManagementPageProps> = ({
+  onNavigate: _onNavigate,
+}) => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
@@ -45,8 +53,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRolesModal, setShowRolesModal] = useState(false);
@@ -54,7 +62,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   const [userRoles, setUserRoles] = useState<Role[]>([]);
 
   // 批量选择状态
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [selectAll, setSelectAll] = useState(false);
 
   // 分页状态
@@ -81,7 +91,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     setError(null);
     try {
       const [usersRes, rolesRes] = await Promise.all([
-        authApi.listUsers({ page: currentPage, page_size: pageSize, search: debouncedSearch || undefined }),
+        authApi.listUsers({
+          page: currentPage,
+          page_size: pageSize,
+          search: debouncedSearch || undefined,
+        }),
         authApi.listRoles(),
       ]);
 
@@ -93,9 +107,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         setRoles(rolesRes.data);
       }
     } catch (_err: any) {
-      const errorMsg = _err.response?.data?.message || _err.message || '加载数据失败';
+      const errorMsg =
+        _err.response?.data?.message || _err.message || "加载数据失败";
       setError(errorMsg);
-      addNotification({ title: '加载失败', message: errorMsg, type: 'error' });
+      addNotification({ title: "加载失败", message: errorMsg, type: "error" });
     } finally {
       setLoading(false);
     }
@@ -126,7 +141,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   // 批量启用/禁用用户
   const handleBatchUpdateStatus = async (isActive: boolean) => {
     if (selectedUserIds.size === 0) {
-      addNotification({ title: '提示', message: '请先选择要操作的用户', type: 'info' });
+      addNotification({
+        title: "提示",
+        message: "请先选择要操作的用户",
+        type: "info",
+      });
       return;
     }
 
@@ -137,29 +156,45 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       });
       if (res.success) {
         addNotification({
-          title: '成功',
-          message: `已${isActive ? '启用' : '禁用'} ${selectedUserIds.size} 个用户`,
-          type: 'success',
+          title: "成功",
+          message: `已${isActive ? "启用" : "禁用"} ${selectedUserIds.size} 个用户`,
+          type: "success",
         });
         setSelectedUserIds(new Set());
         setSelectAll(false);
         loadData();
       } else {
-        addNotification({ title: '失败', message: res.message || '操作失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "操作失败",
+          type: "error",
+        });
       }
     } catch (_err: any) {
-      addNotification({ title: '失败', message: _err.message || '操作失败', type: 'error' });
+      addNotification({
+        title: "失败",
+        message: _err.message || "操作失败",
+        type: "error",
+      });
     }
   };
 
   // 批量删除用户
   const handleBatchDelete = async () => {
     if (selectedUserIds.size === 0) {
-      addNotification({ title: '提示', message: '请先选择要删除的用户', type: 'info' });
+      addNotification({
+        title: "提示",
+        message: "请先选择要删除的用户",
+        type: "info",
+      });
       return;
     }
 
-    if (!confirm(`确定要删除选中的 ${selectedUserIds.size} 个用户吗？此操作不可恢复。`)) {
+    if (
+      !confirm(
+        `确定要删除选中的 ${selectedUserIds.size} 个用户吗？此操作不可恢复。`,
+      )
+    ) {
       return;
     }
 
@@ -169,18 +204,26 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       });
       if (res.success) {
         addNotification({
-          title: '成功',
+          title: "成功",
           message: `已删除 ${selectedUserIds.size} 个用户`,
-          type: 'success',
+          type: "success",
         });
         setSelectedUserIds(new Set());
         setSelectAll(false);
         loadData();
       } else {
-        addNotification({ title: '失败', message: res.message || '删除失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "删除失败",
+          type: "error",
+        });
       }
     } catch (_err: any) {
-      addNotification({ title: '失败', message: _err.message || '删除失败', type: 'error' });
+      addNotification({
+        title: "失败",
+        message: _err.message || "删除失败",
+        type: "error",
+      });
     }
   };
 
@@ -201,11 +244,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   };
 
   const [newUser, setNewUser] = useState({
-    username: '',
-    email: '',
-    password: '',
-    full_name: '',
-    role: '普通用户',
+    username: "",
+    email: "",
+    password: "",
+    full_name: "",
+    role: "普通用户",
   });
 
   const loadUserRoles = async (userId: string) => {
@@ -215,7 +258,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         setUserRoles(res.data);
       }
     } catch (_err: any) {
-      addNotification({ title: '加载失败', message: '加载用户角色失败', type: 'error' });
+      addNotification({
+        title: "加载失败",
+        message: "加载用户角色失败",
+        type: "error",
+      });
     }
   };
 
@@ -229,31 +276,58 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         full_name: newUser.full_name,
       });
       if (res.success) {
-        addNotification({ title: '成功', message: '用户创建成功', type: 'success' });
+        addNotification({
+          title: "成功",
+          message: "用户创建成功",
+          type: "success",
+        });
         setShowCreateModal(false);
-        setNewUser({ username: '', email: '', password: '', full_name: '', role: '普通用户' });
+        setNewUser({
+          username: "",
+          email: "",
+          password: "",
+          full_name: "",
+          role: "普通用户",
+        });
         loadData();
       } else {
-        addNotification({ title: '失败', message: res.message || '创建用户失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "创建用户失败",
+          type: "error",
+        });
       }
     } catch (_err: any) {
-      const errorMsg = _err.response?.data?.message || _err.message || '创建用户失败';
-      addNotification({ title: '失败', message: errorMsg, type: 'error' });
+      const errorMsg =
+        _err.response?.data?.message || _err.message || "创建用户失败";
+      addNotification({ title: "失败", message: errorMsg, type: "error" });
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('确定要删除这个用户吗？')) return;
+    if (!confirm("确定要删除这个用户吗？")) return;
     try {
       const res = await authApi.deleteUser(userId);
       if (res.success) {
-        addNotification({ title: '成功', message: '用户删除成功', type: 'success' });
+        addNotification({
+          title: "成功",
+          message: "用户删除成功",
+          type: "success",
+        });
         loadData();
       } else {
-        addNotification({ title: '失败', message: res.message || '删除用户失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "删除用户失败",
+          type: "error",
+        });
       }
     } catch (_err: any) {
-      addNotification({ title: '失败', message: _err.message || '删除用户失败', type: 'error' });
+      addNotification({
+        title: "失败",
+        message: _err.message || "删除用户失败",
+        type: "error",
+      });
     }
   };
 
@@ -267,15 +341,27 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         is_active: selectedUser.is_active,
       });
       if (res.success) {
-        addNotification({ title: '成功', message: '用户更新成功', type: 'success' });
+        addNotification({
+          title: "成功",
+          message: "用户更新成功",
+          type: "success",
+        });
         setShowEditModal(false);
         setSelectedUser(null);
         loadData();
       } else {
-        addNotification({ title: '失败', message: res.message || '更新用户失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "更新用户失败",
+          type: "error",
+        });
       }
     } catch (_err: any) {
-      addNotification({ title: '失败', message: _err.message || '更新用户失败', type: 'error' });
+      addNotification({
+        title: "失败",
+        message: _err.message || "更新用户失败",
+        type: "error",
+      });
     }
   };
 
@@ -283,13 +369,25 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     try {
       const res = await authApi.addUserRole(userId, roleId);
       if (res.success) {
-        addNotification({ title: '成功', message: '角色添加成功', type: 'success' });
+        addNotification({
+          title: "成功",
+          message: "角色添加成功",
+          type: "success",
+        });
         await loadUserRoles(userId);
       } else {
-        addNotification({ title: '失败', message: res.message || '添加角色失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "添加角色失败",
+          type: "error",
+        });
       }
     } catch (_err: any) {
-      addNotification({ title: '失败', message: _err.message || '添加角色失败', type: 'error' });
+      addNotification({
+        title: "失败",
+        message: _err.message || "添加角色失败",
+        type: "error",
+      });
     }
   };
 
@@ -297,13 +395,25 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     try {
       const res = await authApi.removeUserRole(userId, roleId);
       if (res.success) {
-        addNotification({ title: '成功', message: '角色移除成功', type: 'success' });
+        addNotification({
+          title: "成功",
+          message: "角色移除成功",
+          type: "success",
+        });
         await loadUserRoles(userId);
       } else {
-        addNotification({ title: '失败', message: res.message || '移除角色失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "移除角色失败",
+          type: "error",
+        });
       }
     } catch (_err: any) {
-      addNotification({ title: '失败', message: _err.message || '移除角色失败', type: 'error' });
+      addNotification({
+        title: "失败",
+        message: _err.message || "移除角色失败",
+        type: "error",
+      });
     }
   };
 
@@ -314,23 +424,26 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   };
 
   const getRoleBadge = (role: string) => {
-    const colors: Record<string, 'default' | 'destructive' | 'outline' | 'secondary'> = {
-      管理员: 'destructive',
-      普通用户: 'secondary',
-      访客: 'outline',
+    const colors: Record<
+      string,
+      "default" | "destructive" | "outline" | "secondary"
+    > = {
+      管理员: "destructive",
+      普通用户: "secondary",
+      访客: "outline",
     };
-    return <Badge variant={colors[role] || 'outline'}>{role || '未知'}</Badge>;
+    return <Badge variant={colors[role] || "outline"}>{role || "未知"}</Badge>;
   };
 
   const columns = useMemo<ColumnDef<User>[]>(
     () => [
       {
-        id: 'select',
+        id: "select",
         header: () => (
           <Checkbox
             checked={selectAll && users.length > 0}
             onCheckedChange={handleSelectAll}
-            aria-label='全选'
+            aria-label="全选"
           />
         ),
         cell: ({ row }) => (
@@ -343,140 +456,155 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         enableSorting: false,
       },
       {
-        accessorKey: 'username',
-        header: '用户',
+        accessorKey: "username",
+        header: "用户",
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className='flex items-center space-x-3'>
+            <div className="flex items-center space-x-3">
               <Avatar>
-                <AvatarFallback className='bg-blue-100 text-blue-700'>
+                <AvatarFallback className="bg-blue-100 text-blue-700">
                   {user.username.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <div className='font-medium text-gray-900 dark:text-gray-100'>{user.full_name || user.username}</div>
-                <div className='text-sm text-gray-500 dark:text-gray-400'>{user.email}</div>
+                <div className="font-medium text-gray-900 dark:text-gray-100">
+                  {user.full_name || user.username}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {user.email}
+                </div>
               </div>
             </div>
           );
         },
       },
       {
-        accessorKey: 'role',
-        header: '角色',
+        accessorKey: "role",
+        header: "角色",
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className='flex items-center space-x-2'>
-              <RoleBadge role={user.role || 'user'} size='sm' />
+            <div className="flex items-center space-x-2">
+              <RoleBadge role={user.role || "user"} size="sm" />
               {user.roles && user.roles.length > 1 && (
-                <span className='text-xs text-gray-500'>+{user.roles.length - 1}</span>
+                <span className="text-xs text-gray-500">
+                  +{user.roles.length - 1}
+                </span>
               )}
             </div>
           );
         },
       },
       {
-        accessorKey: 'permissions',
-        header: '权限',
+        accessorKey: "permissions",
+        header: "权限",
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className='text-sm text-gray-500 dark:text-gray-400'>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               {user.permissions ? user.permissions.length : 0} 个权限
             </div>
           );
         },
       },
       {
-        accessorKey: 'is_active',
-        header: '状态',
+        accessorKey: "is_active",
+        header: "状态",
         cell: ({ row }) => {
           const user = row.original;
           const isActive = user.is_active !== false;
           return (
-            <div className='flex items-center space-x-2'>
+            <div className="flex items-center space-x-2">
               {isActive ? (
-                <CheckCircle className='w-4 h-4 text-green-500' />
+                <CheckCircle className="w-4 h-4 text-green-500" />
               ) : (
-                <XCircle className='w-4 h-4 text-red-500' />
+                <XCircle className="w-4 h-4 text-red-500" />
               )}
-              <span className='text-sm text-gray-600 dark:text-gray-300'>{isActive ? '活跃' : '禁用'}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">
+                {isActive ? "活跃" : "禁用"}
+              </span>
             </div>
           );
         },
       },
       {
-        accessorKey: 'created_at',
-        header: '创建时间',
+        accessorKey: "created_at",
+        header: "创建时间",
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className='text-sm text-gray-500 dark:text-gray-400'>
-              {new Date(user.created_at).toLocaleDateString('zh-CN')}
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {new Date(user.created_at).toLocaleDateString("zh-CN")}
             </div>
           );
         },
       },
       {
-        id: 'actions',
-        header: '操作',
+        id: "actions",
+        header: "操作",
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className='flex items-center justify-end space-x-2'>
+            <div className="flex items-center justify-end space-x-2">
               <Button
-                variant='ghost'
-                size='sm'
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setSelectedUser(user);
                   setShowEditModal(true);
                 }}
               >
-                <Edit className='w-4 h-4' />
-              </Button>
-              <Button variant='ghost' size='sm' onClick={() => openRolesModal(user)} title='管理角色'>
-                <Shield className='w-4 h-4' />
+                <Edit className="w-4 h-4" />
               </Button>
               <Button
-                variant='ghost'
-                size='sm'
-                className='text-red-600 hover:text-red-700'
+                variant="ghost"
+                size="sm"
+                onClick={() => openRolesModal(user)}
+                title="管理角色"
+              >
+                <Shield className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-600 hover:text-red-700"
                 onClick={() => handleDeleteUser(user.id)}
               >
-                <Trash2 className='w-4 h-4' />
+                <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           );
         },
       },
     ],
-    []
+    [],
   );
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-gray-900'>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className='bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-4'>
-              <Button variant='ghost' onClick={() => navigate('/dashboard')}>
-                <ChevronLeft className='w-5 h-5' />
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+                <ChevronLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center'>
-                  <Users className='w-7 h-7 mr-3 text-blue-600' />
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
+                  <Users className="w-7 h-7 mr-3 text-blue-600" />
                   用户管理
                 </h1>
-                <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>管理平台用户账户、角色和权限</p>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  管理平台用户账户、角色和权限
+                </p>
               </div>
             </div>
-            <div className='flex items-center space-x-2'>
+            <div className="flex items-center space-x-2">
               <ModeToggle />
               <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className='w-5 h-5 mr-2' />
+                <Plus className="w-5 h-5 mr-2" />
                 创建用户
               </Button>
             </div>
@@ -484,46 +612,67 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         </div>
       </div>
 
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Batch Actions */}
-        <div className='mb-6'>
-          <div className='flex items-center space-x-4 mb-4'>
-            <div className='flex-1 relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
+        <div className="mb-6">
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
-                type='text'
-                placeholder='搜索用户名、邮箱...'
+                type="text"
+                placeholder="搜索用户名、邮箱..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10'
+                className="pl-10"
               />
             </div>
-            <Button variant='secondary' onClick={loadData} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <Button variant="secondary" onClick={loadData} disabled={loading}>
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
               刷新
             </Button>
           </div>
 
           {/* Batch Actions Toolbar */}
           {selectedUserIds.size > 0 && (
-            <div className='flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4'>
-              <div className='flex items-center space-x-2'>
-                <CheckCircle className='w-5 h-5 text-blue-600' />
-                <span className='text-sm font-medium text-blue-900 dark:text-blue-300'>
+            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
                   已选择 {selectedUserIds.size} 个用户
                 </span>
               </div>
-              <div className='flex items-center space-x-2'>
-                <Button size='sm' variant='outline' onClick={() => handleBatchUpdateStatus(true)}>
+              <div className="flex items-center space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBatchUpdateStatus(true)}
+                >
                   批量启用
                 </Button>
-                <Button size='sm' variant='outline' onClick={() => handleBatchUpdateStatus(false)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBatchUpdateStatus(false)}
+                >
                   批量禁用
                 </Button>
-                <Button size='sm' variant='destructive' onClick={handleBatchDelete}>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={handleBatchDelete}
+                >
                   批量删除
                 </Button>
-                <Button size='sm' variant='ghost' onClick={() => { setSelectedUserIds(new Set()); setSelectAll(false); }}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setSelectedUserIds(new Set());
+                    setSelectAll(false);
+                  }}
+                >
                   取消选择
                 </Button>
               </div>
@@ -533,39 +682,58 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
 
         {/* Table */}
         <Card>
-          <CardContent className='p-0'>
+          <CardContent className="p-0">
             {loading ? (
-              <div className='p-8 text-center'>
-                <Loader2 className='w-8 h-8 animate-spin text-blue-600 mx-auto' />
-                <p className='mt-2 text-gray-500 dark:text-gray-400'>加载中...</p>
+              <div className="p-8 text-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+                <p className="mt-2 text-gray-500 dark:text-gray-400">
+                  加载中...
+                </p>
               </div>
             ) : error ? (
-              <div className='p-8 text-center'>
-                <AlertCircle className='w-12 h-12 text-red-500 mx-auto mb-3' />
-                <p className='text-red-600 dark:text-red-400'>{error}</p>
-                <Button className='mt-4' onClick={loadData}>
+              <div className="p-8 text-center">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+                <p className="text-red-600 dark:text-red-400">{error}</p>
+                <Button className="mt-4" onClick={loadData}>
                   重试
                 </Button>
               </div>
             ) : (
               <>
-                <DataTable columns={columns} data={users} searchPlaceholder='搜索用户名、邮箱...' searchKey='username' />
+                <DataTable
+                  columns={columns}
+                  data={users}
+                  searchPlaceholder="搜索用户名、邮箱..."
+                  searchKey="username"
+                />
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className='flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700'>
-                    <div className='text-sm text-gray-500 dark:text-gray-400'>
-                      显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalUsers)} 共 {totalUsers} 条
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      显示 {(currentPage - 1) * pageSize + 1} -{" "}
+                      {Math.min(currentPage * pageSize, totalUsers)} 共{" "}
+                      {totalUsers} 条
                     </div>
-                    <div className='flex items-center space-x-2'>
-                      <Button variant='outline' size='sm' onClick={goToPrevPage} disabled={currentPage === 1}>
-                        <ChevronLeft className='w-4 h-4' />
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToPrevPage}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
                       </Button>
-                      <span className='text-sm px-2'>
+                      <span className="text-sm px-2">
                         第 {currentPage} / {totalPages} 页
                       </span>
-                      <Button variant='outline' size='sm' onClick={goToNextPage} disabled={currentPage === totalPages}>
-                        <ChevronRight className='w-4 h-4' />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -578,66 +746,80 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
 
       {/* Create User Dialog */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className='max-w-md'>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>创建新用户</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateUser}>
-            <div className='space-y-4 py-2'>
-              <div className='space-y-2'>
-                <Label htmlFor='username'>用户名 *</Label>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="username">用户名 *</Label>
                 <Input
-                  id='username'
+                  id="username"
                   value={newUser.username}
-                  onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                  placeholder='输入用户名'
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, username: e.target.value })
+                  }
+                  placeholder="输入用户名"
                   required
                 />
               </div>
-              <div className='space-y-2'>
-                <Label htmlFor='email'>邮箱 *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email">邮箱 *</Label>
                 <Input
-                  id='email'
-                  type='email'
+                  id="email"
+                  type="email"
                   value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  placeholder='输入邮箱'
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, email: e.target.value })
+                  }
+                  placeholder="输入邮箱"
                   required
                 />
               </div>
-              <div className='space-y-2'>
-                <Label htmlFor='password'>密码 *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="password">密码 *</Label>
                 <Input
-                  id='password'
-                  type='password'
+                  id="password"
+                  type="password"
                   value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  placeholder='输入密码'
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, password: e.target.value })
+                  }
+                  placeholder="输入密码"
                   required
                 />
               </div>
-              <div className='space-y-2'>
-                <Label htmlFor='full_name'>姓名</Label>
+              <div className="space-y-2">
+                <Label htmlFor="full_name">姓名</Label>
                 <Input
-                  id='full_name'
+                  id="full_name"
                   value={newUser.full_name}
-                  onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
-                  placeholder='输入姓名'
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, full_name: e.target.value })
+                  }
+                  placeholder="输入姓名"
                 />
               </div>
             </div>
-            <DialogFooter className='mt-6'>
+            <DialogFooter className="mt-6">
               <Button
-                type='button'
-                variant='secondary'
+                type="button"
+                variant="secondary"
                 onClick={() => {
                   setShowCreateModal(false);
-                  setNewUser({ username: '', email: '', password: '', full_name: '', role: '普通用户' });
+                  setNewUser({
+                    username: "",
+                    email: "",
+                    password: "",
+                    full_name: "",
+                    role: "普通用户",
+                  });
                 }}
               >
                 取消
               </Button>
-              <Button type='submit'>创建</Button>
+              <Button type="submit">创建</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -645,51 +827,70 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
 
       {/* Edit User Dialog */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className='max-w-md'>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>编辑用户</DialogTitle>
           </DialogHeader>
           {selectedUser && (
             <form onSubmit={handleEditUser}>
-              <div className='space-y-4 py-2'>
-                <div className='space-y-2'>
-                  <Label htmlFor='edit-username'>用户名</Label>
-                  <Input id='edit-username' value={selectedUser.username} disabled />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='edit-email'>邮箱 *</Label>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-username">用户名</Label>
                   <Input
-                    id='edit-email'
-                    type='email'
+                    id="edit-username"
+                    value={selectedUser.username}
+                    disabled
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">邮箱 *</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
                     value={selectedUser.email}
-                    onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })}
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        email: e.target.value,
+                      })
+                    }
                     required
                   />
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='edit-full_name'>姓名</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-full_name">姓名</Label>
                   <Input
-                    id='edit-full_name'
-                    value={selectedUser.full_name || ''}
-                    onChange={(e) => setSelectedUser({ ...selectedUser, full_name: e.target.value })}
-                    placeholder='输入姓名'
+                    id="edit-full_name"
+                    value={selectedUser.full_name || ""}
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        full_name: e.target.value,
+                      })
+                    }
+                    placeholder="输入姓名"
                   />
                 </div>
-                <div className='flex items-center space-x-2'>
+                <div className="flex items-center space-x-2">
                   <input
-                    type='checkbox'
-                    id='edit-is_active'
+                    type="checkbox"
+                    id="edit-is_active"
                     checked={selectedUser.is_active}
-                    onChange={(e) => setSelectedUser({ ...selectedUser, is_active: e.target.checked })}
-                    className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        is_active: e.target.checked,
+                      })
+                    }
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <Label htmlFor='edit-is_active'>启用账户</Label>
+                  <Label htmlFor="edit-is_active">启用账户</Label>
                 </div>
               </div>
-              <DialogFooter className='mt-6'>
+              <DialogFooter className="mt-6">
                 <Button
-                  type='button'
-                  variant='secondary'
+                  type="button"
+                  variant="secondary"
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedUser(null);
@@ -697,7 +898,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
                 >
                   取消
                 </Button>
-                <Button type='submit'>保存</Button>
+                <Button type="submit">保存</Button>
               </DialogFooter>
             </form>
           )}
@@ -706,70 +907,93 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
 
       {/* Roles Management Dialog */}
       <Dialog open={showRolesModal} onOpenChange={setShowRolesModal}>
-        <DialogContent className='max-w-2xl'>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>用户角色管理 - {selectedUser?.full_name || selectedUser?.username}</DialogTitle>
+            <DialogTitle>
+              用户角色管理 - {selectedUser?.full_name || selectedUser?.username}
+            </DialogTitle>
           </DialogHeader>
-          <div className='py-4'>
-            <h4 className='font-medium text-gray-900 dark:text-gray-100 mb-4'>已有角色</h4>
-            <div className='space-y-2 mb-6'>
+          <div className="py-4">
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
+              已有角色
+            </h4>
+            <div className="space-y-2 mb-6">
               {userRoles.length === 0 ? (
-                <p className='text-sm text-gray-500 dark:text-gray-400'>暂无分配角色</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  暂无分配角色
+                </p>
               ) : (
                 userRoles.map((role) => (
                   <div
                     key={role.id}
-                    className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800'
+                    className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
                   >
-                    <div className='flex items-center space-x-3'>
-                      <Shield className='w-4 h-4 text-green-600 dark:text-green-400' />
-                      <span className='font-medium text-green-900 dark:text-green-100'>{role.name}</span>
+                    <div className="flex items-center space-x-3">
+                      <Shield className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      <span className="font-medium text-green-900 dark:text-green-100">
+                        {role.name}
+                      </span>
                     </div>
                     <Button
-                      variant='ghost'
-                      size='sm'
-                      className='text-red-600 hover:text-red-700'
-                      onClick={() => selectedUser && handleRemoveRoleFromUser(selectedUser.id, role.id)}
-                      title='移除角色'
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() =>
+                        selectedUser &&
+                        handleRemoveRoleFromUser(selectedUser.id, role.id)
+                      }
+                      title="移除角色"
                     >
-                      <UserMinus className='w-4 h-4' />
+                      <UserMinus className="w-4 h-4" />
                     </Button>
                   </div>
                 ))
               )}
             </div>
-            <h4 className='font-medium text-gray-900 dark:text-gray-100 mb-4'>可用角色</h4>
-            <div className='space-y-2'>
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
+              可用角色
+            </h4>
+            <div className="space-y-2">
               {roles
                 .filter((r) => !userRoles.some((ur) => ur.id === r.id))
                 .map((role) => (
                   <div
                     key={role.id}
-                    className='flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg'
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                   >
-                    <div className='flex items-center space-x-3'>
-                      <Shield className='w-4 h-4 text-gray-600 dark:text-gray-400' />
+                    <div className="flex items-center space-x-3">
+                      <Shield className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                       <div>
-                        <span className='font-medium text-gray-900 dark:text-gray-100'>{role.name}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {role.name}
+                        </span>
                         {role.description && (
-                          <span className='text-sm text-gray-500 dark:text-gray-400 ml-2'>- {role.description}</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
+                            - {role.description}
+                          </span>
                         )}
                       </div>
                     </div>
                     <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => selectedUser && handleAddRoleToUser(selectedUser.id, role.id)}
-                      title='添加角色'
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        selectedUser &&
+                        handleAddRoleToUser(selectedUser.id, role.id)
+                      }
+                      title="添加角色"
                     >
-                      <UserPlus className='w-4 h-4' />
+                      <UserPlus className="w-4 h-4" />
                     </Button>
                   </div>
                 ))}
             </div>
           </div>
           <DialogFooter>
-            <Button variant='secondary' onClick={() => setShowRolesModal(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowRolesModal(false)}
+            >
               关闭
             </Button>
           </DialogFooter>

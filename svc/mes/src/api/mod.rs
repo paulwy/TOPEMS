@@ -14,6 +14,7 @@ pub mod work_station;
 pub mod production_record;
 pub mod audit;
 pub mod equipment;
+pub mod openapi;
 
 #[derive(Clone)]
 pub struct ApiState {

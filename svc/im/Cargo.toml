@@ -28,6 +28,9 @@ mime_guess.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 
+# OpenAPI 文档
+utoipa.workspace = true
+
 [dev-dependencies]
 tokio-test.workspace = true
 

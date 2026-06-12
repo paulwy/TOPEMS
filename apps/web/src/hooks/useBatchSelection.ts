@@ -1,13 +1,18 @@
-import React from 'react';
+import React from "react";
 
-export const useBatchSelection = <T>(items: T[], idKey: string = 'id') => {
+export const useBatchSelection = <T>(items: T[], idKey: string = "id") => {
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
 
-  const allItemsSelected = items.length > 0 && selectedIds.length === items.length;
+  const allItemsSelected =
+    items.length > 0 && selectedIds.length === items.length;
   const isIndeterminate = !allItemsSelected && selectedIds.length > 0;
 
   const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]));
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((itemId) => itemId !== id)
+        : [...prev, id],
+    );
   };
 
   const selectAll = () => {

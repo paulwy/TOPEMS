@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -9,9 +9,9 @@ import {
   ResponsiveContainer,
   Legend,
   Cell,
-} from 'recharts';
-import { BIChartColors, getChartColor } from './chartTheme';
-import { CustomTooltip } from './CustomTooltip';
+} from "recharts";
+import { BIChartColors, getChartColor } from "./chartTheme";
+import { CustomTooltip } from "./CustomTooltip";
 
 interface BarChartProps {
   data: any[];
@@ -50,42 +50,50 @@ export const BarChart: React.FC<BarChartProps> = ({
 
   return (
     <div style={{ height }}>
-      <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={0}>
-        <RechartsBarChart data={data} layout={horizontal ? 'vertical' : 'horizontal'}>
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        minWidth={0}
+        minHeight={0}
+      >
+        <RechartsBarChart
+          data={data}
+          layout={horizontal ? "vertical" : "horizontal"}
+        >
           {showGrid && (
             <CartesianGrid
-              strokeDasharray='3 3'
-              stroke='#E2E8F0'
+              strokeDasharray="3 3"
+              stroke="#E2E8F0"
               vertical={horizontal}
               horizontal={!horizontal}
             />
           )}
           <XAxis
-            type={horizontal ? 'number' : 'category'}
+            type={horizontal ? "number" : "category"}
             dataKey={horizontal ? undefined : xKey}
-            tick={{ fill: '#64748B', fontSize: 12 }}
-            axisLine={{ stroke: '#E2E8F0' }}
-            tickLine={{ stroke: '#E2E8F0' }}
+            tick={{ fill: "#64748B", fontSize: 12 }}
+            axisLine={{ stroke: "#E2E8F0" }}
+            tickLine={{ stroke: "#E2E8F0" }}
           />
           <YAxis
-            type={horizontal ? 'category' : 'number'}
+            type={horizontal ? "category" : "number"}
             dataKey={horizontal ? xKey : undefined}
-            tick={{ fill: '#64748B', fontSize: 12 }}
-            axisLine={{ stroke: '#E2E8F0' }}
-            tickLine={{ stroke: '#E2E8F0' }}
+            tick={{ fill: "#64748B", fontSize: 12 }}
+            axisLine={{ stroke: "#E2E8F0" }}
+            tickLine={{ stroke: "#E2E8F0" }}
             width={50}
           />
           <Tooltip
             content={<CustomTooltip />}
-            cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }}
+            cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
           />
           {showLegend && (
             <Legend
-              wrapperStyle={{ paddingTop: '20px' }}
-              iconType='circle'
+              wrapperStyle={{ paddingTop: "20px" }}
+              iconType="circle"
               iconSize={8}
               formatter={(value) => (
-                <span className='text-sm text-slate-600'>{value}</span>
+                <span className="text-sm text-slate-600">{value}</span>
               )}
             />
           )}
@@ -95,13 +103,13 @@ export const BarChart: React.FC<BarChartProps> = ({
               dataKey={yKey.key}
               name={yKey.name}
               fill={yKey.color || getChartColor(index)}
-              stackId={stacked ? 'a' : undefined}
+              stackId={stacked ? "a" : undefined}
               onClick={handleClick}
-              cursor={onBarClick ? 'pointer' : 'default'}
+              cursor={onBarClick ? "pointer" : "default"}
               radius={barRadius}
               maxBarSize={barWidth || 40}
               animationDuration={animate ? 800 + index * 100 : 0}
-              animationEasing='ease-out'
+              animationEasing="ease-out"
             >
               {showValue &&
                 data.map((entry, i) => (

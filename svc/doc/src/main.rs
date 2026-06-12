@@ -2227,9 +2227,15 @@ async fn main() {
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
+    async fn openapi_docs() -> Json<serde_json::Value> {
+        let openapi_json = ApiDoc::openapi().to_json().unwrap_or_else(|_| "{}".to_string());
+        let value: serde_json::Value = serde_json::from_str(&openapi_json).unwrap_or_default();
+        Json(value)
+    }
+
     let app = Router::new()
         .route("/", get(home))
-        .route("/api-docs/openapi.json", get(|| async { Json(ApiDoc::openapi()) }))
+        .route("/api-docs/openapi.json", get(openapi_docs))
         .merge(health_routes)
         .nest("/api/v1", combined_routes)
         .layer(cors)

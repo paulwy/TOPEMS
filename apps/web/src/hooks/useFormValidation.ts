@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { FieldError, ValidationHint } from '../components/ValidationError';
+import { useState, useCallback } from "react";
+import { FieldError, ValidationHint } from "../components/ValidationError";
 
 export interface ValidationRule {
   required?: boolean;
@@ -9,40 +9,50 @@ export interface ValidationRule {
   custom?: (value: any) => boolean | string;
 }
 
-export function useFormValidation<T extends Record<string, any>>(initialData: T) {
+export function useFormValidation<T extends Record<string, any>>(
+  initialData: T,
+) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const validateField = useCallback((field: keyof T, value: any, rules?: ValidationRule): string | null => {
-    if (!rules) return null;
+  const validateField = useCallback(
+    (field: keyof T, value: any, rules?: ValidationRule): string | null => {
+      if (!rules) return null;
 
-    if (rules.required && (!value || (typeof value === 'string' && !value.trim()))) {
-      return `${String(field)}不能为空`;
-    }
-
-    if (value && typeof value === 'string') {
-      if (rules.minLength && value.length < rules.minLength) {
-        return `${String(field)}至少需要${rules.minLength}个字符`;
+      if (
+        rules.required &&
+        (!value || (typeof value === "string" && !value.trim()))
+      ) {
+        return `${String(field)}不能为空`;
       }
 
-      if (rules.maxLength && value.length > rules.maxLength) {
-        return `${String(field)}不能超过${rules.maxLength}个字符`;
+      if (value && typeof value === "string") {
+        if (rules.minLength && value.length < rules.minLength) {
+          return `${String(field)}至少需要${rules.minLength}个字符`;
+        }
+
+        if (rules.maxLength && value.length > rules.maxLength) {
+          return `${String(field)}不能超过${rules.maxLength}个字符`;
+        }
+
+        if (rules.pattern && !rules.pattern.test(value)) {
+          return `${String(field)}格式不正确`;
+        }
       }
 
-      if (rules.pattern && !rules.pattern.test(value)) {
-        return `${String(field)}格式不正确`;
+      if (rules.custom) {
+        const result = rules.custom(value);
+        if (result !== true) {
+          return typeof result === "string"
+            ? result
+            : `${String(field)}验证失败`;
+        }
       }
-    }
 
-    if (rules.custom) {
-      const result = rules.custom(value);
-      if (result !== true) {
-        return typeof result === 'string' ? result : `${String(field)}验证失败`;
-      }
-    }
-
-    return null;
-  }, []);
+      return null;
+    },
+    [],
+  );
 
   const handleFieldChange = useCallback(
     (field: keyof T, value: any, rules?: ValidationRule) => {
@@ -59,7 +69,7 @@ export function useFormValidation<T extends Record<string, any>>(initialData: T)
         });
       }
     },
-    [touched, validateField]
+    [touched, validateField],
   );
 
   const handleFieldBlur = useCallback(
@@ -76,7 +86,7 @@ export function useFormValidation<T extends Record<string, any>>(initialData: T)
         return newErrors;
       });
     },
-    [validateField]
+    [validateField],
   );
 
   const validateForm = useCallback(
@@ -95,10 +105,12 @@ export function useFormValidation<T extends Record<string, any>>(initialData: T)
       }
 
       setErrors(formErrors);
-      setTouched(Object.keys(rules).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
+      setTouched(
+        Object.keys(rules).reduce((acc, key) => ({ ...acc, [key]: true }), {}),
+      );
       return isValid;
     },
-    [validateField]
+    [validateField],
   );
 
   const clearErrors = useCallback(() => {
@@ -110,14 +122,14 @@ export function useFormValidation<T extends Record<string, any>>(initialData: T)
     (field: string): string | undefined => {
       return touched[field] ? errors[field] : undefined;
     },
-    [errors, touched]
+    [errors, touched],
   );
 
   const hasFieldError = useCallback(
     (field: string): boolean => {
       return touched[field] && !!errors[field];
     },
-    [errors, touched]
+    [errors, touched],
   );
 
   return {
@@ -135,7 +147,9 @@ export function useFormValidation<T extends Record<string, any>>(initialData: T)
 
 export function getInputClassName(
   hasError: boolean,
-  baseClass: string = 'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+  baseClass: string = "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500",
 ): string {
-  return hasError ? `${baseClass} border-red-500` : `${baseClass} border-slate-200`;
+  return hasError
+    ? `${baseClass} border-red-500`
+    : `${baseClass} border-slate-200`;
 }

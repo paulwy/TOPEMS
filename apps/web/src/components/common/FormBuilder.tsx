@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback } from "react";
 import {
   Input,
   TextArea,
@@ -11,12 +11,21 @@ import {
   Card,
   Label,
   TextField,
-} from '@heroui/react';
+} from "@heroui/react";
 
 export interface FormFieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'date' | 'file';
+  type:
+    | "text"
+    | "email"
+    | "password"
+    | "number"
+    | "textarea"
+    | "select"
+    | "checkbox"
+    | "date"
+    | "file";
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
@@ -48,8 +57,8 @@ export interface FormBuilderConfig {
 export default function FormBuilder({
   fields,
   onSubmit,
-  submitLabel = '提交',
-  resetLabel = '重置',
+  submitLabel = "提交",
+  resetLabel = "重置",
   showReset = true,
   title,
   initialValues = {},
@@ -59,7 +68,7 @@ export default function FormBuilder({
     async (values: Record<string, any>) => {
       await onSubmit(values);
     },
-    [onSubmit]
+    [onSubmit],
   );
 
   const renderField = useCallback(
@@ -69,9 +78,9 @@ export default function FormBuilder({
       const defaultValue = initialValues[field.name] ?? field.defaultValue;
 
       switch (field.type) {
-        case 'text':
-        case 'email':
-        case 'password':
+        case "text":
+        case "email":
+        case "password":
           return (
             <TextField
               key={field.name}
@@ -84,7 +93,7 @@ export default function FormBuilder({
               <Input type={field.type} placeholder={field.placeholder} />
             </TextField>
           );
-        case 'number':
+        case "number":
           return (
             <TextField
               key={field.name}
@@ -94,10 +103,10 @@ export default function FormBuilder({
               defaultValue={defaultValue?.toString()}
             >
               <Label>{field.label}</Label>
-              <Input type='number' placeholder={field.placeholder} />
+              <Input type="number" placeholder={field.placeholder} />
             </TextField>
           );
-        case 'textarea':
+        case "textarea":
           return (
             <TextField
               key={field.name}
@@ -110,14 +119,16 @@ export default function FormBuilder({
               <TextArea placeholder={field.placeholder} />
             </TextField>
           );
-        case 'select':
+        case "select":
           return (
             <Select
               key={field.name}
               name={field.name}
               isRequired={isRequired}
               isDisabled={isDisabled}
-              defaultSelectedKey={defaultValue ? String(defaultValue) : undefined}
+              defaultSelectedKey={
+                defaultValue ? String(defaultValue) : undefined
+              }
             >
               <Label>{field.label}</Label>
               {field.options?.map((opt) => (
@@ -127,13 +138,18 @@ export default function FormBuilder({
               ))}
             </Select>
           );
-        case 'checkbox':
+        case "checkbox":
           return (
-            <Checkbox key={field.name} name={field.name} isSelected={defaultValue || false} isDisabled={isDisabled}>
+            <Checkbox
+              key={field.name}
+              name={field.name}
+              isSelected={defaultValue || false}
+              isDisabled={isDisabled}
+            >
               {field.label}
             </Checkbox>
           );
-        case 'date':
+        case "date":
           return (
             <DatePicker
               key={field.name}
@@ -145,27 +161,37 @@ export default function FormBuilder({
               <Label>{field.label}</Label>
             </DatePicker>
           );
-        case 'file':
+        case "file":
           return (
-            <TextField key={field.name} name={field.name} isRequired={isRequired} isDisabled={isDisabled}>
+            <TextField
+              key={field.name}
+              name={field.name}
+              isRequired={isRequired}
+              isDisabled={isDisabled}
+            >
               <Label>{field.label}</Label>
-              <Input type='file' />
+              <Input type="file" />
             </TextField>
           );
         default:
           if (field.render) {
-            return field.render({ name: field.name, defaultValue, isRequired, isDisabled });
+            return field.render({
+              name: field.name,
+              defaultValue,
+              isRequired,
+              isDisabled,
+            });
           }
           return null;
       }
     },
-    [initialValues]
+    [initialValues],
   );
 
   const renderForm = () => {
     if (fields.length === 1 || colCount === 1) {
       return (
-        <div className='flex flex-col gap-4'>
+        <div className="flex flex-col gap-4">
           {fields.map((field) => (
             <div key={field.name}>{renderField(field)}</div>
           ))}
@@ -174,9 +200,15 @@ export default function FormBuilder({
     }
 
     return (
-      <div className='grid gap-4' style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}>
+      <div
+        className="grid gap-4"
+        style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
+      >
         {fields.map((field) => (
-          <div key={field.name} style={{ gridColumn: `span ${field.colSpan || 1}` }}>
+          <div
+            key={field.name}
+            style={{ gridColumn: `span ${field.colSpan || 1}` }}
+          >
             {renderField(field)}
           </div>
         ))}
@@ -191,20 +223,24 @@ export default function FormBuilder({
   return (
     <Card>
       {title && (
-        <div className='px-6 pt-4'>
-          <h3 className='text-lg font-semibold'>{title}</h3>
+        <div className="px-6 pt-4">
+          <h3 className="text-lg font-semibold">{title}</h3>
         </div>
       )}
-      <div className='p-6'>
-        <Form onSubmit={handleSubmit} onReset={handleReset} className='flex flex-col gap-6'>
+      <div className="p-6">
+        <Form
+          onSubmit={handleSubmit}
+          onReset={handleReset}
+          className="flex flex-col gap-6"
+        >
           {renderForm()}
-          <div className='flex gap-3 justify-end'>
+          <div className="flex gap-3 justify-end">
             {showReset && (
-              <Button type='reset' variant='secondary'>
+              <Button type="reset" variant="secondary">
                 {resetLabel}
               </Button>
             )}
-            <Button type='submit' variant='primary'>
+            <Button type="submit" variant="primary">
               {submitLabel}
             </Button>
           </div>

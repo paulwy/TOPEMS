@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import * as React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   format,
   startOfMonth,
@@ -13,14 +13,14 @@ import {
   addMonths,
   subMonths,
   addDays,
-} from 'date-fns';
-import { zhCN } from 'date-fns/locale';
+} from "date-fns";
+import { zhCN } from "date-fns/locale";
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export type CalendarProps = {
-  mode?: 'single' | 'range' | 'multiple';
+  mode?: "single" | "range" | "multiple";
   selected?: Date | Date[];
   onSelect?: (date: Date | Date[] | undefined) => void;
   defaultMonth?: Date;
@@ -30,7 +30,7 @@ export type CalendarProps = {
 };
 
 function Calendar({
-  mode = 'single',
+  mode = "single",
   selected,
   onSelect,
   defaultMonth,
@@ -60,10 +60,10 @@ function Calendar({
 
   const isSelected = (date: Date) => {
     if (!selected) return false;
-    if (mode === 'single') {
+    if (mode === "single") {
       return isSameDay(date, selected as Date);
     }
-    if (mode === 'multiple' || mode === 'range') {
+    if (mode === "multiple" || mode === "range") {
       return (selected as Date[]).some((d) => isSameDay(d, date));
     }
     return false;
@@ -78,9 +78,9 @@ function Calendar({
     if (isDisabled(date)) return;
 
     let newSelected;
-    if (mode === 'single') {
+    if (mode === "single") {
       newSelected = isSelected(date) ? undefined : date;
-    } else if (mode === 'multiple') {
+    } else if (mode === "multiple") {
       const array = Array.isArray(selected) ? [...selected] : [];
       const index = array.findIndex((d) => isSameDay(d, date));
       if (index > -1) {
@@ -98,30 +98,43 @@ function Calendar({
   };
 
   return (
-    <div className={cn('p-3', className)}>
-      <div className='flex items-center justify-between mb-4'>
-        <Button variant='outline' className='h-7 w-7 bg-transparent p-0' onClick={prevMonth}>
-          <ChevronLeft className='h-4 w-4' />
-          <span className='sr-only'>上月</span>
+    <div className={cn("p-3", className)}>
+      <div className="flex items-center justify-between mb-4">
+        <Button
+          variant="outline"
+          className="h-7 w-7 bg-transparent p-0"
+          onClick={prevMonth}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span className="sr-only">上月</span>
         </Button>
 
-        <div className='text-sm font-medium'>{format(month, 'yyyy年 MMMM', { locale: zhCN })}</div>
+        <div className="text-sm font-medium">
+          {format(month, "yyyy年 MMMM", { locale: zhCN })}
+        </div>
 
-        <Button variant='outline' className='h-7 w-7 bg-transparent p-0' onClick={nextMonth}>
-          <ChevronRight className='h-4 w-4' />
-          <span className='sr-only'>下月</span>
+        <Button
+          variant="outline"
+          className="h-7 w-7 bg-transparent p-0"
+          onClick={nextMonth}
+        >
+          <ChevronRight className="h-4 w-4" />
+          <span className="sr-only">下月</span>
         </Button>
       </div>
 
-      <div className='grid grid-cols-7 gap-1 mb-1'>
-        {['一', '二', '三', '四', '五', '六', '日'].map((day, i) => (
-          <div key={i} className='text-center text-xs text-muted-foreground py-2'>
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {["一", "二", "三", "四", "五", "六", "日"].map((day, i) => (
+          <div
+            key={i}
+            className="text-center text-xs text-muted-foreground py-2"
+          >
             {day}
           </div>
         ))}
       </div>
 
-      <div className='grid grid-cols-7 gap-1'>
+      <div className="grid grid-cols-7 gap-1">
         {daysInMonth.map((date, dateIndex) => {
           const isOutsideMonth = !isSameMonth(date, month);
           const selected = isSelected(date);
@@ -130,17 +143,19 @@ function Calendar({
           return (
             <Button
               key={dateIndex}
-              variant='ghost'
+              variant="ghost"
               className={cn(
-                'h-9 w-9 p-0 font-normal',
-                isOutsideMonth && 'text-muted-foreground opacity-50',
-                selected && 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground',
-                disabled && 'text-muted-foreground opacity-50 pointer-events-none'
+                "h-9 w-9 p-0 font-normal",
+                isOutsideMonth && "text-muted-foreground opacity-50",
+                selected &&
+                  "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+                disabled &&
+                  "text-muted-foreground opacity-50 pointer-events-none",
               )}
               disabled={disabled}
               onClick={() => handleDayClick(date)}
             >
-              {format(date, 'd')}
+              {format(date, "d")}
             </Button>
           );
         })}
@@ -149,6 +164,6 @@ function Calendar({
   );
 }
 
-Calendar.displayName = 'Calendar';
+Calendar.displayName = "Calendar";
 
 export { Calendar };

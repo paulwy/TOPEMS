@@ -3,8 +3,12 @@
  * 客户关系管理 API 客户端
  */
 
-import type { ApiResponse, PaginationParams, PaginatedResponse } from './client';
-import { apiClient } from './client';
+import type {
+  ApiResponse,
+  PaginationParams,
+  PaginatedResponse,
+} from "./client";
+import { apiClient } from "./client";
 
 // ==================== Types ====================
 
@@ -180,15 +184,19 @@ const customerApi = {
   /**
    * 获取客户列表
    */
-  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Customer>>> => {
-    return apiClient.crm.get('/api/v1/customers', { params });
+  list: async (
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResponse<Customer>>> => {
+    return apiClient.crm.get("/api/v1/customers", { params });
   },
 
   /**
    * 创建客户
    */
-  create: async (data: CreateCustomerRequest): Promise<ApiResponse<Customer>> => {
-    return apiClient.crm.post('/api/v1/customers', data);
+  create: async (
+    data: CreateCustomerRequest,
+  ): Promise<ApiResponse<Customer>> => {
+    return apiClient.crm.post("/api/v1/customers", data);
   },
 
   /**
@@ -201,7 +209,10 @@ const customerApi = {
   /**
    * 更新客户
    */
-  update: async (id: string, data: UpdateCustomerRequest): Promise<ApiResponse<Customer>> => {
+  update: async (
+    id: string,
+    data: UpdateCustomerRequest,
+  ): Promise<ApiResponse<Customer>> => {
     return apiClient.crm.put(`/api/v1/customers/${id}`, data);
   },
 
@@ -216,7 +227,7 @@ const customerApi = {
    * 批量删除客户
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post('/api/v1/customers/batch-delete', { ids });
+    return apiClient.crm.post("/api/v1/customers/batch-delete", { ids });
   },
 };
 
@@ -226,15 +237,17 @@ const contactApi = {
   /**
    * 获取联系人列表
    */
-  list: async (params?: ContactQueryParams): Promise<ApiResponse<PaginatedResponse<Contact>>> => {
-    return apiClient.crm.get('/api/v1/contacts', { params });
+  list: async (
+    params?: ContactQueryParams,
+  ): Promise<ApiResponse<PaginatedResponse<Contact>>> => {
+    return apiClient.crm.get("/api/v1/contacts", { params });
   },
 
   /**
    * 创建联系人
    */
   create: async (data: CreateContactRequest): Promise<ApiResponse<Contact>> => {
-    return apiClient.crm.post('/api/v1/contacts', data);
+    return apiClient.crm.post("/api/v1/contacts", data);
   },
 
   /**
@@ -247,7 +260,10 @@ const contactApi = {
   /**
    * 更新联系人
    */
-  update: async (id: string, data: UpdateContactRequest): Promise<ApiResponse<Contact>> => {
+  update: async (
+    id: string,
+    data: UpdateContactRequest,
+  ): Promise<ApiResponse<Contact>> => {
     return apiClient.crm.put(`/api/v1/contacts/${id}`, data);
   },
 
@@ -262,7 +278,7 @@ const contactApi = {
    * 批量删除联系人
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post('/api/v1/contacts/batch-delete', { ids });
+    return apiClient.crm.post("/api/v1/contacts/batch-delete", { ids });
   },
 };
 
@@ -272,15 +288,19 @@ const opportunityApi = {
   /**
    * 获取商机列表
    */
-  list: async (params?: OpportunityQueryParams): Promise<ApiResponse<PaginatedResponse<Opportunity>>> => {
-    return apiClient.crm.get('/api/v1/opportunities', { params });
+  list: async (
+    params?: OpportunityQueryParams,
+  ): Promise<ApiResponse<PaginatedResponse<Opportunity>>> => {
+    return apiClient.crm.get("/api/v1/opportunities", { params });
   },
 
   /**
    * 创建商机
    */
-  create: async (data: CreateOpportunityRequest): Promise<ApiResponse<Opportunity>> => {
-    return apiClient.crm.post('/api/v1/opportunities', data);
+  create: async (
+    data: CreateOpportunityRequest,
+  ): Promise<ApiResponse<Opportunity>> => {
+    return apiClient.crm.post("/api/v1/opportunities", data);
   },
 
   /**
@@ -293,7 +313,10 @@ const opportunityApi = {
   /**
    * 更新商机
    */
-  update: async (id: string, data: UpdateOpportunityRequest): Promise<ApiResponse<Opportunity>> => {
+  update: async (
+    id: string,
+    data: UpdateOpportunityRequest,
+  ): Promise<ApiResponse<Opportunity>> => {
     return apiClient.crm.put(`/api/v1/opportunities/${id}`, data);
   },
 
@@ -308,7 +331,7 @@ const opportunityApi = {
    * 批量删除商机
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post('/api/v1/opportunities/batch-delete', { ids });
+    return apiClient.crm.post("/api/v1/opportunities/batch-delete", { ids });
   },
 };
 
@@ -318,15 +341,19 @@ const interactionApi = {
   /**
    * 获取交互记录列表
    */
-  list: async (params?: InteractionQueryParams): Promise<ApiResponse<PaginatedResponse<Interaction>>> => {
-    return apiClient.crm.get('/api/v1/interactions', { params });
+  list: async (
+    params?: InteractionQueryParams,
+  ): Promise<ApiResponse<PaginatedResponse<Interaction>>> => {
+    return apiClient.crm.get("/api/v1/interactions", { params });
   },
 
   /**
    * 创建交互记录
    */
-  create: async (data: CreateInteractionRequest): Promise<ApiResponse<Interaction>> => {
-    return apiClient.crm.post('/api/v1/interactions', data);
+  create: async (
+    data: CreateInteractionRequest,
+  ): Promise<ApiResponse<Interaction>> => {
+    return apiClient.crm.post("/api/v1/interactions", data);
   },
 
   /**
@@ -339,7 +366,10 @@ const interactionApi = {
   /**
    * 更新交互记录
    */
-  update: async (id: string, data: UpdateInteractionRequest): Promise<ApiResponse<Interaction>> => {
+  update: async (
+    id: string,
+    data: UpdateInteractionRequest,
+  ): Promise<ApiResponse<Interaction>> => {
     return apiClient.crm.put(`/api/v1/interactions/${id}`, data);
   },
 
@@ -354,7 +384,7 @@ const interactionApi = {
    * 批量删除交互记录
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post('/api/v1/interactions/batch-delete', { ids });
+    return apiClient.crm.post("/api/v1/interactions/batch-delete", { ids });
   },
 };
 
@@ -373,7 +403,7 @@ export const crmApi = {
    * 健康检查
    */
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.crm.get('/health');
+    return apiClient.crm.get("/health");
   },
 };
 

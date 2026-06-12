@@ -1,42 +1,42 @@
-import type { ColumnDef } from '@tanstack/react-table';
-import type { AxiosInstance } from 'axios';
+import type { ColumnDef } from "@tanstack/react-table";
+import type { AxiosInstance } from "axios";
 
 export type FieldType =
-  | 'text'
-  | 'textarea'
-  | 'number'
-  | 'email'
-  | 'password'
-  | 'select'
-  | 'multiselect'
-  | 'checkbox'
-  | 'radio'
-  | 'switch'
-  | 'date'
-  | 'datetime'
-  | 'file'
-  | 'hidden';
+  | "text"
+  | "textarea"
+  | "number"
+  | "email"
+  | "password"
+  | "select"
+  | "multiselect"
+  | "checkbox"
+  | "radio"
+  | "switch"
+  | "date"
+  | "datetime"
+  | "file"
+  | "hidden";
 
 export type FilterOperator =
-  | 'equals'
-  | 'not_equals'
-  | 'contains'
-  | 'not_contains'
-  | 'starts_with'
-  | 'ends_with'
-  | 'greater_than'
-  | 'less_than'
-  | 'greater_or_equal'
-  | 'less_or_equal'
-  | 'in'
-  | 'not_in'
-  | 'is_empty'
-  | 'is_not_empty'
-  | 'between'
-  | 'before'
-  | 'after';
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "ends_with"
+  | "greater_than"
+  | "less_than"
+  | "greater_or_equal"
+  | "less_or_equal"
+  | "in"
+  | "not_in"
+  | "is_empty"
+  | "is_not_empty"
+  | "between"
+  | "before"
+  | "after";
 
-export type FilterFieldType = 'text' | 'number' | 'date' | 'select' | 'boolean';
+export type FilterFieldType = "text" | "number" | "date" | "select" | "boolean";
 
 export interface ValidationRule {
   required?: boolean;
@@ -45,7 +45,10 @@ export interface ValidationRule {
   min?: number;
   max?: number;
   pattern?: RegExp;
-  custom?: (value: unknown, allValues?: Record<string, unknown>) => boolean | string;
+  custom?: (
+    value: unknown,
+    allValues?: Record<string, unknown>,
+  ) => boolean | string;
   message?: string;
 }
 
@@ -61,7 +64,11 @@ export interface FieldConfig {
   hidden?: boolean;
   helpText?: string;
   colSpan?: 1 | 2 | 3 | 4;
-  render?: (value: unknown, onChange: (value: unknown) => void, formData: Record<string, unknown>) => React.ReactNode;
+  render?: (
+    value: unknown,
+    onChange: (value: unknown) => void,
+    formData: Record<string, unknown>,
+  ) => React.ReactNode;
   condition?: (formData: Record<string, unknown>) => boolean;
 }
 
@@ -74,7 +81,7 @@ export interface FormBuilderProps {
   onCancel?: () => void;
   loading?: boolean;
   className?: string;
-  layout?: 'vertical' | 'horizontal';
+  layout?: "vertical" | "horizontal";
   showReset?: boolean;
 }
 
@@ -97,11 +104,15 @@ export interface FilterPanelProps {
   fields: FilterFieldConfig[];
   conditions: FilterCondition[];
   onChange: (conditions: FilterCondition[]) => void;
-  savedFilters?: Array<{ id: string; name: string; conditions: FilterCondition[] }>;
+  savedFilters?: Array<{
+    id: string;
+    name: string;
+    conditions: FilterCondition[];
+  }>;
   onSaveFilter?: (name: string, conditions: FilterCondition[]) => void;
   onDeleteFilter?: (id: string) => void;
-  logic?: 'AND' | 'OR';
-  onLogicChange?: (logic: 'AND' | 'OR') => void;
+  logic?: "AND" | "OR";
+  onLogicChange?: (logic: "AND" | "OR") => void;
   className?: string;
 }
 
@@ -112,18 +123,20 @@ export interface DataTableColumn<TData = unknown, TValue = unknown> {
   sortable?: boolean;
   filterable?: boolean;
   width?: string | number;
-  align?: 'left' | 'center' | 'right';
+  align?: "left" | "center" | "right";
   cell?: (info: { row: TData; getValue: () => TValue }) => React.ReactNode;
 }
 
 export interface ExportConfig<TData = unknown> {
   enabled: boolean;
-  formats?: Array<'csv' | 'xlsx' | 'json'>;
+  formats?: Array<"csv" | "xlsx" | "json">;
   filename?: string;
   customExporter?: (data: TData[]) => void;
 }
 
-export interface DataTableProps<TData extends { id?: string | number } = Record<string, unknown>> {
+export interface DataTableProps<
+  TData extends { id?: string | number } = Record<string, unknown>,
+> {
   columns: DataTableColumn<TData>[];
   data: TData[];
   loading?: boolean;
@@ -150,14 +163,14 @@ export interface DataTableProps<TData extends { id?: string | number } = Record<
     label: string;
     icon?: React.ReactNode;
     onClick: (row: TData) => void;
-    variant?: 'default' | 'destructive' | 'outline' | 'ghost';
+    variant?: "default" | "destructive" | "outline" | "ghost";
     condition?: (row: TData) => boolean;
   }>;
   batchActions?: Array<{
     label: string;
     icon?: React.ReactNode;
     onClick: (rows: TData[]) => void;
-    variant?: 'default' | 'destructive' | 'outline' | 'ghost';
+    variant?: "default" | "destructive" | "outline" | "ghost";
   }>;
   toolbarLeft?: React.ReactNode;
   toolbarRight?: React.ReactNode;
@@ -186,7 +199,7 @@ export interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void | Promise<void>;
-  variant?: 'default' | 'destructive';
+  variant?: "default" | "destructive";
   loading?: boolean;
   children?: React.ReactNode;
 }
@@ -195,25 +208,36 @@ export interface ToastMessage {
   id: string;
   title: string;
   description?: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info";
   duration?: number;
 }
 
 export interface ToastNotificationProps {
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
+  position?:
+    | "top-right"
+    | "top-left"
+    | "bottom-right"
+    | "bottom-left"
+    | "top-center"
+    | "bottom-center";
   maxToasts?: number;
   defaultDuration?: number;
 }
 
-export interface CrudConfig<T extends { id?: string | number } = Record<string, unknown>> {
+export interface CrudConfig<
+  T extends { id?: string | number } = Record<string, unknown>,
+> {
   resourceName: string;
   resourceLabel: string;
   apiClient:
     | AxiosInstance
     | {
-        list: (
-          params: Record<string, unknown>
-        ) => Promise<{ items: T[]; total: number; page: number; pageSize: number }>;
+        list: (params: Record<string, unknown>) => Promise<{
+          items: T[];
+          total: number;
+          page: number;
+          pageSize: number;
+        }>;
         get: (id: string | number) => Promise<T>;
         create: (data: Partial<T>) => Promise<T>;
         update: (id: string | number, data: Partial<T>) => Promise<T>;
@@ -242,13 +266,15 @@ export interface CrudConfig<T extends { id?: string | number } = Record<string, 
   onItemCreated?: (item: T) => void;
   onItemUpdated?: (item: T) => void;
   onItemDeleted?: (item: T) => void;
-  customActions?: DataTableProps<T>['actions'];
-  customBatchActions?: DataTableProps<T>['batchActions'];
+  customActions?: DataTableProps<T>["actions"];
+  customBatchActions?: DataTableProps<T>["batchActions"];
   transformFormData?: (data: Record<string, unknown>) => Partial<T>;
   transformApiData?: (data: T) => Record<string, unknown>;
 }
 
-export interface CrudPageProps<T extends { id?: string | number } = Record<string, unknown>> {
+export interface CrudPageProps<
+  T extends { id?: string | number } = Record<string, unknown>,
+> {
   config: CrudConfig<T>;
   className?: string;
 }
@@ -259,7 +285,10 @@ export interface UseCrudOptions<T> {
   autoFetch?: boolean;
   transformListItem?: (item: T) => T;
   onError?: (error: unknown) => void;
-  onSuccess?: (operation: 'list' | 'get' | 'create' | 'update' | 'delete', data?: unknown) => void;
+  onSuccess?: (
+    operation: "list" | "get" | "create" | "update" | "delete",
+    data?: unknown,
+  ) => void;
 }
 
 export interface UseCrudResult<T extends { id?: string | number }> {

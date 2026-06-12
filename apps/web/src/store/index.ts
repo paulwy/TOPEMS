@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 // 用户信息类型定义
 export interface User {
@@ -20,7 +20,7 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'error' | 'warning';
+  type: "info" | "success" | "error" | "warning";
   timestamp: number;
 }
 
@@ -42,7 +42,7 @@ export interface Shortcut {
 }
 
 // 主题类型
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = "light" | "dark" | "system";
 
 interface AppState {
   // 用户相关状态
@@ -58,14 +58,19 @@ interface AppState {
 
   // 全局通知状态
   notifications: Notification[];
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
+  addNotification: (
+    notification: Omit<Notification, "id" | "timestamp">,
+  ) => void;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
 
   // 通知设置状态
   notificationSettings: NotificationSettings;
   setNotificationSettings: (settings: NotificationSettings) => void;
-  updateNotificationSetting: (key: keyof NotificationSettings, value: boolean) => void;
+  updateNotificationSetting: (
+    key: keyof NotificationSettings,
+    value: boolean,
+  ) => void;
 
   // 快捷方式状态
   shortcuts: Shortcut[];
@@ -92,8 +97,8 @@ const defaultNotificationSettings: NotificationSettings = {
 };
 
 const defaultShortcuts: Shortcut[] = [
-  { id: '1', title: '仪表盘', icon: 'Activity', path: '/dashboard' },
-  { id: '2', title: '文档中心', icon: 'FileText', path: '/documents' },
+  { id: "1", title: "仪表盘", icon: "Activity", path: "/dashboard" },
+  { id: "2", title: "文档中心", icon: "FileText", path: "/documents" },
 ];
 
 export const useAppStore = create<AppState>()(
@@ -106,12 +111,13 @@ export const useAppStore = create<AppState>()(
       isAuthenticated: () => !!get().user,
 
       // 主题相关状态
-      theme: 'system',
+      theme: "system",
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => {
         const { theme } = get();
         set({
-          theme: theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light',
+          theme:
+            theme === "light" ? "dark" : theme === "dark" ? "system" : "light",
         });
       },
 
@@ -122,7 +128,8 @@ export const useAppStore = create<AppState>()(
           notifications: [
             ...state.notifications,
             {
-              id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+              id:
+                Date.now().toString() + Math.random().toString(36).substr(2, 9),
               ...notification,
               timestamp: Date.now(),
             },
@@ -136,7 +143,8 @@ export const useAppStore = create<AppState>()(
 
       // 通知设置状态
       notificationSettings: defaultNotificationSettings,
-      setNotificationSettings: (settings) => set({ notificationSettings: settings }),
+      setNotificationSettings: (settings) =>
+        set({ notificationSettings: settings }),
       updateNotificationSetting: (key, value) =>
         set((state) => ({
           notificationSettings: {
@@ -163,11 +171,12 @@ export const useAppStore = create<AppState>()(
 
       // UI 状态
       sidebarOpen: true,
-      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      toggleSidebar: () =>
+        set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
     }),
     {
-      name: 'topems-app-storage',
+      name: "topems-app-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         theme: state.theme,
@@ -176,6 +185,6 @@ export const useAppStore = create<AppState>()(
         notificationSettings: state.notificationSettings,
         shortcuts: state.shortcuts,
       }),
-    }
-  )
+    },
+  ),
 );

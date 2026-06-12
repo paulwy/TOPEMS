@@ -1,5 +1,12 @@
-import { useState, useCallback } from 'react';
-import { companyApi, departmentApi, employeeApi, type Company, type Department, type Employee } from '../api/hrm';
+import { useState, useCallback } from "react";
+import {
+  companyApi,
+  departmentApi,
+  employeeApi,
+  type Company,
+  type Department,
+  type Employee,
+} from "../api/hrm";
 
 export interface OrganizationData {
   companies: Company[];
@@ -32,7 +39,7 @@ export const useOrganization = (): UseOrganizationReturn => {
         setCompanies(response.data.items || []);
       }
     } catch (error) {
-      console.error('Failed to load companies:', error);
+      console.error("Failed to load companies:", error);
     } finally {
       setLoading(false);
     }
@@ -47,7 +54,7 @@ export const useOrganization = (): UseOrganizationReturn => {
         setDepartments(response.data.items || []);
       }
     } catch (error) {
-      console.error('Failed to load departments:', error);
+      console.error("Failed to load departments:", error);
     } finally {
       setLoading(false);
     }
@@ -62,7 +69,7 @@ export const useOrganization = (): UseOrganizationReturn => {
         setEmployees(response.data.items || []);
       }
     } catch (error) {
-      console.error('Failed to load employees:', error);
+      console.error("Failed to load employees:", error);
     } finally {
       setLoading(false);
     }

@@ -33,3 +33,10 @@ pdf-extract.workspace = true
 
 # 异步 trait
 async-trait.workspace = true
+
+# OpenAPI 文档
+utoipa.workspace = true
+
+# 测试
+[dev-dependencies]
+tokio-test.workspace = true

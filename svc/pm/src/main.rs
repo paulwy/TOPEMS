@@ -1,5 +1,6 @@
 pub mod api;
 pub mod models;
+pub mod services;
 
 use api::auth;
 use axum::{

@@ -1,5 +1,5 @@
-import apiClient from './client';
-import type { ApiResponse } from './client';
+import apiClient from "./client";
+import type { ApiResponse } from "./client";
 
 // 项目相关类型
 export interface Project {
@@ -291,15 +291,24 @@ export const rsApi = {
     page_size?: number;
     search?: string;
     status?: string;
-  }): Promise<ApiResponse<{ projects: Project[]; total: number; page: number; page_size: number }>> => {
+  }): Promise<
+    ApiResponse<{
+      projects: Project[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
     const queryParams = params
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)])
+            .map(([k, v]) => [k, String(v)]),
         )
-      : '';
-    const url = queryParams ? `/api/v1/projects?${queryParams}` : '/api/v1/projects';
+      : "";
+    const url = queryParams
+      ? `/api/v1/projects?${queryParams}`
+      : "/api/v1/projects";
     return apiClient.rs.get(url);
   },
 
@@ -307,11 +316,16 @@ export const rsApi = {
     return apiClient.rs.get(`/api/v1/projects/${id}`);
   },
 
-  createProject: async (data: CreateProjectRequest): Promise<ApiResponse<Project>> => {
-    return apiClient.rs.post('/api/v1/projects', data);
+  createProject: async (
+    data: CreateProjectRequest,
+  ): Promise<ApiResponse<Project>> => {
+    return apiClient.rs.post("/api/v1/projects", data);
   },
 
-  updateProject: async (id: string, data: UpdateProjectRequest): Promise<ApiResponse<Project>> => {
+  updateProject: async (
+    id: string,
+    data: UpdateProjectRequest,
+  ): Promise<ApiResponse<Project>> => {
     return apiClient.rs.put(`/api/v1/projects/${id}`, data);
   },
 
@@ -319,34 +333,44 @@ export const rsApi = {
     return apiClient.rs.delete(`/api/v1/projects/${id}`);
   },
 
-  batchCreateProjects: async (data: BatchCreateProjectsRequest): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.rs.post('/api/v1/projects/batch', data);
+  batchCreateProjects: async (
+    data: BatchCreateProjectsRequest,
+  ): Promise<ApiResponse<BatchOperationResult>> => {
+    return apiClient.rs.post("/api/v1/projects/batch", data);
   },
 
-  batchDeleteProjects: async (data: BatchDeleteProjectsRequest): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.rs.delete('/api/v1/projects/batch', { data });
+  batchDeleteProjects: async (
+    data: BatchDeleteProjectsRequest,
+  ): Promise<ApiResponse<BatchOperationResult>> => {
+    return apiClient.rs.delete("/api/v1/projects/batch", { data });
   },
 
   exportProjects: async (): Promise<Blob> => {
-    return apiClient.rs.get('/api/v1/projects/export', {
-      responseType: 'blob',
+    return apiClient.rs.get("/api/v1/projects/export", {
+      responseType: "blob",
     });
   },
 
-  importProjects: async (file: File): Promise<ApiResponse<BatchOperationResult>> => {
+  importProjects: async (
+    file: File,
+  ): Promise<ApiResponse<BatchOperationResult>> => {
     const content = await file.text();
-    return apiClient.rs.post('/api/v1/projects/import', content, {
+    return apiClient.rs.post("/api/v1/projects/import", content, {
       headers: {
-        'Content-Type': 'text/csv',
+        "Content-Type": "text/csv",
       },
     });
   },
 
-  getProjectDashboard: async (id: string): Promise<ApiResponse<ProjectDashboardResponse>> => {
+  getProjectDashboard: async (
+    id: string,
+  ): Promise<ApiResponse<ProjectDashboardResponse>> => {
     return apiClient.rs.get(`/api/v1/projects/${id}/dashboard`);
   },
 
-  getProjectGantt: async (id: string): Promise<ApiResponse<ProjectGanttResponse>> => {
+  getProjectGantt: async (
+    id: string,
+  ): Promise<ApiResponse<ProjectGanttResponse>> => {
     return apiClient.rs.get(`/api/v1/projects/${id}/gantt`);
   },
 
@@ -358,15 +382,24 @@ export const rsApi = {
     status?: string;
     project_id?: string;
     experiment_type?: string;
-  }): Promise<ApiResponse<{ experiments: Experiment[]; total: number; page: number; page_size: number }>> => {
+  }): Promise<
+    ApiResponse<{
+      experiments: Experiment[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
     const queryParams = params
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)])
+            .map(([k, v]) => [k, String(v)]),
         )
-      : '';
-    const url = queryParams ? `/api/v1/experiments?${queryParams}` : '/api/v1/experiments';
+      : "";
+    const url = queryParams
+      ? `/api/v1/experiments?${queryParams}`
+      : "/api/v1/experiments";
     return apiClient.rs.get(url);
   },
 
@@ -374,11 +407,16 @@ export const rsApi = {
     return apiClient.rs.get(`/api/v1/experiments/${id}`);
   },
 
-  createExperiment: async (data: CreateExperimentRequest): Promise<ApiResponse<Experiment>> => {
-    return apiClient.rs.post('/api/v1/experiments', data);
+  createExperiment: async (
+    data: CreateExperimentRequest,
+  ): Promise<ApiResponse<Experiment>> => {
+    return apiClient.rs.post("/api/v1/experiments", data);
   },
 
-  updateExperiment: async (id: string, data: UpdateExperimentRequest): Promise<ApiResponse<Experiment>> => {
+  updateExperiment: async (
+    id: string,
+    data: UpdateExperimentRequest,
+  ): Promise<ApiResponse<Experiment>> => {
     return apiClient.rs.put(`/api/v1/experiments/${id}`, data);
   },
 
@@ -386,7 +424,9 @@ export const rsApi = {
     return apiClient.rs.delete(`/api/v1/experiments/${id}`);
   },
 
-  listExperimentsByProject: async (projectId: string): Promise<ApiResponse<Experiment[]>> => {
+  listExperimentsByProject: async (
+    projectId: string,
+  ): Promise<ApiResponse<Experiment[]>> => {
     return apiClient.rs.get(`/api/v1/experiments/project/${projectId}`);
   },
 
@@ -395,15 +435,24 @@ export const rsApi = {
     page_size?: number;
     search?: string;
     status?: string;
-  }): Promise<ApiResponse<{ experiments: Experiment[]; total: number; page: number; page_size: number }>> => {
+  }): Promise<
+    ApiResponse<{
+      experiments: Experiment[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
     const queryParams = params
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)])
+            .map(([k, v]) => [k, String(v)]),
         )
-      : '';
-    const url = queryParams ? `/api/v1/experiments/phase/lab?${queryParams}` : '/api/v1/experiments/phase/lab';
+      : "";
+    const url = queryParams
+      ? `/api/v1/experiments/phase/lab?${queryParams}`
+      : "/api/v1/experiments/phase/lab";
     return apiClient.rs.get(url);
   },
 
@@ -412,15 +461,24 @@ export const rsApi = {
     page_size?: number;
     search?: string;
     status?: string;
-  }): Promise<ApiResponse<{ experiments: Experiment[]; total: number; page: number; page_size: number }>> => {
+  }): Promise<
+    ApiResponse<{
+      experiments: Experiment[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
     const queryParams = params
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)])
+            .map(([k, v]) => [k, String(v)]),
         )
-      : '';
-    const url = queryParams ? `/api/v1/experiments/phase/pilot?${queryParams}` : '/api/v1/experiments/phase/pilot';
+      : "";
+    const url = queryParams
+      ? `/api/v1/experiments/phase/pilot?${queryParams}`
+      : "/api/v1/experiments/phase/pilot";
     return apiClient.rs.get(url);
   },
 
@@ -429,52 +487,77 @@ export const rsApi = {
     page_size?: number;
     search?: string;
     status?: string;
-  }): Promise<ApiResponse<{ experiments: Experiment[]; total: number; page: number; page_size: number }>> => {
+  }): Promise<
+    ApiResponse<{
+      experiments: Experiment[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
     const queryParams = params
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)])
+            .map(([k, v]) => [k, String(v)]),
         )
-      : '';
-    const url = queryParams ? `/api/v1/experiments/phase/scaleup?${queryParams}` : '/api/v1/experiments/phase/scaleup';
+      : "";
+    const url = queryParams
+      ? `/api/v1/experiments/phase/scaleup?${queryParams}`
+      : "/api/v1/experiments/phase/scaleup";
     return apiClient.rs.get(url);
   },
 
-  advancePhase: async (id: string, data?: { new_status?: string }): Promise<ApiResponse<Experiment>> => {
-    return apiClient.rs.post(`/api/v1/experiments/${id}/advance-phase`, data || {});
+  advancePhase: async (
+    id: string,
+    data?: { new_status?: string },
+  ): Promise<ApiResponse<Experiment>> => {
+    return apiClient.rs.post(
+      `/api/v1/experiments/${id}/advance-phase`,
+      data || {},
+    );
   },
 
-  traceBatch: async (batchNumber: string): Promise<ApiResponse<BatchTraceItem[]>> => {
+  traceBatch: async (
+    batchNumber: string,
+  ): Promise<ApiResponse<BatchTraceItem[]>> => {
     return apiClient.rs.get(`/api/v1/batch-trace/${batchNumber}`);
   },
 
   // 试验记录相关
-  getExperimentRecords: async (experimentId: string): Promise<ApiResponse<ExperimentRecord[]>> => {
+  getExperimentRecords: async (
+    experimentId: string,
+  ): Promise<ApiResponse<ExperimentRecord[]>> => {
     return apiClient.rs.get(`/api/v1/experiments/${experimentId}/records`);
   },
 
   createExperimentRecord: async (
     experimentId: string,
-    data: CreateExperimentRecordRequest
+    data: CreateExperimentRecordRequest,
   ): Promise<ApiResponse<{ id: string; recorded_at: string }>> => {
-    return apiClient.rs.post(`/api/v1/experiments/${experimentId}/records`, data);
+    return apiClient.rs.post(
+      `/api/v1/experiments/${experimentId}/records`,
+      data,
+    );
   },
 
   // 统计相关
   getStatistics: async (): Promise<ApiResponse<RsStatistics>> => {
-    return apiClient.rs.get('/api/v1/statistics');
+    return apiClient.rs.get("/api/v1/statistics");
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.rs.get('/health');
+    return apiClient.rs.get("/health");
   },
 };
 
 // 配方 API 函数
 export const formulaApi = {
-  listFormulas: async (params?: { project_id?: string; status?: string }): Promise<ApiResponse<Formula[]>> => {
-    let url = '/api/v1/formulas';
+  listFormulas: async (params?: {
+    project_id?: string;
+    status?: string;
+  }): Promise<ApiResponse<Formula[]>> => {
+    let url = "/api/v1/formulas";
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -494,11 +577,16 @@ export const formulaApi = {
     return apiClient.rs.get(`/api/v1/formulas/${id}`);
   },
 
-  createFormula: async (data: CreateFormulaRequest): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.post('/api/v1/formulas', data);
+  createFormula: async (
+    data: CreateFormulaRequest,
+  ): Promise<ApiResponse<Formula>> => {
+    return apiClient.rs.post("/api/v1/formulas", data);
   },
 
-  updateFormula: async (id: string, data: UpdateFormulaRequest): Promise<ApiResponse<Formula>> => {
+  updateFormula: async (
+    id: string,
+    data: UpdateFormulaRequest,
+  ): Promise<ApiResponse<Formula>> => {
     return apiClient.rs.put(`/api/v1/formulas/${id}`, data);
   },
 
@@ -506,11 +594,16 @@ export const formulaApi = {
     return apiClient.rs.delete(`/api/v1/formulas/${id}`);
   },
 
-  listVersions: async (formulaId: string): Promise<ApiResponse<FormulaVersion[]>> => {
+  listVersions: async (
+    formulaId: string,
+  ): Promise<ApiResponse<FormulaVersion[]>> => {
     return apiClient.rs.get(`/api/v1/formulas/${formulaId}/versions`);
   },
 
-  createVersion: async (formulaId: string, data: CreateFormulaVersionRequest): Promise<ApiResponse<FormulaVersion>> => {
+  createVersion: async (
+    formulaId: string,
+    data: CreateFormulaVersionRequest,
+  ): Promise<ApiResponse<FormulaVersion>> => {
     return apiClient.rs.post(`/api/v1/formulas/${formulaId}/versions`, data);
   },
 
@@ -530,7 +623,7 @@ export interface AuditLog {
   user_name?: string;
   request_details?: any;
   response_details?: any;
-  status: 'success' | 'partial' | 'error';
+  status: "success" | "partial" | "error";
   error_message?: string;
   ip_address?: string;
   user_agent?: string;
@@ -567,9 +660,9 @@ export interface RsStatistics {
 
 export const auditRsApi = {
   listAuditLogs: async (
-    params?: AuditLogQueryParams
+    params?: AuditLogQueryParams,
   ): Promise<ApiResponse<{ audit_logs: AuditLog[]; total: number }>> => {
-    let url = '/api/v1/audit-logs';
+    let url = "/api/v1/audit-logs";
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -592,7 +685,7 @@ export const auditRsApi = {
 
 export const rsStatisticsApi = {
   getStatistics: async (): Promise<ApiResponse<RsStatistics>> => {
-    return apiClient.rs.get('/api/v1/statistics');
+    return apiClient.rs.get("/api/v1/statistics");
   },
 };
 

@@ -1,10 +1,15 @@
 // AI 相关类型定义
 
-export type AIFeatureType = 'code' | 'text' | 'document' | 'validate' | 'complete';
+export type AIFeatureType =
+  | "code"
+  | "text"
+  | "document"
+  | "validate"
+  | "complete";
 
 export interface ValidationIssue {
   field: string;
-  type: 'error' | 'warning' | 'info';
+  type: "error" | "warning" | "info";
   message: string;
   fix?: string;
 }
@@ -43,7 +48,7 @@ export interface CompleteRequest {
 export interface CompletionItem {
   value: any;
   confidence: number;
-  source: 'inference' | 'history' | 'knowledge';
+  source: "inference" | "history" | "knowledge";
 }
 
 export interface CompleteResponse {
@@ -53,7 +58,7 @@ export interface CompleteResponse {
 export interface SummarizeRequest {
   text: string;
   maxLength?: number;
-  type?: 'short' | 'medium' | 'detailed';
+  type?: "short" | "medium" | "detailed";
   context?: any;
 }
 
@@ -69,7 +74,7 @@ export interface AITemplate {
   category: string;
   fields: Array<{
     name: string;
-    type: 'text' | 'number' | 'date' | 'select' | 'textarea';
+    type: "text" | "number" | "date" | "select" | "textarea";
     label: string;
     required?: boolean;
     options?: Array<{ label: string; value: string }>;
@@ -78,14 +83,14 @@ export interface AITemplate {
 }
 
 export interface CodeGenerateContext {
-  entityType: 'department' | 'employee' | 'project' | 'contract';
+  entityType: "department" | "employee" | "project" | "contract";
   name?: string;
   parentId?: string;
   type?: string;
 }
 
 export interface TextOptimizeContext {
-  textType: 'description' | 'duty' | 'profile' | 'clause';
+  textType: "description" | "duty" | "profile" | "clause";
   name?: string;
   keywords?: string[];
 }

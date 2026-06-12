@@ -14,16 +14,27 @@ export interface ValidationError {
 }
 
 export interface Validator {
-  validate: (value: any, rule: ValidationRule, fieldName: string) => string | null;
+  validate: (
+    value: any,
+    rule: ValidationRule,
+    fieldName: string,
+  ) => string | null;
 }
 
 export const validators: Validator = {
-  validate: (value: any, rule: ValidationRule, fieldName: string): string | null => {
-    if (rule.required && (!value || (typeof value === 'string' && !value.trim()))) {
+  validate: (
+    value: any,
+    rule: ValidationRule,
+    fieldName: string,
+  ): string | null => {
+    if (
+      rule.required &&
+      (!value || (typeof value === "string" && !value.trim()))
+    ) {
       return `${fieldName}不能为空`;
     }
 
-    if (value && typeof value === 'string') {
+    if (value && typeof value === "string") {
       if (rule.minLength && value.length < rule.minLength) {
         return `${fieldName}至少需要${rule.minLength}个字符`;
       }
@@ -37,7 +48,7 @@ export const validators: Validator = {
       }
     }
 
-    if (value && typeof value === 'number') {
+    if (value && typeof value === "number") {
       if (rule.min !== undefined && value < rule.min) {
         return `${fieldName}不能小于${rule.min}`;
       }
@@ -50,7 +61,7 @@ export const validators: Validator = {
     if (rule.custom) {
       const result = rule.custom(value);
       if (result !== true) {
-        return typeof result === 'string' ? result : `${fieldName}验证失败`;
+        return typeof result === "string" ? result : `${fieldName}验证失败`;
       }
     }
 
@@ -82,7 +93,7 @@ export const validationRules = {
     minLength: 8,
     custom: (value: string) => {
       if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-        return '密码必须包含大小写字母和数字';
+        return "密码必须包含大小写字母和数字";
       }
       return true;
     },
@@ -106,10 +117,10 @@ export const validationRules = {
       if (!value) return true;
       const num = parseFloat(value);
       if (isNaN(num) || num < 0) {
-        return '金额必须是正数';
+        return "金额必须是正数";
       }
       if (!patterns.amount.test(value.toString())) {
-        return '金额最多保留2位小数';
+        return "金额最多保留2位小数";
       }
       return true;
     },
@@ -161,29 +172,32 @@ export class FormValidator {
 
   private getFieldName(field: string): string {
     const fieldNames: Record<string, string> = {
-      username: '用户名',
-      email: '邮箱',
-      password: '密码',
-      name: '名称',
-      code: '编号',
-      description: '描述',
-      amount: '金额',
-      date: '日期',
-      phone: '电话',
-      contact_person: '联系人',
-      contact_phone: '联系电话',
-      title: '标题',
-      status: '状态',
-      inspector: '检验员',
-      experimenter: '试验员',
-      assignee: '负责人',
-      proposer: '提议人',
+      username: "用户名",
+      email: "邮箱",
+      password: "密码",
+      name: "名称",
+      code: "编号",
+      description: "描述",
+      amount: "金额",
+      date: "日期",
+      phone: "电话",
+      contact_person: "联系人",
+      contact_phone: "联系电话",
+      title: "标题",
+      status: "状态",
+      inspector: "检验员",
+      experimenter: "试验员",
+      assignee: "负责人",
+      proposer: "提议人",
     };
     return fieldNames[field] || field;
   }
 }
 
-export function validateForm(data: Record<string, any>, rules: Record<string, ValidationRule>): Record<string, string> {
+export function validateForm(
+  data: Record<string, any>,
+  rules: Record<string, ValidationRule>,
+): Record<string, string> {
   const validator = new FormValidator(rules);
   validator.validate(data);
   return validator.getErrors();

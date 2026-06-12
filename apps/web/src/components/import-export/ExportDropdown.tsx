@@ -1,5 +1,5 @@
-import React from 'react';
-import { Download } from 'lucide-react';
+import React from "react";
+import { Download } from "lucide-react";
 
 export interface ExportDropdownProps {
   onExport: (format: string, columns?: string[]) => void;
@@ -11,11 +11,11 @@ export interface ExportDropdownProps {
 export const ExportDropdown: React.FC<ExportDropdownProps> = ({
   onExport,
   options = [
-    { value: 'csv', label: '导出为 CSV' },
-    { value: 'xlsx', label: '导出为 Excel' },
+    { value: "csv", label: "导出为 CSV" },
+    { value: "xlsx", label: "导出为 Excel" },
   ],
   disabled = false,
-  className = '',
+  className = "",
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -24,16 +24,16 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
-        className='inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <Download className='w-4 h-4 mr-2' />
+        <Download className="w-4 h-4 mr-2" />
         导出
       </button>
 
       {isOpen && (
         <>
-          <div className='fixed inset-0' onClick={() => setIsOpen(false)} />
-          <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10'>
+          <div className="fixed inset-0" onClick={() => setIsOpen(false)} />
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10">
             {options.map((option) => (
               <button
                 key={option.value}
@@ -41,7 +41,7 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
                   onExport(option.value);
                   setIsOpen(false);
                 }}
-                className='w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 transition-colors'
+                className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 transition-colors"
               >
                 {option.label}
               </button>

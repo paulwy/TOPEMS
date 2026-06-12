@@ -60,7 +60,7 @@ export interface LoggingConfig {
 }
 
 export interface ThemeConfig {
-  default: 'light' | 'dark';
+  default: "light" | "dark";
   enableDarkMode: boolean;
 }
 

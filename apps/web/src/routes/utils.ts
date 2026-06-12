@@ -1,14 +1,16 @@
-import React, { ComponentType, lazy, LazyExoticComponent } from 'react';
-import ErrorPage from '../pages/ErrorPage';
+import type { ComponentType, LazyExoticComponent } from "react";
+import type React from "react";
+import { lazy } from "react";
+import ErrorPage from "../pages/ErrorPage";
 
 export const lazyWithRetry = <T extends ComponentType<any>>(
-  factory: () => Promise<{ default: T }>
+  factory: () => Promise<{ default: T }>,
 ): LazyExoticComponent<T> => {
   return lazy(async () => {
     try {
       return await factory();
     } catch (error) {
-      console.error('Failed to load component:', error);
+      console.error("Failed to load component:", error);
       return { default: ErrorPage as unknown as T };
     }
   });
@@ -19,5 +21,5 @@ export interface RouteConfig {
   element: React.ReactNode;
   requiredPermissions?: string[];
   module?: string;
-  action?: 'read' | 'write' | 'delete' | 'admin';
+  action?: "read" | "write" | "delete" | "admin";
 }

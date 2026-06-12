@@ -1,5 +1,6 @@
 pub mod asset;
 pub mod audit_log;
+pub mod consolidation;
 pub mod finance;
 pub mod uuid_helpers;
 pub mod dict;

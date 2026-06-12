@@ -1,130 +1,174 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Search,
-  Filter,
-  FolderKanban,
-  TrendingUp,
-  Users,
-  Calendar,
-  Eye,
   Edit,
   Trash2,
+  Eye,
+  FolderKanban,
+  TrendingUp,
+  Calendar,
+  Users,
   MoreVertical,
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import type { Project } from '../api/pm';
-import { pmApi } from '../api/pm';
-import OrganizationFilter, { type OrganizationFilterValue } from '../components/ui/OrganizationFilter';
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import type { Project } from "../api/pm";
+import { pmApi } from "../api/pm";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Input } from "../components/ui/input";
+import { Progress } from "../components/ui/progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
+import Pagination from "../components/pm/Pagination";
 
 const PROJECT_TYPES = [
-  { value: '', label: '全部类型' },
-  { value: 'research', label: '科研项目' },
-  { value: 'production', label: '生产项目' },
-  { value: 'construction', label: '施工项目' },
-  { value: 'design', label: '设计项目' },
-  { value: 'service', label: '服务项目' },
+  { value: "", label: "全部类型" },
+  { value: "research", label: "科研项目" },
+  { value: "production", label: "生产项目" },
+  { value: "construction", label: "施工项目" },
+  { value: "design", label: "设计项目" },
+  { value: "service", label: "服务项目" },
 ];
 
 const STATUS_OPTIONS = [
-  { value: '', label: '全部状态' },
-  { value: 'draft', label: '草稿' },
-  { value: 'pending', label: '待审批' },
-  { value: 'approved', label: '已批准' },
-  { value: 'active', label: '进行中' },
-  { value: 'completed', label: '已完成' },
-  { value: 'cancelled', label: '已取消' },
+  { value: "", label: "全部状态" },
+  { value: "draft", label: "草稿" },
+  { value: "pending", label: "待审批" },
+  { value: "approved", label: "已批准" },
+  { value: "active", label: "进行中" },
+  { value: "completed", label: "已完成" },
+  { value: "cancelled", label: "已取消" },
 ];
 
 const PmProjectListPage: React.FC = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
 
   useEffect(() => {
-    loadProjects();
+    setCurrentPage(1);
+    loadProjects(1);
   }, [selectedType, selectedStatus]);
 
-  const loadProjects = async () => {
+  const loadProjects = async (page: number) => {
     setLoading(true);
     try {
       const response = await pmApi.projects.list({
         project_type: selectedType || undefined,
         status: selectedStatus || undefined,
+        page,
+        page_size: pageSize,
       });
       if (response.success && response.data) {
         setProjects(response.data.projects || []);
+        setTotalPages(response.data.total_pages || 1);
+        setTotalCount(response.data.total_count || 0);
       }
     } catch (error) {
-      console.error('Failed to load projects:', error);
+      console.error("Failed to load projects:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    loadProjects(page);
+  };
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除这个项目吗？')) return;
+    if (!window.confirm("确定要删除这个项目吗？")) return;
     try {
       const response = await pmApi.projects.delete(id);
       if (response.success) {
-        loadProjects();
+        loadProjects(currentPage);
       }
     } catch (error) {
-      console.error('Failed to delete project:', error);
+      console.error("Failed to delete project:", error);
     }
   };
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('zh-CN');
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString("zh-CN");
   };
 
   const formatCurrency = (amount?: number) => {
-    if (!amount) return '-';
-    return new Intl.NumberFormat('zh-CN', {
-      style: 'currency',
-      currency: 'CNY',
+    if (!amount) return "-";
+    return new Intl.NumberFormat("zh-CN", {
+      style: "currency",
+      currency: "CNY",
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'approved':
-        return 'bg-purple-100 text-purple-800';
-      case 'cancelled':
-        return 'bg-gray-100 text-gray-800';
-      case 'draft':
-        return 'bg-gray-100 text-gray-600';
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "completed":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "approved":
+        return "bg-purple-100 text-purple-800";
+      case "cancelled":
+        return "bg-gray-100 text-gray-800";
+      case "draft":
+        return "bg-gray-100 text-gray-600";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active':
-        return '进行中';
-      case 'completed':
-        return '已完成';
-      case 'pending':
-        return '待审批';
-      case 'approved':
-        return '已批准';
-      case 'cancelled':
-        return '已取消';
-      case 'draft':
-        return '草稿';
+      case "active":
+        return "进行中";
+      case "completed":
+        return "已完成";
+      case "pending":
+        return "待审批";
+      case "approved":
+        return "已批准";
+      case "cancelled":
+        return "已取消";
+      case "draft":
+        return "草稿";
       default:
         return status;
     }
@@ -138,219 +182,275 @@ const PmProjectListPage: React.FC = () => {
   const filteredProjects = projects.filter(
     (project) =>
       project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.code.toLowerCase().includes(searchTerm.toLowerCase())
+      project.code.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const activeCount = projects.filter((p) => p.status === "active").length;
+  const pendingCount = projects.filter((p) => p.status === "pending").length;
+  const completedCount = projects.filter(
+    (p) => p.status === "completed",
+  ).length;
+
   return (
-    <div className='p-6 bg-gray-50 min-h-screen'>
-      <div className='mb-6'>
-        <h1 className='text-2xl font-bold text-gray-900'>项目管理</h1>
-        <p className='text-gray-500 mt-1'>管理所有类型的项目，跟踪进度和状态</p>
-      </div>
+    <div className="flex min-h-screen bg-slate-50">
+      <div className="flex-1 p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">项目管理</h1>
+            <p className="text-gray-500 mt-1">
+              管理所有类型的项目，跟踪进度和状态
+            </p>
+          </div>
+          <Button onClick={() => navigate("/pm/projects/create")}>
+            <Plus className="w-4 h-4 mr-2" />
+            创建项目
+          </Button>
+        </div>
 
-      <div className='bg-white rounded-lg shadow p-6 mb-6'>
-        <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
-          <div className='flex-1'>
-            <div className='relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
-              <input
-                type='text'
-                placeholder='搜索项目名称或编号...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className='w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-              />
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="搜索项目名称或编号..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Select value={selectedType} onValueChange={setSelectedType}>
+                  <SelectTrigger className="w-36">
+                    <SelectValue placeholder="选择类型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROJECT_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={selectedStatus}
+                  onValueChange={setSelectedStatus}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue placeholder="选择状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((status) => (
+                      <SelectItem key={status.value} value={status.value}>
+                        {status.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-          <div className='flex gap-3'>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-            >
-              {PROJECT_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-            >
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => navigate('/pm/projects/create')}
-              className='flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-            >
-              <Plus className='w-5 h-5' />
-              创建项目
-            </button>
-          </div>
-        </div>
-        <div className='mt-4 pt-4 border-t border-gray-200'>
-          <OrganizationFilter
-            value={organizationFilter}
-            onChange={setOrganizationFilter}
-            showCompany={true}
-            showDepartment={true}
-            showEmployee={false}
-          />
-        </div>
-      </div>
+          </CardContent>
+        </Card>
 
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-6'>
-        <div className='bg-white rounded-lg shadow p-6'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <p className='text-sm text-gray-500'>总项目数</p>
-              <p className='text-2xl font-bold text-gray-900'>{projects.length}</p>
-            </div>
-            <div className='p-3 bg-blue-100 rounded-full'>
-              <FolderKanban className='w-6 h-6 text-blue-600' />
-            </div>
-          </div>
-        </div>
-        <div className='bg-white rounded-lg shadow p-6'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <p className='text-sm text-gray-500'>进行中</p>
-              <p className='text-2xl font-bold text-green-600'>
-                {projects.filter((p) => p.status === 'active').length}
-              </p>
-            </div>
-            <div className='p-3 bg-green-100 rounded-full'>
-              <TrendingUp className='w-6 h-6 text-green-600' />
-            </div>
-          </div>
-        </div>
-        <div className='bg-white rounded-lg shadow p-6'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <p className='text-sm text-gray-500'>待审批</p>
-              <p className='text-2xl font-bold text-yellow-600'>
-                {projects.filter((p) => p.status === 'pending').length}
-              </p>
-            </div>
-            <div className='p-3 bg-yellow-100 rounded-full'>
-              <Calendar className='w-6 h-6 text-yellow-600' />
-            </div>
-          </div>
-        </div>
-        <div className='bg-white rounded-lg shadow p-6'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <p className='text-sm text-gray-500'>已完成</p>
-              <p className='text-2xl font-bold text-blue-600'>
-                {projects.filter((p) => p.status === 'completed').length}
-              </p>
-            </div>
-            <div className='p-3 bg-blue-100 rounded-full'>
-              <Users className='w-6 h-6 text-blue-600' />
-            </div>
-          </div>
-        </div>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-3 rounded-full bg-blue-100">
+                <FolderKanban className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">总项目数</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {projects.length}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-      <div className='bg-white rounded-lg shadow'>
-        <div className='overflow-x-auto'>
-          <table className='w-full'>
-            <thead className='bg-gray-50'>
-              <tr>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>项目名称</th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>类型</th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>状态</th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>进度</th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>预算</th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>时间</th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>操作</th>
-              </tr>
-            </thead>
-            <tbody className='divide-y divide-gray-200'>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className='px-6 py-12 text-center'>
-                    <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
-                  </td>
-                </tr>
-              ) : filteredProjects.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className='px-6 py-12 text-center text-gray-500'>
-                    暂无项目数据
-                  </td>
-                </tr>
-              ) : (
-                filteredProjects.map((project) => (
-                  <tr key={project.id} className='hover:bg-gray-50'>
-                    <td className='px-6 py-4'>
-                      <div>
-                        <p className='font-medium text-gray-900'>{project.name}</p>
-                        <p className='text-xs text-gray-500'>{project.code}</p>
-                      </div>
-                    </td>
-                    <td className='px-6 py-4'>
-                      <span className='text-sm text-gray-600'>{getTypeLabel(project.project_type)}</span>
-                    </td>
-                    <td className='px-6 py-4'>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(project.status)}`}>
-                        {getStatusLabel(project.status)}
-                      </span>
-                    </td>
-                    <td className='px-6 py-4'>
-                      <div className='flex items-center gap-2'>
-                        <div className='w-24 bg-gray-200 rounded-full h-2'>
-                          <div
-                            className={`h-2 rounded-full ${project.status === 'completed' ? 'bg-green-600' : 'bg-blue-600'}`}
-                            style={{ width: `${project.progress}%` }}
-                          ></div>
-                        </div>
-                        <span className='text-sm text-gray-600'>{project.progress}%</span>
-                      </div>
-                    </td>
-                    <td className='px-6 py-4 text-sm text-gray-600'>{formatCurrency(project.budget)}</td>
-                    <td className='px-6 py-4 text-sm text-gray-600'>
-                      <div>
-                        <p>{formatDate(project.start_date)}</p>
-                        <p className='text-xs text-gray-400'>至 {formatDate(project.end_date)}</p>
-                      </div>
-                    </td>
-                    <td className='px-6 py-4'>
-                      <div className='flex items-center gap-2'>
-                        <button
-                          onClick={() => navigate(`/pm/projects/${project.id}`)}
-                          className='p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors'
-                          title='查看详情'
-                        >
-                          <Eye className='w-5 h-5' />
-                        </button>
-                        <button
-                          onClick={() => navigate(`/pm/projects/${project.id}/edit`)}
-                          className='p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors'
-                          title='编辑'
-                        >
-                          <Edit className='w-5 h-5' />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(project.id)}
-                          className='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
-                          title='删除'
-                        >
-                          <Trash2 className='w-5 h-5' />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-3 rounded-full bg-green-100">
+                <TrendingUp className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">进行中</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {activeCount}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-3 rounded-full bg-yellow-100">
+                <Calendar className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">待审批</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {pendingCount}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-3 rounded-full bg-blue-100">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">已完成</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {completedCount}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        <Card>
+          <CardHeader className="px-6">
+            <CardTitle className="text-lg">项目列表</CardTitle>
+            <span className="text-sm text-gray-500">
+              共 {totalCount} 个项目
+            </span>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">项目名称</TableHead>
+                    <TableHead>类型</TableHead>
+                    <TableHead>状态</TableHead>
+                    <TableHead className="w-[180px]">进度</TableHead>
+                    <TableHead>预算</TableHead>
+                    <TableHead className="w-[150px]">时间</TableHead>
+                    <TableHead className="w-[120px]">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredProjects.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={7}
+                        className="text-center py-12 text-gray-500"
+                      >
+                        暂无项目数据
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredProjects.map((project) => (
+                      <TableRow key={project.id} className="hover:bg-gray-50">
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {project.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {project.code}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-gray-600">
+                            {getTypeLabel(project.project_type)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(project.status)}>
+                            {getStatusLabel(project.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-24">
+                              <Progress
+                                value={project.progress}
+                                className="h-2"
+                              />
+                            </div>
+                            <span className="text-sm text-gray-600">
+                              {project.progress}%
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600">
+                          {formatCurrency(project.budget)}
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600">
+                          <div>
+                            <p>{formatDate(project.start_date)}</p>
+                            <p className="text-xs text-gray-400">
+                              至 {formatDate(project.end_date)}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  navigate(`/pm/projects/${project.id}`)
+                                }
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                查看详情
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  navigate(`/pm/projects/${project.id}/edit`)
+                                }
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                编辑
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(project.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                删除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            {!loading && totalPages > 1 && (
+              <div className="p-4 border-t border-gray-200">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

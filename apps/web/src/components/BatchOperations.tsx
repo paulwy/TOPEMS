@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from "react";
 import {
   CheckSquare,
   Square,
@@ -9,13 +9,13 @@ import {
   ArrowRight,
   MoreHorizontal,
   Check,
-} from 'lucide-react';
+} from "lucide-react";
 
 export interface BatchAction {
   id: string;
   label: string;
   icon: React.ReactNode;
-  color: 'primary' | 'danger' | 'success' | 'warning' | 'default';
+  color: "primary" | "danger" | "success" | "warning" | "default";
   disabled?: boolean;
 }
 
@@ -40,7 +40,7 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
   onToggleSelect,
   actions,
   onAction,
-  itemIdKey = 'id',
+  itemIdKey = "id",
 }) => {
   const hasSelection = selectedIds.length > 0;
   const isIndeterminate = !allItemsSelected && hasSelection;
@@ -59,16 +59,16 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
 
   const getButtonClass = (color: string) => {
     switch (color) {
-      case 'primary':
-        return 'bg-blue-600 hover:bg-blue-700 text-white';
-      case 'danger':
-        return 'bg-red-600 hover:bg-red-700 text-white';
-      case 'success':
-        return 'bg-green-600 hover:bg-green-700 text-white';
-      case 'warning':
-        return 'bg-yellow-600 hover:bg-yellow-700 text-white';
+      case "primary":
+        return "bg-blue-600 hover:bg-blue-700 text-white";
+      case "danger":
+        return "bg-red-600 hover:bg-red-700 text-white";
+      case "success":
+        return "bg-green-600 hover:bg-green-700 text-white";
+      case "warning":
+        return "bg-yellow-600 hover:bg-yellow-700 text-white";
       default:
-        return 'bg-gray-600 hover:bg-gray-700 text-white';
+        return "bg-gray-600 hover:bg-gray-700 text-white";
     }
   };
 
@@ -79,12 +79,12 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
   return (
     <>
       {/* Header Row with Select All */}
-      <div className='flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200'>
-        <div className='flex items-center'>
-          <label className='flex items-center cursor-pointer select-none'>
+      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+        <div className="flex items-center">
+          <label className="flex items-center cursor-pointer select-none">
             <input
               ref={checkboxRef1}
-              type='checkbox'
+              type="checkbox"
               checked={allItemsSelected}
               onChange={(e) => {
                 if (e.target.checked) {
@@ -93,33 +93,39 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
                   onDeselectAll();
                 }
               }}
-              className='w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
-            <span className='ml-2 text-sm text-gray-600'>{allItemsSelected ? '取消全选' : '全选'}</span>
+            <span className="ml-2 text-sm text-gray-600">
+              {allItemsSelected ? "取消全选" : "全选"}
+            </span>
           </label>
           {hasSelection && (
-            <span className='ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded-full'>
+            <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
               已选择 {selectedIds.length} 项
             </span>
           )}
-          {!hasSelection && <span className='ml-3 text-sm text-gray-400'>共 {totalItems} 项</span>}
+          {!hasSelection && (
+            <span className="ml-3 text-sm text-gray-400">
+              共 {totalItems} 项
+            </span>
+          )}
         </div>
 
         {/* Batch Actions */}
         {hasSelection && (
-          <div className='flex items-center space-x-2'>
+          <div className="flex items-center space-x-2">
             {actions.map((action) => (
               <button
                 key={action.id}
                 onClick={() => onAction(action.id)}
                 disabled={action.disabled}
                 className={`flex items-center px-3 py-1.5 rounded-lg text-sm transition-colors ${getButtonClass(action.color)} ${
-                  action.disabled ? 'opacity-50 cursor-not-allowed' : ''
+                  action.disabled ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 title={action.label}
               >
                 {getButtonIcon(action.icon)}
-                <span className='ml-1'>{action.label}</span>
+                <span className="ml-1">{action.label}</span>
               </button>
             ))}
           </div>
@@ -127,11 +133,11 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
       </div>
 
       {/* Select Column Header Cell */}
-      <div className='select-column-header' style={{ width: '48px' }}>
-        <label className='flex items-center cursor-pointer select-none h-full'>
+      <div className="select-column-header" style={{ width: "48px" }}>
+        <label className="flex items-center cursor-pointer select-none h-full">
           <input
             ref={checkboxRef2}
-            type='checkbox'
+            type="checkbox"
             checked={allItemsSelected}
             onChange={(e) => {
               if (e.target.checked) {
@@ -140,19 +146,19 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
                 onDeselectAll();
               }
             }}
-            className='w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
           />
         </label>
       </div>
 
       {/* Row Checkbox Cell (for use in table rows) */}
-      <div className='select-cell' style={{ width: '48px' }}>
-        <label className='flex items-center cursor-pointer select-none h-full'>
+      <div className="select-cell" style={{ width: "48px" }}>
+        <label className="flex items-center cursor-pointer select-none h-full">
           <input
-            type='checkbox'
+            type="checkbox"
             checked={false}
             onChange={() => {}}
-            className='w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
           />
         </label>
       </div>

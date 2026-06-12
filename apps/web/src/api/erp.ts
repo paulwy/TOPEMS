@@ -1,5 +1,5 @@
-import apiClient from './client';
-import type { ApiResponse } from './client';
+import apiClient from "./client";
+import type { ApiResponse } from "./client";
 
 export interface Asset {
   id: string;
@@ -432,6 +432,105 @@ export interface VehicleRequest {
   updated_at: string;
 }
 
+export interface OpeningBalance {
+  id: string;
+  company_id: string;
+  subject_code: string;
+  subject_name: string;
+  period: string;
+  debit_balance: number;
+  credit_balance: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateOpeningBalanceRequest {
+  company_id: string;
+  subject_code: string;
+  subject_name: string;
+  period: string;
+  debit_balance: number;
+  credit_balance: number;
+}
+
+export interface CarryForwardRequest {
+  from_period: string;
+  to_period: string;
+}
+
+export interface FixedAsset {
+  id: string;
+  asset_code: string;
+  asset_name: string;
+  asset_type: string;
+  asset_category?: string;
+  purchase_date: string;
+  original_value: number;
+  accumulated_depreciation: number;
+  net_value: number;
+  depreciation_method: string;
+  expected_life: number;
+  salvage_value: number;
+  monthly_depreciation: number;
+  location?: string;
+  responsible_id?: string;
+  department_id?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DepreciateRequest {
+  period: string;
+  asset_ids?: string[];
+}
+
+export interface DepreciationResult {
+  depreciated_count: number;
+  errors: string[];
+  period: string;
+}
+
+export interface BankAccount {
+  id: string;
+  company_id: string;
+  bank_name: string;
+  branch_name?: string;
+  account_name: string;
+  account_number: string;
+  account_type: string;
+  balance: number;
+  currency: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BankTransaction {
+  id: string;
+  account_id: string;
+  transaction_date: string;
+  transaction_type: string;
+  amount: number;
+  balance_after: number;
+  description?: string;
+  counterparty_account?: string;
+  counterparty_name?: string;
+  voucher_id?: string;
+  created_at: string;
+}
+
+export interface CreateBankTransactionRequest {
+  account_id: string;
+  transaction_date: string;
+  transaction_type: string;
+  amount: number;
+  description?: string;
+  counterparty_account?: string;
+  counterparty_name?: string;
+  voucher_id?: string;
+}
+
 export interface Announcement {
   id: string;
   title: string;
@@ -461,23 +560,28 @@ export interface PaginatedResult<T> {
 
 function cleanEmptyUuids<T extends Record<string, any>>(data: T): T {
   const result = { ...data };
-  if (result.parent_id === '') delete (result as any).parent_id;
-  if (result.company_id === '') delete (result as any).company_id;
-  if (result.department_id === '') delete (result as any).department_id;
-  if (result.responsible_id === '') delete (result as any).responsible_id;
+  if (result.parent_id === "") delete (result as any).parent_id;
+  if (result.company_id === "") delete (result as any).company_id;
+  if (result.department_id === "") delete (result as any).department_id;
+  if (result.responsible_id === "") delete (result as any).responsible_id;
   return result;
 }
 
 export const assetApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Asset>>> {
+  async list(
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResult<Asset>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/assets${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/assets${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<Asset>> {
@@ -485,7 +589,7 @@ export const assetApi = {
   },
 
   async create(data: Partial<Asset>): Promise<ApiResponse<Asset>> {
-    return apiClient.erp.post('/api/v1/assets', cleanEmptyUuids(data));
+    return apiClient.erp.post("/api/v1/assets", cleanEmptyUuids(data));
   },
 
   async update(id: string, data: Partial<Asset>): Promise<ApiResponse<Asset>> {
@@ -499,20 +603,25 @@ export const assetApi = {
 
 export const erpApi = {
   async health(): Promise<ApiResponse<string>> {
-    return apiClient.erp.get<string>('/health');
+    return apiClient.erp.get<string>("/health");
   },
 };
 
 export const expenseApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Expense>>> {
+  async list(
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResult<Expense>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/expenses${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/expenses${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<Expense>> {
@@ -520,10 +629,13 @@ export const expenseApi = {
   },
 
   async create(data: Partial<Expense>): Promise<ApiResponse<Expense>> {
-    return apiClient.erp.post('/api/v1/expenses', cleanEmptyUuids(data));
+    return apiClient.erp.post("/api/v1/expenses", cleanEmptyUuids(data));
   },
 
-  async update(id: string, data: Partial<Expense>): Promise<ApiResponse<Expense>> {
+  async update(
+    id: string,
+    data: Partial<Expense>,
+  ): Promise<ApiResponse<Expense>> {
     return apiClient.erp.put(`/api/v1/expenses/${id}`, cleanEmptyUuids(data));
   },
 
@@ -533,15 +645,20 @@ export const expenseApi = {
 };
 
 export const budgetApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Budget>>> {
+  async list(
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResult<Budget>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/budgets${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/budgets${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<Budget>> {
@@ -549,10 +666,13 @@ export const budgetApi = {
   },
 
   async create(data: Partial<Budget>): Promise<ApiResponse<Budget>> {
-    return apiClient.erp.post('/api/v1/budgets', cleanEmptyUuids(data));
+    return apiClient.erp.post("/api/v1/budgets", cleanEmptyUuids(data));
   },
 
-  async update(id: string, data: Partial<Budget>): Promise<ApiResponse<Budget>> {
+  async update(
+    id: string,
+    data: Partial<Budget>,
+  ): Promise<ApiResponse<Budget>> {
     return apiClient.erp.put(`/api/v1/budgets/${id}`, cleanEmptyUuids(data));
   },
 
@@ -562,15 +682,20 @@ export const budgetApi = {
 };
 
 export const receivableApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Receivable>>> {
+  async list(
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResult<Receivable>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/receivables${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/receivables${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<Receivable>> {
@@ -578,11 +703,17 @@ export const receivableApi = {
   },
 
   async create(data: Partial<Receivable>): Promise<ApiResponse<Receivable>> {
-    return apiClient.erp.post('/api/v1/receivables', cleanEmptyUuids(data));
+    return apiClient.erp.post("/api/v1/receivables", cleanEmptyUuids(data));
   },
 
-  async update(id: string, data: Partial<Receivable>): Promise<ApiResponse<Receivable>> {
-    return apiClient.erp.put(`/api/v1/receivables/${id}`, cleanEmptyUuids(data));
+  async update(
+    id: string,
+    data: Partial<Receivable>,
+  ): Promise<ApiResponse<Receivable>> {
+    return apiClient.erp.put(
+      `/api/v1/receivables/${id}`,
+      cleanEmptyUuids(data),
+    );
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
@@ -591,15 +722,20 @@ export const receivableApi = {
 };
 
 export const payableApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Payable>>> {
+  async list(
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResult<Payable>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/payables${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/payables${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<Payable>> {
@@ -607,10 +743,13 @@ export const payableApi = {
   },
 
   async create(data: Partial<Payable>): Promise<ApiResponse<Payable>> {
-    return apiClient.erp.post('/api/v1/payables', cleanEmptyUuids(data));
+    return apiClient.erp.post("/api/v1/payables", cleanEmptyUuids(data));
   },
 
-  async update(id: string, data: Partial<Payable>): Promise<ApiResponse<Payable>> {
+  async update(
+    id: string,
+    data: Partial<Payable>,
+  ): Promise<ApiResponse<Payable>> {
     return apiClient.erp.put(`/api/v1/payables/${id}`, cleanEmptyUuids(data));
   },
 
@@ -620,26 +759,36 @@ export const payableApi = {
 };
 
 export const accountingSubjectApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<AccountingSubject>>> {
+  async list(
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResult<AccountingSubject>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/accounting-subjects${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/accounting-subjects${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<AccountingSubject>> {
     return apiClient.erp.get(`/api/v1/accounting-subjects/${id}`);
   },
 
-  async create(data: Partial<AccountingSubject>): Promise<ApiResponse<AccountingSubject>> {
-    return apiClient.erp.post('/api/v1/accounting-subjects', data);
+  async create(
+    data: Partial<AccountingSubject>,
+  ): Promise<ApiResponse<AccountingSubject>> {
+    return apiClient.erp.post("/api/v1/accounting-subjects", data);
   },
 
-  async update(id: string, data: Partial<AccountingSubject>): Promise<ApiResponse<AccountingSubject>> {
+  async update(
+    id: string,
+    data: Partial<AccountingSubject>,
+  ): Promise<ApiResponse<AccountingSubject>> {
     return apiClient.erp.put(`/api/v1/accounting-subjects/${id}`, data);
   },
 
@@ -649,16 +798,21 @@ export const accountingSubjectApi = {
 };
 
 export const voucherApi = {
-  async list(params?: PaginationParams & { period?: string }): Promise<ApiResponse<PaginatedResult<FinancialVoucher>>> {
+  async list(
+    params?: PaginationParams & { period?: string },
+  ): Promise<ApiResponse<PaginatedResult<FinancialVoucher>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
+    if (params?.period) searchParams.set("period", params.period);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/vouchers${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/vouchers${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<FinancialVoucher>> {
@@ -669,11 +823,16 @@ export const voucherApi = {
     return apiClient.erp.get(`/api/v1/vouchers/${id}/items`);
   },
 
-  async create(data: CreateFinancialVoucherRequest): Promise<ApiResponse<FinancialVoucher>> {
-    return apiClient.erp.post('/api/v1/vouchers', data);
+  async create(
+    data: CreateFinancialVoucherRequest,
+  ): Promise<ApiResponse<FinancialVoucher>> {
+    return apiClient.erp.post("/api/v1/vouchers", data);
   },
 
-  async update(id: string, data: Partial<FinancialVoucher>): Promise<ApiResponse<FinancialVoucher>> {
+  async update(
+    id: string,
+    data: Partial<FinancialVoucher>,
+  ): Promise<ApiResponse<FinancialVoucher>> {
     return apiClient.erp.put(`/api/v1/vouchers/${id}`, data);
   },
 
@@ -686,119 +845,174 @@ export const voucherApi = {
     file_content: string;
     import_mode: string;
   }): Promise<ApiResponse<VoucherImportResult>> {
-    return apiClient.erp.post('/api/v1/vouchers/import/u8', data);
+    return apiClient.erp.post("/api/v1/vouchers/import/u8", data);
   },
 };
 
 export const financeReportApi = {
-  async balanceSheet(params?: { period?: string }): Promise<ApiResponse<BalanceSheet>> {
+  async balanceSheet(params?: {
+    period?: string;
+  }): Promise<ApiResponse<BalanceSheet>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/balance-sheet${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/balance-sheet${queryString ? "?" + queryString : ""}`,
+    );
   },
 
-  async incomeStatement(params?: { period?: string }): Promise<ApiResponse<IncomeStatement>> {
+  async incomeStatement(params?: {
+    period?: string;
+  }): Promise<ApiResponse<IncomeStatement>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/income-statement${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/income-statement${queryString ? "?" + queryString : ""}`,
+    );
   },
 
-  async cashFlowStatement(params?: { period?: string }): Promise<ApiResponse<CashFlowStatement>> {
+  async cashFlowStatement(params?: {
+    period?: string;
+  }): Promise<ApiResponse<CashFlowStatement>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/cash-flow${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/cash-flow${queryString ? "?" + queryString : ""}`,
+    );
   },
 
-  async businessOverview(params?: { period?: string }): Promise<ApiResponse<BusinessOverview>> {
+  async businessOverview(params?: {
+    period?: string;
+  }): Promise<ApiResponse<BusinessOverview>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/business-overview${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/business-overview${queryString ? "?" + queryString : ""}`,
+    );
   },
 
-  async projectSummary(params?: { project_id?: string }): Promise<ApiResponse<ProjectFinancialSummary[]>> {
+  async projectSummary(params?: {
+    project_id?: string;
+  }): Promise<ApiResponse<ProjectFinancialSummary[]>> {
     const searchParams = new URLSearchParams();
-    if (params?.project_id) searchParams.set('project_id', params.project_id);
+    if (params?.project_id) searchParams.set("project_id", params.project_id);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/project-summary${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/project-summary${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async monthlyTrend(): Promise<ApiResponse<MonthlyTrend[]>> {
-    return apiClient.erp.get('/api/v1/reports/monthly-trend');
+    return apiClient.erp.get("/api/v1/reports/monthly-trend");
   },
 
-  async departmentSummary(params?: { department_id?: string }): Promise<ApiResponse<DepartmentFinancialSummary[]>> {
+  async departmentSummary(params?: {
+    department_id?: string;
+  }): Promise<ApiResponse<DepartmentFinancialSummary[]>> {
     const searchParams = new URLSearchParams();
-    if (params?.department_id) searchParams.set('department_id', params.department_id);
+    if (params?.department_id)
+      searchParams.set("department_id", params.department_id);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/department-summary${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/department-summary${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async agingAnalysis(): Promise<ApiResponse<AgingAnalysis[]>> {
-    return apiClient.erp.get('/api/v1/reports/aging-analysis');
+    return apiClient.erp.get("/api/v1/reports/aging-analysis");
   },
 
-  async voucherStatistics(params?: { period?: string }): Promise<ApiResponse<Record<string, any>>> {
+  async voucherStatistics(params?: {
+    period?: string;
+  }): Promise<ApiResponse<Record<string, any>>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/voucher-statistics${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/voucher-statistics${queryString ? "?" + queryString : ""}`,
+    );
   },
 
-  async cashFlowAnalysis(params?: { period?: string }): Promise<ApiResponse<CashFlowAnalysis>> {
+  async cashFlowAnalysis(params?: {
+    period?: string;
+  }): Promise<ApiResponse<CashFlowAnalysis>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/cash-flow-analysis${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/cash-flow-analysis${queryString ? "?" + queryString : ""}`,
+    );
   },
 
-  async expenseAnalysis(params?: { period?: string }): Promise<ApiResponse<ExpenseAnalysis>> {
+  async expenseAnalysis(params?: {
+    period?: string;
+  }): Promise<ApiResponse<ExpenseAnalysis>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/expense-analysis${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/expense-analysis${queryString ? "?" + queryString : ""}`,
+    );
   },
 
-  async profitAnalysis(params?: { period?: string }): Promise<ApiResponse<ProfitAnalysis>> {
+  async profitAnalysis(params?: {
+    period?: string;
+  }): Promise<ApiResponse<ProfitAnalysis>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/profit-analysis${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/profit-analysis${queryString ? "?" + queryString : ""}`,
+    );
   },
 
-  async financialOverview(params?: { period?: string }): Promise<ApiResponse<FinancialOverview>> {
+  async financialOverview(params?: {
+    period?: string;
+  }): Promise<ApiResponse<FinancialOverview>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set('period', params.period);
+    if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/reports/financial-overview${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/reports/financial-overview${queryString ? "?" + queryString : ""}`,
+    );
   },
 };
 
 export const officeSupplyApi = {
-  async list(params?: PaginationParams & { category?: string }): Promise<ApiResponse<PaginatedResult<OfficeSupply>>> {
+  async list(
+    params?: PaginationParams & { category?: string },
+  ): Promise<ApiResponse<PaginatedResult<OfficeSupply>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
-    if (params?.category) searchParams.set('category', params.category);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
+    if (params?.category) searchParams.set("category", params.category);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/office-supplies${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/office-supplies${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<OfficeSupply>> {
     return apiClient.erp.get(`/api/v1/office-supplies/${id}`);
   },
 
-  async create(data: Partial<OfficeSupply>): Promise<ApiResponse<OfficeSupply>> {
-    return apiClient.erp.post('/api/v1/office-supplies', data);
+  async create(
+    data: Partial<OfficeSupply>,
+  ): Promise<ApiResponse<OfficeSupply>> {
+    return apiClient.erp.post("/api/v1/office-supplies", data);
   },
 
-  async update(id: string, data: Partial<OfficeSupply>): Promise<ApiResponse<OfficeSupply>> {
+  async update(
+    id: string,
+    data: Partial<OfficeSupply>,
+  ): Promise<ApiResponse<OfficeSupply>> {
     return apiClient.erp.put(`/api/v1/office-supplies/${id}`, data);
   },
 
@@ -808,15 +1022,20 @@ export const officeSupplyApi = {
 };
 
 export const meetingRoomApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<MeetingRoom>>> {
+  async list(
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResult<MeetingRoom>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/meeting-rooms${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/meeting-rooms${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<MeetingRoom>> {
@@ -824,10 +1043,13 @@ export const meetingRoomApi = {
   },
 
   async create(data: Partial<MeetingRoom>): Promise<ApiResponse<MeetingRoom>> {
-    return apiClient.erp.post('/api/v1/meeting-rooms', data);
+    return apiClient.erp.post("/api/v1/meeting-rooms", data);
   },
 
-  async update(id: string, data: Partial<MeetingRoom>): Promise<ApiResponse<MeetingRoom>> {
+  async update(
+    id: string,
+    data: Partial<MeetingRoom>,
+  ): Promise<ApiResponse<MeetingRoom>> {
     return apiClient.erp.put(`/api/v1/meeting-rooms/${id}`, data);
   },
 
@@ -841,26 +1063,36 @@ export const meetingRoomApi = {
 };
 
 export const meetingBookingApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<MeetingBooking>>> {
+  async list(
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResult<MeetingBooking>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/meeting-bookings${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/meeting-bookings${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<MeetingBooking>> {
     return apiClient.erp.get(`/api/v1/meeting-bookings/${id}`);
   },
 
-  async create(data: Partial<MeetingBooking>): Promise<ApiResponse<MeetingBooking>> {
-    return apiClient.erp.post('/api/v1/meeting-bookings', data);
+  async create(
+    data: Partial<MeetingBooking>,
+  ): Promise<ApiResponse<MeetingBooking>> {
+    return apiClient.erp.post("/api/v1/meeting-bookings", data);
   },
 
-  async update(id: string, data: Partial<MeetingBooking>): Promise<ApiResponse<MeetingBooking>> {
+  async update(
+    id: string,
+    data: Partial<MeetingBooking>,
+  ): Promise<ApiResponse<MeetingBooking>> {
     return apiClient.erp.put(`/api/v1/meeting-bookings/${id}`, data);
   },
 
@@ -870,16 +1102,22 @@ export const meetingBookingApi = {
 };
 
 export const vehicleApi = {
-  async list(params?: PaginationParams & { vehicle_type?: string }): Promise<ApiResponse<PaginatedResult<Vehicle>>> {
+  async list(
+    params?: PaginationParams & { vehicle_type?: string },
+  ): Promise<ApiResponse<PaginatedResult<Vehicle>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
-    if (params?.vehicle_type) searchParams.set('vehicle_type', params.vehicle_type);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
+    if (params?.vehicle_type)
+      searchParams.set("vehicle_type", params.vehicle_type);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/vehicles${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/vehicles${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<Vehicle>> {
@@ -887,10 +1125,13 @@ export const vehicleApi = {
   },
 
   async create(data: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
-    return apiClient.erp.post('/api/v1/vehicles', data);
+    return apiClient.erp.post("/api/v1/vehicles", data);
   },
 
-  async update(id: string, data: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
+  async update(
+    id: string,
+    data: Partial<Vehicle>,
+  ): Promise<ApiResponse<Vehicle>> {
     return apiClient.erp.put(`/api/v1/vehicles/${id}`, data);
   },
 
@@ -904,26 +1145,36 @@ export const vehicleApi = {
 };
 
 export const vehicleRequestApi = {
-  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<VehicleRequest>>> {
+  async list(
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResult<VehicleRequest>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/vehicle-requests${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/vehicle-requests${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<VehicleRequest>> {
     return apiClient.erp.get(`/api/v1/vehicle-requests/${id}`);
   },
 
-  async create(data: Partial<VehicleRequest>): Promise<ApiResponse<VehicleRequest>> {
-    return apiClient.erp.post('/api/v1/vehicle-requests', data);
+  async create(
+    data: Partial<VehicleRequest>,
+  ): Promise<ApiResponse<VehicleRequest>> {
+    return apiClient.erp.post("/api/v1/vehicle-requests", data);
   },
 
-  async update(id: string, data: Partial<VehicleRequest>): Promise<ApiResponse<VehicleRequest>> {
+  async update(
+    id: string,
+    data: Partial<VehicleRequest>,
+  ): Promise<ApiResponse<VehicleRequest>> {
     return apiClient.erp.put(`/api/v1/vehicle-requests/${id}`, data);
   },
 
@@ -933,27 +1184,37 @@ export const vehicleRequestApi = {
 };
 
 export const announcementApi = {
-  async list(params?: PaginationParams & { priority?: string }): Promise<ApiResponse<PaginatedResult<Announcement>>> {
+  async list(
+    params?: PaginationParams & { priority?: string },
+  ): Promise<ApiResponse<PaginatedResult<Announcement>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.search) searchParams.set('search', params.search);
-    if (params?.status) searchParams.set('status', params.status);
-    if (params?.priority) searchParams.set('priority', params.priority);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.status) searchParams.set("status", params.status);
+    if (params?.priority) searchParams.set("priority", params.priority);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/v1/announcements${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(
+      `/api/v1/announcements${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async get(id: string): Promise<ApiResponse<Announcement>> {
     return apiClient.erp.get(`/api/v1/announcements/${id}`);
   },
 
-  async create(data: Partial<Announcement>): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.post('/api/v1/announcements', data);
+  async create(
+    data: Partial<Announcement>,
+  ): Promise<ApiResponse<Announcement>> {
+    return apiClient.erp.post("/api/v1/announcements", data);
   },
 
-  async update(id: string, data: Partial<Announcement>): Promise<ApiResponse<Announcement>> {
+  async update(
+    id: string,
+    data: Partial<Announcement>,
+  ): Promise<ApiResponse<Announcement>> {
     return apiClient.erp.put(`/api/v1/announcements/${id}`, data);
   },
 
@@ -967,5 +1228,162 @@ export const announcementApi = {
 
   async unpublish(id: string): Promise<ApiResponse<Announcement>> {
     return apiClient.erp.post(`/api/v1/announcements/${id}/unpublish`);
+  },
+};
+
+export const openingBalanceApi = {
+  async list(
+    params?: PaginationParams & { period?: string; company_id?: string },
+  ): Promise<ApiResponse<PaginatedResult<OpeningBalance>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.period) searchParams.set("period", params.period);
+    if (params?.company_id) searchParams.set("company_id", params.company_id);
+
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(
+      `/api/v1/finance/accounts/opening-balances${queryString ? "?" + queryString : ""}`,
+    );
+  },
+
+  async get(id: string): Promise<ApiResponse<OpeningBalance>> {
+    return apiClient.erp.get(`/api/v1/finance/accounts/opening-balances/${id}`);
+  },
+
+  async create(data: CreateOpeningBalanceRequest): Promise<ApiResponse<OpeningBalance>> {
+    return apiClient.erp.post("/api/v1/finance/accounts/opening-balances", data);
+  },
+
+  async update(
+    id: string,
+    data: Partial<OpeningBalance>,
+  ): Promise<ApiResponse<OpeningBalance>> {
+    return apiClient.erp.put(`/api/v1/finance/accounts/opening-balances/${id}`, data);
+  },
+
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/finance/accounts/opening-balances/${id}`);
+  },
+
+  async batchImport(data: CreateOpeningBalanceRequest[]): Promise<ApiResponse<Record<string, any>>> {
+    return apiClient.erp.post("/api/v1/finance/accounts/opening-balances/batch", data);
+  },
+
+  async carryForward(data: CarryForwardRequest): Promise<ApiResponse<Record<string, any>>> {
+    return apiClient.erp.post("/api/v1/finance/accounts/opening-balances/carry-forward", data);
+  },
+};
+
+export const fixedAssetApi = {
+  async list(
+    params?: PaginationParams & { department_id?: string; status?: string },
+  ): Promise<ApiResponse<PaginatedResult<FixedAsset>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.department_id) searchParams.set("department_id", params.department_id);
+    if (params?.status) searchParams.set("status", params.status);
+
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(
+      `/api/v1/fixed-assets${queryString ? "?" + queryString : ""}`,
+    );
+  },
+
+  async get(id: string): Promise<ApiResponse<FixedAsset>> {
+    return apiClient.erp.get(`/api/v1/fixed-assets/${id}`);
+  },
+
+  async create(data: Partial<FixedAsset>): Promise<ApiResponse<FixedAsset>> {
+    return apiClient.erp.post("/api/v1/fixed-assets", data);
+  },
+
+  async update(
+    id: string,
+    data: Partial<FixedAsset>,
+  ): Promise<ApiResponse<FixedAsset>> {
+    return apiClient.erp.put(`/api/v1/fixed-assets/${id}`, data);
+  },
+
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/fixed-assets/${id}`);
+  },
+
+  async depreciate(data: DepreciateRequest): Promise<ApiResponse<DepreciationResult>> {
+    return apiClient.erp.post("/api/v1/fixed-assets/depreciate", data);
+  },
+};
+
+export const bankAccountApi = {
+  async list(
+    params?: PaginationParams & { company_id?: string; status?: string },
+  ): Promise<ApiResponse<PaginatedResult<BankAccount>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.company_id) searchParams.set("company_id", params.company_id);
+    if (params?.status) searchParams.set("status", params.status);
+
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(
+      `/api/v1/bank-accounts${queryString ? "?" + queryString : ""}`,
+    );
+  },
+
+  async get(id: string): Promise<ApiResponse<BankAccount>> {
+    return apiClient.erp.get(`/api/v1/bank-accounts/${id}`);
+  },
+
+  async create(data: Partial<BankAccount>): Promise<ApiResponse<BankAccount>> {
+    return apiClient.erp.post("/api/v1/bank-accounts", data);
+  },
+
+  async update(
+    id: string,
+    data: Partial<BankAccount>,
+  ): Promise<ApiResponse<BankAccount>> {
+    return apiClient.erp.put(`/api/v1/bank-accounts/${id}`, data);
+  },
+
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/bank-accounts/${id}`);
+  },
+};
+
+export const bankTransactionApi = {
+  async list(
+    params?: PaginationParams & { account_id?: string; transaction_date?: string },
+  ): Promise<ApiResponse<PaginatedResult<BankTransaction>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.account_id) searchParams.set("account_id", params.account_id);
+    if (params?.transaction_date) searchParams.set("transaction_date", params.transaction_date);
+
+    const queryString = searchParams.toString();
+    return apiClient.erp.get(
+      `/api/v1/bank-transactions${queryString ? "?" + queryString : ""}`,
+    );
+  },
+
+  async get(id: string): Promise<ApiResponse<BankTransaction>> {
+    return apiClient.erp.get(`/api/v1/bank-transactions/${id}`);
+  },
+
+  async create(data: CreateBankTransactionRequest): Promise<ApiResponse<BankTransaction>> {
+    return apiClient.erp.post("/api/v1/bank-transactions", data);
+  },
+
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/api/v1/bank-transactions/${id}`);
   },
 };
