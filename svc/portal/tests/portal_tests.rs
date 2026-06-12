@@ -259,4 +259,16 @@ mod user_info_tests {
     #[test]
     fn test_user_info_email_format() {
         let user = UserInfo {
-            id: "
+            id: "user-002".to_string(),
+            name: "李四".to_string(),
+            email: "lisi@topems.com".to_string(),
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lisi".to_string(),
+            department: "市场部".to_string(),
+            role: "经理".to_string(),
+            last_login: "2024-01-11 10:00:00".to_string(),
+        };
+
+        assert!(user.email.contains("@"));
+        assert_eq!(user.department, "市场部");
+    }
+}

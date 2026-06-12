@@ -1,5 +1,5 @@
-import React from 'react';
-import { BIChartColors } from './chartTheme';
+import React from "react";
+import { BIChartColors } from "./chartTheme";
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -22,31 +22,38 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className='bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl shadow-xl px-4 py-3 min-w-[140px]'>
+    <div className="bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl shadow-xl px-4 py-3 min-w-[140px]">
       {label && (
-        <p className='text-xs font-medium text-slate-500 mb-2 pb-2 border-b border-slate-100'>
+        <p className="text-xs font-medium text-slate-500 mb-2 pb-2 border-b border-slate-100">
           {label}
         </p>
       )}
-      <div className='space-y-1.5'>
+      <div className="space-y-1.5">
         {payload.map((entry, index) => {
           const [displayValue, displayName] = formatter
             ? formatter(entry.value, entry.name)
             : [
-                typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value,
+                typeof entry.value === "number"
+                  ? entry.value.toLocaleString()
+                  : entry.value,
                 entry.name,
               ];
 
           return (
-            <div key={index} className='flex items-center justify-between gap-4'>
-              <div className='flex items-center gap-2'>
+            <div
+              key={index}
+              className="flex items-center justify-between gap-4"
+            >
+              <div className="flex items-center gap-2">
                 <div
-                  className='w-2.5 h-2.5 rounded-full'
+                  className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className='text-sm text-slate-600'>{displayName}</span>
+                <span className="text-sm text-slate-600">{displayName}</span>
               </div>
-              <span className='text-sm font-semibold text-slate-900'>{displayValue}</span>
+              <span className="text-sm font-semibold text-slate-900">
+                {displayValue}
+              </span>
             </div>
           );
         })}

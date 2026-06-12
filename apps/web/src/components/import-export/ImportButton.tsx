@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Upload, FileSpreadsheet, X, Check } from 'lucide-react';
+import React, { useState } from "react";
+import { Upload, FileSpreadsheet, X, Check } from "lucide-react";
 
 export interface ImportButtonProps {
   onImport: () => void;
@@ -10,9 +10,9 @@ export interface ImportButtonProps {
 
 export const ImportButton: React.FC<ImportButtonProps> = ({
   onImport,
-  label = '导入',
+  label = "导入",
   disabled = false,
-  className = '',
+  className = "",
 }) => {
   return (
     <button
@@ -20,7 +20,7 @@ export const ImportButton: React.FC<ImportButtonProps> = ({
       disabled={disabled}
       className={`inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
-      <Upload className='w-4 h-4 mr-2' />
+      <Upload className="w-4 h-4 mr-2" />
       {label}
     </button>
   );

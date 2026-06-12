@@ -56,6 +56,31 @@ pub struct Project {
     pub updated_at: DateTime<Utc>,
 }
 
+// 项目财务扩展字段
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ProjectFinance {
+    pub project_id: Uuid,
+    pub actual_cost: Option<Decimal>,           // 实际成本
+    pub cost_variance: Option<Decimal>,         // 成本差异
+    pub cost_variance_rate: Option<Decimal>,    // 成本差异率
+    pub cost_budget_ratio: Option<Decimal>,    // 成本预算比
+    pub committed_cost: Option<Decimal>,         // 已承诺成本
+    pub forecast_cost: Option<Decimal>,        // 预测成本
+    pub revenue: Option<Decimal>,               // 收入
+    pub earned_value: Option<Decimal>,          // 挣值
+    pub profit: Option<Decimal>,                // 利润
+    pub profit_margin: Option<Decimal>,         // 利润率
+    pub investment_amount: Option<Decimal>,     // 投资金额
+    pub roi: Option<Decimal>,                  // 投资回报率
+    pub payment_status: String,                 // 付款状态
+    pub invoice_status: String,                 // 发票状态
+    pub tax_amount: Option<Decimal>,           // 税额
+    pub cost_loaded_progress: Option<Decimal>,  // 成本加载进度
+    pub schedule_variance: Option<Decimal>,     // 进度差异
+    pub cost_performance_index: Option<Decimal>, // 成本绩效指数
+    pub schedule_performance_index: Option<Decimal>, // 进度绩效指数
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateProjectRequest {
     pub name: String,

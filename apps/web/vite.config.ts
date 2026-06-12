@@ -127,45 +127,85 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            // React 核心必须最先分割，避免循环依赖
-            if (id.includes('react-dom') || id.includes('@babel/runtime') || id.includes('scheduler')) {
-              return 'vendor-react';
+            const packageName = id.split('node_modules/')[1]?.split('/')[0];
+            if (!packageName) {
+              return 'vendor-other';
             }
-            // React Router
-            if (id.includes('react-router') || id.includes('react-router-dom')) {
-              return 'vendor-router';
+            // 纯工具库（无外部依赖）
+            if (['clsx', 'tailwind-merge', 'class-variance-authority', 'isomorphic-dompurify', 'csstype', 'css-in-js-utils'].includes(packageName)) {
+              return 'vendor-utils';
             }
-            // NextUI 组件库 (依赖于 React，放在 React 之后)
-            if (id.includes('@nextui-org')) {
-              return 'vendor-nextui';
-            }
-            // UI 组件库 (依赖于 React 和 NextUI)
-            if (id.includes('lucide-react') || id.includes('clsx') || id.includes('tailwind-merge') || id.includes('@heroui') || id.includes('@radix-ui')) {
-              return 'vendor-ui';
-            }
-            // 图表库
-            if (id.includes('recharts') || id.includes('d3-') || id.includes('chart.js')) {
-              return 'vendor-charts';
-            }
-            // HTTP 客户端
-            if (id.includes('axios')) {
-              return 'vendor-axios';
-            }
-            // 表单验证
-            if (id.includes('zod') || id.includes('yup') || id.includes('react-hook-form') || id.includes('hookform')) {
-              return 'vendor-validation';
-            }
-            // 数据处理
-            if (id.includes('xlsx') || id.includes('date-fns') || id.includes('dayjs') || id.includes('lodash')) {
+            // 数据处理工具（无 React 依赖）
+            if (['date-fns', 'dayjs', 'xlsx', 'file-saver', 'uuid', 'nanoid'].includes(packageName)) {
               return 'vendor-data';
             }
-            // 状态管理
-            if (id.includes('zustand') || id.includes('jotai') || id.includes('redux')) {
+            // HTTP 客户端（无 React 依赖）
+            if (['axios', 'follow-redirects'].includes(packageName)) {
+              return 'vendor-axios';
+            }
+            // 表单验证（无 React 依赖）
+            if (['zod', 'yup', 'property-expr', 'fast-deep-equal', 'tiny-invariant', 'get-nested-value'].includes(packageName)) {
+              return 'vendor-validation';
+            }
+            // React 核心（依赖工具库）
+            if (['react', 'react-dom', 'scheduler', 'loose-envify', 'object-assign', 'prop-types'].includes(packageName)) {
+              return 'vendor-react';
+            }
+            // Babel 运行时
+            if (packageName === '@babel' || id.includes('@babel/runtime')) {
+              return 'vendor-babel';
+            }
+            // React Router（依赖 React）
+            if (['react-router', 'react-router-dom', 'history', 'path-to-regexp', 'query-string'].includes(packageName)) {
+              return 'vendor-router';
+            }
+            // 状态管理（依赖 React）
+            if (['zustand', 'jotai', 'redux', 'react-redux', '@reduxjs/toolkit'].includes(packageName)) {
               return 'vendor-state';
             }
-            // 富文本编辑器
-            if (id.includes('tiptap') || id.includes('quill') || id.includes('draft')) {
-              return 'vendor-editor';
+            // Radix UI（依赖 React）
+            if (packageName === '@radix-ui') {
+              return 'vendor-radix';
+            }
+            // NextUI（依赖 React 和 Radix）
+            if (packageName === '@nextui-org') {
+              return 'vendor-nextui';
+            }
+            // 其他 UI 库（依赖 React）
+            if (['lucide-react', '@heroui/react', '@heroui/styles'].includes(packageName)) {
+              return 'vendor-ui';
+            }
+            // 图表库（依赖 React）
+            if (['recharts', 'd3-array', 'd3-scale', 'd3-shape', 'd3-interpolate', 'd3-color', 'd3-format', 'd3-time', 'd3-time-format', 'd3-ease'].includes(packageName)) {
+              return 'vendor-charts';
+            }
+            // Markdown 解析（依赖 React）
+            if (['react-markdown', 'remark-gfm', 'remark-parse', 'remark-rehype', 'rehype-raw', 'rehype-sanitize', 'unified', 'unist-util-visit', 'mdast-util-definitions'].includes(packageName)) {
+              return 'vendor-markdown';
+            }
+            // 语法高亮（依赖 React）
+            if (['react-syntax-highlighter', 'highlight.js', 'refractor', 'prismjs'].includes(packageName)) {
+              return 'vendor-highlighter';
+            }
+            // 文档预览
+            if (['docx-preview', 'mammoth'].includes(packageName)) {
+              return 'vendor-docx';
+            }
+            // 动画库
+            if (['framer-motion', 'motion-dom'].includes(packageName)) {
+              return 'vendor-animation';
+            }
+            // Hook 相关
+            if (['@hookform/resolvers', 'react-hook-form'].includes(packageName)) {
+              return 'vendor-form';
+            }
+            // Vite PWA / Workbox
+            if (packageName === 'workbox' || id.includes('workbox-')) {
+              return 'vendor-pwa';
+            }
+            // 测试相关（生产构建不应包含）
+            if (['@testing-library', 'vitest', 'jsdom', 'faker'].includes(packageName)) {
+              return 'vendor-test';
             }
             return 'vendor-other';
           }
@@ -194,10 +234,24 @@ export default defineConfig({
           if (id.includes('pages/Hrm')) {
             return 'page-hrm';
           }
+          // 路由级代码分割
+          if (id.includes('routes/')) {
+            const routeName = id.split('routes/')[1]?.split('.')[0];
+            if (routeName) {
+              return `route-${routeName}`;
+            }
+          }
+          // API 模块代码分割
+          if (id.includes('src/api/')) {
+            const apiName = id.split('src/api/')[1]?.split('.')[0];
+            if (apiName) {
+              return `api-${apiName}`;
+            }
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 800,
   },
   server: {
     port: 3000,

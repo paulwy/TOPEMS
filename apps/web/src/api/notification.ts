@@ -1,16 +1,16 @@
-import apiClient from './client';
-import type { ApiResponse } from './client';
+import apiClient from "./client";
+import type { ApiResponse } from "./client";
 
 export type NotificationTypeEnum =
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'system'
-  | 'workflow'
-  | 'reminder'
-  | 'alert'
-  | 'message';
+  | "info"
+  | "success"
+  | "warning"
+  | "error"
+  | "system"
+  | "workflow"
+  | "reminder"
+  | "alert"
+  | "message";
 
 export interface Notification {
   id: string;
@@ -67,7 +67,7 @@ export interface NotificationTemplate {
   updated_at: string;
 }
 
-export type TemplateStatusEnum = 'active' | 'inactive' | 'draft' | 'deprecated';
+export type TemplateStatusEnum = "active" | "inactive" | "draft" | "deprecated";
 
 export interface CreateTemplateRequest {
   name: string;
@@ -111,7 +111,7 @@ export interface CreateNotificationRequest {
 export const getNotifications = async (
   page = 1,
   pageSize = 20,
-  notificationType?: NotificationTypeEnum
+  notificationType?: NotificationTypeEnum,
 ): Promise<ApiResponse<NotificationListResponse>> => {
   const params: Record<string, any> = {
     page,
@@ -122,77 +122,111 @@ export const getNotifications = async (
     params.notification_type = notificationType;
   }
 
-  const response = await apiClient.notification.get<NotificationListResponse>('/api/v1/notifications', { params });
+  const response = await apiClient.notification.get<NotificationListResponse>(
+    "/api/v1/notifications",
+    { params },
+  );
 
   return response;
 };
 
-export const getUnreadNotifications = async (): Promise<ApiResponse<Notification[]>> => {
-  const response = await apiClient.notification.get<Notification[]>('/api/v1/notifications/unread');
+export const getUnreadNotifications = async (): Promise<
+  ApiResponse<Notification[]>
+> => {
+  const response = await apiClient.notification.get<Notification[]>(
+    "/api/v1/notifications/unread",
+  );
 
   return response;
 };
 
 export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
   try {
-    const response = await apiClient.notification.get<number>('/api/v1/notifications/unread-count');
+    const response = await apiClient.notification.get<number>(
+      "/api/v1/notifications/unread-count",
+    );
     return response;
   } catch (error: any) {
-    if (error.code === 'ERR_CANCELED' || error.code === 'ECONNABORTED' || error.name === 'AbortError') {
-      console.debug('Notification count request was canceled or aborted');
+    if (
+      error.code === "ERR_CANCELED" ||
+      error.code === "ECONNABORTED" ||
+      error.name === "AbortError"
+    ) {
+      console.debug("Notification count request was canceled or aborted");
       return {
         code: 0,
         success: true,
         data: 0,
-        message: 'Request canceled',
+        message: "Request canceled",
         timestamp: new Date().toISOString(),
       };
     }
-    console.error('Failed to fetch unread count:', error);
+    console.error("Failed to fetch unread count:", error);
     throw error;
   }
 };
 
-export const markAsRead = async (id: string): Promise<ApiResponse<Notification>> => {
-  return await apiClient.notification.put<Notification>(`/api/v1/notifications/${id}`);
+export const markAsRead = async (
+  id: string,
+): Promise<ApiResponse<Notification>> => {
+  return await apiClient.notification.put<Notification>(
+    `/api/v1/notifications/${id}`,
+  );
 };
 
 export const markAllAsRead = async (): Promise<ApiResponse<number>> => {
-  return await apiClient.notification.put<number>('/api/v1/notifications/read-all');
+  return await apiClient.notification.put<number>(
+    "/api/v1/notifications/read-all",
+  );
 };
 
-export const deleteNotification = async (id: string): Promise<ApiResponse<boolean>> => {
-  return await apiClient.notification.delete<boolean>(`/api/v1/notifications/${id}`);
+export const deleteNotification = async (
+  id: string,
+): Promise<ApiResponse<boolean>> => {
+  return await apiClient.notification.delete<boolean>(
+    `/api/v1/notifications/${id}`,
+  );
 };
 
 export const createNotification = async (
-  notification: CreateNotificationRequest
+  notification: CreateNotificationRequest,
 ): Promise<ApiResponse<Notification>> => {
-  return await apiClient.notification.post<Notification>('/api/v1/notifications', notification);
+  return await apiClient.notification.post<Notification>(
+    "/api/v1/notifications",
+    notification,
+  );
 };
 
 export const getArchivedNotifications = async (
   page = 1,
-  pageSize = 20
+  pageSize = 20,
 ): Promise<ApiResponse<NotificationListResponse<ArchivedNotification>>> => {
   const params = {
     page,
     page_size: pageSize,
   };
-  const response = await apiClient.notification.get<NotificationListResponse<ArchivedNotification>>(
-    '/api/v1/notifications/archived',
-    { params }
+  const response = await apiClient.notification.get<
+    NotificationListResponse<ArchivedNotification>
+  >("/api/v1/notifications/archived", { params });
+  return response;
+};
+
+export const getArchiveConfig = async (): Promise<
+  ApiResponse<ArchiveConfig>
+> => {
+  const response = await apiClient.notification.get<ArchiveConfig>(
+    "/api/v1/notifications/archive/config",
   );
   return response;
 };
 
-export const getArchiveConfig = async (): Promise<ApiResponse<ArchiveConfig>> => {
-  const response = await apiClient.notification.get<ArchiveConfig>('/api/v1/notifications/archive/config');
-  return response;
-};
-
-export const updateArchiveConfig = async (config: ArchiveConfig): Promise<ApiResponse<ArchiveConfig>> => {
-  const response = await apiClient.notification.put<ArchiveConfig>('/api/v1/notifications/archive/config', config);
+export const updateArchiveConfig = async (
+  config: ArchiveConfig,
+): Promise<ApiResponse<ArchiveConfig>> => {
+  const response = await apiClient.notification.put<ArchiveConfig>(
+    "/api/v1/notifications/archive/config",
+    config,
+  );
   return response;
 };
 
@@ -200,13 +234,21 @@ export interface AutoArchiveResponse {
   archived_count: number;
 }
 
-export const runAutoArchive = async (): Promise<ApiResponse<AutoArchiveResponse>> => {
-  const response = await apiClient.notification.post<AutoArchiveResponse>('/api/v1/notifications/archive/run');
+export const runAutoArchive = async (): Promise<
+  ApiResponse<AutoArchiveResponse>
+> => {
+  const response = await apiClient.notification.post<AutoArchiveResponse>(
+    "/api/v1/notifications/archive/run",
+  );
   return response;
 };
 
-export const getMyNotificationStats = async (): Promise<ApiResponse<NotificationStats>> => {
-  const response = await apiClient.notification.get<NotificationStats>('/api/v1/notifications/stats');
+export const getMyNotificationStats = async (): Promise<
+  ApiResponse<NotificationStats>
+> => {
+  const response = await apiClient.notification.get<NotificationStats>(
+    "/api/v1/notifications/stats",
+  );
   return response;
 };
 
@@ -220,7 +262,7 @@ export interface NotificationTemplateListResponse {
 export const getTemplates = async (
   page = 1,
   pageSize = 20,
-  status?: TemplateStatusEnum
+  status?: TemplateStatusEnum,
 ): Promise<ApiResponse<NotificationTemplateListResponse>> => {
   const params: Record<string, any> = {
     page,
@@ -229,57 +271,81 @@ export const getTemplates = async (
   if (status) {
     params.status = status;
   }
-  const response = await apiClient.notification.get<NotificationTemplateListResponse>(
-    '/api/v1/notification-templates',
-    { params }
+  const response =
+    await apiClient.notification.get<NotificationTemplateListResponse>(
+      "/api/v1/notification-templates",
+      { params },
+    );
+  return response;
+};
+
+export const getTemplate = async (
+  id: string,
+): Promise<ApiResponse<NotificationTemplate>> => {
+  const response = await apiClient.notification.get<NotificationTemplate>(
+    `/api/v1/notification-templates/${id}`,
   );
   return response;
 };
 
-export const getTemplate = async (id: string): Promise<ApiResponse<NotificationTemplate>> => {
-  const response = await apiClient.notification.get<NotificationTemplate>(`/api/v1/notification-templates/${id}`);
-  return response;
-};
-
-export const createTemplate = async (template: CreateTemplateRequest): Promise<ApiResponse<NotificationTemplate>> => {
-  const response = await apiClient.notification.post<NotificationTemplate>('/api/v1/notification-templates', template);
+export const createTemplate = async (
+  template: CreateTemplateRequest,
+): Promise<ApiResponse<NotificationTemplate>> => {
+  const response = await apiClient.notification.post<NotificationTemplate>(
+    "/api/v1/notification-templates",
+    template,
+  );
   return response;
 };
 
 export const updateTemplate = async (
   id: string,
-  template: UpdateTemplateRequest
+  template: UpdateTemplateRequest,
 ): Promise<ApiResponse<NotificationTemplate>> => {
   const response = await apiClient.notification.put<NotificationTemplate>(
     `/api/v1/notification-templates/${id}`,
-    template
+    template,
   );
   return response;
 };
 
-export const deleteTemplate = async (id: string): Promise<ApiResponse<boolean>> => {
-  const response = await apiClient.notification.delete<boolean>(`/api/v1/notification-templates/${id}`);
+export const deleteTemplate = async (
+  id: string,
+): Promise<ApiResponse<boolean>> => {
+  const response = await apiClient.notification.delete<boolean>(
+    `/api/v1/notification-templates/${id}`,
+  );
   return response;
 };
 
 export const renderTemplate = async (
   id: string,
-  data: Record<string, any>
+  data: Record<string, any>,
 ): Promise<ApiResponse<{ title: string; content: string }>> => {
-  const response = await apiClient.notification.post<{ title: string; content: string }>(
-    `/api/v1/notification-templates/${id}/render`,
-    data
+  const response = await apiClient.notification.post<{
+    title: string;
+    content: string;
+  }>(`/api/v1/notification-templates/${id}/render`, data);
+  return response;
+};
+
+export const bulkMarkAsRead = async (
+  ids: string[],
+): Promise<ApiResponse<number>> => {
+  const response = await apiClient.notification.put<number>(
+    "/api/v1/notifications/bulk-read",
+    { ids },
   );
   return response;
 };
 
-export const bulkMarkAsRead = async (ids: string[]): Promise<ApiResponse<number>> => {
-  const response = await apiClient.notification.put<number>('/api/v1/notifications/bulk-read', { ids });
-  return response;
-};
-
-export const bulkDeleteNotifications = async (ids: string[]): Promise<ApiResponse<number>> => {
-  const response = await apiClient.notification.delete<number>('/api/v1/notifications/bulk', { data: { ids } });
+export const bulkDeleteNotifications = async (
+  ids: string[],
+): Promise<ApiResponse<number>> => {
+  const response = await apiClient.notification.delete<number>(
+    "/api/v1/notifications/bulk",
+    { data: { ids } },
+  );
   return response;
 };
 
@@ -301,7 +367,9 @@ export const notificationServiceApi = {
   deleteNotification,
   createNotification,
   health: async (): Promise<ApiResponse<HealthResponse>> => {
-    const response = await apiClient.notification.get<HealthResponse>('/api/v1/notifications/health');
+    const response = await apiClient.notification.get<HealthResponse>(
+      "/api/v1/notifications/health",
+    );
     return response;
   },
 };

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useAppStore, type Theme } from '@/store';
+import * as React from "react";
+import { useAppStore, type Theme } from "@/store";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -13,8 +13,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // 监听系统主题变化
   React.useEffect(() => {
     const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-      if (theme === 'system') {
-        updateDOM(e.matches ? 'dark' : 'light');
+      if (theme === "system") {
+        updateDOM(e.matches ? "dark" : "light");
       }
     };
 
@@ -22,19 +22,21 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     applyTheme();
 
     // 监听系统主题变化
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", handleSystemThemeChange);
 
     return () => {
-      mediaQuery.removeEventListener('change', handleSystemThemeChange);
+      mediaQuery.removeEventListener("change", handleSystemThemeChange);
     };
   }, [theme]);
 
   const applyTheme = () => {
-    let activeTheme: 'light' | 'dark';
+    let activeTheme: "light" | "dark";
 
-    if (theme === 'system') {
-      activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (theme === "system") {
+      activeTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
     } else {
       activeTheme = theme;
     }
@@ -42,17 +44,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     updateDOM(activeTheme);
   };
 
-  const updateDOM = (newTheme: 'light' | 'dark') => {
+  const updateDOM = (newTheme: "light" | "dark") => {
     const root = window.document.documentElement;
 
-    if (newTheme === 'dark') {
-      root.classList.add('dark');
+    if (newTheme === "dark") {
+      root.classList.add("dark");
     } else {
-      root.classList.remove('dark');
+      root.classList.remove("dark");
     }
 
     // 设置 data-theme 属性（可选，方便调试）
-    root.setAttribute('data-theme', newTheme);
+    root.setAttribute("data-theme", newTheme);
   };
 
   return <>{children}</>;

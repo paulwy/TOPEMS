@@ -1,14 +1,14 @@
-import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './hooks/useAuth';
-import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
-import { ModuleGate } from './components/PermissionGate';
-import ErrorBoundary from './components/ErrorBoundary';
-import { ToastProvider } from './components/ToastProvider';
-import { LoadingProvider } from './components/LoadingProvider';
-import { ThemeProvider } from './components/ThemeProvider';
-import { Toaster } from './components/Toaster';
-import { LoadingSpinner } from './components/LoadingSpinner';
+import React, { Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { ProtectedRoute, GuestRoute } from "./components/ProtectedRoute";
+import { ModuleGate } from "./components/PermissionGate";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { ToastProvider } from "./components/ToastProvider";
+import { LoadingProvider } from "./components/LoadingProvider";
+import { ThemeProvider } from "./components/ThemeProvider";
+import { Toaster } from "./components/Toaster";
+import { LoadingSpinner } from "./components/LoadingSpinner";
 
 import {
   authRoutes,
@@ -25,13 +25,13 @@ import {
   aiRoutes,
   professionalRoutes,
   type RouteConfig,
-} from './routes';
+} from "./routes";
 
 const PageLoader: React.FC = () => (
-  <div className='min-h-screen flex items-center justify-center bg-gray-50'>
-    <div className='text-center'>
-      <LoadingSpinner size='lg' />
-      <p className='mt-4 text-gray-600'>加载中...</p>
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="text-center">
+      <LoadingSpinner size="lg" />
+      <p className="mt-4 text-gray-600">加载中...</p>
     </div>
   </div>
 );
@@ -84,24 +84,20 @@ const AppContent: React.FC = () => {
             <Route
               key={route.path}
               path={route.path}
-              element={
-                <GuestRoute>
-                  {route.element}
-                </GuestRoute>
-              }
+              element={<GuestRoute>{route.element}</GuestRoute>}
             />
           ))}
 
           <Route
-            path='/dashboard'
+            path="/dashboard"
             element={
               <ProtectedRoute>
-                {dashboardRoutes.find(r => r.path === '/dashboard')?.element}
+                {dashboardRoutes.find((r) => r.path === "/dashboard")?.element}
               </ProtectedRoute>
             }
           />
 
-          {renderRoutes(dashboardRoutes.filter(r => r.path !== '/dashboard'))}
+          {renderRoutes(dashboardRoutes.filter((r) => r.path !== "/dashboard"))}
           {renderRoutes(hrmRoutes)}
           {renderRoutes(crmRoutes)}
           {renderRoutes(erpRoutes)}
@@ -114,13 +110,28 @@ const AppContent: React.FC = () => {
           {renderRoutes(aiRoutes)}
           {renderRoutes(professionalRoutes)}
 
-          <Route path='/departments' element={<Navigate to='/hrm/departments' replace />} />
-          <Route path='/employees' element={<Navigate to='/hrm/employees' replace />} />
-          <Route path='/contracts' element={<Navigate to='/hrm/contracts' replace />} />
-          <Route path='/reports' element={<Navigate to='/hrm/reports' replace />} />
-          <Route path='/config-debug' element={<Navigate to='/debug' replace />} />
-          <Route path='/' element={<Navigate to='/dashboard' replace />} />
-          <Route path='*' element={<Navigate to='/dashboard' replace />} />
+          <Route
+            path="/departments"
+            element={<Navigate to="/hrm/departments" replace />}
+          />
+          <Route
+            path="/employees"
+            element={<Navigate to="/hrm/employees" replace />}
+          />
+          <Route
+            path="/contracts"
+            element={<Navigate to="/hrm/contracts" replace />}
+          />
+          <Route
+            path="/reports"
+            element={<Navigate to="/hrm/reports" replace />}
+          />
+          <Route
+            path="/config-debug"
+            element={<Navigate to="/debug" replace />}
+          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

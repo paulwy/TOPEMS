@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { X, FileText, FileImage, AlertCircle, Loader2 } from 'lucide-react';
-import { renderAsync } from 'docx-preview';
-import { docApi } from '../api/doc';
+import React, { useEffect, useRef, useState } from "react";
+import { X, FileText, FileImage, AlertCircle, Loader2 } from "lucide-react";
+import { renderAsync } from "docx-preview";
+import { docApi } from "../api/doc";
 
 interface DocumentPreviewModalProps {
   isOpen: boolean;
@@ -26,10 +26,10 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     if (!isOpen) return;
 
     const loadAndPreview = async () => {
-      console.log('开始预览:', { fileName, contentType, fileId });
+      console.log("开始预览:", { fileName, contentType, fileId });
 
       if (!containerRef.current) {
-        console.error('容器引用为 null');
+        console.error("容器引用为 null");
         return;
       }
 
@@ -38,51 +38,58 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
       try {
         const container = containerRef.current;
-        container.innerHTML = '';
-        console.log('容器已清空');
+        container.innerHTML = "";
+        console.log("容器已清空");
 
-        if (contentType.includes('image/')) {
-          console.log('预览图片');
+        if (contentType.includes("image/")) {
+          console.log("预览图片");
           const imgUrl = await docApi.preview(fileId);
-          const img = document.createElement('img');
+          const img = document.createElement("img");
           img.src = imgUrl;
-          img.className = 'max-w-full max-h-[80vh] mx-auto';
+          img.className = "max-w-full max-h-[80vh] mx-auto";
           img.alt = fileName;
           container.appendChild(img);
-        } else if (contentType.includes('application/pdf')) {
-          console.log('预览 PDF');
+        } else if (contentType.includes("application/pdf")) {
+          console.log("预览 PDF");
           const pdfUrl = await docApi.preview(fileId);
-          const iframe = document.createElement('iframe');
+          const iframe = document.createElement("iframe");
           iframe.src = pdfUrl;
-          iframe.className = 'w-full h-[80vh] border-0';
+          iframe.className = "w-full h-[80vh] border-0";
           container.appendChild(iframe);
-        } else if (fileName.endsWith('.docx')) {
-          console.log('预览 DOCX');
+        } else if (fileName.endsWith(".docx")) {
+          console.log("预览 DOCX");
           const blob = await docApi.download(fileId);
-          console.log('获取到 Blob，大小:', blob.size);
+          console.log("获取到 Blob，大小:", blob.size);
 
           // 再次检查容器是否还存在
           if (containerRef.current) {
-            console.log('开始调用 docx-preview renderAsync');
+            console.log("开始调用 docx-preview renderAsync");
             await renderAsync(blob, containerRef.current);
-            console.log('DOCX 渲染完成');
+            console.log("DOCX 渲染完成");
           }
-        } else if (contentType.includes('text/') || fileName.endsWith('.md') || fileName.endsWith('.txt')) {
-          console.log('预览文本/Markdown');
+        } else if (
+          contentType.includes("text/") ||
+          fileName.endsWith(".md") ||
+          fileName.endsWith(".txt")
+        ) {
+          console.log("预览文本/Markdown");
           const blob = await docApi.download(fileId);
           const text = await blob.text();
-          console.log('获取到文本内容，长度:', text.length);
-          const pre = document.createElement('pre');
+          console.log("获取到文本内容，长度:", text.length);
+          const pre = document.createElement("pre");
           pre.textContent = text;
-          pre.className = 'whitespace-pre-wrap p-4 bg-gray-50 rounded overflow-auto max-h-[80vh] font-mono text-sm';
+          pre.className =
+            "whitespace-pre-wrap p-4 bg-gray-50 rounded overflow-auto max-h-[80vh] font-mono text-sm";
           container.appendChild(pre);
         } else {
-          console.log('不支持的文件类型');
+          console.log("不支持的文件类型");
           setError(`不支持直接预览 ${fileName}，请下载后查看`);
         }
       } catch (err) {
-        console.error('Preview error:', err);
-        setError(`预览失败: ${err instanceof Error ? err.message : '未知错误'}`);
+        console.error("Preview error:", err);
+        setError(
+          `预览失败: ${err instanceof Error ? err.message : "未知错误"}`,
+        );
       } finally {
         setLoading(false);
       }
@@ -97,36 +104,41 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
-      <div className='bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col'>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
         {/* 头部 */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200'>
-          <div className='flex items-center space-x-3'>
-            <FileText className='w-6 h-6 text-blue-600' />
-            <h2 className='text-lg font-semibold text-gray-900 truncate'>{fileName}</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <FileText className="w-6 h-6 text-blue-600" />
+            <h2 className="text-lg font-semibold text-gray-900 truncate">
+              {fileName}
+            </h2>
           </div>
-          <button onClick={onClose} className='p-2 hover:bg-gray-100 rounded-lg transition-colors'>
-            <X className='w-5 h-5 text-gray-500' />
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
         {/* 内容区域 */}
-        <div className='flex-1 overflow-auto bg-gray-50 relative'>
+        <div className="flex-1 overflow-auto bg-gray-50 relative">
           {/* 加载和错误状态使用绝对定位 */}
           {loading && (
-            <div className='absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10'>
-              <Loader2 className='w-10 h-10 text-blue-600 animate-spin mb-3' />
-              <p className='text-gray-600'>正在加载文档...</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10">
+              <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
+              <p className="text-gray-600">正在加载文档...</p>
             </div>
           )}
 
           {error && (
-            <div className='absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10'>
-              <AlertCircle className='w-10 h-10 text-red-500 mb-3' />
-              <p className='text-red-600 mb-4'>{error}</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10">
+              <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
+              <p className="text-red-600 mb-4">{error}</p>
               <button
                 onClick={onClose}
-                className='px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors'
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 关闭
               </button>
@@ -134,14 +146,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           )}
 
           {/* 容器始终渲染和显示 */}
-          <div ref={containerRef} className='p-4 min-h-[80vh]' />
+          <div ref={containerRef} className="p-4 min-h-[80vh]" />
         </div>
 
         {/* 底部操作栏 */}
-        <div className='p-4 border-t border-gray-200 bg-gray-50'>
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
           <button
             onClick={onClose}
-            className='w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors'
+            className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
           >
             关闭
           </button>

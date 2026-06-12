@@ -13,6 +13,7 @@ use reqwest::Client;
 use sqlx::PgPool;
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
+use utoipa::OpenApi;
 
 use topems_shared::{
     ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims, init_logging,
@@ -21,6 +22,7 @@ use topems_shared::{
     create_database_pool, DatabaseConfig,
 };
 use crate::services::permission::{check_permission, BIPermission};
+use crate::api::openapi::BiApiDoc;
 
 mod services;
 mod models;
@@ -753,6 +755,12 @@ async fn get_analytics_overview(
     Json(ApiResponse::success(overview, "获取分析概览数据成功"))
 }
 
+async fn openapi_docs() -> Json<serde_json::Value> {
+    let openapi_json = BiApiDoc::openapi().to_json().unwrap_or_else(|_| "{}".to_string());
+    let value: serde_json::Value = serde_json::from_str(&openapi_json).unwrap_or_default();
+    Json(value)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
@@ -776,6 +784,7 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route("/api-docs/openapi.json", get(openapi_docs))
         .with_state(app_state.clone());
 
     // BI数据分析API路由

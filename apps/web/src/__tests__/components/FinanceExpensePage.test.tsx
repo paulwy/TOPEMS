@@ -46,6 +46,10 @@ vi.mock('../../components/DataTable', () => ({
   DataTable: () => <div data-testid='data-table'>Mock Data Table</div>,
 }));
 
+vi.mock('../../components/EnhancedDataTable', () => ({
+  EnhancedDataTable: () => <div data-testid='enhanced-data-table'>Mock Enhanced Data Table</div>,
+}));
+
 vi.mock('../../components/ui/OrganizationFilter', () => ({
   default: () => <div data-testid='organization-filter' />,
 }));

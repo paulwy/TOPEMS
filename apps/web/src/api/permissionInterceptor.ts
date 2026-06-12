@@ -1,5 +1,5 @@
-import apiClient from './client';
-import type { ApiResponse } from './client';
+import apiClient from "./client";
+import type { ApiResponse } from "./client";
 
 export interface PermissionError {
   code: number;
@@ -13,16 +13,16 @@ export const createPermissionInterceptor = () => {
       (response) => response,
       (error) => {
         if (error.response?.status === 403) {
-          const errorMessage = error.response?.data?.message || '权限不足';
-          console.warn('Permission denied:', errorMessage);
+          const errorMessage = error.response?.data?.message || "权限不足";
+          console.warn("Permission denied:", errorMessage);
 
           window.dispatchEvent(
-            new CustomEvent('permission-denied', {
+            new CustomEvent("permission-denied", {
               detail: {
                 message: errorMessage,
                 requiredPermission: error.response?.data?.requiredPermission,
               },
-            })
+            }),
           );
         }
 
@@ -31,9 +31,11 @@ export const createPermissionInterceptor = () => {
         if (error.response?.status === 401) {
           const currentPath = window.location.pathname;
           // 登录页的 401 不处理（避免循环）
-          if (currentPath !== '/login' && currentPath !== '/register') {
-            if (localStorage.getItem('token')) {
-              console.warn('Unauthorized, but not redirecting temporarily - token invalid');
+          if (currentPath !== "/login" && currentPath !== "/register") {
+            if (localStorage.getItem("token")) {
+              console.warn(
+                "Unauthorized, but not redirecting temporarily - token invalid",
+              );
               // 暂时不自动重定向
               // localStorage.removeItem('token');
               // localStorage.removeItem('user');
@@ -43,33 +45,38 @@ export const createPermissionInterceptor = () => {
         }
 
         return Promise.reject(error);
-      }
+      },
     );
   });
 };
 
-export const checkPermissionBeforeRequest = (permission: string, callback: () => void) => {
-  const permissions = JSON.parse(localStorage.getItem('permissions') || '[]');
-  const isSuperuser = JSON.parse(localStorage.getItem('user') || '{}')?.is_superuser;
+export const checkPermissionBeforeRequest = (
+  permission: string,
+  callback: () => void,
+) => {
+  const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");
+  const isSuperuser = JSON.parse(
+    localStorage.getItem("user") || "{}",
+  )?.is_superuser;
 
   if (isSuperuser || permissions.includes(permission)) {
     callback();
   } else {
     console.warn(`Permission denied: ${permission}`);
     window.dispatchEvent(
-      new CustomEvent('permission-denied', {
+      new CustomEvent("permission-denied", {
         detail: {
           message: `您没有 ${permission} 权限`,
           requiredPermission: permission,
         },
-      })
+      }),
     );
   }
 };
 
 export const withPermissionCheck = async <T>(
   permission: string,
-  apiCall: () => Promise<T>
+  apiCall: () => Promise<T>,
 ): Promise<{ success: boolean; data?: T; error?: PermissionError }> => {
   try {
     const result = await apiCall();
@@ -80,7 +87,7 @@ export const withPermissionCheck = async <T>(
         success: false,
         error: {
           code: 403,
-          message: error.response?.data?.message || '权限不足',
+          message: error.response?.data?.message || "权限不足",
           requiredPermission: permission,
         },
       };
@@ -93,17 +100,17 @@ export const logPermissionAccess = async (
   action: string,
   resource: string,
   success: boolean,
-  errorMessage?: string
+  errorMessage?: string,
 ) => {
   try {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     if (!user.id) {
-      console.warn('Cannot log access: user not authenticated');
+      console.warn("Cannot log access: user not authenticated");
       return;
     }
 
-    await apiClient.iam.post('/api/v1/access-logs', {
+    await apiClient.iam.post("/api/v1/access-logs", {
       user_id: user.id,
       username: user.username,
       action,
@@ -115,7 +122,7 @@ export const logPermissionAccess = async (
       resource_id: undefined,
     });
   } catch (error) {
-    console.error('Failed to log permission access:', error);
+    console.error("Failed to log permission access:", error);
   }
 };
 

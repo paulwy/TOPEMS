@@ -1,4 +1,4 @@
-import config from '../config/runtime';
+import config from "../config/runtime";
 
 const LOG_LEVELS = {
   debug: 0,
@@ -69,4 +69,4 @@ const createLogger = (namespace: string): Logger => {
 
 export default createLogger;
 
-export const globalLogger = createLogger('TOPEMS');
+export const globalLogger = createLogger("TOPEMS");

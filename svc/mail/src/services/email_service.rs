@@ -228,8 +228,8 @@ impl EmailService {
             sent_at: r.sent_at,
             error_message: r.error_message,
             template_id: r.template_id,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 
@@ -279,8 +279,8 @@ impl EmailService {
             sent_at: r.sent_at,
             error_message: r.error_message,
             template_id: r.template_id,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
         .collect();
 
@@ -445,8 +445,8 @@ impl TemplateService {
             category: result.category,
             tags: result.tags,
             status: result.status,
-            created_at: result.created_at,
-            updated_at: result.updated_at,
+            created_at: result.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: result.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 
@@ -474,8 +474,8 @@ impl TemplateService {
             category: r.category,
             tags: r.tags,
             status: r.status,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 
@@ -503,8 +503,8 @@ impl TemplateService {
             category: r.category,
             tags: r.tags,
             status: r.status,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 
@@ -550,8 +550,8 @@ impl TemplateService {
             category: r.category,
             tags: r.tags,
             status: r.status,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
         .collect();
 
@@ -632,8 +632,8 @@ impl TemplateService {
             category: result.category,
             tags: result.tags,
             status: result.status,
-            created_at: result.created_at,
-            updated_at: result.updated_at,
+            created_at: result.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: result.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 
@@ -677,8 +677,8 @@ impl TemplateService {
             category: result.category,
             tags: result.tags,
             status: result.status,
-            created_at: result.created_at,
-            updated_at: result.updated_at,
+            created_at: result.created_at.unwrap_or_else(OffsetDateTime::now_utc),
+            updated_at: result.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 

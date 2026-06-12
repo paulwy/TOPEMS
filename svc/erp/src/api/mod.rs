@@ -11,12 +11,16 @@ use crate::models;
 
 pub mod asset;
 pub mod audit;
+pub mod bank;
+pub mod consolidation;
 pub mod finance;
+pub mod fixed_asset;
 pub mod dict;
 pub mod db_structure;
 pub mod voucher;
 pub mod finance_reports;
 pub mod office_supplies;
+pub mod opening_balance;
 pub mod meeting_room;
 pub mod vehicles;
 pub mod announcement;
@@ -51,12 +55,16 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(health::create_routes())
         .merge(asset::create_routes())
         .merge(audit::create_routes())
+        .merge(bank::create_routes())
+        .merge(consolidation::create_routes())
         .merge(finance::create_routes())
+        .merge(fixed_asset::create_routes())
         .merge(dict::create_routes())
         .merge(db_structure::create_routes())
         .merge(voucher::create_routes())
         .merge(finance_reports::create_routes())
         .merge(office_supplies::create_routes())
+        .merge(opening_balance::create_routes())
         .merge(meeting_room::create_routes())
         .merge(vehicles::create_routes())
         .merge(announcement::create_routes())

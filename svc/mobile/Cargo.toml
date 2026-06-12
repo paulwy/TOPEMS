@@ -26,6 +26,9 @@ jsonwebtoken.workspace = true
 bytes.workspace = true
 topems-shared = { path = "../../lib" }
 
+# OpenAPI 文档
+utoipa.workspace = true
+
 [dev-dependencies]
 tokio-test.workspace = true
 

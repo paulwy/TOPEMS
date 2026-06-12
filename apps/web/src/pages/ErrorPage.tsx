@@ -1,12 +1,12 @@
-import React from 'react';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import React from "react";
+import { AlertCircle, ArrowLeft } from "lucide-react";
 
 const ErrorPage: React.FC = () => {
   const handleGoBack = () => {
     if (window.history.length > 1) {
       window.history.back();
     } else {
-      window.location.href = '/dashboard';
+      window.location.href = "/dashboard";
     }
   };
 

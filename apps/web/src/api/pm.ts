@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
 export interface Project {
   id: string;
@@ -22,6 +22,19 @@ export interface Project {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  // 财务集成字段
+  cost_center_id?: string;
+  cost_center_name?: string;
+  actual_cost?: number;
+  committed_cost?: number;
+  remaining_budget?: number;
+  cost_variance?: number;
+  cost_variance_rate?: number;
+  revenue_recognized?: number;
+  accounts_receivable?: number;
+  gross_profit?: number;
+  gross_margin?: number;
+  budget_utilization_rate?: number;
 }
 
 export interface CreateProjectRequest {
@@ -40,6 +53,8 @@ export interface CreateProjectRequest {
   tags?: string[];
   parent_id?: string;
   workspace_id?: string;
+  // 财务集成字段
+  cost_center_id?: string;
 }
 
 export interface UpdateProjectRequest {
@@ -183,7 +198,7 @@ export interface ProjectApproval {
 export interface ProjectProgress {
   planned: number;
   actual: number;
-  trend: 'ahead' | 'behind' | 'normal';
+  trend: "ahead" | "behind" | "normal";
   completed_phases: number;
   total_phases: number;
 }
@@ -269,7 +284,7 @@ export interface BenefitAnalysis {
 }
 
 export interface ApprovalRequest {
-  action: 'approve' | 'reject' | 'cancel';
+  action: "approve" | "reject" | "cancel";
   comment?: string;
   approver_id: string;
 }
@@ -687,17 +702,23 @@ export interface PmStatistics {
 
 export const pmApi = {
   projects: {
-    list: async (params?: { project_type?: string; status?: string; page?: number; page_size?: number }) => {
+    list: async (params?: {
+      project_type?: string;
+      status?: string;
+      page?: number;
+      page_size?: number;
+    }) => {
       const query = new URLSearchParams();
-      if (params?.project_type) query.set('project_type', params.project_type);
-      if (params?.status) query.set('status', params.status);
-      if (params?.page) query.set('page', params.page.toString());
-      if (params?.page_size) query.set('page_size', params.page_size.toString());
+      if (params?.project_type) query.set("project_type", params.project_type);
+      if (params?.status) query.set("status", params.status);
+      if (params?.page) query.set("page", params.page.toString());
+      if (params?.page_size)
+        query.set("page_size", params.page_size.toString());
       return apiClient.pm.get(`/api/v1/projects?${query.toString()}`);
     },
 
     create: async (data: CreateProjectRequest) => {
-      return apiClient.pm.post('/api/v1/projects', data);
+      return apiClient.pm.post("/api/v1/projects", data);
     },
 
     get: async (id: string) => {
@@ -734,7 +755,7 @@ export const pmApi = {
         start_date?: string;
         end_date?: string;
         predecessor_ids?: string[];
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/phases`, data);
     },
@@ -755,9 +776,12 @@ export const pmApi = {
         progress?: number;
         status?: string;
         predecessor_ids?: string[];
-      }
+      },
     ) => {
-      return apiClient.pm.put(`/api/v1/projects/${projectId}/phases/${id}`, data);
+      return apiClient.pm.put(
+        `/api/v1/projects/${projectId}/phases/${id}`,
+        data,
+      );
     },
 
     delete: async (projectId: string, id: string) => {
@@ -778,9 +802,12 @@ export const pmApi = {
         date: string;
         phase_id?: string;
         acceptance_criteria?: string;
-      }
+      },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/milestones`, data);
+      return apiClient.pm.post(
+        `/api/v1/projects/${projectId}/milestones`,
+        data,
+      );
     },
 
     get: async (projectId: string, id: string) => {
@@ -797,13 +824,18 @@ export const pmApi = {
         status?: string;
         phase_id?: string;
         acceptance_criteria?: string;
-      }
+      },
     ) => {
-      return apiClient.pm.put(`/api/v1/projects/${projectId}/milestones/${id}`, data);
+      return apiClient.pm.put(
+        `/api/v1/projects/${projectId}/milestones/${id}`,
+        data,
+      );
     },
 
     delete: async (projectId: string, id: string) => {
-      return apiClient.pm.delete(`/api/v1/projects/${projectId}/milestones/${id}`);
+      return apiClient.pm.delete(
+        `/api/v1/projects/${projectId}/milestones/${id}`,
+      );
     },
   },
 
@@ -820,7 +852,7 @@ export const pmApi = {
         responsibilities?: string;
         start_date?: string;
         end_date?: string;
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/members`, data);
     },
@@ -837,9 +869,12 @@ export const pmApi = {
         responsibilities?: string;
         start_date?: string;
         end_date?: string;
-      }
+      },
     ) => {
-      return apiClient.pm.put(`/api/v1/projects/${projectId}/members/${id}`, data);
+      return apiClient.pm.put(
+        `/api/v1/projects/${projectId}/members/${id}`,
+        data,
+      );
     },
 
     delete: async (projectId: string, id: string) => {
@@ -863,7 +898,7 @@ export const pmApi = {
         end_date?: string;
         allocation_percent?: number;
         created_by?: string;
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/resources`, data);
     },
@@ -883,13 +918,18 @@ export const pmApi = {
         actual_hours?: number;
         actual_cost?: number;
         status?: string;
-      }
+      },
     ) => {
-      return apiClient.pm.put(`/api/v1/projects/${projectId}/resources/${id}`, data);
+      return apiClient.pm.put(
+        `/api/v1/projects/${projectId}/resources/${id}`,
+        data,
+      );
     },
 
     delete: async (projectId: string, id: string) => {
-      return apiClient.pm.delete(`/api/v1/projects/${projectId}/resources/${id}`);
+      return apiClient.pm.delete(
+        `/api/v1/projects/${projectId}/resources/${id}`,
+      );
     },
   },
 
@@ -915,7 +955,7 @@ export const pmApi = {
         approval_workflow_id?: string;
         attachment_ids?: string[];
         created_by?: string;
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/expenses`, data);
     },
@@ -936,13 +976,18 @@ export const pmApi = {
         paid_date?: string;
         status?: string;
         approved_by?: string;
-      }
+      },
     ) => {
-      return apiClient.pm.put(`/api/v1/projects/${projectId}/expenses/${id}`, data);
+      return apiClient.pm.put(
+        `/api/v1/projects/${projectId}/expenses/${id}`,
+        data,
+      );
     },
 
     delete: async (projectId: string, id: string) => {
-      return apiClient.pm.delete(`/api/v1/projects/${projectId}/expenses/${id}`);
+      return apiClient.pm.delete(
+        `/api/v1/projects/${projectId}/expenses/${id}`,
+      );
     },
   },
 
@@ -952,7 +997,9 @@ export const pmApi = {
     },
 
     analysis: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/benefits/analysis`);
+      return apiClient.pm.get(
+        `/api/v1/projects/${projectId}/benefits/analysis`,
+      );
     },
 
     calculate: async (
@@ -969,7 +1016,7 @@ export const pmApi = {
         actual_cost_eva: number;
         notes?: string;
         created_by?: string;
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/benefits`, data);
     },
@@ -985,19 +1032,22 @@ export const pmApi = {
       data: {
         comment?: string;
         approver_id: string;
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/approval`, data);
     },
 
     action: async (projectId: string, data: ApprovalRequest) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/approval/action`, data);
+      return apiClient.pm.post(
+        `/api/v1/projects/${projectId}/approval/action`,
+        data,
+      );
     },
   },
 
   contracts: {
     list: async () => {
-      return apiClient.pm.get('/api/v1/contracts');
+      return apiClient.pm.get("/api/v1/contracts");
     },
 
     get: async (id: string) => {
@@ -1024,7 +1074,7 @@ export const pmApi = {
       description?: string;
       created_by?: string;
     }) => {
-      return apiClient.pm.post('/api/v1/contracts', data);
+      return apiClient.pm.post("/api/v1/contracts", data);
     },
 
     update: async (
@@ -1044,7 +1094,7 @@ export const pmApi = {
         end_date?: string;
         status?: string;
         description?: string;
-      }
+      },
     ) => {
       return apiClient.pm.put(`/api/v1/contracts/${id}`, data);
     },
@@ -1079,9 +1129,12 @@ export const pmApi = {
           payment_amount?: number;
           payment_percent?: number;
           project_milestone_id?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/contracts/${contractId}/milestones`, data);
+        return apiClient.pm.post(
+          `/api/v1/contracts/${contractId}/milestones`,
+          data,
+        );
       },
 
       update: async (
@@ -1093,13 +1146,18 @@ export const pmApi = {
           target_date?: string;
           payment_amount?: number;
           payment_percent?: number;
-        }
+        },
       ) => {
-        return apiClient.pm.put(`/api/v1/contracts/${contractId}/milestones/${milestoneId}`, data);
+        return apiClient.pm.put(
+          `/api/v1/contracts/${contractId}/milestones/${milestoneId}`,
+          data,
+        );
       },
 
       delete: async (contractId: string, milestoneId: string) => {
-        return apiClient.pm.delete(`/api/v1/contracts/${contractId}/milestones/${milestoneId}`);
+        return apiClient.pm.delete(
+          `/api/v1/contracts/${contractId}/milestones/${milestoneId}`,
+        );
       },
     },
 
@@ -1116,9 +1174,12 @@ export const pmApi = {
           payment_percent?: number;
           payment_amount: number;
           due_date: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/contracts/${contractId}/payments`, data);
+        return apiClient.pm.post(
+          `/api/v1/contracts/${contractId}/payments`,
+          data,
+        );
       },
 
       update: async (
@@ -1129,13 +1190,18 @@ export const pmApi = {
           payment_percent?: number;
           payment_amount?: number;
           due_date?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.put(`/api/v1/contracts/${contractId}/payments/${paymentId}`, data);
+        return apiClient.pm.put(
+          `/api/v1/contracts/${contractId}/payments/${paymentId}`,
+          data,
+        );
       },
 
       delete: async (contractId: string, paymentId: string) => {
-        return apiClient.pm.delete(`/api/v1/contracts/${contractId}/payments/${paymentId}`);
+        return apiClient.pm.delete(
+          `/api/v1/contracts/${contractId}/payments/${paymentId}`,
+        );
       },
     },
 
@@ -1164,16 +1230,19 @@ export const pmApi = {
           template_id?: string;
           description?: string;
           created_by?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/projects/${projectId}/contracts`, data);
+        return apiClient.pm.post(
+          `/api/v1/projects/${projectId}/contracts`,
+          data,
+        );
       },
     },
   },
 
   contractTemplates: {
     list: async () => {
-      return apiClient.pm.get('/api/v1/contract-templates');
+      return apiClient.pm.get("/api/v1/contract-templates");
     },
 
     get: async (id: string) => {
@@ -1187,7 +1256,7 @@ export const pmApi = {
       content: Record<string, unknown>;
       created_by?: string;
     }) => {
-      return apiClient.pm.post('/api/v1/contract-templates', data);
+      return apiClient.pm.post("/api/v1/contract-templates", data);
     },
 
     update: async (
@@ -1197,7 +1266,7 @@ export const pmApi = {
         contract_type?: string;
         description?: string;
         content?: Record<string, unknown>;
-      }
+      },
     ) => {
       return apiClient.pm.put(`/api/v1/contract-templates/${id}`, data);
     },
@@ -1224,7 +1293,7 @@ export const pmApi = {
         budget_type?: string;
         total_amount: number;
         created_by?: string;
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/budgets`, data);
     },
@@ -1236,7 +1305,7 @@ export const pmApi = {
         budget_type?: string;
         total_amount?: number;
         status?: string;
-      }
+      },
     ) => {
       return apiClient.pm.put(`/api/v1/budgets/${id}`, data);
     },
@@ -1263,7 +1332,7 @@ export const pmApi = {
           subcategory?: string;
           budget_amount: number;
           description?: string;
-        }
+        },
       ) => {
         return apiClient.pm.post(`/api/v1/budgets/${budgetId}/items`, data);
       },
@@ -1277,13 +1346,18 @@ export const pmApi = {
           subcategory?: string;
           budget_amount?: number;
           description?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.put(`/api/v1/budgets/${budgetId}/items/${itemId}`, data);
+        return apiClient.pm.put(
+          `/api/v1/budgets/${budgetId}/items/${itemId}`,
+          data,
+        );
       },
 
       delete: async (budgetId: string, itemId: string) => {
-        return apiClient.pm.delete(`/api/v1/budgets/${budgetId}/items/${itemId}`);
+        return apiClient.pm.delete(
+          `/api/v1/budgets/${budgetId}/items/${itemId}`,
+        );
       },
     },
   },
@@ -1315,7 +1389,7 @@ export const pmApi = {
         owner?: string;
         response_due_date?: string;
         created_by?: string;
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/risks`, data);
     },
@@ -1337,7 +1411,7 @@ export const pmApi = {
         warning_threshold?: number;
         owner?: string;
         response_due_date?: string;
-      }
+      },
     ) => {
       return apiClient.pm.put(`/api/v1/risks/${id}`, data);
     },
@@ -1353,7 +1427,7 @@ export const pmApi = {
           event_type: string;
           event_description?: string;
           reported_by?: string;
-        }
+        },
       ) => {
         return apiClient.pm.post(`/api/v1/risks/${riskId}/events`, data);
       },
@@ -1381,9 +1455,12 @@ export const pmApi = {
           check_criteria?: string;
           acceptance_standard?: string;
           created_by?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/projects/${projectId}/quality-checks`, data);
+        return apiClient.pm.post(
+          `/api/v1/projects/${projectId}/quality-checks`,
+          data,
+        );
       },
 
       update: async (
@@ -1400,7 +1477,7 @@ export const pmApi = {
           nonconformities?: Record<string, any>;
           corrective_actions?: Record<string, any>;
           follow_up_date?: string;
-        }
+        },
       ) => {
         return apiClient.pm.put(`/api/v1/quality-checks/${id}`, data);
       },
@@ -1427,7 +1504,7 @@ export const pmApi = {
           assignee?: string;
           due_date?: string;
           created_by?: string;
-        }
+        },
       ) => {
         return apiClient.pm.post(`/api/v1/projects/${projectId}/defects`, data);
       },
@@ -1443,7 +1520,7 @@ export const pmApi = {
           assignee?: string;
           due_date?: string;
           resolution?: string;
-        }
+        },
       ) => {
         return apiClient.pm.put(`/api/v1/defects/${id}`, data);
       },
@@ -1457,7 +1534,9 @@ export const pmApi = {
   acceptance: {
     plans: {
       list: async (projectId: string) => {
-        return apiClient.pm.get(`/api/v1/projects/${projectId}/acceptance-plans`);
+        return apiClient.pm.get(
+          `/api/v1/projects/${projectId}/acceptance-plans`,
+        );
       },
 
       get: async (id: string) => {
@@ -1477,9 +1556,12 @@ export const pmApi = {
           participants?: Record<string, any>;
           documents_required?: Record<string, any>;
           created_by?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/projects/${projectId}/acceptance-plans`, data);
+        return apiClient.pm.post(
+          `/api/v1/projects/${projectId}/acceptance-plans`,
+          data,
+        );
       },
 
       update: async (
@@ -1492,7 +1574,7 @@ export const pmApi = {
           status?: string;
           participants?: Record<string, any>;
           documents_required?: Record<string, any>;
-        }
+        },
       ) => {
         return apiClient.pm.put(`/api/v1/acceptance-plans/${id}`, data);
       },
@@ -1510,9 +1592,12 @@ export const pmApi = {
           item_name: string;
           item_description?: string;
           required_standard?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/acceptance-plans/${planId}/items`, data);
+        return apiClient.pm.post(
+          `/api/v1/acceptance-plans/${planId}/items`,
+          data,
+        );
       },
 
       update: async (
@@ -1521,7 +1606,7 @@ export const pmApi = {
           actual_result?: string;
           is_passed?: boolean;
           comments?: string;
-        }
+        },
       ) => {
         return apiClient.pm.put(`/api/v1/acceptance-items/${id}`, data);
       },
@@ -1533,7 +1618,9 @@ export const pmApi = {
 
     records: {
       list: async (projectId: string) => {
-        return apiClient.pm.get(`/api/v1/projects/${projectId}/acceptance-records`);
+        return apiClient.pm.get(
+          `/api/v1/projects/${projectId}/acceptance-records`,
+        );
       },
 
       get: async (id: string) => {
@@ -1552,9 +1639,12 @@ export const pmApi = {
           findings?: Record<string, any>;
           recommendations?: Record<string, any>;
           created_by?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/acceptance-plans/${planId}/records`, data);
+        return apiClient.pm.post(
+          `/api/v1/acceptance-plans/${planId}/records`,
+          data,
+        );
       },
 
       update: async (
@@ -1566,7 +1656,7 @@ export const pmApi = {
           attendees?: Record<string, any>;
           findings?: Record<string, any>;
           recommendations?: Record<string, any>;
-        }
+        },
       ) => {
         return apiClient.pm.put(`/api/v1/acceptance-records/${id}`, data);
       },
@@ -1592,9 +1682,12 @@ export const pmApi = {
         settlement_period_end?: string;
         description?: string;
         created_by?: string;
-      }
+      },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/settlements`, data);
+      return apiClient.pm.post(
+        `/api/v1/projects/${projectId}/settlements`,
+        data,
+      );
     },
 
     update: async (
@@ -1604,7 +1697,7 @@ export const pmApi = {
         status?: string;
         actual_amount?: number;
         description?: string;
-      }
+      },
     ) => {
       return apiClient.pm.put(`/api/v1/settlements/${id}`, data);
     },
@@ -1629,9 +1722,12 @@ export const pmApi = {
           description?: string;
           expense_ref_id?: string;
           contract_ref_id?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/settlements/${settlementId}/items`, data);
+        return apiClient.pm.post(
+          `/api/v1/settlements/${settlementId}/items`,
+          data,
+        );
       },
 
       update: async (
@@ -1641,7 +1737,7 @@ export const pmApi = {
           category?: string;
           actual_amount?: number;
           description?: string;
-        }
+        },
       ) => {
         return apiClient.pm.put(`/api/v1/settlement-items/${id}`, data);
       },
@@ -1653,7 +1749,9 @@ export const pmApi = {
 
     adjustments: {
       list: async (settlementId: string) => {
-        return apiClient.pm.get(`/api/v1/settlements/${settlementId}/adjustments`);
+        return apiClient.pm.get(
+          `/api/v1/settlements/${settlementId}/adjustments`,
+        );
       },
 
       create: async (
@@ -1666,9 +1764,12 @@ export const pmApi = {
           reason?: string;
           supporting_documents?: Record<string, any>;
           created_by?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/settlements/${settlementId}/adjustments`, data);
+        return apiClient.pm.post(
+          `/api/v1/settlements/${settlementId}/adjustments`,
+          data,
+        );
       },
     },
   },
@@ -1694,7 +1795,7 @@ export const pmApi = {
         description?: string;
         tags?: string[];
         created_by?: string;
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/documents`, data);
     },
@@ -1707,7 +1808,7 @@ export const pmApi = {
         status?: string;
         description?: string;
         tags?: string[];
-      }
+      },
     ) => {
       return apiClient.pm.put(`/api/v1/documents/${id}`, data);
     },
@@ -1728,9 +1829,12 @@ export const pmApi = {
           file_hash?: string;
           change_note?: string;
           created_by?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/documents/${documentId}/versions`, data);
+        return apiClient.pm.post(
+          `/api/v1/documents/${documentId}/versions`,
+          data,
+        );
       },
     },
 
@@ -1750,7 +1854,7 @@ export const pmApi = {
           folder_name: string;
           description?: string;
           created_by?: string;
-        }
+        },
       ) => {
         return apiClient.pm.post(`/api/v1/projects/${projectId}/folders`, data);
       },
@@ -1760,7 +1864,7 @@ export const pmApi = {
         data: {
           folder_name?: string;
           description?: string;
-        }
+        },
       ) => {
         return apiClient.pm.put(`/api/v1/folders/${id}`, data);
       },
@@ -1788,7 +1892,7 @@ export const pmApi = {
         report_type: string;
         report_period?: string;
         generated_by?: string;
-      }
+      },
     ) => {
       return apiClient.pm.post(`/api/v1/projects/${projectId}/reports`, data);
     },
@@ -1801,14 +1905,17 @@ export const pmApi = {
         report_type: string;
         report_period?: string;
         generated_by?: string;
-      }
+      },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/reports/generate`, data);
+      return apiClient.pm.post(
+        `/api/v1/projects/${projectId}/reports/generate`,
+        data,
+      );
     },
 
     templates: {
       list: async () => {
-        return apiClient.pm.get('/api/v1/report-templates');
+        return apiClient.pm.get("/api/v1/report-templates");
       },
 
       get: async (id: string) => {
@@ -1822,7 +1929,7 @@ export const pmApi = {
         content: Record<string, any>;
         created_by?: string;
       }) => {
-        return apiClient.pm.post('/api/v1/report-templates', data);
+        return apiClient.pm.post("/api/v1/report-templates", data);
       },
 
       update: async (
@@ -1830,7 +1937,7 @@ export const pmApi = {
         data: {
           template_name?: string;
           content?: Record<string, any>;
-        }
+        },
       ) => {
         return apiClient.pm.put(`/api/v1/report-templates/${id}`, data);
       },
@@ -1860,7 +1967,7 @@ export const pmApi = {
       metadata?: Record<string, any>;
       due_date?: string;
     }) => {
-      return apiClient.pm.post('/api/v1/notifications', data);
+      return apiClient.pm.post("/api/v1/notifications", data);
     },
 
     update: async (
@@ -1868,7 +1975,7 @@ export const pmApi = {
       data: {
         status?: string;
         read_at?: string;
-      }
+      },
     ) => {
       return apiClient.pm.put(`/api/v1/notifications/${id}`, data);
     },
@@ -1879,7 +1986,9 @@ export const pmApi = {
 
     settings: {
       list: async (projectId: string) => {
-        return apiClient.pm.get(`/api/v1/projects/${projectId}/notification-settings`);
+        return apiClient.pm.get(
+          `/api/v1/projects/${projectId}/notification-settings`,
+        );
       },
 
       create: async (
@@ -1889,9 +1998,12 @@ export const pmApi = {
           enabled: boolean;
           notify_before_days?: number;
           preferred_channel?: string;
-        }
+        },
       ) => {
-        return apiClient.pm.post(`/api/v1/projects/${projectId}/notification-settings`, data);
+        return apiClient.pm.post(
+          `/api/v1/projects/${projectId}/notification-settings`,
+          data,
+        );
       },
 
       update: async (
@@ -1900,7 +2012,7 @@ export const pmApi = {
           enabled?: boolean;
           notify_before_days?: number;
           preferred_channel?: string;
-        }
+        },
       ) => {
         return apiClient.pm.put(`/api/v1/notification-settings/${id}`, data);
       },
@@ -1908,12 +2020,12 @@ export const pmApi = {
 
     types: {
       list: async () => {
-        return apiClient.pm.get('/api/v1/notification-types');
+        return apiClient.pm.get("/api/v1/notification-types");
       },
     },
   },
 
   getStatistics: async (): Promise<any> => {
-    return apiClient.pm.get('/api/v1/statistics');
+    return apiClient.pm.get("/api/v1/statistics");
   },
 };

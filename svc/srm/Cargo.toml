@@ -23,3 +23,7 @@ thiserror = "2"
 topems-shared = { path = "../../lib" }
 axum-prometheus = "0.8"
 prometheus = "0.13"
+utoipa = "4"
+
+[dev-dependencies]
+tokio-test = "0.4"

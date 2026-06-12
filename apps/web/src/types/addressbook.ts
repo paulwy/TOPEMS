@@ -1,6 +1,6 @@
 export interface AddressbookEntry {
   id: string;
-  contact_type: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
+  contact_type: "EMPLOYEE" | "DEPARTMENT" | "COMPANY";
   name: string;
   code?: string;
   position?: string;
@@ -21,7 +21,7 @@ export interface AddressbookDetail extends AddressbookEntry {
 export interface AddressbookQueryParams {
   page?: number;
   page_size?: number;
-  type?: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
+  type?: "EMPLOYEE" | "DEPARTMENT" | "COMPANY";
   department_id?: string;
   status?: string;
   search?: string;
@@ -30,18 +30,18 @@ export interface AddressbookQueryParams {
 
 export interface AddressbookSearchParams {
   limit?: number;
-  contact_type?: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
+  contact_type?: "EMPLOYEE" | "DEPARTMENT" | "COMPANY";
   search?: string;
   fields?: string;
 }
 
 export interface ExportParams {
-  contact_type?: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
+  contact_type?: "EMPLOYEE" | "DEPARTMENT" | "COMPANY";
   format: string;
 }
 
 export interface ContactDetailParams {
-  contact_type: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
+  contact_type: "EMPLOYEE" | "DEPARTMENT" | "COMPANY";
 }
 
 export interface DepartmentNode {

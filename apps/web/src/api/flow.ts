@@ -1,5 +1,5 @@
-import apiClient from './client';
-import type { ApiResponse } from './client';
+import apiClient from "./client";
+import type { ApiResponse } from "./client";
 
 // ========== 类型定义 ==========
 
@@ -50,7 +50,7 @@ export interface Condition {
   value: any;
 }
 
-export type ApprovalType = 'single' | 'counter' | 'or';
+export type ApprovalType = "single" | "counter" | "or";
 
 export interface ApprovalNode {
   node_id: string;
@@ -101,7 +101,7 @@ export interface UpdateWorkflowRequest {
 export interface WorkflowInstance {
   id: string;
   workflow_id?: string;
-  status: 'pending' | 'running' | 'completed' | 'rejected' | string;
+  status: "pending" | "running" | "completed" | "rejected" | string;
   current_node?: string;
   initiator_id?: string;
   data?: any;
@@ -122,7 +122,7 @@ export interface Approval {
   node_id?: string;
   task_name: string;
   assignee_id?: string;
-  status: 'pending' | 'approved' | 'rejected' | string;
+  status: "pending" | "approved" | "rejected" | string;
   approval_type?: string;
   comment?: string;
   approved_by?: string;
@@ -165,7 +165,7 @@ export interface RollbackRequest {
 }
 
 export interface ProcessApprovalRequest {
-  action: 'approve' | 'reject';
+  action: "approve" | "reject";
   comment?: string;
   actor_id: string;
   actor_name?: string;
@@ -229,7 +229,7 @@ export interface PaginatedResult<T> {
 // ========== 通用工具函数 ==========
 
 function buildQueryString(params?: ListParams): string {
-  if (!params) return '';
+  if (!params) return "";
 
   const searchParams = new URLSearchParams();
 
@@ -240,7 +240,7 @@ function buildQueryString(params?: ListParams): string {
   });
 
   const queryString = searchParams.toString();
-  return queryString ? `?${queryString}` : '';
+  return queryString ? `?${queryString}` : "";
 }
 
 interface CrudOperations<T> {
@@ -279,46 +279,66 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 // ========== 工作流 API ==========
 
 export const workflowApi = {
-  ...createCrudApi<Workflow>('/api/v1/workflows'),
+  ...createCrudApi<Workflow>("/api/v1/workflows"),
 
-  listWorkflows: (params?: ListParams) => createCrudApi<Workflow>('/api/v1/workflows').list(params),
+  listWorkflows: (params?: ListParams) =>
+    createCrudApi<Workflow>("/api/v1/workflows").list(params),
 
-  getWorkflow: (id: string) => createCrudApi<Workflow>('/api/v1/workflows').get(id),
+  getWorkflow: (id: string) =>
+    createCrudApi<Workflow>("/api/v1/workflows").get(id),
 
-  createWorkflow: (data: CreateWorkflowRequest) => createCrudApi<Workflow>('/api/v1/workflows').create(data),
+  createWorkflow: (data: CreateWorkflowRequest) =>
+    createCrudApi<Workflow>("/api/v1/workflows").create(data),
 
   updateWorkflow: (id: string, data: UpdateWorkflowRequest) =>
-    createCrudApi<Workflow>('/api/v1/workflows').update(id, data),
+    createCrudApi<Workflow>("/api/v1/workflows").update(id, data),
 
-  deleteWorkflow: (id: string) => createCrudApi<Workflow>('/api/v1/workflows').delete(id),
+  deleteWorkflow: (id: string) =>
+    createCrudApi<Workflow>("/api/v1/workflows").delete(id),
 
   getVersions: (workflowId: string, params?: ListParams) => {
     const queryString = buildQueryString(params);
-    return apiClient.flow.get(`/api/v1/workflows/${workflowId}/versions${queryString}`);
+    return apiClient.flow.get(
+      `/api/v1/workflows/${workflowId}/versions${queryString}`,
+    );
   },
 
   createVersion: (workflowId: string, data: CreateVersionRequest) => {
-    return apiClient.flow.post(`/api/v1/workflows/${workflowId}/versions`, data);
+    return apiClient.flow.post(
+      `/api/v1/workflows/${workflowId}/versions`,
+      data,
+    );
   },
 
   getVersion: (workflowId: string, versionId: string) => {
-    return apiClient.flow.get(`/api/v1/workflows/${workflowId}/versions/${versionId}`);
+    return apiClient.flow.get(
+      `/api/v1/workflows/${workflowId}/versions/${versionId}`,
+    );
   },
 
   activateVersion: (workflowId: string, versionId: string) => {
-    return apiClient.flow.post(`/api/v1/workflows/${workflowId}/versions/${versionId}/activate`);
+    return apiClient.flow.post(
+      `/api/v1/workflows/${workflowId}/versions/${versionId}/activate`,
+    );
   },
 
   rollback: (workflowId: string, data: RollbackRequest) => {
-    return apiClient.flow.post(`/api/v1/workflows/${workflowId}/rollback`, data);
+    return apiClient.flow.post(
+      `/api/v1/workflows/${workflowId}/rollback`,
+      data,
+    );
   },
 
   compareVersions: (workflowId: string, version1: string, version2: string) => {
-    return apiClient.flow.get(`/api/v1/workflows/${workflowId}/compare/${version1}/${version2}`);
+    return apiClient.flow.get(
+      `/api/v1/workflows/${workflowId}/compare/${version1}/${version2}`,
+    );
   },
 
   deleteVersion: (workflowId: string, versionId: string) => {
-    return apiClient.flow.delete(`/api/v1/workflows/${workflowId}/versions/${versionId}`);
+    return apiClient.flow.delete(
+      `/api/v1/workflows/${workflowId}/versions/${versionId}`,
+    );
   },
 };
 
@@ -331,7 +351,7 @@ export const instanceApi = {
   },
 
   start: (data: CreateWorkflowInstanceRequest) => {
-    return apiClient.flow.post('/api/v1/instances', data);
+    return apiClient.flow.post("/api/v1/instances", data);
   },
 
   get: (id: string) => {
@@ -357,7 +377,7 @@ export const approvalApi = {
   },
 
   create: (data: CreateApprovalRequest) => {
-    return apiClient.flow.post('/api/v1/approvals', data);
+    return apiClient.flow.post("/api/v1/approvals", data);
   },
 
   get: (id: string) => {
@@ -400,7 +420,7 @@ export const notificationApi = {
   },
 
   create: (data: CreateNotificationRequest) => {
-    return apiClient.flow.post('/api/v1/notifications', data);
+    return apiClient.flow.post("/api/v1/notifications", data);
   },
 
   listNotifications: (userId: string, params?: ListParams) => {
@@ -450,19 +470,19 @@ export const flowApi = {
   deleteVersion: workflowApi.deleteVersion,
 
   getStatistics: async (): Promise<ApiResponse<StatisticsResponse>> => {
-    return apiClient.flow.get('/api/v1/statistics');
+    return apiClient.flow.get("/api/v1/statistics");
   },
 
   getPerformance: async (): Promise<ApiResponse<PerformanceStats>> => {
-    return apiClient.flow.get('/api/v1/performance');
+    return apiClient.flow.get("/api/v1/performance");
   },
 
   resetPerformance: async (): Promise<ApiResponse<string>> => {
-    return apiClient.flow.post('/api/v1/performance/reset');
+    return apiClient.flow.post("/api/v1/performance/reset");
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.flow.get('/health');
+    return apiClient.flow.get("/health");
   },
 };
 

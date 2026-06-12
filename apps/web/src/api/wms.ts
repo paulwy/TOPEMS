@@ -3,8 +3,8 @@
  * 仓储管理 API 客户端
  */
 
-import type { ApiResponse } from './client';
-import { apiClient } from './client';
+import type { ApiResponse } from "./client";
+import { apiClient } from "./client";
 
 // ==================== Types ====================
 
@@ -15,7 +15,7 @@ export interface PaginationParams {
   page?: number;
   page_size?: number;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
 }
 
 /**
@@ -191,15 +191,19 @@ const warehouseApi = {
   /**
    * 获取仓库列表
    */
-  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Warehouse>>> => {
-    return apiClient.wms.get('/api/v1/warehouses', { params });
+  list: async (
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResponse<Warehouse>>> => {
+    return apiClient.wms.get("/api/v1/warehouses", { params });
   },
 
   /**
    * 创建仓库
    */
-  create: async (data: CreateWarehouseRequest): Promise<ApiResponse<Warehouse>> => {
-    return apiClient.wms.post('/api/v1/warehouses', data);
+  create: async (
+    data: CreateWarehouseRequest,
+  ): Promise<ApiResponse<Warehouse>> => {
+    return apiClient.wms.post("/api/v1/warehouses", data);
   },
 
   /**
@@ -212,7 +216,10 @@ const warehouseApi = {
   /**
    * 更新仓库
    */
-  update: async (id: string, data: UpdateWarehouseRequest): Promise<ApiResponse<Warehouse>> => {
+  update: async (
+    id: string,
+    data: UpdateWarehouseRequest,
+  ): Promise<ApiResponse<Warehouse>> => {
     return apiClient.wms.put(`/api/v1/warehouses/${id}`, data);
   },
 
@@ -230,15 +237,19 @@ const inventoryApi = {
   /**
    * 获取库存列表
    */
-  list: async (params?: InventoryQueryParams): Promise<ApiResponse<PaginatedResponse<InventoryItem>>> => {
-    return apiClient.wms.get('/api/v1/inventory', { params });
+  list: async (
+    params?: InventoryQueryParams,
+  ): Promise<ApiResponse<PaginatedResponse<InventoryItem>>> => {
+    return apiClient.wms.get("/api/v1/inventory", { params });
   },
 
   /**
    * 创建库存项
    */
-  create: async (data: CreateInventoryItemRequest): Promise<ApiResponse<InventoryItem>> => {
-    return apiClient.wms.post('/api/v1/inventory', data);
+  create: async (
+    data: CreateInventoryItemRequest,
+  ): Promise<ApiResponse<InventoryItem>> => {
+    return apiClient.wms.post("/api/v1/inventory", data);
   },
 
   /**
@@ -251,7 +262,10 @@ const inventoryApi = {
   /**
    * 更新库存项
    */
-  update: async (id: string, data: UpdateInventoryItemRequest): Promise<ApiResponse<InventoryItem>> => {
+  update: async (
+    id: string,
+    data: UpdateInventoryItemRequest,
+  ): Promise<ApiResponse<InventoryItem>> => {
     return apiClient.wms.put(`/api/v1/inventory/${id}`, data);
   },
 
@@ -269,15 +283,19 @@ const inboundOrderApi = {
   /**
    * 获取入库订单列表
    */
-  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<InboundOrder>>> => {
-    return apiClient.wms.get('/api/v1/inbound-orders', { params });
+  list: async (
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResponse<InboundOrder>>> => {
+    return apiClient.wms.get("/api/v1/inbound-orders", { params });
   },
 
   /**
    * 创建入库订单
    */
-  create: async (data: CreateInboundOrderRequest): Promise<ApiResponse<InboundOrder>> => {
-    return apiClient.wms.post('/api/v1/inbound-orders', data);
+  create: async (
+    data: CreateInboundOrderRequest,
+  ): Promise<ApiResponse<InboundOrder>> => {
+    return apiClient.wms.post("/api/v1/inbound-orders", data);
   },
 
   /**
@@ -290,7 +308,10 @@ const inboundOrderApi = {
   /**
    * 更新入库订单
    */
-  update: async (id: string, data: UpdateInboundOrderRequest): Promise<ApiResponse<InboundOrder>> => {
+  update: async (
+    id: string,
+    data: UpdateInboundOrderRequest,
+  ): Promise<ApiResponse<InboundOrder>> => {
     return apiClient.wms.put(`/api/v1/inbound-orders/${id}`, data);
   },
 
@@ -308,15 +329,19 @@ const outboundOrderApi = {
   /**
    * 获取出库订单列表
    */
-  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<OutboundOrder>>> => {
-    return apiClient.wms.get('/api/v1/outbound-orders', { params });
+  list: async (
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResponse<OutboundOrder>>> => {
+    return apiClient.wms.get("/api/v1/outbound-orders", { params });
   },
 
   /**
    * 创建出库订单
    */
-  create: async (data: CreateOutboundOrderRequest): Promise<ApiResponse<OutboundOrder>> => {
-    return apiClient.wms.post('/api/v1/outbound-orders', data);
+  create: async (
+    data: CreateOutboundOrderRequest,
+  ): Promise<ApiResponse<OutboundOrder>> => {
+    return apiClient.wms.post("/api/v1/outbound-orders", data);
   },
 
   /**
@@ -329,7 +354,10 @@ const outboundOrderApi = {
   /**
    * 更新出库订单
    */
-  update: async (id: string, data: UpdateOutboundOrderRequest): Promise<ApiResponse<OutboundOrder>> => {
+  update: async (
+    id: string,
+    data: UpdateOutboundOrderRequest,
+  ): Promise<ApiResponse<OutboundOrder>> => {
     return apiClient.wms.put(`/api/v1/outbound-orders/${id}`, data);
   },
 
@@ -356,6 +384,6 @@ export const wmsApi = {
    * 健康检查
    */
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.wms.get('/health');
+    return apiClient.wms.get("/health");
   },
 };

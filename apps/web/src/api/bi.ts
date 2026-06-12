@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from "./client";
 
 export interface Dashboard {
   id: string;
@@ -27,7 +27,7 @@ export interface KeyMetric {
   value: number;
   unit: string;
   change: number;
-  change_type: 'increase' | 'decrease';
+  change_type: "increase" | "decrease";
   icon: string;
 }
 
@@ -122,7 +122,7 @@ export interface ModuleAnalytics {
 }
 
 export async function fetchDashboards() {
-  return await apiClient.bi.get('/api/v1/dashboards');
+  return await apiClient.bi.get("/api/v1/dashboards");
 }
 
 export async function fetchDashboard(id: string) {
@@ -130,7 +130,7 @@ export async function fetchDashboard(id: string) {
 }
 
 export async function createDashboard(data: Partial<Dashboard>) {
-  return await apiClient.bi.post('/api/v1/dashboards', data);
+  return await apiClient.bi.post("/api/v1/dashboards", data);
 }
 
 export async function updateDashboard(id: string, data: Partial<Dashboard>) {
@@ -142,7 +142,7 @@ export async function deleteDashboard(id: string) {
 }
 
 export async function fetchReports() {
-  return await apiClient.bi.get('/api/v1/reports');
+  return await apiClient.bi.get("/api/v1/reports");
 }
 
 export async function fetchReport(id: string) {
@@ -150,7 +150,7 @@ export async function fetchReport(id: string) {
 }
 
 export async function createReport(data: Partial<Report>) {
-  return await apiClient.bi.post('/api/v1/reports', data);
+  return await apiClient.bi.post("/api/v1/reports", data);
 }
 
 export async function updateReport(id: string, data: Partial<Report>) {
@@ -162,27 +162,27 @@ export async function deleteReport(id: string) {
 }
 
 export async function fetchSummaryDashboard() {
-  return await apiClient.bi.get('/api/v1/analytics/summary');
+  return await apiClient.bi.get("/api/v1/analytics/summary");
 }
 
 export async function fetchDevelopmentAnalytics() {
-  return await apiClient.bi.get('/api/v1/analytics/development');
+  return await apiClient.bi.get("/api/v1/analytics/development");
 }
 
 export async function fetchQualityAnalytics() {
-  return await apiClient.bi.get('/api/v1/analytics/quality');
+  return await apiClient.bi.get("/api/v1/analytics/quality");
 }
 
 export async function fetchProductionAnalytics() {
-  return await apiClient.bi.get('/api/v1/analytics/production');
+  return await apiClient.bi.get("/api/v1/analytics/production");
 }
 
 export async function fetchLaboratoryAnalytics() {
-  return await apiClient.bi.get('/api/v1/analytics/laboratory');
+  return await apiClient.bi.get("/api/v1/analytics/laboratory");
 }
 
 export async function fetchAnalyticsOverview() {
-  return await apiClient.bi.get('/api/v1/analytics/overview');
+  return await apiClient.bi.get("/api/v1/analytics/overview");
 }
 
 export async function fetchModuleAnalytics(moduleId: string) {
@@ -191,12 +191,12 @@ export async function fetchModuleAnalytics(moduleId: string) {
 
 export async function fetchModuleData(moduleId: string, type: string) {
   const endpoints: Record<string, string> = {
-    development: '/api/v1/bi/rs/summary',
-    quality: '/api/v1/bi/qms/summary',
-    production: '/api/v1/bi/pdm/summary',
-    laboratory: '/api/v1/bi/lims/summary',
-    ehs: '/api/v1/bi/ehs/summary',
-    srm: '/api/v1/bi/srm/summary',
+    development: "/api/v1/bi/rs/summary",
+    quality: "/api/v1/bi/qms/summary",
+    production: "/api/v1/bi/pdm/summary",
+    laboratory: "/api/v1/bi/lims/summary",
+    ehs: "/api/v1/bi/ehs/summary",
+    srm: "/api/v1/bi/srm/summary",
   };
   const endpoint = endpoints[moduleId] || `/api/v1/analytics/${moduleId}`;
   return await apiClient.bi.get(endpoint);
@@ -204,91 +204,91 @@ export async function fetchModuleData(moduleId: string, type: string) {
 
 // 模块详细数据API
 export async function fetchRsSummary() {
-  return await apiClient.bi.get('/api/v1/bi/rs/summary');
+  return await apiClient.bi.get("/api/v1/bi/rs/summary");
 }
 
 export async function fetchRsProjectTimeline() {
-  return await apiClient.bi.get('/api/v1/bi/rs/project-timeline');
+  return await apiClient.bi.get("/api/v1/bi/rs/project-timeline");
 }
 
 export async function fetchRsExperimentSuccessRate() {
-  return await apiClient.bi.get('/api/v1/bi/rs/experiment-success-rate');
+  return await apiClient.bi.get("/api/v1/bi/rs/experiment-success-rate");
 }
 
 export async function fetchRsMaterialUsage() {
-  return await apiClient.bi.get('/api/v1/bi/rs/material-usage');
+  return await apiClient.bi.get("/api/v1/bi/rs/material-usage");
 }
 
 export async function fetchRsProjectRanking() {
-  return await apiClient.bi.get('/api/v1/bi/rs/project-ranking');
+  return await apiClient.bi.get("/api/v1/bi/rs/project-ranking");
 }
 
 export async function fetchLimsSummary() {
-  return await apiClient.bi.get('/api/v1/bi/lims/summary');
+  return await apiClient.bi.get("/api/v1/bi/lims/summary");
 }
 
 export async function fetchLimsSampleTimeline() {
-  return await apiClient.bi.get('/api/v1/bi/lims/sample-timeline');
+  return await apiClient.bi.get("/api/v1/bi/lims/sample-timeline");
 }
 
 export async function fetchLimsTestPassRate() {
-  return await apiClient.bi.get('/api/v1/bi/lims/test-pass-rate');
+  return await apiClient.bi.get("/api/v1/bi/lims/test-pass-rate");
 }
 
 export async function fetchLimsInstrumentUsage() {
-  return await apiClient.bi.get('/api/v1/bi/lims/instrument-usage');
+  return await apiClient.bi.get("/api/v1/bi/lims/instrument-usage");
 }
 
 export async function fetchLimsSampleStatusDistribution() {
-  return await apiClient.bi.get('/api/v1/bi/lims/sample-status-distribution');
+  return await apiClient.bi.get("/api/v1/bi/lims/sample-status-distribution");
 }
 
 export async function fetchQmsSummary() {
-  return await apiClient.bi.get('/api/v1/bi/qms/summary');
+  return await apiClient.bi.get("/api/v1/bi/qms/summary");
 }
 
 export async function fetchQmsQualityTrend() {
-  return await apiClient.bi.get('/api/v1/bi/qms/quality-trend');
+  return await apiClient.bi.get("/api/v1/bi/qms/quality-trend");
 }
 
 export async function fetchQmsIssueDistribution() {
-  return await apiClient.bi.get('/api/v1/bi/qms/issue-distribution');
+  return await apiClient.bi.get("/api/v1/bi/qms/issue-distribution");
 }
 
 export async function fetchEhsSummary() {
-  return await apiClient.bi.get('/api/v1/bi/ehs/summary');
+  return await apiClient.bi.get("/api/v1/bi/ehs/summary");
 }
 
 export async function fetchEhsRiskDistribution() {
-  return await apiClient.bi.get('/api/v1/bi/ehs/risk-distribution');
+  return await apiClient.bi.get("/api/v1/bi/ehs/risk-distribution");
 }
 
 export async function fetchEhsIncidentTrend() {
-  return await apiClient.bi.get('/api/v1/bi/ehs/incident-trend');
+  return await apiClient.bi.get("/api/v1/bi/ehs/incident-trend");
 }
 
 export async function fetchSrmSummary() {
-  return await apiClient.bi.get('/api/v1/bi/srm/summary');
+  return await apiClient.bi.get("/api/v1/bi/srm/summary");
 }
 
 export async function fetchSrmSupplierRanking() {
-  return await apiClient.bi.get('/api/v1/bi/srm/supplier-ranking');
+  return await apiClient.bi.get("/api/v1/bi/srm/supplier-ranking");
 }
 
 export async function fetchSrmOrderTimeline() {
-  return await apiClient.bi.get('/api/v1/bi/srm/order-timeline');
+  return await apiClient.bi.get("/api/v1/bi/srm/order-timeline");
 }
 
 export async function fetchPdmSummary() {
-  return await apiClient.bi.get('/api/v1/bi/pdm/summary');
+  return await apiClient.bi.get("/api/v1/bi/pdm/summary");
 }
 
 export async function fetchPdmProductionTrend() {
-  return await apiClient.bi.get('/api/v1/bi/pdm/production-trend');
+  return await apiClient.bi.get("/api/v1/bi/pdm/production-trend");
 }
 
 export async function fetchPdmBatchStatusDistribution() {
-  return await apiClient.bi.get('/api/v1/bi/pdm/batch-status-distribution');
+  return await apiClient.bi.get("/api/v1/bi/pdm/batch-status-distribution");
 }
 
 // 模块详细数据API

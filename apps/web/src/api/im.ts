@@ -1,6 +1,6 @@
-import apiClient from './client';
-import type { ApiResponse } from './client';
-import config from '../config/runtime';
+import apiClient from "./client";
+import type { ApiResponse } from "./client";
+import config from "../config/runtime";
 
 export interface ChatMessage {
   id: string;
@@ -90,7 +90,7 @@ export interface Friend {
   id: string;
   friend_id: string;
   friend_name: string;
-  status: 'pending' | 'accepted';
+  status: "pending" | "accepted";
   created_at: string;
   is_online?: boolean;
   last_seen?: string;
@@ -114,10 +114,12 @@ export interface CreateContactGroupRequest {
 
 export const imApi = {
   listChatRooms: async (): Promise<ApiResponse<any>> => {
-    return apiClient.im.get<any>('/api/v1/chat-rooms');
+    return apiClient.im.get<any>("/api/v1/chat-rooms");
   },
-  createChatRoom: async (data: CreateChatRoomRequest): Promise<ApiResponse<ChatRoom>> => {
-    return apiClient.im.post<ChatRoom>('/api/v1/chat-rooms', data);
+  createChatRoom: async (
+    data: CreateChatRoomRequest,
+  ): Promise<ApiResponse<ChatRoom>> => {
+    return apiClient.im.post<ChatRoom>("/api/v1/chat-rooms", data);
   },
   getChatRoom: async (id: string): Promise<ApiResponse<ChatRoom>> => {
     return apiClient.im.get<ChatRoom>(`/api/v1/chat-rooms/${id}`);
@@ -128,15 +130,25 @@ export const imApi = {
   listChatMessages: async (chatId: string): Promise<ApiResponse<any>> => {
     return apiClient.im.get<any>(`/api/v1/chat-rooms/${chatId}/messages`);
   },
-  createChatMessage: async (data: CreateChatMessageRequest): Promise<ApiResponse<ChatMessage>> => {
-    return apiClient.im.post<ChatMessage>(`/api/v1/chat-rooms/${data.chat_id}/messages`, data);
+  createChatMessage: async (
+    data: CreateChatMessageRequest,
+  ): Promise<ApiResponse<ChatMessage>> => {
+    return apiClient.im.post<ChatMessage>(
+      `/api/v1/chat-rooms/${data.chat_id}/messages`,
+      data,
+    );
   },
   markMessageRead: async (id: string): Promise<ApiResponse<ChatMessage>> => {
     return apiClient.im.put<ChatMessage>(`/api/v1/chat-messages/${id}/read`);
   },
 
-  updateChatMessage: async (id: string, content: string): Promise<ApiResponse<ChatMessage>> => {
-    return apiClient.im.put<ChatMessage>(`/api/v1/chat-messages/${id}`, { content });
+  updateChatMessage: async (
+    id: string,
+    content: string,
+  ): Promise<ApiResponse<ChatMessage>> => {
+    return apiClient.im.put<ChatMessage>(`/api/v1/chat-messages/${id}`, {
+      content,
+    });
   },
 
   deleteChatMessage: async (id: string): Promise<ApiResponse<any>> => {
@@ -147,44 +159,63 @@ export const imApi = {
     return apiClient.im.get<any>(`/api/v1/chat-rooms/${chatRoomId}/members`);
   },
 
-  addChatRoomMember: async (chatRoomId: string, userId: string): Promise<ApiResponse<ChatRoom>> => {
-    return apiClient.im.post<ChatRoom>(`/api/v1/chat-rooms/${chatRoomId}/members`, { user_id: userId });
+  addChatRoomMember: async (
+    chatRoomId: string,
+    userId: string,
+  ): Promise<ApiResponse<ChatRoom>> => {
+    return apiClient.im.post<ChatRoom>(
+      `/api/v1/chat-rooms/${chatRoomId}/members`,
+      { user_id: userId },
+    );
   },
 
-  removeChatRoomMember: async (chatRoomId: string, userId: string): Promise<ApiResponse<ChatRoom>> => {
-    return apiClient.im.delete<ChatRoom>(`/api/v1/chat-rooms/${chatRoomId}/members/${userId}`);
+  removeChatRoomMember: async (
+    chatRoomId: string,
+    userId: string,
+  ): Promise<ApiResponse<ChatRoom>> => {
+    return apiClient.im.delete<ChatRoom>(
+      `/api/v1/chat-rooms/${chatRoomId}/members/${userId}`,
+    );
   },
 
   listProjectGroups: async (): Promise<ApiResponse<any>> => {
-    return apiClient.im.get<any>('/api/v1/project-groups');
+    return apiClient.im.get<any>("/api/v1/project-groups");
   },
-  createProjectGroup: async (data: CreateProjectGroupRequest): Promise<ApiResponse<ProjectGroup>> => {
-    return apiClient.im.post<ProjectGroup>('/api/v1/project-groups', data);
+  createProjectGroup: async (
+    data: CreateProjectGroupRequest,
+  ): Promise<ApiResponse<ProjectGroup>> => {
+    return apiClient.im.post<ProjectGroup>("/api/v1/project-groups", data);
   },
 
   listNotifications: async (userId: string): Promise<ApiResponse<any>> => {
     return apiClient.im.get<any>(`/api/v1/notifications/${userId}`);
   },
-  createNotification: async (data: CreateNotificationRequest): Promise<ApiResponse<Notification>> => {
-    return apiClient.im.post<Notification>('/api/v1/notifications', data);
+  createNotification: async (
+    data: CreateNotificationRequest,
+  ): Promise<ApiResponse<Notification>> => {
+    return apiClient.im.post<Notification>("/api/v1/notifications", data);
   },
-  markNotificationRead: async (id: string): Promise<ApiResponse<Notification>> => {
+  markNotificationRead: async (
+    id: string,
+  ): Promise<ApiResponse<Notification>> => {
     return apiClient.im.put<Notification>(`/api/v1/notifications/${id}/read`);
   },
-  markAllNotificationsRead: async (userId: string): Promise<ApiResponse<any>> => {
+  markAllNotificationsRead: async (
+    userId: string,
+  ): Promise<ApiResponse<any>> => {
     return apiClient.im.put<any>(`/api/v1/notifications/${userId}/read-all`);
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.im.get<string>('/health');
+    return apiClient.im.get<string>("/health");
   },
 
   uploadFile: async (formData: FormData): Promise<ApiResponse<any>> => {
     const baseURL = config.services.im;
     const response = await fetch(`${baseURL}/api/v1/files/upload`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       body: formData,
     });
@@ -199,19 +230,35 @@ export const imApi = {
     return apiClient.im.get<any>(`/api/v1/friends/${userId}`);
   },
 
-  sendFriendRequest: async (userId: string, data: CreateFriendRequest): Promise<ApiResponse<any>> => {
+  sendFriendRequest: async (
+    userId: string,
+    data: CreateFriendRequest,
+  ): Promise<ApiResponse<any>> => {
     return apiClient.im.post<any>(`/api/v1/friends/${userId}`, data);
   },
 
-  acceptFriendRequest: async (userId: string, friendId: string): Promise<ApiResponse<any>> => {
-    return apiClient.im.put<any>(`/api/v1/friends/${userId}/${friendId}/accept`);
+  acceptFriendRequest: async (
+    userId: string,
+    friendId: string,
+  ): Promise<ApiResponse<any>> => {
+    return apiClient.im.put<any>(
+      `/api/v1/friends/${userId}/${friendId}/accept`,
+    );
   },
 
-  rejectFriendRequest: async (userId: string, friendId: string): Promise<ApiResponse<any>> => {
-    return apiClient.im.put<any>(`/api/v1/friends/${userId}/${friendId}/reject`);
+  rejectFriendRequest: async (
+    userId: string,
+    friendId: string,
+  ): Promise<ApiResponse<any>> => {
+    return apiClient.im.put<any>(
+      `/api/v1/friends/${userId}/${friendId}/reject`,
+    );
   },
 
-  removeFriend: async (userId: string, friendId: string): Promise<ApiResponse<any>> => {
+  removeFriend: async (
+    userId: string,
+    friendId: string,
+  ): Promise<ApiResponse<any>> => {
     return apiClient.im.delete<any>(`/api/v1/friends/${userId}/${friendId}`);
   },
 
@@ -219,32 +266,52 @@ export const imApi = {
     return apiClient.im.get<any>(`/api/v1/contact-groups/${userId}`);
   },
 
-  createContactGroup: async (userId: string, data: CreateContactGroupRequest): Promise<ApiResponse<any>> => {
+  createContactGroup: async (
+    userId: string,
+    data: CreateContactGroupRequest,
+  ): Promise<ApiResponse<any>> => {
     return apiClient.im.post<any>(`/api/v1/contact-groups/${userId}`, data);
   },
 
   updateContactGroup: async (
     userId: string,
     groupId: string,
-    data: CreateContactGroupRequest
+    data: CreateContactGroupRequest,
   ): Promise<ApiResponse<any>> => {
-    return apiClient.im.put<any>(`/api/v1/contact-groups/${userId}/${groupId}`, data);
+    return apiClient.im.put<any>(
+      `/api/v1/contact-groups/${userId}/${groupId}`,
+      data,
+    );
   },
 
-  deleteContactGroup: async (userId: string, groupId: string): Promise<ApiResponse<any>> => {
-    return apiClient.im.delete<any>(`/api/v1/contact-groups/${userId}/${groupId}`);
+  deleteContactGroup: async (
+    userId: string,
+    groupId: string,
+  ): Promise<ApiResponse<any>> => {
+    return apiClient.im.delete<any>(
+      `/api/v1/contact-groups/${userId}/${groupId}`,
+    );
   },
 
-  addContactGroupMember: async (userId: string, groupId: string, memberUserId: string): Promise<ApiResponse<any>> => {
-    return apiClient.im.post<any>(`/api/v1/contact-groups/${userId}/${groupId}/members`, { user_id: memberUserId });
+  addContactGroupMember: async (
+    userId: string,
+    groupId: string,
+    memberUserId: string,
+  ): Promise<ApiResponse<any>> => {
+    return apiClient.im.post<any>(
+      `/api/v1/contact-groups/${userId}/${groupId}/members`,
+      { user_id: memberUserId },
+    );
   },
 
   removeContactGroupMember: async (
     userId: string,
     groupId: string,
-    memberUserId: string
+    memberUserId: string,
   ): Promise<ApiResponse<any>> => {
-    return apiClient.im.delete<any>(`/api/v1/contact-groups/${userId}/${groupId}/members/${memberUserId}`);
+    return apiClient.im.delete<any>(
+      `/api/v1/contact-groups/${userId}/${groupId}/members/${memberUserId}`,
+    );
   },
 
   muteChatRoom: async (chatId: string): Promise<ApiResponse<any>> => {

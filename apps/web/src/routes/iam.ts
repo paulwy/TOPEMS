@@ -1,78 +1,86 @@
-import React, { lazy } from 'react';
-import type { RouteConfig } from './utils';
+import React, { lazy } from "react";
+import type { RouteConfig } from "./utils";
 
-const UserManagementPage = lazy(() => import('../pages/UserManagementPage'));
-const RoleManagementPage = lazy(() => import('../pages/RoleManagementPage'));
-const PermissionManagementPage = lazy(() => import('../pages/PermissionManagementPage'));
-const AuditLogPage = lazy(() => import('../pages/AuditLogPage'));
-const SystemManagementPage = lazy(() => import('../pages/SystemManagementPage'));
-const DictionaryManagementPage = lazy(() => import('../pages/DictionaryManagementPage'));
-const DatabaseStructurePage = lazy(() => import('../pages/DatabaseStructurePage'));
-const MigrationAdminPage = lazy(() => import('../pages/MigrationAdminPage'));
-const ConfigDebugPage = lazy(() => import('../pages/ConfigDebugPage'));
+const UserManagementPage = lazy(() => import("../pages/UserManagementPage"));
+const RoleManagementPage = lazy(() => import("../pages/RoleManagementPage"));
+const PermissionManagementPage = lazy(
+  () => import("../pages/PermissionManagementPage"),
+);
+const AuditLogPage = lazy(() => import("../pages/AuditLogPage"));
+const SystemManagementPage = lazy(
+  () => import("../pages/SystemManagementPage"),
+);
+const DictionaryManagementPage = lazy(
+  () => import("../pages/DictionaryManagementPage"),
+);
+const DatabaseStructurePage = lazy(
+  () => import("../pages/DatabaseStructurePage"),
+);
+const MigrationAdminPage = lazy(() => import("../pages/MigrationAdminPage"));
+const ConfigDebugPage = lazy(() => import("../pages/ConfigDebugPage"));
 
 export const iamRoutes: RouteConfig[] = [
   {
-    path: '/users',
+    path: "/users",
     element: React.createElement(UserManagementPage),
-    requiredPermissions: ['iam:admin'],
-    module: 'iam',
-    action: 'admin',
+    requiredPermissions: ["iam:admin"],
+    module: "iam",
+    action: "admin",
   },
   {
-    path: '/roles',
+    path: "/roles",
     element: React.createElement(RoleManagementPage),
-    requiredPermissions: ['iam:admin'],
-    module: 'iam',
-    action: 'admin',
+    requiredPermissions: ["iam:admin"],
+    module: "iam",
+    action: "admin",
   },
   {
-    path: '/permissions',
+    path: "/permissions",
     element: React.createElement(PermissionManagementPage),
-    requiredPermissions: ['iam:admin'],
-    module: 'iam',
-    action: 'admin',
+    requiredPermissions: ["iam:admin"],
+    module: "iam",
+    action: "admin",
   },
   {
-    path: '/audit',
+    path: "/audit",
     element: React.createElement(AuditLogPage),
-    requiredPermissions: ['iam:admin'],
-    module: 'iam',
-    action: 'admin',
+    requiredPermissions: ["iam:admin"],
+    module: "iam",
+    action: "admin",
   },
   {
-    path: '/system',
+    path: "/system",
     element: React.createElement(SystemManagementPage),
-    requiredPermissions: ['iam:admin'],
-    module: 'iam',
-    action: 'admin',
+    requiredPermissions: ["iam:admin"],
+    module: "iam",
+    action: "admin",
   },
   {
-    path: '/dictionaries',
+    path: "/dictionaries",
     element: React.createElement(DictionaryManagementPage),
-    requiredPermissions: ['iam:admin'],
-    module: 'iam',
-    action: 'admin',
+    requiredPermissions: ["iam:admin"],
+    module: "iam",
+    action: "admin",
   },
   {
-    path: '/database',
+    path: "/database",
     element: React.createElement(DatabaseStructurePage),
-    requiredPermissions: ['iam:admin'],
-    module: 'iam',
-    action: 'admin',
+    requiredPermissions: ["iam:admin"],
+    module: "iam",
+    action: "admin",
   },
   {
-    path: '/migration',
+    path: "/migration",
     element: React.createElement(MigrationAdminPage),
-    requiredPermissions: ['iam:admin'],
-    module: 'iam',
-    action: 'admin',
+    requiredPermissions: ["iam:admin"],
+    module: "iam",
+    action: "admin",
   },
   {
-    path: '/debug',
+    path: "/debug",
     element: React.createElement(ConfigDebugPage),
-    requiredPermissions: ['iam:admin'],
-    module: 'iam',
-    action: 'admin',
+    requiredPermissions: ["iam:admin"],
+    module: "iam",
+    action: "admin",
   },
 ];

@@ -1,4 +1,5 @@
 pub mod permission;
+pub mod audit;
 
 use sqlx::PgPool;
 use crate::repositories::*;

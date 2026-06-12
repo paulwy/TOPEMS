@@ -10,6 +10,7 @@ pub mod purchase_order;
 pub mod purchase_item;
 pub mod supplier_evaluation;
 pub mod audit;
+pub mod openapi;
 
 #[derive(Clone)]
 pub struct ApiState {

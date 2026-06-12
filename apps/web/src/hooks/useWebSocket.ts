@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import config from '../config/runtime';
+import { useEffect, useRef, useState, useCallback } from "react";
+import config from "../config/runtime";
 
 export interface WsMessage {
   msg_type: string;
@@ -46,18 +46,19 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     const imServiceUrl = config.services.im;
     let wsUrl = imServiceUrl;
 
-    if (wsUrl.startsWith('/')) {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    if (wsUrl.startsWith("/")) {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const hostname = window.location.hostname;
-      const port = window.location.port ? `:${window.location.port}` : '';
-      const host = hostname === 'localhost' ? '127.0.0.1' + port : window.location.host;
+      const port = window.location.port ? `:${window.location.port}` : "";
+      const host =
+        hostname === "localhost" ? "127.0.0.1" + port : window.location.host;
       wsUrl = `${protocol}//${host}${wsUrl}`;
     } else {
-      wsUrl = wsUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+      wsUrl = wsUrl.replace("http://", "ws://").replace("https://", "wss://");
     }
 
     const fullWsUrl = `${wsUrl}/ws`;
-    console.log('[useWebSocket] Attempting to connect to:', fullWsUrl);
+    console.log("[useWebSocket] Attempting to connect to:", fullWsUrl);
 
     const ws = new WebSocket(fullWsUrl);
 
@@ -73,18 +74,25 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         const message: WsMessage = JSON.parse(event.data);
         callbacksRef.current.onMessage?.(message);
       } catch (err) {
-        console.error('Failed to parse WebSocket message:', err);
+        console.error("Failed to parse WebSocket message:", err);
       }
     };
 
     ws.onclose = (event) => {
-      console.log('[useWebSocket] Connection closed:', event.code, event.reason);
+      console.log(
+        "[useWebSocket] Connection closed:",
+        event.code,
+        event.reason,
+      );
       setIsConnected(false);
       callbacksRef.current.onClose?.();
 
       if (reconnectCountRef.current < reconnectAttempts) {
         reconnectCountRef.current++;
-        console.log('[useWebSocket] Reconnecting attempt:', reconnectCountRef.current);
+        console.log(
+          "[useWebSocket] Reconnecting attempt:",
+          reconnectCountRef.current,
+        );
         reconnectTimeoutRef.current = setTimeout(() => {
           connect();
         }, reconnectInterval);
@@ -92,7 +100,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     };
 
     ws.onerror = (event) => {
-      console.error('[useWebSocket] Connection error:', event);
+      console.error("[useWebSocket] Connection error:", event);
       setError(event);
       callbacksRef.current.onError?.(event);
     };
@@ -113,7 +121,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     } else {
-      console.error('WebSocket is not connected');
+      console.error("WebSocket is not connected");
     }
   }, []);
 

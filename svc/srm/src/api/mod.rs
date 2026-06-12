@@ -3,6 +3,7 @@ pub mod supplier_category;
 pub mod supplier_evaluation;
 pub mod supplier_contract;
 pub mod supplier_product;
+pub mod openapi;
 
 pub use supplier::create_routes as create_supplier_routes;
 pub use supplier_category::create_routes as create_category_routes;

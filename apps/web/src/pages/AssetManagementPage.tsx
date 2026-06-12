@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Search,
@@ -11,30 +11,52 @@ import {
   Calendar,
   User,
   Settings,
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { assetApi, type Asset } from '../api/erp';
-import { employeeApi, type Employee } from '../api/hrm';
-import { useAppStore } from '../store';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/DataTable';
+  RefreshCw,
+  Check,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { assetApi, type Asset } from "../api/erp";
+import { employeeApi, type Employee } from "../api/hrm";
+import { useAppStore } from "../store";
+import type { ColumnDef } from "@tanstack/react-table";
+import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { ModeToggle } from '@/components/ModeToggle';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { ModeToggle } from "@/components/ModeToggle";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AssetManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 
-const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) => {
+const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
+  onNavigate,
+}) => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
@@ -45,24 +67,85 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showBatchStatusModal, setShowBatchStatusModal] = useState(false);
+  const [batchStatus, setBatchStatus] = useState<string>("");
+
+  const handleBatchUpdateStatus = () => {
+    setShowBatchStatusModal(true);
+  };
+
+  const confirmBatchUpdateStatus = async () => {
+    if (selectedIds.length === 0 || !batchStatus) return;
+
+    try {
+      const promises = selectedIds.map((id) =>
+        assetApi.update(id, { status: batchStatus }),
+      );
+      const results = await Promise.all(promises);
+      const successCount = results.filter((r) => r.success).length;
+
+      addNotification({
+        title: "批量更新成功",
+        message: `成功更新 ${successCount} 条资产状态，失败 ${selectedIds.length - successCount} 条`,
+        type: "success",
+      });
+
+      setSelectedIds([]);
+      setShowBatchStatusModal(false);
+      setBatchStatus("");
+      loadData();
+    } catch (err: any) {
+      addNotification({
+        title: "批量更新失败",
+        message: err.message || "批量更新状态失败",
+        type: "error",
+      });
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    try {
+      const promises = selectedIds.map((id) => assetApi.delete(id));
+      const results = await Promise.all(promises);
+      const successCount = results.filter((r) => r.success).length;
+
+      addNotification({
+        title: "批量删除成功",
+        message: `成功删除 ${successCount} 条资产，失败 ${selectedIds.length - successCount} 条`,
+        type: "success",
+      });
+
+      setSelectedIds([]);
+      loadData();
+    } catch (err: any) {
+      addNotification({
+        title: "批量删除失败",
+        message: err.message || "批量删除失败",
+        type: "error",
+      });
+    }
+  };
 
   const [newAsset, setNewAsset] = useState<Partial<Asset>>({
-    asset_number: '',
-    name: '',
-    category: '',
-    brand: '',
-    model: '',
-    purchase_date: '',
+    asset_number: "",
+    name: "",
+    category: "",
+    brand: "",
+    model: "",
+    purchase_date: "",
     purchase_amount: 0,
-    location: '',
-    responsible_id: '',
-    status: 'idle',
-    serial_number: '',
-    manufacturer: '',
+    location: "",
+    responsible_id: "",
+    status: "idle",
+    serial_number: "",
+    manufacturer: "",
     rated_power: 0,
     rated_voltage: 0,
     rated_current: 0,
-    department: '',
+    department: "",
   });
 
   useEffect(() => {
@@ -73,7 +156,10 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
     setLoading(true);
     setError(null);
     try {
-      const [assetRes, employeeRes] = await Promise.all([assetApi.list(), employeeApi.list()]);
+      const [assetRes, employeeRes] = await Promise.all([
+        assetApi.list(),
+        employeeApi.list(),
+      ]);
 
       if (assetRes.success && assetRes.data) {
         setAssets(assetRes.data.items || []);
@@ -83,8 +169,12 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
         setEmployees(employeeRes.data.items || []);
       }
     } catch (err: any) {
-      setError(err.message || '加载数据失败');
-      addNotification({ title: '加载失败', message: '加载数据失败', type: 'error' });
+      setError(err.message || "加载数据失败");
+      addNotification({
+        title: "加载失败",
+        message: "加载数据失败",
+        type: "error",
+      });
       setAssets([]);
     } finally {
       setLoading(false);
@@ -96,47 +186,71 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
     try {
       const res = await assetApi.create(newAsset);
       if (res.success) {
-        addNotification({ title: '成功', message: '资产创建成功', type: 'success' });
+        addNotification({
+          title: "成功",
+          message: "资产创建成功",
+          type: "success",
+        });
         setShowCreateModal(false);
         setNewAsset({
-          asset_number: '',
-          name: '',
-          category: '',
-          brand: '',
-          model: '',
-          purchase_date: '',
+          asset_number: "",
+          name: "",
+          category: "",
+          brand: "",
+          model: "",
+          purchase_date: "",
           purchase_amount: 0,
-          location: '',
-          responsible_id: '',
-          status: 'idle',
-          serial_number: '',
-          manufacturer: '',
+          location: "",
+          responsible_id: "",
+          status: "idle",
+          serial_number: "",
+          manufacturer: "",
           rated_power: 0,
           rated_voltage: 0,
           rated_current: 0,
-          department: '',
+          department: "",
         });
         loadData();
       } else {
-        addNotification({ title: '失败', message: res.message || '创建资产失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "创建资产失败",
+          type: "error",
+        });
       }
     } catch (err: any) {
-      addNotification({ title: '失败', message: err.message || '创建资产失败', type: 'error' });
+      addNotification({
+        title: "失败",
+        message: err.message || "创建资产失败",
+        type: "error",
+      });
     }
   };
 
   const handleDeleteAsset = async (id: string) => {
-    if (!confirm('确定要删除这个资产吗？')) return;
+    if (!confirm("确定要删除这个资产吗？")) return;
     try {
       const res = await assetApi.delete(id);
       if (res.success) {
-        addNotification({ title: '成功', message: '资产删除成功', type: 'success' });
+        addNotification({
+          title: "成功",
+          message: "资产删除成功",
+          type: "success",
+        });
         loadData();
       } else {
-        addNotification({ title: '失败', message: res.message || '删除资产失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "删除资产失败",
+          type: "error",
+        });
       }
     } catch (err: any) {
-      addNotification({ title: '失败', message: err.message || '删除资产失败', type: 'error' });
+      addNotification({
+        title: "失败",
+        message: err.message || "删除资产失败",
+        type: "error",
+      });
     }
   };
 
@@ -146,118 +260,151 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
     try {
       const res = await assetApi.update(selectedAsset.id, selectedAsset);
       if (res.success) {
-        addNotification({ title: '成功', message: '资产信息更新成功', type: 'success' });
+        addNotification({
+          title: "成功",
+          message: "资产信息更新成功",
+          type: "success",
+        });
         setShowEditModal(false);
         setSelectedAsset(null);
         loadData();
       } else {
-        addNotification({ title: '失败', message: res.message || '更新资产失败', type: 'error' });
+        addNotification({
+          title: "失败",
+          message: res.message || "更新资产失败",
+          type: "error",
+        });
       }
     } catch (err: any) {
-      addNotification({ title: '失败', message: err.message || '更新资产失败', type: 'error' });
+      addNotification({
+        title: "失败",
+        message: err.message || "更新资产失败",
+        type: "error",
+      });
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      in_use: 'default',
-      idle: 'secondary',
-      maintenance: 'outline',
-      scrapped: 'destructive',
+    const colors: Record<
+      string,
+      "default" | "secondary" | "destructive" | "outline"
+    > = {
+      in_use: "default",
+      idle: "secondary",
+      maintenance: "outline",
+      scrapped: "destructive",
     };
     const labels: Record<string, string> = {
-      in_use: '使用中',
-      idle: '闲置',
-      maintenance: '维护中',
-      scrapped: '报废',
+      in_use: "使用中",
+      idle: "闲置",
+      maintenance: "维护中",
+      scrapped: "报废",
     };
-    return <Badge variant={colors[status] || 'outline'}>{labels[status] || status}</Badge>;
+    return (
+      <Badge variant={colors[status] || "outline"}>
+        {labels[status] || status}
+      </Badge>
+    );
   };
 
   const getEmployeeName = (id: string) => {
     const emp = employees.find((e) => e.id === id);
-    return emp ? emp.name : '-';
+    return emp ? emp.name : "-";
   };
 
   const columns = useMemo<ColumnDef<Asset>[]>(
     () => [
       {
-        accessorKey: 'asset_number',
-        header: '资产编号',
+        accessorKey: "asset_number",
+        header: "资产编号",
         cell: ({ row }) => (
-          <div className='font-medium text-slate-900 dark:text-slate-100'>{row.original.asset_number}</div>
-        ),
-      },
-      {
-        accessorKey: 'name',
-        header: '资产名称',
-        cell: ({ row }) => <div className='text-slate-900 dark:text-slate-100'>{row.original.name}</div>,
-      },
-      {
-        accessorKey: 'category',
-        header: '类别',
-        cell: ({ row }) => (
-          <span className='text-sm text-slate-500 dark:text-slate-400'>{row.original.category || '-'}</span>
-        ),
-      },
-      {
-        accessorKey: 'brand',
-        header: '品牌',
-        cell: ({ row }) => (
-          <span className='text-sm text-slate-500 dark:text-slate-400'>{row.original.brand || '-'}</span>
-        ),
-      },
-      {
-        accessorKey: 'model',
-        header: '型号',
-        cell: ({ row }) => (
-          <span className='text-sm text-slate-500 dark:text-slate-400'>{row.original.model || '-'}</span>
-        ),
-      },
-      {
-        accessorKey: 'purchase_amount',
-        header: '采购金额',
-        cell: ({ row }) => (
-          <div className='flex items-center text-sm text-slate-900 dark:text-slate-100'>
-            <DollarSign className='w-3 h-3 mr-1 text-green-600' />
-            {row.original.purchase_amount ? `¥${row.original.purchase_amount.toLocaleString()}` : '-'}
+          <div className="font-medium text-slate-900 dark:text-slate-100">
+            {row.original.asset_number}
           </div>
         ),
       },
       {
-        accessorKey: 'responsible_id',
-        header: '负责人',
+        accessorKey: "name",
+        header: "资产名称",
         cell: ({ row }) => (
-          <div className='flex items-center text-sm text-slate-900 dark:text-slate-100'>
-            <User className='w-3 h-3 mr-1 text-blue-600' />
-            {getEmployeeName(row.original.responsible_id || '')}
+          <div className="text-slate-900 dark:text-slate-100">
+            {row.original.name}
           </div>
         ),
       },
       {
-        accessorKey: 'status',
-        header: '状态',
+        accessorKey: "category",
+        header: "类别",
+        cell: ({ row }) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {row.original.category || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "brand",
+        header: "品牌",
+        cell: ({ row }) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {row.original.brand || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "model",
+        header: "型号",
+        cell: ({ row }) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {row.original.model || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "purchase_amount",
+        header: "采购金额",
+        cell: ({ row }) => (
+          <div className="flex items-center text-sm text-slate-900 dark:text-slate-100">
+            <DollarSign className="w-3 h-3 mr-1 text-green-600" />
+            {row.original.purchase_amount
+              ? `¥${row.original.purchase_amount.toLocaleString()}`
+              : "-"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "responsible_id",
+        header: "负责人",
+        cell: ({ row }) => (
+          <div className="flex items-center text-sm text-slate-900 dark:text-slate-100">
+            <User className="w-3 h-3 mr-1 text-blue-600" />
+            {getEmployeeName(row.original.responsible_id || "")}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "状态",
         cell: ({ row }) => getStatusBadge(row.original.status),
       },
       {
-        id: 'actions',
-        header: '操作',
+        id: "actions",
+        header: "操作",
         cell: ({ row }) => {
           const asset = row.original;
           return (
-            <div className='flex items-center justify-end space-x-2'>
+            <div className="flex items-center justify-end space-x-2">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant='ghost'
-                      size='sm'
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         setSelectedAsset(asset);
                         setShowEditModal(true);
                       }}
                     >
-                      <Edit className='w-4 h-4' />
+                      <Edit className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>编辑</TooltipContent>
@@ -268,12 +415,12 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant='ghost'
-                      size='sm'
-                      className='text-red-600 hover:text-red-700 dark:text-red-400'
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 dark:text-red-400"
                       onClick={() => handleDeleteAsset(asset.id)}
                     >
-                      <Trash2 className='w-4 h-4' />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>删除</TooltipContent>
@@ -284,30 +431,32 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
         },
       },
     ],
-    [employees]
+    [employees],
   );
 
   return (
-    <div className='min-h-screen bg-slate-50 dark:bg-slate-900'>
-      <div className='bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-4'>
-              <Button variant='ghost' onClick={() => navigate('/dashboard')}>
-                <ChevronLeft className='w-5 h-5' />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+                <ChevronLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className='text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center'>
-                  <Box className='w-7 h-7 mr-3 text-blue-600' />
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+                  <Box className="w-7 h-7 mr-3 text-blue-600" />
                   资产管理
                 </h1>
-                <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>管理企业资产、设备台账</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  管理企业资产、设备台账
+                </p>
               </div>
             </div>
-            <div className='flex items-center space-x-2'>
+            <div className="flex items-center space-x-2">
               <ModeToggle />
               <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className='w-5 h-5 mr-2' />
+                <Plus className="w-5 h-5 mr-2" />
                 新增资产
               </Button>
             </div>
@@ -315,215 +464,329 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
         </div>
       </div>
 
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>
-          <CardContent className='p-0'>
+          <CardContent className="p-0">
             {loading ? (
-              <div className='p-8 text-center'>
-                <div className='inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent' />
-                <p className='mt-2 text-slate-500 dark:text-slate-400'>加载中...</p>
+              <div className="p-8 text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
+                <p className="mt-2 text-slate-500 dark:text-slate-400">
+                  加载中...
+                </p>
               </div>
             ) : error ? (
-              <div className='p-8 text-center'>
-                <AlertCircle className='w-12 h-12 text-red-500 mx-auto mb-3' />
-                <p className='text-red-600 dark:text-red-400'>{error}</p>
-                <Button className='mt-4' onClick={loadData}>
+              <div className="p-8 text-center">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+                <p className="text-red-600 dark:text-red-400">{error}</p>
+                <Button className="mt-4" onClick={loadData}>
                   重试
                 </Button>
               </div>
             ) : (
-              <DataTable
-                columns={columns}
-                data={assets}
-                searchPlaceholder='搜索资产名称、编号、品牌、型号...'
-                searchKey='name'
-              />
+              <>
+                {selectedIds.length > 0 && (
+                  <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={selectedIds.length === assets.length}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedIds(assets.map((a) => a.id));
+                            } else {
+                              setSelectedIds([]);
+                            }
+                          }}
+                        />
+                        <span className="text-sm text-slate-600">
+                          已选择 {selectedIds.length} 项
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleBatchUpdateStatus}
+                      >
+                        <Settings className="w-4 h-4 mr-1" />
+                        批量更新状态
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={handleBatchDelete}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        批量删除
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <EnhancedDataTable
+                  columns={columns}
+                  data={assets}
+                  searchPlaceholder="搜索资产名称、编号、品牌、型号..."
+                  searchKey="name"
+                  loading={loading}
+                  enableSelection={true}
+                  selectedIds={selectedIds}
+                  onSelectionChange={setSelectedIds}
+                  selectionKey="id"
+                  enableAdvancedFilter={true}
+                  advancedFilters={[
+                    {
+                      key: "status",
+                      label: "状态",
+                      type: "select",
+                      options: [
+                        { value: "", label: "全部" },
+                        { value: "in_use", label: "使用中" },
+                        { value: "idle", label: "闲置" },
+                        { value: "maintenance", label: "维护中" },
+                        { value: "scrapped", label: "报废" },
+                      ],
+                    },
+                  ]}
+                  exportFileName="asset-report"
+                  onRefresh={loadData}
+                />
+              </>
             )}
           </CardContent>
         </Card>
       </div>
 
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>新增资产</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateAsset}>
-            <div className='space-y-4'>
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='asset_number'>资产编号 *</Label>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="asset_number">资产编号 *</Label>
                   <Input
-                    id='asset_number'
-                    type='text'
+                    id="asset_number"
+                    type="text"
                     required
-                    value={newAsset.asset_number || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, asset_number: e.target.value })}
-                    placeholder='请输入资产编号'
+                    value={newAsset.asset_number || ""}
+                    onChange={(e) =>
+                      setNewAsset({ ...newAsset, asset_number: e.target.value })
+                    }
+                    placeholder="请输入资产编号"
                   />
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='name'>资产名称 *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="name">资产名称 *</Label>
                   <Input
-                    id='name'
-                    type='text'
+                    id="name"
+                    type="text"
                     required
-                    value={newAsset.name || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, name: e.target.value })}
-                    placeholder='请输入资产名称'
+                    value={newAsset.name || ""}
+                    onChange={(e) =>
+                      setNewAsset({ ...newAsset, name: e.target.value })
+                    }
+                    placeholder="请输入资产名称"
                   />
                 </div>
               </div>
 
-              <div className='grid grid-cols-3 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='category'>类别</Label>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">类别</Label>
                   <Input
-                    id='category'
-                    type='text'
-                    value={newAsset.category || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, category: e.target.value })}
-                    placeholder='请输入类别'
+                    id="category"
+                    type="text"
+                    value={newAsset.category || ""}
+                    onChange={(e) =>
+                      setNewAsset({ ...newAsset, category: e.target.value })
+                    }
+                    placeholder="请输入类别"
                   />
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='brand'>品牌</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="brand">品牌</Label>
                   <Input
-                    id='brand'
-                    type='text'
-                    value={newAsset.brand || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, brand: e.target.value })}
-                    placeholder='请输入品牌'
+                    id="brand"
+                    type="text"
+                    value={newAsset.brand || ""}
+                    onChange={(e) =>
+                      setNewAsset({ ...newAsset, brand: e.target.value })
+                    }
+                    placeholder="请输入品牌"
                   />
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='model'>型号</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="model">型号</Label>
                   <Input
-                    id='model'
-                    type='text'
-                    value={newAsset.model || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, model: e.target.value })}
-                    placeholder='请输入型号'
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-3 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='serial_number'>序列号</Label>
-                  <Input
-                    id='serial_number'
-                    type='text'
-                    value={newAsset.serial_number || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, serial_number: e.target.value })}
-                    placeholder='请输入序列号'
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='manufacturer'>制造商</Label>
-                  <Input
-                    id='manufacturer'
-                    type='text'
-                    value={newAsset.manufacturer || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, manufacturer: e.target.value })}
-                    placeholder='请输入制造商'
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='department'>部门</Label>
-                  <Input
-                    id='department'
-                    type='text'
-                    value={newAsset.department || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, department: e.target.value })}
-                    placeholder='请输入所属部门'
+                    id="model"
+                    type="text"
+                    value={newAsset.model || ""}
+                    onChange={(e) =>
+                      setNewAsset({ ...newAsset, model: e.target.value })
+                    }
+                    placeholder="请输入型号"
                   />
                 </div>
               </div>
 
-              <div className='grid grid-cols-3 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='rated_power'>额定功率 (kW)</Label>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="serial_number">序列号</Label>
                   <Input
-                    id='rated_power'
-                    type='number'
-                    step='0.01'
-                    value={newAsset.rated_power || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, rated_power: Number(e.target.value) })}
-                    placeholder='请输入额定功率'
+                    id="serial_number"
+                    type="text"
+                    value={newAsset.serial_number || ""}
+                    onChange={(e) =>
+                      setNewAsset({
+                        ...newAsset,
+                        serial_number: e.target.value,
+                      })
+                    }
+                    placeholder="请输入序列号"
                   />
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='rated_voltage'>额定电压 (V)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="manufacturer">制造商</Label>
                   <Input
-                    id='rated_voltage'
-                    type='number'
-                    step='0.01'
-                    value={newAsset.rated_voltage || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, rated_voltage: Number(e.target.value) })}
-                    placeholder='请输入额定电压'
+                    id="manufacturer"
+                    type="text"
+                    value={newAsset.manufacturer || ""}
+                    onChange={(e) =>
+                      setNewAsset({ ...newAsset, manufacturer: e.target.value })
+                    }
+                    placeholder="请输入制造商"
                   />
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='rated_current'>额定电流 (A)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="department">部门</Label>
                   <Input
-                    id='rated_current'
-                    type='number'
-                    step='0.01'
-                    value={newAsset.rated_current || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, rated_current: Number(e.target.value) })}
-                    placeholder='请输入额定电流'
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='purchase_date'>采购日期</Label>
-                  <Input
-                    id='purchase_date'
-                    type='date'
-                    value={newAsset.purchase_date || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, purchase_date: e.target.value })}
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='purchase_amount'>采购金额</Label>
-                  <Input
-                    id='purchase_amount'
-                    type='number'
-                    min='0'
-                    step='0.01'
-                    value={newAsset.purchase_amount || ''}
-                    onChange={(e) => setNewAsset({ ...newAsset, purchase_amount: Number(e.target.value) })}
-                    placeholder='请输入采购金额'
+                    id="department"
+                    type="text"
+                    value={newAsset.department || ""}
+                    onChange={(e) =>
+                      setNewAsset({ ...newAsset, department: e.target.value })
+                    }
+                    placeholder="请输入所属部门"
                   />
                 </div>
               </div>
 
-              <div className='space-y-2'>
-                <Label htmlFor='location'>存放位置</Label>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="rated_power">额定功率 (kW)</Label>
+                  <Input
+                    id="rated_power"
+                    type="number"
+                    step="0.01"
+                    value={newAsset.rated_power || ""}
+                    onChange={(e) =>
+                      setNewAsset({
+                        ...newAsset,
+                        rated_power: Number(e.target.value),
+                      })
+                    }
+                    placeholder="请输入额定功率"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rated_voltage">额定电压 (V)</Label>
+                  <Input
+                    id="rated_voltage"
+                    type="number"
+                    step="0.01"
+                    value={newAsset.rated_voltage || ""}
+                    onChange={(e) =>
+                      setNewAsset({
+                        ...newAsset,
+                        rated_voltage: Number(e.target.value),
+                      })
+                    }
+                    placeholder="请输入额定电压"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rated_current">额定电流 (A)</Label>
+                  <Input
+                    id="rated_current"
+                    type="number"
+                    step="0.01"
+                    value={newAsset.rated_current || ""}
+                    onChange={(e) =>
+                      setNewAsset({
+                        ...newAsset,
+                        rated_current: Number(e.target.value),
+                      })
+                    }
+                    placeholder="请输入额定电流"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="purchase_date">采购日期</Label>
+                  <Input
+                    id="purchase_date"
+                    type="date"
+                    value={newAsset.purchase_date || ""}
+                    onChange={(e) =>
+                      setNewAsset({
+                        ...newAsset,
+                        purchase_date: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="purchase_amount">采购金额</Label>
+                  <Input
+                    id="purchase_amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newAsset.purchase_amount || ""}
+                    onChange={(e) =>
+                      setNewAsset({
+                        ...newAsset,
+                        purchase_amount: Number(e.target.value),
+                      })
+                    }
+                    placeholder="请输入采购金额"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">存放位置</Label>
                 <Input
-                  id='location'
-                  type='text'
-                  value={newAsset.location || ''}
-                  onChange={(e) => setNewAsset({ ...newAsset, location: e.target.value })}
-                  placeholder='请输入存放位置'
+                  id="location"
+                  type="text"
+                  value={newAsset.location || ""}
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, location: e.target.value })
+                  }
+                  placeholder="请输入存放位置"
                 />
               </div>
 
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='responsible_id'>负责人</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="responsible_id">负责人</Label>
                   <Select
-                    value={newAsset.responsible_id || ''}
-                    onValueChange={(value) => setNewAsset({ ...newAsset, responsible_id: value })}
+                    value={newAsset.responsible_id || ""}
+                    onValueChange={(value) =>
+                      setNewAsset({ ...newAsset, responsible_id: value })
+                    }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='请选择负责人' />
+                      <SelectValue placeholder="请选择负责人" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='none'>无</SelectItem>
+                      <SelectItem value="none">无</SelectItem>
                       {employees.map((emp) => (
                         <SelectItem key={emp.id} value={emp.id}>
                           {emp.name}
@@ -532,205 +795,286 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
                     </SelectContent>
                   </Select>
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='status'>状态</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="status">状态</Label>
                   <Select
-                    value={newAsset.status || 'idle'}
-                    onValueChange={(value) => setNewAsset({ ...newAsset, status: value })}
+                    value={newAsset.status || "idle"}
+                    onValueChange={(value) =>
+                      setNewAsset({ ...newAsset, status: value })
+                    }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='请选择状态' />
+                      <SelectValue placeholder="请选择状态" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='idle'>闲置</SelectItem>
-                      <SelectItem value='in_use'>使用中</SelectItem>
-                      <SelectItem value='maintenance'>维护中</SelectItem>
-                      <SelectItem value='scrapped'>报废</SelectItem>
+                      <SelectItem value="idle">闲置</SelectItem>
+                      <SelectItem value="in_use">使用中</SelectItem>
+                      <SelectItem value="maintenance">维护中</SelectItem>
+                      <SelectItem value="scrapped">报废</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
             </div>
 
-            <DialogFooter className='mt-6'>
-              <Button type='button' variant='secondary' onClick={() => setShowCreateModal(false)}>
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowCreateModal(false)}
+              >
                 取消
               </Button>
-              <Button type='submit'>创建</Button>
+              <Button type="submit">创建</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>编辑资产</DialogTitle>
           </DialogHeader>
           {selectedAsset && (
             <form onSubmit={handleEditAsset}>
-              <div className='space-y-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_asset_number'>资产编号 *</Label>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_asset_number">资产编号 *</Label>
                     <Input
-                      id='edit_asset_number'
-                      type='text'
+                      id="edit_asset_number"
+                      type="text"
                       required
                       value={selectedAsset.asset_number}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, asset_number: e.target.value })}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          asset_number: e.target.value,
+                        })
+                      }
                     />
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_name'>资产名称 *</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_name">资产名称 *</Label>
                     <Input
-                      id='edit_name'
-                      type='text'
+                      id="edit_name"
+                      type="text"
                       required
                       value={selectedAsset.name}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, name: e.target.value })}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          name: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
 
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_category'>类别</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_category">类别</Label>
                     <Input
-                      id='edit_category'
-                      type='text'
-                      value={selectedAsset.category || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, category: e.target.value })}
+                      id="edit_category"
+                      type="text"
+                      value={selectedAsset.category || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          category: e.target.value,
+                        })
+                      }
                     />
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_brand'>品牌</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_brand">品牌</Label>
                     <Input
-                      id='edit_brand'
-                      type='text'
-                      value={selectedAsset.brand || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, brand: e.target.value })}
+                      id="edit_brand"
+                      type="text"
+                      value={selectedAsset.brand || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          brand: e.target.value,
+                        })
+                      }
                     />
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_model'>型号</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_model">型号</Label>
                     <Input
-                      id='edit_model'
-                      type='text'
-                      value={selectedAsset.model || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, model: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_serial_number'>序列号</Label>
-                    <Input
-                      id='edit_serial_number'
-                      type='text'
-                      value={selectedAsset.serial_number || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, serial_number: e.target.value })}
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_manufacturer'>制造商</Label>
-                    <Input
-                      id='edit_manufacturer'
-                      type='text'
-                      value={selectedAsset.manufacturer || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, manufacturer: e.target.value })}
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_department'>部门</Label>
-                    <Input
-                      id='edit_department'
-                      type='text'
-                      value={selectedAsset.department || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, department: e.target.value })}
+                      id="edit_model"
+                      type="text"
+                      value={selectedAsset.model || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          model: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
 
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_rated_power'>额定功率 (kW)</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_serial_number">序列号</Label>
                     <Input
-                      id='edit_rated_power'
-                      type='number'
-                      step='0.01'
-                      value={selectedAsset.rated_power || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, rated_power: Number(e.target.value) })}
+                      id="edit_serial_number"
+                      type="text"
+                      value={selectedAsset.serial_number || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          serial_number: e.target.value,
+                        })
+                      }
                     />
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_rated_voltage'>额定电压 (V)</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_manufacturer">制造商</Label>
                     <Input
-                      id='edit_rated_voltage'
-                      type='number'
-                      step='0.01'
-                      value={selectedAsset.rated_voltage || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, rated_voltage: Number(e.target.value) })}
+                      id="edit_manufacturer"
+                      type="text"
+                      value={selectedAsset.manufacturer || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          manufacturer: e.target.value,
+                        })
+                      }
                     />
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_rated_current'>额定电流 (A)</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_department">部门</Label>
                     <Input
-                      id='edit_rated_current'
-                      type='number'
-                      step='0.01'
-                      value={selectedAsset.rated_current || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, rated_current: Number(e.target.value) })}
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_purchase_date'>采购日期</Label>
-                    <Input
-                      id='edit_purchase_date'
-                      type='date'
-                      value={selectedAsset.purchase_date || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, purchase_date: e.target.value })}
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_purchase_amount'>采购金额</Label>
-                    <Input
-                      id='edit_purchase_amount'
-                      type='number'
-                      min='0'
-                      step='0.01'
-                      value={selectedAsset.purchase_amount || ''}
-                      onChange={(e) => setSelectedAsset({ ...selectedAsset, purchase_amount: Number(e.target.value) })}
+                      id="edit_department"
+                      type="text"
+                      value={selectedAsset.department || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          department: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
 
-                <div className='space-y-2'>
-                  <Label htmlFor='edit_location'>存放位置</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_rated_power">额定功率 (kW)</Label>
+                    <Input
+                      id="edit_rated_power"
+                      type="number"
+                      step="0.01"
+                      value={selectedAsset.rated_power || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          rated_power: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_rated_voltage">额定电压 (V)</Label>
+                    <Input
+                      id="edit_rated_voltage"
+                      type="number"
+                      step="0.01"
+                      value={selectedAsset.rated_voltage || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          rated_voltage: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_rated_current">额定电流 (A)</Label>
+                    <Input
+                      id="edit_rated_current"
+                      type="number"
+                      step="0.01"
+                      value={selectedAsset.rated_current || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          rated_current: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_purchase_date">采购日期</Label>
+                    <Input
+                      id="edit_purchase_date"
+                      type="date"
+                      value={selectedAsset.purchase_date || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          purchase_date: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_purchase_amount">采购金额</Label>
+                    <Input
+                      id="edit_purchase_amount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={selectedAsset.purchase_amount || ""}
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          purchase_amount: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit_location">存放位置</Label>
                   <Input
-                    id='edit_location'
-                    type='text'
-                    value={selectedAsset.location || ''}
-                    onChange={(e) => setSelectedAsset({ ...selectedAsset, location: e.target.value })}
+                    id="edit_location"
+                    type="text"
+                    value={selectedAsset.location || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        location: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_responsible_id'>负责人</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_responsible_id">负责人</Label>
                     <Select
-                      value={selectedAsset.responsible_id || ''}
-                      onValueChange={(value) => setSelectedAsset({ ...selectedAsset, responsible_id: value })}
+                      value={selectedAsset.responsible_id || ""}
+                      onValueChange={(value) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          responsible_id: value,
+                        })
+                      }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='请选择负责人' />
+                        <SelectValue placeholder="请选择负责人" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value='none'>无</SelectItem>
+                        <SelectItem value="none">无</SelectItem>
                         {employees
                           .filter((e) => e.id !== selectedAsset.id)
                           .map((emp) => (
@@ -741,30 +1085,32 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='edit_status'>状态</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_status">状态</Label>
                     <Select
                       value={selectedAsset.status}
-                      onValueChange={(value) => setSelectedAsset({ ...selectedAsset, status: value })}
+                      onValueChange={(value) =>
+                        setSelectedAsset({ ...selectedAsset, status: value })
+                      }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='请选择状态' />
+                        <SelectValue placeholder="请选择状态" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value='idle'>闲置</SelectItem>
-                        <SelectItem value='in_use'>使用中</SelectItem>
-                        <SelectItem value='maintenance'>维护中</SelectItem>
-                        <SelectItem value='scrapped'>报废</SelectItem>
+                        <SelectItem value="idle">闲置</SelectItem>
+                        <SelectItem value="in_use">使用中</SelectItem>
+                        <SelectItem value="maintenance">维护中</SelectItem>
+                        <SelectItem value="scrapped">报废</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
               </div>
 
-              <DialogFooter className='mt-6'>
+              <DialogFooter className="mt-6">
                 <Button
-                  type='button'
-                  variant='secondary'
+                  type="button"
+                  variant="secondary"
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedAsset(null);
@@ -772,10 +1118,61 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
                 >
                   取消
                 </Button>
-                <Button type='submit'>保存</Button>
+                <Button type="submit">保存</Button>
               </DialogFooter>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showBatchStatusModal}
+        onOpenChange={setShowBatchStatusModal}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>批量更新状态</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="batch_status">选择新状态</Label>
+              <Select value={batchStatus} onValueChange={setBatchStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="请选择状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="idle">闲置</SelectItem>
+                  <SelectItem value="in_use">使用中</SelectItem>
+                  <SelectItem value="maintenance">维护中</SelectItem>
+                  <SelectItem value="scrapped">报废</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-sm text-slate-500">
+              将批量更新{" "}
+              <span className="font-semibold">{selectedIds.length}</span>{" "}
+              条资产的状态
+            </p>
+          </div>
+          <DialogFooter className="mt-6">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setShowBatchStatusModal(false);
+                setBatchStatus("");
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmBatchUpdateStatus}
+              disabled={!batchStatus}
+            >
+              确认更新
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

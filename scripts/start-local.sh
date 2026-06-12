@@ -373,6 +373,8 @@ start_service() {
   # File 服务需要存储路径配置
   elif [ "$name" = "file" ]; then
     DATABASE_URL="$DATABASE_URL" \
+      JWT_SECRET="$JWT_SECRET" \
+      REFRESH_SECRET="$REFRESH_SECRET" \
       STORAGE_LOCAL_PATH="./storage/files" \
       SERVER_PORT=8055 \
       RUST_LOG=info \
