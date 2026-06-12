@@ -8,8 +8,9 @@ mod tests {
     // 测试数据库连接
     #[tokio::test]
     async fn test_database_connection() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -22,8 +23,9 @@ mod tests {
     // 测试环境监测点创建
     #[tokio::test]
     async fn test_create_monitoring_point() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -58,8 +60,9 @@ mod tests {
     // 测试安全事件创建
     #[tokio::test]
     async fn test_create_safety_incident() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -93,8 +96,9 @@ mod tests {
     // 测试风险评估
     #[tokio::test]
     async fn test_risk_assessment() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -127,8 +131,9 @@ mod tests {
     // 测试审计日志
     #[tokio::test]
     async fn test_audit_log() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)

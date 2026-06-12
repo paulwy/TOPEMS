@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrows_for_generic_args)]
+
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
@@ -8,9 +10,9 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, Claims};
 use crate::models::dashboard::*;
 use crate::services::permission::{check_permission, BIPermission};
+use topems_shared::{ApiResponse, Claims};
 
 /// 创建仪表盘
 pub async fn create_dashboard(
@@ -19,7 +21,7 @@ pub async fn create_dashboard(
     Json(payload): Json<CreateDashboard>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DashboardWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -43,11 +45,14 @@ pub async fn create_dashboard(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "dashboard_id": dashboard_id,
-            "name": payload.name,
-            "created_at": Utc::now().to_rfc3339(),
-        }), "创建仪表盘成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "dashboard_id": dashboard_id,
+                "name": payload.name,
+                "created_at": Utc::now().to_rfc3339(),
+            }),
+            "创建仪表盘成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("创建仪表盘失败: {}", e))),
     }
 }
@@ -59,7 +64,7 @@ pub async fn list_dashboards(
     Query(params): Query<DashboardQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DashboardRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -69,7 +74,7 @@ pub async fn list_dashboards(
          AND (is_public = true OR created_by = $1)
          AND ($2::text IS NULL OR name LIKE '%' || $2 || '%')
          ORDER BY created_at DESC 
-         LIMIT $3 OFFSET $4"
+         LIMIT $3 OFFSET $4",
     )
     .bind(claims.sub)
     .bind(&params.name)
@@ -79,12 +84,13 @@ pub async fn list_dashboards(
     .await;
 
     match dashboards {
-        Ok(dashboards_list) => {
-            Json(ApiResponse::success(json!({
+        Ok(dashboards_list) => Json(ApiResponse::success(
+            json!({
                 "dashboards": dashboards_list,
                 "total": dashboards_list.len(),
-            }), "获取仪表盘列表成功"))
-        },
+            }),
+            "获取仪表盘列表成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("查询仪表盘失败: {}", e))),
     }
 }
@@ -96,12 +102,12 @@ pub async fn get_dashboard(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DashboardRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     let dashboard = sqlx::query_as::<_, Dashboard>(
-        "SELECT * FROM dashboards WHERE id = $1 AND is_active = true"
+        "SELECT * FROM dashboards WHERE id = $1 AND is_active = true",
     )
     .bind(id)
     .fetch_optional(&pool)
@@ -117,11 +123,14 @@ pub async fn get_dashboard(
             .fetch_all(&pool)
             .await;
 
-            Json(ApiResponse::success(json!({
-                "dashboard": dashboard_data,
-                "widgets": widgets.unwrap_or_default(),
-            }), "获取仪表盘详情成功"))
-        },
+            Json(ApiResponse::success(
+                json!({
+                    "dashboard": dashboard_data,
+                    "widgets": widgets.unwrap_or_default(),
+                }),
+                "获取仪表盘详情成功",
+            ))
+        }
         Ok(None) => Json(ApiResponse::error(404, "仪表盘不存在")),
         Err(e) => Json(ApiResponse::error(500, &format!("查询仪表盘失败: {}", e))),
     }
@@ -135,7 +144,7 @@ pub async fn update_dashboard(
     Json(payload): Json<UpdateDashboard>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DashboardWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -149,7 +158,7 @@ pub async fn update_dashboard(
          is_active = COALESCE($7, is_active),
          is_public = COALESCE($8, is_public),
          updated_at = $9
-         WHERE id = $1"
+         WHERE id = $1",
     )
     .bind(id)
     .bind(&payload.name)
@@ -164,10 +173,13 @@ pub async fn update_dashboard(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "dashboard_id": id,
-            "updated_at": Utc::now().to_rfc3339(),
-        }), "更新仪表盘成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "dashboard_id": id,
+                "updated_at": Utc::now().to_rfc3339(),
+            }),
+            "更新仪表盘成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("更新仪表盘失败: {}", e))),
     }
 }
@@ -179,23 +191,25 @@ pub async fn delete_dashboard(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DashboardWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
-    let result = sqlx::query(
-        "UPDATE dashboards SET is_active = false, updated_at = $2 WHERE id = $1"
-    )
-    .bind(id)
-    .bind(Utc::now())
-    .execute(&pool)
-    .await;
+    let result =
+        sqlx::query("UPDATE dashboards SET is_active = false, updated_at = $2 WHERE id = $1")
+            .bind(id)
+            .bind(Utc::now())
+            .execute(&pool)
+            .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "dashboard_id": id,
-            "deleted_at": Utc::now().to_rfc3339(),
-        }), "删除仪表盘成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "dashboard_id": id,
+                "deleted_at": Utc::now().to_rfc3339(),
+            }),
+            "删除仪表盘成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("删除仪表盘失败: {}", e))),
     }
 }
@@ -208,7 +222,7 @@ pub async fn add_widget(
     Json(payload): Json<AddDashboardWidget>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DashboardWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -237,12 +251,15 @@ pub async fn add_widget(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "widget_id": widget_id,
-            "dashboard_id": id,
-            "widget_type": payload.widget_type,
-            "created_at": Utc::now().to_rfc3339(),
-        }), "添加组件成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "widget_id": widget_id,
+                "dashboard_id": id,
+                "widget_type": payload.widget_type,
+                "created_at": Utc::now().to_rfc3339(),
+            }),
+            "添加组件成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("添加组件失败: {}", e))),
     }
 }
@@ -255,12 +272,16 @@ pub async fn update_widget(
     Json(payload): Json<UpdateDashboardWidget>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DashboardWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
-    let position_json = payload.position.map(|p| serde_json::to_value(p).unwrap_or_default());
-    let size_json = payload.size.map(|s| serde_json::to_value(s).unwrap_or_default());
+    let position_json = payload
+        .position
+        .map(|p| serde_json::to_value(p).unwrap_or_default());
+    let size_json = payload
+        .size
+        .map(|s| serde_json::to_value(s).unwrap_or_default());
 
     let result = sqlx::query(
         "UPDATE dashboard_widgets SET 
@@ -274,7 +295,7 @@ pub async fn update_widget(
          refresh_interval = COALESCE($10, refresh_interval),
          is_active = COALESCE($11, is_active),
          updated_at = $12
-         WHERE id = $1 AND dashboard_id = $2"
+         WHERE id = $1 AND dashboard_id = $2",
     )
     .bind(widget_id)
     .bind(dashboard_id)
@@ -292,11 +313,14 @@ pub async fn update_widget(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "widget_id": widget_id,
-            "dashboard_id": dashboard_id,
-            "updated_at": Utc::now().to_rfc3339(),
-        }), "更新组件成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "widget_id": widget_id,
+                "dashboard_id": dashboard_id,
+                "updated_at": Utc::now().to_rfc3339(),
+            }),
+            "更新组件成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("更新组件失败: {}", e))),
     }
 }
@@ -308,7 +332,7 @@ pub async fn delete_widget(
     Path((dashboard_id, widget_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DashboardWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -322,11 +346,14 @@ pub async fn delete_widget(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "widget_id": widget_id,
-            "dashboard_id": dashboard_id,
-            "deleted_at": Utc::now().to_rfc3339(),
-        }), "删除组件成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "widget_id": widget_id,
+                "dashboard_id": dashboard_id,
+                "deleted_at": Utc::now().to_rfc3339(),
+            }),
+            "删除组件成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("删除组件失败: {}", e))),
     }
 }
@@ -339,13 +366,13 @@ pub async fn get_dashboard_data(
     Query(params): Query<DashboardDataQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DashboardRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 查询仪表盘组件
     let widgets = sqlx::query_as::<_, DashboardWidget>(
-        "SELECT * FROM dashboard_widgets WHERE dashboard_id = $1 AND is_active = true"
+        "SELECT * FROM dashboard_widgets WHERE dashboard_id = $1 AND is_active = true",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -354,27 +381,36 @@ pub async fn get_dashboard_data(
     match widgets {
         Ok(widgets_list) => {
             // 为每个组件生成数据（简化实现）
-            let widgets_data: Vec<serde_json::Value> = widgets_list.iter().map(|widget| {
-                json!({
-                    "widget_id": widget.id,
-                    "widget_type": widget.widget_type,
-                    "title": widget.title,
-                    "data": generate_widget_data(&widget.widget_type),
-                    "metadata": {
-                        "refresh_interval": widget.refresh_interval,
-                        "last_updated": Utc::now().to_rfc3339(),
-                    }
+            let widgets_data: Vec<serde_json::Value> = widgets_list
+                .iter()
+                .map(|widget| {
+                    json!({
+                        "widget_id": widget.id,
+                        "widget_type": widget.widget_type,
+                        "title": widget.title,
+                        "data": generate_widget_data(&widget.widget_type),
+                        "metadata": {
+                            "refresh_interval": widget.refresh_interval,
+                            "last_updated": Utc::now().to_rfc3339(),
+                        }
+                    })
                 })
-            }).collect();
+                .collect();
 
-            Json(ApiResponse::success(json!({
-                "dashboard_id": id,
-                "widgets": widgets_data,
-                "generated_at": Utc::now().to_rfc3339(),
-                "filters": params.filters,
-            }), "获取仪表盘数据成功"))
-        },
-        Err(e) => Json(ApiResponse::error(500, &format!("获取仪表盘数据失败: {}", e))),
+            Json(ApiResponse::success(
+                json!({
+                    "dashboard_id": id,
+                    "widgets": widgets_data,
+                    "generated_at": Utc::now().to_rfc3339(),
+                    "filters": params.filters,
+                }),
+                "获取仪表盘数据成功",
+            ))
+        }
+        Err(e) => Json(ApiResponse::error(
+            500,
+            &format!("获取仪表盘数据失败: {}", e),
+        )),
     }
 }
 
@@ -389,7 +425,7 @@ fn generate_widget_data(widget_type: &WidgetType) -> serde_json::Value {
                     "data": [100, 120, 150, 180, 220, 250],
                 }]
             })
-        },
+        }
         WidgetType::Metric => {
             json!({
                 "value": 1250,
@@ -397,7 +433,7 @@ fn generate_widget_data(widget_type: &WidgetType) -> serde_json::Value {
                 "change": 15.5,
                 "change_type": "increase",
             })
-        },
+        }
         WidgetType::Table => {
             json!({
                 "columns": ["ID", "名称", "数值"],
@@ -407,7 +443,7 @@ fn generate_widget_data(widget_type: &WidgetType) -> serde_json::Value {
                     [3, "项目C", 300],
                 ]
             })
-        },
+        }
         _ => json!({"data": "示例数据"}),
     }
 }

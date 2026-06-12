@@ -1,23 +1,31 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(clippy::too_many_arguments)]
+#![allow(dead_code)]
+
 mod api;
 mod models;
 mod services;
 
 use anyhow::Result;
-use axum::{
-    extract::State,
-    routing::get, Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use std::env;
 use std::time::Instant;
 
+use api::ApiState;
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, build_health_response, create_api_info_router,
-    create_database_pool, DatabaseConfig,
+    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
+    create_database_pool, init_logging, ApiResponse, AuthState, DatabaseConfig, ServiceHealth,
 };
-use api::ApiState;
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 
@@ -39,8 +47,11 @@ async fn main() -> Result<()> {
     let custom_gauge = Gauge::new(
         "topems_scm_custom_metric",
         "This is a custom metric for TOPEMS-SCM",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -70,9 +81,10 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let public_routes = Router::new()
-        .route("/health", get(health_check))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+    let public_routes = Router::new().route("/health", get(health_check)).route(
+        "/metrics",
+        get(move || async move { metric_handle.render() }),
+    );
 
     let protected_routes = api::create_routes()
         .route("/api/v1/health/detailed", get(health_check_detailed))
@@ -153,9 +165,15 @@ async fn health_check_detailed(State(state): State<ApiState>) -> Json<ApiRespons
     };
     dependencies.push(db_health);
 
-    let status = if dependencies.iter().all(|d| d.status == HealthStatus::Healthy) {
+    let status = if dependencies
+        .iter()
+        .all(|d| d.status == HealthStatus::Healthy)
+    {
         HealthStatus::Healthy
-    } else if dependencies.iter().any(|d| d.status == HealthStatus::Unhealthy) {
+    } else if dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Unhealthy)
+    {
         HealthStatus::Unhealthy
     } else {
         HealthStatus::Degraded

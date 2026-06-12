@@ -1,14 +1,17 @@
-use axum::{
-    extract::{Path, State, Extension, Query},
-    Json,
-};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use sqlx::PgPool;
-use topems_shared::{ApiResponse, auth::Claims};
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(dead_code)]
+
 use crate::models::{Device, DeviceLocationRecord};
 use crate::services::permission::{check_permission, GisPermission};
+use axum::{
+    extract::{Extension, Path, Query, State},
+    Json,
+};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
+use topems_shared::{auth::Claims, ApiResponse};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegisterDevice {
@@ -268,7 +271,8 @@ pub async fn get_device_tracking(
     } {
         Ok(records) => {
             // Build trajectory LineString
-            let coordinates: Vec<Vec<f64>> = records.iter()
+            let coordinates: Vec<Vec<f64>> = records
+                .iter()
                 .rev() // Reverse to get chronological order
                 .filter_map(|r| {
                     if let Some(obj) = r.position.as_object() {
@@ -279,7 +283,7 @@ pub async fn get_device_tracking(
                         if arr.len() >= 2 {
                             Some(vec![
                                 arr[0].as_f64().unwrap_or(0.0),
-                                arr[1].as_f64().unwrap_or(0.0)
+                                arr[1].as_f64().unwrap_or(0.0),
                             ])
                         } else {
                             None
@@ -345,13 +349,11 @@ pub async fn get_device_history(
         Ok(records) => {
             // Calculate statistics
             let total_records = records.len();
-            let avg_speed = records.iter()
-                .filter_map(|r| r.speed)
-                .sum::<f64>() / total_records as f64;
-            
-            let avg_battery = records.iter()
-                .filter_map(|r| r.battery_level)
-                .sum::<i32>() / total_records as i32;
+            let avg_speed =
+                records.iter().filter_map(|r| r.speed).sum::<f64>() / total_records as f64;
+
+            let avg_battery =
+                records.iter().filter_map(|r| r.battery_level).sum::<i32>() / total_records as i32;
 
             Json(ApiResponse::success(
                 serde_json::json!({

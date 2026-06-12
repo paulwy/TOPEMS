@@ -9,9 +9,9 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::api::audit::log_audit_event;
-use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct LeaveRequest {
@@ -71,7 +71,10 @@ pub struct QueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/leaves", get(list_leaves).post(create_leave))
-        .route("/api/v1/leaves/{id}", get(get_leave).put(update_leave).delete(delete_leave))
+        .route(
+            "/api/v1/leaves/{id}",
+            get(get_leave).put(update_leave).delete(delete_leave),
+        )
         .route("/api/v1/leaves/{id}/approve", put(approve_leave))
         .route("/api/v1/leaves/{id}/reject", put(reject_leave))
 }
@@ -132,7 +135,10 @@ async fn list_leaves(
         }
         Err(e) => {
             tracing::error!("查询请假列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询请假列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询请假列表失败",
+            ))
         }
     }
 }
@@ -268,7 +274,10 @@ async fn update_leave(
 
     match result {
         Ok(Some(leave)) => Json(ApiResponse::success(leave, "请假申请更新成功")),
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::error(404, "请假申请不存在或已处理")),
+        Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
+            404,
+            "请假申请不存在或已处理",
+        )),
         Err(e) => {
             tracing::error!("更新请假申请失败: {}", e);
             Json(ApiResponse::<LeaveRequest>::error(500, "更新请假申请失败"))
@@ -281,12 +290,10 @@ async fn delete_leave(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "DELETE FROM leave_requests WHERE id = $1 AND status = 'pending'"
-    )
-    .bind(id)
-    .execute(&state.db)
-    .await;
+    let result = sqlx::query("DELETE FROM leave_requests WHERE id = $1 AND status = 'pending'")
+        .bind(id)
+        .execute(&state.db)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -361,7 +368,10 @@ async fn approve_leave(
 
     match result {
         Ok(Some(leave)) => Json(ApiResponse::success(leave, "请假已批准")),
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::error(404, "请假申请不存在或已处理")),
+        Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
+            404,
+            "请假申请不存在或已处理",
+        )),
         Err(e) => {
             tracing::error!("批准请假失败: {}", e);
             Json(ApiResponse::<LeaveRequest>::error(500, "批准请假失败"))
@@ -398,7 +408,10 @@ async fn reject_leave(
 
     match result {
         Ok(Some(leave)) => Json(ApiResponse::success(leave, "请假已拒绝")),
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::error(404, "请假申请不存在或已处理")),
+        Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
+            404,
+            "请假申请不存在或已处理",
+        )),
         Err(e) => {
             tracing::error!("拒绝请假失败: {}", e);
             Json(ApiResponse::<LeaveRequest>::error(500, "拒绝请假失败"))

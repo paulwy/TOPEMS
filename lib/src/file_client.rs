@@ -107,18 +107,24 @@ impl FileServiceClient {
             .multipart(form);
 
         let response = self.add_auth_header(request).send().await?;
-        
+
         // 获取原始响应文本用于调试
         let status = response.status();
         let text = response.text().await?;
-        
+
         if !status.is_success() {
-            return Err(anyhow::anyhow!("File service returned status {}: {}", status, text));
+            return Err(anyhow::anyhow!(
+                "File service returned status {}: {}",
+                status,
+                text
+            ));
         }
-        
+
         let api_response: ApiResponse<UploadResponse> = serde_json::from_str(&text)
             .map_err(|e| anyhow::anyhow!("Failed to parse response: {}, raw: {}", e, text))?;
-        api_response.data.ok_or_else(|| anyhow::anyhow!("Empty response data"))
+        api_response
+            .data
+            .ok_or_else(|| anyhow::anyhow!("Empty response data"))
     }
 
     /// 上传文件（带 external_id）
@@ -146,7 +152,9 @@ impl FileServiceClient {
         let response = self.add_auth_header(request).send().await?;
 
         let api_response: ApiResponse<UploadResponse> = response.json().await?;
-        api_response.data.ok_or_else(|| anyhow::anyhow!("Empty response data"))
+        api_response
+            .data
+            .ok_or_else(|| anyhow::anyhow!("Empty response data"))
     }
 
     /// 获取文件元数据
@@ -158,14 +166,17 @@ impl FileServiceClient {
         let response = self.add_auth_header(request).send().await?;
 
         let api_response: ApiResponse<FileMetadataResponse> = response.json().await?;
-        api_response.data.ok_or_else(|| anyhow::anyhow!("Empty response data"))
+        api_response
+            .data
+            .ok_or_else(|| anyhow::anyhow!("Empty response data"))
     }
 
     /// 下载文件
     pub async fn download_file(&self, file_id: Uuid) -> anyhow::Result<Vec<u8>> {
-        let request = self
-            .client
-            .get(format!("{}/api/v1/files/{}/download", self.base_url, file_id));
+        let request = self.client.get(format!(
+            "{}/api/v1/files/{}/download",
+            self.base_url, file_id
+        ));
 
         let response = self.add_auth_header(request).send().await?;
 
@@ -184,7 +195,10 @@ impl FileServiceClient {
         if response.status().is_success() {
             Ok(())
         } else {
-            Err(anyhow::anyhow!("Delete failed with status: {}", response.status()))
+            Err(anyhow::anyhow!(
+                "Delete failed with status: {}",
+                response.status()
+            ))
         }
     }
 }

@@ -8,10 +8,12 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest};
-use topems_shared::{ApiResponse, api_error};
-use crate::api::audit::log_audit_event;
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use crate::models::{
+    CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest,
+};
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct SupplierEvaluationQueryParams {
@@ -22,7 +24,10 @@ pub struct SupplierEvaluationQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/evaluations", get(list_evaluations).post(create_evaluation))
+        .route(
+            "/api/v1/evaluations",
+            get(list_evaluations).post(create_evaluation),
+        )
         .route(
             "/api/v1/evaluations/{id}",
             get(get_evaluation).put(update_evaluation),
@@ -116,16 +121,19 @@ async fn create_evaluation(
 
     let (response, status, error_msg) = match &result {
         Ok(evaluation) => (
-            Json(ApiResponse::success(evaluation.clone(), "供应商评估创建成功")),
+            Json(ApiResponse::success(
+                evaluation.clone(),
+                "供应商评估创建成功",
+            )),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建供应商评估失败: {}", e);
             (
                 Json(api_error(500, "供应商评估创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -148,8 +156,9 @@ async fn create_evaluation(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -185,7 +194,7 @@ async fn update_evaluation(
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
         "SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at FROM supplier_evaluations WHERE id = $1",
     )
@@ -230,16 +239,19 @@ async fn update_evaluation(
 
     let (response, status_str, error_msg) = match &result {
         Ok(evaluation) => (
-            Json(ApiResponse::success(evaluation.clone(), "供应商评估更新成功")),
+            Json(ApiResponse::success(
+                evaluation.clone(),
+                "供应商评估更新成功",
+            )),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新供应商评估失败: {}", e);
             (
                 Json(api_error(500, "供应商评估更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -262,8 +274,9 @@ async fn update_evaluation(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

@@ -97,9 +97,14 @@ export const fileApi = {
     if (options?.external_id) {
       formData.append("external_id", options.external_id);
     }
+
+    // 获取当前用户的认证令牌
+    const token = localStorage.getItem("token");
+
     return apiClient.file.post<FileMetadata>("/api/v1/files/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
     });
   },

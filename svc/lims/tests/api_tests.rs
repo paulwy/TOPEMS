@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -19,10 +18,7 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -31,7 +27,7 @@ mod tests {
 
         println!("1. Testing create sample...");
         let create_response = client
-            .post(&format!("{}/api/v1/samples", base_url))
+            .post(format!("{}/api/v1/samples", base_url))
             .bearer_auth(&token)
             .json(&json!({
                 "name": "Integration Test Sample",
@@ -44,17 +40,14 @@ mod tests {
 
         assert_eq!(create_response.status(), 200);
 
-        let created_data = create_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let created_data = create_response.json::<serde_json::Value>().await.unwrap();
 
         let sample_id = created_data["data"]["id"].as_str().unwrap();
         println!("   Created sample with ID: {}", sample_id);
 
         println!("\n2. Testing list samples...");
         let list_response = client
-            .get(&format!("{}/api/v1/samples", base_url))
+            .get(format!("{}/api/v1/samples", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -64,7 +57,7 @@ mod tests {
 
         println!("\n3. Testing get sample...");
         let get_response = client
-            .get(&format!("{}/api/v1/samples/{}", base_url, sample_id))
+            .get(format!("{}/api/v1/samples/{}", base_url, sample_id))
             .bearer_auth(&token)
             .send()
             .await
@@ -74,7 +67,7 @@ mod tests {
 
         println!("\n4. Testing update sample...");
         let update_response = client
-            .put(&format!("{}/api/v1/samples/{}", base_url, sample_id))
+            .put(format!("{}/api/v1/samples/{}", base_url, sample_id))
             .bearer_auth(&token)
             .json(&json!({
                 "name": "Updated Integration Test Sample",
@@ -88,7 +81,7 @@ mod tests {
 
         println!("\n5. Testing delete sample...");
         let delete_response = client
-            .delete(&format!("{}/api/v1/samples/{}", base_url, sample_id))
+            .delete(format!("{}/api/v1/samples/{}", base_url, sample_id))
             .bearer_auth(&token)
             .send()
             .await
@@ -115,10 +108,7 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -127,7 +117,7 @@ mod tests {
 
         println!("\n1. Testing batch create samples...");
         let batch_create_response = client
-            .post(&format!("{}/api/v1/samples/batch", base_url))
+            .post(format!("{}/api/v1/samples/batch", base_url))
             .bearer_auth(&token)
             .json(&json!({
                 "samples": [
@@ -164,7 +154,7 @@ mod tests {
 
         println!("\n2. Fetching created samples to get IDs...");
         let list_after_create = client
-            .get(&format!("{}/api/v1/samples", base_url))
+            .get(format!("{}/api/v1/samples", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -176,14 +166,17 @@ mod tests {
             .unwrap()
             .iter()
             .filter(|s| {
-                s["name"].as_str().unwrap_or("").starts_with("Batch Test Sample")
+                s["name"]
+                    .as_str()
+                    .unwrap_or("")
+                    .starts_with("Batch Test Sample")
             })
             .map(|s| s["id"].as_str().unwrap().to_string())
             .collect();
 
         println!("\n3. Testing batch delete samples...");
         let batch_delete_response = client
-            .delete(&format!("{}/api/v1/samples/batch", base_url))
+            .delete(format!("{}/api/v1/samples/batch", base_url))
             .bearer_auth(&token)
             .json(&json!({
                 "ids": sample_ids
@@ -221,10 +214,7 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -234,7 +224,7 @@ mod tests {
         println!("\n1. Creating test samples for export...");
         for i in 1..=2 {
             client
-                .post(&format!("{}/api/v1/samples", base_url))
+                .post(format!("{}/api/v1/samples", base_url))
                 .bearer_auth(&token)
                 .json(&json!({
                     "name": format!("Export Test Sample {}", i),
@@ -248,7 +238,7 @@ mod tests {
 
         println!("\n2. Testing export samples...");
         let export_response = client
-            .get(&format!("{}/api/v1/samples/export", base_url))
+            .get(format!("{}/api/v1/samples/export", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -261,29 +251,35 @@ mod tests {
             .await
             .expect("Failed to read export content");
         println!("   Export response length: {} bytes", export_content.len());
-        assert!(export_content.len() > 0);
+        assert!(!export_content.is_empty());
 
         println!("\n3. Deleting test samples to prepare for import...");
         let list_before_delete = client
-            .get(&format!("{}/api/v1/samples", base_url))
+            .get(format!("{}/api/v1/samples", base_url))
             .bearer_auth(&token)
             .send()
             .await
             .expect("List samples before delete failed");
 
-        let samples_before_delete = list_before_delete.json::<serde_json::Value>().await.unwrap();
+        let samples_before_delete = list_before_delete
+            .json::<serde_json::Value>()
+            .await
+            .unwrap();
         let sample_ids_to_delete: Vec<String> = samples_before_delete["data"]
             .as_array()
             .unwrap()
             .iter()
             .filter(|s| {
-                s["name"].as_str().unwrap_or("").starts_with("Export Test Sample")
+                s["name"]
+                    .as_str()
+                    .unwrap_or("")
+                    .starts_with("Export Test Sample")
             })
             .map(|s| s["id"].as_str().unwrap().to_string())
             .collect();
 
         client
-            .delete(&format!("{}/api/v1/samples/batch", base_url))
+            .delete(format!("{}/api/v1/samples/batch", base_url))
             .bearer_auth(&token)
             .json(&json!({ "ids": sample_ids_to_delete }))
             .send()
@@ -298,7 +294,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
 ";
 
         let import_response = client
-            .post(&format!("{}/api/v1/samples/import", base_url))
+            .post(format!("{}/api/v1/samples/import", base_url))
             .bearer_auth(&token)
             .header("Content-Type", "text/csv")
             .body(import_csv_content)
@@ -308,17 +304,14 @@ id,name,description,status,project_id,received_date,created_at,updated_at
 
         assert_eq!(import_response.status(), 200);
 
-        let import_data = import_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let import_data = import_response.json::<serde_json::Value>().await.unwrap();
 
         let imported_count = import_data["data"]["success"].as_i64().unwrap();
         println!("   Imported {} samples", imported_count);
 
         println!("\n5. Cleaning up imported samples...");
         let list_after_import = client
-            .get(&format!("{}/api/v1/samples", base_url))
+            .get(format!("{}/api/v1/samples", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -330,13 +323,16 @@ id,name,description,status,project_id,received_date,created_at,updated_at
             .unwrap()
             .iter()
             .filter(|s| {
-                s["name"].as_str().unwrap_or("").starts_with("Import Test Sample")
+                s["name"]
+                    .as_str()
+                    .unwrap_or("")
+                    .starts_with("Import Test Sample")
             })
             .map(|s| s["id"].as_str().unwrap().to_string())
             .collect();
 
         client
-            .delete(&format!("{}/api/v1/samples/batch", base_url))
+            .delete(format!("{}/api/v1/samples/batch", base_url))
             .bearer_auth(&token)
             .json(&json!({ "ids": imported_sample_ids }))
             .send()
@@ -362,10 +358,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
             .await
             .expect("Login failed");
 
-        let json_response = login_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -373,9 +366,9 @@ id,name,description,status,project_id,received_date,created_at,updated_at
             .to_string();
 
         println!("\n1. Performing some operations to generate audit logs...");
-        
+
         let create_response = client
-            .post(&format!("{}/api/v1/samples", base_url))
+            .post(format!("{}/api/v1/samples", base_url))
             .bearer_auth(&token)
             .json(&json!({
                 "name": "Audit Test Sample",
@@ -386,14 +379,11 @@ id,name,description,status,project_id,received_date,created_at,updated_at
             .await
             .expect("Create audit test sample failed");
 
-        let created_data = create_response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
+        let created_data = create_response.json::<serde_json::Value>().await.unwrap();
         let audit_sample_id = created_data["data"]["id"].as_str().unwrap();
 
         client
-            .delete(&format!("{}/api/v1/samples/{}", base_url, audit_sample_id))
+            .delete(format!("{}/api/v1/samples/{}", base_url, audit_sample_id))
             .bearer_auth(&token)
             .send()
             .await
@@ -401,7 +391,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
 
         println!("\n2. Testing list audit logs...");
         let list_logs_response = client
-            .get(&format!("{}/api/v1/audit-logs", base_url))
+            .get(format!("{}/api/v1/audit-logs", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -415,14 +405,17 @@ id,name,description,status,project_id,received_date,created_at,updated_at
             .unwrap();
 
         assert!(logs_data["data"]["audit_logs"].is_array());
-        println!("   Got {} audit logs", logs_data["data"]["audit_logs"].as_array().unwrap().len());
+        println!(
+            "   Got {} audit logs",
+            logs_data["data"]["audit_logs"].as_array().unwrap().len()
+        );
 
         if let Some(logs_array) = logs_data["data"]["audit_logs"].as_array() {
             if let Some(first_log) = logs_array.first() {
                 if let Some(log_id) = first_log["id"].as_str() {
                     println!("\n3. Testing get single audit log...");
                     let get_log_response = client
-                        .get(&format!("{}/api/v1/audit-logs/{}", base_url, log_id))
+                        .get(format!("{}/api/v1/audit-logs/{}", base_url, log_id))
                         .bearer_auth(&token)
                         .send()
                         .await

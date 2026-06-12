@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use tokio::process::Command;
+use tokio::sync::RwLock;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -155,9 +155,12 @@ impl BackupManager {
         self.config.read().await.clone()
     }
 
-    pub async fn create_backup(&self, request: BackupRequest) -> Result<BackupMetadata, BackupError> {
+    pub async fn create_backup(
+        &self,
+        request: BackupRequest,
+    ) -> Result<BackupMetadata, BackupError> {
         let config = self.config.read().await.clone();
-        
+
         if !config.enabled {
             return Err(BackupError::BackupDisabled);
         }
@@ -195,14 +198,14 @@ impl BackupManager {
             Ok(mut completed_backup) => {
                 completed_backup.status = BackupStatus::Completed;
                 completed_backup.completed_at = Some(Utc::now());
-                
+
                 let mut backups = self.backups.write().await;
                 if let Some(pos) = backups.iter().position(|b| b.id == backup_id) {
                     backups[pos] = completed_backup.clone();
                 }
 
                 self.cleanup_old_backups(&config).await;
-                
+
                 Ok(completed_backup)
             }
             Err(e) => {
@@ -216,13 +219,21 @@ impl BackupManager {
         }
     }
 
-    async fn perform_backup(&self, backup: &BackupMetadata, _config: &BackupConfig) -> Result<BackupMetadata, BackupError> {
+    async fn perform_backup(
+        &self,
+        backup: &BackupMetadata,
+        _config: &BackupConfig,
+    ) -> Result<BackupMetadata, BackupError> {
         let pg_dump_result = Command::new("pg_dump")
             .args([
-                "-h", "localhost",
-                "-U", "postgres",
-                "-d", &backup.database_name,
-                "-f", backup.file_path.to_str().unwrap_or(""),
+                "-h",
+                "localhost",
+                "-U",
+                "postgres",
+                "-d",
+                &backup.database_name,
+                "-f",
+                backup.file_path.to_str().unwrap_or(""),
             ])
             .output()
             .await;
@@ -231,41 +242,40 @@ impl BackupManager {
             Ok(output) if output.status.success() => {
                 let metadata = std::fs::metadata(&backup.file_path)
                     .map_err(|e| BackupError::IoError(e.to_string()))?;
-                
+
                 let checksum = self.calculate_checksum(&backup.file_path)?;
-                
+
                 Ok(BackupMetadata {
                     file_size: metadata.len(),
                     checksum,
                     ..backup.clone()
                 })
             }
-            Ok(output) => {
-                Err(BackupError::PgDumpFailed(
-                    String::from_utf8_lossy(&output.stderr).to_string()
-                ))
-            }
+            Ok(output) => Err(BackupError::PgDumpFailed(
+                String::from_utf8_lossy(&output.stderr).to_string(),
+            )),
             Err(e) => Err(BackupError::PgDumpNotFound(e.to_string())),
         }
     }
 
     fn calculate_checksum(&self, path: &PathBuf) -> Result<String, BackupError> {
         use std::io::Read;
-        
-        let mut file = std::fs::File::open(path)
-            .map_err(|e| BackupError::IoError(e.to_string()))?;
-        
+
+        let mut file =
+            std::fs::File::open(path).map_err(|e| BackupError::IoError(e.to_string()))?;
+
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)
             .map_err(|e| BackupError::IoError(e.to_string()))?;
-        
+
         let digest = md5::compute(&buffer);
         Ok(format!("{:x}", digest))
     }
 
     pub async fn restore(&self, request: RestoreRequest) -> Result<(), BackupError> {
         let backups = self.backups.read().await;
-        let backup = backups.iter()
+        let backup = backups
+            .iter()
             .find(|b| b.id == request.backup_id)
             .ok_or(BackupError::BackupNotFound)?
             .clone();
@@ -275,14 +285,20 @@ impl BackupManager {
             return Err(BackupError::BackupNotComplete);
         }
 
-        let target_db = request.target_database.unwrap_or(backup.database_name.clone());
+        let target_db = request
+            .target_database
+            .unwrap_or(backup.database_name.clone());
 
         let restore_result = Command::new("psql")
             .args([
-                "-h", "localhost",
-                "-U", "postgres",
-                "-d", &target_db,
-                "-f", backup.file_path.to_str().unwrap_or(""),
+                "-h",
+                "localhost",
+                "-U",
+                "postgres",
+                "-d",
+                &target_db,
+                "-f",
+                backup.file_path.to_str().unwrap_or(""),
             ])
             .output()
             .await;
@@ -296,7 +312,7 @@ impl BackupManager {
                 Ok(())
             }
             Ok(output) => Err(BackupError::RestoreFailed(
-                String::from_utf8_lossy(&output.stderr).to_string()
+                String::from_utf8_lossy(&output.stderr).to_string(),
             )),
             Err(e) => Err(BackupError::PsqlNotFound(e.to_string())),
         }
@@ -330,7 +346,7 @@ impl BackupManager {
     async fn cleanup_old_backups(&self, config: &BackupConfig) {
         let cutoff = Utc::now() - chrono::Duration::days(config.retention_days as i64);
         let mut backups = self.backups.write().await;
-        
+
         backups.retain(|b| {
             if b.created_at < cutoff {
                 let _ = std::fs::remove_file(&b.file_path);
@@ -343,18 +359,26 @@ impl BackupManager {
 
     pub async fn get_statistics(&self) -> BackupStatistics {
         let backups = self.backups.read().await;
-        
-        let completed: Vec<_> = backups.iter().filter(|b| b.status == BackupStatus::Completed).collect();
-        let failed: Vec<_> = backups.iter().filter(|b| b.status == BackupStatus::Failed).collect();
-        
+
+        let completed: Vec<_> = backups
+            .iter()
+            .filter(|b| b.status == BackupStatus::Completed)
+            .collect();
+        let failed: Vec<_> = backups
+            .iter()
+            .filter(|b| b.status == BackupStatus::Failed)
+            .collect();
+
         let total_size: u64 = completed.iter().map(|b| b.file_size).sum();
-        
-        let durations: Vec<f64> = completed.iter()
+
+        let durations: Vec<f64> = completed
+            .iter()
             .filter_map(|b| {
-                b.completed_at.map(|c| (c - b.created_at).num_seconds() as f64)
+                b.completed_at
+                    .map(|c| (c - b.created_at).num_seconds() as f64)
             })
             .collect();
-        
+
         let avg_duration = if durations.is_empty() {
             0.0
         } else {
@@ -369,19 +393,20 @@ impl BackupManager {
             oldest_backup: completed.first().map(|b| b.created_at),
             newest_backup: completed.last().map(|b| b.created_at),
             average_backup_duration_seconds: avg_duration,
-            last_restore: backups.iter()
+            last_restore: backups
+                .iter()
                 .find(|b| b.status == BackupStatus::Restored)
-                .map(|b| b.completed_at)
-                .flatten(),
+                .and_then(|b| b.completed_at),
         }
     }
 
     pub async fn verify_backup(&self, id: Uuid) -> Result<bool, BackupError> {
         let backups = self.backups.read().await;
-        let backup = backups.iter()
+        let backup = backups
+            .iter()
             .find(|b| b.id == id)
             .ok_or(BackupError::BackupNotFound)?;
-        
+
         if backup.status != BackupStatus::Completed {
             return Err(BackupError::BackupNotComplete);
         }
@@ -395,28 +420,28 @@ impl BackupManager {
 pub enum BackupError {
     #[error("Backup is disabled")]
     BackupDisabled,
-    
+
     #[error("Backup not found")]
     BackupNotFound,
-    
+
     #[error("Backup not complete")]
     BackupNotComplete,
-    
+
     #[error("pg_dump not found: {0}")]
     PgDumpNotFound(String),
-    
+
     #[error("pg_dump failed: {0}")]
     PgDumpFailed(String),
-    
+
     #[error("psql not found: {0}")]
     PsqlNotFound(String),
-    
+
     #[error("Restore failed: {0}")]
     RestoreFailed(String),
-    
+
     #[error("IO error: {0}")]
     IoError(String),
-    
+
     #[error("Checksum mismatch")]
     ChecksumMismatch,
 }
@@ -428,7 +453,7 @@ mod tests {
     #[tokio::test]
     async fn test_backup_manager() {
         let manager = BackupManager::new();
-        
+
         let config = BackupConfig {
             enabled: true,
             backup_dir: PathBuf::from("/tmp/test_backups"),
@@ -439,7 +464,7 @@ mod tests {
             remote_backup_enabled: false,
             remote_backup_url: None,
         };
-        
+
         manager.configure(config).await;
         let retrieved = manager.get_config().await;
         assert!(retrieved.enabled);
@@ -450,7 +475,7 @@ mod tests {
     async fn test_statistics() {
         let manager = BackupManager::new();
         let stats = manager.get_statistics().await;
-        
+
         assert_eq!(stats.total_backups, 0);
         assert_eq!(stats.successful_backups, 0);
     }

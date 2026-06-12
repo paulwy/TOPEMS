@@ -1,9 +1,9 @@
 // ERP 服务单元测试和集成测试
 // 测试资产管理、财务管理、会议管理、公告管理等功能
 
-use uuid::Uuid;
-use chrono::{DateTime, Utc, NaiveDate};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 // ============ 资产管理测试 ============
 
@@ -336,8 +336,8 @@ mod http_endpoint_tests {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
-        Router,
         routing::get,
+        Router,
     };
     use tower::ServiceExt;
 

@@ -1,13 +1,16 @@
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(dead_code)]
+
+use crate::models::{Map, MapLayer};
+use crate::services::permission::{check_permission, GisPermission};
 use axum::{
-    extract::{Path, State, Extension},
+    extract::{Extension, Path, State},
     Json,
 };
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use sqlx::PgPool;
-use topems_shared::{ApiResponse, auth::Claims};
-use crate::models::{Map, MapLayer};
-use crate::services::permission::{check_permission, GisPermission};
+use topems_shared::{auth::Claims, ApiResponse};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateMap {
@@ -117,10 +120,7 @@ pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_jso
 }
 
 /// 获取地图详情
-pub async fn get_map(
-    State(pool): State<PgPool>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Map>> {
+pub async fn get_map(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Map>> {
     match sqlx::query_as::<_, Map>("SELECT * FROM maps WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
@@ -202,7 +202,7 @@ pub async fn list_map_layers(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, MapLayer>(
-        "SELECT * FROM map_layers WHERE map_id = $1 ORDER BY z_index DESC, created_at DESC"
+        "SELECT * FROM map_layers WHERE map_id = $1 ORDER BY z_index DESC, created_at DESC",
     )
     .bind(map_id)
     .fetch_all(&pool)

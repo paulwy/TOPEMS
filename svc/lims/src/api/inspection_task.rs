@@ -1,4 +1,3 @@
-use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -7,11 +6,15 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared::Result;
 use uuid::Uuid;
 
-use crate::models::{CompleteStepRequest, CreateInspectionTaskRequest, InspectionProcess, InspectionRecord, InspectionTask, UpdateInspectionTaskRequest};
-use crate::api::ApiState;
 use crate::api::audit::log_audit_event;
+use crate::api::ApiState;
+use crate::models::{
+    CompleteStepRequest, CreateInspectionTaskRequest, InspectionProcess, InspectionRecord,
+    InspectionTask, UpdateInspectionTaskRequest,
+};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -25,14 +28,8 @@ pub struct PaginationParams {
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/tasks", get(list_tasks).post(create_task))
-        .route(
-            "/api/v1/tasks/{id}",
-            get(get_task).put(update_task),
-        )
-        .route(
-            "/api/v1/tasks/{id}/complete_step",
-            post(complete_step),
-        );
+        .route("/api/v1/tasks/{id}", get(get_task).put(update_task))
+        .route("/api/v1/tasks/{id}/complete_step", post(complete_step));
 
     Ok(app)
 }
@@ -44,7 +41,7 @@ async fn list_tasks(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    
+
     // 预先处理搜索参数，避免所有权问题
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();

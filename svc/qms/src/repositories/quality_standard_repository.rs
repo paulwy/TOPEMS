@@ -73,7 +73,10 @@ impl QualityStandardRepository {
         Ok(standard)
     }
 
-    pub async fn create(&self, req: &CreateQualityStandardRequest) -> anyhow::Result<QualityStandard> {
+    pub async fn create(
+        &self,
+        req: &CreateQualityStandardRequest,
+    ) -> anyhow::Result<QualityStandard> {
         let id = Uuid::new_v4();
         let now = Utc::now();
 

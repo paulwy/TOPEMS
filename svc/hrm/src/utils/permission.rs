@@ -58,13 +58,13 @@ pub async fn check_permission<T>(
     }
 
     let permission_str = permission.to_string();
-    
+
     if claims.has_permission(&permission_str) {
         return Ok(());
     }
 
-    Err(axum::Json(ApiResponse::error(403, &format!(
-        "权限不足：需要 {} 权限", 
-        permission
-    ))))
+    Err(axum::Json(ApiResponse::error(
+        403,
+        &format!("权限不足：需要 {} 权限", permission),
+    )))
 }

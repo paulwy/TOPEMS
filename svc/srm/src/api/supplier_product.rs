@@ -10,10 +10,7 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{
-    SupplierProduct,
-    CreateSupplierProductRequest, UpdateSupplierProductRequest,
-};
+use crate::models::{CreateSupplierProductRequest, SupplierProduct, UpdateSupplierProductRequest};
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
@@ -36,7 +33,10 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/v1/supplier-products", get(list_products).post(create_product))
+        .route(
+            "/api/v1/supplier-products",
+            get(list_products).post(create_product),
+        )
         .route(
             "/api/v1/supplier-products/{id}",
             get(get_product).put(update_product).delete(delete_product),
@@ -54,7 +54,7 @@ async fn list_products(
     Query(params): Query<ProductQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -64,7 +64,10 @@ async fn list_products(
 
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let supplier_id_filter = params.supplier_id.clone().and_then(|s| Uuid::parse_str(&s).ok());
+    let supplier_id_filter = params
+        .supplier_id
+        .clone()
+        .and_then(|s| Uuid::parse_str(&s).ok());
     let category_filter = params.category.clone();
 
     let result = sqlx::query_as::<_, SupplierProduct>(
@@ -120,7 +123,10 @@ async fn list_products(
         }
         Err(e) => {
             tracing::error!("获取供应商产品列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商产品列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取供应商产品列表失败",
+            ))
         }
     }
 }
@@ -131,38 +137,47 @@ async fn create_product(
     Json(req): Json<CreateSupplierProductRequest>,
 ) -> Json<ApiResponse<SupplierProduct>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 数据验证
     if req.product_no.is_empty() || req.name.is_empty() {
-        return Json(ApiResponse::<SupplierProduct>::error(400, "产品编号和名称不能为空"));
+        return Json(ApiResponse::<SupplierProduct>::error(
+            400,
+            "产品编号和名称不能为空",
+        ));
     }
 
     // 验证供应商ID
     let supplier_uuid = Uuid::parse_str(&req.supplier_id);
     if supplier_uuid.is_err() {
-        return Json(ApiResponse::<SupplierProduct>::error(400, "供应商ID格式错误"));
+        return Json(ApiResponse::<SupplierProduct>::error(
+            400,
+            "供应商ID格式错误",
+        ));
     }
 
     let supplier_id = supplier_uuid.unwrap();
 
     // 检查供应商是否存在
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'"
+        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
     )
     .bind(supplier_id)
     .fetch_one(&state.db)
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<SupplierProduct>::error(400, "供应商不存在或已删除"));
+        return Json(ApiResponse::<SupplierProduct>::error(
+            400,
+            "供应商不存在或已删除",
+        ));
     }
 
     // 检查产品编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_products WHERE product_no = $1"
+        "SELECT COUNT(*) FROM srm.supplier_products WHERE product_no = $1",
     )
     .bind(&req.product_no)
     .fetch_one(&state.db)
@@ -182,14 +197,20 @@ async fn create_product(
     // 验证最小订购量
     if let Some(min_qty) = req.min_order_qty {
         if min_qty < 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(400, "最小订购量不能为负数"));
+            return Json(ApiResponse::<SupplierProduct>::error(
+                400,
+                "最小订购量不能为负数",
+            ));
         }
     }
 
     // 验证交货周期
     if let Some(lead_time) = req.lead_time_days {
         if lead_time < 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(400, "交货周期不能为负数"));
+            return Json(ApiResponse::<SupplierProduct>::error(
+                400,
+                "交货周期不能为负数",
+            ));
         }
     }
 
@@ -227,7 +248,10 @@ async fn create_product(
         Ok(product) => Json(ApiResponse::success(product, "供应商产品创建成功")),
         Err(e) => {
             tracing::error!("创建供应商产品失败: {}", e);
-            Json(ApiResponse::<SupplierProduct>::error(500, "供应商产品创建失败"))
+            Json(ApiResponse::<SupplierProduct>::error(
+                500,
+                "供应商产品创建失败",
+            ))
         }
     }
 }
@@ -238,7 +262,7 @@ async fn get_product(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierProduct>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -254,10 +278,16 @@ async fn get_product(
 
     match result {
         Ok(Some(product)) => Json(ApiResponse::success(product, "获取供应商产品成功")),
-        Ok(None) => Json(ApiResponse::<SupplierProduct>::error(404, "供应商产品不存在")),
+        Ok(None) => Json(ApiResponse::<SupplierProduct>::error(
+            404,
+            "供应商产品不存在",
+        )),
         Err(e) => {
             tracing::error!("获取供应商产品失败: {}", e);
-            Json(ApiResponse::<SupplierProduct>::error(500, "获取供应商产品失败"))
+            Json(ApiResponse::<SupplierProduct>::error(
+                500,
+                "获取供应商产品失败",
+            ))
         }
     }
 }
@@ -269,7 +299,7 @@ async fn update_product(
     Json(req): Json<UpdateSupplierProductRequest>,
 ) -> Json<ApiResponse<SupplierProduct>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -282,28 +312,44 @@ async fn update_product(
 
     let existing = match existing {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::<SupplierProduct>::error(404, "供应商产品不存在")),
-        Err(e) => return Json(ApiResponse::<SupplierProduct>::error(500, &format!("查询供应商产品失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::<SupplierProduct>::error(
+                404,
+                "供应商产品不存在",
+            ))
+        }
+        Err(e) => {
+            return Json(ApiResponse::<SupplierProduct>::error(
+                500,
+                &format!("查询供应商产品失败: {}", e),
+            ))
+        }
     };
 
     // 验证供应商ID（如果更新）
     let supplier_id = if let Some(supplier_id_str) = &req.supplier_id {
         let supplier_uuid = Uuid::parse_str(supplier_id_str);
         if supplier_uuid.is_err() {
-            return Json(ApiResponse::<SupplierProduct>::error(400, "供应商ID格式错误"));
+            return Json(ApiResponse::<SupplierProduct>::error(
+                400,
+                "供应商ID格式错误",
+            ));
         }
 
         let supplier_uuid_val = supplier_uuid.unwrap();
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'"
+            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
         )
         .bind(supplier_uuid_val)
         .fetch_one(&state.db)
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(400, "供应商不存在或已删除"));
+            return Json(ApiResponse::<SupplierProduct>::error(
+                400,
+                "供应商不存在或已删除",
+            ));
         }
 
         supplier_uuid_val
@@ -321,14 +367,20 @@ async fn update_product(
     // 验证最小订购量
     if let Some(min_qty) = req.min_order_qty {
         if min_qty < 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(400, "最小订购量不能为负数"));
+            return Json(ApiResponse::<SupplierProduct>::error(
+                400,
+                "最小订购量不能为负数",
+            ));
         }
     }
 
     // 验证交货周期
     if let Some(lead_time) = req.lead_time_days {
         if lead_time < 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(400, "交货周期不能为负数"));
+            return Json(ApiResponse::<SupplierProduct>::error(
+                400,
+                "交货周期不能为负数",
+            ));
         }
     }
 
@@ -374,7 +426,10 @@ async fn update_product(
         Ok(product) => Json(ApiResponse::success(product, "供应商产品更新成功")),
         Err(e) => {
             tracing::error!("更新供应商产品失败: {}", e);
-            Json(ApiResponse::<SupplierProduct>::error(500, "供应商产品更新失败"))
+            Json(ApiResponse::<SupplierProduct>::error(
+                500,
+                "供应商产品更新失败",
+            ))
         }
     }
 }
@@ -385,7 +440,7 @@ async fn delete_product(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -395,7 +450,9 @@ async fn delete_product(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "供应商产品删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "供应商产品删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<String>::error(404, "供应商产品不存在")),
         Err(e) => {
             tracing::error!("删除供应商产品失败: {}", e);

@@ -129,15 +129,24 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             const packageName = id.split('node_modules/')[1]?.split('/')[0];
             if (!packageName) {
-              return 'vendor-other';
+              return 'vendor-shared';
+            }
+            // 大型独立库（单独打包）
+            if (['monaco-editor', '@monaco-editor'].includes(packageName)) {
+              return 'vendor-monaco';
+            }
+            if (['pdfjs-dist', 'react-pdf'].includes(packageName)) {
+              return 'vendor-pdf';
+            }
+            if (['xlsx', 'file-saver', 'xlsx-populate'].includes(packageName)) {
+              return 'vendor-excel';
+            }
+            if (['mapbox-gl', 'react-map-gl'].includes(packageName)) {
+              return 'vendor-map';
             }
             // 纯工具库（无外部依赖）
             if (['clsx', 'tailwind-merge', 'class-variance-authority', 'isomorphic-dompurify', 'csstype', 'css-in-js-utils'].includes(packageName)) {
               return 'vendor-utils';
-            }
-            // 数据处理工具（无 React 依赖）
-            if (['date-fns', 'dayjs', 'xlsx', 'file-saver', 'uuid', 'nanoid'].includes(packageName)) {
-              return 'vendor-data';
             }
             // HTTP 客户端（无 React 依赖）
             if (['axios', 'follow-redirects'].includes(packageName)) {
@@ -147,67 +156,40 @@ export default defineConfig({
             if (['zod', 'yup', 'property-expr', 'fast-deep-equal', 'tiny-invariant', 'get-nested-value'].includes(packageName)) {
               return 'vendor-validation';
             }
-            // React 核心（依赖工具库）
-            if (['react', 'react-dom', 'scheduler', 'loose-envify', 'object-assign', 'prop-types'].includes(packageName)) {
-              return 'vendor-react';
-            }
             // Babel 运行时
             if (packageName === '@babel' || id.includes('@babel/runtime')) {
               return 'vendor-babel';
             }
-            // React Router（依赖 React）
+            // React 核心
+            if (['react', 'react-dom', 'scheduler', 'loose-envify', 'object-assign', 'prop-types'].includes(packageName)) {
+              return 'vendor-react';
+            }
+            // React Router
             if (['react-router', 'react-router-dom', 'history', 'path-to-regexp', 'query-string'].includes(packageName)) {
               return 'vendor-router';
-            }
-            // 状态管理（依赖 React）
-            if (['zustand', 'jotai', 'redux', 'react-redux', '@reduxjs/toolkit'].includes(packageName)) {
-              return 'vendor-state';
-            }
-            // Radix UI（依赖 React）
-            if (packageName === '@radix-ui') {
-              return 'vendor-radix';
-            }
-            // NextUI（依赖 React 和 Radix）
-            if (packageName === '@nextui-org') {
-              return 'vendor-nextui';
-            }
-            // 其他 UI 库（依赖 React）
-            if (['lucide-react', '@heroui/react', '@heroui/styles'].includes(packageName)) {
-              return 'vendor-ui';
-            }
-            // 图表库（依赖 React）
-            if (['recharts', 'd3-array', 'd3-scale', 'd3-shape', 'd3-interpolate', 'd3-color', 'd3-format', 'd3-time', 'd3-time-format', 'd3-ease'].includes(packageName)) {
-              return 'vendor-charts';
-            }
-            // Markdown 解析（依赖 React）
-            if (['react-markdown', 'remark-gfm', 'remark-parse', 'remark-rehype', 'rehype-raw', 'rehype-sanitize', 'unified', 'unist-util-visit', 'mdast-util-definitions'].includes(packageName)) {
-              return 'vendor-markdown';
-            }
-            // 语法高亮（依赖 React）
-            if (['react-syntax-highlighter', 'highlight.js', 'refractor', 'prismjs'].includes(packageName)) {
-              return 'vendor-highlighter';
-            }
-            // 文档预览
-            if (['docx-preview', 'mammoth'].includes(packageName)) {
-              return 'vendor-docx';
-            }
-            // 动画库
-            if (['framer-motion', 'motion-dom'].includes(packageName)) {
-              return 'vendor-animation';
             }
             // Hook 相关
             if (['@hookform/resolvers', 'react-hook-form'].includes(packageName)) {
               return 'vendor-form';
             }
-            // Vite PWA / Workbox
-            if (packageName === 'workbox' || id.includes('workbox-')) {
-              return 'vendor-pwa';
+            // Radix UI
+            if (packageName === '@radix-ui') {
+              return 'vendor-radix';
+            }
+            // UI 库
+            if (packageName === '@nextui-org') {
+              return 'vendor-nextui';
+            }
+            // lucide-react 图标库
+            if (packageName === 'lucide-react') {
+              return 'vendor-icons';
             }
             // 测试相关（生产构建不应包含）
             if (['@testing-library', 'vitest', 'jsdom', 'faker'].includes(packageName)) {
               return 'vendor-test';
             }
-            return 'vendor-other';
+            // 所有其他库放到 vendor-shared，避免循环依赖
+            return 'vendor-shared';
           }
           // 页面级代码分割
           if (id.includes('pages/AIPage')) {
@@ -251,7 +233,7 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 2000,
   },
   server: {
     port: 3000,
@@ -329,8 +311,8 @@ export default defineConfig({
       '/erp/health': createServiceProxyConfig('erp', 'http://localhost:8010'),
       '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8012'),
       '/crm/health': createServiceProxyConfig('crm', 'http://localhost:8012'),
-      '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8013'),
-      '/ai/health': createServiceProxyConfig('ai', 'http://localhost:8013'),
+      '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8062'),
+      '/ai/health': createServiceProxyConfig('ai', 'http://localhost:8062'),
       '/rs/api': createServiceProxyConfig('rs', 'http://localhost:8020'),
       '/rs/health': createServiceProxyConfig('rs', 'http://localhost:8020'),
       '/lims/api': createServiceProxyConfig('lims', 'http://localhost:8022'),

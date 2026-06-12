@@ -5,11 +5,14 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, Algorithm};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{error::TopemsError, response::{ApiResponse, api_error}};
+use crate::{
+    error::TopemsError,
+    response::{api_error, ApiResponse},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
@@ -31,29 +34,33 @@ impl Claims {
         Uuid::parse_str(&self.sub)
             .map_err(|_| TopemsError::Auth("Invalid user ID in token".to_string()))
     }
-    
+
     pub fn has_permission(&self, permission: &str) -> bool {
         self.is_superuser || self.permissions.contains(&permission.to_string())
     }
-    
+
     pub fn has_role(&self, role: &str) -> bool {
         self.is_superuser || self.roles.contains(&role.to_string())
     }
-    
+
     pub fn has_any_permission(&self, permissions: &[&str]) -> bool {
         if self.is_superuser {
             return true;
         }
-        permissions.iter().any(|p| self.permissions.contains(&p.to_string()))
+        permissions
+            .iter()
+            .any(|p| self.permissions.contains(&p.to_string()))
     }
-    
+
     pub fn has_all_permissions(&self, permissions: &[&str]) -> bool {
         if self.is_superuser {
             return true;
         }
-        permissions.iter().all(|p| self.permissions.contains(&p.to_string()))
+        permissions
+            .iter()
+            .all(|p| self.permissions.contains(&p.to_string()))
     }
-    
+
     pub fn encode(&self, secret: &str) -> Result<String, TopemsError> {
         encode(
             &Header::new(Algorithm::HS256),
@@ -79,22 +86,23 @@ impl AuthState {
             token_expiry_hours,
         }
     }
-    
+
     pub fn from_env() -> Self {
-        let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET environment variable must be set for security");
+        let jwt_secret = std::env::var("JWT_SECRET")
+            .expect("JWT_SECRET environment variable must be set for security");
         let refresh_secret = std::env::var("JWT_REFRESH_SECRET")
             .or_else(|_| std::env::var("REFRESH_SECRET"))
             .expect("JWT_REFRESH_SECRET or REFRESH_SECRET environment variable must be set for security");
-        
+
         tracing::info!("🔑 AuthState 读取到的 JWT_SECRET: {}", jwt_secret);
-        
+
         if jwt_secret.len() < 32 {
             panic!("JWT_SECRET must be at least 32 characters long for security");
         }
         if refresh_secret.len() < 32 {
             panic!("JWT_REFRESH_SECRET or REFRESH_SECRET must be at least 32 characters long for security");
         }
-        
+
         Self {
             jwt_secret,
             refresh_secret,
@@ -164,35 +172,150 @@ pub struct Permission {
 
 pub fn get_permissions() -> Vec<Permission> {
     vec![
-        Permission { id: "users.read".to_string(), name: "读取用户".to_string(), description: "查看用户列表和详情".to_string(), category: "用户管理".to_string() },
-        Permission { id: "users.create".to_string(), name: "创建用户".to_string(), description: "创建新用户".to_string(), category: "用户管理".to_string() },
-        Permission { id: "users.update".to_string(), name: "更新用户".to_string(), description: "更新用户信息".to_string(), category: "用户管理".to_string() },
-        Permission { id: "users.delete".to_string(), name: "删除用户".to_string(), description: "删除用户".to_string(), category: "用户管理".to_string() },
-        
-        Permission { id: "roles.read".to_string(), name: "读取角色".to_string(), description: "查看角色列表".to_string(), category: "角色管理".to_string() },
-        Permission { id: "roles.create".to_string(), name: "创建角色".to_string(), description: "创建新角色".to_string(), category: "角色管理".to_string() },
-        Permission { id: "roles.update".to_string(), name: "更新角色".to_string(), description: "更新角色信息".to_string(), category: "角色管理".to_string() },
-        Permission { id: "roles.delete".to_string(), name: "删除角色".to_string(), description: "删除角色".to_string(), category: "角色管理".to_string() },
-        
-        Permission { id: "projects.read".to_string(), name: "读取项目".to_string(), description: "查看项目列表".to_string(), category: "项目管理".to_string() },
-        Permission { id: "projects.create".to_string(), name: "创建项目".to_string(), description: "创建新项目".to_string(), category: "项目管理".to_string() },
-        Permission { id: "projects.update".to_string(), name: "更新项目".to_string(), description: "更新项目信息".to_string(), category: "项目管理".to_string() },
-        Permission { id: "projects.delete".to_string(), name: "删除项目".to_string(), description: "删除项目".to_string(), category: "项目管理".to_string() },
-        
-        Permission { id: "documents.read".to_string(), name: "读取文档".to_string(), description: "查看文档".to_string(), category: "文档管理".to_string() },
-        Permission { id: "documents.create".to_string(), name: "创建文档".to_string(), description: "创建文档".to_string(), category: "文档管理".to_string() },
-        Permission { id: "documents.update".to_string(), name: "更新文档".to_string(), description: "更新文档".to_string(), category: "文档管理".to_string() },
-        Permission { id: "documents.delete".to_string(), name: "删除文档".to_string(), description: "删除文档".to_string(), category: "文档管理".to_string() },
-        
-        Permission { id: "workflows.read".to_string(), name: "读取工作流".to_string(), description: "查看工作流".to_string(), category: "工作流管理".to_string() },
-        Permission { id: "workflows.create".to_string(), name: "创建工作流".to_string(), description: "创建工作流".to_string(), category: "工作流管理".to_string() },
-        Permission { id: "workflows.update".to_string(), name: "更新工作流".to_string(), description: "更新工作流".to_string(), category: "工作流管理".to_string() },
-        Permission { id: "workflows.delete".to_string(), name: "删除工作流".to_string(), description: "删除工作流".to_string(), category: "工作流管理".to_string() },
-        
-        Permission { id: "system.settings".to_string(), name: "系统设置".to_string(), description: "修改系统设置".to_string(), category: "系统管理".to_string() },
-        Permission { id: "system.logs".to_string(), name: "查看日志".to_string(), description: "查看系统日志".to_string(), category: "系统管理".to_string() },
-        Permission { id: "system.monitor".to_string(), name: "系统监控".to_string(), description: "查看系统监控".to_string(), category: "系统管理".to_string() },
-        Permission { id: "system.export".to_string(), name: "数据导出".to_string(), description: "导出系统数据".to_string(), category: "系统管理".to_string() },
+        Permission {
+            id: "users.read".to_string(),
+            name: "读取用户".to_string(),
+            description: "查看用户列表和详情".to_string(),
+            category: "用户管理".to_string(),
+        },
+        Permission {
+            id: "users.create".to_string(),
+            name: "创建用户".to_string(),
+            description: "创建新用户".to_string(),
+            category: "用户管理".to_string(),
+        },
+        Permission {
+            id: "users.update".to_string(),
+            name: "更新用户".to_string(),
+            description: "更新用户信息".to_string(),
+            category: "用户管理".to_string(),
+        },
+        Permission {
+            id: "users.delete".to_string(),
+            name: "删除用户".to_string(),
+            description: "删除用户".to_string(),
+            category: "用户管理".to_string(),
+        },
+        Permission {
+            id: "roles.read".to_string(),
+            name: "读取角色".to_string(),
+            description: "查看角色列表".to_string(),
+            category: "角色管理".to_string(),
+        },
+        Permission {
+            id: "roles.create".to_string(),
+            name: "创建角色".to_string(),
+            description: "创建新角色".to_string(),
+            category: "角色管理".to_string(),
+        },
+        Permission {
+            id: "roles.update".to_string(),
+            name: "更新角色".to_string(),
+            description: "更新角色信息".to_string(),
+            category: "角色管理".to_string(),
+        },
+        Permission {
+            id: "roles.delete".to_string(),
+            name: "删除角色".to_string(),
+            description: "删除角色".to_string(),
+            category: "角色管理".to_string(),
+        },
+        Permission {
+            id: "projects.read".to_string(),
+            name: "读取项目".to_string(),
+            description: "查看项目列表".to_string(),
+            category: "项目管理".to_string(),
+        },
+        Permission {
+            id: "projects.create".to_string(),
+            name: "创建项目".to_string(),
+            description: "创建新项目".to_string(),
+            category: "项目管理".to_string(),
+        },
+        Permission {
+            id: "projects.update".to_string(),
+            name: "更新项目".to_string(),
+            description: "更新项目信息".to_string(),
+            category: "项目管理".to_string(),
+        },
+        Permission {
+            id: "projects.delete".to_string(),
+            name: "删除项目".to_string(),
+            description: "删除项目".to_string(),
+            category: "项目管理".to_string(),
+        },
+        Permission {
+            id: "documents.read".to_string(),
+            name: "读取文档".to_string(),
+            description: "查看文档".to_string(),
+            category: "文档管理".to_string(),
+        },
+        Permission {
+            id: "documents.create".to_string(),
+            name: "创建文档".to_string(),
+            description: "创建文档".to_string(),
+            category: "文档管理".to_string(),
+        },
+        Permission {
+            id: "documents.update".to_string(),
+            name: "更新文档".to_string(),
+            description: "更新文档".to_string(),
+            category: "文档管理".to_string(),
+        },
+        Permission {
+            id: "documents.delete".to_string(),
+            name: "删除文档".to_string(),
+            description: "删除文档".to_string(),
+            category: "文档管理".to_string(),
+        },
+        Permission {
+            id: "workflows.read".to_string(),
+            name: "读取工作流".to_string(),
+            description: "查看工作流".to_string(),
+            category: "工作流管理".to_string(),
+        },
+        Permission {
+            id: "workflows.create".to_string(),
+            name: "创建工作流".to_string(),
+            description: "创建工作流".to_string(),
+            category: "工作流管理".to_string(),
+        },
+        Permission {
+            id: "workflows.update".to_string(),
+            name: "更新工作流".to_string(),
+            description: "更新工作流".to_string(),
+            category: "工作流管理".to_string(),
+        },
+        Permission {
+            id: "workflows.delete".to_string(),
+            name: "删除工作流".to_string(),
+            description: "删除工作流".to_string(),
+            category: "工作流管理".to_string(),
+        },
+        Permission {
+            id: "system.settings".to_string(),
+            name: "系统设置".to_string(),
+            description: "修改系统设置".to_string(),
+            category: "系统管理".to_string(),
+        },
+        Permission {
+            id: "system.logs".to_string(),
+            name: "查看日志".to_string(),
+            description: "查看系统日志".to_string(),
+            category: "系统管理".to_string(),
+        },
+        Permission {
+            id: "system.monitor".to_string(),
+            name: "系统监控".to_string(),
+            description: "查看系统监控".to_string(),
+            category: "系统管理".to_string(),
+        },
+        Permission {
+            id: "system.export".to_string(),
+            name: "数据导出".to_string(),
+            description: "导出系统数据".to_string(),
+            category: "系统管理".to_string(),
+        },
     ]
 }
 
@@ -211,9 +334,14 @@ pub fn get_roles() -> Vec<Role> {
             name: "管理员".to_string(),
             description: "管理用户和角色".to_string(),
             permissions: vec![
-                "users.read".to_string(), "users.create".to_string(), "users.update".to_string(),
-                "roles.read".to_string(), "roles.create".to_string(), "roles.update".to_string(),
-                "system.settings".to_string(), "system.logs".to_string(),
+                "users.read".to_string(),
+                "users.create".to_string(),
+                "users.update".to_string(),
+                "roles.read".to_string(),
+                "roles.create".to_string(),
+                "roles.update".to_string(),
+                "system.settings".to_string(),
+                "system.logs".to_string(),
             ],
             is_default: false,
         },
@@ -222,9 +350,14 @@ pub fn get_roles() -> Vec<Role> {
             name: "项目经理".to_string(),
             description: "管理项目和文档".to_string(),
             permissions: vec![
-                "projects.read".to_string(), "projects.create".to_string(), "projects.update".to_string(),
-                "documents.read".to_string(), "documents.create".to_string(), "documents.update".to_string(),
-                "workflows.read".to_string(), "workflows.create".to_string(),
+                "projects.read".to_string(),
+                "projects.create".to_string(),
+                "projects.update".to_string(),
+                "documents.read".to_string(),
+                "documents.create".to_string(),
+                "documents.update".to_string(),
+                "workflows.read".to_string(),
+                "workflows.create".to_string(),
             ],
             is_default: false,
         },
@@ -234,7 +367,8 @@ pub fn get_roles() -> Vec<Role> {
             description: "参与项目开发".to_string(),
             permissions: vec![
                 "projects.read".to_string(),
-                "documents.read".to_string(), "documents.update".to_string(),
+                "documents.read".to_string(),
+                "documents.update".to_string(),
                 "workflows.read".to_string(),
             ],
             is_default: false,
@@ -243,10 +377,7 @@ pub fn get_roles() -> Vec<Role> {
             id: "viewer".to_string(),
             name: "查看者".to_string(),
             description: "只读权限".to_string(),
-            permissions: vec![
-                "projects.read".to_string(),
-                "documents.read".to_string(),
-            ],
+            permissions: vec!["projects.read".to_string(), "documents.read".to_string()],
             is_default: true,
         },
     ]
@@ -257,7 +388,9 @@ pub fn get_role_by_id(role_id: &str) -> Option<Role> {
 }
 
 pub fn get_permission_by_id(permission_id: &str) -> Option<Permission> {
-    get_permissions().into_iter().find(|p| p.id == permission_id)
+    get_permissions()
+        .into_iter()
+        .find(|p| p.id == permission_id)
 }
 
 pub async fn auth_middleware(
@@ -266,14 +399,14 @@ pub async fn auth_middleware(
     next: Next,
 ) -> Response {
     let path = req.uri().path();
-    
+
     let public_paths = ["/", "/health", "/api/v1/auth/login", "/api/v1/auth/refresh"];
     if public_paths.contains(&path) {
         return next.run(req).await;
     }
 
     let (mut parts, body) = req.into_parts();
-    
+
     let auth_header = parts
         .headers
         .get(header::AUTHORIZATION)
@@ -293,9 +426,9 @@ pub async fn auth_middleware(
     ) {
         Ok(token_data) => {
             let claims = token_data.claims;
-            
+
             parts.extensions.insert(claims);
-            
+
             let req = Request::from_parts(parts, body);
             next.run(req).await
         }
@@ -306,7 +439,10 @@ pub async fn auth_middleware(
     }
 }
 
-pub fn check_permission<T>(claims: &Claims, permission: &str) -> Result<(), axum::Json<ApiResponse<T>>> {
+pub fn check_permission<T>(
+    claims: &Claims,
+    permission: &str,
+) -> Result<(), axum::Json<ApiResponse<T>>> {
     if claims.has_permission(permission) {
         Ok(())
     } else {
@@ -339,7 +475,10 @@ pub fn require_superuser<T>(claims: &Claims) -> Result<(), axum::Json<ApiRespons
     }
 }
 
-pub fn require_any_permission<T>(claims: &Claims, permissions: &[&str]) -> Result<(), axum::Json<ApiResponse<T>>> {
+pub fn require_any_permission<T>(
+    claims: &Claims,
+    permissions: &[&str],
+) -> Result<(), axum::Json<ApiResponse<T>>> {
     if claims.has_any_permission(permissions) {
         Ok(())
     } else {
@@ -350,7 +489,10 @@ pub fn require_any_permission<T>(claims: &Claims, permissions: &[&str]) -> Resul
     }
 }
 
-pub fn require_all_permissions<T>(claims: &Claims, permissions: &[&str]) -> Result<(), axum::Json<ApiResponse<T>>> {
+pub fn require_all_permissions<T>(
+    claims: &Claims,
+    permissions: &[&str],
+) -> Result<(), axum::Json<ApiResponse<T>>> {
     if claims.has_all_permissions(permissions) {
         Ok(())
     } else {

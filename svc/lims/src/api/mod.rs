@@ -1,22 +1,19 @@
-use axum::{
-    extract::FromRef,
-    Router,
-};
+use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use topems_shared::{AuthState, Config, Result};
 
-pub mod sample;
-pub mod inspection_process;
-pub mod inspection_task;
-pub mod inspection_record;
-pub mod instrument;
-pub mod audit;
-pub mod reagent;
-pub mod doc_integration;
 pub mod ai_integration;
-pub mod rs_integration;
-pub mod openapi;
+pub mod audit;
+pub mod doc_integration;
 pub mod health;
+pub mod inspection_process;
+pub mod inspection_record;
+pub mod inspection_task;
+pub mod instrument;
+pub mod openapi;
+pub mod reagent;
+pub mod rs_integration;
+pub mod sample;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -38,7 +35,11 @@ impl FromRef<ApiState> for PgPool {
 }
 
 pub async fn create_routes(db: PgPool, auth_state: AuthState, config: Config) -> Result<Router> {
-    let state = ApiState { db, auth_state, config };
+    let state = ApiState {
+        db,
+        auth_state,
+        config,
+    };
 
     let app = Router::new()
         .merge(health::create_routes())

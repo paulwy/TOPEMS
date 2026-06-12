@@ -10,15 +10,17 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
+use sqlx::Row;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
-use sqlx::Row;
 
+use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
-use crate::services::project_permission::{check_project_permission, check_project_owner, ProjectPermission};
+use crate::services::project_permission::{
+    check_project_owner, check_project_permission, ProjectPermission,
+};
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
-use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListProjectsQuery {
@@ -59,7 +61,10 @@ pub fn create_routes() -> Router<super::ApiState> {
             "/api/v1/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
         )
-        .route("/api/v1/projects/{id}/dashboard", get(get_project_dashboard))
+        .route(
+            "/api/v1/projects/{id}/dashboard",
+            get(get_project_dashboard),
+        )
         .route("/api/v1/projects/{id}/gantt", get(get_project_gantt))
 }
 
@@ -182,7 +187,7 @@ async fn create_project(
     .bind(&req.name)
     .bind(&req.code)
     .bind(&req.description)
-    .bind(&req.project_type)
+    .bind(req.project_type)
     .bind("draft")
     .bind(&req.leader)
     .bind(serde_json::to_value(&req.team_members).unwrap_or(serde_json::json!([])))
@@ -197,7 +202,7 @@ async fn create_project(
     .bind(serde_json::json!({}))
     .bind("MEDIUM")
     .bind(3)
-    .bind::<Vec<String>>(vec![])
+    .bind(serde_json::Value::Array(vec![]))
     .bind(None::<Uuid>)
     .bind(None::<Uuid>)
     .fetch_one(&state.db)
@@ -273,7 +278,7 @@ async fn get_project(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Project>> {
     match check_project_permission(&state.db, &claims, &id, &ProjectPermission::Read).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -334,7 +339,7 @@ async fn update_project(
     Json(req): Json<UpdateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
     match check_project_permission(&state.db, &claims, &id, &ProjectPermission::Update).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -353,11 +358,7 @@ async fn update_project(
 
     let name = req.name.clone().unwrap_or(existing.name);
     let description = req.description.clone().or(existing.description);
-    let status = req
-        .status
-        .clone()
-        .map(|s| s.to_string())
-        .unwrap_or(existing.status);
+    let status = req.status.map(|s| s.to_string()).unwrap_or(existing.status);
     let leader = req.leader.clone().unwrap_or(existing.leader);
     let team_members = req.team_members.clone().unwrap_or(existing.team_members);
     let end_date = req.end_date.or(existing.end_date);
@@ -457,7 +458,7 @@ async fn delete_project(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_project_owner(&state.db, &claims, &id).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -558,7 +559,7 @@ async fn batch_create_projects(
         .bind(&project_req.name)
         .bind(&project_req.code)
         .bind(&project_req.description)
-        .bind(&project_req.project_type)
+        .bind(project_req.project_type)
         .bind("draft")
         .bind(&project_req.leader)
         .bind(
@@ -759,7 +760,7 @@ async fn export_projects(State(state): State<super::ApiState>, headers: HeaderMa
             let mut wtr = csv::Writer::from_writer(vec![]);
 
             // Write header
-            if let Err(e) = wtr.write_record(&[
+            if let Err(e) = wtr.write_record([
                 "id",
                 "name",
                 "code",
@@ -1180,16 +1181,24 @@ async fn get_project_dashboard(
         }
     };
 
-    let phases_result = sqlx::query(r#"SELECT status, progress FROM rs.project_phases WHERE project_id = $1"#)
-        .bind(id)
-        .fetch_all(&state.db)
-        .await;
+    let phases_result =
+        sqlx::query(r#"SELECT status, progress FROM rs.project_phases WHERE project_id = $1"#)
+            .bind(id)
+            .fetch_all(&state.db)
+            .await;
 
     let phases = phases_result.unwrap_or_default();
-    let completed_phases = phases.iter().filter(|p| p.get::<String, _>("status") == "COMPLETED").count();
+    let completed_phases = phases
+        .iter()
+        .filter(|p| p.get::<String, _>("status") == "COMPLETED")
+        .count();
     let total_phases = phases.len();
     let avg_progress = if total_phases > 0 {
-        phases.iter().map(|p| p.get::<i32, _>("progress")).sum::<i32>() / total_phases as i32
+        phases
+            .iter()
+            .map(|p| p.get::<i32, _>("progress"))
+            .sum::<i32>()
+            / total_phases as i32
     } else {
         0
     };
@@ -1209,47 +1218,55 @@ async fn get_project_dashboard(
         "utilization_rate": 0.0
     });
 
-    let members_result = sqlx::query(r#"SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1"#)
-        .bind(id)
-        .fetch_all(&state.db)
-        .await;
+    let members_result = sqlx::query(
+        r#"SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1"#,
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await;
 
     let members: Vec<serde_json::Value> = members_result
         .unwrap_or_default()
         .into_iter()
-        .map(|m| serde_json::json!({
-            "user_id": m.get::<Uuid, _>("user_id"),
-            "role": m.get::<String, _>("role")
-        }))
+        .map(|m| {
+            serde_json::json!({
+                "user_id": m.get::<Uuid, _>("user_id"),
+                "role": m.get::<String, _>("role")
+            })
+        })
         .collect();
 
-    let milestones_result = sqlx::query(r#"SELECT status FROM rs.project_milestones WHERE project_id = $1"#)
-        .bind(id)
-        .fetch_all(&state.db)
-        .await;
+    let milestones_result =
+        sqlx::query(r#"SELECT status FROM rs.project_milestones WHERE project_id = $1"#)
+            .bind(id)
+            .fetch_all(&state.db)
+            .await;
 
     let milestones = milestones_result.unwrap_or_default();
-    let achieved_milestones = milestones.iter().filter(|m| m.get::<String, _>("status") == "ACHIEVED").count();
+    let achieved_milestones = milestones
+        .iter()
+        .filter(|m| m.get::<String, _>("status") == "ACHIEVED")
+        .count();
     let total_milestones = milestones.len();
 
-    let risks = vec![
-        if project.risk_level.as_deref() == Some("HIGH") || project.risk_level.as_deref() == Some("CRITICAL") {
-            serde_json::json!({
-                "level": project.risk_level,
-                "description": "风险等级较高"
-            })
-        } else if avg_progress < project.progress - 10 {
-            serde_json::json!({
-                "level": "medium",
-                "description": "进度落后超过10%"
-            })
-        } else {
-            serde_json::json!({
-                "level": "low",
-                "description": "项目运行正常"
-            })
-        }
-    ];
+    let risks = vec![if project.risk_level.as_deref() == Some("HIGH")
+        || project.risk_level.as_deref() == Some("CRITICAL")
+    {
+        serde_json::json!({
+            "level": project.risk_level,
+            "description": "风险等级较高"
+        })
+    } else if avg_progress < project.progress - 10 {
+        serde_json::json!({
+            "level": "medium",
+            "description": "进度落后超过10%"
+        })
+    } else {
+        serde_json::json!({
+            "level": "low",
+            "description": "项目运行正常"
+        })
+    }];
 
     let benefits = serde_json::json!({
         "cpi": 1.0,
@@ -1394,21 +1411,21 @@ async fn get_project_gantt(
         })
         .collect();
 
-    let members_result = sqlx::query(r#"SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1"#)
-        .bind(id)
-        .fetch_all(&state.db)
-        .await;
+    let members_result = sqlx::query(
+        r#"SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1"#,
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await;
 
     let gantt_resources: Vec<GanttResource> = members_result
         .unwrap_or_default()
         .into_iter()
-        .filter_map(|m| {
-            Some(GanttResource {
-                id: m.get::<Uuid, _>("user_id"),
-                resource_type: "person".to_string(),
-                name: m.get::<String, _>("role"),
-                assignments: vec![],
-            })
+        .map(|m| GanttResource {
+            id: m.get::<Uuid, _>("user_id"),
+            resource_type: "person".to_string(),
+            name: m.get::<String, _>("role"),
+            assignments: vec![],
         })
         .collect();
 

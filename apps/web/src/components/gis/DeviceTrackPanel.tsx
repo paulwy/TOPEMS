@@ -5,13 +5,11 @@ import {
   Polyline,
   Marker,
   Popup,
-  useMap,
 } from "react-leaflet";
 import {
   Play,
   Pause,
   RefreshCw,
-  Calendar,
   Clock,
   Activity,
   Gauge,

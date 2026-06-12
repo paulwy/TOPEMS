@@ -1,33 +1,47 @@
-use axum::{
-    extract::{Path, State, Multipart, Extension},
-    Json, Router,
-    routing::get,
-};
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::unnecessary_map_or)]
+#![allow(clippy::map_flatten)]
+#![allow(dead_code)]
+
 use anyhow::Result;
 use axum::extract::FromRef;
+use axum::{
+    extract::{Extension, Multipart, Path, State},
+    routing::get,
+    Json, Router,
+};
+use axum_prometheus::PrometheusMetricLayer;
+use chrono::{DateTime, Utc};
+use csv::ReaderBuilder;
+use prometheus::{default_registry, Gauge};
+use serde::{Deserialize, Serialize};
+use sqlx::{PgPool, Row};
 use std::env;
 use std::io::BufReader;
-use sqlx::{PgPool, Row};
-use csv::ReaderBuilder;
-use axum_prometheus::PrometheusMetricLayer;
-use prometheus::{default_registry, Gauge};
+use uuid::Uuid;
 
-use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, create_api_info_router,
-    HealthStatus, DependencyHealth, check_http_health,
-};
 use topems_shared::auth::Claims;
+use topems_shared::{
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
+    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+};
 
+mod api;
 mod db;
 mod models;
 mod services;
-mod api;
 use db::schema::init_tables;
-use models::{FactoryMap, DeviceLocation, Pipeline, WarehouseLocation, LocationPhoto, BusinessLocation, MapMarker};
+use models::{
+    BusinessLocation, DeviceLocation, FactoryMap, LocationPhoto, MapMarker, Pipeline,
+    WarehouseLocation,
+};
 use services::permission::{check_permission, GisPermission};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -136,9 +150,7 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-async fn health_check(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<String>> {
+async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
     let database_health = check_database_health(&state.pool).await;
     let iam_health = check_iam_health().await;
 
@@ -163,9 +175,7 @@ async fn health_check(
     Json(ApiResponse::success(status_str, "健康检查"))
 }
 
-async fn health_check_detailed(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<ServiceHealth>> {
+async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
         check_database_health(&state.pool).await,
         check_iam_health().await,
@@ -192,17 +202,14 @@ async fn health_check_detailed(
         HealthStatus::Unhealthy => "存在关键服务故障",
     };
 
-    let health = ServiceHealth::healthy_with_message("topems-gis", message)
-        .with_dependencies(dependencies);
+    let health =
+        ServiceHealth::healthy_with_message("topems-gis", message).with_dependencies(dependencies);
 
     Json(ApiResponse::success(health, "详细健康检查"))
 }
 
 async fn check_database_health(pool: &PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -220,8 +227,8 @@ async fn check_database_health(pool: &PgPool) -> DependencyHealth {
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = std::env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {
@@ -269,11 +276,12 @@ async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<GisSt
         .unwrap_or(0);
 
     // Count active devices
-    let active_devices: i64 = sqlx::query("SELECT COUNT(*) FROM device_locations WHERE status = 'active'")
-        .fetch_one(&state.pool)
-        .await
-        .map(|row| row.get::<i64, _>(0))
-        .unwrap_or(0);
+    let active_devices: i64 =
+        sqlx::query("SELECT COUNT(*) FROM device_locations WHERE status = 'active'")
+            .fetch_one(&state.pool)
+            .await
+            .map(|row| row.get::<i64, _>(0))
+            .unwrap_or(0);
 
     // Count pipelines
     let pipelines: i64 = sqlx::query("SELECT COUNT(*) FROM pipelines")
@@ -283,11 +291,12 @@ async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<GisSt
         .unwrap_or(0);
 
     // Count active pipelines
-    let active_pipelines: i64 = sqlx::query("SELECT COUNT(*) FROM pipelines WHERE status = 'active'")
-        .fetch_one(&state.pool)
-        .await
-        .map(|row| row.get::<i64, _>(0))
-        .unwrap_or(0);
+    let active_pipelines: i64 =
+        sqlx::query("SELECT COUNT(*) FROM pipelines WHERE status = 'active'")
+            .fetch_one(&state.pool)
+            .await
+            .map(|row| row.get::<i64, _>(0))
+            .unwrap_or(0);
 
     // Count warehouse locations
     let storage_locations: i64 = sqlx::query("SELECT COUNT(*) FROM warehouse_locations")
@@ -343,10 +352,7 @@ async fn list_factory_maps(State(state): State<AppState>) -> Json<ApiResponse<se
             }),
             "获取厂区地图列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -375,10 +381,7 @@ async fn create_factory_map(
     .await
     {
         Ok(map) => Json(ApiResponse::success(map, "创建厂区地图成功")),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库插入失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
     }
 }
 
@@ -392,13 +395,8 @@ async fn get_factory_map(
         .await
     {
         Ok(map) => Json(ApiResponse::success(map, "获取厂区地图成功")),
-        Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "厂区地图未找到"))
-        }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "厂区地图未找到")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -460,17 +458,18 @@ async fn delete_factory_map(
                 Json(ApiResponse::error(404, "厂区地图未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库删除失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
     }
 }
 
-async fn list_device_locations(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, DeviceLocation>("SELECT * FROM device_locations ORDER BY created_at DESC")
-        .fetch_all(&state.pool)
-        .await
+async fn list_device_locations(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match sqlx::query_as::<_, DeviceLocation>(
+        "SELECT * FROM device_locations ORDER BY created_at DESC",
+    )
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(locations) => Json(ApiResponse::success(
             serde_json::json!({
@@ -479,10 +478,7 @@ async fn list_device_locations(State(state): State<AppState>) -> Json<ApiRespons
             }),
             "获取设备位置列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -496,13 +492,8 @@ async fn get_device_location(
         .await
     {
         Ok(location) => Json(ApiResponse::success(location, "获取设备位置成功")),
-        Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "设备位置未找到"))
-        }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备位置未找到")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -510,10 +501,12 @@ async fn list_device_locations_by_map(
     State(state): State<AppState>,
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, DeviceLocation>("SELECT * FROM device_locations WHERE map_id = $1 ORDER BY created_at DESC")
-        .bind(map_id)
-        .fetch_all(&state.pool)
-        .await
+    match sqlx::query_as::<_, DeviceLocation>(
+        "SELECT * FROM device_locations WHERE map_id = $1 ORDER BY created_at DESC",
+    )
+    .bind(map_id)
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(locations) => Json(ApiResponse::success(
             serde_json::json!({
@@ -522,10 +515,7 @@ async fn list_device_locations_by_map(
             }),
             "获取设备位置列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -534,7 +524,9 @@ async fn create_device_location(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocation>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await
+    {
         return e;
     }
     match sqlx::query_as::<_, DeviceLocation>(
@@ -568,7 +560,9 @@ async fn update_device_location(
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocation>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await
+    {
         return e;
     }
     match sqlx::query_as::<_, DeviceLocation>(
@@ -606,7 +600,9 @@ async fn delete_device_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await
+    {
         return e;
     }
     match sqlx::query("DELETE FROM device_locations WHERE id = $1")
@@ -621,10 +617,7 @@ async fn delete_device_location(
                 Json(ApiResponse::error(404, "设备位置未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库删除失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
     }
 }
 
@@ -640,10 +633,7 @@ async fn list_pipelines(State(state): State<AppState>) -> Json<ApiResponse<serde
             }),
             "获取管道列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -657,13 +647,8 @@ async fn get_pipeline(
         .await
     {
         Ok(pipeline) => Json(ApiResponse::success(pipeline, "获取管道成功")),
-        Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "管道未找到"))
-        }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "管道未找到")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -671,10 +656,12 @@ async fn list_pipelines_by_map(
     State(state): State<AppState>,
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Pipeline>("SELECT * FROM pipelines WHERE map_id = $1 ORDER BY created_at DESC")
-        .bind(map_id)
-        .fetch_all(&state.pool)
-        .await
+    match sqlx::query_as::<_, Pipeline>(
+        "SELECT * FROM pipelines WHERE map_id = $1 ORDER BY created_at DESC",
+    )
+    .bind(map_id)
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(pipelines) => Json(ApiResponse::success(
             serde_json::json!({
@@ -683,10 +670,7 @@ async fn list_pipelines_by_map(
             }),
             "获取管道列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -716,10 +700,7 @@ async fn create_pipeline(
     .await
     {
         Ok(pipeline) => Json(ApiResponse::success(pipeline, "创建管道成功")),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库插入失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
     }
 }
 
@@ -782,17 +763,18 @@ async fn delete_pipeline(
                 Json(ApiResponse::error(404, "管道未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库删除失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
     }
 }
 
-async fn list_warehouse_locations(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, WarehouseLocation>("SELECT * FROM warehouse_locations ORDER BY created_at DESC")
-        .fetch_all(&state.pool)
-        .await
+async fn list_warehouse_locations(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match sqlx::query_as::<_, WarehouseLocation>(
+        "SELECT * FROM warehouse_locations ORDER BY created_at DESC",
+    )
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(locations) => Json(ApiResponse::success(
             serde_json::json!({
@@ -801,10 +783,7 @@ async fn list_warehouse_locations(State(state): State<AppState>) -> Json<ApiResp
             }),
             "获取仓库位置列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -818,13 +797,8 @@ async fn get_warehouse_location(
         .await
     {
         Ok(location) => Json(ApiResponse::success(location, "获取仓库位置成功")),
-        Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "仓库位置未找到"))
-        }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "仓库位置未找到")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -832,10 +806,12 @@ async fn list_warehouse_locations_by_map(
     State(state): State<AppState>,
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, WarehouseLocation>("SELECT * FROM warehouse_locations WHERE map_id = $1 ORDER BY created_at DESC")
-        .bind(map_id)
-        .fetch_all(&state.pool)
-        .await
+    match sqlx::query_as::<_, WarehouseLocation>(
+        "SELECT * FROM warehouse_locations WHERE map_id = $1 ORDER BY created_at DESC",
+    )
+    .bind(map_id)
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(locations) => Json(ApiResponse::success(
             serde_json::json!({
@@ -844,10 +820,7 @@ async fn list_warehouse_locations_by_map(
             }),
             "获取仓库位置列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -856,7 +829,9 @@ async fn create_warehouse_location(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateWarehouseLocation>,
 ) -> Json<ApiResponse<WarehouseLocation>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::WarehouseLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::WarehouseLocationWrite).await
+    {
         return e;
     }
     match sqlx::query_as::<_, WarehouseLocation>(
@@ -890,7 +865,9 @@ async fn update_warehouse_location(
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateWarehouseLocation>,
 ) -> Json<ApiResponse<WarehouseLocation>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::WarehouseLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::WarehouseLocationWrite).await
+    {
         return e;
     }
     match sqlx::query_as::<_, WarehouseLocation>(
@@ -928,7 +905,9 @@ async fn delete_warehouse_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::WarehouseLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::WarehouseLocationWrite).await
+    {
         return e;
     }
     match sqlx::query("DELETE FROM warehouse_locations WHERE id = $1")
@@ -943,17 +922,18 @@ async fn delete_warehouse_location(
                 Json(ApiResponse::error(404, "仓库位置未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库删除失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
     }
 }
 
-async fn list_location_photos(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, LocationPhoto>("SELECT * FROM location_photos ORDER BY created_at DESC")
-        .fetch_all(&state.pool)
-        .await
+async fn list_location_photos(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match sqlx::query_as::<_, LocationPhoto>(
+        "SELECT * FROM location_photos ORDER BY created_at DESC",
+    )
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(photos) => Json(ApiResponse::success(
             serde_json::json!({
@@ -962,10 +942,7 @@ async fn list_location_photos(State(state): State<AppState>) -> Json<ApiResponse
             }),
             "获取位置照片列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -979,13 +956,8 @@ async fn get_location_photo(
         .await
     {
         Ok(photo) => Json(ApiResponse::success(photo, "获取位置照片成功")),
-        Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "位置照片未找到"))
-        }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "位置照片未找到")),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -993,10 +965,12 @@ async fn list_location_photos_by_map(
     State(state): State<AppState>,
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, LocationPhoto>("SELECT * FROM location_photos WHERE map_id = $1 ORDER BY created_at DESC")
-        .bind(map_id)
-        .fetch_all(&state.pool)
-        .await
+    match sqlx::query_as::<_, LocationPhoto>(
+        "SELECT * FROM location_photos WHERE map_id = $1 ORDER BY created_at DESC",
+    )
+    .bind(map_id)
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(photos) => Json(ApiResponse::success(
             serde_json::json!({
@@ -1005,10 +979,7 @@ async fn list_location_photos_by_map(
             }),
             "获取位置照片列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
 
@@ -1017,7 +988,8 @@ async fn create_location_photo(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateLocationPhoto>,
 ) -> Json<ApiResponse<LocationPhoto>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::LocationPhotoWrite).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::LocationPhotoWrite).await
+    {
         return e;
     }
     let taken_at = payload.taken_at.unwrap_or_else(Utc::now);
@@ -1038,10 +1010,7 @@ async fn create_location_photo(
     .await
     {
         Ok(photo) => Json(ApiResponse::success(photo, "创建位置照片成功")),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库插入失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
     }
 }
 
@@ -1050,7 +1019,8 @@ async fn delete_location_photo(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::LocationPhotoWrite).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::LocationPhotoWrite).await
+    {
         return e;
     }
     match sqlx::query("DELETE FROM location_photos WHERE id = $1")
@@ -1065,10 +1035,7 @@ async fn delete_location_photo(
                 Json(ApiResponse::error(404, "位置照片未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库删除失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
     }
 }
 
@@ -1115,7 +1082,9 @@ async fn import_data(
                 let row_num = i + 2;
                 match import_type.as_str() {
                     "devicePoints" | "device_locations" => {
-                        if let Err(e) = import_device_location_row(&state.pool, &record, &headers).await {
+                        if let Err(e) =
+                            import_device_location_row(&state.pool, &record, &headers).await
+                        {
                             errors.push(format!("第{}行: {}", row_num, e));
                         } else {
                             imported_count += 1;
@@ -1129,7 +1098,9 @@ async fn import_data(
                         }
                     }
                     "storageLocations" | "warehouse_locations" => {
-                        if let Err(e) = import_warehouse_location_row(&state.pool, &record, &headers).await {
+                        if let Err(e) =
+                            import_warehouse_location_row(&state.pool, &record, &headers).await
+                        {
                             errors.push(format!("第{}行: {}", row_num, e));
                         } else {
                             imported_count += 1;
@@ -1142,7 +1113,11 @@ async fn import_data(
         }
     }
 
-    let message = format!("导入完成，成功导入{}条记录，失败{}条", imported_count, errors.len());
+    let message = format!(
+        "导入完成，成功导入{}条记录，失败{}条",
+        imported_count,
+        errors.len()
+    );
     Json(ApiResponse::success(
         serde_json::json!({
             "imported_count": imported_count,
@@ -1166,8 +1141,12 @@ async fn import_device_location_row(
     let status = get_field(record, headers, "status").unwrap_or("active".to_string());
     let description = get_field(record, headers, "description");
 
-    let lat: f64 = lat_str.parse().map_err(|e| format!("latitude格式错误: {}", e))?;
-    let lng: f64 = lng_str.parse().map_err(|e| format!("longitude格式错误: {}", e))?;
+    let lat: f64 = lat_str
+        .parse()
+        .map_err(|e| format!("latitude格式错误: {}", e))?;
+    let lng: f64 = lng_str
+        .parse()
+        .map_err(|e| format!("longitude格式错误: {}", e))?;
 
     let position = serde_json::json!({ "lat": lat, "lng": lng });
 
@@ -1254,13 +1233,16 @@ async fn import_warehouse_location_row(
     let lng_str = get_field(record, headers, "longitude").ok_or("缺少longitude字段")?;
     let status = get_field(record, headers, "status").unwrap_or("active".to_string());
 
-    let lat: f64 = lat_str.parse().map_err(|e| format!("latitude格式错误: {}", e))?;
-    let lng: f64 = lng_str.parse().map_err(|e| format!("longitude格式错误: {}", e))?;
+    let lat: f64 = lat_str
+        .parse()
+        .map_err(|e| format!("latitude格式错误: {}", e))?;
+    let lng: f64 = lng_str
+        .parse()
+        .map_err(|e| format!("longitude格式错误: {}", e))?;
 
-    let capacity: Option<i32> = get_field(record, headers, "capacity")
-        .and_then(|s| s.parse().ok());
-    let usage_rate: Option<f64> = get_field(record, headers, "usage_rate")
-        .and_then(|s| s.parse().ok());
+    let capacity: Option<i32> = get_field(record, headers, "capacity").and_then(|s| s.parse().ok());
+    let usage_rate: Option<f64> =
+        get_field(record, headers, "usage_rate").and_then(|s| s.parse().ok());
 
     let position = serde_json::json!({ "lat": lat, "lng": lng });
 
@@ -1284,8 +1266,14 @@ async fn import_warehouse_location_row(
     Ok(())
 }
 
-fn get_field(record: &csv::StringRecord, headers: &csv::StringRecord, name: &str) -> Option<String> {
-    headers.iter().position(|h| h.eq_ignore_ascii_case(name))
+fn get_field(
+    record: &csv::StringRecord,
+    headers: &csv::StringRecord,
+    name: &str,
+) -> Option<String> {
+    headers
+        .iter()
+        .position(|h| h.eq_ignore_ascii_case(name))
         .and_then(|i| record.get(i))
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
@@ -1293,10 +1281,14 @@ fn get_field(record: &csv::StringRecord, headers: &csv::StringRecord, name: &str
 
 // ==================== Business Locations API ====================
 
-async fn list_business_locations(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, BusinessLocation>("SELECT * FROM business_locations ORDER BY created_at DESC")
-        .fetch_all(&state.pool)
-        .await
+async fn list_business_locations(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match sqlx::query_as::<_, BusinessLocation>(
+        "SELECT * FROM business_locations ORDER BY created_at DESC",
+    )
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(locations) => Json(ApiResponse::success(
             serde_json::json!({
@@ -1328,10 +1320,12 @@ async fn list_business_locations_by_type(
     State(state): State<AppState>,
     Path(business_type): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, BusinessLocation>("SELECT * FROM business_locations WHERE business_type = $1 ORDER BY created_at DESC")
-        .bind(business_type)
-        .fetch_all(&state.pool)
-        .await
+    match sqlx::query_as::<_, BusinessLocation>(
+        "SELECT * FROM business_locations WHERE business_type = $1 ORDER BY created_at DESC",
+    )
+    .bind(business_type)
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(locations) => Json(ApiResponse::success(
             serde_json::json!({
@@ -1349,7 +1343,9 @@ async fn create_business_location(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateBusinessLocation>,
 ) -> Json<ApiResponse<BusinessLocation>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await
+    {
         return e;
     }
     match sqlx::query_as::<_, BusinessLocation>(
@@ -1388,7 +1384,9 @@ async fn update_business_location(
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateBusinessLocation>,
 ) -> Json<ApiResponse<BusinessLocation>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await
+    {
         return e;
     }
     match sqlx::query_as::<_, BusinessLocation>(
@@ -1429,7 +1427,9 @@ async fn delete_business_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await
+    {
         return e;
     }
     match sqlx::query("DELETE FROM business_locations WHERE id = $1")
@@ -1451,9 +1451,11 @@ async fn delete_business_location(
 // ==================== Map Markers API ====================
 
 async fn list_map_markers(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, MapMarker>("SELECT * FROM map_markers ORDER BY z_index DESC, created_at DESC")
-        .fetch_all(&state.pool)
-        .await
+    match sqlx::query_as::<_, MapMarker>(
+        "SELECT * FROM map_markers ORDER BY z_index DESC, created_at DESC",
+    )
+    .fetch_all(&state.pool)
+    .await
     {
         Ok(markers) => Json(ApiResponse::success(
             serde_json::json!({
@@ -1471,7 +1473,9 @@ async fn create_map_marker(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateMapMarker>,
 ) -> Json<ApiResponse<MapMarker>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await
+    {
         return e;
     }
     match sqlx::query_as::<_, MapMarker>(
@@ -1507,7 +1511,9 @@ async fn update_map_marker(
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateMapMarker>,
 ) -> Json<ApiResponse<MapMarker>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await
+    {
         return e;
     }
     match sqlx::query_as::<_, MapMarker>(
@@ -1545,7 +1551,9 @@ async fn delete_map_marker(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &GisPermission::DeviceLocationWrite).await
+    {
         return e;
     }
     match sqlx::query("DELETE FROM map_markers WHERE id = $1")
@@ -1604,7 +1612,8 @@ async fn export_geojson(State(state): State<AppState>) -> Json<ApiResponse<serde
     {
         for pipeline in pipelines {
             if let Some(path_array) = pipeline.path.as_array() {
-                let coordinates: Vec<[f64; 2]> = path_array.iter()
+                let coordinates: Vec<[f64; 2]> = path_array
+                    .iter()
                     .filter_map(|p| {
                         if let (Some(lat), Some(lng)) = (p.get("lat"), p.get("lng")) {
                             if let (Some(lat_f), Some(lng_f)) = (lat.as_f64(), lng.as_f64()) {
@@ -1636,9 +1645,10 @@ async fn export_geojson(State(state): State<AppState>) -> Json<ApiResponse<serde
     }
 
     // Export warehouse locations
-    if let Ok(warehouses) = sqlx::query_as::<_, WarehouseLocation>("SELECT * FROM warehouse_locations")
-        .fetch_all(&state.pool)
-        .await
+    if let Ok(warehouses) =
+        sqlx::query_as::<_, WarehouseLocation>("SELECT * FROM warehouse_locations")
+            .fetch_all(&state.pool)
+            .await
     {
         for warehouse in warehouses {
             if let Some(pos) = warehouse.position.as_object() {
@@ -1664,9 +1674,10 @@ async fn export_geojson(State(state): State<AppState>) -> Json<ApiResponse<serde
     }
 
     // Export business locations
-    if let Ok(business_locations) = sqlx::query_as::<_, BusinessLocation>("SELECT * FROM business_locations")
-        .fetch_all(&state.pool)
-        .await
+    if let Ok(business_locations) =
+        sqlx::query_as::<_, BusinessLocation>("SELECT * FROM business_locations")
+            .fetch_all(&state.pool)
+            .await
     {
         for location in business_locations {
             if let Some(pos) = location.position.as_object() {
@@ -1714,7 +1725,7 @@ async fn search_locations(
 
     if location_type.is_none() || location_type.as_deref() == Some("device") {
         if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>(
-            "SELECT * FROM device_locations WHERE device_name ILIKE $1 OR device_code ILIKE $1"
+            "SELECT * FROM device_locations WHERE device_name ILIKE $1 OR device_code ILIKE $1",
         )
         .bind(&search_pattern)
         .fetch_all(&state.pool)
@@ -1735,7 +1746,7 @@ async fn search_locations(
 
     if location_type.is_none() || location_type.as_deref() == Some("pipeline") {
         if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>(
-            "SELECT * FROM pipelines WHERE name ILIKE $1 OR code ILIKE $1"
+            "SELECT * FROM pipelines WHERE name ILIKE $1 OR code ILIKE $1",
         )
         .bind(&search_pattern)
         .fetch_all(&state.pool)
@@ -1755,7 +1766,7 @@ async fn search_locations(
 
     if location_type.is_none() || location_type.as_deref() == Some("warehouse") {
         if let Ok(warehouses) = sqlx::query_as::<_, WarehouseLocation>(
-            "SELECT * FROM warehouse_locations WHERE warehouse_name ILIKE $1"
+            "SELECT * FROM warehouse_locations WHERE warehouse_name ILIKE $1",
         )
         .bind(&search_pattern)
         .fetch_all(&state.pool)
@@ -1816,8 +1827,11 @@ async fn main() -> Result<()> {
     let custom_gauge = Gauge::new(
         "topems_gis_custom_metric",
         "This is a custom metric for TOPEMS-GIS",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -1841,92 +1855,308 @@ async fn main() -> Result<()> {
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         .route("/api/v1/statistics", get(get_statistics))
-        .route("/api/v1/factory-maps", axum::routing::get(list_factory_maps))
-        .route("/api/v1/factory-maps/{id}", axum::routing::get(get_factory_map))
-        .route("/api/v1/device-locations", axum::routing::get(list_device_locations))
-        .route("/api/v1/device-locations/{id}", axum::routing::get(get_device_location))
-        .route("/api/v1/device-locations/map/{map_id}", axum::routing::get(list_device_locations_by_map))
+        .route(
+            "/api/v1/factory-maps",
+            axum::routing::get(list_factory_maps),
+        )
+        .route(
+            "/api/v1/factory-maps/{id}",
+            axum::routing::get(get_factory_map),
+        )
+        .route(
+            "/api/v1/device-locations",
+            axum::routing::get(list_device_locations),
+        )
+        .route(
+            "/api/v1/device-locations/{id}",
+            axum::routing::get(get_device_location),
+        )
+        .route(
+            "/api/v1/device-locations/map/{map_id}",
+            axum::routing::get(list_device_locations_by_map),
+        )
         .route("/api/v1/pipelines", axum::routing::get(list_pipelines))
         .route("/api/v1/pipelines/{id}", axum::routing::get(get_pipeline))
-        .route("/api/v1/pipelines/map/{map_id}", axum::routing::get(list_pipelines_by_map))
-        .route("/api/v1/warehouse-locations", axum::routing::get(list_warehouse_locations))
-        .route("/api/v1/warehouse-locations/{id}", axum::routing::get(get_warehouse_location))
-        .route("/api/v1/warehouse-locations/map/{map_id}", axum::routing::get(list_warehouse_locations_by_map))
-        .route("/api/v1/location-photos", axum::routing::get(list_location_photos))
-        .route("/api/v1/location-photos/{id}", axum::routing::get(get_location_photo))
-        .route("/api/v1/location-photos/map/{map_id}", axum::routing::get(list_location_photos_by_map))
-        .route("/api/v1/business-locations", axum::routing::get(list_business_locations))
-        .route("/api/v1/business-locations/{id}", axum::routing::get(get_business_location))
-        .route("/api/v1/business-locations/type/{business_type}", axum::routing::get(list_business_locations_by_type))
+        .route(
+            "/api/v1/pipelines/map/{map_id}",
+            axum::routing::get(list_pipelines_by_map),
+        )
+        .route(
+            "/api/v1/warehouse-locations",
+            axum::routing::get(list_warehouse_locations),
+        )
+        .route(
+            "/api/v1/warehouse-locations/{id}",
+            axum::routing::get(get_warehouse_location),
+        )
+        .route(
+            "/api/v1/warehouse-locations/map/{map_id}",
+            axum::routing::get(list_warehouse_locations_by_map),
+        )
+        .route(
+            "/api/v1/location-photos",
+            axum::routing::get(list_location_photos),
+        )
+        .route(
+            "/api/v1/location-photos/{id}",
+            axum::routing::get(get_location_photo),
+        )
+        .route(
+            "/api/v1/location-photos/map/{map_id}",
+            axum::routing::get(list_location_photos_by_map),
+        )
+        .route(
+            "/api/v1/business-locations",
+            axum::routing::get(list_business_locations),
+        )
+        .route(
+            "/api/v1/business-locations/{id}",
+            axum::routing::get(get_business_location),
+        )
+        .route(
+            "/api/v1/business-locations/type/{business_type}",
+            axum::routing::get(list_business_locations_by_type),
+        )
         .route("/api/v1/map-markers", axum::routing::get(list_map_markers))
         .route("/api/v1/geojson/export", axum::routing::get(export_geojson))
         .route("/api/v1/search", axum::routing::get(search_locations))
         // 新增 GIS API 路由
         .route("/api/v1/maps", axum::routing::get(api::map::list_maps))
         .route("/api/v1/maps/{id}", axum::routing::get(api::map::get_map))
-        .route("/api/v1/maps/{id}/layers", axum::routing::get(api::map::list_map_layers))
-        .route("/api/v1/geodata", axum::routing::get(api::geodata::list_geodata))
-        .route("/api/v1/geodata/{id}", axum::routing::get(api::geodata::get_geodata))
-        .route("/api/v1/geodata/{id}/features", axum::routing::get(api::geodata::list_geofeatures))
-        .route("/api/v1/locations", axum::routing::get(api::location::list_locations))
-        .route("/api/v1/locations/{id}", axum::routing::get(api::location::get_location))
-        .route("/api/v1/devices", axum::routing::get(api::device::list_devices))
-        .route("/api/v1/devices/{id}", axum::routing::get(api::device::get_device));
+        .route(
+            "/api/v1/maps/{id}/layers",
+            axum::routing::get(api::map::list_map_layers),
+        )
+        .route(
+            "/api/v1/geodata",
+            axum::routing::get(api::geodata::list_geodata),
+        )
+        .route(
+            "/api/v1/geodata/{id}",
+            axum::routing::get(api::geodata::get_geodata),
+        )
+        .route(
+            "/api/v1/geodata/{id}/features",
+            axum::routing::get(api::geodata::list_geofeatures),
+        )
+        .route(
+            "/api/v1/locations",
+            axum::routing::get(api::location::list_locations),
+        )
+        .route(
+            "/api/v1/locations/{id}",
+            axum::routing::get(api::location::get_location),
+        )
+        .route(
+            "/api/v1/devices",
+            axum::routing::get(api::device::list_devices),
+        )
+        .route(
+            "/api/v1/devices/{id}",
+            axum::routing::get(api::device::get_device),
+        );
 
     let protected_api = Router::new()
-        .route("/api/v1/factory-maps", axum::routing::post(create_factory_map))
-        .route("/api/v1/factory-maps/{id}", axum::routing::put(update_factory_map))
-        .route("/api/v1/factory-maps/{id}", axum::routing::delete(delete_factory_map))
-        .route("/api/v1/device-locations", axum::routing::post(create_device_location))
-        .route("/api/v1/device-locations/{id}", axum::routing::put(update_device_location))
-        .route("/api/v1/device-locations/{id}", axum::routing::delete(delete_device_location))
+        .route(
+            "/api/v1/factory-maps",
+            axum::routing::post(create_factory_map),
+        )
+        .route(
+            "/api/v1/factory-maps/{id}",
+            axum::routing::put(update_factory_map),
+        )
+        .route(
+            "/api/v1/factory-maps/{id}",
+            axum::routing::delete(delete_factory_map),
+        )
+        .route(
+            "/api/v1/device-locations",
+            axum::routing::post(create_device_location),
+        )
+        .route(
+            "/api/v1/device-locations/{id}",
+            axum::routing::put(update_device_location),
+        )
+        .route(
+            "/api/v1/device-locations/{id}",
+            axum::routing::delete(delete_device_location),
+        )
         .route("/api/v1/pipelines", axum::routing::post(create_pipeline))
-        .route("/api/v1/pipelines/{id}", axum::routing::put(update_pipeline))
-        .route("/api/v1/pipelines/{id}", axum::routing::delete(delete_pipeline))
-        .route("/api/v1/warehouse-locations", axum::routing::post(create_warehouse_location))
-        .route("/api/v1/warehouse-locations/{id}", axum::routing::put(update_warehouse_location))
-        .route("/api/v1/warehouse-locations/{id}", axum::routing::delete(delete_warehouse_location))
-        .route("/api/v1/location-photos", axum::routing::post(create_location_photo))
-        .route("/api/v1/location-photos/{id}", axum::routing::delete(delete_location_photo))
-        .route("/api/v1/business-locations", axum::routing::post(create_business_location))
-        .route("/api/v1/business-locations/{id}", axum::routing::put(update_business_location))
-        .route("/api/v1/business-locations/{id}", axum::routing::delete(delete_business_location))
-        .route("/api/v1/map-markers", axum::routing::post(create_map_marker))
-        .route("/api/v1/map-markers/{id}", axum::routing::put(update_map_marker))
-        .route("/api/v1/map-markers/{id}", axum::routing::delete(delete_map_marker))
+        .route(
+            "/api/v1/pipelines/{id}",
+            axum::routing::put(update_pipeline),
+        )
+        .route(
+            "/api/v1/pipelines/{id}",
+            axum::routing::delete(delete_pipeline),
+        )
+        .route(
+            "/api/v1/warehouse-locations",
+            axum::routing::post(create_warehouse_location),
+        )
+        .route(
+            "/api/v1/warehouse-locations/{id}",
+            axum::routing::put(update_warehouse_location),
+        )
+        .route(
+            "/api/v1/warehouse-locations/{id}",
+            axum::routing::delete(delete_warehouse_location),
+        )
+        .route(
+            "/api/v1/location-photos",
+            axum::routing::post(create_location_photo),
+        )
+        .route(
+            "/api/v1/location-photos/{id}",
+            axum::routing::delete(delete_location_photo),
+        )
+        .route(
+            "/api/v1/business-locations",
+            axum::routing::post(create_business_location),
+        )
+        .route(
+            "/api/v1/business-locations/{id}",
+            axum::routing::put(update_business_location),
+        )
+        .route(
+            "/api/v1/business-locations/{id}",
+            axum::routing::delete(delete_business_location),
+        )
+        .route(
+            "/api/v1/map-markers",
+            axum::routing::post(create_map_marker),
+        )
+        .route(
+            "/api/v1/map-markers/{id}",
+            axum::routing::put(update_map_marker),
+        )
+        .route(
+            "/api/v1/map-markers/{id}",
+            axum::routing::delete(delete_map_marker),
+        )
         .route("/api/v1/import", axum::routing::post(import_data))
         // 新增 GIS API 保护路由
-        .route("/api/v1/maps/create", axum::routing::post(api::map::create_map))
-        .route("/api/v1/maps/{id}", axum::routing::put(api::map::update_map))
-        .route("/api/v1/maps/{id}", axum::routing::delete(api::map::delete_map))
-        .route("/api/v1/maps/{id}/layers", axum::routing::post(api::map::add_map_layer))
-        .route("/api/v1/maps/{id}/layers/{layer_id}", axum::routing::delete(api::map::delete_map_layer))
-        .route("/api/v1/geodata/upload", axum::routing::post(api::geodata::upload_geodata))
-        .route("/api/v1/geodata/{id}", axum::routing::put(api::geodata::update_geodata))
-        .route("/api/v1/geodata/{id}", axum::routing::delete(api::geodata::delete_geodata))
-        .route("/api/v1/geodata/{id}/convert", axum::routing::post(api::geodata::convert_geodata))
-        .route("/api/v1/spatial/buffer", axum::routing::post(api::spatial::buffer_analysis))
-        .route("/api/v1/spatial/intersect", axum::routing::post(api::spatial::intersect_analysis))
-        .route("/api/v1/spatial/union", axum::routing::post(api::spatial::union_analysis))
-        .route("/api/v1/spatial/difference", axum::routing::post(api::spatial::difference_analysis))
-        .route("/api/v1/spatial/within", axum::routing::post(api::spatial::within_analysis))
-        .route("/api/v1/spatial/distance", axum::routing::post(api::spatial::distance_calculation))
-        .route("/api/v1/spatial/nearest", axum::routing::post(api::spatial::nearest_query))
-        .route("/api/v1/spatial/cluster", axum::routing::post(api::spatial::cluster_analysis))
-        .route("/api/v1/locations/create", axum::routing::post(api::location::create_location))
-        .route("/api/v1/locations/{id}", axum::routing::put(api::location::update_location))
-        .route("/api/v1/locations/{id}", axum::routing::delete(api::location::delete_location))
-        .route("/api/v1/locations/search", axum::routing::post(api::location::search_locations))
-        .route("/api/v1/locations/nearby", axum::routing::post(api::location::nearby_locations))
-        .route("/api/v1/locations/route", axum::routing::post(api::location::plan_route))
-        .route("/api/v1/devices/register", axum::routing::post(api::device::register_device))
-        .route("/api/v1/devices/{id}", axum::routing::put(api::device::update_device))
-        .route("/api/v1/devices/{id}", axum::routing::delete(api::device::delete_device))
-        .route("/api/v1/devices/{id}/location", axum::routing::post(api::device::update_device_location))
-        .route("/api/v1/devices/{id}/tracking", axum::routing::get(api::device::get_device_tracking))
-        .route("/api/v1/devices/{id}/history", axum::routing::get(api::device::get_device_history))
+        .route(
+            "/api/v1/maps/create",
+            axum::routing::post(api::map::create_map),
+        )
+        .route(
+            "/api/v1/maps/{id}",
+            axum::routing::put(api::map::update_map),
+        )
+        .route(
+            "/api/v1/maps/{id}",
+            axum::routing::delete(api::map::delete_map),
+        )
+        .route(
+            "/api/v1/maps/{id}/layers",
+            axum::routing::post(api::map::add_map_layer),
+        )
+        .route(
+            "/api/v1/maps/{id}/layers/{layer_id}",
+            axum::routing::delete(api::map::delete_map_layer),
+        )
+        .route(
+            "/api/v1/geodata/upload",
+            axum::routing::post(api::geodata::upload_geodata),
+        )
+        .route(
+            "/api/v1/geodata/{id}",
+            axum::routing::put(api::geodata::update_geodata),
+        )
+        .route(
+            "/api/v1/geodata/{id}",
+            axum::routing::delete(api::geodata::delete_geodata),
+        )
+        .route(
+            "/api/v1/geodata/{id}/convert",
+            axum::routing::post(api::geodata::convert_geodata),
+        )
+        .route(
+            "/api/v1/spatial/buffer",
+            axum::routing::post(api::spatial::buffer_analysis),
+        )
+        .route(
+            "/api/v1/spatial/intersect",
+            axum::routing::post(api::spatial::intersect_analysis),
+        )
+        .route(
+            "/api/v1/spatial/union",
+            axum::routing::post(api::spatial::union_analysis),
+        )
+        .route(
+            "/api/v1/spatial/difference",
+            axum::routing::post(api::spatial::difference_analysis),
+        )
+        .route(
+            "/api/v1/spatial/within",
+            axum::routing::post(api::spatial::within_analysis),
+        )
+        .route(
+            "/api/v1/spatial/distance",
+            axum::routing::post(api::spatial::distance_calculation),
+        )
+        .route(
+            "/api/v1/spatial/nearest",
+            axum::routing::post(api::spatial::nearest_query),
+        )
+        .route(
+            "/api/v1/spatial/cluster",
+            axum::routing::post(api::spatial::cluster_analysis),
+        )
+        .route(
+            "/api/v1/locations/create",
+            axum::routing::post(api::location::create_location),
+        )
+        .route(
+            "/api/v1/locations/{id}",
+            axum::routing::put(api::location::update_location),
+        )
+        .route(
+            "/api/v1/locations/{id}",
+            axum::routing::delete(api::location::delete_location),
+        )
+        .route(
+            "/api/v1/locations/search",
+            axum::routing::post(api::location::search_locations),
+        )
+        .route(
+            "/api/v1/locations/nearby",
+            axum::routing::post(api::location::nearby_locations),
+        )
+        .route(
+            "/api/v1/locations/route",
+            axum::routing::post(api::location::plan_route),
+        )
+        .route(
+            "/api/v1/devices/register",
+            axum::routing::post(api::device::register_device),
+        )
+        .route(
+            "/api/v1/devices/{id}",
+            axum::routing::put(api::device::update_device),
+        )
+        .route(
+            "/api/v1/devices/{id}",
+            axum::routing::delete(api::device::delete_device),
+        )
+        .route(
+            "/api/v1/devices/{id}/location",
+            axum::routing::post(api::device::update_device_location),
+        )
+        .route(
+            "/api/v1/devices/{id}/tracking",
+            axum::routing::get(api::device::get_device_tracking),
+        )
+        .route(
+            "/api/v1/devices/{id}/history",
+            axum::routing::get(api::device::get_device_history),
+        )
         .layer(axum::middleware::from_fn_with_state(
             auth_state,
             auth_middleware,
@@ -1939,7 +2169,8 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8050".to_string());
+    let port = env::var("SERVER_PORT")
+        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8053".to_string()));
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-GIS 厂区空间数字化系统启动中...");

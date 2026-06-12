@@ -67,6 +67,7 @@ pub trait EmbeddingService: Send + Sync {
 pub struct OpenAIEmbedding {
     api_key: String,
     model: String,
+    #[allow(dead_code)]
     dimension: usize,
     client: reqwest::Client,
 }
@@ -157,6 +158,7 @@ impl EmbeddingService for OpenAIEmbedding {
 #[derive(Clone)]
 pub struct LocalEmbedding {
     endpoint: String,
+    #[allow(dead_code)]
     dimension: usize,
     client: reqwest::Client,
 }
@@ -249,9 +251,7 @@ impl EmbeddingService for MockEmbedding {
 
         let mut rng = SimpleRng::new(hash);
 
-        let embedding: Vec<f32> = (0..self.dimension)
-            .map(|_| rng.next_f32())
-            .collect();
+        let embedding: Vec<f32> = (0..self.dimension).map(|_| rng.next_f32()).collect();
 
         // 归一化
         let norm: f32 = embedding.iter().map(|x| x * x).sum::<f32>().sqrt();
@@ -305,19 +305,20 @@ pub fn create_embedding_service(config: &EmbeddingConfig) -> Result<Arc<dyn Embe
         "ollama" => {
             // 使用 Ollama（Qwen2.5:7b-instruct 等）
             let ollama_config = crate::ollama_client::OllamaConfig {
-                base_url: config.ollama_url.clone().unwrap_or_else(|| "http://localhost:11434".to_string()),
+                base_url: config
+                    .ollama_url
+                    .clone()
+                    .unwrap_or_else(|| "http://localhost:11434".to_string()),
                 model: config.model.clone(),
                 dimension: config.dimension,
             };
             Ok(Arc::new(crate::ollama_client::OllamaEmbedder::new(
-                crate::ollama_client::OllamaClient::new(ollama_config)
+                crate::ollama_client::OllamaClient::new(ollama_config),
             )))
         }
         "openai" => {
-            let api_key = std::env::var(
-                config.api_key_env.as_deref().unwrap_or("OPENAI_API_KEY"),
-            )
-            .map_err(|_| anyhow::anyhow!("OpenAI API key not found"))?;
+            let api_key = std::env::var(config.api_key_env.as_deref().unwrap_or("OPENAI_API_KEY"))
+                .map_err(|_| anyhow::anyhow!("OpenAI API key not found"))?;
 
             Ok(Arc::new(OpenAIEmbedding::new(
                 api_key,

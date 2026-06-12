@@ -1,7 +1,6 @@
 use chrono::Utc;
-use serde_json;
+use topems_shared::audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
 use uuid::Uuid;
-use topems_shared::audit::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
 
 #[test]
 fn test_create_audit_log_request_new() {
@@ -25,7 +24,8 @@ fn test_create_audit_log_request_with_entity_id() {
         "update".to_string(),
         "employee".to_string(),
         "success".to_string(),
-    ).with_entity_id(entity_id);
+    )
+    .with_entity_id(entity_id);
 
     assert_eq!(request.entity_id, Some(entity_id));
 }
@@ -37,7 +37,8 @@ fn test_create_audit_log_request_with_entity_ids() {
         "delete".to_string(),
         "employee".to_string(),
         "success".to_string(),
-    ).with_entity_ids(entity_ids.clone());
+    )
+    .with_entity_ids(entity_ids.clone());
 
     assert_eq!(request.entity_ids, Some(entity_ids));
 }
@@ -48,7 +49,8 @@ fn test_create_audit_log_request_with_user() {
         "create".to_string(),
         "employee".to_string(),
         "success".to_string(),
-    ).with_user("user-123".to_string(), "John Doe".to_string());
+    )
+    .with_user("user-123".to_string(), "John Doe".to_string());
 
     assert_eq!(request.user_id, Some("user-123".to_string()));
     assert_eq!(request.user_name, Some("John Doe".to_string()));
@@ -61,7 +63,8 @@ fn test_create_audit_log_request_with_request_details() {
         "create".to_string(),
         "employee".to_string(),
         "success".to_string(),
-    ).with_request_details(details.clone());
+    )
+    .with_request_details(details.clone());
 
     assert_eq!(request.request_details, Some(details));
 }
@@ -73,7 +76,8 @@ fn test_create_audit_log_request_with_response_details() {
         "create".to_string(),
         "employee".to_string(),
         "success".to_string(),
-    ).with_response_details(details.clone());
+    )
+    .with_response_details(details.clone());
 
     assert_eq!(request.response_details, Some(details));
 }
@@ -84,9 +88,13 @@ fn test_create_audit_log_request_with_error() {
         "create".to_string(),
         "employee".to_string(),
         "failed".to_string(),
-    ).with_error("Database connection failed".to_string());
+    )
+    .with_error("Database connection failed".to_string());
 
-    assert_eq!(request.error_message, Some("Database connection failed".to_string()));
+    assert_eq!(
+        request.error_message,
+        Some("Database connection failed".to_string())
+    );
 }
 
 #[test]
@@ -95,7 +103,11 @@ fn test_create_audit_log_request_with_request_info() {
         "create".to_string(),
         "employee".to_string(),
         "success".to_string(),
-    ).with_request_info(Some("192.168.1.1".to_string()), Some("Mozilla/5.0".to_string()));
+    )
+    .with_request_info(
+        Some("192.168.1.1".to_string()),
+        Some("Mozilla/5.0".to_string()),
+    );
 
     assert_eq!(request.ip_address, Some("192.168.1.1".to_string()));
     assert_eq!(request.user_agent, Some("Mozilla/5.0".to_string()));
@@ -143,7 +155,7 @@ fn test_audit_log_query_defaults() {
 fn test_audit_log_query_with_parameters() {
     let start_date = Utc::now();
     let end_date = start_date + chrono::Duration::days(1);
-    
+
     let query = AuditLogQuery {
         action: Some("create".to_string()),
         entity_type: Some("employee".to_string()),
@@ -165,7 +177,7 @@ fn test_audit_log_query_with_parameters() {
 fn test_audit_log_struct() {
     let id = Uuid::new_v4();
     let created_at = Utc::now();
-    
+
     let audit_log = AuditLog {
         id,
         action: "create".to_string(),
@@ -196,7 +208,8 @@ fn test_create_audit_log_request_serialization() {
         "create".to_string(),
         "employee".to_string(),
         "success".to_string(),
-    ).with_user("user-123".to_string(), "John Doe".to_string());
+    )
+    .with_user("user-123".to_string(), "John Doe".to_string());
 
     let json_string = serde_json::to_string(&request).unwrap();
     let deserialized: CreateAuditLogRequest = serde_json::from_str(&json_string).unwrap();

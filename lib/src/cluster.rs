@@ -1,9 +1,9 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClusterConfig {
@@ -78,22 +78,37 @@ impl NodeHealth {
 
     pub fn calculate_score(&self) -> u32 {
         let mut score = 100u32;
-        
-        if self.cpu_usage > 80.0 { score -= 20; }
-        else if self.cpu_usage > 60.0 { score -= 10; }
-        
-        if self.memory_usage > 85.0 { score -= 20; }
-        else if self.memory_usage > 70.0 { score -= 10; }
-        
-        if self.disk_usage > 90.0 { score -= 15; }
-        else if self.disk_usage > 75.0 { score -= 5; }
-        
-        if self.network_latency_ms > 100 { score -= 15; }
-        else if self.network_latency_ms > 50 { score -= 5; }
-        
-        if self.error_rate > 5.0 { score -= 30; }
-        else if self.error_rate > 2.0 { score -= 15; }
-        
+
+        if self.cpu_usage > 80.0 {
+            score -= 20;
+        } else if self.cpu_usage > 60.0 {
+            score -= 10;
+        }
+
+        if self.memory_usage > 85.0 {
+            score -= 20;
+        } else if self.memory_usage > 70.0 {
+            score -= 10;
+        }
+
+        if self.disk_usage > 90.0 {
+            score -= 15;
+        } else if self.disk_usage > 75.0 {
+            score -= 5;
+        }
+
+        if self.network_latency_ms > 100 {
+            score -= 15;
+        } else if self.network_latency_ms > 50 {
+            score -= 5;
+        }
+
+        if self.error_rate > 5.0 {
+            score -= 30;
+        } else if self.error_rate > 2.0 {
+            score -= 15;
+        }
+
         score.saturating_sub((self.request_rate / 10000) as u32)
     }
 }
@@ -244,7 +259,7 @@ impl ClusterManager {
             return Err(ClusterError::NodeAlreadyExists);
         }
         nodes.insert(node.id, node.clone());
-        
+
         self.record_event(ClusterEvent {
             id: Uuid::new_v4(),
             cluster_id: Uuid::nil(),
@@ -254,15 +269,16 @@ impl ClusterManager {
             message: format!("Node {} joined the cluster", node.hostname),
             details: HashMap::new(),
             created_at: Utc::now(),
-        }).await;
-        
+        })
+        .await;
+
         Ok(())
     }
 
     pub async fn remove_node(&self, node_id: Uuid) -> Result<NodeConfig, ClusterError> {
         let mut nodes = self.nodes.write().await;
         let node = nodes.remove(&node_id).ok_or(ClusterError::NodeNotFound)?;
-        
+
         self.record_event(ClusterEvent {
             id: Uuid::new_v4(),
             cluster_id: Uuid::nil(),
@@ -272,8 +288,9 @@ impl ClusterManager {
             message: format!("Node {} left the cluster", node.hostname),
             details: HashMap::new(),
             created_at: Utc::now(),
-        }).await;
-        
+        })
+        .await;
+
         Ok(node)
     }
 
@@ -289,26 +306,31 @@ impl ClusterManager {
 
     pub async fn get_healthy_nodes(&self) -> Vec<NodeConfig> {
         let nodes = self.nodes.read().await;
-        nodes.values()
+        nodes
+            .values()
             .filter(|n| n.status == NodeStatus::Online && n.health.is_healthy())
             .cloned()
             .collect()
     }
 
-    pub async fn update_node_health(&self, node_id: Uuid, health: NodeHealth) -> Result<(), ClusterError> {
+    pub async fn update_node_health(
+        &self,
+        node_id: Uuid,
+        health: NodeHealth,
+    ) -> Result<(), ClusterError> {
         let mut nodes = self.nodes.write().await;
         let node = nodes.get_mut(&node_id).ok_or(ClusterError::NodeNotFound)?;
-        
+
         let was_healthy = node.health.is_healthy();
         node.health = health;
         node.last_heartbeat = Utc::now();
         node.health.score = node.health.calculate_score();
-        
+
         let is_healthy = node.health.is_healthy();
-        
+
         if was_healthy && !is_healthy {
             node.status = NodeStatus::Standby;
-            
+
             self.record_event(ClusterEvent {
                 id: Uuid::new_v4(),
                 cluster_id: Uuid::nil(),
@@ -318,10 +340,11 @@ impl ClusterManager {
                 message: format!("Node {} health check failed", node.hostname),
                 details: HashMap::new(),
                 created_at: Utc::now(),
-            }).await;
+            })
+            .await;
         } else if !was_healthy && is_healthy {
             node.status = NodeStatus::Online;
-            
+
             self.record_event(ClusterEvent {
                 id: Uuid::new_v4(),
                 cluster_id: Uuid::nil(),
@@ -331,23 +354,25 @@ impl ClusterManager {
                 message: format!("Node {} health check passed", node.hostname),
                 details: HashMap::new(),
                 created_at: Utc::now(),
-            }).await;
+            })
+            .await;
         }
-        
+
         Ok(())
     }
 
-    pub async fn select_node(&self, algorithm: LoadBalancingAlgorithm) -> Result<Option<NodeConfig>, ClusterError> {
+    pub async fn select_node(
+        &self,
+        algorithm: LoadBalancingAlgorithm,
+    ) -> Result<Option<NodeConfig>, ClusterError> {
         let healthy_nodes = self.get_healthy_nodes().await;
-        
+
         if healthy_nodes.is_empty() {
             return Ok(None);
         }
 
         let selected = match algorithm {
-            LoadBalancingAlgorithm::RoundRobin => {
-                healthy_nodes.first().cloned()
-            }
+            LoadBalancingAlgorithm::RoundRobin => healthy_nodes.first().cloned(),
             LoadBalancingAlgorithm::LeastConnections => {
                 let mut sorted = healthy_nodes;
                 sorted.sort_by_key(|n| n.health.request_rate);
@@ -356,15 +381,15 @@ impl ClusterManager {
             LoadBalancingAlgorithm::WeightedRoundRobin => {
                 let total_weight: u32 = healthy_nodes.iter().map(|n| n.weight).sum();
                 let nodes_with_weight: Vec<_> = healthy_nodes.iter().collect();
-                
+
                 if total_weight > 0 {
                     let weight_sum: u32 = (0..nodes_with_weight.len())
                         .map(|i| nodes_with_weight[i].weight)
                         .sum();
-                    
+
                     let selected_weight = weight_sum % nodes_with_weight.len() as u32;
                     let mut cumulative = 0u32;
-                    
+
                     for node in nodes_with_weight {
                         cumulative += node.weight;
                         if cumulative >= selected_weight {
@@ -372,24 +397,22 @@ impl ClusterManager {
                         }
                     }
                 }
-                
+
                 healthy_nodes.first().cloned()
             }
             LoadBalancingAlgorithm::Random => {
                 use std::collections::hash_map::RandomState;
                 use std::hash::{BuildHasher, Hasher};
-                
+
                 let state = RandomState::new();
                 let mut hasher = state.build_hasher();
                 hasher.write_u64(Utc::now().timestamp_nanos_opt().unwrap_or(0) as u64);
                 let hash = hasher.finish();
-                
+
                 let index = (hash as usize) % healthy_nodes.len();
                 Some(healthy_nodes[index].clone())
             }
-            LoadBalancingAlgorithm::IpHash => {
-                healthy_nodes.first().cloned()
-            }
+            LoadBalancingAlgorithm::IpHash => healthy_nodes.first().cloned(),
         };
 
         Ok(selected)
@@ -412,7 +435,8 @@ impl ClusterManager {
             message: format!("Failover started for node {}", failed_node_id),
             details: HashMap::new(),
             created_at: Utc::now(),
-        }).await;
+        })
+        .await;
 
         {
             let mut nodes = self.nodes.write().await;
@@ -435,7 +459,8 @@ impl ClusterManager {
             message: format!("Failover completed for node {}", failed_node_id),
             details: HashMap::new(),
             created_at: Utc::now(),
-        }).await;
+        })
+        .await;
 
         Ok(())
     }
@@ -443,13 +468,23 @@ impl ClusterManager {
     pub async fn get_metrics(&self) -> ClusterMetrics {
         let nodes = self.nodes.read().await;
         let total = nodes.len() as u32;
-        let healthy = nodes.values().filter(|n| n.status == NodeStatus::Online && n.health.is_healthy()).count() as u32;
+        let healthy = nodes
+            .values()
+            .filter(|n| n.status == NodeStatus::Online && n.health.is_healthy())
+            .count() as u32;
         let unhealthy = nodes.values().filter(|n| !n.health.is_healthy()).count() as u32;
-        let offline = nodes.values().filter(|n| n.status == NodeStatus::Offline).count() as u32;
-        
+        let offline = nodes
+            .values()
+            .filter(|n| n.status == NodeStatus::Offline)
+            .count() as u32;
+
         let total_requests: u64 = nodes.values().map(|n| n.health.request_rate).sum();
         let avg_response: u64 = if total > 0 {
-            nodes.values().map(|n| n.health.network_latency_ms).sum::<u64>() / total as u64
+            nodes
+                .values()
+                .map(|n| n.health.network_latency_ms)
+                .sum::<u64>()
+                / total as u64
         } else {
             0
         };
@@ -466,14 +501,18 @@ impl ClusterManager {
             average_load: 0.0,
             failover_count: 0,
             last_failover: None,
-            uptime_percentage: if total > 0 { (healthy as f64 / total as f64) * 100.0 } else { 0.0 },
+            uptime_percentage: if total > 0 {
+                (healthy as f64 / total as f64) * 100.0
+            } else {
+                0.0
+            },
         }
     }
 
     async fn record_event(&self, event: ClusterEvent) {
         let mut events = self.events.write().await;
         events.push(event);
-        
+
         if events.len() > 1000 {
             events.remove(0);
         }
@@ -489,19 +528,19 @@ impl ClusterManager {
 pub enum ClusterError {
     #[error("Node not found")]
     NodeNotFound,
-    
+
     #[error("Node already exists")]
     NodeAlreadyExists,
-    
+
     #[error("No healthy nodes available")]
     NoHealthyNodes,
-    
+
     #[error("Failover already in progress")]
     FailoverInProgress,
-    
+
     #[error("Cluster not configured")]
     ClusterNotConfigured,
-    
+
     #[error("Configuration error: {0}")]
     ConfigurationError(String),
 }
@@ -521,10 +560,10 @@ mod tests {
             error_rate: 1.0,
             score: 0,
         };
-        
+
         // 先计算正确的健康分数
         health.score = health.calculate_score();
-        
+
         // 现在应该是健康的
         assert!(health.is_healthy());
         assert!(health.score >= 70);
@@ -533,7 +572,7 @@ mod tests {
     #[tokio::test]
     async fn test_add_node() {
         let manager = ClusterManager::new();
-        
+
         let node = NodeConfig {
             id: Uuid::new_v4(),
             hostname: "node1.example.com".to_string(),
@@ -556,9 +595,9 @@ mod tests {
             },
             last_heartbeat: Utc::now(),
         };
-        
+
         manager.add_node(node.clone()).await.unwrap();
-        
+
         let found = manager.get_node(node.id).await;
         assert!(found.is_some());
         assert_eq!(found.unwrap().hostname, "node1.example.com");
@@ -567,7 +606,7 @@ mod tests {
     #[tokio::test]
     async fn test_load_balancing() {
         let manager = ClusterManager::new();
-        
+
         for i in 0..3 {
             let node = NodeConfig {
                 id: Uuid::new_v4(),
@@ -591,11 +630,13 @@ mod tests {
                 },
                 last_heartbeat: Utc::now(),
             };
-            
+
             manager.add_node(node).await.unwrap();
         }
-        
-        let selected = manager.select_node(LoadBalancingAlgorithm::RoundRobin).await;
+
+        let selected = manager
+            .select_node(LoadBalancingAlgorithm::RoundRobin)
+            .await;
         assert!(selected.is_ok());
         assert!(selected.unwrap().is_some());
     }
@@ -604,7 +645,7 @@ mod tests {
     async fn test_metrics() {
         let manager = ClusterManager::new();
         let metrics = manager.get_metrics().await;
-        
+
         assert_eq!(metrics.total_nodes, 0);
         assert_eq!(metrics.healthy_nodes, 0);
     }

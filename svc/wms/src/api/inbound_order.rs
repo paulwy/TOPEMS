@@ -7,10 +7,10 @@ use axum::{
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::models::{CreateInboundOrderRequest, InboundOrder, UpdateInboundOrderRequest};
 use crate::api::audit::log_audit_event;
 use crate::api::ApiState;
-use topems_shared::{ApiResponse, PaginationParams, api_error};
+use crate::models::{CreateInboundOrderRequest, InboundOrder, UpdateInboundOrderRequest};
+use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -18,10 +18,15 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/v1/inbound-orders", get(list_inbound_orders).post(create_inbound_order))
+        .route(
+            "/api/v1/inbound-orders",
+            get(list_inbound_orders).post(create_inbound_order),
+        )
         .route(
             "/api/v1/inbound-orders/{id}",
-            get(get_inbound_order).put(update_inbound_order).delete(delete_inbound_order),
+            get(get_inbound_order)
+                .put(update_inbound_order)
+                .delete(delete_inbound_order),
         )
 }
 
@@ -122,14 +127,14 @@ async fn create_inbound_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "入库订单创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建入库订单失败: {}", e);
             (
                 Json(api_error(500, "入库订单创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -152,8 +157,9 @@ async fn create_inbound_order(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -191,7 +197,7 @@ async fn update_inbound_order(
 ) -> Json<ApiResponse<InboundOrder>> {
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, InboundOrder>(
         r#"
         SELECT id, order_number, warehouse_id, supplier_id, order_date, expected_arrival, 
@@ -244,14 +250,14 @@ async fn update_inbound_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "入库订单更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新入库订单失败: {}", e);
             (
                 Json(api_error(500, "入库订单更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -274,8 +280,9 @@ async fn update_inbound_order(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -294,19 +301,19 @@ async fn delete_inbound_order(
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success("".to_string(), "入库订单删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(api_error(404, "入库订单不存在")),
             "error",
-            Some("入库订单不存在".to_string())
+            Some("入库订单不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除入库订单失败: {}", e);
             (
                 Json(api_error(500, "入库订单删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -329,8 +336,9 @@ async fn delete_inbound_order(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

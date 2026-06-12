@@ -1,15 +1,15 @@
 use axum::{
-    extract::{State, Json, Query},
-    http::{StatusCode, HeaderMap},
+    extract::{Json, Query, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row, postgres::PgRow};
+use sqlx::{postgres::PgRow, PgPool, Row};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Notification {
@@ -61,14 +61,20 @@ pub async fn get_notifications(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id = match Uuid::parse_str(&user_id_str) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
@@ -89,19 +95,20 @@ pub async fn get_notifications(
             .bind(size)
             .bind(offset)
     } else {
-        sqlx::query(query_str)
-            .bind(user_id)
-            .bind(size)
-            .bind(offset)
+        sqlx::query(query_str).bind(user_id).bind(size).bind(offset)
     };
 
     let items = match query.fetch_all(&pool).await {
-        Ok(rows) => rows.into_iter()
+        Ok(rows) => rows
+            .into_iter()
             .filter_map(|row| Notification::from_row(&row).ok())
             .collect(),
         Err(e) => {
             tracing::error!("查询通知失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "内部服务器错误")));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "内部服务器错误")),
+            );
         }
     };
 
@@ -117,10 +124,12 @@ pub async fn get_notifications(
         }
     };
 
-    let unread_count = match sqlx::query("SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false")
-        .bind(user_id)
-        .fetch_one(&pool)
-        .await
+    let unread_count = match sqlx::query(
+        "SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false",
+    )
+    .bind(user_id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(row) => row.try_get::<i64, _>(0).unwrap_or(0),
         Err(e) => {
@@ -135,7 +144,10 @@ pub async fn get_notifications(
         unread_count,
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "获取通知列表成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "获取通知列表成功")),
+    )
 }
 
 pub async fn get_unread_count(
@@ -146,30 +158,44 @@ pub async fn get_unread_count(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id = match Uuid::parse_str(&user_id_str) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
-    let count = match sqlx::query("SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false")
-        .bind(user_id)
-        .fetch_one(&pool)
-        .await
+    let count = match sqlx::query(
+        "SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false",
+    )
+    .bind(user_id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(row) => row.try_get::<i64, _>(0).unwrap_or(0),
         Err(e) => {
             tracing::error!("统计未读通知数量失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "内部服务器错误")));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "内部服务器错误")),
+            );
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(count, "获取未读数量成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(count, "获取未读数量成功")),
+    )
 }
 
 pub async fn mark_all_read(
@@ -180,26 +206,40 @@ pub async fn mark_all_read(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id = match Uuid::parse_str(&user_id_str) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
-    match sqlx::query("UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false")
-        .bind(user_id)
-        .execute(&pool)
-        .await
+    match sqlx::query(
+        "UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false",
+    )
+    .bind(user_id)
+    .execute(&pool)
+    .await
     {
-        Ok(_) => (StatusCode::OK, Json(ApiResponse::success((), "全部标记已读成功"))),
+        Ok(_) => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "全部标记已读成功")),
+        ),
         Err(e) => {
             tracing::error!("标记已读失败: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "内部服务器错误")))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "内部服务器错误")),
+            )
         }
     }
 }

@@ -1,19 +1,16 @@
-use axum::{
-    extract::FromRef,
-    Router,
-};
+use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared::AuthState;
 use topems_shared::SystemMetrics;
 
-pub mod customer;
-pub mod contact;
-pub mod opportunity;
-pub mod interaction;
 pub mod audit;
+pub mod contact;
+pub mod customer;
+pub mod interaction;
 pub mod openapi;
+pub mod opportunity;
 
 #[derive(Clone)]
 pub struct ApiState {

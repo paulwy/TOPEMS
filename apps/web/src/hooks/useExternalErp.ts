@@ -197,7 +197,9 @@ export function useSyncAccounts() {
     }) => externalErpApi.syncAccounts(data),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["external-erp-sync-logs"] });
-      success(`成功同步 ${result.data.created_count + result.data.updated_count} 个科目`);
+      success(
+        `成功同步 ${result.data.created_count + result.data.updated_count} 个科目`,
+      );
     },
     onError: (err: any) => {
       error(err.message || "科目同步失败");
@@ -222,7 +224,9 @@ export function useSyncCustomers() {
     }) => externalErpApi.syncCustomers(data),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["external-erp-sync-logs"] });
-      success(`成功同步 ${result.data.created_count + result.data.updated_count} 个客户`);
+      success(
+        `成功同步 ${result.data.created_count + result.data.updated_count} 个客户`,
+      );
     },
     onError: (err: any) => {
       error(err.message || "客户同步失败");

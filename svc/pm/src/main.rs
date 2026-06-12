@@ -3,26 +3,15 @@ pub mod models;
 pub mod services;
 
 use api::auth;
-use axum::{
-    routing::get,
-    Router,
-};
-use topems_shared::{
-    create_cors_layer,
-    create_database_pool,
-    init_logging,
-    test_database_connection,
-    AuthState,
-    auth_middleware,
-    Result,
-    ServiceHealth,
-    build_health_response,
-    create_api_info_router,
-    DatabaseConfig,
-};
-use utoipa::OpenApi;
+use axum::{routing::get, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
+use topems_shared::{
+    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
+    create_database_pool, init_logging, test_database_connection, AuthState, DatabaseConfig,
+    Result, ServiceHealth,
+};
+use utoipa::OpenApi;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -37,8 +26,11 @@ async fn main() -> Result<()> {
     let custom_gauge = Gauge::new(
         "topems_pm_custom_metric",
         "This is a custom metric for TOPEMS-PM",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -67,14 +59,15 @@ async fn main() -> Result<()> {
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         .merge(auth::create_routes());
 
-    let protected_routes = api::create_routes(pool.clone())
-        .layer(axum::middleware::from_fn_with_state(
-            auth_state.clone(),
-            auth_middleware,
-        ));
+    let protected_routes = api::create_routes(pool.clone()).layer(
+        axum::middleware::from_fn_with_state(auth_state.clone(), auth_middleware),
+    );
 
     let app = Router::new()
         .merge(public_routes)
@@ -83,7 +76,7 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = std::env::var("PORT").unwrap_or_else(|_| "8024".to_string());
+    let port = std::env::var("SERVER_PORT").unwrap_or_else(|_| "8002".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-PM 统一项目管理系统启动中...");

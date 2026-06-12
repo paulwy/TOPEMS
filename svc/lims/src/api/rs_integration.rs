@@ -5,12 +5,12 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use sqlx::Row;
-use utoipa::{ToSchema, IntoParams};
+use utoipa::{IntoParams, ToSchema};
+use uuid::Uuid;
 
-use crate::models::{Sample, InspectionRecord};
 use crate::api::ApiState;
+use crate::models::{InspectionRecord, Sample};
 use topems_shared::Result;
 
 #[derive(Debug, Serialize)]
@@ -94,9 +94,18 @@ pub struct BatchLinkRequest {
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/rs/projects/{project_id}/samples", get(get_project_samples))
-        .route("/api/v1/rs/samples/{sample_id}/project", get(get_sample_project))
-        .route("/api/v1/rs/samples/{sample_id}/inspections", get(get_sample_inspections))
+        .route(
+            "/api/v1/rs/projects/{project_id}/samples",
+            get(get_project_samples),
+        )
+        .route(
+            "/api/v1/rs/samples/{sample_id}/project",
+            get(get_sample_project),
+        )
+        .route(
+            "/api/v1/rs/samples/{sample_id}/inspections",
+            get(get_sample_inspections),
+        )
         .route("/api/v1/rs/samples/link", post(link_sample_to_project))
         .route("/api/v1/rs/samples/batch-link", post(batch_link_samples));
 
@@ -129,52 +138,57 @@ async fn get_project_samples(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let sample_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM lims.samples WHERE project_id = $1"#)
-        .bind(project_id)
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+    let sample_count: i64 =
+        sqlx::query_scalar(r#"SELECT COUNT(*) FROM lims.samples WHERE project_id = $1"#)
+            .bind(project_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
-    let completed_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM lims.samples WHERE project_id = $1 AND status = 'completed'"#)
-        .bind(project_id)
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+    let completed_count: i64 = sqlx::query_scalar(
+        r#"SELECT COUNT(*) FROM lims.samples WHERE project_id = $1 AND status = 'completed'"#,
+    )
+    .bind(project_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
-    let pending_count: i64 = sqlx::query_scalar(r#"SELECT COUNT(*) FROM lims.samples WHERE project_id = $1 AND status != 'completed'"#)
-        .bind(project_id)
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+    let pending_count: i64 = sqlx::query_scalar(
+        r#"SELECT COUNT(*) FROM lims.samples WHERE project_id = $1 AND status != 'completed'"#,
+    )
+    .bind(project_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
-    let samples = sqlx::query_as::<_, Sample>(r#"
+    let samples = sqlx::query_as::<_, Sample>(
+        r#"
         SELECT id, name, description, status, project_id, received_date, created_at, updated_at
         FROM lims.samples
         WHERE project_id = $1
         ORDER BY received_date DESC
         LIMIT $2 OFFSET $3
-        "#)
-        .bind(project_id)
-        .bind(page_size)
-        .bind(offset)
-        .fetch_all(&state.db)
-        .await;
+        "#,
+    )
+    .bind(project_id)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
 
     match samples {
-        Ok(samples) => {
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "project_id": project_id,
-                    "total_samples": sample_count,
-                    "completed_samples": completed_count,
-                    "pending_samples": pending_count,
-                    "samples": samples,
-                    "page": page,
-                    "page_size": page_size
-                }),
-                "获取项目样品列表成功",
-            ))
-        }
+        Ok(samples) => Json(ApiResponse::success(
+            serde_json::json!({
+                "project_id": project_id,
+                "total_samples": sample_count,
+                "completed_samples": completed_count,
+                "pending_samples": pending_count,
+                "samples": samples,
+                "page": page,
+                "page_size": page_size
+            }),
+            "获取项目样品列表成功",
+        )),
         Err(e) => {
             tracing::error!("获取项目样品失败: {}", e);
             Json(ApiResponse::error(500, "获取项目样品失败"))
@@ -277,7 +291,7 @@ async fn get_sample_inspections(
                     "recorded_at": record.get::<chrono::DateTime<chrono::Utc>, _>("recorded_at"),
                     "created_at": record.get::<chrono::DateTime<chrono::Utc>, _>("created_at")
                 })),
-                _ => None
+                _ => None,
             };
 
             Json(ApiResponse::success(
@@ -353,12 +367,14 @@ async fn batch_link_samples(
         return Json(ApiResponse::error(400, "未提供样品ID"));
     }
 
-    let result = sqlx::query(r#"UPDATE lims.samples SET project_id = $1, updated_at = $2 WHERE id = ANY($3)"#)
-        .bind(req.project_id)
-        .bind(Utc::now())
-        .bind(&req.sample_ids)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE lims.samples SET project_id = $1, updated_at = $2 WHERE id = ANY($3)"#,
+    )
+    .bind(req.project_id)
+    .bind(Utc::now())
+    .bind(&req.sample_ids)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) => {

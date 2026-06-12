@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -71,13 +73,12 @@ pub async fn get_user_direct_permissions(
     Path(user_id): Path<String>,
 ) -> Result<Json<ApiResponse<UserDirectPermissionsResponse>>, impl IntoResponse> {
     // 检查用户是否存在
-    let user_exists = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)"
-    )
-    .bind(&user_id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+    let user_exists =
+        sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)")
+            .bind(&user_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(false);
 
     if !user_exists {
         return Err((
@@ -94,7 +95,7 @@ pub async fn get_user_direct_permissions(
         INNER JOIN iam.user_direct_permissions udp ON p.id = udp.permission_id
         WHERE udp.user_id = $1
         ORDER BY p.category, p.code
-        "#
+        "#,
     )
     .bind(&user_id)
     .fetch_all(&state.db)
@@ -140,13 +141,12 @@ pub async fn assign_direct_permissions(
     Json(req): Json<AssignDirectPermissionsRequest>,
 ) -> Result<Json<ApiResponse<String>>, impl IntoResponse> {
     // 检查用户是否存在
-    let user_exists = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)"
-    )
-    .bind(&user_id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+    let user_exists =
+        sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)")
+            .bind(&user_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(false);
 
     if !user_exists {
         return Err((
@@ -162,7 +162,7 @@ pub async fn assign_direct_permissions(
             INSERT INTO iam.user_direct_permissions (user_id, permission_id, created_at)
             VALUES ($1, $2, $3)
             ON CONFLICT (user_id, permission_id) DO NOTHING
-            "#
+            "#,
         )
         .bind(&user_id)
         .bind(permission_id)
@@ -171,7 +171,11 @@ pub async fn assign_direct_permissions(
         .await;
 
         if let Err(e) = result {
-            tracing::error!("分配直接权限失败: permission_id={}, error={}", permission_id, e);
+            tracing::error!(
+                "分配直接权限失败: permission_id={}, error={}",
+                permission_id,
+                e
+            );
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiResponse::<()>::error(500, "分配权限失败")),
@@ -179,8 +183,15 @@ pub async fn assign_direct_permissions(
         }
     }
 
-    tracing::info!("为用户 {} 分配了 {} 个直接权限", user_id, req.permission_ids.len());
-    Ok(Json(ApiResponse::success(String::new(), "分配直接权限成功")))
+    tracing::info!(
+        "为用户 {} 分配了 {} 个直接权限",
+        user_id,
+        req.permission_ids.len()
+    );
+    Ok(Json(ApiResponse::success(
+        String::new(),
+        "分配直接权限成功",
+    )))
 }
 
 // 移除用户的直接权限
@@ -189,7 +200,7 @@ pub async fn remove_direct_permission(
     Path((user_id, permission_id)): Path<(String, String)>,
 ) -> Result<Json<ApiResponse<String>>, impl IntoResponse> {
     let result = sqlx::query(
-        "DELETE FROM iam.user_direct_permissions WHERE user_id = $1 AND permission_id = $2"
+        "DELETE FROM iam.user_direct_permissions WHERE user_id = $1 AND permission_id = $2",
     )
     .bind(&user_id)
     .bind(&permission_id)
@@ -200,7 +211,10 @@ pub async fn remove_direct_permission(
         Ok(res) => {
             if res.rows_affected() > 0 {
                 tracing::info!("从用户 {} 移除直接权限 {}", user_id, permission_id);
-                Ok(Json(ApiResponse::success(String::new(), "移除直接权限成功")))
+                Ok(Json(ApiResponse::success(
+                    String::new(),
+                    "移除直接权限成功",
+                )))
             } else {
                 Err((
                     StatusCode::NOT_FOUND,
@@ -224,13 +238,12 @@ pub async fn get_user_roles(
     Path(user_id): Path<String>,
 ) -> Result<Json<ApiResponse<UserRolesResponse>>, impl IntoResponse> {
     // 检查用户是否存在
-    let user_exists = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)"
-    )
-    .bind(&user_id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+    let user_exists =
+        sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)")
+            .bind(&user_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(false);
 
     if !user_exists {
         return Err((
@@ -246,7 +259,7 @@ pub async fn get_user_roles(
         INNER JOIN iam.user_roles ur ON r.id = ur.role_id
         WHERE ur.user_id = $1
         ORDER BY r.created_at
-        "#
+        "#,
     )
     .bind(&user_id)
     .fetch_all(&state.db)
@@ -291,13 +304,12 @@ pub async fn assign_roles_to_user(
     Json(req): Json<AssignRolesRequest>,
 ) -> Result<Json<ApiResponse<String>>, impl IntoResponse> {
     // 检查用户是否存在
-    let user_exists = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)"
-    )
-    .bind(&user_id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+    let user_exists =
+        sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)")
+            .bind(&user_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(false);
 
     if !user_exists {
         return Err((
@@ -313,7 +325,7 @@ pub async fn assign_roles_to_user(
             INSERT INTO iam.user_roles (user_id, role_id, created_at)
             VALUES ($1, $2, $3)
             ON CONFLICT (user_id, role_id) DO NOTHING
-            "#
+            "#,
         )
         .bind(&user_id)
         .bind(role_id)
@@ -339,13 +351,11 @@ pub async fn remove_user_role(
     State(state): State<crate::AppState>,
     Path((user_id, role_id)): Path<(String, String)>,
 ) -> Result<Json<ApiResponse<String>>, impl IntoResponse> {
-    let result = sqlx::query(
-        "DELETE FROM iam.user_roles WHERE user_id = $1 AND role_id = $2"
-    )
-    .bind(&user_id)
-    .bind(&role_id)
-    .execute(&state.db)
-    .await;
+    let result = sqlx::query("DELETE FROM iam.user_roles WHERE user_id = $1 AND role_id = $2")
+        .bind(&user_id)
+        .bind(&role_id)
+        .execute(&state.db)
+        .await;
 
     match result {
         Ok(res) => {
@@ -375,13 +385,12 @@ pub async fn get_effective_permissions(
     Path(user_id): Path<String>,
 ) -> Result<Json<ApiResponse<EffectivePermissionsResponse>>, impl IntoResponse> {
     // 检查用户是否存在
-    let user_exists = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)"
-    )
-    .bind(&user_id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+    let user_exists =
+        sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM iam.users WHERE id = $1)")
+            .bind(&user_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(false);
 
     if !user_exists {
         return Err((
@@ -398,7 +407,7 @@ pub async fn get_effective_permissions(
         INNER JOIN iam.user_direct_permissions udp ON p.id = udp.permission_id
         WHERE udp.user_id = $1
         ORDER BY p.category, p.code
-        "#
+        "#,
     )
     .bind(&user_id)
     .fetch_all(&state.db)
@@ -433,7 +442,7 @@ pub async fn get_effective_permissions(
         INNER JOIN iam.user_roles ur ON rp.role_id = ur.role_id
         WHERE ur.user_id = $1
         ORDER BY p.category, p.code
-        "#
+        "#,
     )
     .bind(&user_id)
     .fetch_all(&state.db)
@@ -485,12 +494,27 @@ pub async fn get_effective_permissions(
 
 pub fn create_user_permission_routes(state: AppState) -> Router<AppState> {
     Router::new()
-        .route("/api/v1/users/{user_id}/permissions", get(get_user_direct_permissions))
-        .route("/api/v1/users/{user_id}/permissions", post(assign_direct_permissions))
-        .route("/api/v1/users/{user_id}/permissions/{permission_id}", delete(remove_direct_permission))
+        .route(
+            "/api/v1/users/{user_id}/permissions",
+            get(get_user_direct_permissions),
+        )
+        .route(
+            "/api/v1/users/{user_id}/permissions",
+            post(assign_direct_permissions),
+        )
+        .route(
+            "/api/v1/users/{user_id}/permissions/{permission_id}",
+            delete(remove_direct_permission),
+        )
         .route("/api/v1/users/{user_id}/roles", get(get_user_roles))
         .route("/api/v1/users/{user_id}/roles", post(assign_roles_to_user))
-        .route("/api/v1/users/{user_id}/roles/{role_id}", delete(remove_user_role))
-        .route("/api/v1/users/{user_id}/effective-permissions", get(get_effective_permissions))
+        .route(
+            "/api/v1/users/{user_id}/roles/{role_id}",
+            delete(remove_user_role),
+        )
+        .route(
+            "/api/v1/users/{user_id}/effective-permissions",
+            get(get_effective_permissions),
+        )
         .with_state(state)
 }

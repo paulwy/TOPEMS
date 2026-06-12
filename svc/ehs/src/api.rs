@@ -1,4 +1,3 @@
-
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -8,28 +7,26 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{
-    SafetyHazard, SafetyCheck, EmergencyPlan, DrillRecord,
-    CreateSafetyHazardRequest, UpdateSafetyHazardRequest,
-    CreateSafetyCheckRequest, UpdateSafetyCheckRequest,
-    CreateEmergencyPlanRequest, UpdateEmergencyPlanRequest,
-    CreateDrillRecordRequest, UpdateDrillRecordRequest,
+    CreateDrillRecordRequest, CreateEmergencyPlanRequest, CreateSafetyCheckRequest,
+    CreateSafetyHazardRequest, DrillRecord, EmergencyPlan, SafetyCheck, SafetyHazard,
+    UpdateDrillRecordRequest, UpdateEmergencyPlanRequest, UpdateSafetyCheckRequest,
+    UpdateSafetyHazardRequest,
 };
 use crate::services::permission::{
-    check_hazard_permission, check_hazard_write_permission,
+    check_drill_permission, check_drill_write_permission, check_emergency_plan_permission,
+    check_emergency_plan_write_permission, check_hazard_permission, check_hazard_write_permission,
     check_safety_check_permission, check_safety_check_write_permission,
-    check_emergency_plan_permission, check_emergency_plan_write_permission,
-    check_drill_permission, check_drill_write_permission,
 };
-use topems_shared::ApiResponse;
 use topems_shared::auth::Claims;
+use topems_shared::ApiResponse;
 
 // 声明子模块
 pub mod environment;
 pub mod health;
-pub mod safety;
-pub mod risk;
-pub mod training;
 pub mod openapi;
+pub mod risk;
+pub mod safety;
+pub mod training;
 
 #[derive(Debug, Deserialize)]
 pub struct ListQueryParams {
@@ -87,19 +84,24 @@ async fn list_hazards(
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<SafetyHazard>>> {
     match check_hazard_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    match state.ehs_service.list_hazards(page, page_size, params.search, params.status).await {
-        Ok((hazards, _)) => {
-            Json(ApiResponse::success(hazards, "获取危险源列表成功"))
-        }
+    match state
+        .ehs_service
+        .list_hazards(page, page_size, params.search, params.status)
+        .await
+    {
+        Ok((hazards, _)) => Json(ApiResponse::success(hazards, "获取危险源列表成功")),
         Err(e) => {
             tracing::error!("获取危险源列表失败: {}", e);
-            Json(ApiResponse::<Vec<SafetyHazard>>::error(500, "获取危险源列表失败"))
+            Json(ApiResponse::<Vec<SafetyHazard>>::error(
+                500,
+                "获取危险源列表失败",
+            ))
         }
     }
 }
@@ -110,7 +112,7 @@ async fn create_hazard(
     Json(req): Json<CreateSafetyHazardRequest>,
 ) -> Json<ApiResponse<SafetyHazard>> {
     match check_hazard_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.create_hazard(req).await {
@@ -128,7 +130,7 @@ async fn get_hazard(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SafetyHazard>> {
     match check_hazard_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.get_hazard(id).await {
@@ -148,7 +150,7 @@ async fn update_hazard(
     Json(req): Json<UpdateSafetyHazardRequest>,
 ) -> Json<ApiResponse<SafetyHazard>> {
     match check_hazard_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.update_hazard(id, req).await {
@@ -166,7 +168,7 @@ async fn delete_hazard(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_hazard_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.delete_hazard(id).await {
@@ -187,19 +189,24 @@ async fn list_checks(
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<SafetyCheck>>> {
     match check_safety_check_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    match state.ehs_service.list_checks(page, page_size, params.search, params.status).await {
-        Ok((checks, _)) => {
-            Json(ApiResponse::success(checks, "获取安全检查列表成功"))
-        }
+    match state
+        .ehs_service
+        .list_checks(page, page_size, params.search, params.status)
+        .await
+    {
+        Ok((checks, _)) => Json(ApiResponse::success(checks, "获取安全检查列表成功")),
         Err(e) => {
             tracing::error!("获取安全检查列表失败: {}", e);
-            Json(ApiResponse::<Vec<SafetyCheck>>::error(500, "获取安全检查列表失败"))
+            Json(ApiResponse::<Vec<SafetyCheck>>::error(
+                500,
+                "获取安全检查列表失败",
+            ))
         }
     }
 }
@@ -210,7 +217,7 @@ async fn create_check(
     Json(req): Json<CreateSafetyCheckRequest>,
 ) -> Json<ApiResponse<SafetyCheck>> {
     match check_safety_check_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.create_check(req).await {
@@ -228,7 +235,7 @@ async fn get_check(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SafetyCheck>> {
     match check_safety_check_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.get_check(id).await {
@@ -248,7 +255,7 @@ async fn update_check(
     Json(req): Json<UpdateSafetyCheckRequest>,
 ) -> Json<ApiResponse<SafetyCheck>> {
     match check_safety_check_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.update_check(id, req).await {
@@ -266,7 +273,7 @@ async fn delete_check(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_safety_check_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.delete_check(id).await {
@@ -287,19 +294,24 @@ async fn list_plans(
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<EmergencyPlan>>> {
     match check_emergency_plan_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    match state.ehs_service.list_plans(page, page_size, params.search, params.status).await {
-        Ok((plans, _)) => {
-            Json(ApiResponse::success(plans, "获取应急预案列表成功"))
-        }
+    match state
+        .ehs_service
+        .list_plans(page, page_size, params.search, params.status)
+        .await
+    {
+        Ok((plans, _)) => Json(ApiResponse::success(plans, "获取应急预案列表成功")),
         Err(e) => {
             tracing::error!("获取应急预案列表失败: {}", e);
-            Json(ApiResponse::<Vec<EmergencyPlan>>::error(500, "获取应急预案列表失败"))
+            Json(ApiResponse::<Vec<EmergencyPlan>>::error(
+                500,
+                "获取应急预案列表失败",
+            ))
         }
     }
 }
@@ -310,7 +322,7 @@ async fn create_plan(
     Json(req): Json<CreateEmergencyPlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
     match check_emergency_plan_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.create_plan(req).await {
@@ -328,7 +340,7 @@ async fn get_plan(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
     match check_emergency_plan_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.get_plan(id).await {
@@ -348,7 +360,7 @@ async fn update_plan(
     Json(req): Json<UpdateEmergencyPlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
     match check_emergency_plan_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.update_plan(id, req).await {
@@ -366,7 +378,7 @@ async fn delete_plan(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_emergency_plan_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.delete_plan(id).await {
@@ -387,19 +399,24 @@ async fn list_drills(
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<Vec<DrillRecord>>> {
     match check_drill_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    match state.ehs_service.list_drills(page, page_size, params.search).await {
-        Ok((drills, _)) => {
-            Json(ApiResponse::success(drills, "获取演练记录列表成功"))
-        }
+    match state
+        .ehs_service
+        .list_drills(page, page_size, params.search)
+        .await
+    {
+        Ok((drills, _)) => Json(ApiResponse::success(drills, "获取演练记录列表成功")),
         Err(e) => {
             tracing::error!("获取演练记录列表失败: {}", e);
-            Json(ApiResponse::<Vec<DrillRecord>>::error(500, "获取演练记录列表失败"))
+            Json(ApiResponse::<Vec<DrillRecord>>::error(
+                500,
+                "获取演练记录列表失败",
+            ))
         }
     }
 }
@@ -410,7 +427,7 @@ async fn create_drill(
     Json(req): Json<CreateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
     match check_drill_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.create_drill(req).await {
@@ -428,7 +445,7 @@ async fn get_drill(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DrillRecord>> {
     match check_drill_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.get_drill(id).await {
@@ -448,7 +465,7 @@ async fn update_drill(
     Json(req): Json<UpdateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
     match check_drill_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.update_drill(id, req).await {
@@ -466,7 +483,7 @@ async fn delete_drill(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_drill_write_permission(&state.ehs_service.pool, &claims).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     match state.ehs_service.delete_drill(id).await {

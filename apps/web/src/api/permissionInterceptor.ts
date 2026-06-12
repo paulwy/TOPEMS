@@ -1,5 +1,4 @@
 import apiClient from "./client";
-import type { ApiResponse } from "./client";
 
 export interface PermissionError {
   code: number;
@@ -8,7 +7,7 @@ export interface PermissionError {
 }
 
 export const createPermissionInterceptor = () => {
-  Object.entries(apiClient.getClients()).forEach(([name, client]) => {
+  Object.entries(apiClient.getClients()).forEach(([, client]) => {
     client.interceptors.response.use(
       (response) => response,
       (error) => {

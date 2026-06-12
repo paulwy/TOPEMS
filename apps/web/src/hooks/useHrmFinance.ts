@@ -43,7 +43,13 @@ export const useEmployeeFinanceInfo = (employeeId: string) => {
  */
 export const useUpdateEmployeeFinanceInfo = () => {
   return useMutation({
-    mutationFn: async ({ employeeId, data }: { employeeId: string; data: Partial<EmployeeFinance> }) => {
+    mutationFn: async ({
+      employeeId,
+      data,
+    }: {
+      employeeId: string;
+      data: Partial<EmployeeFinance>;
+    }) => {
       const response = await apiClient.hrm.put<{ data: EmployeeFinance }>(
         `/api/v1/hrm/employees/${employeeId}/finance`,
         data,

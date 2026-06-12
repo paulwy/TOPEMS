@@ -1,4 +1,5 @@
 // CRM 服务集成测试
+#![allow(dead_code)]
 
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
@@ -22,11 +23,11 @@ mod tests {
     #[tokio::test]
     async fn test_customer_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'customers')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -41,11 +42,11 @@ mod tests {
     #[tokio::test]
     async fn test_contact_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'contacts')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -60,11 +61,11 @@ mod tests {
     #[tokio::test]
     async fn test_opportunity_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'opportunities')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -79,11 +80,11 @@ mod tests {
     #[tokio::test]
     async fn test_interaction_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'interactions')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -98,11 +99,11 @@ mod tests {
     #[tokio::test]
     async fn test_tag_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'tags')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -117,10 +118,10 @@ mod tests {
     #[tokio::test]
     async fn test_create_customer() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let customer_id = Uuid::new_v4();
         let customer_code = format!("CUST-{}", &customer_id.to_string()[..8]);
-        
+
         let result = sqlx::query(
             r#"
             INSERT INTO crm.customers (id, code, name, customer_type, industry, contact, phone, email, status, created_at, updated_at)
@@ -142,14 +143,14 @@ mod tests {
         .bind("active")
         .fetch_one(&pool)
         .await;
-        
+
         assert!(result.is_ok(), "客户创建应该成功");
     }
 
     #[tokio::test]
     async fn test_list_customers() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query_as::<_, CustomerRow>(
             r#"
             SELECT id, code, name, customer_type, industry, contact, phone, email, address, status, created_at, updated_at
@@ -161,7 +162,7 @@ mod tests {
         )
         .fetch_all(&pool)
         .await;
-        
+
         match result {
             Ok(customers) => {
                 assert!(customers.len() <= 10, "返回的客户数量应该不超过10条");
@@ -175,11 +176,11 @@ mod tests {
     #[tokio::test]
     async fn test_customer_status_update() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         // 创建一个新的客户
         let customer_id = Uuid::new_v4();
         let customer_code = format!("CUST-TEST-{}", &customer_id.to_string()[..6]);
-        
+
         sqlx::query(
             r#"
             INSERT INTO crm.customers (id, code, name, customer_type, industry, contact, phone, email, status, created_at, updated_at)
@@ -198,7 +199,7 @@ mod tests {
         .execute(&pool)
         .await
         .expect("创建测试数据失败");
-        
+
         // 更新状态为 inactive
         let update_result = sqlx::query(
             r#"
@@ -209,17 +210,16 @@ mod tests {
         .bind(customer_id)
         .execute(&pool)
         .await;
-        
+
         assert!(update_result.is_ok(), "状态更新应该成功");
-        
+
         // 验证状态已更新
-        let check_result = sqlx::query_scalar::<_, String>(
-            "SELECT status FROM crm.customers WHERE id = $1"
-        )
-        .bind(customer_id)
-        .fetch_one(&pool)
-        .await;
-        
+        let check_result =
+            sqlx::query_scalar::<_, String>("SELECT status FROM crm.customers WHERE id = $1")
+                .bind(customer_id)
+                .fetch_one(&pool)
+                .await;
+
         match check_result {
             Ok(status) => {
                 assert_eq!(status, "inactive", "状态应该更新为 inactive");
@@ -228,7 +228,7 @@ mod tests {
                 panic!("查询状态失败: {}", e);
             }
         }
-        
+
         // 清理测试数据
         let _ = sqlx::query("DELETE FROM crm.customers WHERE id = $1")
             .bind(customer_id)
@@ -239,11 +239,11 @@ mod tests {
     #[tokio::test]
     async fn test_create_opportunity() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         // 先创建一个客户
         let customer_id = Uuid::new_v4();
         let customer_code = format!("CUST-{}", &customer_id.to_string()[..8]);
-        
+
         sqlx::query(
             r#"
             INSERT INTO crm.customers (id, code, name, customer_type, industry, status, created_at, updated_at)
@@ -259,7 +259,7 @@ mod tests {
         .execute(&pool)
         .await
         .expect("创建测试客户失败");
-        
+
         // 创建商机
         let opportunity_id = Uuid::new_v4();
         let result = sqlx::query(
@@ -277,9 +277,9 @@ mod tests {
         .bind("open")
         .fetch_one(&pool)
         .await;
-        
+
         assert!(result.is_ok(), "商机创建应该成功");
-        
+
         // 清理测试数据
         let _ = sqlx::query("DELETE FROM crm.opportunities WHERE id = $1")
             .bind(opportunity_id)
@@ -294,11 +294,11 @@ mod tests {
     #[tokio::test]
     async fn test_audit_log_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'crm_audit_logs')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);

@@ -288,7 +288,7 @@ OLLAMA_MODEL=qwen2.5:7b-instruct
 AI_PROVIDER=ollama
 
 # 文件服务配置
-FILE_SERVICE_URL=http://localhost:8055
+FILE_SERVICE_URL=http://localhost:${FILE_PORT:-8050}
 STORAGE_LOCAL_PATH=./storage/files
 
 # 邮件服务配置

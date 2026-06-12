@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State, Extension},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::{get, post},
     Json, Router,
@@ -8,12 +8,12 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, api_error};
-use topems_shared::auth::Claims;
-use crate::models::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
-use crate::api::audit::log_audit_event;
-use crate::services::permission::{check_permission, ModulePermission};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use crate::models::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct CustomerPaginationParams {
@@ -30,11 +30,19 @@ pub struct BatchDeleteRequest {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/customers", get(list_customers).post(create_customer))
-        .route("/api/v1/customers/batch-delete", post(batch_delete_customers))
+        .route(
+            "/api/v1/customers",
+            get(list_customers).post(create_customer),
+        )
+        .route(
+            "/api/v1/customers/batch-delete",
+            post(batch_delete_customers),
+        )
         .route(
             "/api/v1/customers/{id}",
-            get(get_customer).put(update_customer).delete(delete_customer),
+            get(get_customer)
+                .put(update_customer)
+                .delete(delete_customer),
         )
 }
 
@@ -44,7 +52,7 @@ async fn list_customers(
     Query(params): Query<CustomerPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -112,7 +120,7 @@ async fn create_customer(
     Json(req): Json<CreateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -193,7 +201,7 @@ async fn get_customer(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Customer>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -225,7 +233,7 @@ async fn update_customer(
     Json(req): Json<UpdateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -328,7 +336,7 @@ async fn delete_customer(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -390,7 +398,7 @@ async fn batch_delete_customers(
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -405,7 +413,10 @@ async fn batch_delete_customers(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (
-            Json(ApiResponse::success("".to_string(), &format!("成功删除 {} 个客户", r.rows_affected()))),
+            Json(ApiResponse::success(
+                "".to_string(),
+                &format!("成功删除 {} 个客户", r.rows_affected()),
+            )),
             "success".to_string(),
             None,
         ),

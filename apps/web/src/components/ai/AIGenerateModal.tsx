@@ -1,5 +1,4 @@
-import React from "react";
-import { X, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Dialog,

@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -128,7 +128,7 @@ impl LogAggregator {
     pub async fn add_log(&self, entry: LogEntry) {
         let mut logs = self.logs.write().await;
         logs.push(entry);
-        
+
         if logs.len() > self.max_entries {
             logs.remove(0);
         }
@@ -136,7 +136,7 @@ impl LogAggregator {
 
     pub async fn query(&self, query: &LogQuery) -> Vec<LogEntry> {
         let logs = self.logs.read().await;
-        
+
         logs.iter()
             .filter(|log| {
                 if let Some(level) = &query.level {
@@ -144,43 +144,43 @@ impl LogAggregator {
                         return false;
                     }
                 }
-                
+
                 if let Some(service) = &query.service {
                     if &log.service != service {
                         return false;
                     }
                 }
-                
+
                 if let Some(from) = &query.from {
                     if &log.timestamp < from {
                         return false;
                     }
                 }
-                
+
                 if let Some(to) = &query.to {
                     if &log.timestamp > to {
                         return false;
                     }
                 }
-                
+
                 if let Some(search) = &query.search {
                     if !log.message.to_lowercase().contains(&search.to_lowercase()) {
                         return false;
                     }
                 }
-                
+
                 if let Some(trace_id) = &query.trace_id {
                     if log.trace_id.as_ref() != Some(trace_id) {
                         return false;
                     }
                 }
-                
+
                 if let Some(user_id) = &query.user_id {
                     if log.user_id.as_ref() != Some(user_id) {
                         return false;
                     }
                 }
-                
+
                 true
             })
             .skip(query.offset.unwrap_or(0))
@@ -191,43 +191,45 @@ impl LogAggregator {
 
     pub async fn get_stats(&self) -> LogStats {
         let logs = self.logs.read().await;
-        
+
         let mut by_level: HashMap<String, u64> = HashMap::new();
         let mut by_service: HashMap<String, u64> = HashMap::new();
         let mut error_messages: HashMap<String, (u64, DateTime<Utc>)> = HashMap::new();
         let mut error_count = 0u64;
         let mut total_response_time = 0u64;
         let mut response_count = 0u64;
-        
+
         for log in logs.iter() {
             *by_level.entry(log.level.clone()).or_insert(0) += 1;
             *by_service.entry(log.service.clone()).or_insert(0) += 1;
-            
+
             if log.level == "ERROR" {
                 error_count += 1;
-                let entry = error_messages.entry(log.message.clone()).or_insert((0, log.timestamp));
+                let entry = error_messages
+                    .entry(log.message.clone())
+                    .or_insert((0, log.timestamp));
                 entry.0 += 1;
             }
-            
+
             if let Some(duration) = log.duration_ms {
                 total_response_time += duration;
                 response_count += 1;
             }
         }
-        
+
         let total = logs.len() as u64;
         let error_rate = if total > 0 {
             (error_count as f64 / total as f64) * 100.0
         } else {
             0.0
         };
-        
+
         let avg_response_time = if response_count > 0 {
             total_response_time as f64 / response_count as f64
         } else {
             0.0
         };
-        
+
         let mut top_errors: Vec<ErrorStat> = error_messages
             .into_iter()
             .map(|(message, (count, last))| ErrorStat {
@@ -236,10 +238,10 @@ impl LogAggregator {
                 last_occurrence: last,
             })
             .collect();
-        
-        top_errors.sort_by(|a, b| b.count.cmp(&a.count));
+
+        top_errors.sort_by_key(|a| std::cmp::Reverse(a.count));
         top_errors.truncate(10);
-        
+
         LogStats {
             total_count: total,
             by_level,
@@ -307,7 +309,7 @@ pub fn init_logging(service_name: &str) {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
-    
+
     tracing::info!("✅ {} 日志系统初始化完成", service_name);
 }
 
@@ -344,17 +346,17 @@ mod tests {
     #[tokio::test]
     async fn test_log_aggregator() {
         let aggregator = LogAggregator::new(100);
-        
+
         for i in 0..5 {
             let entry = LogEntry::new("INFO", &format!("Test message {}", i), "test-service");
             aggregator.add_log(entry).await;
         }
-        
+
         let query = LogQuery {
             level: Some("INFO".to_string()),
             ..Default::default()
         };
-        
+
         let results = aggregator.query(&query).await;
         assert_eq!(results.len(), 5);
     }
@@ -362,10 +364,14 @@ mod tests {
     #[tokio::test]
     async fn test_log_stats() {
         let aggregator = LogAggregator::new(100);
-        
-        aggregator.add_log(LogEntry::new("INFO", "Test", "service1")).await;
-        aggregator.add_log(LogEntry::new("ERROR", "Error message", "service1")).await;
-        
+
+        aggregator
+            .add_log(LogEntry::new("INFO", "Test", "service1"))
+            .await;
+        aggregator
+            .add_log(LogEntry::new("ERROR", "Error message", "service1"))
+            .await;
+
         let stats = aggregator.get_stats().await;
         assert_eq!(stats.total_count, 2);
         assert_eq!(stats.by_level.get("INFO"), Some(&1));

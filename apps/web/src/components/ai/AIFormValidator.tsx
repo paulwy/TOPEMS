@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertCircle,
   CheckCircle,
@@ -8,7 +8,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import type {

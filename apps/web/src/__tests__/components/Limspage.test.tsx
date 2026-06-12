@@ -1,19 +1,19 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import Limspage from '../../pages/Limspage';
-import { AuthProvider } from '../../hooks/useAuth';
-import { ThemeProvider } from '../../components/ThemeProvider';
-import { ToastProvider } from '../../components/ToastProvider';
-import { LoadingProvider } from '../../components/LoadingProvider';
-import ErrorBoundary from '../../components/ErrorBoundary';
+import React from "react";
+import { render } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import Limspage from "../../pages/Limspage";
+import { AuthProvider } from "../../hooks/useAuth";
+import { ThemeProvider } from "../../components/ThemeProvider";
+import { ToastProvider } from "../../components/ToastProvider";
+import { LoadingProvider } from "../../components/LoadingProvider";
+import ErrorBoundary from "../../components/ErrorBoundary";
 
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
+vi.mock("react-router-dom", async () => ({
+  ...(await vi.importActual("react-router-dom")),
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock('../../api/lims', () => ({
+vi.mock("../../api/lims", () => ({
   limsApi: {
     getSamples: vi.fn().mockResolvedValue({ success: true, data: [] }),
     listSamples: vi.fn().mockResolvedValue({ success: true, data: [] }),
@@ -35,7 +35,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
-    </ErrorBoundary>
+    </ErrorBoundary>,
   );
 };
 
@@ -43,13 +43,13 @@ const renderLimspage = () => {
   return renderWithProviders(<Limspage />);
 };
 
-describe('Limspage', () => {
+describe("Limspage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
   });
 
-  test('renders LIMS page component', () => {
+  test("renders LIMS page component", () => {
     renderLimspage();
     expect(true).toBe(true);
   });

@@ -43,6 +43,7 @@ impl<T> ApiResponse<T> {
         Self::error(400, message, None)
     }
 
+    #[allow(dead_code)]
     pub fn unauthorized(message: &str) -> Self {
         Self::error(401, message, None)
     }

@@ -9,9 +9,9 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::api::audit::log_audit_event;
-use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PerformanceReview {
@@ -94,14 +94,38 @@ pub struct QueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-    .route("/api/v1/performance-reviews", get(list_reviews).post(create_review))
-    .route("/api/v1/performance-reviews/{id}", get(get_review).put(update_review).delete(delete_review))
-    .route("/api/v1/performance-reviews/{id}/submit", put(submit_review))
-    .route("/api/v1/performance-reviews/{id}/approve", put(approve_review))
-    .route("/api/v1/performance-goals", get(list_goals).post(create_goal))
-    .route("/api/v1/performance-goals/{id}", get(get_goal).put(update_goal).delete(delete_goal))
-    .route("/api/v1/employees/{id}/performance-reviews", get(get_employee_reviews))
-    .route("/api/v1/employees/{id}/performance-goals", get(get_employee_goals))
+        .route(
+            "/api/v1/performance-reviews",
+            get(list_reviews).post(create_review),
+        )
+        .route(
+            "/api/v1/performance-reviews/{id}",
+            get(get_review).put(update_review).delete(delete_review),
+        )
+        .route(
+            "/api/v1/performance-reviews/{id}/submit",
+            put(submit_review),
+        )
+        .route(
+            "/api/v1/performance-reviews/{id}/approve",
+            put(approve_review),
+        )
+        .route(
+            "/api/v1/performance-goals",
+            get(list_goals).post(create_goal),
+        )
+        .route(
+            "/api/v1/performance-goals/{id}",
+            get(get_goal).put(update_goal).delete(delete_goal),
+        )
+        .route(
+            "/api/v1/employees/{id}/performance-reviews",
+            get(get_employee_reviews),
+        )
+        .route(
+            "/api/v1/employees/{id}/performance-goals",
+            get(get_employee_goals),
+        )
 }
 
 async fn list_reviews(
@@ -165,7 +189,10 @@ async fn list_reviews(
         }
         Err(e) => {
             tracing::error!("查询绩效评核列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询绩效评核列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询绩效评核列表失败",
+            ))
         }
     }
 }
@@ -257,10 +284,16 @@ async fn get_review(
 
     match result {
         Ok(Some(review)) => Json(ApiResponse::success(review, "查询成功")),
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(404, "绩效评核不存在")),
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
+            404,
+            "绩效评核不存在",
+        )),
         Err(e) => {
             tracing::error!("查询绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::error(500, "查询绩效评核失败"))
+            Json(ApiResponse::<PerformanceReview>::error(
+                500,
+                "查询绩效评核失败",
+            ))
         }
     }
 }
@@ -302,10 +335,16 @@ async fn update_review(
 
     match result {
         Ok(Some(review)) => Json(ApiResponse::success(review, "绩效评核更新成功")),
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(404, "绩效评核不存在")),
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
+            404,
+            "绩效评核不存在",
+        )),
         Err(e) => {
             tracing::error!("更新绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::error(500, "更新绩效评核失败"))
+            Json(ApiResponse::<PerformanceReview>::error(
+                500,
+                "更新绩效评核失败",
+            ))
         }
     }
 }
@@ -315,12 +354,11 @@ async fn delete_review(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "DELETE FROM hrm.performance_reviews WHERE id = $1 AND status = 'draft'"
-    )
-    .bind(id)
-    .execute(&state.db)
-    .await;
+    let result =
+        sqlx::query("DELETE FROM hrm.performance_reviews WHERE id = $1 AND status = 'draft'")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -389,10 +427,16 @@ async fn submit_review(
 
     match result {
         Ok(Some(review)) => Json(ApiResponse::success(review, "绩效评核已提交")),
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(404, "绩效评核不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
+            404,
+            "绩效评核不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("提交绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::error(500, "提交绩效评核失败"))
+            Json(ApiResponse::<PerformanceReview>::error(
+                500,
+                "提交绩效评核失败",
+            ))
         }
     }
 }
@@ -418,10 +462,16 @@ async fn approve_review(
 
     match result {
         Ok(Some(review)) => Json(ApiResponse::success(review, "绩效评核已批准")),
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(404, "绩效评核不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
+            404,
+            "绩效评核不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("批准绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::error(500, "批准绩效评核失败"))
+            Json(ApiResponse::<PerformanceReview>::error(
+                500,
+                "批准绩效评核失败",
+            ))
         }
     }
 }
@@ -482,7 +532,10 @@ async fn list_goals(
         }
         Err(e) => {
             tracing::error!("查询绩效目标列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询绩效目标列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询绩效目标列表失败",
+            ))
         }
     }
 }
@@ -580,7 +633,10 @@ async fn get_goal(
         Ok(None) => Json(ApiResponse::<PerformanceGoal>::error(404, "绩效目标不存在")),
         Err(e) => {
             tracing::error!("查询绩效目标失败: {}", e);
-            Json(ApiResponse::<PerformanceGoal>::error(500, "查询绩效目标失败"))
+            Json(ApiResponse::<PerformanceGoal>::error(
+                500,
+                "查询绩效目标失败",
+            ))
         }
     }
 }
@@ -625,7 +681,10 @@ async fn update_goal(
         Ok(None) => Json(ApiResponse::<PerformanceGoal>::error(404, "绩效目标不存在")),
         Err(e) => {
             tracing::error!("更新绩效目标失败: {}", e);
-            Json(ApiResponse::<PerformanceGoal>::error(500, "更新绩效目标失败"))
+            Json(ApiResponse::<PerformanceGoal>::error(
+                500,
+                "更新绩效目标失败",
+            ))
         }
     }
 }
@@ -707,7 +766,10 @@ async fn get_employee_reviews(
         )),
         Err(e) => {
             tracing::error!("查询员工绩效评核失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询员工绩效评核失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询员工绩效评核失败",
+            ))
         }
     }
 }
@@ -733,7 +795,10 @@ async fn get_employee_goals(
         )),
         Err(e) => {
             tracing::error!("查询员工绩效目标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询员工绩效目标失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询员工绩效目标失败",
+            ))
         }
     }
 }

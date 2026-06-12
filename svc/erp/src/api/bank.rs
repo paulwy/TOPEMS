@@ -8,9 +8,9 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
 use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct BankAccount {
@@ -96,9 +96,20 @@ pub struct BankTransactionParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/bank-accounts", get(list_bank_accounts).post(create_bank_account))
-        .route("/api/v1/bank-accounts/{id}", get(get_bank_account).put(update_bank_account).delete(delete_bank_account))
-        .route("/api/v1/bank-transactions", get(list_bank_transactions).post(create_bank_transaction))
+        .route(
+            "/api/v1/bank-accounts",
+            get(list_bank_accounts).post(create_bank_account),
+        )
+        .route(
+            "/api/v1/bank-accounts/{id}",
+            get(get_bank_account)
+                .put(update_bank_account)
+                .delete(delete_bank_account),
+        )
+        .route(
+            "/api/v1/bank-transactions",
+            get(list_bank_transactions).post(create_bank_transaction),
+        )
         .route("/api/v1/bank-transactions/{id}", get(get_bank_transaction))
 }
 
@@ -221,16 +232,18 @@ async fn create_bank_account(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "bank_account".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "bank_account".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -335,16 +348,18 @@ async fn update_bank_account(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "bank_account".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "bank_account".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -391,16 +406,18 @@ async fn delete_bank_account(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "bank_account".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "bank_account".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -429,7 +446,12 @@ async fn list_bank_transactions(
         LIMIT $5 OFFSET $6
         "#,
     )
-    .bind(params.bank_account_id.as_ref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        params
+            .bank_account_id
+            .as_ref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(&params.transaction_type)
     .bind(&params.start_date)
     .bind(&params.end_date)
@@ -449,7 +471,12 @@ async fn list_bank_transactions(
                   AND ($4::text IS NULL OR transaction_date <= $4::timestamp)
                 "#,
             )
-            .bind(params.bank_account_id.as_ref().and_then(|s| Uuid::parse_str(s).ok()))
+            .bind(
+                params
+                    .bank_account_id
+                    .as_ref()
+                    .and_then(|s| Uuid::parse_str(s).ok()),
+            )
             .bind(&params.transaction_type)
             .bind(&params.start_date)
             .bind(&params.end_date)
@@ -524,14 +551,13 @@ async fn create_bank_transaction(
 
     let (response, status_str, error_msg) = match &transaction {
         Ok(t) => {
-            let _ = sqlx::query(
-                "UPDATE bank_accounts SET balance = $1, updated_at = $2 WHERE id = $3",
-            )
-            .bind(balance_after)
-            .bind(now)
-            .bind(req.bank_account_id)
-            .execute(&state.db)
-            .await;
+            let _ =
+                sqlx::query("UPDATE bank_accounts SET balance = $1, updated_at = $2 WHERE id = $3")
+                    .bind(balance_after)
+                    .bind(now)
+                    .bind(req.bank_account_id)
+                    .execute(&state.db)
+                    .await;
 
             (
                 Json(ApiResponse::success(t.clone(), "银行交易记录创建成功")),
@@ -558,16 +584,18 @@ async fn create_bank_transaction(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "bank_transaction".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "bank_transaction".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

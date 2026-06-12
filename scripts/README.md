@@ -4,76 +4,94 @@
 
 ### 主脚本：topems.sh
 
-推荐使用统一的服务管理脚本，整合所有服务管理功能：
+推荐使用统一的服务管理脚本，支持 Docker 和非 Docker 两种方案：
 
 ```bash
-# 启动核心服务（IAM, HRM, Mail, File）
+# 启动所有服务（自动检测方案）
 ./scripts/topems.sh start
 
-# 启动所有服务（包含文档服务）
-./scripts/topems.sh start-all
+# 使用Docker方案启动
+./scripts/topems.sh start-docker
+
+# 使用非Docker方案启动
+./scripts/topems.sh start-standalone
 
 # 停止所有服务
 ./scripts/topems.sh stop
 
-# 停止数据库容器
-./scripts/topems.sh stop-db
-
 # 查看服务状态
 ./scripts/topems.sh status
 
-# 编译所有服务
-./scripts/topems.sh build
+# 安装依赖（非Docker方案）
+./scripts/topems.sh install
 
-# 检查编译状态
-./scripts/topems.sh check
-
-# 查看服务日志
-./scripts/topems.sh logs <服务名> [行数]
-
-# 清理资源
-./scripts/topems.sh clean
+# AI模型管理
+./scripts/topems.sh ai start
+./scripts/topems.sh ai pull qwen2.5:7b-instruct
 
 # 显示帮助
 ./scripts/topems.sh help
 ```
 
+### 脚本架构
+
+```
+scripts/
+├── topems.sh                    # 统一入口脚本（自动检测方案）
+├── docker/                      # Docker方案脚本
+│   ├── docker-compose.yml       # Docker Compose配置
+│   └── topems-docker.sh         # Docker方案启动脚本
+└── standalone/                  # 非Docker方案脚本
+    ├── install-deps.sh          # 依赖安装脚本
+    ├── topems-standalone.sh     # 非Docker方案启动脚本
+    └── ai-models.sh             # AI模型管理脚本
+```
+
 ### 脚本工具列表
 
-#### 核心服务脚本
+#### 统一入口脚本
 
 | 脚本 | 说明 |
 |------|------|
-| `topems.sh` | **统一服务管理脚本**（推荐使用，需要Docker） |
-| `start-local.sh` | 启动核心服务（IAM + HRM + Mail），需要Docker |
-| `start-all.sh` | 启动所有服务（需要Docker） |
-| `start-without-docker.sh` | **无Docker启动脚本**（推荐用于本地已安装PostgreSQL/Redis） |
-| `start-services.sh` | 启动服务脚本 |
-| `start-production.sh` | 生产环境部署脚本 |
-| `stop-all.sh` | 停止所有服务 |
+| `topems.sh` | **统一服务管理脚本**（推荐使用，自动检测环境） |
 
-### 数据库脚本
+#### Docker方案脚本
+
+| 脚本 | 说明 |
+|------|------|
+| `docker/docker-compose.yml` | Docker Compose配置文件 |
+| `docker/topems-docker.sh` | Docker方案启动脚本 |
+
+#### 非Docker方案脚本
+
+| 脚本 | 说明 |
+|------|------|
+| `standalone/install-deps.sh` | 依赖安装脚本（PostgreSQL, Redis, Rust, Node.js） |
+| `standalone/topems-standalone.sh` | 非Docker方案启动脚本 |
+| `standalone/ai-models.sh` | AI模型管理脚本（Ollama） |
+
+#### 数据库脚本
 
 | 脚本 | 说明 |
 |------|------|
 | `init-db-unified.sh` | 统一数据库初始化（自动检测环境） |
-| `init-db-local.sh` | **无Docker数据库初始化脚本**（本地PostgreSQL环境） |
-| `init-vector-index.sh` | 初始化 Redis 向量索引 |
+| `init-db-local.sh` | 无Docker数据库初始化脚本 |
+| `init-vector-index.sh` | 初始化向量索引 |
 | `install-pgvector.sh` | 安装配置 pgvector |
 | `rebuild-postgres.sh` | 重建支持 pgvector 的 PostgreSQL 容器 |
 
-### 开发脚本
+#### 开发脚本
 
 | 脚本 | 说明 |
 |------|------|
-| `manage-services.sh` | 管理所有服务（启动、停止、编译） |
-| `build-all-services.sh` | 构建所有服务镜像 |
+| `build-all-services.sh` | 构建所有服务 |
+| `check-all-rust-services.sh` | 检查所有Rust服务编译状态 |
 | `cleanup.sh` | 全面清理（端口、进程、缓存） |
 | `run-clippy.sh` | 运行 Clippy 代码检查 |
 | `run-tests.sh` | 运行测试 |
 | `run_ci_tests.sh` | 运行 CI 测试 |
 
-### 部署脚本
+#### 部署脚本
 
 | 脚本 | 说明 |
 |------|------|
@@ -83,141 +101,91 @@
 
 ## 使用示例
 
-### 快速开始（无Docker模式）
+### 方案选择指南
 
-如果你本地已安装 PostgreSQL 和 Redis，可以使用以下方式快速启动：
+| 场景 | 推荐方案 | 原因 |
+|------|---------|------|
+| 开发环境 | 两者皆可 | 根据个人偏好选择 |
+| CI/CD测试 | Docker方案 | 环境一致性好 |
+| 生产部署 | Docker方案 | 便于扩展和管理 |
+| 离线环境 | 非Docker方案 | 无容器依赖 |
+| 资源受限 | 非Docker方案 | 资源占用更低 |
+
+### Docker方案
 
 ```bash
-# 1. 初始化数据库
-bash scripts/init-db-local.sh
+# 启动所有服务
+bash scripts/topems.sh start-docker
 
-# 2. 加载环境变量
-source .env.local
+# 停止服务
+bash scripts/topems.sh stop-docker
 
-# 3. 启动核心服务
-bash scripts/start-without-docker.sh start
-
-# 4. 查看服务状态
-bash scripts/start-without-docker.sh status
+# 查看状态
+bash scripts/topems.sh status-docker
 ```
 
-### Docker 模式启动
-
-使用 Docker 容器运行 PostgreSQL 和 Redis：
+### 非Docker方案
 
 ```bash
-# 1. 初始化数据库
-bash scripts/init-db-unified.sh
+# 首次使用：安装依赖
+bash scripts/topems.sh install
 
-# 2. 启动所有服务
-bash scripts/start-all.sh
-```
+# 启动所有服务
+bash scripts/topems.sh start-standalone
 
-### 启动核心服务（推荐用于开发）
+# 停止服务
+bash scripts/topems.sh stop-standalone
 
-```bash
-cd TOPEMS
-bash scripts/start-local.sh
-```
-
-### 启动所有服务
-
-```bash
-cd TOPEMS
-bash scripts/start-all.sh
+# 查看状态
+bash scripts/topems.sh status-standalone
 ```
 
 ### 数据库初始化
 
 ```bash
-# 方式一：无Docker模式（推荐用于本地开发）
-#   前提条件：本地已安装 PostgreSQL 和 Redis
-bash scripts/init-db-local.sh
-
-# 方式二：使用统一初始化脚本（交互式，自动检测环境）
+# 方式一：统一初始化脚本（交互式）
 bash scripts/init-db-unified.sh
 
-# 方式三：手动使用 psql
-psql -U xingzhai -d postgres << 'EOF'
-CREATE ROLE topems WITH LOGIN PASSWORD 'topems_secret' CREATEDB SUPERUSER;
+# 方式二：无Docker模式
+bash scripts/init-db-local.sh
+
+# 方式三：手动创建
+psql -U postgres << 'EOF'
+CREATE USER topems WITH PASSWORD 'topems_secret';
 CREATE DATABASE topems OWNER topems;
 EOF
 ```
 
-#### 无Docker模式环境变量配置
+### AI模型管理
 
 ```bash
-# 可选配置（使用默认值可以跳过）
-export DB_NAME=topems
-export DB_USER=topems
-export DB_PASS=topems_secret
-export DB_HOST=localhost
-export DB_PORT=5432
-```
+# 启动Ollama服务
+bash scripts/topems.sh ai start
 
-#### 无Docker启动脚本命令
+# 下载推荐模型
+bash scripts/topems.sh ai pull-all
 
-```bash
-# 启动核心服务
-bash scripts/start-without-docker.sh start
+# 下载指定模型
+bash scripts/topems.sh ai pull qwen2.5:7b-instruct
 
-# 启动所有服务
-bash scripts/start-without-docker.sh start-all
+# 查看模型状态
+bash scripts/topems.sh ai status
 
-# 停止所有服务
-bash scripts/start-without-docker.sh stop
+# 测试模型响应
+bash scripts/topems.sh ai test
 
-# 查看服务状态
-bash scripts/start-without-docker.sh status
-
-# 查看服务日志
-bash scripts/start-without-docker.sh logs <服务名> [行数]
-
-# 查看帮助
-bash scripts/start-without-docker.sh help
-```
-
-### 配置 Ollama AI
-
-```bash
-# 1. 安装 Ollama
-brew install ollama
-
-# 2. 启动并拉取模型
-ollama serve
-ollama pull qwen2.5:7b-instruct
-
-# 3. 验证
-curl http://localhost:11434/api/tags
+# 停止Ollama服务
+bash scripts/topems.sh ai stop
 ```
 
 ### 配置向量搜索
 
 ```bash
-# 方式一：初始化 Redis 向量索引（推荐）
-bash scripts/init-vector-index.sh
-
-# 方式二：安装脚本（配置 pgvector）
+# 安装pgvector扩展
 bash scripts/install-pgvector.sh
 
-# 方式三：重建 PostgreSQL 容器
-bash scripts/rebuild-postgres.sh
-```
-
-### 管理服务
-
-```bash
-# 启动指定服务
-bash scripts/manage-services.sh start iam
-
-# 停止指定服务
-bash scripts/manage-services.sh stop hrm
-
-# 重启指定服务
-bash scripts/manage-services.sh restart mail
-
-# 查看状态
-bash scripts/manage-services.sh status
+# 初始化向量索引
+bash scripts/init-vector-index.sh
 ```
 
 ### 清理环境
@@ -225,4 +193,66 @@ bash scripts/manage-services.sh status
 ```bash
 # 清理所有进程和端口
 bash scripts/cleanup.sh
+
+# 清理Docker资源
+bash scripts/docker/topems-docker.sh stop
+```
+
+## 服务端口配置
+
+所有服务端口配置在 `config/ports.env` 文件中：
+
+| 模块 | 服务 | 默认端口 |
+|------|------|----------|
+| 核心服务 | iam | 8000 |
+| | notification | 8004 |
+| | portal | 8005 |
+| | flow | 8006 |
+| | integration | 8007 |
+| ERP服务 | erp | 8010 |
+| | hrm | 8012 |
+| | crm | 8013 |
+| PLM服务 | rs | 8020 |
+| | doc | 8028 |
+| | lims | 8022 |
+| | pdm | 8023 |
+| MES服务 | mes | 8030 |
+| | qms | 8031 |
+| | ehs | 8032 |
+| SCM服务 | scm | 8040 |
+| | srm | 8041 |
+| | wms | 8042 |
+| 基础设施 | file | 8050 |
+| | mail | 8051 |
+| | im | 8052 |
+| | gis | 8053 |
+| 数据分析 | bi | 8060 |
+| | report | 8061 |
+| | ai | 8062 |
+| 预留扩展 | mobile | 8070 |
+
+## 环境变量配置
+
+### 数据库配置
+
+```bash
+# PostgreSQL
+export DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+
+# Redis
+export REDIS_URL=redis://:topems_redis_secret@localhost:6379
+```
+
+### AI配置
+
+```bash
+export OLLAMA_HOST=http://localhost:11434
+export OLLAMA_MODEL=qwen2.5:7b-instruct
+```
+
+### 安全配置
+
+```bash
+export JWT_SECRET=your-jwt-secret-key-here
+export CORS_ORIGINS=http://localhost:3000,http://localhost:8000
 ```

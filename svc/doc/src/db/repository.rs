@@ -1,4 +1,6 @@
-use crate::models::{FileMetadata, Folder, FileVersion, FilePermission, FolderPermission, Template, TemplateCategory};
+use crate::models::{
+    FileMetadata, FilePermission, FileVersion, Folder, FolderPermission, Template, TemplateCategory,
+};
 use sqlx::{PgPool, Row};
 use thiserror::Error;
 use uuid::Uuid;
@@ -8,8 +10,10 @@ pub enum RepositoryError {
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
     #[error("File not found")]
+    #[allow(dead_code)]
     FileNotFound,
     #[error("Folder not found")]
+    #[allow(dead_code)]
     FolderNotFound,
 }
 
@@ -85,6 +89,7 @@ impl FileRepository {
         Ok(files)
     }
 
+    #[allow(dead_code)]
     pub async fn list_accessible(
         &self,
         folder_id: Option<Uuid>,
@@ -211,10 +216,7 @@ impl FolderRepository {
         Ok(rows.iter().map(|r| r.get::<Uuid, _>("id")).collect())
     }
 
-    pub async fn list(
-        &self,
-        parent_id: Option<Uuid>,
-    ) -> Result<Vec<Folder>, RepositoryError> {
+    pub async fn list(&self, parent_id: Option<Uuid>) -> Result<Vec<Folder>, RepositoryError> {
         let folders = sqlx::query_as::<_, Folder>(
             r#"
             SELECT id, name, parent_id, created_at, updated_at, created_by
@@ -297,7 +299,10 @@ impl FileVersionRepository {
         Ok(version)
     }
 
-    pub async fn list_by_file_id(&self, file_id: Uuid) -> Result<Vec<FileVersion>, RepositoryError> {
+    pub async fn list_by_file_id(
+        &self,
+        file_id: Uuid,
+    ) -> Result<Vec<FileVersion>, RepositoryError> {
         let versions = sqlx::query_as::<_, FileVersion>(
             r#"
             SELECT id, file_id, version, size, checksum, storage_path, created_at, created_by
@@ -313,7 +318,11 @@ impl FileVersionRepository {
         Ok(versions)
     }
 
-    pub async fn get_latest_version(&self, file_id: Uuid) -> Result<Option<FileVersion>, RepositoryError> {
+    #[allow(dead_code)]
+    pub async fn get_latest_version(
+        &self,
+        file_id: Uuid,
+    ) -> Result<Option<FileVersion>, RepositoryError> {
         let version = sqlx::query_as::<_, FileVersion>(
             r#"
             SELECT id, file_id, version, size, checksum, storage_path, created_at, created_by
@@ -356,7 +365,10 @@ impl FilePermissionRepository {
         Self { pool }
     }
 
-    pub async fn create(&self, permission: FilePermission) -> Result<FilePermission, RepositoryError> {
+    pub async fn create(
+        &self,
+        permission: FilePermission,
+    ) -> Result<FilePermission, RepositoryError> {
         let permission = sqlx::query_as::<_, FilePermission>(
             r#"
             INSERT INTO doc_service.file_permissions (id, file_id, user_id, role_id, permission, created_at)
@@ -376,7 +388,10 @@ impl FilePermissionRepository {
         Ok(permission)
     }
 
-    pub async fn list_by_file_id(&self, file_id: Uuid) -> Result<Vec<FilePermission>, RepositoryError> {
+    pub async fn list_by_file_id(
+        &self,
+        file_id: Uuid,
+    ) -> Result<Vec<FilePermission>, RepositoryError> {
         let permissions = sqlx::query_as::<_, FilePermission>(
             r#"
             SELECT id, file_id, user_id, role_id, permission, created_at
@@ -411,7 +426,10 @@ impl FolderPermissionRepository {
         Self { pool }
     }
 
-    pub async fn create(&self, permission: FolderPermission) -> Result<FolderPermission, RepositoryError> {
+    pub async fn create(
+        &self,
+        permission: FolderPermission,
+    ) -> Result<FolderPermission, RepositoryError> {
         let permission = sqlx::query_as::<_, FolderPermission>(
             r#"
             INSERT INTO doc_service.folder_permissions (id, folder_id, user_id, role_id, permission, inherit, created_at)
@@ -432,7 +450,10 @@ impl FolderPermissionRepository {
         Ok(permission)
     }
 
-    pub async fn list_by_folder_id(&self, folder_id: Uuid) -> Result<Vec<FolderPermission>, RepositoryError> {
+    pub async fn list_by_folder_id(
+        &self,
+        folder_id: Uuid,
+    ) -> Result<Vec<FolderPermission>, RepositoryError> {
         let permissions = sqlx::query_as::<_, FolderPermission>(
             r#"
             SELECT id, folder_id, user_id, role_id, permission, inherit, created_at
@@ -565,7 +586,7 @@ impl TemplateRepository {
             FROM doc_service.templates t
             LEFT JOIN doc_service.template_categories tc ON t.category_id = tc.id
             WHERE 1=1
-            "#
+            "#,
         );
 
         let mut count_query = String::from(
@@ -574,14 +595,19 @@ impl TemplateRepository {
             FROM doc_service.templates t
             LEFT JOIN doc_service.template_categories tc ON t.category_id = tc.id
             WHERE 1=1
-            "#
+            "#,
         );
 
         let mut params: Vec<String> = vec![];
         let mut param_idx = 1;
 
         if let Some(s) = search {
-            let condition = format!(" AND (t.name ILIKE ${} OR t.code ILIKE ${} OR t.description ILIKE ${})", param_idx, param_idx + 1, param_idx + 2);
+            let condition = format!(
+                " AND (t.name ILIKE ${} OR t.code ILIKE ${} OR t.description ILIKE ${})",
+                param_idx,
+                param_idx + 1,
+                param_idx + 2
+            );
             query.push_str(&condition);
             count_query.push_str(&condition);
             params.push(format!("%{}%", s));
@@ -613,7 +639,7 @@ impl TemplateRepository {
             params.push(if active { "true" } else { "false" }.to_string());
         }
 
-        query.push_str(&format!(" ORDER BY t.sort_order ASC, t.created_at DESC"));
+        query.push_str(" ORDER BY t.sort_order ASC, t.created_at DESC");
 
         // Build and execute count query
         let mut count_q = sqlx::query(&count_query);
@@ -633,7 +659,11 @@ impl TemplateRepository {
         Ok((templates, total))
     }
 
-    pub async fn update(&self, id: Uuid, template: &Template) -> Result<Option<Template>, RepositoryError> {
+    pub async fn update(
+        &self,
+        id: Uuid,
+        template: &Template,
+    ) -> Result<Option<Template>, RepositoryError> {
         let t = sqlx::query_as::<_, Template>(
             r#"
             UPDATE doc_service.templates
@@ -669,13 +699,16 @@ impl TemplateRepository {
     }
 
     pub async fn increment_view_count(&self, id: Uuid) -> Result<(), RepositoryError> {
-        sqlx::query(r#"UPDATE doc_service.templates SET view_count = view_count + 1 WHERE id = $1"#)
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            r#"UPDATE doc_service.templates SET view_count = view_count + 1 WHERE id = $1"#,
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub async fn increment_use_count(&self, id: Uuid) -> Result<(), RepositoryError> {
         sqlx::query(r#"UPDATE doc_service.templates SET use_count = use_count + 1 WHERE id = $1"#)
             .bind(id)
@@ -695,8 +728,11 @@ impl TemplateCategoryRepository {
         Self { pool }
     }
 
-    pub async fn list(&self, is_active: Option<bool>) -> Result<Vec<TemplateCategory>, RepositoryError> {
-        let query = if is_active.is_some() {
+    pub async fn list(
+        &self,
+        is_active: Option<bool>,
+    ) -> Result<Vec<TemplateCategory>, RepositoryError> {
+        let result = if let Some(active) = is_active {
             sqlx::query_as::<_, TemplateCategory>(
                 r#"
                 SELECT id, name, code, icon, description, sort_order, is_active, created_at, updated_at, created_by
@@ -705,7 +741,7 @@ impl TemplateCategoryRepository {
                 ORDER BY sort_order ASC, name ASC
                 "#,
             )
-            .bind(is_active.unwrap())
+            .bind(active)
             .fetch_all(&self.pool)
             .await?
         } else {
@@ -720,10 +756,13 @@ impl TemplateCategoryRepository {
             .await?
         };
 
-        Ok(query)
+        Ok(result)
     }
 
-    pub async fn find_by_code(&self, code: &str) -> Result<Option<TemplateCategory>, RepositoryError> {
+    pub async fn find_by_code(
+        &self,
+        code: &str,
+    ) -> Result<Option<TemplateCategory>, RepositoryError> {
         let category = sqlx::query_as::<_, TemplateCategory>(
             r#"
             SELECT id, name, code, icon, description, sort_order, is_active, created_at, updated_at, created_by
@@ -757,8 +796,9 @@ impl TemplateCategoryRepository {
 // ==================== 档案管理 Repository ====================
 
 use crate::models::{
-    Archive, ArchiveCategory, ArchiveCategoryResponse, ArchiveResponse, CreateArchiveCategoryRequest, CreateArchiveRequest,
-    UpdateArchiveCategoryRequest, UpdateArchiveRequest, ListArchivesQuery,
+    Archive, ArchiveCategory, ArchiveCategoryResponse, ArchiveResponse,
+    CreateArchiveCategoryRequest, CreateArchiveRequest, ListArchivesQuery,
+    UpdateArchiveCategoryRequest, UpdateArchiveRequest,
 };
 
 #[derive(Debug, Error)]
@@ -766,8 +806,10 @@ pub enum ArchiveRepositoryError {
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
     #[error("Archive not found")]
+    #[allow(dead_code)]
     ArchiveNotFound,
     #[error("Archive category not found")]
+    #[allow(dead_code)]
     CategoryNotFound,
 }
 
@@ -814,7 +856,10 @@ impl ArchiveCategoryRepository {
         Ok(category)
     }
 
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<ArchiveCategory>, ArchiveRepositoryError> {
+    pub async fn find_by_id(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<ArchiveCategory>, ArchiveRepositoryError> {
         let category = sqlx::query_as::<_, ArchiveCategory>(
             r#"
             SELECT id, code, name, parent_id, description, retention_period, sort_order, is_active, created_at, updated_at, created_by
@@ -829,7 +874,11 @@ impl ArchiveCategoryRepository {
         Ok(category)
     }
 
-    pub async fn find_by_code(&self, code: &str) -> Result<Option<ArchiveCategory>, ArchiveRepositoryError> {
+    #[allow(dead_code)]
+    pub async fn find_by_code(
+        &self,
+        code: &str,
+    ) -> Result<Option<ArchiveCategory>, ArchiveRepositoryError> {
         let category = sqlx::query_as::<_, ArchiveCategory>(
             r#"
             SELECT id, code, name, parent_id, description, retention_period, sort_order, is_active, created_at, updated_at, created_by
@@ -861,11 +910,11 @@ impl ArchiveCategoryRepository {
 
     pub async fn list_tree(&self) -> Result<Vec<ArchiveCategoryResponse>, ArchiveRepositoryError> {
         let categories = self.list_all().await?;
-        
+
         // 构建树形结构
         let mut root_categories = vec![];
         let mut children_map = std::collections::HashMap::new();
-        
+
         for category in &categories {
             let count = self.get_archive_count(category.id).await.unwrap_or(0);
             let response = ArchiveCategoryResponse {
@@ -880,14 +929,17 @@ impl ArchiveCategoryRepository {
                 archive_count: count,
                 children: vec![],
             };
-            
+
             if let Some(parent_id) = category.parent_id {
-                children_map.entry(parent_id).or_insert_with(Vec::new).push(response);
+                children_map
+                    .entry(parent_id)
+                    .or_insert_with(Vec::new)
+                    .push(response);
             } else {
                 root_categories.push(response);
             }
         }
-        
+
         // 递归添加子节点
         fn add_children(
             parent: &mut ArchiveCategoryResponse,
@@ -901,7 +953,7 @@ impl ArchiveCategoryRepository {
                 parent.children = children_clone;
             }
         }
-        
+
         for root in &mut root_categories {
             add_children(root, &children_map);
         }
@@ -915,7 +967,7 @@ impl ArchiveCategoryRepository {
         req: UpdateArchiveCategoryRequest,
     ) -> Result<Option<ArchiveCategory>, ArchiveRepositoryError> {
         let now = chrono::Utc::now();
-        
+
         let category = sqlx::query_as::<_, ArchiveCategory>(
             r#"
             UPDATE doc_service.archive_categories
@@ -956,7 +1008,10 @@ impl ArchiveCategoryRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn get_archive_count(&self, category_id: Uuid) -> Result<i64, ArchiveRepositoryError> {
+    pub async fn get_archive_count(
+        &self,
+        category_id: Uuid,
+    ) -> Result<i64, ArchiveRepositoryError> {
         let row = sqlx::query(
             r#"
             SELECT COUNT(*) as count
@@ -1024,7 +1079,10 @@ impl ArchiveRepository {
         Ok(archive)
     }
 
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<ArchiveResponse>, ArchiveRepositoryError> {
+    pub async fn find_by_id(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<ArchiveResponse>, ArchiveRepositoryError> {
         let archive = sqlx::query_as::<_, ArchiveResponse>(
             r#"
             SELECT 
@@ -1046,7 +1104,11 @@ impl ArchiveRepository {
         Ok(archive)
     }
 
-    pub async fn find_by_archive_no(&self, archive_no: &str) -> Result<Option<ArchiveResponse>, ArchiveRepositoryError> {
+    #[allow(dead_code)]
+    pub async fn find_by_archive_no(
+        &self,
+        archive_no: &str,
+    ) -> Result<Option<ArchiveResponse>, ArchiveRepositoryError> {
         let archive = sqlx::query_as::<_, ArchiveResponse>(
             r#"
             SELECT 
@@ -1084,7 +1146,9 @@ impl ArchiveRepository {
         if let Some(search) = &query.search {
             where_clauses.push(format!(
                 "(a.title ILIKE ${} OR a.archive_no ILIKE ${} OR a.summary ILIKE ${})",
-                param_idx, param_idx + 1, param_idx + 2
+                param_idx,
+                param_idx + 1,
+                param_idx + 2
             ));
             params.push(format!("%{}%", search));
             params.push(format!("%{}%", search));
@@ -1151,7 +1215,7 @@ impl ArchiveRepository {
             main_q = main_q.bind(param);
         }
         main_q = main_q.bind(limit).bind(offset);
-        
+
         let archives = main_q.fetch_all(&self.pool).await?;
 
         Ok((archives, total))
@@ -1163,7 +1227,7 @@ impl ArchiveRepository {
         req: UpdateArchiveRequest,
     ) -> Result<Option<Archive>, ArchiveRepositoryError> {
         let now = chrono::Utc::now();
-        
+
         let archive = sqlx::query_as::<_, Archive>(
             r#"
             UPDATE doc_service.archives
@@ -1205,9 +1269,13 @@ impl ArchiveRepository {
         Ok(archive)
     }
 
-    pub async fn archive(&self, id: Uuid, archived_by: String) -> Result<Option<Archive>, ArchiveRepositoryError> {
+    pub async fn archive(
+        &self,
+        id: Uuid,
+        archived_by: String,
+    ) -> Result<Option<Archive>, ArchiveRepositoryError> {
         let now = chrono::Utc::now();
-        
+
         let archive = sqlx::query_as::<_, Archive>(
             r#"
             UPDATE doc_service.archives
@@ -1237,4 +1305,3 @@ impl ArchiveRepository {
         Ok(result.rows_affected() > 0)
     }
 }
-

@@ -13,12 +13,15 @@ impl WorkflowRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
-    
+
     pub fn get_pool(&self) -> &PgPool {
         &self.pool
     }
 
-    pub async fn create_workflow(&self, req: CreateWorkflowRequest) -> Result<Workflow, sqlx::Error> {
+    pub async fn create_workflow(
+        &self,
+        req: CreateWorkflowRequest,
+    ) -> Result<Workflow, sqlx::Error> {
         let now = Utc::now();
         let definition = req.definition.unwrap_or(serde_json::json!({
             "version": "1.0",
@@ -79,7 +82,7 @@ impl WorkflowRepository {
         } else {
             r#"SELECT COUNT(*) FROM flow.workflows"#
         };
-        
+
         let total: i64 = if let Some(active) = is_active {
             sqlx::query_scalar(total_query)
                 .bind(active)
@@ -115,9 +118,9 @@ impl WorkflowRepository {
             q = q.bind(limit).bind(offset);
         }
         let items = q.fetch_all(&self.pool).await?;
-        
+
         let page = offset / limit + 1;
-        
+
         Ok(PaginatedResult {
             items,
             total,
@@ -162,10 +165,7 @@ impl WorkflowRepository {
 
     pub async fn delete_workflow(&self, id: Uuid) -> Result<bool, sqlx::Error> {
         let query = "DELETE FROM flow.workflows WHERE id = $1";
-        let result = sqlx::query(query)
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+        let result = sqlx::query(query).bind(id).execute(&self.pool).await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -253,7 +253,9 @@ impl WorkflowRepository {
             ORDER BY created_at DESC
             LIMIT ${} OFFSET ${}
             "#,
-            where_clause, idx, idx + 1
+            where_clause,
+            idx,
+            idx + 1
         );
 
         let mut q = sqlx::query_as::<_, WorkflowInstance>(&query);
@@ -293,11 +295,12 @@ impl WorkflowRepository {
             inst.started_at
         };
 
-        let completed_at = if new_status == "completed" || new_status == "failed" || new_status == "cancelled" {
-            Some(Utc::now())
-        } else {
-            inst.completed_at
-        };
+        let completed_at =
+            if new_status == "completed" || new_status == "failed" || new_status == "cancelled" {
+                Some(Utc::now())
+            } else {
+                inst.completed_at
+            };
 
         let query = r#"
             UPDATE flow.workflow_instances
@@ -325,7 +328,10 @@ impl WorkflowRepository {
         self.update_instance(id, Some(req.status), None, None).await
     }
 
-    pub async fn create_approval(&self, req: CreateApprovalRequest) -> Result<Approval, sqlx::Error> {
+    pub async fn create_approval(
+        &self,
+        req: CreateApprovalRequest,
+    ) -> Result<Approval, sqlx::Error> {
         let now = Utc::now();
         let timeout_at = req.timeout_hours.map(|h| now + Duration::hours(h as i64));
         let approval = Approval {
@@ -412,7 +418,9 @@ impl WorkflowRepository {
             ORDER BY created_at DESC
             LIMIT ${} OFFSET ${}
             "#,
-            where_clause, idx, idx + 1
+            where_clause,
+            idx,
+            idx + 1
         );
 
         let mut q = sqlx::query_as::<_, Approval>(&query);
@@ -519,10 +527,21 @@ impl WorkflowRepository {
         };
         self.create_approval_record(record).await.ok();
 
-        self.update_approval(id, Some(new_status), new_comment, new_assignee, new_approved_by, new_approved_at).await
+        self.update_approval(
+            id,
+            Some(new_status),
+            new_comment,
+            new_assignee,
+            new_approved_by,
+            new_approved_at,
+        )
+        .await
     }
 
-    pub async fn create_approval_record(&self, req: CreateApprovalRecordRequest) -> Result<ApprovalRecord, sqlx::Error> {
+    pub async fn create_approval_record(
+        &self,
+        req: CreateApprovalRecordRequest,
+    ) -> Result<ApprovalRecord, sqlx::Error> {
         let now = Utc::now();
         let record = ApprovalRecord {
             id: Uuid::new_v4(),
@@ -556,7 +575,10 @@ impl WorkflowRepository {
             .await
     }
 
-    pub async fn get_approval_records(&self, approval_id: Uuid) -> Result<Vec<ApprovalRecord>, sqlx::Error> {
+    pub async fn get_approval_records(
+        &self,
+        approval_id: Uuid,
+    ) -> Result<Vec<ApprovalRecord>, sqlx::Error> {
         let query = r#"
             SELECT id, approval_id, action, actor_id, actor_name, comment, previous_status, new_status, created_at
             FROM flow.approval_records
@@ -601,7 +623,9 @@ impl WorkflowRepository {
             ORDER BY created_at DESC
             LIMIT ${} OFFSET ${}
             "#,
-            where_clause, idx, idx + 1
+            where_clause,
+            idx,
+            idx + 1
         );
 
         let mut q = sqlx::query_as::<_, ApprovalRecord>(&query);
@@ -615,11 +639,18 @@ impl WorkflowRepository {
         q.fetch_all(&self.pool).await
     }
 
-    pub async fn get_approvals_by_instance(&self, instance_id: Uuid) -> Result<Vec<Approval>, sqlx::Error> {
-        self.list_approvals(Some(instance_id), None, None, 100, 0).await
+    pub async fn get_approvals_by_instance(
+        &self,
+        instance_id: Uuid,
+    ) -> Result<Vec<Approval>, sqlx::Error> {
+        self.list_approvals(Some(instance_id), None, None, 100, 0)
+            .await
     }
 
-    pub async fn create_notification(&self, req: CreateNotificationRequest) -> Result<Notification, sqlx::Error> {
+    pub async fn create_notification(
+        &self,
+        req: CreateNotificationRequest,
+    ) -> Result<Notification, sqlx::Error> {
         let now = Utc::now();
         let notification = Notification {
             id: Uuid::new_v4(),
@@ -653,7 +684,12 @@ impl WorkflowRepository {
             .await
     }
 
-    pub async fn get_notifications_by_user(&self, user_id: Uuid, limit: i64, offset: i64) -> Result<Vec<Notification>, sqlx::Error> {
+    pub async fn get_notifications_by_user(
+        &self,
+        user_id: Uuid,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<Notification>, sqlx::Error> {
         let query = r#"
             SELECT id, user_id, title, content, notification_type, workflow_instance_id, approval_id, is_read, created_at
             FROM flow.notifications
@@ -675,10 +711,7 @@ impl WorkflowRepository {
             SET is_read = true
             WHERE user_id = $1 AND is_read = false
         "#;
-        let result = sqlx::query(query)
-            .bind(user_id)
-            .execute(&self.pool)
-            .await?;
+        let result = sqlx::query(query).bind(user_id).execute(&self.pool).await?;
         Ok(result.rows_affected() as usize)
     }
 

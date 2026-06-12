@@ -36,8 +36,8 @@ impl IamServiceClient {
     }
 
     pub fn from_env() -> ServiceClientResult<Self> {
-        let base_url = std::env::var("IAM_SERVICE_URL")
-            .unwrap_or_else(|_| "http://localhost:8000".into());
+        let base_url =
+            std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".into());
         Self::new(base_url)
     }
 
@@ -64,4 +64,3 @@ impl IamServiceClient {
         self.base_client.get("/api/v1/roles").await
     }
 }
-

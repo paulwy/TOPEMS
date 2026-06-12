@@ -1,4 +1,3 @@
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -38,6 +37,7 @@ struct UserInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[allow(dead_code)]
 struct MonitoringService {
     service_name: String,
     status: String,
@@ -47,6 +47,7 @@ struct MonitoringService {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[allow(dead_code)]
 struct MonitoringMetrics {
     requests_total: u64,
     requests_success: u64,
@@ -58,6 +59,7 @@ struct MonitoringMetrics {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[allow(dead_code)]
 struct Alert {
     id: String,
     rule_name: String,
@@ -69,6 +71,7 @@ struct Alert {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[allow(dead_code)]
 struct LogEntry {
     #[serde(with = "chrono::serde::ts_seconds")]
     timestamp: DateTime<Utc>,
@@ -78,6 +81,7 @@ struct LogEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[allow(dead_code)]
 struct Notification {
     id: String,
     title: String,

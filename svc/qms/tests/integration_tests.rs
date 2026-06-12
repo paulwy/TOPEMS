@@ -1,4 +1,6 @@
 // QMS 服务集成测试
+#![allow(dead_code)]
+#![allow(unused_imports)]
 
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
@@ -23,11 +25,11 @@ mod tests {
     #[tokio::test]
     async fn test_quality_inspection_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'qms' AND table_name = 'quality_inspections')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -42,11 +44,11 @@ mod tests {
     #[tokio::test]
     async fn test_quality_standard_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'qms' AND table_name = 'quality_standards')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -61,11 +63,11 @@ mod tests {
     #[tokio::test]
     async fn test_quality_issue_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'qms' AND table_name = 'quality_issues')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -80,11 +82,11 @@ mod tests {
     #[tokio::test]
     async fn test_corrective_action_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'qms' AND table_name = 'corrective_actions')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
@@ -99,10 +101,10 @@ mod tests {
     #[tokio::test]
     async fn test_create_quality_inspection() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let inspection_id = Uuid::new_v4();
         let title = format!("测试质量检查-{}", &inspection_id.to_string()[..8]);
-        
+
         let result = sqlx::query(
             r#"
             INSERT INTO qms.quality_inspections (id, title, description, inspection_type, inspector, status, created_at, updated_at)
@@ -120,14 +122,14 @@ mod tests {
         .bind("测试员")
         .fetch_one(&pool)
         .await;
-        
+
         assert!(result.is_ok(), "质量检查创建应该成功");
     }
 
     #[tokio::test]
     async fn test_list_quality_inspections() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query_as::<_, QualityInspectionRow>(
             r#"
             SELECT id, title, description, inspection_type, standard_id, inspector, status, result, findings, inspected_at, created_at, updated_at
@@ -138,7 +140,7 @@ mod tests {
         )
         .fetch_all(&pool)
         .await;
-        
+
         match result {
             Ok(inspections) => {
                 assert!(inspections.len() <= 10, "返回的检查数量应该不超过10条");
@@ -152,11 +154,11 @@ mod tests {
     #[tokio::test]
     async fn test_quality_inspection_status_update() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         // 创建一个新的检查记录
         let inspection_id = Uuid::new_v4();
         let title = format!("状态更新测试-{}", &inspection_id.to_string()[..8]);
-        
+
         sqlx::query(
             r#"
             INSERT INTO qms.quality_inspections (id, title, description, inspection_type, inspector, status, created_at, updated_at)
@@ -171,7 +173,7 @@ mod tests {
         .execute(&pool)
         .await
         .expect("创建测试数据失败");
-        
+
         // 更新状态为进行中
         let update_result = sqlx::query(
             r#"
@@ -182,17 +184,17 @@ mod tests {
         .bind(inspection_id)
         .execute(&pool)
         .await;
-        
+
         assert!(update_result.is_ok(), "状态更新应该成功");
-        
+
         // 验证状态已更新
         let check_result = sqlx::query_scalar::<_, String>(
-            "SELECT status FROM qms.quality_inspections WHERE id = $1"
+            "SELECT status FROM qms.quality_inspections WHERE id = $1",
         )
         .bind(inspection_id)
         .fetch_one(&pool)
         .await;
-        
+
         match check_result {
             Ok(status) => {
                 assert_eq!(status, "in_progress", "状态应该更新为 in_progress");
@@ -201,7 +203,7 @@ mod tests {
                 panic!("查询状态失败: {}", e);
             }
         }
-        
+
         // 清理测试数据
         let _ = sqlx::query("DELETE FROM qms.quality_inspections WHERE id = $1")
             .bind(inspection_id)
@@ -212,11 +214,11 @@ mod tests {
     #[tokio::test]
     async fn test_quality_audit_log_table_exists() {
         let pool = setup_test_pool().await.unwrap();
-        
+
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'qms' AND table_name = 'quality_audit_logs')")
             .fetch_one(&pool)
             .await;
-        
+
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);

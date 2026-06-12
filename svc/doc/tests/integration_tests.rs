@@ -150,7 +150,9 @@ mod file_list_tests {
                     id: Uuid::new_v4(),
                     name: "file2.docx".to_string(),
                     size: 2048,
-                    content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document".to_string(),
+                    content_type:
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            .to_string(),
                 },
             ],
             total: 2,
@@ -413,6 +415,7 @@ mod template_api_tests {
     #[test]
     fn test_list_templates_query() {
         #[derive(Deserialize)]
+        #[allow(dead_code)]
         struct ListTemplatesQuery {
             page: Option<u32>,
             page_size: Option<u32>,
@@ -472,6 +475,7 @@ mod permission_api_tests {
     }
 
     #[derive(Debug, Deserialize)]
+    #[allow(dead_code)]
     struct SetPermissionRequest {
         user_id: Option<Uuid>,
         role_id: Option<Uuid>,
@@ -540,8 +544,8 @@ mod http_endpoint_tests {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
-        Router,
         routing::get,
+        Router,
     };
     use tower::ServiceExt;
 
@@ -575,12 +579,7 @@ mod http_endpoint_tests {
         let app = Router::new().route("/", get(home_handler));
 
         let response = app
-            .oneshot(
-                Request::builder()
-                    .uri("/")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
 

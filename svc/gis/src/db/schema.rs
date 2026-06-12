@@ -353,17 +353,21 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create indexes for better query performance
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_device_locations_map_id ON device_locations(map_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_device_locations_map_id ON device_locations(map_id)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pipelines_map_id ON pipelines(map_id)")
         .execute(pool)
         .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_warehouse_locations_map_id ON warehouse_locations(map_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_warehouse_locations_map_id ON warehouse_locations(map_id)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_location_photos_map_id ON location_photos(map_id)")
         .execute(pool)
@@ -377,9 +381,11 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_geofeatures_geodata_id ON gis.geofeatures(geodata_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_gis_geofeatures_geodata_id ON gis.geofeatures(geodata_id)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_device_location_records_device_id ON gis.device_location_records(device_id)")
         .execute(pool)

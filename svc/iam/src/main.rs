@@ -13,7 +13,7 @@ use std::env;
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use topems_shared::{ApiResponse, AuthState, auth_middleware, create_api_info_router};
+use topems_shared::{auth_middleware, create_api_info_router, ApiResponse, AuthState};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -47,14 +47,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("✅ 数据库连接成功");
 
     let auth_state = AuthState::from_env();
-    tracing::info!("🔑 AuthState 读取到的 JWT_SECRET: {}", auth_state.jwt_secret);
+    tracing::info!(
+        "🔑 AuthState 读取到的 JWT_SECRET: {}",
+        auth_state.jwt_secret
+    );
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
         .allow_headers(Any);
 
-    let app_state = AppState { db: pool.clone(), auth_state: auth_state.clone() };
+    let app_state = AppState {
+        db: pool.clone(),
+        auth_state: auth_state.clone(),
+    };
 
     let public_routes = Router::new()
         .route("/", get(home))
@@ -94,7 +100,10 @@ async fn home() -> &'static str {
 }
 
 async fn health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success("TOPEMS-IAM is running!".to_string(), "OK"))
+    Json(ApiResponse::success(
+        "TOPEMS-IAM is running!".to_string(),
+        "OK",
+    ))
 }
 
 use crate::models::user::{LoginRequest, RefreshTokenRequest, RegisterRequest};
@@ -139,7 +148,7 @@ async fn get_current_user(
         Ok(id) => id,
         Err(_) => return Json(ApiResponse::error(400, "无效的用户ID")),
     };
-    
+
     let user = user_service.get_user_by_id(&user_id).await;
     match user {
         Some(user) => Json(ApiResponse::success(user.into(), "获取当前用户成功")),

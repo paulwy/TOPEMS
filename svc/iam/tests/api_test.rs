@@ -1,9 +1,4 @@
-use axum::{
-    body::Body,
-    http::Request,
-    routing::get,
-    Router,
-};
+use axum::{body::Body, http::Request, routing::get, Router};
 use tower::ServiceExt;
 
 #[tokio::test]

@@ -8,7 +8,7 @@ const logger = createLogger("ApiClient");
 export interface ApiResponse<T = any> {
   code: number;
   success: boolean;
-  data: T;
+  data: T | undefined;
   message: string;
   timestamp: string;
 }
@@ -56,7 +56,6 @@ type TypedAxiosInstance = Omit<
   ): Promise<R>;
 };
 
-const DEFAULT_TIMEOUT = 30000;
 const AI_TIMEOUT = 120000;
 
 // 禁用 Axios 的自动错误日志

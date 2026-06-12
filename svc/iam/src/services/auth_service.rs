@@ -1,12 +1,24 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(dead_code)]
+
 use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, Algorithm};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use regex::Regex;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use super::user_service::UserService;
 use crate::db::repository::AuditLogRepository;
-use crate::models::user::{LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResponse, RegisterRequest, User, UserInfo};
+use crate::models::user::{
+    LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResponse, RegisterRequest, User,
+    UserInfo,
+};
 use crate::models::AuditLog;
 use topems_shared::{ApiResponse, AuthState, Claims};
 
@@ -29,6 +41,7 @@ impl AuthService {
     }
 
     /// 记录审计日志
+    #[allow(clippy::too_many_arguments)]
     async fn log_audit(
         &self,
         user_id: Option<Uuid>,
@@ -69,16 +82,23 @@ impl AuthService {
                 if !user.5 {
                     return ApiResponse::error(403, "该账号已被禁用");
                 }
-                
+
                 if !bcrypt::verify(&request.password, &user.4).unwrap_or(false) {
                     tracing::warn!("密码错误: {}", request.username);
                     return ApiResponse::error(401, "密码错误");
                 }
 
-                let (roles, permissions) = self.user_service.get_user_roles_and_permissions(&user.0).await;
+                let (roles, permissions) = self
+                    .user_service
+                    .get_user_roles_and_permissions(&user.0)
+                    .await;
                 let role = roles.first().cloned().unwrap_or_else(|| "user".to_string());
                 let is_superuser = user.6 || role == "admin";
-                let final_roles = if roles.is_empty() { vec!["user".to_string()] } else { roles };
+                let final_roles = if roles.is_empty() {
+                    vec!["user".to_string()]
+                } else {
+                    roles
+                };
 
                 let user_info = UserInfo {
                     id: user.0.to_string(),
@@ -122,7 +142,10 @@ impl AuthService {
                 };
 
                 tracing::info!("用户登录成功: {}", user.1);
-                ApiResponse::success(resp, &format!("欢迎回来，{}！", user.3.as_ref().unwrap_or(&user.1)))
+                ApiResponse::success(
+                    resp,
+                    &format!("欢迎回来，{}！", user.3.as_ref().unwrap_or(&user.1)),
+                )
             }
             Ok(None) => {
                 tracing::warn!("用户不存在: {}", request.username);
@@ -170,7 +193,10 @@ impl AuthService {
                 tracing::info!("用户注册成功: {}", user.get::<String, _>("username"));
 
                 let user_id = user.get::<Uuid, _>("id");
-                let (user_roles, user_permissions) = self.user_service.get_user_roles_and_permissions(&user_id).await;
+                let (user_roles, user_permissions) = self
+                    .user_service
+                    .get_user_roles_and_permissions(&user_id)
+                    .await;
 
                 let is_superuser = user.get::<String, _>("role") == "admin";
                 let user_info = UserInfo {
@@ -182,7 +208,9 @@ impl AuthService {
                     roles: user_roles.clone(),
                     permissions: user_permissions.clone(),
                     avatar_url: None,
-                    created_at: user.get::<chrono::DateTime<Utc>, _>("created_at").to_rfc3339(),
+                    created_at: user
+                        .get::<chrono::DateTime<Utc>, _>("created_at")
+                        .to_rfc3339(),
                     is_active: user.get::<bool, _>("is_active"),
                     is_superuser,
                 };
@@ -224,7 +252,10 @@ impl AuthService {
         }
     }
 
-    pub async fn refresh_token(&self, request: RefreshTokenRequest) -> ApiResponse<RefreshTokenResponse> {
+    pub async fn refresh_token(
+        &self,
+        request: RefreshTokenRequest,
+    ) -> ApiResponse<RefreshTokenResponse> {
         match self.verify_token(&request.refresh_token) {
             Ok(claims) => {
                 let result = sqlx::query_as::<_, (Uuid, String, String, Option<String>, String, bool, chrono::DateTime<Utc>, chrono::DateTime<Utc>, bool)>(
@@ -304,7 +335,8 @@ impl AuthService {
             &Header::new(Algorithm::HS256),
             &claims,
             &EncodingKey::from_secret(self.auth_state.jwt_secret.as_ref()),
-        ).map_err(|e| format!("生成token失败: {}", e))
+        )
+        .map_err(|e| format!("生成token失败: {}", e))
     }
 
     fn verify_token(&self, token: &str) -> Result<Claims, String> {

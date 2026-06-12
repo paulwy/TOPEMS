@@ -8,15 +8,18 @@ use axum::{
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::models::{CreateWorkStationRequest, UpdateWorkStationRequest, WorkStation};
-use topems_shared::{ApiResponse, PaginationParams, api_error};
 use crate::api::audit::log_audit_event;
+use crate::models::{CreateWorkStationRequest, UpdateWorkStationRequest, WorkStation};
+use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 use super::ApiState;
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/workstations", get(list_workstations).post(create_workstation))
+        .route(
+            "/api/v1/workstations",
+            get(list_workstations).post(create_workstation),
+        )
         .route(
             "/api/v1/workstations/{id}",
             get(get_workstation).put(update_workstation),
@@ -125,14 +128,14 @@ async fn create_workstation(
         Ok(ws) => (
             Json(ApiResponse::success(ws.clone(), "工作站创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建工作站失败: {}", e);
             (
                 Json(api_error(500, "工作站创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -155,8 +158,9 @@ async fn create_workstation(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -193,7 +197,7 @@ async fn update_workstation(
 ) -> Json<ApiResponse<WorkStation>> {
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, WorkStation>(
         "SELECT id, name, code, location, capacity, status, supervisor, created_at, updated_at FROM work_stations WHERE id = $1",
     )
@@ -238,14 +242,14 @@ async fn update_workstation(
         Ok(ws) => (
             Json(ApiResponse::success(ws.clone(), "工作站更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新工作站失败: {}", e);
             (
                 Json(api_error(500, "工作站更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -268,8 +272,9 @@ async fn update_workstation(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

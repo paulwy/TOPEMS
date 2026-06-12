@@ -10,8 +10,10 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;
-use crate::models::{CorrectiveAction, CreateCorrectiveActionRequest, UpdateCorrectiveActionRequest};
-use topems_shared::{ApiResponse, api_error};
+use crate::models::{
+    CorrectiveAction, CreateCorrectiveActionRequest, UpdateCorrectiveActionRequest,
+};
+use topems_shared::{api_error, ApiResponse};
 
 use super::ApiState;
 
@@ -25,7 +27,10 @@ pub struct CorrectiveActionQueryParams {
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/improvements", get(list_actions).post(create_action))
+        .route(
+            "/api/v1/improvements",
+            get(list_actions).post(create_action),
+        )
         .route(
             "/api/v1/improvements/{id}",
             get(get_action).put(update_action).delete(delete_action),
@@ -90,7 +95,10 @@ async fn list_actions(
         }
         Err(e) => {
             tracing::error!("获取纠正措施列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取纠正措施列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取纠正措施列表失败",
+            ))
         }
     }
 }
@@ -186,10 +194,16 @@ async fn get_action(
 
     match result {
         Ok(Some(action)) => Json(ApiResponse::success(action, "获取纠正措施成功")),
-        Ok(None) => Json(ApiResponse::<CorrectiveAction>::error(404, "纠正措施不存在")),
+        Ok(None) => Json(ApiResponse::<CorrectiveAction>::error(
+            404,
+            "纠正措施不存在",
+        )),
         Err(e) => {
             tracing::error!("获取纠正措施失败: {}", e);
-            Json(ApiResponse::<CorrectiveAction>::error(500, "获取纠正措施失败"))
+            Json(ApiResponse::<CorrectiveAction>::error(
+                500,
+                "获取纠正措施失败",
+            ))
         }
     }
 }
@@ -208,8 +222,18 @@ async fn update_action(
 
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(ApiResponse::<CorrectiveAction>::error(404, "纠正措施不存在")),
-        Err(e) => return Json(ApiResponse::<CorrectiveAction>::error(500, &format!("查询纠正措施失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::<CorrectiveAction>::error(
+                404,
+                "纠正措施不存在",
+            ))
+        }
+        Err(e) => {
+            return Json(ApiResponse::<CorrectiveAction>::error(
+                500,
+                &format!("查询纠正措施失败: {}", e),
+            ))
+        }
     };
 
     let title = req.title.unwrap_or(existing.title);
@@ -247,7 +271,10 @@ async fn update_action(
         Ok(action) => Json(ApiResponse::success(action, "纠正措施更新成功")),
         Err(e) => {
             tracing::error!("更新纠正措施失败: {}", e);
-            Json(ApiResponse::<CorrectiveAction>::error(500, "纠正措施更新失败"))
+            Json(ApiResponse::<CorrectiveAction>::error(
+                500,
+                "纠正措施更新失败",
+            ))
         }
     }
 }

@@ -1,211 +1,160 @@
-pub mod config;
-pub mod error;
+pub mod api_version;
+pub mod audit;
 pub mod auth;
-pub mod response;
+pub mod backup;
+pub mod cache;
+pub mod cluster;
+pub mod config;
 pub mod cors;
+pub mod database;
+pub mod embedding;
+pub mod error;
+pub mod event;
 pub mod health;
 pub mod hrm;
-pub mod performance;
-pub mod database;
 pub mod logging;
-pub mod monitoring;
-pub mod backup;
-pub mod tenant;
-pub mod cluster;
-pub mod redis;
-pub mod rate_limit;
-pub mod repository;
 pub mod messaging;
-pub mod storage;
-pub mod validation;
-pub mod permission;
-pub mod audit;
+pub mod monitoring;
 pub mod notification;
-pub mod service_client;
-pub mod event;
-pub mod api_version;
-pub mod schema;
-pub mod cache;
-pub mod query_optimizer;
-pub mod service_bootstrap;
-pub mod service_discovery;
-pub mod vector_store;
-pub mod embedding;
 pub mod ollama_client;
+pub mod performance;
+pub mod permission;
+pub mod query_optimizer;
+pub mod rate_limit;
+pub mod redis;
+pub mod repository;
+pub mod response;
+pub mod schema;
+pub mod service_bootstrap;
+pub mod service_client;
+pub mod service_discovery;
+pub mod storage;
+pub mod tenant;
+pub mod validation;
+pub mod vector_store;
 
-pub use config::{Config, AppConfig, ServiceConfig, ServiceRegistry, get_default_port, CacheConfig};
-pub use config::enhanced::{
-    DatabaseConfig, RedisConfig, JwtConfig, AIConfig, CacheConfig as EnhancedCacheConfig,
-};
-pub use error::{TopemsError, Result};
-pub use auth::{Claims, AuthState, Role, Permission, get_permissions, get_roles, auth_middleware, check_permission, check_role, require_superuser, require_any_permission, require_all_permissions, get_role_by_id, get_permission_by_id, generate_jwt_token, verify_jwt_token, generate_refresh_token};
-pub use response::{ApiResponse, PaginationParams, PaginatedResponse, api_error};
-pub use cors::create_cors_layer;
-pub use health::{
-    ServiceHealth, HealthStatus, DependencyHealth, HealthCheckResponse, 
-    ServiceMetrics, ServiceMonitor, HealthChecker, SystemMetrics, 
-    check_http_health, HealthState, standard_health_check, 
-    create_health_router, metrics_middleware, create_metrics_router,
-    SimpleHealthConfig, simple_health_check, build_health_response
-};
-pub use hrm::{AppState, PaginationQuery, PaginatedResult};
-pub use performance::{
-    PerformanceMetrics, MetricsSnapshot, RequestTimer,
-    ApiCallMetrics, DatabaseQueryMetrics, CacheMetrics,
-    ComprehensiveMetrics, EndpointStats, ApiStats, TableStats,
-    DatabaseStats, ComprehensiveStats, DatabaseQueryTimer, CacheOperationRecorder
-};
-pub use database::{
-    create_database_pool, test_database_connection,
-    HealthCheckResult, check_pool_health
-};
-pub use logging::{LogEntry, LogQuery, LogStats, LogAggregator, TraceContext, create_log_filter, init_logging};
-pub use monitoring::{MonitoringState, ServiceHealth as MonServiceHealth, ServiceStatus, MonitoringMetrics, AlertRule, AlertSeverity, Alert, default_alert_rules};
-pub use backup::{BackupManager, BackupConfig, BackupMetadata, BackupType, BackupStatus, BackupRequest, RestoreRequest, BackupStatistics, BackupError, BackupSchedule, CompressionType};
-pub use tenant::{TenantManager, Tenant, TenantStatus, TenantPlan, TenantSettings, TenantUser, TenantRole, TenantContext, TenantError, TenantUpdate, UsageMetrics, UsageLimitExceeded};
-pub use cluster::{ClusterManager, ClusterConfig, ClusterMode, NodeConfig, NodeRole, NodeStatus, NodeHealth, LoadBalancerConfig, LoadBalancingAlgorithm, HealthCheckConfig, FailoverConfig, ClusterMetrics, ClusterEvent, ClusterEventType, EventSeverity, ClusterError};
-pub use redis::{RedisPool, RedisCacheService, CacheService};
-pub use rate_limit::{RateLimitConfig, RateLimitMiddleware};
-pub use repository::{Repository, PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder};
-pub use messaging::{Message, MessageProducer, MessageConsumer, RedisMessageBroker, InMemoryMessageBroker};
-pub use storage::{StorageConfig, FileMetadata, StorageService, LocalStorage};
-pub use validation::{ValidationError, ValidationResult, Validator};
-pub use permission::{ModulePermission, check_module_permission, check_resource_permission, check_any_module_permission};
-pub use audit::{AuditLog, CreateAuditLogRequest, AuditLogQuery};
-pub use notification::{
-    NotificationType,
-    Notification,
-    CreateNotificationRequest,
-    NotificationTemplate,
-    CreateTemplateRequest,
-    RenderTemplateRequest,
-    TemplateStatus,
-    ArchiveConfig,
-    NotificationStats,
-    NotificationListResponse,
-    NotificationListQuery,
-    NotificationServiceClient,
-    NotificationServiceState,
-};
-pub use service_discovery::{
-    ServiceInfo,
-    ServiceCategory,
-    ServiceRegistryStatus,
-    ServiceDiscoveryClient,
-    ServiceHealthStatus,
-    LocalServiceRegistry,
-    PortalServiceAggregator,
-};
-pub use service_client::{
-    ServiceClientError,
-    ServiceClientResult,
-    BaseServiceClient,
-    HrmServiceClient,
-    IamServiceClient,
-    Employee,
-    Department,
-    Company,
-    User,
-    create_hrm_client,
-    create_iam_client,
-};
-pub use event::{
-    EventError,
-    EventResult,
-    Event,
-    EventType,
-    HrmEmployeeCreatedPayload,
-    HrmEmployeeUpdatedPayload,
-    PmProjectCreatedPayload,
-    EventPublisher,
-    EventSubscriber,
-};
 pub use api_version::{
-    ApiVersionInfo,
-    ApiInfo,
-    api_prefix,
-    versioned_router,
-    default_versioned_router,
-    create_api_info,
-    create_api_info_router,
-    get_api_info_handler,
+    api_prefix, create_api_info, create_api_info_router, default_versioned_router,
+    get_api_info_handler, versioned_router, ApiInfo, ApiVersionInfo,
 };
-pub use schema::{
-    HRM_SCHEMA,
-    ERP_SCHEMA,
-    PM_SCHEMA,
-    CRM_SCHEMA,
-    QMS_SCHEMA,
-    MES_SCHEMA,
-    WMS_SCHEMA,
-    SRM_SCHEMA,
-    SCM_SCHEMA,
-    PDM_SCHEMA,
-    LIMS_SCHEMA,
-    RS_SCHEMA,
-    GIS_SCHEMA,
-    EHS_SCHEMA,
-    BI_SCHEMA,
-    AI_SCHEMA,
-    IM_SCHEMA,
-    INTEGRATION_SCHEMA,
-    MAIL_SCHEMA,
-    MOBILE_SCHEMA,
-    PORTAL_SCHEMA,
-    with_schema,
-    hrm_table,
-    erp_table,
-    pm_table,
-    crm_table,
-    qms_table,
-    mes_table,
-    wms_table,
-    srm_table,
-    scm_table,
-    pdm_table,
-    lims_table,
-    rs_table,
-    gis_table,
-    ehs_table,
-    bi_table,
-    ai_table,
-    im_table,
-    integration_table,
-    mail_table,
-    mobile_table,
-    portal_table,
+pub use audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
+pub use auth::{
+    auth_middleware, check_permission, check_role, generate_jwt_token, generate_refresh_token,
+    get_permission_by_id, get_permissions, get_role_by_id, get_roles, require_all_permissions,
+    require_any_permission, require_superuser, verify_jwt_token, AuthState, Claims, Permission,
+    Role,
+};
+pub use backup::{
+    BackupConfig, BackupError, BackupManager, BackupMetadata, BackupRequest, BackupSchedule,
+    BackupStatistics, BackupStatus, BackupType, CompressionType, RestoreRequest,
 };
 pub use cache::{
-    InMemoryCache, CacheManager, CacheStatistics, EvictionPolicy,
-    MultiLevelCacheManager, MultiLevelCacheStatistics
+    CacheManager, CacheStatistics, EvictionPolicy, InMemoryCache, MultiLevelCacheManager,
+    MultiLevelCacheStatistics,
+};
+pub use cluster::{
+    ClusterConfig, ClusterError, ClusterEvent, ClusterEventType, ClusterManager, ClusterMetrics,
+    ClusterMode, EventSeverity, FailoverConfig, HealthCheckConfig, LoadBalancerConfig,
+    LoadBalancingAlgorithm, NodeConfig, NodeHealth, NodeRole, NodeStatus,
+};
+pub use config::enhanced::{
+    AIConfig, CacheConfig as EnhancedCacheConfig, DatabaseConfig, JwtConfig, RedisConfig,
+};
+pub use config::{
+    get_default_port, AppConfig, CacheConfig, Config, ServiceConfig, ServiceRegistry,
+};
+pub use cors::create_cors_layer;
+pub use database::{
+    check_pool_health, create_database_pool, test_database_connection, HealthCheckResult,
+};
+pub use error::{Result, TopemsError};
+pub use event::{
+    Event, EventError, EventPublisher, EventResult, EventSubscriber, EventType,
+    HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, PmProjectCreatedPayload,
+};
+pub use health::{
+    build_health_response, check_http_health, create_health_router, create_metrics_router,
+    metrics_middleware, simple_health_check, standard_health_check, DependencyHealth,
+    HealthCheckResponse, HealthChecker, HealthState, HealthStatus, ServiceHealth, ServiceMetrics,
+    ServiceMonitor, SimpleHealthConfig, SystemMetrics,
+};
+pub use hrm::{AppState, PaginatedResult, PaginationQuery};
+pub use logging::{
+    create_log_filter, init_logging, LogAggregator, LogEntry, LogQuery, LogStats, TraceContext,
+};
+pub use messaging::{
+    InMemoryMessageBroker, Message, MessageConsumer, MessageProducer, RedisMessageBroker,
+};
+pub use monitoring::{
+    default_alert_rules, Alert, AlertRule, AlertSeverity, MonitoringMetrics, MonitoringState,
+    ServiceHealth as MonServiceHealth, ServiceStatus,
+};
+pub use notification::{
+    ArchiveConfig, CreateNotificationRequest, CreateTemplateRequest, Notification,
+    NotificationListQuery, NotificationListResponse, NotificationServiceClient,
+    NotificationServiceState, NotificationStats, NotificationTemplate, NotificationType,
+    RenderTemplateRequest, TemplateStatus,
+};
+pub use performance::{
+    ApiCallMetrics, ApiStats, CacheMetrics, CacheOperationRecorder, ComprehensiveMetrics,
+    ComprehensiveStats, DatabaseQueryMetrics, DatabaseQueryTimer, DatabaseStats, EndpointStats,
+    MetricsSnapshot, PerformanceMetrics, RequestTimer, TableStats,
+};
+pub use permission::{
+    check_any_module_permission, check_module_permission, check_resource_permission,
+    ModulePermission,
 };
 pub use query_optimizer::{
-    IndexRecommendation, QueryOptimizationSuggestion,
-    suggest_query_optimization,
-    BatchOperations, PaginationOptimizer,
-    NPlusOneDetector, NPlusOneWarning
+    suggest_query_optimization, BatchOperations, IndexRecommendation, NPlusOneDetector,
+    NPlusOneWarning, PaginationOptimizer, QueryOptimizationSuggestion,
+};
+pub use rate_limit::{RateLimitConfig, RateLimitMiddleware};
+pub use redis::{CacheService, RedisCacheService, RedisPool};
+pub use repository::{
+    PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,
+};
+pub use response::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
+pub use schema::{
+    ai_table, bi_table, crm_table, ehs_table, erp_table, gis_table, hrm_table, im_table,
+    integration_table, lims_table, mail_table, mes_table, mobile_table, pdm_table, pm_table,
+    portal_table, qms_table, rs_table, scm_table, srm_table, with_schema, wms_table, AI_SCHEMA,
+    BI_SCHEMA, CRM_SCHEMA, EHS_SCHEMA, ERP_SCHEMA, GIS_SCHEMA, HRM_SCHEMA, IM_SCHEMA,
+    INTEGRATION_SCHEMA, LIMS_SCHEMA, MAIL_SCHEMA, MES_SCHEMA, MOBILE_SCHEMA, PDM_SCHEMA, PM_SCHEMA,
+    PORTAL_SCHEMA, QMS_SCHEMA, RS_SCHEMA, SCM_SCHEMA, SRM_SCHEMA, WMS_SCHEMA,
 };
 pub use service_bootstrap::{
-    ServiceBootstrap, BootstrapConfig, AppState as BootstrapAppState,
-    quick_bootstrap, quick_bootstrap_with_db,
+    quick_bootstrap, quick_bootstrap_with_db, AppState as BootstrapAppState, BootstrapConfig,
+    ServiceBootstrap,
 };
+pub use service_client::{
+    create_hrm_client, create_iam_client, BaseServiceClient, Company, Department, Employee,
+    HrmServiceClient, IamServiceClient, ServiceClientError, ServiceClientResult, User,
+};
+pub use service_discovery::{
+    LocalServiceRegistry, PortalServiceAggregator, ServiceCategory, ServiceDiscoveryClient,
+    ServiceHealthStatus, ServiceInfo, ServiceRegistryStatus,
+};
+pub use storage::{FileMetadata, LocalStorage, StorageConfig, StorageService};
+pub use tenant::{
+    Tenant, TenantContext, TenantError, TenantManager, TenantPlan, TenantRole, TenantSettings,
+    TenantStatus, TenantUpdate, TenantUser, UsageLimitExceeded, UsageMetrics,
+};
+pub use validation::{ValidationError, ValidationResult, Validator};
 
 // 向量存储模块
 pub use vector_store::{
-    VectorStore, RedisVectorStore, VectorMetadata, SearchResult,
-    create_vector_store,
+    create_vector_store, RedisVectorStore, SearchResult, VectorMetadata, VectorStore,
 };
 
 // 嵌入服务模块
 pub use embedding::{
-    EmbeddingConfig, EmbeddingResult, EmbeddingUsage,
-    create_embedding_service, preprocess_text,
+    create_embedding_service, preprocess_text, EmbeddingConfig, EmbeddingResult, EmbeddingUsage,
 };
 
 // Ollama 客户端模块
 pub use ollama_client::{
-    OllamaConfig, OllamaClient, OllamaEmbedder, MockEmbedder,
-    Embedder, create_ollama_client, create_embedder,
+    create_embedder, create_ollama_client, Embedder, MockEmbedder, OllamaClient, OllamaConfig,
+    OllamaEmbedder,
 };
 // 为了兼容性，提供 ollama 别名
 pub mod ollama {

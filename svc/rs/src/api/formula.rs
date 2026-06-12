@@ -8,11 +8,11 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::api::audit::log_audit_event;
 use crate::models::{
     CreateFormulaRequest, CreateFormulaVersionRequest, Formula, FormulaVersion,
     UpdateFormulaRequest,
 };
-use crate::api::audit::log_audit_event;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]

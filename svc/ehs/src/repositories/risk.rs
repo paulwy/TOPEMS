@@ -1,8 +1,8 @@
-use sqlx::PgPool;
-use chrono::Utc;
-use uuid::Uuid;
 use crate::models::*;
 use anyhow::Result;
+use chrono::Utc;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 pub struct RiskAssessmentRepository<'a> {
     pool: &'a PgPool,
@@ -64,7 +64,9 @@ impl<'a> RiskAssessmentRepository<'a> {
         let now = Utc::now();
         let risk_score = req.likelihood * req.consequence;
         let risk_level = calculate_risk_level(risk_score);
-        let existing_controls = req.existing_controls.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let existing_controls = req
+            .existing_controls
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
 
         let assessment = sqlx::query_as::<_, RiskAssessment>(
             r#"
@@ -103,25 +105,32 @@ impl<'a> RiskAssessmentRepository<'a> {
     }
 
     pub async fn get(&self, id: Uuid) -> Result<Option<RiskAssessment>> {
-        let assessment = sqlx::query_as::<_, RiskAssessment>(
-            "SELECT * FROM ehs.risk_assessments WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.pool)
-        .await?;
+        let assessment =
+            sqlx::query_as::<_, RiskAssessment>("SELECT * FROM ehs.risk_assessments WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool)
+                .await?;
 
         Ok(assessment)
     }
 
-    pub async fn update(&self, id: Uuid, req: UpdateRiskAssessmentRequest) -> Result<RiskAssessment> {
-        let existing = self.get(id).await?.ok_or_else(|| anyhow::anyhow!("风险评估不存在"))?;
+    pub async fn update(
+        &self,
+        id: Uuid,
+        req: UpdateRiskAssessmentRequest,
+    ) -> Result<RiskAssessment> {
+        let existing = self
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("风险评估不存在"))?;
         let now = Utc::now();
 
         let likelihood = req.likelihood.unwrap_or(existing.likelihood);
         let consequence = req.consequence.unwrap_or(existing.consequence);
         let risk_score = likelihood * consequence;
         let risk_level = calculate_risk_level(risk_score);
-        let existing_controls = req.existing_controls
+        let existing_controls = req
+            .existing_controls
             .map(|v| Some(serde_json::to_value(&v).unwrap_or(serde_json::json!([]))))
             .unwrap_or(existing.existing_controls);
 

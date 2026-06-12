@@ -4,14 +4,14 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::{Error as SqlxError};
+use sqlx::Error as SqlxError;
 use std::time::Duration;
 use uuid::Uuid;
 
+use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use crate::models::project_phase::{CreatePhaseRequest, ProjectPhase, UpdatePhaseRequest};
 use crate::services::project_permission::{check_project_permission, ProjectPermission};
 use crate::services::project_progress;
-use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 
@@ -31,8 +31,15 @@ pub async fn create_phase(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
-    match check_project_permission(&state.db, &claims, &payload.project_id, &ProjectPermission::ManagePhases).await {
-        Ok(_) => {},
+    match check_project_permission(
+        &state.db,
+        &claims,
+        &payload.project_id,
+        &ProjectPermission::ManagePhases,
+    )
+    .await
+    {
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -92,7 +99,7 @@ pub async fn create_phase(
         Ok(phase) => {
             let _ = project_progress::update_project_progress(&state.db, payload.project_id).await;
             invalidate_project_cache(&payload.project_id.to_string()).await;
-            
+
             tracing::info!(
                 request_id = %request_id,
                 phase_id = %phase.id,
@@ -131,8 +138,9 @@ pub async fn get_project_phases(
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
-    match check_project_permission(&state.db, &claims, &project_id, &ProjectPermission::Read).await {
-        Ok(_) => {},
+    match check_project_permission(&state.db, &claims, &project_id, &ProjectPermission::Read).await
+    {
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -196,22 +204,29 @@ pub async fn update_phase(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<UpdatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
-    let project_id = match sqlx::query_scalar::<_, Uuid>(
-        "SELECT project_id FROM project_phases WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await {
-        Ok(Some(pid)) => pid,
-        Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
-        Err(e) => {
-            tracing::error!("查询阶段所属项目失败: {}", e);
-            return Json(ApiResponse::error(500, "查询阶段失败"));
-        }
-    };
+    let project_id =
+        match sqlx::query_scalar::<_, Uuid>("SELECT project_id FROM project_phases WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.db)
+            .await
+        {
+            Ok(Some(pid)) => pid,
+            Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
+            Err(e) => {
+                tracing::error!("查询阶段所属项目失败: {}", e);
+                return Json(ApiResponse::error(500, "查询阶段失败"));
+            }
+        };
 
-    match check_project_permission(&state.db, &claims, &project_id, &ProjectPermission::ManagePhases).await {
-        Ok(_) => {},
+    match check_project_permission(
+        &state.db,
+        &claims,
+        &project_id,
+        &ProjectPermission::ManagePhases,
+    )
+    .await
+    {
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -271,7 +286,7 @@ pub async fn update_phase(
         Ok(phase) => {
             let _ = project_progress::update_project_progress(&state.db, phase.project_id).await;
             invalidate_project_cache(&phase.project_id.to_string()).await;
-            
+
             tracing::info!(
                 request_id = %request_id,
                 phase_id = %phase.id,
@@ -326,22 +341,29 @@ pub async fn delete_phase(
         "删除项目阶段请求开始"
     );
 
-    let project_id = match sqlx::query_scalar::<_, Uuid>(
-        "SELECT project_id FROM project_phases WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await {
-        Ok(Some(pid)) => pid,
-        Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
-        Err(e) => {
-            tracing::error!("查询阶段所属项目失败: {}", e);
-            return Json(ApiResponse::error(500, "查询阶段失败"));
-        }
-    };
+    let project_id =
+        match sqlx::query_scalar::<_, Uuid>("SELECT project_id FROM project_phases WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.db)
+            .await
+        {
+            Ok(Some(pid)) => pid,
+            Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
+            Err(e) => {
+                tracing::error!("查询阶段所属项目失败: {}", e);
+                return Json(ApiResponse::error(500, "查询阶段失败"));
+            }
+        };
 
-    match check_project_permission(&state.db, &claims, &project_id, &ProjectPermission::ManagePhases).await {
-        Ok(_) => {},
+    match check_project_permission(
+        &state.db,
+        &claims,
+        &project_id,
+        &ProjectPermission::ManagePhases,
+    )
+    .await
+    {
+        Ok(_) => {}
         Err(e) => return e,
     }
 

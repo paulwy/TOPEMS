@@ -1,6 +1,6 @@
 use crate::api::models::{
-    AnalysisResult, CategoryScore, Entity, Keyword, SentimentAnalysisResponse,
-    ClassifyTextResponse, ExtractEntitiesResponse, ExtractKeywordsResponse,
+    AnalysisResult, CategoryScore, ClassifyTextResponse, Entity, ExtractEntitiesResponse,
+    ExtractKeywordsResponse, Keyword, SentimentAnalysisResponse,
 };
 use crate::services::db::Database;
 use reqwest::Client;
@@ -46,11 +46,24 @@ impl AnalysisService {
             .map_err(|e| format!("解析情感分析结果失败: {}", e))?;
 
         // 保存分析结果
-        self.save_analysis_result("sentiment", text, &result, result.get("confidence").and_then(|v| v.as_f64())).await?;
+        self.save_analysis_result(
+            "sentiment",
+            text,
+            &result,
+            result.get("confidence").and_then(|v| v.as_f64()),
+        )
+        .await?;
 
         Ok(SentimentAnalysisResponse {
-            sentiment: result.get("sentiment").and_then(|v| v.as_str()).unwrap_or("neutral").to_string(),
-            confidence: result.get("confidence").and_then(|v| v.as_f64()).unwrap_or(0.5),
+            sentiment: result
+                .get("sentiment")
+                .and_then(|v| v.as_str())
+                .unwrap_or("neutral")
+                .to_string(),
+            confidence: result
+                .get("confidence")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.5),
             details: result.get("details").cloned(),
         })
     }
@@ -81,7 +94,13 @@ impl AnalysisService {
             .map_err(|e| format!("解析分类结果失败: {}", e))?;
 
         // 保存分析结果
-        self.save_analysis_result("classify", text, &result, result.get("confidence").and_then(|v| v.as_f64())).await?;
+        self.save_analysis_result(
+            "classify",
+            text,
+            &result,
+            result.get("confidence").and_then(|v| v.as_f64()),
+        )
+        .await?;
 
         let all_categories: Vec<CategoryScore> = result
             .get("all_categories")
@@ -99,8 +118,15 @@ impl AnalysisService {
             .unwrap_or_default();
 
         Ok(ClassifyTextResponse {
-            category: result.get("category").and_then(|v| v.as_str()).unwrap_or("其他").to_string(),
-            confidence: result.get("confidence").and_then(|v| v.as_f64()).unwrap_or(0.5),
+            category: result
+                .get("category")
+                .and_then(|v| v.as_str())
+                .unwrap_or("其他")
+                .to_string(),
+            confidence: result
+                .get("confidence")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.5),
             all_categories: Some(all_categories),
         })
     }
@@ -131,7 +157,8 @@ impl AnalysisService {
             .map_err(|e| format!("解析实体提取结果失败: {}", e))?;
 
         // 保存分析结果
-        self.save_analysis_result("entities", text, &result, None).await?;
+        self.save_analysis_result("entities", text, &result, None)
+            .await?;
 
         let entities: Vec<Entity> = result
             .get("entities")
@@ -141,7 +168,10 @@ impl AnalysisService {
                     .filter_map(|item| {
                         Some(Entity {
                             text: item.get("text").and_then(|v| v.as_str())?.to_string(),
-                            entity_type: item.get("entity_type").and_then(|v| v.as_str())?.to_string(),
+                            entity_type: item
+                                .get("entity_type")
+                                .and_then(|v| v.as_str())?
+                                .to_string(),
                             start_pos: item.get("start_pos").and_then(|v| v.as_i64())? as i32,
                             end_pos: item.get("end_pos").and_then(|v| v.as_i64())? as i32,
                             confidence: item.get("confidence").and_then(|v| v.as_f64())?,
@@ -176,7 +206,8 @@ impl AnalysisService {
             .map_err(|e| format!("解析关键词提取结果失败: {}", e))?;
 
         // 保存分析结果
-        self.save_analysis_result("keywords", text, &result, None).await?;
+        self.save_analysis_result("keywords", text, &result, None)
+            .await?;
 
         let keywords: Vec<Keyword> = result
             .get("keywords")

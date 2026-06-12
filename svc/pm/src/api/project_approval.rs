@@ -1,21 +1,25 @@
 use axum::{
     extract::{Path, State},
     routing::{get, post},
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::project_approval::{ApprovalRequest, ProjectApproval};
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/approval", get(get_approval).post(submit_approval))
-        .route("/api/v1/projects/{project_id}/approval/action", post(handle_approval_action))
+        .route(
+            "/api/v1/projects/{project_id}/approval",
+            get(get_approval).post(submit_approval),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/approval/action",
+            post(handle_approval_action),
+        )
         .with_state(pool)
 }
 
@@ -34,7 +38,7 @@ async fn get_approval(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectApproval>> {
     let result = sqlx::query_as::<_, ProjectApproval>(
-        "SELECT * FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1"
+        "SELECT * FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1",
     )
     .bind(project_id)
     .fetch_optional(&pool)
@@ -152,7 +156,7 @@ async fn handle_approval_action(
 
     let now = Utc::now();
     let mut approvals: serde_json::Value = approval.approvals.clone();
-    
+
     if action == "reject" || action == "cancel" {
         let new_history = serde_json::json!({
             "step": approval.current_step,
@@ -176,7 +180,11 @@ async fn handle_approval_action(
             RETURNING *
             "#,
         )
-        .bind(if action == "reject" { "rejected" } else { "cancelled" })
+        .bind(if action == "reject" {
+            "rejected"
+        } else {
+            "cancelled"
+        })
         .bind(&approvals)
         .bind(req.comment)
         .bind(now)
@@ -186,9 +194,20 @@ async fn handle_approval_action(
 
         match update_result {
             Ok(updated) => {
-                let status = if action == "reject" { "rejected" } else { "draft" };
+                let status = if action == "reject" {
+                    "rejected"
+                } else {
+                    "draft"
+                };
                 let _ = update_project_status(&pool, project_id, status).await;
-                Json(ApiResponse::success(updated, if action == "reject" { "审批已拒绝" } else { "审批已取消" }))
+                Json(ApiResponse::success(
+                    updated,
+                    if action == "reject" {
+                        "审批已拒绝"
+                    } else {
+                        "审批已取消"
+                    },
+                ))
             }
             Err(e) => {
                 tracing::error!("更新审批状态失败: {}", e);
@@ -197,15 +216,21 @@ async fn handle_approval_action(
         }
     } else {
         let current_step_index = (approval.current_step - 1) as usize;
-        
+
         if let Some(steps) = approvals.get_mut("steps") {
             if let Some(steps_array) = steps.as_array_mut() {
                 if current_step_index < steps_array.len() {
                     if let Some(step) = steps_array[current_step_index].as_object_mut() {
-                        step.insert("approver_id".to_string(), serde_json::json!(req.approver_id));
+                        step.insert(
+                            "approver_id".to_string(),
+                            serde_json::json!(req.approver_id),
+                        );
                         step.insert("approved".to_string(), serde_json::json!(true));
                         step.insert("comment".to_string(), serde_json::json!(req.comment));
-                        step.insert("approved_at".to_string(), serde_json::json!(now.to_rfc3339()));
+                        step.insert(
+                            "approved_at".to_string(),
+                            serde_json::json!(now.to_rfc3339()),
+                        );
                     }
                 }
             }
@@ -227,7 +252,11 @@ async fn handle_approval_action(
 
         let is_final_step = approval.current_step >= approval.total_steps;
         let new_status = if is_final_step { "approved" } else { "pending" };
-        let new_step = if is_final_step { approval.current_step } else { approval.current_step + 1 };
+        let new_step = if is_final_step {
+            approval.current_step
+        } else {
+            approval.current_step + 1
+        };
 
         let update_result = sqlx::query_as::<_, ProjectApproval>(
             r#"
@@ -263,7 +292,11 @@ async fn handle_approval_action(
     }
 }
 
-async fn update_project_status(pool: &PgPool, project_id: Uuid, status: &str) -> Result<(), sqlx::Error> {
+async fn update_project_status(
+    pool: &PgPool,
+    project_id: Uuid,
+    status: &str,
+) -> Result<(), sqlx::Error> {
     sqlx::query("UPDATE pm.projects SET status = $1, updated_at = $2 WHERE id = $3")
         .bind(status)
         .bind(Utc::now())

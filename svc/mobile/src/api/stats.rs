@@ -1,14 +1,14 @@
 use axum::{
     extract::State,
-    http::{StatusCode, HeaderMap},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
 };
 use serde::Serialize;
-use sqlx::{PgPool};
+use sqlx::PgPool;
 
-use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct DashboardStats {
@@ -43,7 +43,10 @@ pub async fn get_dashboard_stats(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -90,7 +93,10 @@ pub async fn get_dashboard_stats(
         completed_tasks,
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(stats, "获取统计数据成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(stats, "获取统计数据成功")),
+    )
 }
 
 pub async fn get_patrol_stats(
@@ -101,7 +107,10 @@ pub async fn get_patrol_stats(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -158,7 +167,10 @@ pub async fn get_patrol_stats(
         weekly_count,
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(stats, "获取巡逻统计数据成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(stats, "获取巡逻统计数据成功")),
+    )
 }
 
 pub async fn get_task_stats(
@@ -169,7 +181,10 @@ pub async fn get_task_stats(
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
@@ -216,5 +231,8 @@ pub async fn get_task_stats(
         overdue_tasks,
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(stats, "获取任务统计数据成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(stats, "获取任务统计数据成功")),
+    )
 }

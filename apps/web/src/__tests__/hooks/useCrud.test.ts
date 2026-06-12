@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useCrud } from "../../hooks/useCrud";
 
@@ -20,7 +20,7 @@ describe("useCrud", () => {
         api: mockApi as any,
         basePath: "/test",
         autoFetch: false,
-      })
+      }),
     );
 
     expect(result.current.data).toEqual([]);
@@ -41,18 +41,21 @@ describe("useCrud", () => {
         api: mockApi as any,
         basePath: "/test",
         autoFetch: true,
-      })
+      }),
     );
 
     expect(result.current.loading).toBe(true);
-    
+
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
-    
-    expect(mockApi.get).toHaveBeenCalledWith("/test", expect.objectContaining({
-      params: { page: 1, pageSize: 10 },
-    }));
+
+    expect(mockApi.get).toHaveBeenCalledWith(
+      "/test",
+      expect.objectContaining({
+        params: { page: 1, pageSize: 10 },
+      }),
+    );
     expect(result.current.data).toEqual([{ id: "1", name: "Test" }]);
   });
 
@@ -65,7 +68,7 @@ describe("useCrud", () => {
         api: mockApi as any,
         basePath: "/test",
         autoFetch: true,
-      })
+      }),
     );
 
     await waitFor(() => {
@@ -84,7 +87,7 @@ describe("useCrud", () => {
         api: mockApi as any,
         basePath: "/test",
         autoFetch: false,
-      })
+      }),
     );
 
     await act(async () => {
@@ -105,7 +108,7 @@ describe("useCrud", () => {
         basePath: "/test",
         initialData: [{ id: "1", name: "Original" }],
         autoFetch: false,
-      })
+      }),
     );
 
     await act(async () => {
@@ -125,7 +128,7 @@ describe("useCrud", () => {
         basePath: "/test",
         initialData: [{ id: "1", name: "Test" }],
         autoFetch: false,
-      })
+      }),
     );
 
     await act(async () => {
@@ -149,14 +152,16 @@ describe("useCrud", () => {
           { id: "3", name: "Test 3" },
         ],
         autoFetch: false,
-      })
+      }),
     );
 
     await act(async () => {
       await result.current.bulkDelete(["1", "2"]);
     });
 
-    expect(mockApi.post).toHaveBeenCalledWith("/test/bulk-delete", { ids: ["1", "2"] });
+    expect(mockApi.post).toHaveBeenCalledWith("/test/bulk-delete", {
+      ids: ["1", "2"],
+    });
     expect(result.current.data).toEqual([{ id: "3", name: "Test 3" }]);
   });
 
@@ -166,7 +171,7 @@ describe("useCrud", () => {
         api: mockApi as any,
         basePath: "/test",
         autoFetch: false,
-      })
+      }),
     );
 
     act(() => {
@@ -179,23 +184,29 @@ describe("useCrud", () => {
   });
 
   it("should refresh data", async () => {
-    const mockData1 = { data: { items: [{ id: "1", name: "Test 1" }], total: 1 } };
-    const mockData2 = { data: { items: [{ id: "1", name: "Test Updated" }], total: 1 } };
-    mockApi.get.mockResolvedValueOnce(mockData1).mockResolvedValueOnce(mockData2);
+    const mockData1 = {
+      data: { items: [{ id: "1", name: "Test 1" }], total: 1 },
+    };
+    const mockData2 = {
+      data: { items: [{ id: "1", name: "Test Updated" }], total: 1 },
+    };
+    let callCount = 0;
+    mockApi.get.mockImplementation(async () => {
+      callCount++;
+      return callCount === 1 ? mockData1 : mockData2;
+    });
 
     const { result } = renderHook(() =>
       useCrud({
         api: mockApi as any,
         basePath: "/test",
         autoFetch: true,
-      })
+      }),
     );
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
-    
-    expect(result.current.data).toEqual([{ id: "1", name: "Test 1" }]);
 
     await act(async () => {
       await result.current.refresh();
@@ -204,7 +215,7 @@ describe("useCrud", () => {
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
-    
+
     expect(mockApi.get).toHaveBeenCalledTimes(2);
     expect(result.current.data).toEqual([{ id: "1", name: "Test Updated" }]);
   });

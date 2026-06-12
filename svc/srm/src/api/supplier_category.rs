@@ -11,8 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
-    SupplierCategory,
-    CreateSupplierCategoryRequest, UpdateSupplierCategoryRequest,
+    CreateSupplierCategoryRequest, SupplierCategory, UpdateSupplierCategoryRequest,
 };
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
@@ -35,10 +34,15 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/v1/supplier-categories", get(list_categories).post(create_category))
+        .route(
+            "/api/v1/supplier-categories",
+            get(list_categories).post(create_category),
+        )
         .route(
             "/api/v1/supplier-categories/{id}",
-            get(get_category).put(update_category).delete(delete_category),
+            get(get_category)
+                .put(update_category)
+                .delete(delete_category),
         )
         .with_state(state);
 
@@ -53,7 +57,7 @@ async fn list_categories(
     Query(params): Query<CategoryQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -63,7 +67,10 @@ async fn list_categories(
 
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let is_active_filter = params.is_active;
-    let parent_id_filter = params.parent_id.clone().and_then(|p| Uuid::parse_str(&p).ok());
+    let parent_id_filter = params
+        .parent_id
+        .clone()
+        .and_then(|p| Uuid::parse_str(&p).ok());
 
     let result = sqlx::query_as::<_, SupplierCategory>(
         r#"
@@ -114,7 +121,10 @@ async fn list_categories(
         }
         Err(e) => {
             tracing::error!("获取供应商分类列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商分类列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取供应商分类列表失败",
+            ))
         }
     }
 }
@@ -125,47 +135,62 @@ async fn create_category(
     Json(req): Json<CreateSupplierCategoryRequest>,
 ) -> Json<ApiResponse<SupplierCategory>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 数据验证
     if req.category_no.is_empty() || req.name.is_empty() {
-        return Json(ApiResponse::<SupplierCategory>::error(400, "分类编号和名称不能为空"));
+        return Json(ApiResponse::<SupplierCategory>::error(
+            400,
+            "分类编号和名称不能为空",
+        ));
     }
 
     if req.level < 1 || req.level > 5 {
-        return Json(ApiResponse::<SupplierCategory>::error(400, "分类层级必须在1-5之间"));
+        return Json(ApiResponse::<SupplierCategory>::error(
+            400,
+            "分类层级必须在1-5之间",
+        ));
     }
 
     // 检查分类编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_categories WHERE category_no = $1"
+        "SELECT COUNT(*) FROM srm.supplier_categories WHERE category_no = $1",
     )
     .bind(&req.category_no)
     .fetch_one(&state.db)
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<SupplierCategory>::error(400, "分类编号已存在"));
+        return Json(ApiResponse::<SupplierCategory>::error(
+            400,
+            "分类编号已存在",
+        ));
     }
 
     // 验证父分类是否存在
     if let Some(parent_id_str) = &req.parent_id {
         let parent_uuid = Uuid::parse_str(parent_id_str);
         if parent_uuid.is_err() {
-            return Json(ApiResponse::<SupplierCategory>::error(400, "父分类ID格式错误"));
+            return Json(ApiResponse::<SupplierCategory>::error(
+                400,
+                "父分类ID格式错误",
+            ));
         }
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.supplier_categories WHERE id = $1 AND is_active = true"
+            "SELECT COUNT(*) FROM srm.supplier_categories WHERE id = $1 AND is_active = true",
         )
         .bind(parent_uuid.unwrap())
         .fetch_one(&state.db)
         .await;
 
         if parent_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierCategory>::error(400, "父分类不存在或已禁用"));
+            return Json(ApiResponse::<SupplierCategory>::error(
+                400,
+                "父分类不存在或已禁用",
+            ));
         }
     }
 
@@ -198,7 +223,10 @@ async fn create_category(
         Ok(category) => Json(ApiResponse::success(category, "供应商分类创建成功")),
         Err(e) => {
             tracing::error!("创建供应商分类失败: {}", e);
-            Json(ApiResponse::<SupplierCategory>::error(500, "供应商分类创建失败"))
+            Json(ApiResponse::<SupplierCategory>::error(
+                500,
+                "供应商分类创建失败",
+            ))
         }
     }
 }
@@ -209,7 +237,7 @@ async fn get_category(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierCategory>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -225,10 +253,16 @@ async fn get_category(
 
     match result {
         Ok(Some(category)) => Json(ApiResponse::success(category, "获取供应商分类成功")),
-        Ok(None) => Json(ApiResponse::<SupplierCategory>::error(404, "供应商分类不存在")),
+        Ok(None) => Json(ApiResponse::<SupplierCategory>::error(
+            404,
+            "供应商分类不存在",
+        )),
         Err(e) => {
             tracing::error!("获取供应商分类失败: {}", e);
-            Json(ApiResponse::<SupplierCategory>::error(500, "获取供应商分类失败"))
+            Json(ApiResponse::<SupplierCategory>::error(
+                500,
+                "获取供应商分类失败",
+            ))
         }
     }
 }
@@ -240,7 +274,7 @@ async fn update_category(
     Json(req): Json<UpdateSupplierCategoryRequest>,
 ) -> Json<ApiResponse<SupplierCategory>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -253,14 +287,27 @@ async fn update_category(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::<SupplierCategory>::error(404, "供应商分类不存在")),
-        Err(e) => return Json(ApiResponse::<SupplierCategory>::error(500, &format!("查询供应商分类失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::<SupplierCategory>::error(
+                404,
+                "供应商分类不存在",
+            ))
+        }
+        Err(e) => {
+            return Json(ApiResponse::<SupplierCategory>::error(
+                500,
+                &format!("查询供应商分类失败: {}", e),
+            ))
+        }
     };
 
     // 验证层级
     if let Some(level) = req.level {
         if level < 1 || level > 5 {
-            return Json(ApiResponse::<SupplierCategory>::error(400, "分类层级必须在1-5之间"));
+            return Json(ApiResponse::<SupplierCategory>::error(
+                400,
+                "分类层级必须在1-5之间",
+            ));
         }
     }
 
@@ -268,30 +315,42 @@ async fn update_category(
     if let Some(parent_id_str) = &req.parent_id {
         let parent_uuid = Uuid::parse_str(parent_id_str);
         if parent_uuid.is_err() {
-            return Json(ApiResponse::<SupplierCategory>::error(400, "父分类ID格式错误"));
+            return Json(ApiResponse::<SupplierCategory>::error(
+                400,
+                "父分类ID格式错误",
+            ));
         }
 
         // 不能将自己设为父分类
         if parent_uuid.as_ref().unwrap() == &id {
-            return Json(ApiResponse::<SupplierCategory>::error(400, "不能将自己设为父分类"));
+            return Json(ApiResponse::<SupplierCategory>::error(
+                400,
+                "不能将自己设为父分类",
+            ));
         }
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.supplier_categories WHERE id = $1 AND is_active = true"
+            "SELECT COUNT(*) FROM srm.supplier_categories WHERE id = $1 AND is_active = true",
         )
         .bind(parent_uuid.unwrap())
         .fetch_one(&state.db)
         .await;
 
         if parent_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierCategory>::error(400, "父分类不存在或已禁用"));
+            return Json(ApiResponse::<SupplierCategory>::error(
+                400,
+                "父分类不存在或已禁用",
+            ));
         }
     }
 
     let category_no = req.category_no.unwrap_or(existing.category_no);
     let name = req.name.unwrap_or(existing.name);
     let description = req.description.or(existing.description);
-    let parent_id = req.parent_id.and_then(|p| Uuid::parse_str(&p).ok()).or(existing.parent_id);
+    let parent_id = req
+        .parent_id
+        .and_then(|p| Uuid::parse_str(&p).ok())
+        .or(existing.parent_id);
     let level = req.level.unwrap_or(existing.level);
     let is_active = req.is_active.unwrap_or(existing.is_active);
     let now = Utc::now();
@@ -319,7 +378,10 @@ async fn update_category(
         Ok(category) => Json(ApiResponse::success(category, "供应商分类更新成功")),
         Err(e) => {
             tracing::error!("更新供应商分类失败: {}", e);
-            Json(ApiResponse::<SupplierCategory>::error(500, "供应商分类更新失败"))
+            Json(ApiResponse::<SupplierCategory>::error(
+                500,
+                "供应商分类更新失败",
+            ))
         }
     }
 }
@@ -330,20 +392,23 @@ async fn delete_category(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 检查是否有子分类
     let child_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_categories WHERE parent_id = $1"
+        "SELECT COUNT(*) FROM srm.supplier_categories WHERE parent_id = $1",
     )
     .bind(id)
     .fetch_one(&state.db)
     .await;
 
     if child_count.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<String>::error(400, "该分类下存在子分类，无法删除"));
+        return Json(ApiResponse::<String>::error(
+            400,
+            "该分类下存在子分类，无法删除",
+        ));
     }
 
     // 检查是否有供应商使用该分类
@@ -355,7 +420,10 @@ async fn delete_category(
     .await;
 
     if supplier_count.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<String>::error(400, "该分类下存在供应商，无法删除"));
+        return Json(ApiResponse::<String>::error(
+            400,
+            "该分类下存在供应商，无法删除",
+        ));
     }
 
     let result = sqlx::query("DELETE FROM srm.supplier_categories WHERE id = $1")
@@ -364,7 +432,9 @@ async fn delete_category(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "供应商分类删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "供应商分类删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<String>::error(404, "供应商分类不存在")),
         Err(e) => {
             tracing::error!("删除供应商分类失败: {}", e);

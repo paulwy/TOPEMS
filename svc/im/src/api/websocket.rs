@@ -1,18 +1,18 @@
 use axum::{
-    extract::{Path, State, WebSocketUpgrade, Query},
-    extract::ws::{Message as WsRawMessage, WebSocket, Utf8Bytes},
+    extract::ws::{Message as WsRawMessage, Utf8Bytes, WebSocket},
+    extract::{Path, Query, State, WebSocketUpgrade},
     Json,
 };
 use chrono::Utc;
-use uuid::Uuid;
+use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
 use sqlx::PgPool;
-use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use tokio::sync::broadcast;
-use futures_util::{SinkExt, StreamExt};
+use uuid::Uuid;
 
-use crate::models::{WsMessage, WsEvent, UserStatus};
+use crate::models::{UserStatus, WsEvent, WsMessage};
 use topems_shared::ApiResponse;
 
 // WebSocket连接管理器
@@ -60,22 +60,31 @@ pub async fn ws_connect_handler(
     State((pool, ws_manager)): State<(PgPool, WebSocketManager)>,
     Query(params): Query<serde_json::Value>,
 ) -> impl axum::response::IntoResponse {
-    let user_id = params.get("user_id").and_then(|v| v.as_str()).unwrap_or("anonymous").to_string();
-    
+    let user_id = params
+        .get("user_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("anonymous")
+        .to_string();
+
     ws.on_upgrade(move |socket| handle_websocket(socket, pool, ws_manager, user_id))
 }
 
-async fn handle_websocket(socket: WebSocket, pool: PgPool, ws_manager: WebSocketManager, user_id: String) {
+async fn handle_websocket(
+    socket: WebSocket,
+    pool: PgPool,
+    ws_manager: WebSocketManager,
+    user_id: String,
+) {
     let (mut sender, mut receiver) = socket.split();
-    
+
     // 为用户创建专用通道
     let user_tx = ws_manager.add_connection(user_id.clone());
     let mut user_rx = user_tx.subscribe();
     let mut global_rx = ws_manager.global_tx.subscribe();
-    
+
     // 更新用户在线状态
     update_user_online_status(&pool, &user_id, true).await;
-    
+
     // 广播用户上线事件
     let online_event = WsEvent {
         event_type: "user_online".to_string(),
@@ -87,39 +96,48 @@ async fn handle_websocket(socket: WebSocket, pool: PgPool, ws_manager: WebSocket
         timestamp: Utc::now().to_rfc3339(),
     };
     ws_manager.broadcast_event(online_event);
-    
+
     // 发送任务：监听用户专用通道和全局通道
     let send_task = tokio::spawn(async move {
         loop {
             // 优先处理用户专用消息
             if let Ok(event) = user_rx.recv().await {
                 let json_msg = serde_json::to_string(&event).unwrap_or_default();
-                if sender.send(WsRawMessage::Text(Utf8Bytes::from(json_msg))).await.is_err() {
+                if sender
+                    .send(WsRawMessage::Text(Utf8Bytes::from(json_msg)))
+                    .await
+                    .is_err()
+                {
                     break;
                 }
             }
-            
+
             // 然后处理全局广播消息
             if let Ok(event) = global_rx.recv().await {
                 let json_msg = serde_json::to_string(&event).unwrap_or_default();
-                if sender.send(WsRawMessage::Text(Utf8Bytes::from(json_msg))).await.is_err() {
+                if sender
+                    .send(WsRawMessage::Text(Utf8Bytes::from(json_msg)))
+                    .await
+                    .is_err()
+                {
                     break;
                 }
             }
         }
     });
-    
+
     let recv_pool = pool.clone();
     let recv_ws_manager = ws_manager.clone();
     let recv_user_id = user_id.clone();
-    
+
     // 接收任务：处理客户端消息
     let recv_task = tokio::spawn(async move {
         while let Some(msg_result) = receiver.next().await {
             match msg_result {
                 Ok(WsRawMessage::Text(text)) => {
                     if let Ok(ws_msg) = serde_json::from_str::<WsMessage>(&text.to_string()) {
-                        handle_ws_message(&recv_pool, &recv_ws_manager, &recv_user_id, ws_msg).await;
+                        handle_ws_message(&recv_pool, &recv_ws_manager, &recv_user_id, ws_msg)
+                            .await;
                     }
                 }
                 Ok(WsRawMessage::Close(_)) => {
@@ -129,14 +147,14 @@ async fn handle_websocket(socket: WebSocket, pool: PgPool, ws_manager: WebSocket
             }
         }
     });
-    
+
     tokio::spawn(async move {
         tokio::join!(send_task, recv_task);
-        
+
         // 连接断开时清理
         ws_manager.remove_connection(&user_id);
         update_user_online_status(&pool, &user_id, false).await;
-        
+
         // 广播用户离线事件
         let offline_event = WsEvent {
             event_type: "user_offline".to_string(),
@@ -151,11 +169,20 @@ async fn handle_websocket(socket: WebSocket, pool: PgPool, ws_manager: WebSocket
     });
 }
 
-async fn handle_ws_message(pool: &PgPool, ws_manager: &WebSocketManager, user_id: &str, ws_msg: WsMessage) {
+async fn handle_ws_message(
+    pool: &PgPool,
+    ws_manager: &WebSocketManager,
+    user_id: &str,
+    ws_msg: WsMessage,
+) {
     match ws_msg.msg_type.as_str() {
         "chat_message" => {
             // 处理聊天消息
-            if let Some(chat_id) = ws_msg.chat_id.as_ref().and_then(|c| Uuid::parse_str(c).ok()) {
+            if let Some(chat_id) = ws_msg
+                .chat_id
+                .as_ref()
+                .and_then(|c| Uuid::parse_str(c).ok())
+            {
                 let message_id = Uuid::new_v4();
                 let now = Utc::now().naive_utc();
 
@@ -184,7 +211,7 @@ async fn handle_ws_message(pool: &PgPool, ws_manager: &WebSocketManager, user_id
                         UPDATE chat_rooms
                         SET last_message = $1, last_message_time = $2, updated_at = $3
                         WHERE id = $4
-                        "#
+                        "#,
                     )
                     .bind(ws_msg.content.clone())
                     .bind(now)
@@ -212,7 +239,11 @@ async fn handle_ws_message(pool: &PgPool, ws_manager: &WebSocketManager, user_id
         }
         "read_receipt" => {
             // 处理已读回执
-            if let Some(msg_id) = ws_msg.message_id.as_ref().and_then(|m| Uuid::parse_str(m).ok()) {
+            if let Some(msg_id) = ws_msg
+                .message_id
+                .as_ref()
+                .and_then(|m| Uuid::parse_str(m).ok())
+            {
                 let now = Utc::now().naive_utc();
 
                 // 创建已读回执
@@ -221,7 +252,7 @@ async fn handle_ws_message(pool: &PgPool, ws_manager: &WebSocketManager, user_id
                     INSERT INTO message_read_receipts (id, message_id, user_id, read_at)
                     VALUES ($1, $2, $3, $4)
                     ON CONFLICT (message_id, user_id) DO UPDATE SET read_at = $4
-                    "#
+                    "#,
                 )
                 .bind(Uuid::new_v4())
                 .bind(msg_id)
@@ -264,7 +295,7 @@ async fn handle_ws_message(pool: &PgPool, ws_manager: &WebSocketManager, user_id
 
 async fn update_user_online_status(pool: &PgPool, user_id: &str, is_online: bool) {
     let now = Utc::now().naive_utc();
-    
+
     let _ = sqlx::query(
         r#"
         INSERT INTO user_status (user_id, is_online, status_type, status_message, last_seen, updated_at)
@@ -293,27 +324,33 @@ pub async fn get_user_online_status(
         SELECT user_id, is_online, status_type, status_message, last_seen, updated_at
         FROM user_status
         WHERE user_id = $1
-        "#
+        "#,
     )
     .bind(&user_id)
     .fetch_optional(&pool)
     .await;
 
     match result {
-        Ok(Some(status)) => Json(ApiResponse::success(json!({
-            "user_id": status.user_id,
-            "is_online": status.is_online,
-            "status_type": status.status_type,
-            "status_message": status.status_message,
-            "last_seen": status.last_seen
-        }), "获取用户在线状态成功")),
-        Ok(None) => Json(ApiResponse::success(json!({
-            "user_id": user_id,
-            "is_online": false,
-            "status_type": "offline",
-            "status_message": null,
-            "last_seen": null
-        }), "用户未记录在线状态")),
+        Ok(Some(status)) => Json(ApiResponse::success(
+            json!({
+                "user_id": status.user_id,
+                "is_online": status.is_online,
+                "status_type": status.status_type,
+                "status_message": status.status_message,
+                "last_seen": status.last_seen
+            }),
+            "获取用户在线状态成功",
+        )),
+        Ok(None) => Json(ApiResponse::success(
+            json!({
+                "user_id": user_id,
+                "is_online": false,
+                "status_type": "offline",
+                "status_message": null,
+                "last_seen": null
+            }),
+            "用户未记录在线状态",
+        )),
         Err(e) => {
             tracing::error!("Failed to get user online status: {}", e);
             Json(ApiResponse::error(500, "获取用户在线状态失败"))
@@ -346,11 +383,14 @@ pub async fn update_user_status(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "user_id": user_id,
-            "status_type": status_type,
-            "updated": true
-        }), "更新用户状态成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "user_id": user_id,
+                "status_type": status_type,
+                "updated": true
+            }),
+            "更新用户状态成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update user status: {}", e);
             Json(ApiResponse::error(500, "更新用户状态失败"))
@@ -359,25 +399,26 @@ pub async fn update_user_status(
 }
 
 /// GET /api/v1/users/online - 获取所有在线用户
-pub async fn list_online_users(
-    State(pool): State<PgPool>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_online_users(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, UserStatus>(
         r#"
         SELECT user_id, is_online, status_type, status_message, last_seen, updated_at
         FROM user_status
         WHERE is_online = TRUE
         ORDER BY last_seen DESC
-        "#
+        "#,
     )
     .fetch_all(&pool)
     .await;
 
     match result {
-        Ok(users) => Json(ApiResponse::success(json!({
-            "online_users": users,
-            "total": users.len()
-        }), "获取在线用户列表成功")),
+        Ok(users) => Json(ApiResponse::success(
+            json!({
+                "online_users": users,
+                "total": users.len()
+            }),
+            "获取在线用户列表成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to list online users: {}", e);
             Json(ApiResponse::error(500, "获取在线用户列表失败"))

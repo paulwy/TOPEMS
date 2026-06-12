@@ -8,17 +8,25 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::ApiState;
 use crate::api::audit::log_audit_event;
-use crate::models::{CreateAttendanceRequest, AttendanceRecord, UpdateAttendanceRequest};
+use crate::models::{AttendanceRecord, CreateAttendanceRequest, UpdateAttendanceRequest};
 use crate::utils::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{ApiResponse, api_error};
-use super::ApiState;
+use topems_shared::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/attendance", get(list_attendance).post(create_attendance))
-        .route("/api/v1/attendance/{id}", get(get_attendance).put(update_attendance).delete(delete_attendance))
+        .route(
+            "/api/v1/attendance",
+            get(list_attendance).post(create_attendance),
+        )
+        .route(
+            "/api/v1/attendance/{id}",
+            get(get_attendance)
+                .put(update_attendance)
+                .delete(delete_attendance),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -34,7 +42,7 @@ async fn list_attendance(
     Query(params): Query<AttendancePaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::AttendanceRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
@@ -85,7 +93,10 @@ async fn list_attendance(
         }
         Err(e) => {
             tracing::error!("获取考勤记录列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取考勤记录列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取考勤记录列表失败",
+            ))
         }
     }
 }
@@ -184,10 +195,16 @@ async fn get_attendance(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "获取考勤记录成功")),
-        Ok(None) => Json(ApiResponse::<AttendanceRecord>::error(404, "考勤记录不存在")),
+        Ok(None) => Json(ApiResponse::<AttendanceRecord>::error(
+            404,
+            "考勤记录不存在",
+        )),
         Err(e) => {
             tracing::error!("获取考勤记录失败: {}", e);
-            Json(ApiResponse::<AttendanceRecord>::error(500, "获取考勤记录失败"))
+            Json(ApiResponse::<AttendanceRecord>::error(
+                500,
+                "获取考勤记录失败",
+            ))
         }
     }
 }
@@ -209,8 +226,18 @@ async fn update_attendance(
 
     let existing = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::<AttendanceRecord>::error(404, "考勤记录不存在")),
-        Err(_e) => return Json(ApiResponse::<AttendanceRecord>::error(500, "查询考勤记录失败")),
+        Ok(None) => {
+            return Json(ApiResponse::<AttendanceRecord>::error(
+                404,
+                "考勤记录不存在",
+            ))
+        }
+        Err(_e) => {
+            return Json(ApiResponse::<AttendanceRecord>::error(
+                500,
+                "查询考勤记录失败",
+            ))
+        }
     };
 
     let check_in = req.check_in.or(existing.check_in);
@@ -244,7 +271,10 @@ async fn update_attendance(
         Ok(record) => Json(ApiResponse::success(record, "考勤记录更新成功")),
         Err(e) => {
             tracing::error!("更新考勤记录失败: {}", e);
-            Json(ApiResponse::<AttendanceRecord>::error(500, "考勤记录更新失败"))
+            Json(ApiResponse::<AttendanceRecord>::error(
+                500,
+                "考勤记录更新失败",
+            ))
         }
     }
 }

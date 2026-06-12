@@ -57,7 +57,7 @@ const ProtectedRouteWrapper: React.FC<{
 };
 
 const AppContent: React.FC = () => {
-  const { logout } = useAuth();
+  useAuth();
 
   const renderRoutes = (routes: RouteConfig[]) => {
     return routes.map((route) => {

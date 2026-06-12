@@ -8,14 +8,14 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::models::{
-    DictType, CreateDictTypeRequest, UpdateDictTypeRequest,
-    DictItem, CreateDictItemRequest, UpdateDictItemRequest,
-};
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
-use crate::utils::validate_required_field;
 use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
+use crate::models::{
+    CreateDictItemRequest, CreateDictTypeRequest, DictItem, DictType, UpdateDictItemRequest,
+    UpdateDictTypeRequest,
+};
+use crate::utils::validate_required_field;
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BatchCreateDictItemRequest {
@@ -50,18 +50,28 @@ pub struct DictItemQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/dict-types", get(list_dict_types).post(create_dict_type))
+        .route(
+            "/api/v1/dict-types",
+            get(list_dict_types).post(create_dict_type),
+        )
         .route(
             "/api/v1/dict-types/{id}",
-            get(get_dict_type).put(update_dict_type).delete(delete_dict_type),
+            get(get_dict_type)
+                .put(update_dict_type)
+                .delete(delete_dict_type),
         )
         .route("/api/v1/dict-types/{id}/items", get(list_dict_items))
-        .route("/api/v1/dict-types/{id}/items/export", get(export_dict_items))
+        .route(
+            "/api/v1/dict-types/{id}/items/export",
+            get(export_dict_items),
+        )
         .route("/api/v1/dict-items", post(create_dict_item))
         .route("/api/v1/dict-items/batch", post(batch_create_dict_items))
         .route(
             "/api/v1/dict-items/{id}",
-            get(get_dict_item).put(update_dict_item).delete(delete_dict_item),
+            get(get_dict_item)
+                .put(update_dict_item)
+                .delete(delete_dict_item),
         )
 }
 
@@ -77,7 +87,12 @@ async fn list_dict_types(
     let category_filter = params.category.clone();
     let status_filter = params.status.clone();
 
-    if search_pattern.is_none() && category_filter.is_none() && status_filter.is_none() && page == 1 && page_size >= 100 {
+    if search_pattern.is_none()
+        && category_filter.is_none()
+        && status_filter.is_none()
+        && page == 1
+        && page_size >= 100
+    {
         if let Some(cached) = state.dict_cache.get("all_dict_types") {
             let total = cached.len() as i64;
             let dict_types = cached.into_iter().take(page_size as usize).collect();
@@ -126,7 +141,9 @@ async fn list_dict_types(
             let total = count_result.unwrap_or(0);
 
             if search_pattern.is_none() && category_filter.is_none() && status_filter.is_none() {
-                state.dict_cache.set("all_dict_types".to_string(), dict_types.clone());
+                state
+                    .dict_cache
+                    .set("all_dict_types".to_string(), dict_types.clone());
             }
 
             Json(ApiResponse::success(
@@ -202,16 +219,18 @@ async fn create_dict_type(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "dict_type".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "dict_type".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -314,16 +333,18 @@ async fn update_dict_type(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "dict_type".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "dict_type".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -378,16 +399,18 @@ async fn delete_dict_type(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "dict_type".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "dict_type".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -505,16 +528,18 @@ async fn create_dict_item(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "dict_item".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "dict_item".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -620,16 +645,18 @@ async fn update_dict_item(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "dict_item".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "dict_item".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -676,16 +703,18 @@ async fn delete_dict_item(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "dict_item".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "dict_item".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -739,22 +768,27 @@ async fn batch_create_dict_items(
 
     log_audit_event(
         &state.db,
-        "batch_create".to_string(),
-        "dict_item".to_string(),
-        None,
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        "success".to_string(),
-        None,
+        AuditEventParams {
+            action: "batch_create".to_string(),
+            entity_type: "dict_item".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: "success".to_string(),
+            error_message: None,
+        },
         &headers,
     )
     .await;
 
     let count = created_items.len();
-    Json(ApiResponse::success(created_items, &format!("成功创建 {} 个字典项", count)))
+    Json(ApiResponse::success(
+        created_items,
+        &format!("成功创建 {} 个字典项", count),
+    ))
 }
 
 async fn export_dict_items(
@@ -775,7 +809,8 @@ async fn export_dict_items(
 
     match result {
         Ok(items) => {
-            let export_items: Vec<DictItemExport> = items.into_iter()
+            let export_items: Vec<DictItemExport> = items
+                .into_iter()
                 .map(|item| DictItemExport {
                     code: item.code,
                     name: item.name,
@@ -786,10 +821,13 @@ async fn export_dict_items(
                 .collect();
 
             let json_data = serde_json::to_string_pretty(&export_items).unwrap_or_default();
-            
+
             Response::builder()
                 .header("Content-Type", "application/json")
-                .header("Content-Disposition", "attachment; filename=\"dict_items.json\"")
+                .header(
+                    "Content-Disposition",
+                    "attachment; filename=\"dict_items.json\"",
+                )
                 .body(json_data)
                 .unwrap()
         }

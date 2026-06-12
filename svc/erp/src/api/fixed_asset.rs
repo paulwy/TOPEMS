@@ -8,9 +8,9 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
 use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct FixedAsset {
@@ -77,8 +77,16 @@ pub struct FixedAssetParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/fixed-assets", get(list_fixed_assets).post(create_fixed_asset))
-        .route("/api/v1/fixed-assets/{id}", get(get_fixed_asset).put(update_fixed_asset).delete(delete_fixed_asset))
+        .route(
+            "/api/v1/fixed-assets",
+            get(list_fixed_assets).post(create_fixed_asset),
+        )
+        .route(
+            "/api/v1/fixed-assets/{id}",
+            get(get_fixed_asset)
+                .put(update_fixed_asset)
+                .delete(delete_fixed_asset),
+        )
         .route("/api/v1/fixed-assets/depreciate", post(depreciate_assets))
 }
 
@@ -110,7 +118,12 @@ async fn list_fixed_assets(
     .bind(&search_pattern)
     .bind(&params.status)
     .bind(&params.asset_type)
-    .bind(params.department_id.as_ref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        params
+            .department_id
+            .as_ref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -130,7 +143,12 @@ async fn list_fixed_assets(
             .bind(&search_pattern)
             .bind(&params.status)
             .bind(&params.asset_type)
-            .bind(params.department_id.as_ref().and_then(|s| Uuid::parse_str(s).ok()))
+            .bind(
+                params
+                    .department_id
+                    .as_ref()
+                    .and_then(|s| Uuid::parse_str(s).ok()),
+            )
             .fetch_one(&state.db)
             .await;
 
@@ -219,16 +237,18 @@ async fn create_fixed_asset(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "fixed_asset".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "fixed_asset".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -292,10 +312,16 @@ async fn update_fixed_asset(
     let asset_category = req.asset_category.or(Some(existing.asset_category));
     let purchase_date = req.purchase_date.or(existing.purchase_date);
     let original_value = req.original_value.unwrap_or(existing.original_value);
-    let accumulated_depreciation = req.accumulated_depreciation.unwrap_or(existing.accumulated_depreciation);
+    let accumulated_depreciation = req
+        .accumulated_depreciation
+        .unwrap_or(existing.accumulated_depreciation);
     let net_value = original_value - accumulated_depreciation;
-    let depreciation_method = req.depreciation_method.or(Some(existing.depreciation_method));
-    let useful_life_months = req.useful_life_months.unwrap_or(existing.useful_life_months);
+    let depreciation_method = req
+        .depreciation_method
+        .or(Some(existing.depreciation_method));
+    let useful_life_months = req
+        .useful_life_months
+        .unwrap_or(existing.useful_life_months);
     let department_id = req.department_id.or(existing.department_id);
     let department_name = req.department_name.or(existing.department_name);
     let location = req.location.or(existing.location);
@@ -359,16 +385,18 @@ async fn update_fixed_asset(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "fixed_asset".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "fixed_asset".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -415,16 +443,18 @@ async fn delete_fixed_asset(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "fixed_asset".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "fixed_asset".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -452,32 +482,32 @@ async fn depreciate_assets(
     let assets = match req.asset_ids {
         Some(ref ids) => {
             let placeholders = ids.iter().map(|_| "$1").collect::<Vec<_>>().join(",");
-            sqlx::query_as::<_, FixedAsset>(
-                &format!("SELECT * FROM fixed_assets WHERE id IN ({}) AND status = 'active'", placeholders),
-            )
-            .bind(&ids)
+            sqlx::query_as::<_, FixedAsset>(&format!(
+                "SELECT * FROM fixed_assets WHERE id IN ({}) AND status = 'active'",
+                placeholders
+            ))
+            .bind(ids)
             .fetch_all(&state.db)
             .await
         }
         None => {
-            sqlx::query_as::<_, FixedAsset>(
-                "SELECT * FROM fixed_assets WHERE status = 'active'",
-            )
-            .fetch_all(&state.db)
-            .await
+            sqlx::query_as::<_, FixedAsset>("SELECT * FROM fixed_assets WHERE status = 'active'")
+                .fetch_all(&state.db)
+                .await
         }
     };
 
     match assets {
         Ok(assets) => {
-            for mut asset in assets {
+            for asset in assets {
                 if asset.useful_life_months <= 0 {
                     errors.push(format!("资产{}使用寿命无效", asset.asset_code));
                     continue;
                 }
 
                 let monthly_depreciation = asset.original_value / asset.useful_life_months as f64;
-                let new_accumulated_depreciation = asset.accumulated_depreciation + monthly_depreciation;
+                let new_accumulated_depreciation =
+                    asset.accumulated_depreciation + monthly_depreciation;
                 let new_net_value = asset.original_value - new_accumulated_depreciation;
 
                 if new_accumulated_depreciation >= asset.original_value {
@@ -530,16 +560,26 @@ async fn depreciate_assets(
 
     log_audit_event(
         &state.db,
-        "depreciate".to_string(),
-        "fixed_asset".to_string(),
-        None,
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        if errors.is_empty() { "success".to_string() } else { "partial".to_string() },
-        if !errors.is_empty() { Some(errors.join("; ")) } else { None },
+        AuditEventParams {
+            action: "depreciate".to_string(),
+            entity_type: "fixed_asset".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: if errors.is_empty() {
+                "success".to_string()
+            } else {
+                "partial".to_string()
+            },
+            error_message: if !errors.is_empty() {
+                Some(errors.join("; "))
+            } else {
+                None
+            },
+        },
         &headers,
     )
     .await;

@@ -1,14 +1,4 @@
-import React from "react";
-import {
-  X,
-  User,
-  Building,
-  Users,
-  Mail,
-  Phone,
-  Calendar,
-  MapPin,
-} from "lucide-react";
+import { X, User, Building, Users, Mail, Phone, Calendar } from "lucide-react";
 import type { AddressbookDetail } from "../../types/addressbook";
 
 interface ContactDetailModalProps {

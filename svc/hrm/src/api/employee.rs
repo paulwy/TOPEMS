@@ -1,24 +1,26 @@
-use axum::{
-    routing::*,
-    Json, Router,
-};
+use axum::{routing::*, Json, Router};
 use serde::Deserialize;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
-use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
-use crate::api::audit::log_audit_event;
-use crate::services::employee_service::EmployeeService;
-use crate::utils::permission::{ModulePermission, check_permission};
-use topems_shared::{ApiResponse, Claims, api_error};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
+use crate::services::employee_service::EmployeeService;
+use crate::utils::permission::{check_permission, ModulePermission};
+use topems_shared::{api_error, ApiResponse, Claims};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/employees", get(list_employees).post(create_employee))
+        .route(
+            "/api/v1/employees",
+            get(list_employees).post(create_employee),
+        )
         .route(
             "/api/v1/employees/{id}",
-            get(get_employee).put(update_employee).delete(delete_employee),
+            get(get_employee)
+                .put(update_employee)
+                .delete(delete_employee),
         )
         .route("/api/v1/employees/{id}/details", get(get_employee_details))
         .route("/api/v1/employees/export", post(export_employees))
@@ -90,7 +92,14 @@ async fn list_employees(
 
     let service = EmployeeService::new(state.db.clone());
     let result = service
-        .list_employees(page, page_size, params.search, params.status, params.department_id, params.company_id)
+        .list_employees(
+            page,
+            page_size,
+            params.search,
+            params.status,
+            params.department_id,
+            params.company_id,
+        )
         .await;
 
     Json(result)
@@ -117,7 +126,7 @@ async fn get_employee(
     }
 
     let cache_key = employee_cache_key(&id);
-    
+
     if let Ok(Some(cached)) = state.cache.get(&cache_key).await {
         if let Ok(employee) = serde_json::from_str::<Employee>(&cached) {
             return Json(ApiResponse::success(employee, "从缓存获取员工成功"));
@@ -127,12 +136,20 @@ async fn get_employee(
     let service = EmployeeService::new(state.db.clone());
     let result = service.get_employee(&id).await;
 
-    if let ApiResponse { code: 200, data: Some(employee), .. } = &result {
-        let _ = state.cache.set(
-            &cache_key,
-            &serde_json::to_string(employee).unwrap_or_default(),
-            Some(EMPLOYEE_CACHE_TTL),
-        ).await;
+    if let ApiResponse {
+        code: 200,
+        data: Some(employee),
+        ..
+    } = &result
+    {
+        let _ = state
+            .cache
+            .set(
+                &cache_key,
+                &serde_json::to_string(employee).unwrap_or_default(),
+                Some(EMPLOYEE_CACHE_TTL),
+            )
+            .await;
     }
 
     Json(result)
@@ -245,14 +262,21 @@ async fn create_employee(
     let status_str: String;
     let error_msg: Option<String>;
     let data_value: Option<serde_json::Value>;
-    
+
     match &result {
-        ApiResponse { code: 200, data: Some(employee), .. } => {
-            let _ = state.cache.set(
-                &employee_cache_key(&employee.id),
-                &serde_json::to_string(employee).unwrap_or_default(),
-                Some(EMPLOYEE_CACHE_TTL),
-            ).await;
+        ApiResponse {
+            code: 200,
+            data: Some(employee),
+            ..
+        } => {
+            let _ = state
+                .cache
+                .set(
+                    &employee_cache_key(&employee.id),
+                    &serde_json::to_string(employee).unwrap_or_default(),
+                    Some(EMPLOYEE_CACHE_TTL),
+                )
+                .await;
             status_str = "success".to_string();
             error_msg = None;
             data_value = Some(serde_json::to_value(employee).unwrap());
@@ -277,7 +301,8 @@ async fn create_employee(
         status_str.to_string(),
         error_msg,
         &headers,
-    ).await;
+    )
+    .await;
 
     Json(result)
 }
@@ -308,11 +333,14 @@ async fn update_employee(
     let result = service.update_employee(&id, req).await;
 
     if result.code == 200 {
-        let _ = state.cache.set(
-            &employee_cache_key(&id),
-            &serde_json::to_string(result.data.as_ref().unwrap()).unwrap_or_default(),
-            Some(EMPLOYEE_CACHE_TTL),
-        ).await;
+        let _ = state
+            .cache
+            .set(
+                &employee_cache_key(&id),
+                &serde_json::to_string(result.data.as_ref().unwrap()).unwrap_or_default(),
+                Some(EMPLOYEE_CACHE_TTL),
+            )
+            .await;
     }
 
     log_audit_event(
@@ -325,10 +353,16 @@ async fn update_employee(
         None,
         None,
         None,
-        if result.code == 200 { "success" } else { "error" }.to_string(),
+        if result.code == 200 {
+            "success"
+        } else {
+            "error"
+        }
+        .to_string(),
         None,
         &headers,
-    ).await;
+    )
+    .await;
 
     Json(result)
 }
@@ -371,10 +405,16 @@ async fn delete_employee(
         None,
         None,
         None,
-        if result.code == 200 { "success" } else { "error" }.to_string(),
+        if result.code == 200 {
+            "success"
+        } else {
+            "error"
+        }
+        .to_string(),
         None,
         &headers,
-    ).await;
+    )
+    .await;
 
     Json(result)
 }
@@ -399,7 +439,7 @@ async fn export_employees(
     }
 
     let format = req.format.unwrap_or_else(|| "csv".to_string());
-    
+
     let employees = match &req.ids {
         Some(ids) => {
             if ids.is_empty() {

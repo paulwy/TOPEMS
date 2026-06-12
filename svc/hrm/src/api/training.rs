@@ -7,25 +7,46 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::ApiState;
 use crate::models::{
     CreateTrainingCourseRequest, CreateTrainingPlanRequest, CreateTrainingRecordRequest,
     TrainingCourse, TrainingPaginationParams, TrainingPlan, TrainingRecord,
     UpdateTrainingCourseRequest, UpdateTrainingPlanRequest, UpdateTrainingRecordRequest,
 };
 use topems_shared::ApiResponse;
-use super::ApiState;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/training-plans", get(list_plans).post(create_plan))
-        .route("/api/v1/training-plans/{id}", get(get_plan).put(update_plan).delete(delete_plan))
-        .route("/api/v1/training-courses", get(list_courses).post(create_course))
-        .route("/api/v1/training-courses/{id}", get(get_course).put(update_course).delete(delete_course))
-        .route("/api/v1/training-records", get(list_records).post(create_record))
-        .route("/api/v1/training-records/{id}", get(get_record).put(update_record).delete(delete_record))
+        .route(
+            "/api/v1/training-plans/{id}",
+            get(get_plan).put(update_plan).delete(delete_plan),
+        )
+        .route(
+            "/api/v1/training-courses",
+            get(list_courses).post(create_course),
+        )
+        .route(
+            "/api/v1/training-courses/{id}",
+            get(get_course).put(update_course).delete(delete_course),
+        )
+        .route(
+            "/api/v1/training-records",
+            get(list_records).post(create_record),
+        )
+        .route(
+            "/api/v1/training-records/{id}",
+            get(get_record).put(update_record).delete(delete_record),
+        )
         .route("/api/v1/training-courses/{id}/enroll", post(enroll_course))
-        .route("/api/v1/training-courses/{id}/records", get(get_course_records))
-        .route("/api/v1/employees/{id}/training-records", get(get_employee_records))
+        .route(
+            "/api/v1/training-courses/{id}/records",
+            get(get_course_records),
+        )
+        .route(
+            "/api/v1/employees/{id}/training-records",
+            get(get_employee_records),
+        )
 }
 
 async fn list_plans(
@@ -79,7 +100,10 @@ async fn list_plans(
         }
         Err(e) => {
             tracing::error!("获取培训计划列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取培训计划列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取培训计划列表失败",
+            ))
         }
     }
 }
@@ -90,7 +114,13 @@ async fn create_plan(
 ) -> Json<ApiResponse<TrainingPlan>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let code = req.code.unwrap_or_else(|| format!("TP{}{}", now.timestamp(), id.to_string().split('-').next().unwrap_or("")));
+    let code = req.code.unwrap_or_else(|| {
+        format!(
+            "TP{}{}",
+            now.timestamp(),
+            id.to_string().split('-').next().unwrap_or("")
+        )
+    });
 
     let result = sqlx::query_as::<_, TrainingPlan>(
         r#"
@@ -158,10 +188,16 @@ async fn get_plan(
                 "获取培训计划成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::error(404, "培训计划不存在")),
+        Ok(None) => Json(ApiResponse::<serde_json::Value>::error(
+            404,
+            "培训计划不存在",
+        )),
         Err(e) => {
             tracing::error!("获取培训计划失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取培训计划失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取培训计划失败",
+            ))
         }
     }
 }
@@ -220,7 +256,9 @@ async fn delete_plan(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "培训计划删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "培训计划删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<String>::error(404, "培训计划不存在")),
         Err(e) => {
             tracing::error!("删除培训计划失败: {}", e);
@@ -287,7 +325,10 @@ async fn list_courses(
         }
         Err(e) => {
             tracing::error!("获取课程列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取课程列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取课程列表失败",
+            ))
         }
     }
 }
@@ -298,7 +339,13 @@ async fn create_course(
 ) -> Json<ApiResponse<TrainingCourse>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let code = req.code.unwrap_or_else(|| format!("TC{}{}", now.timestamp(), id.to_string().split('-').next().unwrap_or("")));
+    let code = req.code.unwrap_or_else(|| {
+        format!(
+            "TC{}{}",
+            now.timestamp(),
+            id.to_string().split('-').next().unwrap_or("")
+        )
+    });
 
     let result = sqlx::query_as::<_, TrainingCourse>(
         r#"
@@ -427,7 +474,9 @@ async fn delete_course(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "课程删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "课程删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<String>::error(404, "课程不存在")),
         Err(e) => {
             tracing::error!("删除课程失败: {}", e);
@@ -494,7 +543,10 @@ async fn list_records(
         }
         Err(e) => {
             tracing::error!("获取培训记录列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取培训记录列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取培训记录列表失败",
+            ))
         }
     }
 }
@@ -530,7 +582,10 @@ async fn create_record(
         Ok(record) => Json(ApiResponse::success(record, "培训记录创建成功")),
         Err(e) => {
             tracing::error!("创建培训记录失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::error(500, "培训记录创建失败"))
+            Json(ApiResponse::<TrainingRecord>::error(
+                500,
+                "培训记录创建失败",
+            ))
         }
     }
 }
@@ -598,7 +653,10 @@ async fn get_record(
         Ok(None) => Json(ApiResponse::<TrainingRecord>::error(404, "培训记录不存在")),
         Err(e) => {
             tracing::error!("获取培训记录失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::error(500, "获取培训记录失败"))
+            Json(ApiResponse::<TrainingRecord>::error(
+                500,
+                "获取培训记录失败",
+            ))
         }
     }
 }
@@ -642,7 +700,10 @@ async fn update_record(
         Ok(None) => Json(ApiResponse::<TrainingRecord>::error(404, "培训记录不存在")),
         Err(e) => {
             tracing::error!("更新培训记录失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::error(500, "培训记录更新失败"))
+            Json(ApiResponse::<TrainingRecord>::error(
+                500,
+                "培训记录更新失败",
+            ))
         }
     }
 }
@@ -657,7 +718,9 @@ async fn delete_record(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "培训记录删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "培训记录删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<String>::error(404, "培训记录不存在")),
         Err(e) => {
             tracing::error!("删除培训记录失败: {}", e);
@@ -714,7 +777,10 @@ async fn get_course_records(
         }
         Err(e) => {
             tracing::error!("获取课程培训记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取课程培训记录失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取课程培训记录失败",
+            ))
         }
     }
 }
@@ -767,7 +833,10 @@ async fn get_employee_records(
         }
         Err(e) => {
             tracing::error!("获取员工培训记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取员工培训记录失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取员工培训记录失败",
+            ))
         }
     }
 }

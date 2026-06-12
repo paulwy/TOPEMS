@@ -5,7 +5,8 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
-    static ref EMAIL_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
+    static ref EMAIL_REGEX: Regex =
+        Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
     static ref PHONE_REGEX: Regex = Regex::new(r"^1[3-9]\d{9}$").unwrap();
     static ref EMPLOYEE_NUMBER_REGEX: Regex = Regex::new(r"^[A-Za-z0-9]{2,20}$").unwrap();
     static ref ASSET_NUMBER_REGEX: Regex = Regex::new(r"^[A-Za-z0-9]{2,20}$").unwrap();
@@ -16,6 +17,7 @@ pub fn validate_email(email: &str) -> bool {
     EMAIL_REGEX.is_match(email)
 }
 
+#[allow(dead_code)]
 pub fn validate_phone(phone: &str) -> bool {
     PHONE_REGEX.is_match(phone)
 }
@@ -39,7 +41,12 @@ pub fn validate_required_field(field: &str, value: &str) -> Result<(), String> {
 }
 
 #[allow(dead_code)]
-pub fn validate_string_length(field: &str, value: &str, min: usize, max: usize) -> Result<(), String> {
+pub fn validate_string_length(
+    field: &str,
+    value: &str,
+    min: usize,
+    max: usize,
+) -> Result<(), String> {
     let len = value.chars().count();
     if len < min {
         Err(format!("{}长度不能少于{}个字符", field, min))

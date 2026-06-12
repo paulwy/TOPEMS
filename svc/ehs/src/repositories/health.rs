@@ -1,8 +1,8 @@
-use sqlx::PgPool;
-use chrono::Utc;
-use uuid::Uuid;
 use crate::models::*;
 use anyhow::Result;
+use chrono::Utc;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 pub struct HealthRecordRepository<'a> {
     pool: &'a PgPool,
@@ -48,8 +48,12 @@ impl<'a> HealthRecordRepository<'a> {
     pub async fn create(&self, req: CreateHealthRecordRequest) -> Result<HealthRecord> {
         let id = Uuid::new_v4();
         let now = Utc::now();
-        let allergies = req.allergies.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
-        let chronic_diseases = req.chronic_diseases.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let allergies = req
+            .allergies
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let chronic_diseases = req
+            .chronic_diseases
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
 
         let record = sqlx::query_as::<_, HealthRecord>(
             r#"
@@ -81,24 +85,28 @@ impl<'a> HealthRecordRepository<'a> {
     }
 
     pub async fn get(&self, id: Uuid) -> Result<Option<HealthRecord>> {
-        let record = sqlx::query_as::<_, HealthRecord>(
-            "SELECT * FROM ehs.health_records WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.pool)
-        .await?;
+        let record =
+            sqlx::query_as::<_, HealthRecord>("SELECT * FROM ehs.health_records WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool)
+                .await?;
 
         Ok(record)
     }
 
     pub async fn update(&self, id: Uuid, req: UpdateHealthRecordRequest) -> Result<HealthRecord> {
-        let existing = self.get(id).await?.ok_or_else(|| anyhow::anyhow!("健康档案不存在"))?;
+        let existing = self
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("健康档案不存在"))?;
         let now = Utc::now();
 
-        let allergies = req.allergies
+        let allergies = req
+            .allergies
             .map(|v| Some(serde_json::to_value(&v).unwrap_or(serde_json::json!([]))))
             .unwrap_or(existing.allergies);
-        let chronic_diseases = req.chronic_diseases
+        let chronic_diseases = req
+            .chronic_diseases
             .map(|v| Some(serde_json::to_value(&v).unwrap_or(serde_json::json!([]))))
             .unwrap_or(existing.chronic_diseases);
 
@@ -184,8 +192,12 @@ impl<'a> HealthCheckupRepository<'a> {
     pub async fn create(&self, req: CreateHealthCheckupRequest) -> Result<HealthCheckup> {
         let id = Uuid::new_v4();
         let now = Utc::now();
-        let abnormal_items = req.abnormal_items.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
-        let attachments = req.attachments.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let abnormal_items = req
+            .abnormal_items
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let attachments = req
+            .attachments
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
 
         let checkup = sqlx::query_as::<_, HealthCheckup>(
             r#"
@@ -217,12 +229,11 @@ impl<'a> HealthCheckupRepository<'a> {
     }
 
     pub async fn get(&self, id: Uuid) -> Result<Option<HealthCheckup>> {
-        let checkup = sqlx::query_as::<_, HealthCheckup>(
-            "SELECT * FROM ehs.health_checkups WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.pool)
-        .await?;
+        let checkup =
+            sqlx::query_as::<_, HealthCheckup>("SELECT * FROM ehs.health_checkups WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool)
+                .await?;
 
         Ok(checkup)
     }
@@ -272,7 +283,9 @@ impl<'a> VaccinationRecordRepository<'a> {
     pub async fn create(&self, req: CreateVaccinationRecordRequest) -> Result<VaccinationRecord> {
         let id = Uuid::new_v4();
         let now = Utc::now();
-        let attachments = req.attachments.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let attachments = req
+            .attachments
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
 
         let record = sqlx::query_as::<_, VaccinationRecord>(
             r#"

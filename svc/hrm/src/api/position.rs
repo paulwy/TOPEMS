@@ -9,9 +9,9 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::api::audit::log_audit_event;
-use topems_shared::{ApiResponse, PaginationQuery, PaginatedResult, api_error};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use topems_shared::{api_error, ApiResponse, PaginatedResult, PaginationQuery};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Position {
@@ -71,8 +71,16 @@ pub struct QueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/positions", get(list_positions).post(create_position))
-        .route("/api/v1/positions/{id}", get(get_position).put(update_position).delete(delete_position))
+        .route(
+            "/api/v1/positions",
+            get(list_positions).post(create_position),
+        )
+        .route(
+            "/api/v1/positions/{id}",
+            get(get_position)
+                .put(update_position)
+                .delete(delete_position),
+        )
 }
 
 async fn list_positions(
@@ -136,7 +144,10 @@ async fn list_positions(
         }
         Err(e) => {
             tracing::error!("查询岗位列表失败: {}", e);
-            Json(ApiResponse::<PaginatedResult<Position>>::error(500, "查询岗位列表失败"))
+            Json(ApiResponse::<PaginatedResult<Position>>::error(
+                500,
+                "查询岗位列表失败",
+            ))
         }
     }
 }
@@ -295,12 +306,10 @@ async fn delete_position(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "DELETE FROM hrm.positions WHERE id = $1"
-    )
-    .bind(id)
-    .execute(&state.db)
-    .await;
+    let result = sqlx::query("DELETE FROM hrm.positions WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

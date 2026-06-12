@@ -8,16 +8,16 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
 #[allow(unused_imports)]
 use crate::models::finance::{
-    AccountingSubject, CreateAccountingSubjectRequest, UpdateAccountingSubjectRequest,
-    FinancialVoucher, CreateFinancialVoucherRequest, UpdateFinancialVoucherRequest,
-    VoucherItem, VoucherItemRequest, U8VoucherImportRequest, U8VoucherData, U8VoucherItem,
-    VoucherImportResult,
+    AccountingSubject, CreateAccountingSubjectRequest, CreateFinancialVoucherRequest,
+    FinancialVoucher, U8VoucherData, U8VoucherImportRequest, U8VoucherItem,
+    UpdateAccountingSubjectRequest, UpdateFinancialVoucherRequest, VoucherImportResult,
+    VoucherItem, VoucherItemRequest,
 };
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
-use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -30,10 +30,19 @@ pub struct PaginationParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/accounting-subjects", get(list_subjects).post(create_subject))
-        .route("/api/v1/accounting-subjects/{id}", get(get_subject).put(update_subject).delete(delete_subject))
+        .route(
+            "/api/v1/accounting-subjects",
+            get(list_subjects).post(create_subject),
+        )
+        .route(
+            "/api/v1/accounting-subjects/{id}",
+            get(get_subject).put(update_subject).delete(delete_subject),
+        )
         .route("/api/v1/vouchers", get(list_vouchers).post(create_voucher))
-        .route("/api/v1/vouchers/{id}", get(get_voucher).put(update_voucher).delete(delete_voucher))
+        .route(
+            "/api/v1/vouchers/{id}",
+            get(get_voucher).put(update_voucher).delete(delete_voucher),
+        )
         .route("/api/v1/vouchers/{id}/items", get(get_voucher_items))
         .route("/api/v1/vouchers/import/u8", post(import_u8_vouchers))
 }
@@ -149,16 +158,18 @@ async fn create_subject(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "accounting_subject".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "accounting_subject".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -262,16 +273,18 @@ async fn update_subject(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "accounting_subject".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "accounting_subject".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -318,16 +331,18 @@ async fn delete_subject(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "accounting_subject".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "accounting_subject".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -486,16 +501,18 @@ async fn create_voucher(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "financial_voucher".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        "success".to_string(),
-        None,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "financial_voucher".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: "success".to_string(),
+            error_message: None,
+        },
         &headers,
     )
     .await;
@@ -628,16 +645,18 @@ async fn update_voucher(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "financial_voucher".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "financial_voucher".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -689,16 +708,18 @@ async fn delete_voucher(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "financial_voucher".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "financial_voucher".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -729,7 +750,10 @@ async fn import_u8_vouchers(
             Err(_) => match DateTime::parse_from_str(&u8_voucher.voucher_date, "%Y/%m/%d") {
                 Ok(d) => d.with_timezone(&Utc),
                 Err(e) => {
-                    errors.push(format!("凭证{}日期解析失败: {}", u8_voucher.voucher_number, e));
+                    errors.push(format!(
+                        "凭证{}日期解析失败: {}",
+                        u8_voucher.voucher_number, e
+                    ));
                     failed_count += 1;
                     continue;
                 }
@@ -740,7 +764,10 @@ async fn import_u8_vouchers(
         let total_credit: f64 = u8_voucher.items.iter().map(|item| item.credit_amount).sum();
 
         if total_debit != total_credit {
-            errors.push(format!("凭证{}借贷不平: 借方{} 贷方{}", u8_voucher.voucher_number, total_debit, total_credit));
+            errors.push(format!(
+                "凭证{}借贷不平: 借方{} 贷方{}",
+                u8_voucher.voucher_number, total_debit, total_credit
+            ));
             failed_count += 1;
             continue;
         }
@@ -815,16 +842,26 @@ async fn import_u8_vouchers(
 
     log_audit_event(
         &state.db,
-        "import".to_string(),
-        "financial_voucher".to_string(),
-        None,
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        if failed_count == 0 { "success".to_string() } else { "partial".to_string() },
-        if !errors.is_empty() { Some(errors.join("; ")) } else { None },
+        AuditEventParams {
+            action: "import".to_string(),
+            entity_type: "financial_voucher".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: if failed_count == 0 {
+                "success".to_string()
+            } else {
+                "partial".to_string()
+            },
+            error_message: if !errors.is_empty() {
+                Some(errors.join("; "))
+            } else {
+                None
+            },
+        },
         &headers,
     )
     .await;

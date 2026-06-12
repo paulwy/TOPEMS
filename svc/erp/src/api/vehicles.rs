@@ -8,14 +8,14 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
 use crate::models::{
     CreateVehicleRequest, CreateVehicleRequestRequest, UpdateVehicleRequest,
     UpdateVehicleRequestRequest, Vehicle, VehicleApplication,
 };
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
 use crate::utils::validate_required_field;
-use super::ApiState;
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct VehicleQueryParams {
@@ -33,10 +33,15 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/v1/vehicles/{id}",
             get(get_vehicle).put(update_vehicle).delete(delete_vehicle),
         )
-        .route("/api/v1/vehicle-requests", get(list_vehicle_requests).post(create_vehicle_request))
+        .route(
+            "/api/v1/vehicle-requests",
+            get(list_vehicle_requests).post(create_vehicle_request),
+        )
         .route(
             "/api/v1/vehicle-requests/{id}",
-            get(get_vehicle_request).put(update_vehicle_request).delete(delete_vehicle_request),
+            get(get_vehicle_request)
+                .put(update_vehicle_request)
+                .delete(delete_vehicle_request),
         )
         .route("/api/v1/vehicles/{id}/requests", get(get_vehicle_requests))
 }
@@ -159,16 +164,18 @@ async fn create_vehicle(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "vehicle".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "vehicle".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -278,16 +285,18 @@ async fn update_vehicle(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "vehicle".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "vehicle".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -334,16 +343,18 @@ async fn delete_vehicle(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "vehicle".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "vehicle".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -419,7 +430,7 @@ async fn create_vehicle_request(
     let vehicle_result = sqlx::query_as::<_, Vehicle>(
         "SELECT id, plate_number, status FROM vehicles WHERE id = $1 AND status = 'available'",
     )
-    .bind(&req.vehicle_id)
+    .bind(req.vehicle_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -436,9 +447,9 @@ async fn create_vehicle_request(
           AND ((start_time < $2 AND end_time > $2) OR (start_time < $3 AND end_time > $3))
         "#,
     )
-    .bind(&req.vehicle_id)
-    .bind(&req.end_time)
-    .bind(&req.start_time)
+    .bind(req.vehicle_id)
+    .bind(req.end_time)
+    .bind(req.start_time)
     .fetch_one(&state.db)
     .await;
 
@@ -459,12 +470,12 @@ async fn create_vehicle_request(
         "#,
     )
     .bind(id)
-    .bind(&req.vehicle_id)
+    .bind(req.vehicle_id)
     .bind(&vehicle.plate_number)
     .bind(&req.requester)
     .bind(&req.purpose)
-    .bind(&req.start_time)
-    .bind(&req.end_time)
+    .bind(req.start_time)
+    .bind(req.end_time)
     .bind(req.driver_required)
     .bind(now)
     .bind(now)
@@ -496,16 +507,18 @@ async fn create_vehicle_request(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "vehicle_request".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "vehicle_request".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -605,16 +618,18 @@ async fn update_vehicle_request(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "vehicle_request".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "vehicle_request".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -661,16 +676,18 @@ async fn delete_vehicle_request(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "vehicle_request".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "vehicle_request".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

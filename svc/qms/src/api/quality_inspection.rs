@@ -10,8 +10,10 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;
-use crate::models::{CreateQualityInspectionRequest, QualityInspection, UpdateQualityInspectionRequest};
-use topems_shared::{ApiResponse, api_error};
+use crate::models::{
+    CreateQualityInspectionRequest, QualityInspection, UpdateQualityInspectionRequest,
+};
+use topems_shared::{api_error, ApiResponse};
 
 use super::ApiState;
 
@@ -25,10 +27,15 @@ pub struct QualityInspectionQueryParams {
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/checks", get(list_inspections).post(create_inspection))
+        .route(
+            "/api/v1/checks",
+            get(list_inspections).post(create_inspection),
+        )
         .route(
             "/api/v1/checks/{id}",
-            get(get_inspection).put(update_inspection).delete(delete_inspection),
+            get(get_inspection)
+                .put(update_inspection)
+                .delete(delete_inspection),
         );
 
     Ok(app)
@@ -90,7 +97,10 @@ async fn list_inspections(
         }
         Err(e) => {
             tracing::error!("获取质量检查列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取质量检查列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取质量检查列表失败",
+            ))
         }
     }
 }
@@ -187,10 +197,16 @@ async fn get_inspection(
 
     match result {
         Ok(Some(inspection)) => Json(ApiResponse::success(inspection, "获取质量检查成功")),
-        Ok(None) => Json(ApiResponse::<QualityInspection>::error(404, "质量检查不存在")),
+        Ok(None) => Json(ApiResponse::<QualityInspection>::error(
+            404,
+            "质量检查不存在",
+        )),
         Err(e) => {
             tracing::error!("获取质量检查失败: {}", e);
-            Json(ApiResponse::<QualityInspection>::error(500, "获取质量检查失败"))
+            Json(ApiResponse::<QualityInspection>::error(
+                500,
+                "获取质量检查失败",
+            ))
         }
     }
 }
@@ -209,8 +225,18 @@ async fn update_inspection(
 
     let existing = match existing {
         Ok(Some(i)) => i,
-        Ok(None) => return Json(ApiResponse::<QualityInspection>::error(404, "质量检查不存在")),
-        Err(e) => return Json(ApiResponse::<QualityInspection>::error(500, &format!("查询质量检查失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::<QualityInspection>::error(
+                404,
+                "质量检查不存在",
+            ))
+        }
+        Err(e) => {
+            return Json(ApiResponse::<QualityInspection>::error(
+                500,
+                &format!("查询质量检查失败: {}", e),
+            ))
+        }
     };
 
     let title = req.title.unwrap_or(existing.title);
@@ -244,7 +270,10 @@ async fn update_inspection(
         Ok(inspection) => Json(ApiResponse::success(inspection, "质量检查更新成功")),
         Err(e) => {
             tracing::error!("更新质量检查失败: {}", e);
-            Json(ApiResponse::<QualityInspection>::error(500, "质量检查更新失败"))
+            Json(ApiResponse::<QualityInspection>::error(
+                500,
+                "质量检查更新失败",
+            ))
         }
     }
 }

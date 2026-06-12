@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State, Extension},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::{get, post},
     Json, Router,
@@ -8,12 +8,12 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, api_error};
-use topems_shared::auth::Claims;
-use crate::models::{Contact, CreateContactRequest, UpdateContactRequest};
-use crate::api::audit::log_audit_event;
-use crate::services::permission::{check_permission, ModulePermission};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use crate::models::{Contact, CreateContactRequest, UpdateContactRequest};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct ContactPaginationParams {
@@ -45,7 +45,7 @@ async fn list_contacts(
     Query(params): Query<ContactPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -118,7 +118,7 @@ async fn create_contact(
     Json(req): Json<CreateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -198,7 +198,7 @@ async fn get_contact(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contact>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -230,7 +230,7 @@ async fn update_contact(
     Json(req): Json<UpdateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -331,7 +331,7 @@ async fn delete_contact(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -393,7 +393,7 @@ async fn batch_delete_contacts(
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -408,7 +408,10 @@ async fn batch_delete_contacts(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (
-            Json(ApiResponse::success("".to_string(), &format!("成功删除 {} 个联系人", r.rows_affected()))),
+            Json(ApiResponse::success(
+                "".to_string(),
+                &format!("成功删除 {} 个联系人", r.rows_affected()),
+            )),
             "success".to_string(),
             None,
         ),

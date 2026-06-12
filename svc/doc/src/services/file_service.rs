@@ -1,6 +1,8 @@
-use uuid::Uuid;
-use crate::models::{FileMetadata, Permission};
+#![allow(dead_code)]
+
 use crate::db::repository::FileRepository;
+use crate::models::{FileMetadata, Permission};
+use uuid::Uuid;
 
 pub struct FileService {
     repository: FileRepository,
@@ -11,13 +13,19 @@ impl FileService {
         Self { repository }
     }
 
-    pub async fn create_file(&self, metadata: FileMetadata) -> Result<FileMetadata, Box<dyn std::error::Error>> {
+    pub async fn create_file(
+        &self,
+        metadata: FileMetadata,
+    ) -> Result<FileMetadata, Box<dyn std::error::Error>> {
         tracing::info!("Creating file: {}", metadata.name);
         let file = self.repository.create(metadata).await?;
         Ok(file)
     }
 
-    pub async fn get_file(&self, id: Uuid) -> Result<Option<FileMetadata>, Box<dyn std::error::Error>> {
+    pub async fn get_file(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<FileMetadata>, Box<dyn std::error::Error>> {
         tracing::debug!("Getting file: {}", id);
         let file = self.repository.find_by_id(id).await?;
         Ok(file)
@@ -31,10 +39,10 @@ impl FileService {
     ) -> Result<(Vec<FileMetadata>, u64), Box<dyn std::error::Error>> {
         let offset = ((page - 1) * page_size) as i64;
         let limit = page_size as i64;
-        
+
         let files = self.repository.list(folder_id, limit, offset).await?;
         let total = files.len() as u64;
-        
+
         Ok((files, total))
     }
 
@@ -50,7 +58,12 @@ impl FileService {
         user_id: Uuid,
         required: Permission,
     ) -> Result<bool, Box<dyn std::error::Error>> {
-        tracing::debug!("Checking permission for file {} user {} required {:?}", file_id, user_id, required);
+        tracing::debug!(
+            "Checking permission for file {} user {} required {:?}",
+            file_id,
+            user_id,
+            required
+        );
         Ok(true)
     }
 }

@@ -147,7 +147,7 @@ export function useCrud<
         abortControllerRef.current = null;
       }
     },
-    [api, basePath, page, pageSize, cacheTime, handleError, data],
+    [api, basePath, page, pageSize, cacheTime, handleError],
   );
 
   useEffect(() => {

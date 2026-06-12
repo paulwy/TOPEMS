@@ -18,10 +18,11 @@ impl QaApi {
         // 注意：这里需要生成查询向量
         let query_embedding: Vec<f32> = vec![0.0; 768]; // 示例向量
 
-        let context_chunks = match state.vector_service.search_similar(&query_embedding, top_k).await {
-            Ok(results) => results,
-            Err(_) => vec![],
-        };
+        let context_chunks = state
+            .vector_service
+            .search_similar(&query_embedding, top_k)
+            .await
+            .unwrap_or_default();
 
         // 构建上下文
         let context = if !context_chunks.is_empty() {
@@ -37,21 +38,21 @@ impl QaApi {
         };
 
         // 调用 QA 服务
-        match state.qa_service.ask(&req.question, context.as_deref(), top_k).await {
-            Ok((answer, sources, qa_id, confidence)) => {
-                Json(ApiResponse::success(
-                    AskResponse {
-                        answer,
-                        sources,
-                        qa_id,
-                        confidence,
-                    },
-                    "Success",
-                ))
-            }
-            Err(e) => {
-                Json(ApiResponse::<AskResponse>::error(500, &e))
-            }
+        match state
+            .qa_service
+            .ask(&req.question, context.as_deref(), top_k)
+            .await
+        {
+            Ok((answer, sources, qa_id, confidence)) => Json(ApiResponse::success(
+                AskResponse {
+                    answer,
+                    sources,
+                    qa_id,
+                    confidence,
+                },
+                "Success",
+            )),
+            Err(e) => Json(ApiResponse::<AskResponse>::error(500, &e)),
         }
     }
 
@@ -82,24 +83,21 @@ impl QaApi {
         context_chunks.truncate(top_k);
 
         // 调用 QA 服务
-        match state.qa_service
+        match state
+            .qa_service
             .ask_with_context(&req.question, &req.document_ids, &context_chunks)
             .await
         {
-            Ok((answer, sources, qa_id, confidence)) => {
-                Json(ApiResponse::success(
-                    AskResponse {
-                        answer,
-                        sources,
-                        qa_id,
-                        confidence,
-                    },
-                    "Success",
-                ))
-            }
-            Err(e) => {
-                Json(ApiResponse::<AskResponse>::error(500, &e))
-            }
+            Ok((answer, sources, qa_id, confidence)) => Json(ApiResponse::success(
+                AskResponse {
+                    answer,
+                    sources,
+                    qa_id,
+                    confidence,
+                },
+                "Success",
+            )),
+            Err(e) => Json(ApiResponse::<AskResponse>::error(500, &e)),
         }
     }
 
@@ -109,16 +107,11 @@ impl QaApi {
             Ok(history) => {
                 let total = history.len() as i32;
                 Json(ApiResponse::success(
-                    QAHistoryResponse {
-                        history,
-                        total,
-                    },
+                    QAHistoryResponse { history, total },
                     "Success",
                 ))
             }
-            Err(e) => {
-                Json(ApiResponse::<QAHistoryResponse>::error(500, &e))
-            }
+            Err(e) => Json(ApiResponse::<QAHistoryResponse>::error(500, &e)),
         }
     }
 
@@ -127,19 +120,19 @@ impl QaApi {
         State(state): State<AppState>,
         Json(req): Json<FeedbackRequest>,
     ) -> Json<ApiResponse<FeedbackResponse>> {
-        match state.qa_service.submit_feedback(req.qa_id, &req.feedback, req.rating).await {
-            Ok(_) => {
-                Json(ApiResponse::success(
-                    FeedbackResponse {
-                        qa_id: req.qa_id,
-                        message: "反馈已提交".to_string(),
-                    },
-                    "Success",
-                ))
-            }
-            Err(e) => {
-                Json(ApiResponse::<FeedbackResponse>::error(500, &e))
-            }
+        match state
+            .qa_service
+            .submit_feedback(req.qa_id, &req.feedback, req.rating)
+            .await
+        {
+            Ok(_) => Json(ApiResponse::success(
+                FeedbackResponse {
+                    qa_id: req.qa_id,
+                    message: "反馈已提交".to_string(),
+                },
+                "Success",
+            )),
+            Err(e) => Json(ApiResponse::<FeedbackResponse>::error(500, &e)),
         }
     }
 }

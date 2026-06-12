@@ -50,8 +50,8 @@ impl HrmServiceClient {
     }
 
     pub fn from_env() -> ServiceClientResult<Self> {
-        let base_url = std::env::var("HRM_SERVICE_URL")
-            .unwrap_or_else(|_| "http://localhost:8011".into());
+        let base_url =
+            std::env::var("HRM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8011".into());
         Self::new(base_url)
     }
 
@@ -63,7 +63,9 @@ impl HrmServiceClient {
     }
 
     pub async fn get_employee(&self, id: Uuid) -> ServiceClientResult<Employee> {
-        self.base_client.get(&format!("/api/v1/employees/{}", id)).await
+        self.base_client
+            .get(&format!("/api/v1/employees/{}", id))
+            .await
     }
 
     pub async fn get_department(&self, id: Uuid) -> ServiceClientResult<Department> {
@@ -73,7 +75,9 @@ impl HrmServiceClient {
     }
 
     pub async fn get_company(&self, id: Uuid) -> ServiceClientResult<Company> {
-        self.base_client.get(&format!("/api/v1/companies/{}", id)).await
+        self.base_client
+            .get(&format!("/api/v1/companies/{}", id))
+            .await
     }
 
     pub async fn list_employees(&self) -> ServiceClientResult<Vec<Employee>> {
@@ -88,4 +92,3 @@ impl HrmServiceClient {
         self.base_client.get("/api/v1/companies").await
     }
 }
-

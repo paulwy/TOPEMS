@@ -43,11 +43,15 @@ impl EmailService {
         let now = OffsetDateTime::now_utc();
         let priority = request.priority.unwrap_or_else(|| "normal".to_string());
 
-        let cc_addresses = request.cc_addresses.as_ref()
-            .map(|v| serde_json::to_value(v))
+        let cc_addresses = request
+            .cc_addresses
+            .as_ref()
+            .map(serde_json::to_value)
             .transpose()?;
-        let bcc_addresses = request.bcc_addresses.as_ref()
-            .map(|v| serde_json::to_value(v))
+        let bcc_addresses = request
+            .bcc_addresses
+            .as_ref()
+            .map(serde_json::to_value)
             .transpose()?;
 
         let email = Email {
@@ -80,12 +84,14 @@ impl EmailService {
         self.update_email_status(id, status, sent_at, error_message)
             .await?;
 
-        self.get_email(id).await.ok_or_else(|| anyhow::anyhow!("邮件保存失败"))
+        self.get_email(id)
+            .await
+            .ok_or_else(|| anyhow::anyhow!("邮件保存失败"))
     }
 
     async fn deliver_email(&self, email: &Email) -> Result<()> {
         let from_email = self.from_address.parse::<Mailbox>()?;
-        
+
         let mut to_mailboxes = Vec::new();
         if let Ok(to_addrs) = serde_json::from_value::<Vec<String>>(email.to_addresses.clone()) {
             for addr in to_addrs {
@@ -228,8 +234,8 @@ impl EmailService {
             sent_at: r.sent_at,
             error_message: r.error_message,
             template_id: r.template_id,
-            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
     }
 
@@ -279,8 +285,8 @@ impl EmailService {
             sent_at: r.sent_at,
             error_message: r.error_message,
             template_id: r.template_id,
-            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 
@@ -303,12 +309,9 @@ impl EmailService {
     }
 
     pub async fn delete_email(&self, id: Uuid) -> Result<bool> {
-        let result = sqlx::query!(
-            "DELETE FROM mail.emails WHERE id = $1",
-            id,
-        )
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query!("DELETE FROM mail.emails WHERE id = $1", id,)
+            .execute(&self.pool)
+            .await?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -322,11 +325,25 @@ impl EmailService {
             if let Some(email) = self.get_email(email_id).await {
                 match self.deliver_email(&email).await {
                     Ok(_) => {
-                        let _ = self.update_email_status(email_id, "sent".to_string(), Some(OffsetDateTime::now_utc()), None).await;
+                        let _ = self
+                            .update_email_status(
+                                email_id,
+                                "sent".to_string(),
+                                Some(OffsetDateTime::now_utc()),
+                                None,
+                            )
+                            .await;
                         success_count += 1;
                     }
                     Err(e) => {
-                        let _ = self.update_email_status(email_id, "failed".to_string(), None, Some(e.to_string())).await;
+                        let _ = self
+                            .update_email_status(
+                                email_id,
+                                "failed".to_string(),
+                                None,
+                                Some(e.to_string()),
+                            )
+                            .await;
                         fail_count += 1;
                         failed_ids.push(email_id.to_string());
                     }
@@ -370,9 +387,7 @@ impl EmailService {
         .await?
         .unwrap_or(0);
 
-        let last_sent_at_str = result
-            .last_sent_at
-            .and_then(|dt| dt.format(&Rfc3339).ok());
+        let last_sent_at_str = result.last_sent_at.and_then(|dt| dt.format(&Rfc3339).ok());
 
         Ok(serde_json::json!({
             "total": result.total.unwrap_or(0),
@@ -394,6 +409,7 @@ impl TemplateService {
         TemplateService { pool }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_template(
         &self,
         code: String,
@@ -408,7 +424,7 @@ impl TemplateService {
         let id = Uuid::new_v4();
         let now = OffsetDateTime::now_utc();
         let category = category.unwrap_or_else(|| "general".to_string());
-        let tags_json = tags.map(|t| serde_json::to_value(t)).transpose()?;
+        let tags_json = tags.map(serde_json::to_value).transpose()?;
 
         let result = sqlx::query!(
             r#"
@@ -445,8 +461,8 @@ impl TemplateService {
             category: result.category,
             tags: result.tags,
             status: result.status,
-            created_at: result.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: result.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: result.created_at,
+            updated_at: result.updated_at,
         })
     }
 
@@ -474,8 +490,8 @@ impl TemplateService {
             category: r.category,
             tags: r.tags,
             status: r.status,
-            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
     }
 
@@ -503,8 +519,8 @@ impl TemplateService {
             category: r.category,
             tags: r.tags,
             status: r.status,
-            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
     }
 
@@ -550,8 +566,8 @@ impl TemplateService {
             category: r.category,
             tags: r.tags,
             status: r.status,
-            created_at: r.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: r.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 
@@ -573,6 +589,7 @@ impl TemplateService {
         Ok((templates, total))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn update_template(
         &self,
         id: Uuid,
@@ -594,7 +611,10 @@ impl TemplateService {
         let body_template = body_template.unwrap_or(existing.body_template);
         let body_html_template = body_html_template.or(existing.body_html_template);
         let category = category.unwrap_or(existing.category);
-        let tags_json = tags.map(|t| serde_json::to_value(t)).transpose()?.or(existing.tags);
+        let tags_json = tags
+            .map(serde_json::to_value)
+            .transpose()?
+            .or(existing.tags);
         let status = status.unwrap_or(existing.status);
         let now = OffsetDateTime::now_utc();
 
@@ -632,18 +652,15 @@ impl TemplateService {
             category: result.category,
             tags: result.tags,
             status: result.status,
-            created_at: result.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: result.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: result.created_at,
+            updated_at: result.updated_at,
         })
     }
 
     pub async fn delete_template(&self, id: Uuid) -> Result<bool> {
-        let result = sqlx::query!(
-            "DELETE FROM mail.templates WHERE id = $1",
-            id,
-        )
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query!("DELETE FROM mail.templates WHERE id = $1", id,)
+            .execute(&self.pool)
+            .await?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -677,22 +694,28 @@ impl TemplateService {
             category: result.category,
             tags: result.tags,
             status: result.status,
-            created_at: result.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: result.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: result.created_at,
+            updated_at: result.updated_at,
         })
     }
 
-    pub fn render_template(template: &EmailTemplate, data: &Value) -> (String, String, Option<String>) {
+    pub fn render_template(
+        template: &EmailTemplate,
+        data: &Value,
+    ) -> (String, String, Option<String>) {
         let subject = Self::render_string(&template.subject_template, data);
         let body = Self::render_string(&template.body_template, data);
-        let body_html = template.body_html_template.as_ref().map(|t| Self::render_string(t, data));
+        let body_html = template
+            .body_html_template
+            .as_ref()
+            .map(|t| Self::render_string(t, data));
 
         (subject, body, body_html)
     }
 
     fn render_string(template: &str, data: &Value) -> String {
         let mut result = template.to_string();
-        
+
         for (key, value) in data.as_object().unwrap_or(&serde_json::Map::new()) {
             let placeholder = format!("{{{{{}}}}}", key);
             let value_str = match value {
@@ -705,7 +728,7 @@ impl TemplateService {
             };
             result = result.replace(&placeholder, &value_str);
         }
-        
+
         result
     }
 }

@@ -20,11 +20,10 @@ use crate::api::handlers::{
     health_check, list_files, revoke_permission, share_file, upload_file, AppState,
 };
 use crate::backends::local::LocalStorage;
-use topems_shared::{AuthState, auth_middleware};
+use topems_shared::{auth_middleware, AuthState};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-
     let subscriber = FmtSubscriber::builder()
         .with_max_level(Level::INFO)
         .finish();
@@ -58,8 +57,8 @@ async fn main() -> Result<()> {
         }
     };
 
-    let storage_base_path = std::env::var("STORAGE_LOCAL_PATH")
-        .unwrap_or_else(|_| "./storage/files".to_string());
+    let storage_base_path =
+        std::env::var("STORAGE_LOCAL_PATH").unwrap_or_else(|_| "./storage/files".to_string());
     let storage = Arc::new(LocalStorage::new(&storage_base_path)?);
 
     info!("Storage backend initialized at: {}", storage_base_path);
@@ -87,7 +86,10 @@ async fn main() -> Result<()> {
         .route("/api/v1/files/{id}/download", get(download_file))
         .route("/api/v1/files/{id}/share", post(share_file))
         .route("/api/v1/files/{id}/permissions", get(get_file_permissions))
-        .route("/api/v1/files/{id}/permissions/revoke/{principal_type}/{principal_id}/{permission}", delete(revoke_permission))
+        .route(
+            "/api/v1/files/{id}/permissions/revoke/{principal_type}/{principal_id}/{permission}",
+            delete(revoke_permission),
+        )
         .with_state(state.clone())
         .layer(axum::middleware::from_fn_with_state(
             auth_state,
@@ -105,7 +107,7 @@ async fn main() -> Result<()> {
         .layer(cors);
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8055".to_string())
+        .unwrap_or_else(|_| "8050".to_string())
         .parse::<u16>()?;
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));

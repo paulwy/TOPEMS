@@ -1,4 +1,6 @@
 // GIS 服务审计日志
+#![allow(dead_code)]
+
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -20,7 +22,9 @@ impl GisAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -51,7 +55,9 @@ impl GisAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -82,7 +88,9 @@ impl GisAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -113,7 +121,9 @@ impl GisAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -144,7 +154,9 @@ impl GisAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -175,7 +187,9 @@ impl GisAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(

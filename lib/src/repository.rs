@@ -1,7 +1,7 @@
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 #[async_trait]
 pub trait Repository<T> {
@@ -46,7 +46,7 @@ pub struct PaginatedResult<T> {
 impl<T> PaginatedResult<T> {
     pub fn new(items: Vec<T>, total: i64, page: i64, page_size: i64) -> Self {
         let page = page.max(1);
-        let page_size = page_size.min(100).max(1);
+        let page_size = page_size.clamp(1, 100);
         let total_pages = (total + page_size - 1) / page_size;
         Self {
             items,
@@ -111,7 +111,10 @@ impl QueryBuilder {
         self
     }
 
-    pub fn param<T: sqlx::Encode<'static, sqlx::Postgres> + Send + 'static>(mut self, value: T) -> Self {
+    pub fn param<T: sqlx::Encode<'static, sqlx::Postgres> + Send + 'static>(
+        mut self,
+        value: T,
+    ) -> Self {
         self.params.push(Box::new(value));
         self
     }
@@ -168,7 +171,7 @@ mod tests {
     fn test_paginated_result() {
         let items = vec![1, 2, 3, 4, 5];
         let result = PaginatedResult::new(items, 100, 1, 10);
-        
+
         assert_eq!(result.total, 100);
         assert_eq!(result.page, 1);
         assert_eq!(result.page_size, 10);
@@ -200,7 +203,7 @@ mod tests {
         let items = vec![1, 2, 3];
         let result = PaginatedResult::new(items, 10, 1, 5);
         let mapped = result.map(|x| x.to_string());
-        
+
         assert_eq!(mapped.items, vec!["1", "2", "3"]);
         assert_eq!(mapped.total, 10);
     }

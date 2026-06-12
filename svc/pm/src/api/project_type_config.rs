@@ -1,8 +1,7 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
@@ -11,7 +10,10 @@ use uuid::Uuid;
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route("/api/v1/project-types", get(list_types).post(create_type))
-        .route("/api/v1/project-types/{id}", get(get_type).put(update_type).delete(delete_type))
+        .route(
+            "/api/v1/project-types/{id}",
+            get(get_type).put(update_type).delete(delete_type),
+        )
         .with_state(pool)
 }
 

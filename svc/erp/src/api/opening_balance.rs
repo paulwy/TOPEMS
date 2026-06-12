@@ -8,10 +8,10 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
 use crate::models::finance::AccountingSubject;
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
-use super::ApiState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct OpeningBalance {
@@ -58,10 +58,24 @@ pub struct OpeningBalanceParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/finance/accounts/opening-balances", get(list_opening_balances).post(create_opening_balance))
-        .route("/api/v1/finance/accounts/opening-balances/{id}", get(get_opening_balance).put(update_opening_balance).delete(delete_opening_balance))
-        .route("/api/v1/finance/accounts/opening-balances/batch", post(import_opening_balances))
-        .route("/api/v1/finance/accounts/opening-balances/carry-forward", post(carry_forward_opening_balance))
+        .route(
+            "/api/v1/finance/accounts/opening-balances",
+            get(list_opening_balances).post(create_opening_balance),
+        )
+        .route(
+            "/api/v1/finance/accounts/opening-balances/{id}",
+            get(get_opening_balance)
+                .put(update_opening_balance)
+                .delete(delete_opening_balance),
+        )
+        .route(
+            "/api/v1/finance/accounts/opening-balances/batch",
+            post(import_opening_balances),
+        )
+        .route(
+            "/api/v1/finance/accounts/opening-balances/carry-forward",
+            post(carry_forward_opening_balance),
+        )
 }
 
 async fn list_opening_balances(
@@ -84,7 +98,12 @@ async fn list_opening_balances(
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(params.company_id.as_ref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        params
+            .company_id
+            .as_ref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(&params.period)
     .bind(&params.subject_code)
     .bind(page_size)
@@ -102,7 +121,12 @@ async fn list_opening_balances(
                   AND ($3::text IS NULL OR ob.subject_code = $3)
                 "#,
             )
-            .bind(params.company_id.as_ref().and_then(|s| Uuid::parse_str(s).ok()))
+            .bind(
+                params
+                    .company_id
+                    .as_ref()
+                    .and_then(|s| Uuid::parse_str(s).ok()),
+            )
             .bind(&params.period)
             .bind(&params.subject_code)
             .fetch_one(&state.db)
@@ -185,16 +209,18 @@ async fn create_opening_balance(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "opening_balance".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "opening_balance".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -289,16 +315,18 @@ async fn update_opening_balance(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "opening_balance".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "opening_balance".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -345,16 +373,18 @@ async fn delete_opening_balance(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "opening_balance".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "opening_balance".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -422,16 +452,26 @@ async fn import_opening_balances(
 
     log_audit_event(
         &state.db,
-        "import".to_string(),
-        "opening_balance".to_string(),
-        None,
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        if failed_count == 0 { "success".to_string() } else { "partial".to_string() },
-        if !errors.is_empty() { Some(errors.join("; ")) } else { None },
+        AuditEventParams {
+            action: "import".to_string(),
+            entity_type: "opening_balance".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: if failed_count == 0 {
+                "success".to_string()
+            } else {
+                "partial".to_string()
+            },
+            error_message: if !errors.is_empty() {
+                Some(errors.join("; "))
+            } else {
+                None
+            },
+        },
         &headers,
     )
     .await;
@@ -445,7 +485,7 @@ async fn carry_forward_opening_balance(
     Json(req): Json<CarryForwardRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let query = r#"
         INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at)
         SELECT uuid_generate_v4(), company_id, subject_code, subject_name, $2, debit_balance, credit_balance, NOW(), NOW()
@@ -456,7 +496,7 @@ async fn carry_forward_opening_balance(
             credit_balance = EXCLUDED.credit_balance,
             updated_at = NOW()
     "#;
-    
+
     let result = sqlx::query(query)
         .bind(&req.from_period)
         .bind(&req.to_period)
@@ -465,7 +505,10 @@ async fn carry_forward_opening_balance(
 
     let (response, status_str, error_msg) = match result {
         Ok(r) => (
-            Json(ApiResponse::success(serde_json::json!({ "rows_affected": r.rows_affected() }), "期初余额结转完成")),
+            Json(ApiResponse::success(
+                serde_json::json!({ "rows_affected": r.rows_affected() }),
+                "期初余额结转完成",
+            )),
             "success".to_string(),
             None,
         ),
@@ -481,16 +524,18 @@ async fn carry_forward_opening_balance(
 
     log_audit_event(
         &state.db,
-        "carry_forward".to_string(),
-        "opening_balance".to_string(),
-        None,
-        None,
-        None,
-        None,
-        request_data,
-        None,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "carry_forward".to_string(),
+            entity_type: "opening_balance".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: None,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

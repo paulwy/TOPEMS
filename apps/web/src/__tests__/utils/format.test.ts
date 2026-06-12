@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   formatDate,
   formatNumber,
@@ -101,13 +101,13 @@ describe("debounce", () => {
   it("should delay function execution", async () => {
     const fn = vi.fn();
     const debouncedFn = debounce(fn, 10);
-    
+
     debouncedFn();
     debouncedFn();
     debouncedFn();
-    
+
     expect(fn).not.toHaveBeenCalled();
-    
+
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(fn).toHaveBeenCalledTimes(1);
   });
@@ -117,13 +117,13 @@ describe("throttle", () => {
   it("should limit function execution", async () => {
     const fn = vi.fn();
     const throttledFn = throttle(fn, 10);
-    
+
     throttledFn();
     throttledFn();
     throttledFn();
-    
+
     expect(fn).toHaveBeenCalledTimes(1);
-    
+
     await new Promise((resolve) => setTimeout(resolve, 15));
     throttledFn();
     expect(fn).toHaveBeenCalledTimes(2);

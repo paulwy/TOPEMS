@@ -8,10 +8,10 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::ApiState;
+use crate::api::audit::{log_audit_event, AuditEventParams};
 use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-use crate::api::audit::log_audit_event;
-use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -160,16 +160,18 @@ async fn create_asset(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "asset".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "asset".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -300,16 +302,18 @@ async fn update_asset(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "asset".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "asset".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -356,16 +360,18 @@ async fn delete_asset(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "asset".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "asset".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

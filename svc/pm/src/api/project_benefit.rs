@@ -1,21 +1,25 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::project_benefit::{ProjectBenefit, CreateBenefitRequest};
+use crate::models::project_benefit::{CreateBenefitRequest, ProjectBenefit};
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/benefits", get(get_benefits).post(calculate_benefits))
-        .route("/api/v1/projects/{project_id}/benefits/analysis", get(get_analysis))
+        .route(
+            "/api/v1/projects/{project_id}/benefits",
+            get(get_benefits).post(calculate_benefits),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/benefits/analysis",
+            get(get_analysis),
+        )
         .with_state(pool)
 }
 
@@ -62,7 +66,7 @@ async fn get_analysis(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let benefits_result = sqlx::query_as::<_, ProjectBenefit>(
-        "SELECT * FROM pm.project_benefits WHERE project_id = $1"
+        "SELECT * FROM pm.project_benefits WHERE project_id = $1",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -226,7 +230,7 @@ async fn calculate_benefits(
     .bind(id)
     .bind(project_id)
     .bind(&req.period_type)
-    .bind(&req.period_date)
+    .bind(req.period_date)
     .bind(req.planned_cost)
     .bind(req.actual_cost)
     .bind(req.planned_progress)

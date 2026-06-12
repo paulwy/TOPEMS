@@ -1,8 +1,10 @@
+#![allow(dead_code)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::needless_borrows_for_generic_args)]
 
-
-use sqlx::{Pool, Postgres};
 use crate::models::*;
 use chrono::Utc;
+use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 pub async fn db_get_dashboard_stats(pool: &Pool<Postgres>) -> sqlx::Result<(i64, i64, i64, i64)> {
@@ -33,7 +35,10 @@ pub async fn db_get_patrol_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Pa
     rows.iter().map(|row| PatrolRecord::from_row(row)).collect()
 }
 
-pub async fn db_create_patrol_record(pool: &Pool<Postgres>, data: CreatePatrolRecord) -> sqlx::Result<PatrolRecord> {
+pub async fn db_create_patrol_record(
+    pool: &Pool<Postgres>,
+    data: CreatePatrolRecord,
+) -> sqlx::Result<PatrolRecord> {
     let id = Uuid::new_v4();
     let now = Utc::now();
     let status = data.status.unwrap_or_else(|| "pending".to_string());
@@ -79,7 +84,10 @@ pub async fn db_get_scan_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Scan
     rows.iter().map(|row| ScanRecord::from_row(row)).collect()
 }
 
-pub async fn db_create_scan_record(pool: &Pool<Postgres>, data: CreateScanRecord) -> sqlx::Result<ScanRecord> {
+pub async fn db_create_scan_record(
+    pool: &Pool<Postgres>,
+    data: CreateScanRecord,
+) -> sqlx::Result<ScanRecord> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -117,10 +125,15 @@ pub async fn db_get_photo_evidence(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Ph
         .fetch_all(pool)
         .await?;
 
-    rows.iter().map(|row| PhotoEvidence::from_row(row)).collect()
+    rows.iter()
+        .map(|row| PhotoEvidence::from_row(row))
+        .collect()
 }
 
-pub async fn db_create_photo_evidence(pool: &Pool<Postgres>, data: CreatePhotoEvidence) -> sqlx::Result<PhotoEvidence> {
+pub async fn db_create_photo_evidence(
+    pool: &Pool<Postgres>,
+    data: CreatePhotoEvidence,
+) -> sqlx::Result<PhotoEvidence> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -160,10 +173,15 @@ pub async fn db_get_audio_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<
         .fetch_all(pool)
         .await?;
 
-    rows.iter().map(|row| AudioRecording::from_row(row)).collect()
+    rows.iter()
+        .map(|row| AudioRecording::from_row(row))
+        .collect()
 }
 
-pub async fn db_create_audio_recording(pool: &Pool<Postgres>, data: CreateAudioRecording) -> sqlx::Result<AudioRecording> {
+pub async fn db_create_audio_recording(
+    pool: &Pool<Postgres>,
+    data: CreateAudioRecording,
+) -> sqlx::Result<AudioRecording> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -205,10 +223,15 @@ pub async fn db_get_video_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<
         .fetch_all(pool)
         .await?;
 
-    rows.iter().map(|row| VideoRecording::from_row(row)).collect()
+    rows.iter()
+        .map(|row| VideoRecording::from_row(row))
+        .collect()
 }
 
-pub async fn db_create_video_recording(pool: &Pool<Postgres>, data: CreateVideoRecording) -> sqlx::Result<VideoRecording> {
+pub async fn db_create_video_recording(
+    pool: &Pool<Postgres>,
+    data: CreateVideoRecording,
+) -> sqlx::Result<VideoRecording> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -255,11 +278,16 @@ pub async fn db_get_mobile_tasks(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Mobi
     rows.iter().map(|row| MobileTask::from_row(row)).collect()
 }
 
-pub async fn db_create_mobile_task(pool: &Pool<Postgres>, data: CreateMobileTask) -> sqlx::Result<MobileTask> {
+pub async fn db_create_mobile_task(
+    pool: &Pool<Postgres>,
+    data: CreateMobileTask,
+) -> sqlx::Result<MobileTask> {
     let id = Uuid::new_v4();
     let now = Utc::now();
     let priority = data.priority.unwrap_or_else(|| "medium".to_string());
-    let due_date = data.due_date.and_then(|s| chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok());
+    let due_date = data
+        .due_date
+        .and_then(|s| chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok());
 
     sqlx::query(
         "INSERT INTO mobile_tasks (id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at)
@@ -297,12 +325,20 @@ pub async fn db_create_mobile_task(pool: &Pool<Postgres>, data: CreateMobileTask
     })
 }
 
-pub async fn db_update_task_status(pool: &Pool<Postgres>, task_id: Uuid, status: &str) -> sqlx::Result<Option<MobileTask>> {
+pub async fn db_update_task_status(
+    pool: &Pool<Postgres>,
+    task_id: Uuid,
+    status: &str,
+) -> sqlx::Result<Option<MobileTask>> {
     let now = Utc::now();
-    let completed_at = if status == "completed" { Some(now) } else { None };
+    let completed_at = if status == "completed" {
+        Some(now)
+    } else {
+        None
+    };
 
     let result = sqlx::query(
-        "UPDATE mobile_tasks SET status = $1, completed_at = $2, updated_at = $3 WHERE id = $4"
+        "UPDATE mobile_tasks SET status = $1, completed_at = $2, updated_at = $3 WHERE id = $4",
     )
     .bind(status)
     .bind(completed_at)

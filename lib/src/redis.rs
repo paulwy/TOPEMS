@@ -1,9 +1,9 @@
 use crate::config::enhanced::RedisConfig;
 use crate::error::TopemsError;
 use crate::Result;
+use async_trait::async_trait;
 use redis::{Client, Connection, RedisResult};
 use std::sync::Arc;
-use async_trait::async_trait;
 
 #[derive(Debug)]
 pub struct RedisPool {
@@ -14,7 +14,7 @@ impl RedisPool {
     pub async fn new(config: &RedisConfig) -> Result<Self> {
         let client = Client::open(config.url.clone())
             .map_err(|e| TopemsError::Config(format!("Failed to create Redis client: {}", e)))?;
-        
+
         Ok(Self {
             client: Arc::new(client),
         })
@@ -68,16 +68,24 @@ impl CacheService for RedisCacheService {
     async fn set(&self, key: &str, value: &str, ttl_seconds: Option<u64>) -> Result<()> {
         let mut conn = self.pool.get_connection().await?;
         if let Some(ttl) = ttl_seconds {
-            redis::cmd("SET").arg(key).arg(value).arg("EX").arg(ttl).query::<()>(&mut conn)
+            redis::cmd("SET")
+                .arg(key)
+                .arg(value)
+                .arg("EX")
+                .arg(ttl)
+                .query::<()>(&mut conn)
         } else {
             redis::cmd("SET").arg(key).arg(value).query::<()>(&mut conn)
-        }.map_err(|e| TopemsError::Config(format!("Redis SET failed: {}", e)))?;
+        }
+        .map_err(|e| TopemsError::Config(format!("Redis SET failed: {}", e)))?;
         Ok(())
     }
 
     async fn delete(&self, key: &str) -> Result<()> {
         let mut conn = self.pool.get_connection().await?;
-        redis::cmd("DEL").arg(key).query::<()>(&mut conn)
+        redis::cmd("DEL")
+            .arg(key)
+            .query::<()>(&mut conn)
             .map_err(|e| TopemsError::Config(format!("Redis DEL failed: {}", e)))?;
         Ok(())
     }
@@ -96,20 +104,28 @@ impl CacheService for RedisCacheService {
 
     async fn hset(&self, key: &str, field: &str, value: &str) -> Result<()> {
         let mut conn = self.pool.get_connection().await?;
-        redis::cmd("HSET").arg(key).arg(field).arg(value).query::<()>(&mut conn)
+        redis::cmd("HSET")
+            .arg(key)
+            .arg(field)
+            .arg(value)
+            .query::<()>(&mut conn)
             .map_err(|e| TopemsError::Config(format!("Redis HSET failed: {}", e)))?;
         Ok(())
     }
 
     async fn hget(&self, key: &str, field: &str) -> Result<Option<String>> {
         let mut conn = self.pool.get_connection().await?;
-        let result: RedisResult<Option<String>> = redis::cmd("HGET").arg(key).arg(field).query(&mut conn);
+        let result: RedisResult<Option<String>> =
+            redis::cmd("HGET").arg(key).arg(field).query(&mut conn);
         result.map_err(|e| TopemsError::Config(format!("Redis HGET failed: {}", e)))
     }
 
     async fn hdel(&self, key: &str, field: &str) -> Result<()> {
         let mut conn = self.pool.get_connection().await?;
-        redis::cmd("HDEL").arg(key).arg(field).query::<()>(&mut conn)
+        redis::cmd("HDEL")
+            .arg(key)
+            .arg(field)
+            .query::<()>(&mut conn)
             .map_err(|e| TopemsError::Config(format!("Redis HDEL failed: {}", e)))?;
         Ok(())
     }
@@ -128,7 +144,8 @@ impl CacheService for RedisCacheService {
 
     async fn flush_db(&self) -> Result<()> {
         let mut conn = self.pool.get_connection().await?;
-        redis::cmd("FLUSHDB").query::<()>(&mut conn)
+        redis::cmd("FLUSHDB")
+            .query::<()>(&mut conn)
             .map_err(|e| TopemsError::Config(format!("Redis FLUSHDB failed: {}", e)))?;
         Ok(())
     }

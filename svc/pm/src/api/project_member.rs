@@ -1,8 +1,7 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
@@ -13,8 +12,14 @@ use crate::models::project_member::{CreateMemberRequest, ProjectMember, UpdateMe
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/members", get(list_members).post(create_member))
-        .route("/api/v1/projects/{project_id}/members/{id}", get(get_member).put(update_member).delete(delete_member))
+        .route(
+            "/api/v1/projects/{project_id}/members",
+            get(list_members).post(create_member),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/members/{id}",
+            get(get_member).put(update_member).delete(delete_member),
+        )
         .with_state(pool)
 }
 
@@ -32,7 +37,7 @@ async fn list_members(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
     let result = sqlx::query_as::<_, ProjectMember>(
-        "SELECT * FROM pm.project_members WHERE project_id = $1 ORDER BY role ASC"
+        "SELECT * FROM pm.project_members WHERE project_id = $1 ORDER BY role ASC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -82,8 +87,8 @@ async fn create_member(
     .bind(&req.user_id)
     .bind(&req.role)
     .bind(&req.responsibilities)
-    .bind(&req.start_date)
-    .bind(&req.end_date)
+    .bind(req.start_date)
+    .bind(req.end_date)
     .bind(now)
     .bind(now)
     .fetch_optional(&pool)
@@ -114,7 +119,7 @@ async fn get_member(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectMember>> {
     let result = sqlx::query_as::<_, ProjectMember>(
-        "SELECT * FROM pm.project_members WHERE project_id = $1 AND id = $2"
+        "SELECT * FROM pm.project_members WHERE project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)
@@ -163,8 +168,8 @@ async fn update_member(
     )
     .bind(&req.role)
     .bind(&req.responsibilities)
-    .bind(&req.start_date)
-    .bind(&req.end_date)
+    .bind(req.start_date)
+    .bind(req.end_date)
     .bind(now)
     .bind(project_id)
     .bind(id)
@@ -195,13 +200,11 @@ async fn delete_member(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query(
-        "DELETE FROM pm.project_members WHERE project_id = $1 AND id = $2"
-    )
-    .bind(project_id)
-    .bind(id)
-    .execute(&pool)
-    .await;
+    let result = sqlx::query("DELETE FROM pm.project_members WHERE project_id = $1 AND id = $2")
+        .bind(project_id)
+        .bind(id)
+        .execute(&pool)
+        .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

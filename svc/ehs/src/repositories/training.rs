@@ -1,8 +1,8 @@
-use sqlx::PgPool;
-use chrono::Utc;
-use uuid::Uuid;
 use crate::models::*;
 use anyhow::Result;
+use chrono::Utc;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 pub struct TrainingProgramRepository<'a> {
     pool: &'a PgPool,
@@ -62,7 +62,9 @@ impl<'a> TrainingProgramRepository<'a> {
     pub async fn create(&self, req: CreateTrainingProgramRequest) -> Result<TrainingProgram> {
         let id = Uuid::new_v4();
         let now = Utc::now();
-        let materials = req.materials.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let materials = req
+            .materials
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
 
         let program = sqlx::query_as::<_, TrainingProgram>(
             r#"
@@ -109,11 +111,19 @@ impl<'a> TrainingProgramRepository<'a> {
         Ok(program)
     }
 
-    pub async fn update(&self, id: Uuid, req: UpdateTrainingProgramRequest) -> Result<TrainingProgram> {
-        let existing = self.get(id).await?.ok_or_else(|| anyhow::anyhow!("培训计划不存在"))?;
+    pub async fn update(
+        &self,
+        id: Uuid,
+        req: UpdateTrainingProgramRequest,
+    ) -> Result<TrainingProgram> {
+        let existing = self
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("培训计划不存在"))?;
         let now = Utc::now();
 
-        let materials = req.materials
+        let materials = req
+            .materials
             .map(|v| Some(serde_json::to_value(&v).unwrap_or(serde_json::json!([]))))
             .unwrap_or(existing.materials);
 
@@ -159,7 +169,11 @@ impl<'a> TrainingProgramRepository<'a> {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn complete(&self, id: Uuid, _req: CompleteTrainingRequest) -> Result<TrainingProgram> {
+    pub async fn complete(
+        &self,
+        id: Uuid,
+        _req: CompleteTrainingRequest,
+    ) -> Result<TrainingProgram> {
         let now = Utc::now();
 
         let program = sqlx::query_as::<_, TrainingProgram>(

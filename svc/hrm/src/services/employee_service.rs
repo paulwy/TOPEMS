@@ -3,7 +3,7 @@ use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
-use topems_shared::{ApiResponse, api_error};
+use topems_shared::{api_error, ApiResponse};
 
 pub struct EmployeeService {
     db: PgPool,
@@ -183,7 +183,11 @@ impl EmployeeService {
         }
     }
 
-    pub async fn update_employee(&self, id: &Uuid, req: UpdateEmployeeRequest) -> ApiResponse<Employee> {
+    pub async fn update_employee(
+        &self,
+        id: &Uuid,
+        req: UpdateEmployeeRequest,
+    ) -> ApiResponse<Employee> {
         let existing = sqlx::query_as::<_, Employee>(
             r#"
             SELECT id, organization_id, company_id, department_id, position_id,
@@ -214,8 +218,12 @@ impl EmployeeService {
         let job_title = req.job_title.or(existing.job_title);
         let email = req.email.or(existing.email);
         let phone = req.phone.or(existing.phone);
-        let emergency_contact_name = req.emergency_contact_name.or(existing.emergency_contact_name);
-        let emergency_contact_phone = req.emergency_contact_phone.or(existing.emergency_contact_phone);
+        let emergency_contact_name = req
+            .emergency_contact_name
+            .or(existing.emergency_contact_name);
+        let emergency_contact_phone = req
+            .emergency_contact_phone
+            .or(existing.emergency_contact_phone);
         let address = req.address.or(existing.address);
         let status = req.status.unwrap_or(existing.status);
         let now = Utc::now();

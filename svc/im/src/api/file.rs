@@ -1,14 +1,14 @@
+use anyhow::Result;
 use axum::{
-    extract::{Path, State, Multipart, Query},
-    Json,
+    extract::{Multipart, Path, Query, State},
     http::StatusCode,
+    Json,
 };
 use chrono::Utc;
-use uuid::Uuid;
 use serde_json::json;
 use sqlx::PgPool;
 use std::env;
-use anyhow::Result;
+use uuid::Uuid;
 
 use crate::models::{FileTransfer, ShareFile};
 use topems_shared::ApiResponse;
@@ -21,7 +21,7 @@ pub async fn upload_file(
     mut multipart: Multipart,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, StatusCode> {
     let upload_dir = env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string());
-    
+
     // 创建上传目录
     tokio::fs::create_dir_all(&upload_dir).await.map_err(|e| {
         tracing::error!("Failed to create upload directory: {}", e);
@@ -35,8 +35,11 @@ pub async fn upload_file(
         StatusCode::BAD_REQUEST
     })? {
         let file_name = field.file_name().unwrap_or("unknown").to_string();
-        let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
-        
+        let content_type = field
+            .content_type()
+            .unwrap_or("application/octet-stream")
+            .to_string();
+
         let data = field.bytes().await.map_err(|e| {
             tracing::error!("Failed to read file data: {}", e);
             StatusCode::BAD_REQUEST
@@ -92,10 +95,13 @@ pub async fn upload_file(
         }
     }
 
-    Ok(Json(ApiResponse::success(json!({
-        "files": uploaded_files,
-        "total": uploaded_files.len()
-    }), "文件上传成功")))
+    Ok(Json(ApiResponse::success(
+        json!({
+            "files": uploaded_files,
+            "total": uploaded_files.len()
+        }),
+        "文件上传成功",
+    )))
 }
 
 /// GET /api/v1/files/:id - 获取文件信息
@@ -157,7 +163,7 @@ pub async fn download_file(
                 UPDATE im.file_transfers
                 SET download_count = download_count + 1, updated_at = $1
                 WHERE id = $2
-                "#
+                "#,
             )
             .bind(Utc::now().naive_utc())
             .bind(file_id)
@@ -165,16 +171,24 @@ pub async fn download_file(
             .await;
 
             let upload_dir = env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string());
-            let download_url = format!("/uploads/{}", file.file_path.replace(&upload_dir, "").trim_start_matches('/'));
+            let download_url = format!(
+                "/uploads/{}",
+                file.file_path
+                    .replace(&upload_dir, "")
+                    .trim_start_matches('/')
+            );
 
-            Json(ApiResponse::success(json!({
-                "file_id": file.id.to_string(),
-                "file_name": file.file_name,
-                "file_size": file.file_size,
-                "content_type": file.content_type,
-                "download_url": download_url,
-                "download_count": file.download_count + 1
-            }), "获取下载链接成功"))
+            Json(ApiResponse::success(
+                json!({
+                    "file_id": file.id.to_string(),
+                    "file_name": file.file_name,
+                    "file_size": file.file_size,
+                    "content_type": file.content_type,
+                    "download_url": download_url,
+                    "download_count": file.download_count + 1
+                }),
+                "获取下载链接成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(404, "文件不存在")),
         Err(e) => {
@@ -212,13 +226,16 @@ pub async fn delete_file(
                 r#"
                 DELETE FROM im.file_transfers
                 WHERE id = $1
-                "#
+                "#,
             )
             .bind(file_id)
             .execute(&pool)
             .await;
 
-            Json(ApiResponse::success(json!({ "deleted": true }), "删除文件成功"))
+            Json(ApiResponse::success(
+                json!({ "deleted": true }),
+                "删除文件成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(404, "文件不存在")),
         Err(e) => {
@@ -235,21 +252,21 @@ pub async fn share_file(
     Json(payload): Json<ShareFile>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let now = Utc::now().naive_utc();
-    
+
     // 生成分享链接
     let share_link = Uuid::new_v4().to_string();
-    
+
     // 计算过期时间
-    let expires_at = payload.expires_days.map(|days| {
-        now + chrono::Duration::days(days as i64)
-    });
+    let expires_at = payload
+        .expires_days
+        .map(|days| now + chrono::Duration::days(days as i64));
 
     let result = sqlx::query(
         r#"
         UPDATE im.file_transfers
         SET is_shared = TRUE, share_link = $1, expires_at = $2, updated_at = $3
         WHERE id = $4
-        "#
+        "#,
     )
     .bind(&share_link)
     .bind(expires_at)
@@ -261,14 +278,17 @@ pub async fn share_file(
     match result {
         Ok(_) => {
             let share_url = format!("/api/v1/files/share/{}/download", share_link);
-            
-            Json(ApiResponse::success(json!({
-                "file_id": file_id.to_string(),
-                "share_link": share_link,
-                "share_url": share_url,
-                "expires_at": expires_at,
-                "share_to_users": payload.share_to_users
-            }), "分享文件成功"))
+
+            Json(ApiResponse::success(
+                json!({
+                    "file_id": file_id.to_string(),
+                    "share_link": share_link,
+                    "share_url": share_url,
+                    "expires_at": expires_at,
+                    "share_to_users": payload.share_to_users
+                }),
+                "分享文件成功",
+            ))
         }
         Err(e) => {
             tracing::error!("Failed to share file: {}", e);
@@ -284,7 +304,7 @@ pub async fn get_file_history(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let user_id = params.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
     let limit = params.get("limit").and_then(|v| v.as_i64()).unwrap_or(50) as i32;
-    
+
     if user_id.is_empty() {
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
@@ -307,10 +327,13 @@ pub async fn get_file_history(
     .await;
 
     match result {
-        Ok(files) => Json(ApiResponse::success(json!({
-            "files": files,
-            "total": files.len()
-        }), "获取文件传输历史成功")),
+        Ok(files) => Json(ApiResponse::success(
+            json!({
+                "files": files,
+                "total": files.len()
+            }),
+            "获取文件传输历史成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to get file history: {}", e);
             Json(ApiResponse::error(500, "获取文件传输历史失败"))
@@ -350,7 +373,7 @@ pub async fn download_shared_file(
                 UPDATE im.file_transfers
                 SET download_count = download_count + 1, updated_at = $1
                 WHERE id = $2
-                "#
+                "#,
             )
             .bind(Utc::now().naive_utc())
             .bind(file.id)
@@ -358,15 +381,23 @@ pub async fn download_shared_file(
             .await;
 
             let upload_dir = env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string());
-            let download_url = format!("/uploads/{}", file.file_path.replace(&upload_dir, "").trim_start_matches('/'));
+            let download_url = format!(
+                "/uploads/{}",
+                file.file_path
+                    .replace(&upload_dir, "")
+                    .trim_start_matches('/')
+            );
 
-            Json(ApiResponse::success(json!({
-                "file_id": file.id.to_string(),
-                "file_name": file.file_name,
-                "file_size": file.file_size,
-                "content_type": file.content_type,
-                "download_url": download_url
-            }), "获取分享文件下载链接成功"))
+            Json(ApiResponse::success(
+                json!({
+                    "file_id": file.id.to_string(),
+                    "file_name": file.file_name,
+                    "file_size": file.file_size,
+                    "content_type": file.content_type,
+                    "download_url": download_url
+                }),
+                "获取分享文件下载链接成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(404, "分享链接无效或文件不存在")),
         Err(e) => {

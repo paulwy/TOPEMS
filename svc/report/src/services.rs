@@ -1,16 +1,15 @@
+use crate::models::*;
 use anyhow::Result;
 use sqlx::PgPool;
-use crate::models::*;
 
 /// 获取报表中心统计数据
 pub async fn fetch_reports_center_stats(pool: &PgPool) -> Result<ReportsCenterStats> {
     // 获取仪表板统计数据
-    let total_users: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL"
-    )
-    .fetch_one(pool)
-    .await
-    .unwrap_or(0);
+    let total_users: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL")
+            .fetch_one(pool)
+            .await
+            .unwrap_or(0);
 
     let active_users: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND last_login_at > NOW() - INTERVAL '30 days'"
@@ -19,43 +18,37 @@ pub async fn fetch_reports_center_stats(pool: &PgPool) -> Result<ReportsCenterSt
     .await
     .unwrap_or(0);
 
-    let total_roles: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.roles WHERE deleted_at IS NULL"
-    )
-    .fetch_one(pool)
-    .await
-    .unwrap_or(0);
+    let total_roles: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM iam.roles WHERE deleted_at IS NULL")
+            .fetch_one(pool)
+            .await
+            .unwrap_or(0);
 
-    let total_permissions: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.permissions"
-    )
-    .fetch_one(pool)
-    .await
-    .unwrap_or(0);
+    let total_permissions: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM iam.permissions")
+        .fetch_one(pool)
+        .await
+        .unwrap_or(0);
 
-    let total_companies: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.companies WHERE deleted_at IS NULL"
-    )
-    .fetch_one(pool)
-    .await
-    .unwrap_or(0);
+    let total_companies: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM iam.companies WHERE deleted_at IS NULL")
+            .fetch_one(pool)
+            .await
+            .unwrap_or(0);
 
-    let total_departments: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.departments WHERE deleted_at IS NULL"
-    )
-    .fetch_one(pool)
-    .await
-    .unwrap_or(0);
+    let total_departments: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM iam.departments WHERE deleted_at IS NULL")
+            .fetch_one(pool)
+            .await
+            .unwrap_or(0);
 
-    let total_employees: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.employees WHERE deleted_at IS NULL"
-    )
-    .fetch_one(pool)
-    .await
-    .unwrap_or(0);
+    let total_employees: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM iam.employees WHERE deleted_at IS NULL")
+            .fetch_one(pool)
+            .await
+            .unwrap_or(0);
 
     let recent_activities: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM iam.audit_logs WHERE created_at > NOW() - INTERVAL '7 days'"
+        "SELECT COUNT(*) FROM iam.audit_logs WHERE created_at > NOW() - INTERVAL '7 days'",
     )
     .fetch_one(pool)
     .await
@@ -100,18 +93,19 @@ async fn fetch_user_growth_data(pool: &PgPool) -> Result<Vec<UserGrowthDataPoint
         WHERE created_at > NOW() - INTERVAL '6 months'
         GROUP BY TO_CHAR(created_at, 'YYYY-MM')
         ORDER BY month
-        "#
+        "#,
     )
     .fetch_all(pool)
     .await?;
 
-    let data_points = rows.into_iter().map(|row| {
-        UserGrowthDataPoint {
+    let data_points = rows
+        .into_iter()
+        .map(|row| UserGrowthDataPoint {
             month: row.month,
             新增用户: row.new_users,
             活跃用户: (row.new_users as f64 * 0.7) as i64,
-        }
-    }).collect();
+        })
+        .collect();
 
     Ok(data_points)
 }
@@ -133,17 +127,18 @@ async fn fetch_role_distribution_data(pool: &PgPool) -> Result<Vec<RoleDistribut
         GROUP BY r.id, r.name
         ORDER BY user_count DESC
         LIMIT 10
-        "#
+        "#,
     )
     .fetch_all(pool)
     .await?;
 
-    let data_points = rows.into_iter().map(|row| {
-        RoleDistributionDataPoint {
+    let data_points = rows
+        .into_iter()
+        .map(|row| RoleDistributionDataPoint {
             name: row.name,
             value: row.user_count,
-        }
-    }).collect();
+        })
+        .collect();
 
     Ok(data_points)
 }
@@ -164,17 +159,18 @@ async fn fetch_activity_types_data(pool: &PgPool) -> Result<Vec<ActivityTypeData
         GROUP BY action
         ORDER BY count DESC
         LIMIT 10
-        "#
+        "#,
     )
     .fetch_all(pool)
     .await?;
 
-    let data_points = rows.into_iter().map(|row| {
-        ActivityTypeDataPoint {
+    let data_points = rows
+        .into_iter()
+        .map(|row| ActivityTypeDataPoint {
             name: row.action,
             count: row.count,
-        }
-    }).collect();
+        })
+        .collect();
 
     Ok(data_points)
 }

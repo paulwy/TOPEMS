@@ -1,6 +1,6 @@
 use topems_shared::auth::Claims;
-use topems_shared::response::ApiResponse;
 use topems_shared::permission::ModulePermission as SharedModulePermission;
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BIPermission {
@@ -39,7 +39,7 @@ impl SharedModulePermission for BIPermission {
     fn module_name() -> &'static str {
         "bi"
     }
-    
+
     fn all_permission() -> Self {
         BIPermission::All
     }
@@ -62,8 +62,8 @@ pub async fn check_permission<T>(
         return Ok(());
     }
 
-    Err(axum::Json(ApiResponse::error(403, &format!(
-        "权限不足：需要 {} 权限", 
-        permission
-    ))))
+    Err(axum::Json(ApiResponse::error(
+        403,
+        &format!("权限不足：需要 {} 权限", permission),
+    )))
 }

@@ -7,10 +7,10 @@ use axum::{
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::models::{CreateOutboundOrderRequest, OutboundOrder, UpdateOutboundOrderRequest};
 use crate::api::audit::log_audit_event;
 use crate::api::ApiState;
-use topems_shared::{ApiResponse, PaginationParams, api_error};
+use crate::models::{CreateOutboundOrderRequest, OutboundOrder, UpdateOutboundOrderRequest};
+use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -18,10 +18,15 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/v1/outbound-orders", get(list_outbound_orders).post(create_outbound_order))
+        .route(
+            "/api/v1/outbound-orders",
+            get(list_outbound_orders).post(create_outbound_order),
+        )
         .route(
             "/api/v1/outbound-orders/{id}",
-            get(get_outbound_order).put(update_outbound_order).delete(delete_outbound_order),
+            get(get_outbound_order)
+                .put(update_outbound_order)
+                .delete(delete_outbound_order),
         )
 }
 
@@ -122,14 +127,14 @@ async fn create_outbound_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "出库订单创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建出库订单失败: {}", e);
             (
                 Json(api_error(500, "出库订单创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -152,8 +157,9 @@ async fn create_outbound_order(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -191,7 +197,7 @@ async fn update_outbound_order(
 ) -> Json<ApiResponse<OutboundOrder>> {
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, OutboundOrder>(
         r#"
         SELECT id, order_number, warehouse_id, customer_id, order_date, expected_delivery, 
@@ -244,14 +250,14 @@ async fn update_outbound_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "出库订单更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新出库订单失败: {}", e);
             (
                 Json(api_error(500, "出库订单更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -274,8 +280,9 @@ async fn update_outbound_order(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -294,19 +301,19 @@ async fn delete_outbound_order(
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success("".to_string(), "出库订单删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(api_error(404, "出库订单不存在")),
             "error",
-            Some("出库订单不存在".to_string())
+            Some("出库订单不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除出库订单失败: {}", e);
             (
                 Json(api_error(500, "出库订单删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -329,8 +336,9 @@ async fn delete_outbound_order(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

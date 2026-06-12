@@ -37,7 +37,7 @@ impl ProjectRepository {
         .bind(&req.name)
         .bind(&req.code)
         .bind(&req.description)
-        .bind(&req.project_type)
+        .bind(req.project_type)
         .bind("draft")
         .bind(&req.leader)
         .bind(serde_json::to_value(&req.team_members).unwrap_or(serde_json::json!([])))
@@ -114,13 +114,24 @@ impl ProjectRepository {
         Ok((results, total))
     }
 
-    pub async fn update(&self, id: Uuid, req: &UpdateProjectRequest, existing: &Project) -> Result<Project> {
+    pub async fn update(
+        &self,
+        id: Uuid,
+        req: &UpdateProjectRequest,
+        existing: &Project,
+    ) -> Result<Project> {
         let now = Utc::now();
         let name = req.name.clone().unwrap_or(existing.name.clone());
         let description = req.description.clone().or(existing.description.clone());
         let leader = req.leader.clone().unwrap_or(existing.leader.clone());
-        let team_members = req.team_members.clone().unwrap_or(existing.team_members.clone());
-        let status = req.status.clone().map(|s| s.to_string()).unwrap_or(existing.status.clone());
+        let team_members = req
+            .team_members
+            .clone()
+            .unwrap_or(existing.team_members.clone());
+        let status = req
+            .status
+            .map(|s| s.to_string())
+            .unwrap_or(existing.status.clone());
         let progress = req.progress.unwrap_or(existing.progress);
 
         let project = sqlx::query_as::<_, Project>(
@@ -183,7 +194,7 @@ impl ProjectRepository {
             .bind(&req.name)
             .bind(&req.code)
             .bind(&req.description)
-            .bind(&req.project_type)
+            .bind(req.project_type)
             .bind("draft")
             .bind(&req.leader)
             .bind(serde_json::to_value(&req.team_members).unwrap_or(serde_json::json!([])))
@@ -231,14 +242,14 @@ mod tests {
     async fn setup_test_db() -> PgPool {
         let database_url = "postgres://topems:topems_secret@localhost:5432/topems";
         let pool = PgPool::connect(database_url).await.unwrap();
-        
+
         // 清理测试表中的所有数据，确保测试隔离
         // 使用 CASCADE 以删除关联数据（如 project_phases 等外键关联表）
         sqlx::query("TRUNCATE TABLE rs_test.projects, rs_test.project_phases, rs_test.milestones, rs_test.project_members CASCADE")
             .execute(&pool)
             .await
             .unwrap_or_default();
-        
+
         pool
     }
 
@@ -274,7 +285,7 @@ mod tests {
             .bind(&req.name)
             .bind(&req.code)
             .bind(&req.description)
-            .bind(&req.project_type)
+            .bind(req.project_type)
             .bind("draft")
             .bind(&req.leader)
             .bind(serde_json::to_value(&req.team_members).unwrap_or(serde_json::json!([])))
@@ -288,10 +299,10 @@ mod tests {
             .bind(&req.project_config)
             .bind(&req.benefit_target)
             .bind(&req.risk_level)
-            .bind(&req.priority)
+            .bind(req.priority)
             .bind(&req.tags)
-            .bind(&req.parent_id)
-            .bind(&req.workspace_id)
+            .bind(req.parent_id)
+            .bind(req.workspace_id)
             .fetch_one(&self.db)
             .await?;
 
@@ -365,7 +376,7 @@ mod tests {
     async fn test_create_project() {
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
-        
+
         let req = CreateProjectRequest {
             name: "Test Project".to_string(),
             code: "TEST-001".to_string(),
@@ -384,10 +395,10 @@ mod tests {
             parent_id: None,
             workspace_id: None,
         };
-        
+
         let result = repo.create(&req).await;
         assert!(result.is_ok());
-        
+
         let project = result.unwrap();
         assert_eq!(project.name, "Test Project");
         assert_eq!(project.code, "TEST-001");
@@ -397,7 +408,7 @@ mod tests {
     async fn test_get_project_by_id() {
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
-        
+
         let req = CreateProjectRequest {
             name: "Get Test Project".to_string(),
             code: "GET-001".to_string(),
@@ -416,10 +427,10 @@ mod tests {
             parent_id: None,
             workspace_id: None,
         };
-        
+
         let created = repo.create(&req).await.unwrap();
         let fetched = repo.get_by_id(created.id).await.unwrap();
-        
+
         assert!(fetched.is_some());
         assert_eq!(fetched.unwrap().id, created.id);
     }
@@ -428,13 +439,13 @@ mod tests {
     async fn test_list_projects() {
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
-        
+
         // 清理数据库中的现有项目
         sqlx::query("DELETE FROM rs_test.projects")
             .execute(&pool)
             .await
             .unwrap_or_default();
-        
+
         for i in 1..=5 {
             let req = CreateProjectRequest {
                 name: format!("List Project {}", i),
@@ -456,7 +467,7 @@ mod tests {
             };
             repo.create(&req).await.unwrap();
         }
-        
+
         let (projects, total) = repo.list(None, None, 1, 10).await.unwrap();
         assert_eq!(total, 5);
         assert_eq!(projects.len(), 5);

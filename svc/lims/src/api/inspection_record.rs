@@ -1,4 +1,3 @@
-use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     routing::*,
@@ -6,10 +5,11 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared::Result;
 use uuid::Uuid;
 
-use crate::models::{CreateInspectionRecordRequest, InspectionRecord};
 use crate::api::ApiState;
+use crate::models::{CreateInspectionRecordRequest, InspectionRecord};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -23,10 +23,7 @@ pub struct PaginationParams {
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/records", get(list_records).post(create_record))
-        .route(
-            "/api/v1/records/task/{task_id}",
-            get(list_records_by_task),
-        );
+        .route("/api/v1/records/task/{task_id}", get(list_records_by_task));
 
     Ok(app)
 }
@@ -38,7 +35,7 @@ async fn list_records(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    
+
     // 预先处理搜索参数，避免所有权问题
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let conclusion_filter = params.conclusion.clone();

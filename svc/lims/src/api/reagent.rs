@@ -1,4 +1,12 @@
-use topems_shared::Result;
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(dead_code)]
+
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -8,10 +16,11 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared::Result;
 use uuid::Uuid;
 
-use crate::api::ApiState;
 use crate::api::audit::log_audit_event;
+use crate::api::ApiState;
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -213,7 +222,7 @@ async fn create_reagent(
         Ok(reagent) => serde_json::to_value(reagent).ok(),
         Err(_) => None,
     };
-    
+
     let (response, status_str, error_msg) = match result {
         Ok(reagent) => (
             Json(ApiResponse::success(reagent, "试剂创建成功")),
@@ -336,7 +345,7 @@ async fn update_reagent(
         Ok(reagent) => serde_json::to_value(reagent).ok(),
         Err(_) => None,
     };
-    
+
     let (response, status_str, error_msg) = match result {
         Ok(reagent) => (
             Json(ApiResponse::success(reagent, "试剂更新成功")),
@@ -433,12 +442,10 @@ async fn record_usage(
     Path(id): Path<Uuid>,
     Json(req): Json<ReagentUsageRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let existing = sqlx::query_as::<_, (f64,)>(
-        "SELECT quantity FROM lims.reagents WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await;
+    let existing = sqlx::query_as::<_, (f64,)>("SELECT quantity FROM lims.reagents WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await;
 
     let existing_quantity = match existing {
         Ok(Some((q,))) => q,
@@ -496,9 +503,7 @@ async fn record_usage(
     ))
 }
 
-async fn list_low_stock(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<Reagent>>> {
+async fn list_low_stock(State(state): State<ApiState>) -> Json<ApiResponse<Vec<Reagent>>> {
     let result = sqlx::query_as::<_, Reagent>(
         r#"
         SELECT id, name, code, category, specification, supplier, batch_number,

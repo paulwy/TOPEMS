@@ -7,10 +7,10 @@ use axum::{
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::models::{CreateWarehouseRequest, Warehouse, UpdateWarehouseRequest};
 use crate::api::audit::log_audit_event;
 use crate::api::ApiState;
-use topems_shared::{ApiResponse, PaginationParams, api_error};
+use crate::models::{CreateWarehouseRequest, UpdateWarehouseRequest, Warehouse};
+use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -18,10 +18,15 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/v1/warehouses", get(list_warehouses).post(create_warehouse))
+        .route(
+            "/api/v1/warehouses",
+            get(list_warehouses).post(create_warehouse),
+        )
         .route(
             "/api/v1/warehouses/{id}",
-            get(get_warehouse).put(update_warehouse).delete(delete_warehouse),
+            get(get_warehouse)
+                .put(update_warehouse)
+                .delete(delete_warehouse),
         )
 }
 
@@ -117,14 +122,14 @@ async fn create_warehouse(
         Ok(warehouse) => (
             Json(ApiResponse::success(warehouse.clone(), "仓库创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建仓库失败: {}", e);
             (
                 Json(api_error(500, "仓库创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -147,8 +152,9 @@ async fn create_warehouse(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -185,7 +191,7 @@ async fn update_warehouse(
 ) -> Json<ApiResponse<Warehouse>> {
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, Warehouse>(
         "SELECT id, name, code, address, manager, phone, status, created_at, updated_at FROM warehouses WHERE id = $1",
     )
@@ -230,14 +236,14 @@ async fn update_warehouse(
         Ok(warehouse) => (
             Json(ApiResponse::success(warehouse.clone(), "仓库更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新仓库失败: {}", e);
             (
                 Json(api_error(500, "仓库更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -260,8 +266,9 @@ async fn update_warehouse(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -280,19 +287,19 @@ async fn delete_warehouse(
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success("".to_string(), "仓库删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(api_error(404, "仓库不存在")),
             "error",
-            Some("仓库不存在".to_string())
+            Some("仓库不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除仓库失败: {}", e);
             (
                 Json(api_error(500, "仓库删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -315,8 +322,9 @@ async fn delete_warehouse(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

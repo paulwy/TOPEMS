@@ -73,6 +73,7 @@ struct EmbedResponse {
 pub struct OllamaClient {
     base_url: String,
     model: String,
+    #[allow(dead_code)]
     dimension: usize,
     client: reqwest::Client,
 }
@@ -231,9 +232,7 @@ impl Embedder for MockEmbedder {
         let hash = hasher.finish();
 
         let mut rng = SimpleRng::new(hash);
-        let embedding: Vec<f32> = (0..self.dimension)
-            .map(|_| rng.next_f32())
-            .collect();
+        let embedding: Vec<f32> = (0..self.dimension).map(|_| rng.next_f32()).collect();
 
         // 归一化
         let norm: f32 = embedding.iter().map(|x| x * x).sum::<f32>().sqrt();

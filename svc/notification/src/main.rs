@@ -1,30 +1,45 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::manual_unwrap_or_default)]
+#![allow(clippy::manual_unwrap_or)]
+#![allow(clippy::single_component_path_imports)]
+#![allow(dead_code)]
+
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
-        Path, Query, State, FromRef, Request,
+        FromRef, Path, Query, Request, State,
     },
     routing::{delete, get, post, put},
     Json, Router,
 };
+use axum_prometheus::PrometheusMetricLayer;
+use dotenv;
 use futures_util::{sink::SinkExt, stream::StreamExt};
+use prometheus::{default_registry, Gauge};
+use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use std::net::SocketAddr;
 use tokio::sync::broadcast;
 use uuid::Uuid;
-use sqlx::PgPool;
-use dotenv;
-use serde::{Deserialize, Serialize};
-use axum_prometheus::PrometheusMetricLayer;
-use prometheus::{default_registry, Gauge};
 
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, Claims, init_logging,
-    ServiceHealth, SimpleHealthConfig, simple_health_check, get_api_info_handler
+    auth_middleware, create_cors_layer, get_api_info_handler, init_logging, simple_health_check,
+    ApiResponse, AuthState, Claims, ServiceHealth, SimpleHealthConfig,
 };
 
-mod models;
 mod db;
-use models::*;
+mod models;
 use db::*;
+use models::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "payload")]
@@ -42,8 +57,6 @@ pub enum WsMessage {
     #[serde(rename = "unsubscribe")]
     Unsubscribe { user_id: String },
 }
-
-
 
 #[derive(Clone)]
 struct AppState {
@@ -64,54 +77,54 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(DatabaseSchema::create_notifications_table())
         .execute(pool)
         .await?;
-    
+
     sqlx::query(DatabaseSchema::create_templates_table())
         .execute(pool)
         .await?;
-    
+
     sqlx::query(DatabaseSchema::create_archived_table())
         .execute(pool)
         .await?;
-    
+
     sqlx::query(DatabaseSchema::create_archive_config_table())
         .execute(pool)
         .await?;
-    
+
     sqlx::query(DatabaseSchema::insert_default_archive_config())
         .execute(pool)
         .await?;
-    
+
     // 迁移：添加可能缺失的列
     // 注意：这些操作会静默失败如果列已存在，但 PostgreSQL 的 ADD COLUMN IF NOT EXISTS 会处理
     let _ = sqlx::query(DatabaseSchema::migrate_add_is_read_column())
         .execute(pool)
         .await;
-    
+
     let _ = sqlx::query(DatabaseSchema::migrate_add_read_at_column())
         .execute(pool)
         .await;
-    
+
     let _ = sqlx::query(DatabaseSchema::migrate_add_priority_column())
         .execute(pool)
         .await;
-    
+
     let _ = sqlx::query(DatabaseSchema::migrate_add_data_column())
         .execute(pool)
         .await;
-    
+
     // 创建索引
     sqlx::query(DatabaseSchema::create_index_user_id())
         .execute(pool)
         .await?;
-    
+
     sqlx::query(DatabaseSchema::create_index_is_read())
         .execute(pool)
         .await?;
-    
+
     sqlx::query(DatabaseSchema::create_index_created_at())
         .execute(pool)
         .await?;
-    
+
     Ok(())
 }
 
@@ -142,12 +155,16 @@ async fn main() {
 
     let (tx, _) = broadcast::channel(1000);
     let auth_state = AuthState::from_env();
-    
+
     // 创建健康检查配置
-    let health_config = SimpleHealthConfig::new("topems-notification")
-        .with_db(pool.clone());
-    
-    let state = AppState { auth_state, tx, pool, health_config };
+    let health_config = SimpleHealthConfig::new("topems-notification").with_db(pool.clone());
+
+    let state = AppState {
+        auth_state,
+        tx,
+        pool,
+        health_config,
+    };
 
     let cors = create_cors_layer();
 
@@ -155,8 +172,11 @@ async fn main() {
     let custom_gauge = Gauge::new(
         "topems_notification_custom_metric",
         "This is a custom metric for TOPEMS Notification Service",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -164,21 +184,33 @@ async fn main() {
         .route("/", get(home))
         .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("notification-service")))
-        .route("/api/info", get(|| get_api_info_handler("notification-service")))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/api/info",
+            get(|| get_api_info_handler("notification-service")),
+        )
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         // WebSocket 路由 - 不需要认证，用户通过订阅消息标识自己
         .route("/ws/notifications", get(ws_handler));
 
     let protected_routes = Router::new()
         .route("/api/v1/notifications", get(list_notifications))
         .route("/api/v1/notifications", post(create_notification))
-        .route("/api/v1/notifications/unread", get(get_unread_notifications))
+        .route(
+            "/api/v1/notifications/unread",
+            get(get_unread_notifications),
+        )
         .route("/api/v1/notifications/unread-count", get(get_unread_count))
         .route("/api/v1/notifications/{id}/read", put(mark_as_read))
         .route("/api/v1/notifications/read-all", put(mark_all_as_read))
         .route("/api/v1/notifications/{id}", delete(delete_notification))
         .route("/api/v1/notifications/bulk/read", put(bulk_mark_as_read))
-        .route("/api/v1/notifications/bulk/delete", post(bulk_delete_notifications))
+        .route(
+            "/api/v1/notifications/bulk/delete",
+            post(bulk_delete_notifications),
+        )
         .route("/api/v1/health/detailed", get(detailed_health))
         .route("/api/v1/metrics", get(get_metrics))
         // 模板相关路由
@@ -191,8 +223,14 @@ async fn main() {
         // 归档相关路由
         .route("/api/v1/archive/config", get(get_archive_config))
         .route("/api/v1/archive/config", put(update_archive_config))
-        .route("/api/v1/notifications/{id}/archive", post(archive_notification))
-        .route("/api/v1/notifications/archived", get(list_archived_notifications))
+        .route(
+            "/api/v1/notifications/{id}/archive",
+            post(archive_notification),
+        )
+        .route(
+            "/api/v1/notifications/archived",
+            get(list_archived_notifications),
+        )
         .route("/api/v1/archive/auto", post(run_auto_archive))
         // 统计相关路由
         .route("/api/v1/stats", get(get_stats))
@@ -232,15 +270,12 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
     simple_health_check(&state.health_config).await
 }
 
-
-
 fn extract_user_id(req: &Request) -> String {
     req.extensions()
         .get::<Claims>()
         .map(|claims| claims.sub.clone())
         .unwrap_or_else(|| {
-            std::env::var("CURRENT_USER_ID")
-                .unwrap_or_else(|_| "user_001".to_string())
+            std::env::var("CURRENT_USER_ID").unwrap_or_else(|_| "user_001".to_string())
         })
 }
 
@@ -250,31 +285,37 @@ async fn list_notifications(
     req: Request,
 ) -> Json<ApiResponse<NotificationListResponse>> {
     let user_id = extract_user_id(&req);
-    
+
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(20);
-    
+
     let notifications = match Repository::get_user_notifications(
         &state.pool,
         &user_id,
         query.notification_type.as_ref(),
         page,
         page_size,
-    ).await {
+    )
+    .await
+    {
         Ok(n) => n,
         Err(e) => {
             tracing::error!("Failed to get notifications: {:?}", e);
             vec![]
         }
     };
-    
+
     let total = Repository::get_user_notifications_count(
         &state.pool,
         &user_id,
         query.notification_type.as_ref(),
-    ).await.unwrap_or(0);
-    
-    let unread_count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
+    )
+    .await
+    .unwrap_or(0);
+
+    let unread_count = Repository::get_unread_count(&state.pool, &user_id)
+        .await
+        .unwrap_or(0);
 
     Json(ApiResponse::success(
         NotificationListResponse {
@@ -294,16 +335,26 @@ async fn create_notification(
 ) -> Json<ApiResponse<Notification>> {
     match Repository::create_notification(&state.pool, req).await {
         Ok(notification) => {
-            let _ = state.tx.send(WsMessage::NewNotification(notification.clone()));
-            
-            let unread_count = Repository::get_unread_count(&state.pool, &notification.user_id).await.unwrap_or(0);
+            let _ = state
+                .tx
+                .send(WsMessage::NewNotification(notification.clone()));
+
+            let unread_count = Repository::get_unread_count(&state.pool, &notification.user_id)
+                .await
+                .unwrap_or(0);
             let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
-            
-            Json(ApiResponse::success(notification, "Notification created successfully"))
+
+            Json(ApiResponse::success(
+                notification,
+                "Notification created successfully",
+            ))
         }
         Err(e) => {
             tracing::error!("Failed to create notification: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to create notification: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to create notification: {}", e),
+            ))
         }
     }
 }
@@ -313,21 +364,28 @@ async fn get_unread_notifications(
     req: Request,
 ) -> Json<ApiResponse<Vec<Notification>>> {
     let user_id = extract_user_id(&req);
-    
-    let notifications = Repository::get_unread_notifications(&state.pool, &user_id).await.unwrap_or_default();
 
-    Json(ApiResponse::success(notifications, "Unread notifications retrieved successfully"))
+    let notifications = Repository::get_unread_notifications(&state.pool, &user_id)
+        .await
+        .unwrap_or_default();
+
+    Json(ApiResponse::success(
+        notifications,
+        "Unread notifications retrieved successfully",
+    ))
 }
 
-async fn get_unread_count(
-    State(state): State<AppState>,
-    req: Request,
-) -> Json<ApiResponse<usize>> {
+async fn get_unread_count(State(state): State<AppState>, req: Request) -> Json<ApiResponse<usize>> {
     let user_id = extract_user_id(&req);
-    
-    let count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
 
-    Json(ApiResponse::success(count, "Unread count retrieved successfully"))
+    let count = Repository::get_unread_count(&state.pool, &user_id)
+        .await
+        .unwrap_or(0);
+
+    Json(ApiResponse::success(
+        count,
+        "Unread count retrieved successfully",
+    ))
 }
 
 async fn mark_as_read(
@@ -336,42 +394,53 @@ async fn mark_as_read(
     req: Request,
 ) -> Json<ApiResponse<Notification>> {
     match Uuid::parse_str(&id) {
-        Ok(uuid) => {
-            match Repository::mark_as_read(&state.pool, &uuid).await {
-                Ok(Some(notification)) => {
-                    let _ = state.tx.send(WsMessage::NewNotification(notification.clone()));
-                    
-                    let user_id = extract_user_id(&req);
-                    let unread_count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
-                    let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
-                    
-                    Json(ApiResponse::success(notification, "Notification marked as read"))
-                }
-                Ok(None) => Json(ApiResponse::error(404, "Notification not found")),
-                Err(e) => {
-                    tracing::error!("Failed to mark as read: {}", e);
-                    Json(ApiResponse::error(500, &format!("Failed to mark as read: {}", e)))
-                }
+        Ok(uuid) => match Repository::mark_as_read(&state.pool, &uuid).await {
+            Ok(Some(notification)) => {
+                let _ = state
+                    .tx
+                    .send(WsMessage::NewNotification(notification.clone()));
+
+                let user_id = extract_user_id(&req);
+                let unread_count = Repository::get_unread_count(&state.pool, &user_id)
+                    .await
+                    .unwrap_or(0);
+                let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
+
+                Json(ApiResponse::success(
+                    notification,
+                    "Notification marked as read",
+                ))
             }
-        }
+            Ok(None) => Json(ApiResponse::error(404, "Notification not found")),
+            Err(e) => {
+                tracing::error!("Failed to mark as read: {}", e);
+                Json(ApiResponse::error(
+                    500,
+                    &format!("Failed to mark as read: {}", e),
+                ))
+            }
+        },
         Err(_) => Json(ApiResponse::error(400, "Invalid notification ID")),
     }
 }
 
-async fn mark_all_as_read(
-    State(state): State<AppState>,
-    req: Request,
-) -> Json<ApiResponse<usize>> {
+async fn mark_all_as_read(State(state): State<AppState>, req: Request) -> Json<ApiResponse<usize>> {
     let user_id = extract_user_id(&req);
-    
+
     match Repository::mark_all_as_read(&state.pool, &user_id).await {
         Ok(count) => {
             let _ = state.tx.send(WsMessage::UnreadCount(0));
-            Json(ApiResponse::success(count, &format!("Marked {} notifications as read", count)))
+            Json(ApiResponse::success(
+                count,
+                &format!("Marked {} notifications as read", count),
+            ))
         }
         Err(e) => {
             tracing::error!("Failed to mark all as read: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to mark all as read: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to mark all as read: {}", e),
+            ))
         }
     }
 }
@@ -382,23 +451,32 @@ async fn delete_notification(
 ) -> Json<ApiResponse<bool>> {
     match Uuid::parse_str(&id) {
         Ok(uuid) => {
-            let user_id_opt = Repository::get_notification(&state.pool, &uuid).await
+            let user_id_opt = Repository::get_notification(&state.pool, &uuid)
+                .await
                 .ok()
                 .flatten()
                 .map(|n| n.user_id.clone());
-                
+
             match Repository::delete_notification(&state.pool, &uuid).await {
                 Ok(true) => {
                     if let Some(user_id) = user_id_opt {
-                        let unread_count = Repository::get_unread_count(&state.pool, &user_id).await.unwrap_or(0);
+                        let unread_count = Repository::get_unread_count(&state.pool, &user_id)
+                            .await
+                            .unwrap_or(0);
                         let _ = state.tx.send(WsMessage::UnreadCount(unread_count));
                     }
-                    Json(ApiResponse::success(true, "Notification deleted successfully"))
+                    Json(ApiResponse::success(
+                        true,
+                        "Notification deleted successfully",
+                    ))
                 }
                 Ok(false) => Json(ApiResponse::error(404, "Notification not found")),
                 Err(e) => {
                     tracing::error!("Failed to delete notification: {}", e);
-                    Json(ApiResponse::error(500, &format!("Failed to delete notification: {}", e)))
+                    Json(ApiResponse::error(
+                        500,
+                        &format!("Failed to delete notification: {}", e),
+                    ))
                 }
             }
         }
@@ -416,19 +494,28 @@ async fn bulk_mark_as_read(
             uuids.push(uuid);
         }
     }
-    
+
     if uuids.is_empty() {
-        return Json(ApiResponse::error(400, "No valid notification IDs provided"));
+        return Json(ApiResponse::error(
+            400,
+            "No valid notification IDs provided",
+        ));
     }
-    
+
     match Repository::bulk_mark_as_read(&state.pool, &uuids).await {
         Ok(count) => {
             let _ = state.tx.send(WsMessage::UnreadCount(0));
-            Json(ApiResponse::success(count, &format!("Marked {} notifications as read", count)))
+            Json(ApiResponse::success(
+                count,
+                &format!("Marked {} notifications as read", count),
+            ))
         }
         Err(e) => {
             tracing::error!("Failed to bulk mark as read: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to bulk mark as read: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to bulk mark as read: {}", e),
+            ))
         }
     }
 }
@@ -443,35 +530,40 @@ async fn bulk_delete_notifications(
             uuids.push(uuid);
         }
     }
-    
+
     if uuids.is_empty() {
-        return Json(ApiResponse::error(400, "No valid notification IDs provided"));
+        return Json(ApiResponse::error(
+            400,
+            "No valid notification IDs provided",
+        ));
     }
-    
+
     match Repository::bulk_delete_notifications(&state.pool, &uuids).await {
         Ok(count) => {
             let _ = state.tx.send(WsMessage::UnreadCount(0));
-            Json(ApiResponse::success(count, &format!("Deleted {} notifications", count)))
+            Json(ApiResponse::success(
+                count,
+                &format!("Deleted {} notifications", count),
+            ))
         }
         Err(e) => {
             tracing::error!("Failed to bulk delete notifications: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to bulk delete notifications: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to bulk delete notifications: {}", e),
+            ))
         }
     }
 }
 
-
-
-async fn detailed_health(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
         Ok(_) => "healthy",
         Err(_) => "unhealthy",
     };
-    
+
     let metrics = get_metrics_internal(&state.pool).await;
-    
+
     let response = serde_json::json!({
         "service": "notification-service",
         "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
@@ -486,26 +578,50 @@ async fn detailed_health(
         "metrics": metrics,
         "version": "1.0.0"
     });
-    
+
     Json(ApiResponse::success(response, "Detailed health check"))
 }
 
-async fn get_metrics(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_metrics(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let metrics = get_metrics_internal(&state.pool).await;
-    Json(ApiResponse::success(metrics, "Metrics retrieved successfully"))
+    Json(ApiResponse::success(
+        metrics,
+        "Metrics retrieved successfully",
+    ))
 }
 
 async fn get_metrics_internal(pool: &PgPool) -> serde_json::Value {
-    let total_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications").fetch_one(pool).await;
-    let unread_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE is_read = FALSE").fetch_one(pool).await;
-    let system_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'system'").fetch_one(pool).await;
-    let workflow_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'workflow'").fetch_one(pool).await;
-    let reminder_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'reminder'").fetch_one(pool).await;
-    let alert_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'alert'").fetch_one(pool).await;
-    let message_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'message'").fetch_one(pool).await;
-    
+    let total_count: Result<i64, _> = sqlx::query_scalar("SELECT COUNT(*) FROM notifications")
+        .fetch_one(pool)
+        .await;
+    let unread_count: Result<i64, _> =
+        sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE is_read = FALSE")
+            .fetch_one(pool)
+            .await;
+    let system_count: Result<i64, _> =
+        sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'system'")
+            .fetch_one(pool)
+            .await;
+    let workflow_count: Result<i64, _> = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM notifications WHERE notification_type = 'workflow'",
+    )
+    .fetch_one(pool)
+    .await;
+    let reminder_count: Result<i64, _> = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM notifications WHERE notification_type = 'reminder'",
+    )
+    .fetch_one(pool)
+    .await;
+    let alert_count: Result<i64, _> =
+        sqlx::query_scalar("SELECT COUNT(*) FROM notifications WHERE notification_type = 'alert'")
+            .fetch_one(pool)
+            .await;
+    let message_count: Result<i64, _> = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM notifications WHERE notification_type = 'message'",
+    )
+    .fetch_one(pool)
+    .await;
+
     serde_json::json!({
         "total_notifications": total_count.unwrap_or(0),
         "unread_notifications": unread_count.unwrap_or(0),
@@ -532,7 +648,11 @@ async fn websocket_handler(socket: WebSocket, state: AppState) {
     let mut rx = state.tx.subscribe();
     let mut user_id: Option<String> = None;
 
-    let _ = sender.send(Message::Text(serde_json::to_string(&WsMessage::Ping).unwrap().into())).await;
+    let _ = sender
+        .send(Message::Text(
+            serde_json::to_string(&WsMessage::Ping).unwrap().into(),
+        ))
+        .await;
 
     loop {
         tokio::select! {
@@ -544,7 +664,7 @@ async fn websocket_handler(socket: WebSocket, state: AppState) {
                                 WsMessage::Subscribe { user_id: uid } => {
                                     user_id = Some(uid);
                                     tracing::info!("User {} subscribed to notifications", user_id.as_ref().unwrap());
-                                    
+
                                     if let Some(uid) = &user_id {
                                         if let Ok(count) = Repository::get_unread_count(&state.pool, uid).await {
                                             let _ = sender.send(Message::Text(
@@ -603,10 +723,16 @@ async fn create_template(
     Json(req): Json<CreateTemplateRequest>,
 ) -> Json<ApiResponse<NotificationTemplate>> {
     match Repository::create_template(&state.pool, req).await {
-        Ok(template) => Json(ApiResponse::success(template, "Template created successfully")),
+        Ok(template) => Json(ApiResponse::success(
+            template,
+            "Template created successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to create template: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to create template: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to create template: {}", e),
+            ))
         }
     }
 }
@@ -617,11 +743,17 @@ async fn get_template(
 ) -> Json<ApiResponse<NotificationTemplate>> {
     match Uuid::parse_str(&id) {
         Ok(uuid) => match Repository::get_template(&state.pool, &uuid).await {
-            Ok(Some(template)) => Json(ApiResponse::success(template, "Template retrieved successfully")),
+            Ok(Some(template)) => Json(ApiResponse::success(
+                template,
+                "Template retrieved successfully",
+            )),
             Ok(None) => Json(ApiResponse::error(404, "Template not found")),
             Err(e) => {
                 tracing::error!("Failed to get template: {}", e);
-                Json(ApiResponse::error(500, &format!("Failed to get template: {}", e)))
+                Json(ApiResponse::error(
+                    500,
+                    &format!("Failed to get template: {}", e),
+                ))
             }
         },
         Err(_) => Json(ApiResponse::error(400, "Invalid template ID")),
@@ -633,18 +765,23 @@ async fn list_templates(
     Query(query): Query<serde_json::Value>,
 ) -> Json<ApiResponse<TemplateListResponse>> {
     let page = query.get("page").and_then(|p| p.as_u64()).unwrap_or(1) as usize;
-    let page_size = query.get("page_size").and_then(|p| p.as_u64()).unwrap_or(20) as usize;
-    let status = query.get("status")
+    let page_size = query
+        .get("page_size")
+        .and_then(|p| p.as_u64())
+        .unwrap_or(20) as usize;
+    let status = query
+        .get("status")
         .and_then(|s| s.as_str())
         .and_then(|s| TemplateStatus::from_str(s));
 
-    let templates = match Repository::list_templates(&state.pool, page, page_size, status.clone()).await {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("Failed to list templates: {}", e);
-            vec![]
-        }
-    };
+    let templates =
+        match Repository::list_templates(&state.pool, page, page_size, status.clone()).await {
+            Ok(t) => t,
+            Err(e) => {
+                tracing::error!("Failed to list templates: {}", e);
+                vec![]
+            }
+        };
 
     let total = match Repository::count_templates(&state.pool, status).await {
         Ok(c) => c,
@@ -658,7 +795,7 @@ async fn list_templates(
             page,
             page_size,
         },
-        "Templates retrieved successfully"
+        "Templates retrieved successfully",
     ))
 }
 
@@ -669,11 +806,17 @@ async fn update_template(
 ) -> Json<ApiResponse<NotificationTemplate>> {
     match Uuid::parse_str(&id) {
         Ok(uuid) => match Repository::update_template(&state.pool, &uuid, req).await {
-            Ok(Some(template)) => Json(ApiResponse::success(template, "Template updated successfully")),
+            Ok(Some(template)) => Json(ApiResponse::success(
+                template,
+                "Template updated successfully",
+            )),
             Ok(None) => Json(ApiResponse::error(404, "Template not found")),
             Err(e) => {
                 tracing::error!("Failed to update template: {}", e);
-                Json(ApiResponse::error(500, &format!("Failed to update template: {}", e)))
+                Json(ApiResponse::error(
+                    500,
+                    &format!("Failed to update template: {}", e),
+                ))
             }
         },
         Err(_) => Json(ApiResponse::error(400, "Invalid template ID")),
@@ -690,7 +833,10 @@ async fn delete_template(
             Ok(false) => Json(ApiResponse::error(404, "Template not found")),
             Err(e) => {
                 tracing::error!("Failed to delete template: {}", e);
-                Json(ApiResponse::error(500, &format!("Failed to delete template: {}", e)))
+                Json(ApiResponse::error(
+                    500,
+                    &format!("Failed to delete template: {}", e),
+                ))
             }
         },
         Err(_) => Json(ApiResponse::error(400, "Invalid template ID")),
@@ -703,30 +849,44 @@ async fn render_template(
 ) -> Json<ApiResponse<Notification>> {
     match Repository::render_and_create_notification(&state.pool, req).await {
         Ok(Some(notification)) => {
-            let _ = state.tx.send(WsMessage::NewNotification(notification.clone()));
+            let _ = state
+                .tx
+                .send(WsMessage::NewNotification(notification.clone()));
             let _ = state.tx.send(WsMessage::UnreadCount(
-                Repository::get_unread_count(&state.pool, &notification.user_id).await.unwrap_or(0)
+                Repository::get_unread_count(&state.pool, &notification.user_id)
+                    .await
+                    .unwrap_or(0),
             ));
-            Json(ApiResponse::success(notification, "Notification created from template successfully"))
-        },
+            Json(ApiResponse::success(
+                notification,
+                "Notification created from template successfully",
+            ))
+        }
         Ok(None) => Json(ApiResponse::error(404, "Template not found or not active")),
         Err(e) => {
             tracing::error!("Failed to render template: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to render template: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to render template: {}", e),
+            ))
         }
     }
 }
 
 // ==================== 归档处理函数 ====================
 
-async fn get_archive_config(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<ArchiveConfig>> {
+async fn get_archive_config(State(state): State<AppState>) -> Json<ApiResponse<ArchiveConfig>> {
     match Repository::get_archive_config(&state.pool).await {
-        Ok(config) => Json(ApiResponse::success(config, "Archive config retrieved successfully")),
+        Ok(config) => Json(ApiResponse::success(
+            config,
+            "Archive config retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to get archive config: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to get archive config: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to get archive config: {}", e),
+            ))
         }
     }
 }
@@ -736,10 +896,16 @@ async fn update_archive_config(
     Json(config): Json<ArchiveConfig>,
 ) -> Json<ApiResponse<ArchiveConfig>> {
     match Repository::update_archive_config(&state.pool, config).await {
-        Ok(config) => Json(ApiResponse::success(config, "Archive config updated successfully")),
+        Ok(config) => Json(ApiResponse::success(
+            config,
+            "Archive config updated successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to update archive config: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to update archive config: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to update archive config: {}", e),
+            ))
         }
     }
 }
@@ -750,11 +916,17 @@ async fn archive_notification(
 ) -> Json<ApiResponse<bool>> {
     match Uuid::parse_str(&id) {
         Ok(uuid) => match Repository::archive_notification(&state.pool, &uuid).await {
-            Ok(true) => Json(ApiResponse::success(true, "Notification archived successfully")),
+            Ok(true) => Json(ApiResponse::success(
+                true,
+                "Notification archived successfully",
+            )),
             Ok(false) => Json(ApiResponse::error(404, "Notification not found")),
             Err(e) => {
                 tracing::error!("Failed to archive notification: {}", e);
-                Json(ApiResponse::error(500, &format!("Failed to archive notification: {}", e)))
+                Json(ApiResponse::error(
+                    500,
+                    &format!("Failed to archive notification: {}", e),
+                ))
             }
         },
         Err(_) => Json(ApiResponse::error(400, "Invalid notification ID")),
@@ -768,20 +940,27 @@ async fn list_archived_notifications(
 ) -> Json<ApiResponse<Vec<ArchivedNotification>>> {
     let user_id = extract_user_id(&req);
     let page = query.get("page").and_then(|p| p.as_u64()).unwrap_or(1) as usize;
-    let page_size = query.get("page_size").and_then(|p| p.as_u64()).unwrap_or(20) as usize;
+    let page_size = query
+        .get("page_size")
+        .and_then(|p| p.as_u64())
+        .unwrap_or(20) as usize;
 
     match Repository::list_archived_notifications(&state.pool, &user_id, page, page_size).await {
-        Ok(notifications) => Json(ApiResponse::success(notifications, "Archived notifications retrieved successfully")),
+        Ok(notifications) => Json(ApiResponse::success(
+            notifications,
+            "Archived notifications retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to list archived notifications: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to list archived notifications: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to list archived notifications: {}", e),
+            ))
         }
     }
 }
 
-async fn run_auto_archive(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn run_auto_archive(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let archived_count = match Repository::auto_archive_old_notifications(&state.pool).await {
         Ok(c) => c,
         Err(e) => {
@@ -803,20 +982,24 @@ async fn run_auto_archive(
             "archived_count": archived_count,
             "cleaned_count": cleaned_count
         }),
-        "Auto archive completed successfully"
+        "Auto archive completed successfully",
     ))
 }
 
 // ==================== 统计处理函数 ====================
 
-async fn get_stats(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<NotificationStats>> {
+async fn get_stats(State(state): State<AppState>) -> Json<ApiResponse<NotificationStats>> {
     match Repository::get_notification_stats(&state.pool, None).await {
-        Ok(stats) => Json(ApiResponse::success(stats, "Statistics retrieved successfully")),
+        Ok(stats) => Json(ApiResponse::success(
+            stats,
+            "Statistics retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to get stats: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to get stats: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to get stats: {}", e),
+            ))
         }
     }
 }
@@ -827,10 +1010,16 @@ async fn get_my_stats(
 ) -> Json<ApiResponse<NotificationStats>> {
     let user_id = extract_user_id(&req);
     match Repository::get_notification_stats(&state.pool, Some(&user_id)).await {
-        Ok(stats) => Json(ApiResponse::success(stats, "My statistics retrieved successfully")),
+        Ok(stats) => Json(ApiResponse::success(
+            stats,
+            "My statistics retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to get my stats: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to get my stats: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to get my stats: {}", e),
+            ))
         }
     }
 }

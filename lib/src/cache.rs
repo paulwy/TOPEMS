@@ -1,13 +1,13 @@
 use crate::config::CacheConfig;
 use crate::error::TopemsError;
-use crate::Result;
 use crate::redis::{CacheService, RedisCacheService};
+use crate::Result;
+use async_trait::async_trait;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use async_trait::async_trait;
 use tokio::task;
 
 #[derive(Debug, Clone)]
@@ -91,28 +91,34 @@ impl InMemoryCache {
 
     pub async fn get(&self, key: &str) -> Option<String> {
         let mut cache = self.cache.write();
-        
+
         if let Some(entry) = cache.get_mut(key) {
             if entry.is_expired() {
                 cache.remove(key);
-                self.miss_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                self.miss_count
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 return None;
             }
             entry.access();
-            self.hit_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            self.hit_count
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             Some(entry.value.clone())
         } else {
-            self.miss_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            self.miss_count
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             None
         }
     }
 
     pub async fn set(&self, key: String, value: String, ttl: Option<Duration>) {
         let mut cache = self.cache.write();
-        
-        let entry = CacheEntry::new(value, ttl.or(Some(Duration::from_secs(self.config.default_ttl))));
+
+        let entry = CacheEntry::new(
+            value,
+            ttl.or(Some(Duration::from_secs(self.config.default_ttl))),
+        );
         cache.insert(key, entry);
-        
+
         self.evict_if_needed(&mut cache);
     }
 
@@ -133,12 +139,16 @@ impl InMemoryCache {
         let hits = self.hit_count.load(std::sync::atomic::Ordering::Relaxed);
         let misses = self.miss_count.load(std::sync::atomic::Ordering::Relaxed);
         let total = hits + misses;
-        
+
         CacheStatistics {
             total_entries: cache.len(),
             hit_count: hits,
             miss_count: misses,
-            hit_rate: if total == 0 { 1.0 } else { hits as f64 / total as f64 },
+            hit_rate: if total == 0 {
+                1.0
+            } else {
+                hits as f64 / total as f64
+            },
             evictions: self.evictions.load(std::sync::atomic::Ordering::Relaxed),
         }
     }
@@ -150,11 +160,12 @@ impl InMemoryCache {
                 .filter(|(_, entry)| entry.is_expired())
                 .map(|(k, _)| k.clone())
                 .collect();
-            
+
             if !keys_to_evict.is_empty() {
                 for key in keys_to_evict {
                     cache.remove(&key);
-                    self.evictions.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.evictions
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 }
                 continue;
             }
@@ -163,7 +174,7 @@ impl InMemoryCache {
                 let eviction_policy = EvictionPolicy::from(self.config.eviction_policy.as_str());
                 let key_to_remove = {
                     let mut sorted_entries: Vec<_> = cache.iter().collect();
-                    
+
                     match eviction_policy {
                         EvictionPolicy::LRU => {
                             sorted_entries.sort_by_key(|(_, entry)| entry.last_accessed);
@@ -175,7 +186,9 @@ impl InMemoryCache {
                             sorted_entries.sort_by_key(|(_, entry)| entry.created_at);
                         }
                         EvictionPolicy::TTL => {
-                            sorted_entries.sort_by_key(|(_, entry)| entry.expires_at.unwrap_or(Instant::now()));
+                            sorted_entries.sort_by_key(|(_, entry)| {
+                                entry.expires_at.unwrap_or(Instant::now())
+                            });
                         }
                     }
 
@@ -184,7 +197,8 @@ impl InMemoryCache {
 
                 if let Some(key) = key_to_remove {
                     cache.remove(&key);
-                    self.evictions.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.evictions
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 }
             }
         }
@@ -218,16 +232,20 @@ impl CacheManager {
         if let Some(value) = self.cache.get(&full_key).await {
             serde_json::from_str(&value)
                 .map(Some)
-                .map_err(|e| TopemsError::Serialization(e))
+                .map_err(TopemsError::Serialization)
         } else {
             Ok(None)
         }
     }
 
-    pub async fn set<T: Serialize>(&self, key: &str, value: &T, ttl: Option<Duration>) -> Result<()> {
+    pub async fn set<T: Serialize>(
+        &self,
+        key: &str,
+        value: &T,
+        ttl: Option<Duration>,
+    ) -> Result<()> {
         let full_key = self.build_key(key);
-        let serialized = serde_json::to_string(value)
-            .map_err(|e| TopemsError::Serialization(e))?;
+        let serialized = serde_json::to_string(value).map_err(TopemsError::Serialization)?;
         self.cache.set(full_key, serialized, ttl).await;
         Ok(())
     }
@@ -260,7 +278,7 @@ impl CacheService for InMemoryCache {
     }
 
     async fn set(&self, key: &str, value: &str, ttl_seconds: Option<u64>) -> Result<()> {
-        let ttl = ttl_seconds.map(|s| Duration::from_secs(s));
+        let ttl = ttl_seconds.map(Duration::from_secs);
         self.set(key.to_string(), value.to_string(), ttl).await;
         Ok(())
     }
@@ -301,7 +319,8 @@ impl CacheService for InMemoryCache {
 
     async fn expire(&self, key: &str, seconds: u64) -> Result<bool> {
         if let Some(value) = self.get(key).await {
-            self.set(key.to_string(), value, Some(Duration::from_secs(seconds))).await;
+            self.set(key.to_string(), value, Some(Duration::from_secs(seconds)))
+                .await;
             Ok(true)
         } else {
             Ok(false)
@@ -352,45 +371,57 @@ impl MultiLevelCacheManager {
 
     pub async fn get<T: for<'de> Deserialize<'de>>(&self, key: &str) -> Result<Option<T>> {
         let full_key = self.build_key(key);
-        
+
         if self.config.enable_multi_level {
             if let Some(value) = self.l1_cache.get(&full_key).await {
-                self.l1_hit_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                self.l1_hit_count
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 return serde_json::from_str(&value)
                     .map(Some)
-                    .map_err(|e| TopemsError::Serialization(e));
+                    .map_err(TopemsError::Serialization);
             }
 
             if let Some(l2) = &self.l2_cache {
                 if let Ok(Some(value)) = l2.get(&full_key).await {
-                    self.l2_hit_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.l2_hit_count
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     let l1_ttl = Some(Duration::from_secs(self.config.l1_ttl));
-                    self.l1_cache.set(full_key.clone(), value.clone(), l1_ttl).await;
+                    self.l1_cache
+                        .set(full_key.clone(), value.clone(), l1_ttl)
+                        .await;
                     return serde_json::from_str(&value)
                         .map(Some)
-                        .map_err(|e| TopemsError::Serialization(e));
+                        .map_err(TopemsError::Serialization);
                 }
             }
         } else {
             if let Some(value) = self.l1_cache.get(&full_key).await {
-                self.l1_hit_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                self.l1_hit_count
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 return serde_json::from_str(&value)
                     .map(Some)
-                    .map_err(|e| TopemsError::Serialization(e));
+                    .map_err(TopemsError::Serialization);
             }
         }
 
-        self.miss_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.miss_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         Ok(None)
     }
 
-    pub async fn set<T: Serialize>(&self, key: &str, value: &T, ttl: Option<Duration>) -> Result<()> {
+    pub async fn set<T: Serialize>(
+        &self,
+        key: &str,
+        value: &T,
+        ttl: Option<Duration>,
+    ) -> Result<()> {
         let full_key = self.build_key(key);
-        let serialized = serde_json::to_string(value)
-            .map_err(|e| TopemsError::Serialization(e))?;
+        let serialized = serde_json::to_string(value).map_err(TopemsError::Serialization)?;
 
         let l1_ttl = ttl.or(Some(Duration::from_secs(self.config.l1_ttl)));
-        self.l1_cache.set(full_key.clone(), serialized.clone(), l1_ttl).await;
+        self.l1_cache
+            .set(full_key.clone(), serialized.clone(), l1_ttl)
+            .await;
 
         if self.config.enable_multi_level && self.config.write_through {
             if let Some(l2) = &self.l2_cache {
@@ -434,13 +465,17 @@ impl MultiLevelCacheManager {
                     Ok(value) => {
                         let full_key = format!("{}:{}", config_clone.prefix, key);
                         let l1_ttl = Some(Duration::from_secs(config_clone.l1_ttl));
-                        let _ = tokio::runtime::Runtime::new().unwrap().block_on(
-                            l1_cache_clone.set(full_key.clone(), value.clone(), l1_ttl)
-                        );
+                        #[allow(clippy::let_unit_value)]
+                        let _ = tokio::runtime::Runtime::new()
+                            .unwrap()
+                            .block_on(l1_cache_clone.set(full_key.clone(), value.clone(), l1_ttl));
                         if let Some(l2) = &l2_cache_clone {
-                            let _ = tokio::runtime::Runtime::new().unwrap().block_on(
-                                l2.set(&full_key, &value, Some(config_clone.l2_ttl))
-                            );
+                            #[allow(clippy::let_unit_value)]
+                            let _ = tokio::runtime::Runtime::new().unwrap().block_on(l2.set(
+                                &full_key,
+                                &value,
+                                Some(config_clone.l2_ttl),
+                            ));
                         }
                         count += 1;
                     }
@@ -448,7 +483,9 @@ impl MultiLevelCacheManager {
                 }
             }
             count
-        }).await.map_err(|e| TopemsError::Config(format!("Cache warm-up failed: {}", e)))?;
+        })
+        .await
+        .map_err(|e| TopemsError::Config(format!("Cache warm-up failed: {}", e)))?;
 
         Ok(results)
     }
@@ -473,9 +510,21 @@ impl MultiLevelCacheManager {
             l2_hits,
             misses,
             total_requests: total,
-            l1_hit_rate: if total == 0 { 0.0 } else { l1_hits as f64 / total as f64 },
-            l2_hit_rate: if total == 0 { 0.0 } else { l2_hits as f64 / total as f64 },
-            combined_hit_rate: if total == 0 { 0.0 } else { (l1_hits + l2_hits) as f64 / total as f64 },
+            l1_hit_rate: if total == 0 {
+                0.0
+            } else {
+                l1_hits as f64 / total as f64
+            },
+            l2_hit_rate: if total == 0 {
+                0.0
+            } else {
+                l2_hits as f64 / total as f64
+            },
+            combined_hit_rate: if total == 0 {
+                0.0
+            } else {
+                (l1_hits + l2_hits) as f64 / total as f64
+            },
             l1_total_entries: l1_stats.total_entries,
             l1_evictions: l1_stats.evictions,
         }
@@ -504,7 +553,9 @@ mod tests {
         let config = CacheConfig::default();
         let cache = InMemoryCache::new(config);
 
-        cache.set("key1".to_string(), "value1".to_string(), None).await;
+        cache
+            .set("key1".to_string(), "value1".to_string(), None)
+            .await;
         let value = cache.get("key1").await;
         assert_eq!(value, Some("value1".to_string()));
 
@@ -518,7 +569,13 @@ mod tests {
         let config = CacheConfig::default();
         let cache = InMemoryCache::new(config);
 
-        cache.set("key_ttl".to_string(), "value_ttl".to_string(), Some(Duration::from_millis(100))).await;
+        cache
+            .set(
+                "key_ttl".to_string(),
+                "value_ttl".to_string(),
+                Some(Duration::from_millis(100)),
+            )
+            .await;
         let value = cache.get("key_ttl").await;
         assert_eq!(value, Some("value_ttl".to_string()));
 

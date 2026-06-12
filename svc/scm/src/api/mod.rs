@@ -1,16 +1,13 @@
-use axum::{
-    extract::FromRef,
-    Router,
-};
+use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use topems_shared::AuthState;
 
-pub mod supplier;
-pub mod purchase_order;
-pub mod purchase_item;
-pub mod supplier_evaluation;
 pub mod audit;
 pub mod openapi;
+pub mod purchase_item;
+pub mod purchase_order;
+pub mod supplier;
+pub mod supplier_evaluation;
 
 #[derive(Clone)]
 pub struct ApiState {

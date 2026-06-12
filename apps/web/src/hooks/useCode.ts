@@ -100,7 +100,10 @@ const codeApi = {
     prefix_variables?: Record<string, string>;
   }): Promise<GenerateCodeResponse> => {
     const { default: client } = await import("../api/client");
-    const response = await client.master.post("/api/v1/master/codes/generate", params);
+    const response = await client.master.post(
+      "/api/v1/master/codes/generate",
+      params,
+    );
     return response.data;
   },
 
@@ -115,9 +118,12 @@ const codeApi = {
     }[],
   ): Promise<BatchGenerateCodeResponse> => {
     const { default: client } = await import("../api/client");
-    const response = await client.master.post("/api/v1/master/codes/batch-generate", {
-      requests,
-    });
+    const response = await client.master.post(
+      "/api/v1/master/codes/batch-generate",
+      {
+        requests,
+      },
+    );
     return response.data;
   },
 
@@ -129,7 +135,10 @@ const codeApi = {
     code: string;
   }): Promise<{ valid: boolean; message?: string }> => {
     const { default: client } = await import("../api/client");
-    const response = await client.master.post("/api/v1/master/codes/validate", params);
+    const response = await client.master.post(
+      "/api/v1/master/codes/validate",
+      params,
+    );
     return response.data;
   },
 
@@ -142,7 +151,10 @@ const codeApi = {
     reserve_days?: number;
   }): Promise<{ reservation_id: string; codes: string[] }> => {
     const { default: client } = await import("../api/client");
-    const response = await client.master.post("/api/v1/master/codes/reserve", params);
+    const response = await client.master.post(
+      "/api/v1/master/codes/reserve",
+      params,
+    );
     return response.data;
   },
 
@@ -162,7 +174,9 @@ const codeApi = {
     entity_type?: EntityType;
   }): Promise<CodeRule[]> => {
     const { default: client } = await import("../api/client");
-    const response = await client.master.get("/api/v1/master/code-rules", { params });
+    const response = await client.master.get("/api/v1/master/code-rules", {
+      params,
+    });
     return response.data.items || [];
   },
 
@@ -571,6 +585,4 @@ export function batchGenerateCodesForEntity(
 // 五、导出
 // ============================================
 
-export {
-  codeApi,
-};
+export { codeApi };

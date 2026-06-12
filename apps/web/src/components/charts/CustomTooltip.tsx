@@ -1,6 +1,3 @@
-import React from "react";
-import { BIChartColors } from "./chartTheme";
-
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{

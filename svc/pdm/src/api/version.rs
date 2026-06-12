@@ -1,13 +1,13 @@
 use axum::{
-    extract::{Path, State, FromRef},
-    routing::{post},
+    extract::{FromRef, Path, State},
+    routing::post,
     Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::{Version, CreateVersionRequest};
+use crate::models::{CreateVersionRequest, Version};
 use topems_shared::ApiResponse;
 
 #[derive(Clone)]
@@ -35,17 +35,22 @@ async fn create_version(
 ) -> Json<ApiResponse<Version>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let product_uuid = match Uuid::parse_str(&req.product_id) {
         Ok(u) => u,
-        Err(e) => return Json(ApiResponse::<Version>::error(400, &format!("Invalid product ID: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::<Version>::error(
+                400,
+                &format!("Invalid product ID: {}", e),
+            ))
+        }
     };
 
     match sqlx::query_as::<_, Version>(
         "INSERT INTO versions (
             id, version_no, product_id, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *"
+        RETURNING *",
     )
     .bind(id)
     .bind(req.version_no)
@@ -57,10 +62,16 @@ async fn create_version(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(version) => Json(ApiResponse::success(version, "Version created successfully")),
+        Ok(version) => Json(ApiResponse::success(
+            version,
+            "Version created successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to create version: {}", e);
-            Json(ApiResponse::<Version>::error(500, &format!("Failed to create version: {}", e)))
+            Json(ApiResponse::<Version>::error(
+                500,
+                &format!("Failed to create version: {}", e),
+            ))
         }
     }
 }

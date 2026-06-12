@@ -1,12 +1,16 @@
-use sqlx::{PgPool, postgres::PgPoolOptions};
-use uuid::Uuid;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use topems_shared::auth::Claims;
-use topems_shared::permission::{ModulePermission, check_module_permission, check_resource_permission, check_any_module_permission};
+use topems_shared::permission::{
+    check_any_module_permission, check_module_permission, check_resource_permission,
+    ModulePermission,
+};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 enum TestPermission {
     Read,
     Write,
+    #[allow(dead_code)]
     Manage,
     All,
 }
@@ -26,7 +30,7 @@ impl ModulePermission for TestPermission {
     fn module_name() -> &'static str {
         "test"
     }
-    
+
     fn all_permission() -> Self {
         TestPermission::All
     }
@@ -66,9 +70,10 @@ async fn create_test_pool() -> PgPool {
 async fn test_check_module_permission_superuser() {
     let claims = create_claims(true, vec![]);
     let pool = create_test_pool().await;
-    
-    let result: TestResult<()> = check_module_permission(&pool, &claims, &TestPermission::Read).await;
-    
+
+    let result: TestResult<()> =
+        check_module_permission(&pool, &claims, &TestPermission::Read).await;
+
     assert!(result.is_ok());
 }
 
@@ -76,9 +81,10 @@ async fn test_check_module_permission_superuser() {
 async fn test_check_module_permission_has_module_manage() {
     let claims = create_claims(false, vec!["test.manage"]);
     let pool = create_test_pool().await;
-    
-    let result: TestResult<()> = check_module_permission(&pool, &claims, &TestPermission::Read).await;
-    
+
+    let result: TestResult<()> =
+        check_module_permission(&pool, &claims, &TestPermission::Read).await;
+
     assert!(result.is_ok());
 }
 
@@ -86,9 +92,10 @@ async fn test_check_module_permission_has_module_manage() {
 async fn test_check_module_permission_has_specific_permission() {
     let claims = create_claims(false, vec!["test_read"]);
     let pool = create_test_pool().await;
-    
-    let result: TestResult<()> = check_module_permission(&pool, &claims, &TestPermission::Read).await;
-    
+
+    let result: TestResult<()> =
+        check_module_permission(&pool, &claims, &TestPermission::Read).await;
+
     assert!(result.is_ok());
 }
 
@@ -96,9 +103,10 @@ async fn test_check_module_permission_has_specific_permission() {
 async fn test_check_module_permission_no_permission() {
     let claims = create_claims(false, vec!["other_permission"]);
     let pool = create_test_pool().await;
-    
-    let result: TestResult<String> = check_module_permission(&pool, &claims, &TestPermission::Read).await;
-    
+
+    let result: TestResult<String> =
+        check_module_permission(&pool, &claims, &TestPermission::Read).await;
+
     assert!(result.is_err());
     let err = result.err().unwrap();
     assert_eq!(err.0.code, 403);
@@ -110,9 +118,11 @@ async fn test_check_resource_permission_superuser() {
     let claims = create_claims(true, vec![]);
     let resource_id = Uuid::new_v4();
     let pool = create_test_pool().await;
-    
-    let result: TestResult<()> = check_resource_permission(&pool, &claims, &resource_id, "resource", "resource.manage").await;
-    
+
+    let result: TestResult<()> =
+        check_resource_permission(&pool, &claims, &resource_id, "resource", "resource.manage")
+            .await;
+
     assert!(result.is_ok());
 }
 
@@ -121,9 +131,11 @@ async fn test_check_resource_permission_has_manage_permission() {
     let claims = create_claims(false, vec!["resource.manage"]);
     let resource_id = Uuid::new_v4();
     let pool = create_test_pool().await;
-    
-    let result: TestResult<()> = check_resource_permission(&pool, &claims, &resource_id, "resource", "resource.manage").await;
-    
+
+    let result: TestResult<()> =
+        check_resource_permission(&pool, &claims, &resource_id, "resource", "resource.manage")
+            .await;
+
     assert!(result.is_ok());
 }
 
@@ -144,9 +156,10 @@ async fn test_check_resource_permission_own_resource() {
         tenant_id: None,
     };
     let pool = create_test_pool().await;
-    
-    let result: TestResult<()> = check_resource_permission(&pool, &claims, &user_id, "resource", "resource.manage").await;
-    
+
+    let result: TestResult<()> =
+        check_resource_permission(&pool, &claims, &user_id, "resource", "resource.manage").await;
+
     assert!(result.is_ok());
 }
 
@@ -155,9 +168,11 @@ async fn test_check_resource_permission_no_access() {
     let claims = create_claims(false, vec!["other_permission"]);
     let resource_id = Uuid::new_v4();
     let pool = create_test_pool().await;
-    
-    let result: TestResult<String> = check_resource_permission(&pool, &claims, &resource_id, "resource", "resource.manage").await;
-    
+
+    let result: TestResult<String> =
+        check_resource_permission(&pool, &claims, &resource_id, "resource", "resource.manage")
+            .await;
+
     assert!(result.is_err());
     let err = result.err().unwrap();
     assert_eq!(err.0.code, 403);
@@ -166,36 +181,40 @@ async fn test_check_resource_permission_no_access() {
 #[test]
 fn test_check_any_module_permission_superuser() {
     let claims = create_claims(true, vec![]);
-    
-    let result: TestResult<()> = check_any_module_permission(&claims, &[TestPermission::Read, TestPermission::Write]);
-    
+
+    let result: TestResult<()> =
+        check_any_module_permission(&claims, &[TestPermission::Read, TestPermission::Write]);
+
     assert!(result.is_ok());
 }
 
 #[test]
 fn test_check_any_module_permission_has_module_manage() {
     let claims = create_claims(false, vec!["test.manage"]);
-    
-    let result: TestResult<()> = check_any_module_permission(&claims, &[TestPermission::Read, TestPermission::Write]);
-    
+
+    let result: TestResult<()> =
+        check_any_module_permission(&claims, &[TestPermission::Read, TestPermission::Write]);
+
     assert!(result.is_ok());
 }
 
 #[test]
 fn test_check_any_module_permission_has_one_permission() {
     let claims = create_claims(false, vec!["test_read"]);
-    
-    let result: TestResult<()> = check_any_module_permission(&claims, &[TestPermission::Read, TestPermission::Write]);
-    
+
+    let result: TestResult<()> =
+        check_any_module_permission(&claims, &[TestPermission::Read, TestPermission::Write]);
+
     assert!(result.is_ok());
 }
 
 #[test]
 fn test_check_any_module_permission_no_permission() {
     let claims = create_claims(false, vec!["other_permission"]);
-    
-    let result: TestResult<String> = check_any_module_permission(&claims, &[TestPermission::Read, TestPermission::Write]);
-    
+
+    let result: TestResult<String> =
+        check_any_module_permission(&claims, &[TestPermission::Read, TestPermission::Write]);
+
     assert!(result.is_err());
     let err = result.err().unwrap();
     assert_eq!(err.0.code, 403);

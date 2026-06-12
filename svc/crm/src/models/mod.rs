@@ -1,12 +1,12 @@
 pub mod app_state;
-pub mod customer;
-pub mod contact;
-pub mod opportunity;
-pub mod interaction;
 pub mod audit_log;
+pub mod contact;
+pub mod customer;
+pub mod interaction;
+pub mod opportunity;
 
-pub use customer::{Customer, CreateCustomerRequest, UpdateCustomerRequest};
-pub use contact::{Contact, CreateContactRequest, UpdateContactRequest};
-pub use opportunity::{Opportunity, CreateOpportunityRequest, UpdateOpportunityRequest};
-pub use interaction::{Interaction, CreateInteractionRequest, UpdateInteractionRequest};
 pub use audit_log::AuditLog;
+pub use contact::{Contact, CreateContactRequest, UpdateContactRequest};
+pub use customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
+pub use interaction::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
+pub use opportunity::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};

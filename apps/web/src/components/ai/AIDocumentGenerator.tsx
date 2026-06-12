@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Copy, Check } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -145,51 +145,60 @@ export function AIDocumentGenerator({
             </div>
 
             <div className="space-y-3">
-              {selectedTemplate.fields.map((field) => (
-                <div key={field.name} className="space-y-1">
-                  <Label className="flex items-center gap-1">
-                    {field.label}
-                    {field.required && <span className="text-red-500">*</span>}
-                  </Label>
-                  {field.type === "textarea" ? (
-                    <Textarea
-                      value={formData[field.name] || ""}
-                      onChange={(e) =>
-                        handleFieldChange(field.name, e.target.value)
-                      }
-                      placeholder={`请输入${field.label}`}
-                      rows={3}
-                    />
-                  ) : field.type === "select" && field.options ? (
-                    <Select
-                      value={formData[field.name] || ""}
-                      onValueChange={(value) =>
-                        handleFieldChange(field.name, value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={`请选择${field.label}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {field.options.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      type={field.type}
-                      value={formData[field.name] || ""}
-                      onChange={(e) =>
-                        handleFieldChange(field.name, e.target.value)
-                      }
-                      placeholder={`请输入${field.label}`}
-                    />
-                  )}
-                </div>
-              ))}
+              {selectedTemplate.fields.map(
+                (field: AITemplate["fields"][number]) => (
+                  <div key={field.name} className="space-y-1">
+                    <Label className="flex items-center gap-1">
+                      {field.label}
+                      {field.required && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </Label>
+                    {field.type === "textarea" ? (
+                      <Textarea
+                        value={formData[field.name] || ""}
+                        onChange={(e) =>
+                          handleFieldChange(field.name, e.target.value)
+                        }
+                        placeholder={`请输入${field.label}`}
+                        rows={3}
+                      />
+                    ) : field.type === "select" && field.options ? (
+                      <Select
+                        value={formData[field.name] || ""}
+                        onValueChange={(value) =>
+                          handleFieldChange(field.name, value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={`请选择${field.label}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {field.options?.map(
+                            (option: { label: string; value: string }) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ),
+                          )}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        type={field.type}
+                        value={formData[field.name] || ""}
+                        onChange={(e) =>
+                          handleFieldChange(field.name, e.target.value)
+                        }
+                        placeholder={`请输入${field.label}`}
+                      />
+                    )}
+                  </div>
+                ),
+              )}
             </div>
 
             <Button

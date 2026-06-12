@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State, FromRef},
+    extract::{FromRef, Path, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -7,7 +7,9 @@ use chrono::Utc;
 use sqlx::{PgPool, QueryBuilder};
 use uuid::Uuid;
 
-use crate::models::{Product, CreateProductRequest, UpdateProductRequest, ProductBOM, CreateProductBOMRequest};
+use crate::models::{
+    CreateProductBOMRequest, CreateProductRequest, Product, ProductBOM, UpdateProductRequest,
+};
 use topems_shared::ApiResponse;
 
 #[derive(Clone)]
@@ -35,16 +37,20 @@ pub fn create_router(pool: PgPool) -> Router {
 }
 
 async fn list_products(State(state): State<ProductApiState>) -> Json<ApiResponse<Vec<Product>>> {
-    match sqlx::query_as::<_, Product>(
-        "SELECT * FROM products ORDER BY created_at DESC LIMIT 100"
-    )
-    .fetch_all(&state.pool)
-    .await
+    match sqlx::query_as::<_, Product>("SELECT * FROM products ORDER BY created_at DESC LIMIT 100")
+        .fetch_all(&state.pool)
+        .await
     {
-        Ok(products) => Json(ApiResponse::success(products, "Products retrieved successfully")),
+        Ok(products) => Json(ApiResponse::success(
+            products,
+            "Products retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch products: {}", e);
-            Json(ApiResponse::<Vec<Product>>::error(500, &format!("Failed to fetch products: {}", e)))
+            Json(ApiResponse::<Vec<Product>>::error(
+                500,
+                &format!("Failed to fetch products: {}", e),
+            ))
         }
     }
 }
@@ -87,18 +93,21 @@ async fn get_product(
     State(state): State<ProductApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Product>> {
-    match sqlx::query_as::<_, Product>(
-        "SELECT * FROM products WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
+    match sqlx::query_as::<_, Product>("SELECT * FROM products WHERE id = $1")
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await
     {
         Ok(product) => Json(ApiResponse::success(product, "Product found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<Product>::error(404, "Product not found")),
+        Err(sqlx::Error::RowNotFound) => {
+            Json(ApiResponse::<Product>::error(404, "Product not found"))
+        }
         Err(e) => {
             tracing::error!("Failed to fetch product: {}", e);
-            Json(ApiResponse::<Product>::error(500, &format!("Failed to fetch product: {}", e)))
+            Json(ApiResponse::<Product>::error(
+                500,
+                &format!("Failed to fetch product: {}", e),
+            ))
         }
     }
 }
@@ -113,37 +122,51 @@ async fn update_product(
     let mut first = true;
 
     if let Some(v) = req.product_no {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("product_no = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.name {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("name = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.description {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("description = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.category {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("category = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.unit {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("unit = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.status {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("status = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.version {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("version = ").push_bind(v);
         first = false;
     }
@@ -152,17 +175,31 @@ async fn update_product(
         return get_product(State(state), Path(id)).await;
     }
 
-    if !first { query_builder.push(", "); }
+    if !first {
+        query_builder.push(", ");
+    }
     query_builder.push("updated_at = ").push_bind(now);
     query_builder.push(" WHERE id = ").push_bind(id);
     query_builder.push(" RETURNING *");
 
-    match query_builder.build_query_as::<Product>().fetch_one(&state.pool).await {
-        Ok(product) => Json(ApiResponse::success(product, "Product updated successfully")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<Product>::error(404, "Product not found")),
+    match query_builder
+        .build_query_as::<Product>()
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(product) => Json(ApiResponse::success(
+            product,
+            "Product updated successfully",
+        )),
+        Err(sqlx::Error::RowNotFound) => {
+            Json(ApiResponse::<Product>::error(404, "Product not found"))
+        }
         Err(e) => {
             tracing::error!("Failed to update product: {}", e);
-            Json(ApiResponse::<Product>::error(500, &format!("Failed to update product: {}", e)))
+            Json(ApiResponse::<Product>::error(
+                500,
+                &format!("Failed to update product: {}", e),
+            ))
         }
     }
 }
@@ -185,7 +222,10 @@ async fn delete_product(
         }
         Err(e) => {
             tracing::error!("Failed to delete product: {}", e);
-            Json(ApiResponse::<bool>::error(500, &format!("Failed to delete product: {}", e)))
+            Json(ApiResponse::<bool>::error(
+                500,
+                &format!("Failed to delete product: {}", e),
+            ))
         }
     }
 }
@@ -195,7 +235,7 @@ async fn get_product_boms(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProductBOM>>> {
     match sqlx::query_as::<_, ProductBOM>(
-        "SELECT * FROM product_boms WHERE product_id = $1 ORDER BY level, sort_order"
+        "SELECT * FROM product_boms WHERE product_id = $1 ORDER BY level, sort_order",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -204,7 +244,10 @@ async fn get_product_boms(
         Ok(boms) => Json(ApiResponse::success(boms, "BOMs retrieved successfully")),
         Err(e) => {
             tracing::error!("Failed to fetch BOMs: {}", e);
-            Json(ApiResponse::<Vec<ProductBOM>>::error(500, &format!("Failed to fetch BOMs: {}", e)))
+            Json(ApiResponse::<Vec<ProductBOM>>::error(
+                500,
+                &format!("Failed to fetch BOMs: {}", e),
+            ))
         }
     }
 }
@@ -215,12 +258,17 @@ async fn add_bom_component(
 ) -> Json<ApiResponse<ProductBOM>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let product_uuid = match Uuid::parse_str(&req.product_id) {
         Ok(u) => u,
-        Err(e) => return Json(ApiResponse::<ProductBOM>::error(400, &format!("Invalid product ID: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::<ProductBOM>::error(
+                400,
+                &format!("Invalid product ID: {}", e),
+            ))
+        }
     };
-    
+
     let material_uuid = req.material_id.parse::<Uuid>().ok();
     let parent_uuid = req.parent_id.and_then(|pid| Uuid::parse_str(&pid).ok());
 

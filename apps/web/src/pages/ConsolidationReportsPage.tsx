@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   Plus,
   Search,
@@ -181,7 +181,7 @@ export default function ConsolidationReportsPage() {
         let IconComponent: React.ElementType = FileText;
         let name = reportType;
         let color = "text-gray-600";
-        
+
         switch (reportType) {
           case "consolidated_balance_sheet":
             IconComponent = Building2;
@@ -209,7 +209,7 @@ export default function ConsolidationReportsPage() {
             color = "text-gray-600";
             break;
         }
-        
+
         return (
           <div className={`flex items-center gap-2 font-medium ${color}`}>
             <IconComponent className="w-4 h-4" />

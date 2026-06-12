@@ -5,8 +5,7 @@ use uuid::Uuid;
 
 use crate::models::file::FileRecord;
 use crate::models::permission::{
-    FilePermission, Permission, PermissionCheckResult,
-    ShareFileRequest,
+    FilePermission, Permission, PermissionCheckResult, ShareFileRequest,
 };
 
 pub struct PermissionService {
@@ -172,12 +171,10 @@ impl PermissionService {
         .await?;
 
         // 更新文件的 is_shared 标志
-        sqlx::query(
-            "UPDATE storage.files SET is_shared = true WHERE id = $1",
-        )
-        .bind(file_id)
-        .execute(&self.pool)
-        .await?;
+        sqlx::query("UPDATE storage.files SET is_shared = true WHERE id = $1")
+            .bind(file_id)
+            .execute(&self.pool)
+            .await?;
 
         Ok(FilePermission {
             id,

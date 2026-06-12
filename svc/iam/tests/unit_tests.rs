@@ -1,8 +1,16 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+
 // IAM 服务单元测试
 // 测试用户认证、权限管理、JWT Token验证、用户管理等功能
 
 use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, Algorithm};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use regex::Regex;
 use uuid::Uuid;
 
@@ -10,7 +18,6 @@ use uuid::Uuid;
 
 #[cfg(test)]
 mod password_validation_tests {
-    
 
     fn validate_password(password: &str) -> Result<(), String> {
         if password.len() < 8 {
@@ -179,7 +186,6 @@ mod email_validation_tests {
 
 #[cfg(test)]
 mod username_validation_tests {
-    
 
     fn validate_username(username: &str) -> Result<(), String> {
         if username.len() < 2 {
@@ -201,13 +207,7 @@ mod username_validation_tests {
 
     #[test]
     fn test_valid_username() {
-        let usernames = vec![
-            "admin",
-            "user123",
-            "AdminUser",
-            "testuser",
-            "User2024",
-        ];
+        let usernames = vec!["admin", "user123", "AdminUser", "testuser", "User2024"];
 
         for username in usernames {
             assert!(validate_username(username).is_ok());
@@ -236,12 +236,7 @@ mod username_validation_tests {
 
     #[test]
     fn test_username_with_special_chars() {
-        let usernames = vec![
-            "user_name",
-            "user-name",
-            "user@email",
-            "user!",
-        ];
+        let usernames = vec!["user_name", "user-name", "user@email", "user!"];
 
         for username in usernames {
             assert!(validate_username(username).is_err());
@@ -292,7 +287,8 @@ mod jwt_token_tests {
             &Header::new(Algorithm::HS256),
             &claims,
             &EncodingKey::from_secret(secret.as_ref()),
-        ).map_err(|e| format!("生成token失败: {}", e))
+        )
+        .map_err(|e| format!("生成token失败: {}", e))
     }
 
     fn verify_token(token: &str, secret: &str) -> Result<Claims, String> {
@@ -405,7 +401,11 @@ mod jwt_token_tests {
             username: "testuser".to_string(),
             role: "manager".to_string(),
             roles: vec!["manager".to_string(), "user".to_string()],
-            permissions: vec!["read".to_string(), "write".to_string(), "delete".to_string()],
+            permissions: vec![
+                "read".to_string(),
+                "write".to_string(),
+                "delete".to_string(),
+            ],
             is_superuser: false,
             exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
             iat: Utc::now().timestamp() as usize,
@@ -423,7 +423,10 @@ mod jwt_token_tests {
         assert_eq!(verified_claims.role, "manager");
         assert_eq!(verified_claims.roles.len(), 2);
         assert_eq!(verified_claims.permissions.len(), 3);
-        assert_eq!(verified_claims.email, Some("testuser@example.com".to_string()));
+        assert_eq!(
+            verified_claims.email,
+            Some("testuser@example.com".to_string())
+        );
         assert_eq!(verified_claims.department, Some("研发部".to_string()));
         assert_eq!(verified_claims.tenant_id, Some("tenant-001".to_string()));
     }
@@ -433,7 +436,6 @@ mod jwt_token_tests {
 
 #[cfg(test)]
 mod permission_tests {
-    
 
     #[test]
     fn test_permission_check_admin() {
@@ -504,8 +506,8 @@ mod permission_tests {
 #[cfg(test)]
 mod user_model_tests {
     use super::*;
-    use serde::{Deserialize, Serialize};
     use chrono::Utc;
+    use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct User {
@@ -557,7 +559,11 @@ mod user_model_tests {
             full_name: Some("Admin User".to_string()),
             role: "admin".to_string(),
             roles: vec!["admin".to_string()],
-            permissions: vec!["read".to_string(), "write".to_string(), "delete".to_string()],
+            permissions: vec![
+                "read".to_string(),
+                "write".to_string(),
+                "delete".to_string(),
+            ],
             created_at: Utc::now().to_rfc3339(),
             updated_at: Utc::now().to_rfc3339(),
             is_active: true,

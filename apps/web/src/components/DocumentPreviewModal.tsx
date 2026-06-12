@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { X, FileText, FileImage, AlertCircle, Loader2 } from "lucide-react";
+import { X, FileText, AlertCircle, Loader2 } from "lucide-react";
 import { renderAsync } from "docx-preview";
 import { docApi } from "../api/doc";
 

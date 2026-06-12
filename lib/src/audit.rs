@@ -50,11 +50,7 @@ pub struct AuditLogQuery {
 }
 
 impl CreateAuditLogRequest {
-    pub fn new(
-        action: String,
-        entity_type: String,
-        status: String,
-    ) -> Self {
+    pub fn new(action: String, entity_type: String, status: String) -> Self {
         Self {
             action,
             entity_type,
@@ -102,7 +98,11 @@ impl CreateAuditLogRequest {
         self
     }
 
-    pub fn with_request_info(mut self, ip_address: Option<String>, user_agent: Option<String>) -> Self {
+    pub fn with_request_info(
+        mut self,
+        ip_address: Option<String>,
+        user_agent: Option<String>,
+    ) -> Self {
         self.ip_address = ip_address;
         self.user_agent = user_agent;
         self

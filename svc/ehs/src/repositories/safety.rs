@@ -1,8 +1,8 @@
-use sqlx::PgPool;
-use chrono::Utc;
-use uuid::Uuid;
 use crate::models::*;
 use anyhow::Result;
+use chrono::Utc;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 pub struct SafetyIncidentRepository<'a> {
     pool: &'a PgPool,
@@ -62,9 +62,15 @@ impl<'a> SafetyIncidentRepository<'a> {
     pub async fn create(&self, req: CreateSafetyIncidentRequest) -> Result<SafetyIncident> {
         let id = Uuid::new_v4();
         let now = Utc::now();
-        let corrective_actions = req.corrective_actions.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
-        let responsible_persons = req.responsible_persons.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
-        let attachments = req.attachments.map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let corrective_actions = req
+            .corrective_actions
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let responsible_persons = req
+            .responsible_persons
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
+        let attachments = req
+            .attachments
+            .map(|v| serde_json::to_value(&v).unwrap_or(serde_json::json!([])));
 
         let incident = sqlx::query_as::<_, SafetyIncident>(
             r#"
@@ -101,27 +107,36 @@ impl<'a> SafetyIncidentRepository<'a> {
     }
 
     pub async fn get(&self, id: Uuid) -> Result<Option<SafetyIncident>> {
-        let incident = sqlx::query_as::<_, SafetyIncident>(
-            "SELECT * FROM ehs.safety_incidents WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.pool)
-        .await?;
+        let incident =
+            sqlx::query_as::<_, SafetyIncident>("SELECT * FROM ehs.safety_incidents WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool)
+                .await?;
 
         Ok(incident)
     }
 
-    pub async fn update(&self, id: Uuid, req: UpdateSafetyIncidentRequest) -> Result<SafetyIncident> {
-        let existing = self.get(id).await?.ok_or_else(|| anyhow::anyhow!("安全事故不存在"))?;
+    pub async fn update(
+        &self,
+        id: Uuid,
+        req: UpdateSafetyIncidentRequest,
+    ) -> Result<SafetyIncident> {
+        let existing = self
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("安全事故不存在"))?;
         let now = Utc::now();
 
-        let corrective_actions = req.corrective_actions
+        let corrective_actions = req
+            .corrective_actions
             .map(|v| Some(serde_json::to_value(&v).unwrap_or(serde_json::json!([]))))
             .unwrap_or(existing.corrective_actions);
-        let responsible_persons = req.responsible_persons
+        let responsible_persons = req
+            .responsible_persons
             .map(|v| Some(serde_json::to_value(&v).unwrap_or(serde_json::json!([]))))
             .unwrap_or(existing.responsible_persons);
-        let attachments = req.attachments
+        let attachments = req
+            .attachments
             .map(|v| Some(serde_json::to_value(&v).unwrap_or(serde_json::json!([]))))
             .unwrap_or(existing.attachments);
 
@@ -168,8 +183,10 @@ impl<'a> SafetyIncidentRepository<'a> {
 
     pub async fn handle(&self, id: Uuid, req: HandleIncidentRequest) -> Result<SafetyIncident> {
         let now = Utc::now();
-        let corrective_actions = serde_json::to_value(&req.corrective_actions).unwrap_or(serde_json::json!([]));
-        let responsible_persons = serde_json::to_value(&req.responsible_persons).unwrap_or(serde_json::json!([]));
+        let corrective_actions =
+            serde_json::to_value(&req.corrective_actions).unwrap_or(serde_json::json!([]));
+        let responsible_persons =
+            serde_json::to_value(&req.responsible_persons).unwrap_or(serde_json::json!([]));
 
         let incident = sqlx::query_as::<_, SafetyIncident>(
             r#"
@@ -250,7 +267,8 @@ impl<'a> SafetyHazardNewRepository<'a> {
     pub async fn create(&self, req: CreateSafetyHazardRequest) -> Result<SafetyHazard> {
         let id = Uuid::new_v4();
         let now = Utc::now();
-        let control_measures = serde_json::to_value(&req.control_measures).unwrap_or(serde_json::json!([]));
+        let control_measures =
+            serde_json::to_value(&req.control_measures).unwrap_or(serde_json::json!([]));
 
         let hazard = sqlx::query_as::<_, SafetyHazard>(
             r#"

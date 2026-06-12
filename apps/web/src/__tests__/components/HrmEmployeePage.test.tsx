@@ -1,23 +1,24 @@
-import React from 'react';
-import { render, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import HrmEmployeePage from '../../pages/HrmEmployeePage';
-import { employeeApi, departmentApi } from '../../api/hrm';
-import { ThemeProvider } from '../../components/ThemeProvider';
-import { ToastProvider } from '../../components/ToastProvider';
-import { LoadingProvider } from '../../components/LoadingProvider';
-import ErrorBoundary from '../../components/ErrorBoundary';
-import { useAppStore } from '../../store';
+import { vi } from "vitest";
+import React from "react";
+import { render, waitFor } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import HrmEmployeePage from "../../pages/HrmEmployeePage";
+import { employeeApi, departmentApi } from "../../api/hrm";
+import { ThemeProvider } from "../../components/ThemeProvider";
+import { ToastProvider } from "../../components/ToastProvider";
+import { LoadingProvider } from "../../components/LoadingProvider";
+import ErrorBoundary from "../../components/ErrorBoundary";
+import { useAppStore } from "../../store";
 
 // 模拟依赖
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
+vi.mock("react-router-dom", async () => ({
+  ...(await vi.importActual("react-router-dom")),
   useNavigate: () => vi.fn(),
-  useLocation: () => ({ pathname: '/hrm/employees' }),
+  useLocation: () => ({ pathname: "/hrm/employees" }),
 }));
 
 // 模拟 API
-vi.mock('../../api/hrm', () => ({
+vi.mock("../../api/hrm", () => ({
   employeeApi: {
     list: vi.fn(),
     create: vi.fn(),
@@ -30,14 +31,14 @@ vi.mock('../../api/hrm', () => ({
 }));
 
 // 模拟 DataTable 组件以避免测试问题
-vi.mock('../../components/DataTable', () => ({
-  DataTable: () => <div data-testid='data-table'>Mock Data Table</div>,
+vi.mock("../../components/DataTable", () => ({
+  DataTable: () => <div data-testid="data-table">Mock Data Table</div>,
 }));
 
 // 模拟 MetricCard 组件以避免测试问题
-vi.mock('../../components/MetricCard', () => ({
+vi.mock("../../components/MetricCard", () => ({
   MetricCard: (props: any) => (
-    <div data-testid='metric-card'>
+    <div data-testid="metric-card">
       <p>{props.title}</p>
       <p>{props.value}</p>
     </div>
@@ -45,21 +46,21 @@ vi.mock('../../components/MetricCard', () => ({
 }));
 
 // 模拟 StatsChart 组件以避免测试问题
-vi.mock('../../components/StatsChart', () => ({
-  StatsChart: () => <div data-testid='stats-chart'>Mock Stats Chart</div>,
+vi.mock("../../components/StatsChart", () => ({
+  StatsChart: () => <div data-testid="stats-chart">Mock Stats Chart</div>,
 }));
 
 // 模拟 zustand store
-vi.mock('../../store', () => ({
+vi.mock("../../store", () => ({
   useAppStore: vi.fn(),
 }));
 
-const mockEmployeeApi = employeeApi as vi.Mock<typeof employeeApi>;
-const mockDepartmentApi = departmentApi as vi.Mock<typeof departmentApi>;
+const mockEmployeeApi = vi.mocked(employeeApi);
+const mockDepartmentApi = vi.mocked(departmentApi);
 
 // 模拟 zustand store 返回值
 const mockAddNotification = vi.fn();
-const mockUseAppStore = useAppStore as vi.MockFunction<typeof useAppStore>;
+const mockUseAppStore = vi.mocked(useAppStore);
 
 // 模拟数据
 const mockEmployees = {
@@ -80,8 +81,8 @@ const renderWithProviders = (ui: React.ReactElement) => {
   mockUseAppStore.mockImplementation((selector) => {
     const store = {
       addNotification: mockAddNotification,
-    };
-    return selector(store);
+    } as unknown;
+    return selector(store as any);
   });
 
   return render(
@@ -93,11 +94,11 @@ const renderWithProviders = (ui: React.ReactElement) => {
           </LoadingProvider>
         </ToastProvider>
       </ThemeProvider>
-    </ErrorBoundary>
+    </ErrorBoundary>,
   );
 };
 
-describe('HrmEmployeePage', () => {
+describe("HrmEmployeePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -106,7 +107,7 @@ describe('HrmEmployeePage', () => {
       code: 200,
       success: true,
       data: mockEmployees,
-      message: 'Success',
+      message: "Success",
       timestamp: new Date().toISOString(),
     });
 
@@ -114,17 +115,17 @@ describe('HrmEmployeePage', () => {
       code: 200,
       success: true,
       data: mockDepartments,
-      message: 'Success',
+      message: "Success",
       timestamp: new Date().toISOString(),
     });
   });
 
-  test('should render employee page without crashing', async () => {
+  test("should render employee page without crashing", async () => {
     renderWithProviders(<HrmEmployeePage />);
     expect(true).toBe(true);
   });
 
-  test('should call APIs on mount', async () => {
+  test("should call APIs on mount", async () => {
     renderWithProviders(<HrmEmployeePage />);
 
     await waitFor(() => {

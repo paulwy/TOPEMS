@@ -1,9 +1,9 @@
 // LIMS 服务单元测试和集成测试
 // 测试样品管理、仪器管理、检验任务、检验记录等功能
 
-use uuid::Uuid;
-use chrono::{DateTime, Utc, NaiveDate};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 // ============ 样品管理测试 ============
 
@@ -47,7 +47,14 @@ mod sample_tests {
 
     #[test]
     fn test_sample_statuses() {
-        let statuses = vec!["pending", "testing", "completed", "approved", "rejected", "disposed"];
+        let statuses = vec![
+            "pending",
+            "testing",
+            "completed",
+            "approved",
+            "rejected",
+            "disposed",
+        ];
 
         for status in statuses {
             let sample = Sample {
@@ -69,7 +76,13 @@ mod sample_tests {
 
     #[test]
     fn test_sample_types() {
-        let types = vec!["raw_material", "semi_finished", "finished_product", "environmental", "other"];
+        let types = vec![
+            "raw_material",
+            "semi_finished",
+            "finished_product",
+            "environmental",
+            "other",
+        ];
 
         for type_name in types {
             let sample = Sample {
@@ -132,7 +145,14 @@ mod instrument_tests {
 
     #[test]
     fn test_instrument_statuses() {
-        let statuses = vec!["available", "in_use", "maintenance", "calibration", "broken", "disposed"];
+        let statuses = vec![
+            "available",
+            "in_use",
+            "maintenance",
+            "calibration",
+            "broken",
+            "disposed",
+        ];
 
         for status in statuses {
             let instrument = Instrument {
@@ -217,7 +237,14 @@ mod inspection_task_tests {
 
     #[test]
     fn test_inspection_task_statuses() {
-        let statuses = vec!["pending", "in_progress", "completed", "approved", "rejected", "cancelled"];
+        let statuses = vec![
+            "pending",
+            "in_progress",
+            "completed",
+            "approved",
+            "rejected",
+            "cancelled",
+        ];
 
         for status in statuses {
             let task = InspectionTask {
@@ -359,8 +386,8 @@ mod http_endpoint_tests {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
-        Router,
         routing::get,
+        Router,
     };
     use tower::ServiceExt;
 

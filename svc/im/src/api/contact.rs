@@ -1,13 +1,13 @@
 use axum::{
-    extract::{Path, State, Query},
+    extract::{Path, Query, State},
     Json,
 };
 use chrono::Utc;
-use uuid::Uuid;
 use serde_json::json;
 use sqlx::PgPool;
+use uuid::Uuid;
 
-use crate::models::{Contact, AddContact, UpdateContact, ContactGroup, CreateContactGroup};
+use crate::models::{AddContact, Contact, ContactGroup, CreateContactGroup, UpdateContact};
 use topems_shared::ApiResponse;
 
 // ==================== 联系人管理API ====================
@@ -19,7 +19,7 @@ pub async fn add_contact(
 ) -> Json<ApiResponse<Contact>> {
     // 需要用户ID
     let user_id = payload.contact_user_id.clone();
-    
+
     let id = Uuid::new_v4();
     let now = Utc::now().naive_utc();
     let group_id = payload.group_id.and_then(|g| Uuid::parse_str(&g).ok());
@@ -60,7 +60,7 @@ pub async fn list_contacts(
     Query(params): Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let user_id = params.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
-    
+
     if user_id.is_empty() {
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
@@ -78,10 +78,13 @@ pub async fn list_contacts(
     .await;
 
     match result {
-        Ok(contacts) => Json(ApiResponse::success(json!({
-            "contacts": contacts,
-            "total": contacts.len()
-        }), "获取联系人列表成功")),
+        Ok(contacts) => Json(ApiResponse::success(
+            json!({
+                "contacts": contacts,
+                "total": contacts.len()
+            }),
+            "获取联系人列表成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to list contacts: {}", e);
             Json(ApiResponse::error(500, "获取联系人列表失败"))
@@ -161,14 +164,17 @@ pub async fn delete_contact(
         DELETE FROM im.contacts
         WHERE id = $1
         RETURNING id
-        "#
+        "#,
     )
     .bind(contact_id)
     .fetch_optional(&pool)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(json!({ "deleted": true }), "删除联系人成功")),
+        Ok(Some(_)) => Json(ApiResponse::success(
+            json!({ "deleted": true }),
+            "删除联系人成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "联系人不存在")),
         Err(e) => {
             tracing::error!("Failed to delete contact: {}", e);
@@ -189,7 +195,7 @@ pub async fn block_contact(
         UPDATE im.contacts
         SET is_blocked = TRUE, updated_at = $1
         WHERE id = $2
-        "#
+        "#,
     )
     .bind(now)
     .bind(contact_id)
@@ -197,7 +203,10 @@ pub async fn block_contact(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({ "blocked": true }), "拉黑联系人成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({ "blocked": true }),
+            "拉黑联系人成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to block contact: {}", e);
             Json(ApiResponse::error(500, "拉黑联系人失败"))
@@ -217,7 +226,7 @@ pub async fn unblock_contact(
         UPDATE im.contacts
         SET is_blocked = FALSE, updated_at = $1
         WHERE id = $2
-        "#
+        "#,
     )
     .bind(now)
     .bind(contact_id)
@@ -225,7 +234,10 @@ pub async fn unblock_contact(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({ "blocked": false }), "解除拉黑成功")),
+        Ok(_) => Json(ApiResponse::success(
+            json!({ "blocked": false }),
+            "解除拉黑成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to unblock contact: {}", e);
             Json(ApiResponse::error(500, "解除拉黑失败"))
@@ -240,7 +252,7 @@ pub async fn search_contacts(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let user_id = params.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
     let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
-    
+
     if user_id.is_empty() {
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
@@ -266,11 +278,14 @@ pub async fn search_contacts(
     .await;
 
     match result {
-        Ok(contacts) => Json(ApiResponse::success(json!({
-            "contacts": contacts,
-            "total": contacts.len(),
-            "keyword": keyword
-        }), "搜索联系人成功")),
+        Ok(contacts) => Json(ApiResponse::success(
+            json!({
+                "contacts": contacts,
+                "total": contacts.len(),
+                "keyword": keyword
+            }),
+            "搜索联系人成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to search contacts: {}", e);
             Json(ApiResponse::error(500, "搜索联系人失败"))
@@ -284,7 +299,7 @@ pub async fn list_blocked_contacts(
     Query(params): Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let user_id = params.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
-    
+
     if user_id.is_empty() {
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
@@ -302,10 +317,13 @@ pub async fn list_blocked_contacts(
     .await;
 
     match result {
-        Ok(contacts) => Json(ApiResponse::success(json!({
-            "blocked_contacts": contacts,
-            "total": contacts.len()
-        }), "获取已拉黑联系人成功")),
+        Ok(contacts) => Json(ApiResponse::success(
+            json!({
+                "blocked_contacts": contacts,
+                "total": contacts.len()
+            }),
+            "获取已拉黑联系人成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to list blocked contacts: {}", e);
             Json(ApiResponse::error(500, "获取已拉黑联系人失败"))
@@ -322,7 +340,7 @@ pub async fn create_contact_group(
     Json(payload): Json<CreateContactGroup>,
 ) -> Json<ApiResponse<ContactGroup>> {
     let user_id = params.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
-    
+
     if user_id.is_empty() {
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
@@ -335,7 +353,7 @@ pub async fn create_contact_group(
         INSERT INTO im.contact_groups (id, user_id, name, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id, user_id, name, created_at, updated_at
-        "#
+        "#,
     )
     .bind(id)
     .bind(user_id)
@@ -360,7 +378,7 @@ pub async fn list_contact_groups(
     Query(params): Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let user_id = params.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
-    
+
     if user_id.is_empty() {
         return Json(ApiResponse::error(400, "用户ID不能为空"));
     }
@@ -371,17 +389,20 @@ pub async fn list_contact_groups(
         FROM im.contact_groups
         WHERE user_id = $1
         ORDER BY updated_at DESC
-        "#
+        "#,
     )
     .bind(user_id)
     .fetch_all(&pool)
     .await;
 
     match result {
-        Ok(groups) => Json(ApiResponse::success(json!({
-            "contact_groups": groups,
-            "total": groups.len()
-        }), "获取联系人分组成功")),
+        Ok(groups) => Json(ApiResponse::success(
+            json!({
+                "contact_groups": groups,
+                "total": groups.len()
+            }),
+            "获取联系人分组成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to list contact groups: {}", e);
             Json(ApiResponse::error(500, "获取联系人分组失败"))
@@ -403,7 +424,7 @@ pub async fn update_contact_group(
         SET name = $1, updated_at = $2
         WHERE id = $3
         RETURNING id, user_id, name, created_at, updated_at
-        "#
+        "#,
     )
     .bind(payload.name)
     .bind(now)
@@ -431,14 +452,17 @@ pub async fn delete_contact_group(
         DELETE FROM im.contact_groups
         WHERE id = $1
         RETURNING id
-        "#
+        "#,
     )
     .bind(group_id)
     .fetch_optional(&pool)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(json!({ "deleted": true }), "删除联系人分组成功")),
+        Ok(Some(_)) => Json(ApiResponse::success(
+            json!({ "deleted": true }),
+            "删除联系人分组成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "联系人分组不存在")),
         Err(e) => {
             tracing::error!("Failed to delete contact group: {}", e);

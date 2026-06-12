@@ -13,12 +13,8 @@ impl AnalysisApi {
         Json(req): Json<SentimentAnalysisRequest>,
     ) -> Json<ApiResponse<SentimentAnalysisResponse>> {
         match state.analysis_service.analyze_sentiment(&req.text).await {
-            Ok(response) => {
-                Json(ApiResponse::success(response, "Success"))
-            }
-            Err(e) => {
-                Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e))
-            }
+            Ok(response) => Json(ApiResponse::success(response, "Success")),
+            Err(e) => Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e)),
         }
     }
 
@@ -32,12 +28,8 @@ impl AnalysisApi {
             .classify_text(&req.text, req.categories.as_deref())
             .await
         {
-            Ok(response) => {
-                Json(ApiResponse::success(response, "Success"))
-            }
-            Err(e) => {
-                Json(ApiResponse::<ClassifyTextResponse>::error(500, &e))
-            }
+            Ok(response) => Json(ApiResponse::success(response, "Success")),
+            Err(e) => Json(ApiResponse::<ClassifyTextResponse>::error(500, &e)),
         }
     }
 
@@ -51,12 +43,8 @@ impl AnalysisApi {
             .extract_entities(&req.text, req.entity_types.as_deref())
             .await
         {
-            Ok(response) => {
-                Json(ApiResponse::success(response, "Success"))
-            }
-            Err(e) => {
-                Json(ApiResponse::<ExtractEntitiesResponse>::error(500, &e))
-            }
+            Ok(response) => Json(ApiResponse::success(response, "Success")),
+            Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::error(500, &e)),
         }
     }
 
@@ -70,12 +58,8 @@ impl AnalysisApi {
             .extract_keywords(&req.text, req.max_keywords)
             .await
         {
-            Ok(response) => {
-                Json(ApiResponse::success(response, "Success"))
-            }
-            Err(e) => {
-                Json(ApiResponse::<ExtractKeywordsResponse>::error(500, &e))
-            }
+            Ok(response) => Json(ApiResponse::success(response, "Success")),
+            Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::error(500, &e)),
         }
     }
 
@@ -97,9 +81,7 @@ impl AnalysisApi {
                     "Success",
                 ))
             }
-            Err(e) => {
-                Json(ApiResponse::<AnalysisHistoryResponse>::error(500, &e))
-            }
+            Err(e) => Json(ApiResponse::<AnalysisHistoryResponse>::error(500, &e)),
         }
     }
 }

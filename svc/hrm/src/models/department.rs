@@ -50,7 +50,7 @@ mod tests {
         let org_id = Uuid::new_v4();
         let created_at = Utc::now();
         let updated_at = Utc::now();
-        
+
         let department = Department {
             id,
             organization_id: org_id,

@@ -1,6 +1,10 @@
 // IAM 服务集成测试
 // 测试 API 端点和数据库交互
 
+#![allow(dead_code)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::redundant_closure)]
+
 use serde_json::json;
 use uuid::Uuid;
 
@@ -9,8 +13,8 @@ use uuid::Uuid;
 #[cfg(test)]
 mod api_response_tests {
     use super::*;
-    use serde::{Deserialize, Serialize};
     use chrono::Utc;
+    use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Serialize, Deserialize)]
     struct ApiResponse<T> {
@@ -80,8 +84,7 @@ mod api_response_tests {
 
     #[test]
     fn test_response_with_complex_data() {
-        #[derive(Serialize, Deserialize)]
-        #[derive(Clone)]
+        #[derive(Serialize, Deserialize, Clone)]
         struct UserData {
             id: String,
             username: String,
@@ -200,7 +203,7 @@ mod login_api_tests {
 
 #[cfg(test)]
 mod register_api_tests {
-    
+
     use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Deserialize, Serialize)]
@@ -494,7 +497,7 @@ mod permission_management_api_tests {
 
 #[cfg(test)]
 mod password_change_api_tests {
-    
+
     use serde::Deserialize;
 
     #[derive(Debug, Deserialize)]
@@ -620,19 +623,17 @@ mod audit_log_api_tests {
     #[test]
     fn test_list_audit_logs_response() {
         let response = ListAuditLogsResponse {
-            logs: vec![
-                AuditLogInfo {
-                    id: "log-001".to_string(),
-                    user_id: Some("user-001".to_string()),
-                    action: "login".to_string(),
-                    resource: None,
-                    resource_id: None,
-                    ip_address: Some("192.168.1.1".to_string()),
-                    user_agent: None,
-                    details: None,
-                    created_at: chrono::Utc::now().to_rfc3339(),
-                },
-            ],
+            logs: vec![AuditLogInfo {
+                id: "log-001".to_string(),
+                user_id: Some("user-001".to_string()),
+                action: "login".to_string(),
+                resource: None,
+                resource_id: None,
+                ip_address: Some("192.168.1.1".to_string()),
+                user_agent: None,
+                details: None,
+                created_at: chrono::Utc::now().to_rfc3339(),
+            }],
             total: 1,
         };
 
@@ -666,8 +667,8 @@ mod http_endpoint_tests {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
-        Router,
         routing::get,
+        Router,
     };
     use tower::ServiceExt;
 
@@ -701,12 +702,7 @@ mod http_endpoint_tests {
         let app = Router::new().route("/", get(home_handler));
 
         let response = app
-            .oneshot(
-                Request::builder()
-                    .uri("/")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
@@ -718,7 +714,6 @@ mod http_endpoint_tests {
 
 #[cfg(test)]
 mod user_role_association_tests {
-    
 
     #[test]
     fn test_user_has_role() {
@@ -756,7 +751,6 @@ mod user_role_association_tests {
 
 #[cfg(test)]
 mod role_permission_association_tests {
-    
 
     #[test]
     fn test_role_has_permission() {
@@ -794,7 +788,7 @@ mod role_permission_association_tests {
 
 #[cfg(test)]
 mod token_refresh_tests {
-    
+
     use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Deserialize)]

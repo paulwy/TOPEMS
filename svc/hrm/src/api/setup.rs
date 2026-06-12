@@ -1,15 +1,11 @@
-use axum::{
-    extract::State,
-    routing::*,
-    Json, Router,
-};
+use axum::{extract::State, routing::*, Json, Router};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct InitializationStatus {
@@ -120,7 +116,7 @@ async fn get_init_progress(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<InitProgressResponse>> {
     let org_id = Uuid::parse_str(DEFAULT_ORG_ID).unwrap();
-    
+
     let steps = sqlx::query_as::<_, InitializationStatus>(
         r#"
         SELECT id, organization_id, step_name, step_order, status, completed_at, created_at, updated_at
@@ -136,7 +132,8 @@ async fn get_init_progress(
     match steps {
         Ok(steps) => {
             let is_completed = steps.iter().all(|s| s.status == "completed");
-            let current_step = steps.iter()
+            let current_step = steps
+                .iter()
                 .find(|s| s.status != "completed")
                 .map(|s| s.step_order)
                 .unwrap_or(5);
@@ -148,15 +145,18 @@ async fn get_init_progress(
             .fetch_optional(&state.db)
             .await;
 
-            let step_statuses: Vec<StepStatus> = steps.iter().map(|s| {
-                let is_current = s.status != "completed" && s.status != "failed";
-                StepStatus {
-                    name: s.step_name.clone(),
-                    order: s.step_order,
-                    status: s.status.clone(),
-                    is_current,
-                }
-            }).collect();
+            let step_statuses: Vec<StepStatus> = steps
+                .iter()
+                .map(|s| {
+                    let is_current = s.status != "completed" && s.status != "failed";
+                    StepStatus {
+                        name: s.step_name.clone(),
+                        order: s.step_order,
+                        status: s.status.clone(),
+                        is_current,
+                    }
+                })
+                .collect();
 
             Json(ApiResponse::success(
                 InitProgressResponse {
@@ -165,7 +165,7 @@ async fn get_init_progress(
                     steps: step_statuses,
                     company_id: company_result.ok().flatten(),
                 },
-                "获取初始化进度成功"
+                "获取初始化进度成功",
             ))
         }
         Err(e) => {
@@ -229,7 +229,7 @@ async fn setup_company_info(
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'company_info'
-                "#
+                "#,
             )
             .bind(now)
             .bind(org_id)
@@ -252,7 +252,7 @@ async fn setup_company_info(
 
             Json(ApiResponse::success(
                 serde_json::json!({ "company_id": company.id, "name": company.name }),
-                "公司信息更新成功"
+                "公司信息更新成功",
             ))
         }
         Err(e) => {
@@ -339,7 +339,10 @@ async fn setup_departments(
     }
 
     if created_depts.is_empty() {
-        return Json(api_error(500, &format!("创建部门失败: {}", errors.join(", "))));
+        return Json(api_error(
+            500,
+            &format!("创建部门失败: {}", errors.join(", ")),
+        ));
     }
 
     // 更新初始化状态
@@ -348,7 +351,7 @@ async fn setup_departments(
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE organization_id = $2 AND step_name = 'departments'
-        "#
+        "#,
     )
     .bind(now)
     .bind(org_id)
@@ -366,7 +369,7 @@ async fn setup_departments(
                 })
             }).collect::<Vec<_>>()
         }),
-        &format!("成功创建 {} 个部门", created_depts.len())
+        &format!("成功创建 {} 个部门", created_depts.len()),
     ))
 }
 
@@ -438,7 +441,10 @@ async fn setup_positions(
     }
 
     if created_positions.is_empty() {
-        return Json(api_error(500, &format!("创建职位失败: {}", errors.join(", "))));
+        return Json(api_error(
+            500,
+            &format!("创建职位失败: {}", errors.join(", ")),
+        ));
     }
 
     // 更新初始化状态
@@ -447,7 +453,7 @@ async fn setup_positions(
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE organization_id = $2 AND step_name = 'positions'
-        "#
+        "#,
     )
     .bind(now)
     .bind(org_id)
@@ -465,7 +471,7 @@ async fn setup_positions(
                 })
             }).collect::<Vec<_>>()
         }),
-        &format!("成功创建 {} 个职位", created_positions.len())
+        &format!("成功创建 {} 个职位", created_positions.len()),
     ))
 }
 
@@ -550,14 +556,14 @@ async fn setup_admin_user(
         Ok(employee) => {
             // 注意：密码应该通过单独的认证服务处理，这里仅记录
             // 实际密码设置应由 IAM 服务完成
-            
+
             // 更新初始化状态
             let _ = sqlx::query(
                 r#"
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'admin_user'
-                "#
+                "#,
             )
             .bind(now)
             .bind(org_id)
@@ -571,7 +577,7 @@ async fn setup_admin_user(
                     "name": employee.name,
                     "message": "管理员账户创建成功，请前往认证服务设置密码"
                 }),
-                "管理员账户创建成功"
+                "管理员账户创建成功",
             ))
         }
         Err(e) => {
@@ -622,13 +628,17 @@ async fn complete_initialization(
 
     match steps {
         Ok(steps) => {
-            let incomplete: Vec<&str> = steps.iter()
+            let incomplete: Vec<&str> = steps
+                .iter()
                 .filter(|s| s.status != "completed")
                 .map(|s| s.step_name.as_str())
                 .collect();
 
             if !incomplete.is_empty() {
-                return Json(api_error(400, &format!("请先完成以下步骤: {}", incomplete.join(", "))));
+                return Json(api_error(
+                    400,
+                    &format!("请先完成以下步骤: {}", incomplete.join(", ")),
+                ));
             }
 
             // 更新完成状态
@@ -637,7 +647,7 @@ async fn complete_initialization(
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'completion'
-                "#
+                "#,
             )
             .bind(now)
             .bind(org_id)
@@ -649,7 +659,7 @@ async fn complete_initialization(
                     "is_completed": true,
                     "completed_at": now
                 }),
-                "初始化完成！系统已准备就绪。"
+                "初始化完成！系统已准备就绪。",
             ))
         }
         Err(e) => {

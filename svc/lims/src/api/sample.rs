@@ -1,20 +1,24 @@
+#![allow(dead_code)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+
 use axum::{
+    body::Bytes,
     extract::{Extension, Path, Query, State},
-    routing::{get, post},
     http::{header, HeaderMap},
     response::{IntoResponse, Response},
-    body::Bytes,
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
-use utoipa::{ToSchema, IntoParams};
 
-use crate::models::{CreateSampleRequest, Sample, UpdateSampleRequest};
 use crate::api::ApiState;
+use crate::models::{CreateSampleRequest, Sample, UpdateSampleRequest};
 use topems_shared::auth::Claims;
-use topems_shared::{Result, ApiResponse, PaginationParams};
+use topems_shared::{ApiResponse, PaginationParams, Result};
 
 #[derive(Debug, Deserialize, IntoParams)]
 #[allow(dead_code)]
@@ -46,7 +50,10 @@ pub struct BatchOperationResult {
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/samples", get(list_samples).post(create_sample))
-        .route("/api/v1/samples/batch", post(batch_create_samples).delete(batch_delete_samples))
+        .route(
+            "/api/v1/samples/batch",
+            post(batch_create_samples).delete(batch_delete_samples),
+        )
         .route("/api/v1/samples/export", get(export_samples))
         .route("/api/v1/samples/import", post(import_samples))
         .route(
@@ -80,14 +87,17 @@ async fn list_samples(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if claims.is_superuser || claims.has_permission("lims.manage") || claims.has_permission("sample_read") {
+    if claims.is_superuser
+        || claims.has_permission("lims.manage")
+        || claims.has_permission("sample_read")
+    {
     } else {
         return Json(ApiResponse::error(403, "权限不足：需要 sample_read 权限"));
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    
+
     // 预先处理搜索参数，避免所有权问题
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
@@ -185,14 +195,14 @@ async fn create_sample(
         Ok(sample) => (
             Json(ApiResponse::success(sample.clone(), "样品创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建样品失败: {}", e);
             (
                 Json(ApiResponse::error(500, "样品创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -217,7 +227,8 @@ async fn create_sample(
         status.to_string(),
         error_msg,
         &headers,
-    ).await;
+    )
+    .await;
 
     response
 }
@@ -301,7 +312,7 @@ async fn update_sample(
     let name = req.name.clone().unwrap_or(existing.name);
     let description = req.description.clone().or(existing.description);
     let status = req.status.clone().unwrap_or(existing.status);
-    let project_id = req.project_id.clone().or(existing.project_id);
+    let project_id = req.project_id.or(existing.project_id);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Sample>(
@@ -325,14 +336,14 @@ async fn update_sample(
         Ok(sample) => (
             Json(ApiResponse::success(sample.clone(), "样品更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新样品失败: {}", e);
             (
                 Json(ApiResponse::error(500, "样品更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -357,7 +368,8 @@ async fn update_sample(
         status_str.to_string(),
         error_msg,
         &headers,
-    ).await;
+    )
+    .await;
 
     response
 }
@@ -392,19 +404,19 @@ async fn delete_sample(
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success((), "样品删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(ApiResponse::error(404, "样品不存在")),
             "error",
-            Some("样品不存在".to_string())
+            Some("样品不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除样品失败: {}", e);
             (
                 Json(ApiResponse::error(500, "样品删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -428,7 +440,8 @@ async fn delete_sample(
         status_str.to_string(),
         error_msg,
         &headers,
-    ).await;
+    )
+    .await;
 
     response
 }
@@ -493,7 +506,11 @@ async fn batch_create_samples(
         errors,
     };
 
-    let status = if success == total { "success" } else { "partial" };
+    let status = if success == total {
+        "success"
+    } else {
+        "partial"
+    };
     let response_data = serde_json::to_value(&result).ok();
 
     crate::api::audit::log_audit_event(
@@ -513,7 +530,8 @@ async fn batch_create_samples(
             None
         },
         &headers,
-    ).await;
+    )
+    .await;
 
     if success == total {
         Json(ApiResponse::success(result, "批量创建样品成功"))
@@ -544,12 +562,10 @@ async fn batch_delete_samples(
         return Json(ApiResponse::error(400, "未提供要删除的样品 ID"));
     }
 
-    let result = sqlx::query(
-        r#"DELETE FROM lims.samples WHERE id = ANY($1)"#,
-    )
-    .bind(&req.ids)
-    .execute(&state.db)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM lims.samples WHERE id = ANY($1)"#)
+        .bind(&req.ids)
+        .execute(&state.db)
+        .await;
 
     match result {
         Ok(r) => {
@@ -559,10 +575,18 @@ async fn batch_delete_samples(
                 total,
                 success: affected,
                 failed: total - affected,
-                errors: if affected == total { vec![] } else { vec!["部分样品可能不存在".to_string()] },
+                errors: if affected == total {
+                    vec![]
+                } else {
+                    vec!["部分样品可能不存在".to_string()]
+                },
             };
 
-            let status = if affected == total { "success" } else { "partial" };
+            let status = if affected == total {
+                "success"
+            } else {
+                "partial"
+            };
             let response_data = serde_json::to_value(&result).ok();
 
             crate::api::audit::log_audit_event(
@@ -582,7 +606,8 @@ async fn batch_delete_samples(
                     None
                 },
                 &headers,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::success(result, "批量删除操作完成"))
         }
@@ -602,7 +627,8 @@ async fn batch_delete_samples(
                 "error".to_string(),
                 Some(e.to_string()),
                 &headers,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::error(500, "批量删除失败"))
         }
@@ -621,10 +647,7 @@ async fn batch_delete_samples(
         ("bearer_auth" = [])
     )
 )]
-async fn export_samples(
-    State(state): State<ApiState>,
-    headers: HeaderMap,
-) -> Response {
+async fn export_samples(State(state): State<ApiState>, headers: HeaderMap) -> Response {
     let result = sqlx::query_as::<_, Sample>(
         r#"
         SELECT id, name, description, status, project_id, received_date, created_at, updated_at
@@ -639,9 +662,18 @@ async fn export_samples(
         Ok(samples) => {
             let sample_count = samples.len();
             let mut wtr = csv::Writer::from_writer(vec![]);
-            
+
             // Write header
-            if let Err(e) = wtr.write_record(&["id", "name", "description", "status", "project_id", "received_date", "created_at", "updated_at"]) {
+            if let Err(e) = wtr.write_record(&[
+                "id",
+                "name",
+                "description",
+                "status",
+                "project_id",
+                "received_date",
+                "created_at",
+                "updated_at",
+            ]) {
                 tracing::error!("导出样品 CSV 头部失败: {}", e);
                 crate::api::audit::log_audit_event(
                     &state.db,
@@ -656,13 +688,15 @@ async fn export_samples(
                     "error".to_string(),
                     Some(e.to_string()),
                     &headers,
-                ).await;
+                )
+                .await;
                 return (
                     [(header::CONTENT_TYPE, "application/json")],
                     Json(ApiResponse::<()>::error(500, "导出失败")),
-                ).into_response();
+                )
+                    .into_response();
             }
-            
+
             // Write rows
             for sample in samples {
                 let row = vec![
@@ -671,11 +705,20 @@ async fn export_samples(
                     sample.description.unwrap_or_default(),
                     sample.status.clone(),
                     sample.project_id.map(|u| u.to_string()).unwrap_or_default(),
-                    sample.received_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
-                    sample.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
-                    sample.updated_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                    sample
+                        .received_date
+                        .map(|d| d.to_rfc3339())
+                        .unwrap_or_default(),
+                    sample
+                        .created_at
+                        .map(|d| d.to_rfc3339())
+                        .unwrap_or_default(),
+                    sample
+                        .updated_at
+                        .map(|d| d.to_rfc3339())
+                        .unwrap_or_default(),
                 ];
-                
+
                 if let Err(e) = wtr.write_record(&row) {
                     tracing::error!("导出样品 CSV 行失败: {}", e);
                     crate::api::audit::log_audit_event(
@@ -691,18 +734,20 @@ async fn export_samples(
                         "error".to_string(),
                         Some(e.to_string()),
                         &headers,
-                    ).await;
+                    )
+                    .await;
                     return (
                         [(header::CONTENT_TYPE, "application/json")],
                         Json(ApiResponse::<()>::error(500, "导出失败")),
-                    ).into_response();
+                    )
+                        .into_response();
                 }
             }
-            
+
             match wtr.into_inner() {
                 Ok(data) => {
                     let filename = format!("samples_{}.csv", Utc::now().format("%Y%m%d_%H%M%S"));
-                    
+
                     crate::api::audit::log_audit_event(
                         &state.db,
                         "export".to_string(),
@@ -716,15 +761,20 @@ async fn export_samples(
                         "success".to_string(),
                         None,
                         &headers,
-                    ).await;
-                    
+                    )
+                    .await;
+
                     (
                         [
                             (header::CONTENT_TYPE, "text/csv"),
-                            (header::CONTENT_DISPOSITION, &format!("attachment; filename=\"{}\"", filename)),
+                            (
+                                header::CONTENT_DISPOSITION,
+                                &format!("attachment; filename=\"{}\"", filename),
+                            ),
                         ],
                         data,
-                    ).into_response()
+                    )
+                        .into_response()
                 }
                 Err(e) => {
                     tracing::error!("导出样品 CSV 完成失败: {}", e);
@@ -741,11 +791,13 @@ async fn export_samples(
                         "error".to_string(),
                         Some(e.to_string()),
                         &headers,
-                    ).await;
+                    )
+                    .await;
                     (
                         [(header::CONTENT_TYPE, "application/json")],
                         Json(ApiResponse::<()>::error(500, "导出失败")),
-                    ).into_response()
+                    )
+                        .into_response()
                 }
             }
         }
@@ -764,11 +816,13 @@ async fn export_samples(
                 "error".to_string(),
                 Some(e.to_string()),
                 &headers,
-            ).await;
+            )
+            .await;
             (
                 [(header::CONTENT_TYPE, "application/json")],
                 Json(ApiResponse::<()>::error(500, "导出失败")),
-            ).into_response()
+            )
+                .into_response()
         }
     }
 }
@@ -805,7 +859,7 @@ async fn import_samples(
         Ok(h) => h.clone(),
         Err(e) => {
             tracing::error!("解析 CSV 头部失败: {}", e);
-            
+
             crate::api::audit::log_audit_event(
                 &state.db,
                 "import".to_string(),
@@ -818,16 +872,18 @@ async fn import_samples(
                 None,
                 "error".to_string(),
                 Some(e.to_string()),
-                &headers,            ).await;
-            
+                &headers,
+            )
+            .await;
+
             return Json(ApiResponse::error(400, "CSV 格式错误"));
         }
     };
-    
+
     let mut success = 0;
     let mut errors = Vec::new();
     let mut row_num = 0;
-    
+
     for result in rdr.records() {
         row_num += 1;
         match result {
@@ -837,21 +893,27 @@ async fn import_samples(
                     errors.push(format!("第 {} 行: 样品名称不能为空", row_num));
                     continue;
                 }
-                
-                let description = record.get(2).and_then(|s| if s.is_empty() { None } else { Some(s.to_string()) });
+
+                let description = record.get(2).and_then(|s| {
+                    if s.is_empty() {
+                        None
+                    } else {
+                        Some(s.to_string())
+                    }
+                });
                 let status = record.get(3).unwrap_or("待测试").to_string();
-                let project_id_str = record.get(4).and_then(|s| if s.is_empty() { None } else { Some(s) });
+                let project_id_str =
+                    record
+                        .get(4)
+                        .and_then(|s| if s.is_empty() { None } else { Some(s) });
                 let project_id = match project_id_str {
-                    Some(s) => match Uuid::parse_str(s) {
-                        Ok(u) => Some(u),
-                        Err(_) => None,
-                    },
+                    Some(s) => Uuid::parse_str(s).ok(),
                     None => None,
                 };
-                
+
                 let id = Uuid::new_v4();
                 let now = Utc::now();
-                
+
                 let insert_result = sqlx::query_as::<_, Sample>(
                     r#"
                     INSERT INTO lims.samples (id, name, description, status, project_id, received_date, created_at, updated_at)
@@ -869,7 +931,7 @@ async fn import_samples(
                 .bind(now)
                 .fetch_one(&state.db)
                 .await;
-                
+
                 match insert_result {
                     Ok(_) => success += 1,
                     Err(e) => {
@@ -884,7 +946,7 @@ async fn import_samples(
             }
         }
     }
-    
+
     let total = row_num;
     let result = BatchOperationResult {
         total,
@@ -892,10 +954,14 @@ async fn import_samples(
         failed: total - success,
         errors,
     };
-    
-    let status = if success == total { "success" } else { "partial" };
+
+    let status = if success == total {
+        "success"
+    } else {
+        "partial"
+    };
     let response_data = serde_json::to_value(&result).ok();
-    
+
     crate::api::audit::log_audit_event(
         &state.db,
         "import".to_string(),
@@ -913,8 +979,9 @@ async fn import_samples(
             None
         },
         &headers,
-    ).await;
-    
+    )
+    .await;
+
     if success == total {
         Json(ApiResponse::success(result, "导入完成"))
     } else {

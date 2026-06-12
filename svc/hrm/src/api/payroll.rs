@@ -11,9 +11,9 @@ use sqlx::postgres::PgPool;
 use std::str::FromStr;
 use uuid::Uuid;
 
-use crate::api::audit::log_audit_event;
-use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PayrollRun {
@@ -72,13 +72,25 @@ pub struct QueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-    .route("/api/v1/payroll-runs", get(list_payroll_runs).post(create_payroll_run))
-    .route("/api/v1/payroll-runs/{id}", get(get_payroll_run).delete(delete_payroll_run))
-    .route("/api/v1/payroll-runs/{id}/calculate", put(calculate_payroll_run))
-    .route("/api/v1/payroll-runs/{id}/pay", put(pay_payroll_run))
-    .route("/api/v1/payroll-items", get(list_payroll_items))
-    .route("/api/v1/payroll-items/{id}", get(get_payroll_item))
-    .route("/api/v1/payroll-details", get(list_payroll_details).post(create_payroll_detail))
+        .route(
+            "/api/v1/payroll-runs",
+            get(list_payroll_runs).post(create_payroll_run),
+        )
+        .route(
+            "/api/v1/payroll-runs/{id}",
+            get(get_payroll_run).delete(delete_payroll_run),
+        )
+        .route(
+            "/api/v1/payroll-runs/{id}/calculate",
+            put(calculate_payroll_run),
+        )
+        .route("/api/v1/payroll-runs/{id}/pay", put(pay_payroll_run))
+        .route("/api/v1/payroll-items", get(list_payroll_items))
+        .route("/api/v1/payroll-items/{id}", get(get_payroll_item))
+        .route(
+            "/api/v1/payroll-details",
+            get(list_payroll_details).post(create_payroll_detail),
+        )
 }
 
 async fn list_payroll_runs(
@@ -137,7 +149,10 @@ async fn list_payroll_runs(
         }
         Err(e) => {
             tracing::error!("查询薪资发放列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询薪资发放列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询薪资发放列表失败",
+            ))
         }
     }
 }
@@ -239,10 +254,16 @@ async fn get_payroll_run(
                 "查询成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::error(404, "薪资周期不存在")),
+        Ok(None) => Json(ApiResponse::<serde_json::Value>::error(
+            404,
+            "薪资周期不存在",
+        )),
         Err(e) => {
             tracing::error!("查询薪资周期失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询薪资周期失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询薪资周期失败",
+            ))
         }
     }
 }
@@ -252,12 +273,10 @@ async fn delete_payroll_run(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "DELETE FROM hrm.payroll_runs WHERE id = $1 AND status = 'draft'"
-    )
-    .bind(id)
-    .execute(&state.db)
-    .await;
+    let result = sqlx::query("DELETE FROM hrm.payroll_runs WHERE id = $1 AND status = 'draft'")
+        .bind(id)
+        .execute(&state.db)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -312,7 +331,7 @@ async fn calculate_payroll_run(
     let now = Utc::now();
 
     let result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM shared.employees WHERE status = 'active'"
+        "SELECT COUNT(*) FROM shared.employees WHERE status = 'active'",
     )
     .fetch_one(&state.db)
     .await;
@@ -340,7 +359,10 @@ async fn calculate_payroll_run(
             let _ = create_payroll_items(&state.db, id, emp_count as i32).await;
             Json(ApiResponse::success(run, "薪资计算完成"))
         }
-        Ok(None) => Json(ApiResponse::<PayrollRun>::error(404, "薪资周期不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<PayrollRun>::error(
+            404,
+            "薪资周期不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("计算薪资失败: {}", e);
             Json(ApiResponse::<PayrollRun>::error(500, "计算薪资失败"))
@@ -348,7 +370,11 @@ async fn calculate_payroll_run(
     }
 }
 
-async fn create_payroll_items(db: &PgPool, payroll_run_id: Uuid, emp_count: i32) -> Result<(), sqlx::Error> {
+async fn create_payroll_items(
+    db: &PgPool,
+    payroll_run_id: Uuid,
+    emp_count: i32,
+) -> Result<(), sqlx::Error> {
     for i in 1..=emp_count {
         let item_id = Uuid::new_v4();
         let emp_id = Uuid::new_v4();
@@ -388,7 +414,7 @@ async fn pay_payroll_run(
         UPDATE hrm.payroll_items
         SET status = 'paid', paid_at = $2
         WHERE payroll_run_id = $1 AND status = 'pending'
-        "#
+        "#,
     )
     .bind(id)
     .bind(now)
@@ -410,7 +436,10 @@ async fn pay_payroll_run(
 
     match result {
         Ok(Some(run)) => Json(ApiResponse::success(run, "薪资发放完成")),
-        Ok(None) => Json(ApiResponse::<PayrollRun>::error(404, "薪资周期不存在或状态不正确")),
+        Ok(None) => Json(ApiResponse::<PayrollRun>::error(
+            404,
+            "薪资周期不存在或状态不正确",
+        )),
         Err(e) => {
             tracing::error!("发放薪资失败: {}", e);
             Json(ApiResponse::<PayrollRun>::error(500, "发放薪资失败"))
@@ -479,7 +508,10 @@ async fn list_payroll_items(
         }
         Err(e) => {
             tracing::error!("查询薪资明细列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询薪资明细列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询薪资明细列表失败",
+            ))
         }
     }
 }
@@ -513,10 +545,16 @@ async fn get_payroll_item(
                 "查询成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::error(404, "薪资明细不存在")),
+        Ok(None) => Json(ApiResponse::<serde_json::Value>::error(
+            404,
+            "薪资明细不存在",
+        )),
         Err(e) => {
             tracing::error!("查询薪资明细失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询薪资明细失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询薪资明细失败",
+            ))
         }
     }
 }
@@ -569,7 +607,10 @@ async fn list_payroll_details(
         }
         Err(e) => {
             tracing::error!("查询薪资详情列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "查询薪资详情列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询薪资详情列表失败",
+            ))
         }
     }
 }

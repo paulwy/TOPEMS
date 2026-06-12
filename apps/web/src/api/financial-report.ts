@@ -4,12 +4,6 @@
  */
 
 import { apiClient } from "./client";
-import type {
-  BalanceSheet,
-  IncomeStatement,
-  CashFlowStatement,
-  ReportQueryParams,
-} from "../types/erp-finance";
 
 // ============================================
 // 一、财务报表生成

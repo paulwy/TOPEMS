@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -89,7 +91,7 @@ pub async fn list_roles(
         WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%')
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
-        "#
+        "#,
     )
     .bind(&params.name)
     .bind(page_size as i64)
@@ -200,7 +202,7 @@ pub async fn get_role(
 ) -> Result<Json<ApiResponse<RoleDetailResponse>>, impl IntoResponse> {
     // 先查询角色信息
     let role_result = sqlx::query_as::<_, Role>(
-        "SELECT id, name, description, created_at FROM iam.roles WHERE id = $1"
+        "SELECT id, name, description, created_at FROM iam.roles WHERE id = $1",
     )
     .bind(&role_id)
     .fetch_optional(&state.db)
@@ -231,7 +233,7 @@ pub async fn get_role(
         INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id
         WHERE rp.role_id = $1
         ORDER BY p.category, p.code
-        "#
+        "#,
     )
     .bind(&role_id)
     .fetch_all(&state.db)
@@ -276,7 +278,7 @@ pub async fn update_role(
 ) -> Result<Json<ApiResponse<RoleResponse>>, impl IntoResponse> {
     // 先查询角色是否存在
     let existing = sqlx::query_as::<_, Role>(
-        "SELECT id, name, description, created_at FROM iam.roles WHERE id = $1"
+        "SELECT id, name, description, created_at FROM iam.roles WHERE id = $1",
     )
     .bind(&role_id)
     .fetch_optional(&state.db)
@@ -308,7 +310,7 @@ pub async fn update_role(
         SET name = $2, description = $3
         WHERE id = $1
         RETURNING id, name, description, created_at
-        "#
+        "#,
     )
     .bind(&role_id)
     .bind(&name)
@@ -344,12 +346,10 @@ pub async fn delete_role(
     Path(role_id): Path<String>,
 ) -> Result<Json<ApiResponse<String>>, impl IntoResponse> {
     // 检查是否为系统角色（管理员角色不可删除）
-    let role_check = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM iam.roles WHERE id = $1"
-    )
-    .bind(&role_id)
-    .fetch_optional(&state.db)
-    .await;
+    let role_check = sqlx::query_scalar::<_, String>("SELECT name FROM iam.roles WHERE id = $1")
+        .bind(&role_id)
+        .fetch_optional(&state.db)
+        .await;
 
     match role_check {
         Ok(Some(name)) => {
@@ -413,7 +413,7 @@ pub async fn get_role_permissions(
         INNER JOIN iam.role_permissions rp ON p.id = rp.permission_id
         WHERE rp.role_id = $1
         ORDER BY p.category, p.code
-        "#
+        "#,
     )
     .bind(&role_id)
     .fetch_all(&state.db)
@@ -448,13 +448,12 @@ pub async fn assign_permissions_to_role(
     Json(req): Json<AssignPermissionsRequest>,
 ) -> Result<Json<ApiResponse<String>>, impl IntoResponse> {
     // 检查角色是否存在
-    let role_exists = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM iam.roles WHERE id = $1)"
-    )
-    .bind(&role_id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+    let role_exists =
+        sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM iam.roles WHERE id = $1)")
+            .bind(&role_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(false);
 
     if !role_exists {
         return Err((
@@ -470,7 +469,7 @@ pub async fn assign_permissions_to_role(
             INSERT INTO iam.role_permissions (role_id, permission_id)
             VALUES ($1, $2)
             ON CONFLICT (role_id, permission_id) DO NOTHING
-            "#
+            "#,
         )
         .bind(&role_id)
         .bind(permission_id)
@@ -486,7 +485,11 @@ pub async fn assign_permissions_to_role(
         }
     }
 
-    tracing::info!("为角色 {} 分配了 {} 个权限", role_id, req.permission_ids.len());
+    tracing::info!(
+        "为角色 {} 分配了 {} 个权限",
+        role_id,
+        req.permission_ids.len()
+    );
     Ok(Json(ApiResponse::success(String::new(), "分配权限成功")))
 }
 
@@ -494,13 +497,12 @@ pub async fn remove_permission_from_role(
     State(state): State<crate::AppState>,
     Path((role_id, permission_id)): Path<(String, String)>,
 ) -> Result<Json<ApiResponse<String>>, impl IntoResponse> {
-    let result = sqlx::query(
-        "DELETE FROM iam.role_permissions WHERE role_id = $1 AND permission_id = $2"
-    )
-    .bind(&role_id)
-    .bind(&permission_id)
-    .execute(&state.db)
-    .await;
+    let result =
+        sqlx::query("DELETE FROM iam.role_permissions WHERE role_id = $1 AND permission_id = $2")
+            .bind(&role_id)
+            .bind(&permission_id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(res) => {
@@ -531,8 +533,17 @@ pub fn create_role_routes(state: AppState) -> Router<AppState> {
         .route("/api/v1/roles/{role_id}", get(get_role))
         .route("/api/v1/roles/{role_id}", put(update_role))
         .route("/api/v1/roles/{role_id}", delete(delete_role))
-        .route("/api/v1/roles/{role_id}/permissions", get(get_role_permissions))
-        .route("/api/v1/roles/{role_id}/permissions", post(assign_permissions_to_role))
-        .route("/api/v1/roles/{role_id}/permissions/{permission_id}", delete(remove_permission_from_role))
+        .route(
+            "/api/v1/roles/{role_id}/permissions",
+            get(get_role_permissions),
+        )
+        .route(
+            "/api/v1/roles/{role_id}/permissions",
+            post(assign_permissions_to_role),
+        )
+        .route(
+            "/api/v1/roles/{role_id}/permissions/{permission_id}",
+            delete(remove_permission_from_role),
+        )
         .with_state(state)
 }

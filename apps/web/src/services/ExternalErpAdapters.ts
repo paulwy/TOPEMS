@@ -5,7 +5,7 @@
 
 import type { AxiosInstance } from "axios";
 import axios from "axios";
-import type { CreateVoucherRequest, Voucher } from "../types/erp-finance";
+import type { CreateVoucherRequest } from "../types/erp-finance";
 
 // ============================================
 // 一、类型定义
@@ -224,7 +224,7 @@ export class KingdeeAdapter extends BaseAdapter {
     });
 
     this.token = response.data.access_token;
-    return this.token;
+    return this.token as string;
   }
 
   /**
@@ -401,7 +401,7 @@ export class KingdeeAdapter extends BaseAdapter {
       FDate: voucher.voucher_date,
       FPeriod: voucher.period,
       FExplanation: voucher.summary,
-      FEntity: voucher.entries.map((entry, index) => ({
+      FEntity: voucher.entries.map((entry: any, index: number) => ({
         FSeq: index + 1,
         FAccountID: entry.account_id,
         FDebitAmountFor: entry.debit_amount || 0,
@@ -421,7 +421,7 @@ export class KingdeeAdapter extends BaseAdapter {
 // ============================================
 
 export class YonyouAdapter extends BaseAdapter {
-  private session: string | null = null;
+  private session: string = "";
 
   /**
    * 连接测试
@@ -448,7 +448,7 @@ export class YonyouAdapter extends BaseAdapter {
       password: this.config.password,
     });
 
-    this.session = response.data.session_id;
+    this.session = response.data.session_id || "";
     return this.session;
   }
 
@@ -851,7 +851,7 @@ export class SapAdapter extends BaseAdapter {
    */
   private transformToSapFormat(voucher: CreateVoucherRequest): any {
     const lines = voucher.entries
-      .flatMap((entry, index) => [
+      .flatMap((entry: any, index: number) => [
         {
           ITEMNO_ACC: String(index * 10 + 1),
           GL_ACCOUNT: entry.account_id,
@@ -866,7 +866,7 @@ export class SapAdapter extends BaseAdapter {
           AMT_DOCCUR: entry.credit_amount ? -entry.credit_amount : 0,
         },
       ])
-      .filter((line) => line.GL_ACCOUNT);
+      .filter((line: any) => line.GL_ACCOUNT);
 
     return {
       DOCUMENTHEADER: {
@@ -879,7 +879,7 @@ export class SapAdapter extends BaseAdapter {
         USERNAME: this.config.username,
       },
       ACCOUNTGL: lines,
-      CURRENCYAMOUNT: lines.map((line) => ({
+      CURRENCYAMOUNT: lines.map((line: any) => ({
         ITEMNO_ACC: line.ITEMNO_ACC,
         CURRENCY: "CNY",
         AMT_DOCCUR: line.AMT_DOCCUR || 0,

@@ -1,15 +1,15 @@
 use axum::{
-    extract::{State, Json},
-    http::{StatusCode, HeaderMap},
+    extract::{Json, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row, postgres::PgRow};
+use sqlx::{postgres::PgRow, PgPool, Row};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, AuthState};
 use super::auth_utils::extract_user_id_from_token;
+use topems_shared::{ApiResponse, AuthState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Device {
@@ -74,29 +74,39 @@ pub async fn register_device(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id = match Uuid::parse_str(&user_id_str) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
-    let existing_device = match sqlx::query("SELECT id FROM devices WHERE user_id = $1 AND device_id = $2")
-        .bind(user_id)
-        .bind(&payload.device_id)
-        .fetch_optional(&pool)
-        .await
-    {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::error!("查询设备失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "内部服务器错误")));
-        }
-    };
+    let existing_device =
+        match sqlx::query("SELECT id FROM devices WHERE user_id = $1 AND device_id = $2")
+            .bind(user_id)
+            .bind(&payload.device_id)
+            .fetch_optional(&pool)
+            .await
+        {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::error!("查询设备失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(500, "内部服务器错误")),
+                );
+            }
+        };
 
     if existing_device.is_some() {
         if let Err(e) = sqlx::query("UPDATE devices SET device_name = $1, device_type = $2, os_type = $3, os_version = $4, app_version = $5, push_token = $6, is_active = true, last_login_at = NOW(), updated_at = NOW() WHERE user_id = $7 AND device_id = $8")
@@ -114,7 +124,10 @@ pub async fn register_device(
             tracing::error!("更新设备信息失败: {}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "更新设备信息失败")));
         }
-        return (StatusCode::OK, Json(ApiResponse::success((), "设备更新成功")));
+        return (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "设备更新成功")),
+        );
     }
 
     let device_id = Uuid::new_v4();
@@ -136,7 +149,10 @@ pub async fn register_device(
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "创建设备失败")));
     }
 
-    (StatusCode::CREATED, Json(ApiResponse::success((), "设备注册成功")))
+    (
+        StatusCode::CREATED,
+        Json(ApiResponse::success((), "设备注册成功")),
+    )
 }
 
 pub async fn update_push_token(
@@ -148,14 +164,20 @@ pub async fn update_push_token(
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(ApiResponse::error(401, "未授权")));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
         }
     };
 
     let user_id = match Uuid::parse_str(&user_id_str) {
         Ok(u) => u,
         Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(400, "无效的用户ID")));
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
         }
     };
 
@@ -169,14 +191,23 @@ pub async fn update_push_token(
     match result {
         Ok(r) => {
             if r.rows_affected() > 0 {
-                (StatusCode::OK, Json(ApiResponse::success((), "推送Token更新成功")))
+                (
+                    StatusCode::OK,
+                    Json(ApiResponse::success((), "推送Token更新成功")),
+                )
             } else {
-                (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "设备不存在")))
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiResponse::error(404, "设备不存在")),
+                )
             }
         }
         Err(e) => {
             tracing::error!("更新推送Token失败: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "更新推送Token失败")))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "更新推送Token失败")),
+            )
         }
     }
 }

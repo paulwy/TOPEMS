@@ -8,8 +8,9 @@ mod tests {
     // 测试数据库连接
     #[tokio::test]
     async fn test_database_connection() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -22,8 +23,9 @@ mod tests {
     // 测试供应商创建
     #[tokio::test]
     async fn test_create_supplier() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -58,8 +60,9 @@ mod tests {
     // 测试供应商列表查询
     #[tokio::test]
     async fn test_list_suppliers() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -68,7 +71,7 @@ mod tests {
             .unwrap();
 
         let result = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'"
+            "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'",
         )
         .fetch_one(&pool)
         .await;
@@ -79,8 +82,9 @@ mod tests {
     // 测试审计日志记录
     #[tokio::test]
     async fn test_audit_log() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -108,8 +112,9 @@ mod tests {
     // 测试供应商分类统计
     #[tokio::test]
     async fn test_supplier_category_stats() {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        });
 
         let pool = PgPoolOptions::new()
             .max_connections(1)

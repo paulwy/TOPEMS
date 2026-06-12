@@ -1,29 +1,28 @@
 use axum::{
-    extract::{Path, State, FromRef},
+    extract::{FromRef, Path, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
-use chrono::{Utc, DateTime};
-use uuid::Uuid;
-use sqlx::{postgres::PgPoolOptions, PgPool};
 use axum_prometheus::PrometheusMetricLayer;
+use chrono::{DateTime, Utc};
 use prometheus::{default_registry, Gauge};
+use serde::{Deserialize, Serialize};
+use sqlx::{postgres::PgPoolOptions, PgPool};
+use uuid::Uuid;
 
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, create_api_info_router,
-    HealthStatus, DependencyHealth, check_http_health,
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
+    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
 };
 
-pub mod models;
 pub mod api;
+pub mod models;
 
-use api::product::create_router as create_product_router;
+use api::configuration::create_router as create_configuration_router;
 use api::document::create_router as create_document_router;
 use api::material::create_router as create_material_router;
+use api::product::create_router as create_product_router;
 use api::version::create_router as create_version_router;
-use api::configuration::create_router as create_configuration_router;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ProductionProcess {
@@ -284,8 +283,11 @@ async fn main() {
     let custom_gauge = Gauge::new(
         "topems_pdm_custom_metric",
         "This is a custom metric for TOPEMS-PDM",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -293,7 +295,10 @@ async fn main() {
         .route("/", get(home))
         .route("/health", get(health))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
@@ -313,7 +318,10 @@ async fn main() {
         .route("/api/v1/production-formulas/{id}", put(update_formula))
         .route("/api/v1/production-formulas/{id}", delete(delete_formula))
         .route("/api/v1/formula-ingredients", post(create_ingredient))
-        .route("/api/v1/formula-ingredients/{id}", delete(delete_ingredient))
+        .route(
+            "/api/v1/formula-ingredients/{id}",
+            delete(delete_ingredient),
+        )
         .route("/api/v1/production-batches", get(list_batches))
         .route("/api/v1/production-batches", post(create_batch))
         .route("/api/v1/production-batches/{id}", get(get_batch))
@@ -363,9 +371,7 @@ async fn home() -> &'static str {
     "TOPEMS-PDM Production Data Management System API\n\nCheck out the API at /health"
 }
 
-async fn health(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<String>> {
+async fn health(State(state): State<AppState>) -> Json<ApiResponse<String>> {
     let database_health = check_database_health(&state.pool).await;
     let iam_health = check_iam_health().await;
 
@@ -390,9 +396,7 @@ async fn health(
     Json(ApiResponse::success(status_str, "健康检查"))
 }
 
-async fn health_check_detailed(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<ServiceHealth>> {
+async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
         check_database_health(&state.pool).await,
         check_iam_health().await,
@@ -419,17 +423,14 @@ async fn health_check_detailed(
         HealthStatus::Unhealthy => "存在关键服务故障",
     };
 
-    let health = ServiceHealth::healthy_with_message("topems-pdm", message)
-        .with_dependencies(dependencies);
+    let health =
+        ServiceHealth::healthy_with_message("topems-pdm", message).with_dependencies(dependencies);
 
     Json(ApiResponse::success(health, "详细健康检查"))
 }
 
 async fn check_database_health(pool: &PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -447,8 +448,8 @@ async fn check_database_health(pool: &PgPool) -> DependencyHealth {
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = std::env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {
@@ -475,17 +476,25 @@ async fn check_iam_health() -> DependencyHealth {
     }
 }
 
-async fn list_processes(State(state): State<AppState>) -> Json<ApiResponse<Vec<ProductionProcess>>> {
+async fn list_processes(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<ProductionProcess>>> {
     match sqlx::query_as::<_, ProductionProcess>(
-        "SELECT * FROM production_processes ORDER BY created_at DESC LIMIT 100"
+        "SELECT * FROM production_processes ORDER BY created_at DESC LIMIT 100",
     )
     .fetch_all(&state.pool)
     .await
     {
-        Ok(processes) => Json(ApiResponse::success(processes, "Processes retrieved successfully")),
+        Ok(processes) => Json(ApiResponse::success(
+            processes,
+            "Processes retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch processes: {}", e);
-            Json(ApiResponse::<Vec<ProductionProcess>>::error(500, &format!("Failed to fetch processes: {}", e)))
+            Json(ApiResponse::<Vec<ProductionProcess>>::error(
+                500,
+                &format!("Failed to fetch processes: {}", e),
+            ))
         }
     }
 }
@@ -501,7 +510,7 @@ async fn create_process(
         "INSERT INTO production_processes (
             id, process_no, name, description, version, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *"
+        RETURNING *",
     )
     .bind(id)
     .bind(req.process_no)
@@ -514,10 +523,16 @@ async fn create_process(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(process) => Json(ApiResponse::success(process, "Process created successfully")),
+        Ok(process) => Json(ApiResponse::success(
+            process,
+            "Process created successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to create process: {}", e);
-            Json(ApiResponse::<ProductionProcess>::error(500, &format!("Failed to create process: {}", e)))
+            Json(ApiResponse::<ProductionProcess>::error(
+                500,
+                &format!("Failed to create process: {}", e),
+            ))
         }
     }
 }
@@ -526,18 +541,22 @@ async fn get_process(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionProcess>> {
-    match sqlx::query_as::<_, ProductionProcess>(
-        "SELECT * FROM production_processes WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
+    match sqlx::query_as::<_, ProductionProcess>("SELECT * FROM production_processes WHERE id = $1")
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await
     {
         Ok(process) => Json(ApiResponse::success(process, "Process found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionProcess>::error(404, "Process not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionProcess>::error(
+            404,
+            "Process not found",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch process: {}", e);
-            Json(ApiResponse::<ProductionProcess>::error(500, &format!("Failed to fetch process: {}", e)))
+            Json(ApiResponse::<ProductionProcess>::error(
+                500,
+                &format!("Failed to fetch process: {}", e),
+            ))
         }
     }
 }
@@ -552,27 +571,37 @@ async fn update_process(
     let mut first = true;
 
     if let Some(v) = req.process_no {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("process_no = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.name {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("name = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.description {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("description = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.version {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("version = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.status {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("status = ").push_bind(v);
         first = false;
     }
@@ -581,17 +610,32 @@ async fn update_process(
         return get_process(State(state), Path(id)).await;
     }
 
-    if !first { query_builder.push(", "); }
+    if !first {
+        query_builder.push(", ");
+    }
     query_builder.push("updated_at = ").push_bind(now);
     query_builder.push(" WHERE id = ").push_bind(id);
     query_builder.push(" RETURNING *");
 
-    match query_builder.build_query_as::<ProductionProcess>().fetch_one(&state.pool).await {
-        Ok(process) => Json(ApiResponse::success(process, "Process updated successfully")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionProcess>::error(404, "Process not found")),
+    match query_builder
+        .build_query_as::<ProductionProcess>()
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(process) => Json(ApiResponse::success(
+            process,
+            "Process updated successfully",
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionProcess>::error(
+            404,
+            "Process not found",
+        )),
         Err(e) => {
             tracing::error!("Failed to update process: {}", e);
-            Json(ApiResponse::<ProductionProcess>::error(500, &format!("Failed to update process: {}", e)))
+            Json(ApiResponse::<ProductionProcess>::error(
+                500,
+                &format!("Failed to update process: {}", e),
+            ))
         }
     }
 }
@@ -614,14 +658,17 @@ async fn delete_process(
         }
         Err(e) => {
             tracing::error!("Failed to delete process: {}", e);
-            Json(ApiResponse::<bool>::error(500, &format!("Failed to delete process: {}", e)))
+            Json(ApiResponse::<bool>::error(
+                500,
+                &format!("Failed to delete process: {}", e),
+            ))
         }
     }
 }
 
 async fn list_steps(State(state): State<AppState>) -> Json<ApiResponse<Vec<ProductionStep>>> {
     match sqlx::query_as::<_, ProductionStep>(
-        "SELECT * FROM production_steps ORDER BY process_id, sort_order LIMIT 100"
+        "SELECT * FROM production_steps ORDER BY process_id, sort_order LIMIT 100",
     )
     .fetch_all(&state.pool)
     .await
@@ -629,7 +676,10 @@ async fn list_steps(State(state): State<AppState>) -> Json<ApiResponse<Vec<Produ
         Ok(steps) => Json(ApiResponse::success(steps, "Steps retrieved successfully")),
         Err(e) => {
             tracing::error!("Failed to fetch steps: {}", e);
-            Json(ApiResponse::<Vec<ProductionStep>>::error(500, &format!("Failed to fetch steps: {}", e)))
+            Json(ApiResponse::<Vec<ProductionStep>>::error(
+                500,
+                &format!("Failed to fetch steps: {}", e),
+            ))
         }
     }
 }
@@ -642,7 +692,12 @@ async fn create_step(
     let now = Utc::now();
     let process_uuid = match Uuid::parse_str(&req.process_id) {
         Ok(u) => u,
-        Err(e) => return Json(ApiResponse::<ProductionStep>::error(400, &format!("Invalid process ID: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::<ProductionStep>::error(
+                400,
+                &format!("Invalid process ID: {}", e),
+            ))
+        }
     };
 
     match sqlx::query_as::<_, ProductionStep>(
@@ -675,18 +730,21 @@ async fn get_step(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionStep>> {
-    match sqlx::query_as::<_, ProductionStep>(
-        "SELECT * FROM production_steps WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
+    match sqlx::query_as::<_, ProductionStep>("SELECT * FROM production_steps WHERE id = $1")
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await
     {
         Ok(step) => Json(ApiResponse::success(step, "Step found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionStep>::error(404, "Step not found")),
+        Err(sqlx::Error::RowNotFound) => {
+            Json(ApiResponse::<ProductionStep>::error(404, "Step not found"))
+        }
         Err(e) => {
             tracing::error!("Failed to fetch step: {}", e);
-            Json(ApiResponse::<ProductionStep>::error(500, &format!("Failed to fetch step: {}", e)))
+            Json(ApiResponse::<ProductionStep>::error(
+                500,
+                &format!("Failed to fetch step: {}", e),
+            ))
         }
     }
 }
@@ -700,32 +758,46 @@ async fn update_step(
     let mut first = true;
 
     if let Some(v) = req.step_no {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("step_no = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.name {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("name = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.description {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("description = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.duration {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("duration = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.equipment_required {
-        if !first { query_builder.push(", "); }
-        query_builder.push("equipment_required = ").push_bind(Some(v));
+        if !first {
+            query_builder.push(", ");
+        }
+        query_builder
+            .push("equipment_required = ")
+            .push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.sort_order {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("sort_order = ").push_bind(v);
         first = false;
     }
@@ -737,12 +809,21 @@ async fn update_step(
     query_builder.push(" WHERE id = ").push_bind(id);
     query_builder.push(" RETURNING *");
 
-    match query_builder.build_query_as::<ProductionStep>().fetch_one(&state.pool).await {
+    match query_builder
+        .build_query_as::<ProductionStep>()
+        .fetch_one(&state.pool)
+        .await
+    {
         Ok(step) => Json(ApiResponse::success(step, "Step updated successfully")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionStep>::error(404, "Step not found")),
+        Err(sqlx::Error::RowNotFound) => {
+            Json(ApiResponse::<ProductionStep>::error(404, "Step not found"))
+        }
         Err(e) => {
             tracing::error!("Failed to update step: {}", e);
-            Json(ApiResponse::<ProductionStep>::error(500, &format!("Failed to update step: {}", e)))
+            Json(ApiResponse::<ProductionStep>::error(
+                500,
+                &format!("Failed to update step: {}", e),
+            ))
         }
     }
 }
@@ -765,22 +846,31 @@ async fn delete_step(
         }
         Err(e) => {
             tracing::error!("Failed to delete step: {}", e);
-            Json(ApiResponse::<bool>::error(500, &format!("Failed to delete step: {}", e)))
+            Json(ApiResponse::<bool>::error(
+                500,
+                &format!("Failed to delete step: {}", e),
+            ))
         }
     }
 }
 
 async fn list_formulas(State(state): State<AppState>) -> Json<ApiResponse<Vec<ProductionFormula>>> {
     match sqlx::query_as::<_, ProductionFormula>(
-        "SELECT * FROM production_formulas ORDER BY created_at DESC LIMIT 100"
+        "SELECT * FROM production_formulas ORDER BY created_at DESC LIMIT 100",
     )
     .fetch_all(&state.pool)
     .await
     {
-        Ok(formulas) => Json(ApiResponse::success(formulas, "Formulas retrieved successfully")),
+        Ok(formulas) => Json(ApiResponse::success(
+            formulas,
+            "Formulas retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch formulas: {}", e);
-            Json(ApiResponse::<Vec<ProductionFormula>>::error(500, &format!("Failed to fetch formulas: {}", e)))
+            Json(ApiResponse::<Vec<ProductionFormula>>::error(
+                500,
+                &format!("Failed to fetch formulas: {}", e),
+            ))
         }
     }
 }
@@ -797,7 +887,7 @@ async fn create_formula(
         "INSERT INTO production_formulas (
             id, formula_no, name, description, version, process_id, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING *"
+        RETURNING *",
     )
     .bind(id)
     .bind(req.formula_no)
@@ -811,10 +901,16 @@ async fn create_formula(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(formula) => Json(ApiResponse::success(formula, "Formula created successfully")),
+        Ok(formula) => Json(ApiResponse::success(
+            formula,
+            "Formula created successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to create formula: {}", e);
-            Json(ApiResponse::<ProductionFormula>::error(500, &format!("Failed to create formula: {}", e)))
+            Json(ApiResponse::<ProductionFormula>::error(
+                500,
+                &format!("Failed to create formula: {}", e),
+            ))
         }
     }
 }
@@ -823,18 +919,22 @@ async fn get_formula(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionFormula>> {
-    match sqlx::query_as::<_, ProductionFormula>(
-        "SELECT * FROM production_formulas WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
+    match sqlx::query_as::<_, ProductionFormula>("SELECT * FROM production_formulas WHERE id = $1")
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await
     {
         Ok(formula) => Json(ApiResponse::success(formula, "Formula found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionFormula>::error(404, "Formula not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionFormula>::error(
+            404,
+            "Formula not found",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch formula: {}", e);
-            Json(ApiResponse::<ProductionFormula>::error(500, &format!("Failed to fetch formula: {}", e)))
+            Json(ApiResponse::<ProductionFormula>::error(
+                500,
+                &format!("Failed to fetch formula: {}", e),
+            ))
         }
     }
 }
@@ -849,33 +949,45 @@ async fn update_formula(
     let mut first = true;
 
     if let Some(v) = req.formula_no {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("formula_no = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.name {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("name = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.description {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("description = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.version {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("version = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.process_id {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         let uuid = Uuid::parse_str(&v).ok();
         query_builder.push("process_id = ").push_bind(uuid);
         first = false;
     }
     if let Some(v) = req.status {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("status = ").push_bind(v);
         first = false;
     }
@@ -884,17 +996,32 @@ async fn update_formula(
         return get_formula(State(state), Path(id)).await;
     }
 
-    if !first { query_builder.push(", "); }
+    if !first {
+        query_builder.push(", ");
+    }
     query_builder.push("updated_at = ").push_bind(now);
     query_builder.push(" WHERE id = ").push_bind(id);
     query_builder.push(" RETURNING *");
 
-    match query_builder.build_query_as::<ProductionFormula>().fetch_one(&state.pool).await {
-        Ok(formula) => Json(ApiResponse::success(formula, "Formula updated successfully")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionFormula>::error(404, "Formula not found")),
+    match query_builder
+        .build_query_as::<ProductionFormula>()
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(formula) => Json(ApiResponse::success(
+            formula,
+            "Formula updated successfully",
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionFormula>::error(
+            404,
+            "Formula not found",
+        )),
         Err(e) => {
             tracing::error!("Failed to update formula: {}", e);
-            Json(ApiResponse::<ProductionFormula>::error(500, &format!("Failed to update formula: {}", e)))
+            Json(ApiResponse::<ProductionFormula>::error(
+                500,
+                &format!("Failed to update formula: {}", e),
+            ))
         }
     }
 }
@@ -917,7 +1044,10 @@ async fn delete_formula(
         }
         Err(e) => {
             tracing::error!("Failed to delete formula: {}", e);
-            Json(ApiResponse::<bool>::error(500, &format!("Failed to delete formula: {}", e)))
+            Json(ApiResponse::<bool>::error(
+                500,
+                &format!("Failed to delete formula: {}", e),
+            ))
         }
     }
 }
@@ -930,14 +1060,19 @@ async fn create_ingredient(
     let now = Utc::now();
     let formula_uuid = match Uuid::parse_str(&req.formula_id) {
         Ok(u) => u,
-        Err(e) => return Json(ApiResponse::<FormulaIngredient>::error(400, &format!("Invalid formula ID: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::<FormulaIngredient>::error(
+                400,
+                &format!("Invalid formula ID: {}", e),
+            ))
+        }
     };
 
     match sqlx::query_as::<_, FormulaIngredient>(
         "INSERT INTO formula_ingredients (
             id, formula_id, material_name, quantity, unit, percentage, sort_order, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *"
+        RETURNING *",
     )
     .bind(id)
     .bind(formula_uuid)
@@ -950,10 +1085,16 @@ async fn create_ingredient(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(ingredient) => Json(ApiResponse::success(ingredient, "Ingredient created successfully")),
+        Ok(ingredient) => Json(ApiResponse::success(
+            ingredient,
+            "Ingredient created successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to create ingredient: {}", e);
-            Json(ApiResponse::<FormulaIngredient>::error(500, &format!("Failed to create ingredient: {}", e)))
+            Json(ApiResponse::<FormulaIngredient>::error(
+                500,
+                &format!("Failed to create ingredient: {}", e),
+            ))
         }
     }
 }
@@ -969,29 +1110,41 @@ async fn delete_ingredient(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "Ingredient deleted successfully"))
+                Json(ApiResponse::success(
+                    true,
+                    "Ingredient deleted successfully",
+                ))
             } else {
                 Json(ApiResponse::<bool>::error(404, "Ingredient not found"))
             }
         }
         Err(e) => {
             tracing::error!("Failed to delete ingredient: {}", e);
-            Json(ApiResponse::<bool>::error(500, &format!("Failed to delete ingredient: {}", e)))
+            Json(ApiResponse::<bool>::error(
+                500,
+                &format!("Failed to delete ingredient: {}", e),
+            ))
         }
     }
 }
 
 async fn list_batches(State(state): State<AppState>) -> Json<ApiResponse<Vec<ProductionBatch>>> {
     match sqlx::query_as::<_, ProductionBatch>(
-        "SELECT * FROM production_batches ORDER BY created_at DESC LIMIT 100"
+        "SELECT * FROM production_batches ORDER BY created_at DESC LIMIT 100",
     )
     .fetch_all(&state.pool)
     .await
     {
-        Ok(batches) => Json(ApiResponse::success(batches, "Batches retrieved successfully")),
+        Ok(batches) => Json(ApiResponse::success(
+            batches,
+            "Batches retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch batches: {}", e);
-            Json(ApiResponse::<Vec<ProductionBatch>>::error(500, &format!("Failed to fetch batches: {}", e)))
+            Json(ApiResponse::<Vec<ProductionBatch>>::error(
+                500,
+                &format!("Failed to fetch batches: {}", e),
+            ))
         }
     }
 }
@@ -1038,18 +1191,22 @@ async fn get_batch(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionBatch>> {
-    match sqlx::query_as::<_, ProductionBatch>(
-        "SELECT * FROM production_batches WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
+    match sqlx::query_as::<_, ProductionBatch>("SELECT * FROM production_batches WHERE id = $1")
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await
     {
         Ok(batch) => Json(ApiResponse::success(batch, "Batch found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionBatch>::error(404, "Batch not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionBatch>::error(
+            404,
+            "Batch not found",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch batch: {}", e);
-            Json(ApiResponse::<ProductionBatch>::error(500, &format!("Failed to fetch batch: {}", e)))
+            Json(ApiResponse::<ProductionBatch>::error(
+                500,
+                &format!("Failed to fetch batch: {}", e),
+            ))
         }
     }
 }
@@ -1064,64 +1221,88 @@ async fn update_batch(
     let mut first = true;
 
     if let Some(v) = req.batch_no {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("batch_no = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.product_name {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("product_name = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.formula_id {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         let uuid = Uuid::parse_str(&v).ok();
         query_builder.push("formula_id = ").push_bind(uuid);
         first = false;
     }
     if let Some(v) = req.process_id {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         let uuid = Uuid::parse_str(&v).ok();
         query_builder.push("process_id = ").push_bind(uuid);
         first = false;
     }
     if let Some(v) = req.planned_quantity {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("planned_quantity = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.actual_quantity {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("actual_quantity = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.unit {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("unit = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.start_date {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("start_date = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.end_date {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("end_date = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.status {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("status = ").push_bind(v);
         first = false;
     }
     if let Some(v) = req.operator {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("operator = ").push_bind(Some(v));
         first = false;
     }
     if let Some(v) = req.remarks {
-        if !first { query_builder.push(", "); }
+        if !first {
+            query_builder.push(", ");
+        }
         query_builder.push("remarks = ").push_bind(Some(v));
         first = false;
     }
@@ -1130,17 +1311,29 @@ async fn update_batch(
         return get_batch(State(state), Path(id)).await;
     }
 
-    if !first { query_builder.push(", "); }
+    if !first {
+        query_builder.push(", ");
+    }
     query_builder.push("updated_at = ").push_bind(now);
     query_builder.push(" WHERE id = ").push_bind(id);
     query_builder.push(" RETURNING *");
 
-    match query_builder.build_query_as::<ProductionBatch>().fetch_one(&state.pool).await {
+    match query_builder
+        .build_query_as::<ProductionBatch>()
+        .fetch_one(&state.pool)
+        .await
+    {
         Ok(batch) => Json(ApiResponse::success(batch, "Batch updated successfully")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionBatch>::error(404, "Batch not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<ProductionBatch>::error(
+            404,
+            "Batch not found",
+        )),
         Err(e) => {
             tracing::error!("Failed to update batch: {}", e);
-            Json(ApiResponse::<ProductionBatch>::error(500, &format!("Failed to update batch: {}", e)))
+            Json(ApiResponse::<ProductionBatch>::error(
+                500,
+                &format!("Failed to update batch: {}", e),
+            ))
         }
     }
 }
@@ -1163,22 +1356,33 @@ async fn delete_batch(
         }
         Err(e) => {
             tracing::error!("Failed to delete batch: {}", e);
-            Json(ApiResponse::<bool>::error(500, &format!("Failed to delete batch: {}", e)))
+            Json(ApiResponse::<bool>::error(
+                500,
+                &format!("Failed to delete batch: {}", e),
+            ))
         }
     }
 }
 
-async fn list_statistics(State(state): State<AppState>) -> Json<ApiResponse<Vec<ProductionStatistics>>> {
+async fn list_statistics(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<ProductionStatistics>>> {
     match sqlx::query_as::<_, ProductionStatistics>(
-        "SELECT * FROM production_statistics ORDER BY stat_date DESC LIMIT 100"
+        "SELECT * FROM production_statistics ORDER BY stat_date DESC LIMIT 100",
     )
     .fetch_all(&state.pool)
     .await
     {
-        Ok(statistics) => Json(ApiResponse::success(statistics, "Statistics retrieved successfully")),
+        Ok(statistics) => Json(ApiResponse::success(
+            statistics,
+            "Statistics retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch statistics: {}", e);
-            Json(ApiResponse::<Vec<ProductionStatistics>>::error(500, &format!("Failed to fetch statistics: {}", e)))
+            Json(ApiResponse::<Vec<ProductionStatistics>>::error(
+                500,
+                &format!("Failed to fetch statistics: {}", e),
+            ))
         }
     }
 }

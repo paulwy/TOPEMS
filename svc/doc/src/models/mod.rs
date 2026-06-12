@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct FileMetadata {
@@ -72,16 +72,16 @@ pub enum Permission {
 
 impl Permission {
     pub fn includes(&self, required: &Permission) -> bool {
-        match (self, required) {
-            (Permission::Admin, _) => true,
-            (Permission::Delete, Permission::Read) => true,
-            (Permission::Delete, Permission::Write) => true,
-            (Permission::Delete, Permission::Delete) => true,
-            (Permission::Write, Permission::Read) => true,
-            (Permission::Write, Permission::Write) => true,
-            (Permission::Read, Permission::Read) => true,
-            _ => false,
-        }
+        matches!(
+            (self, required),
+            (Permission::Admin, _)
+                | (Permission::Delete, Permission::Read)
+                | (Permission::Delete, Permission::Write)
+                | (Permission::Delete, Permission::Delete)
+                | (Permission::Write, Permission::Read)
+                | (Permission::Write, Permission::Write)
+                | (Permission::Read, Permission::Read)
+        )
     }
 
     pub fn as_str(&self) -> &str {
@@ -104,16 +104,16 @@ mod tests {
         assert!(Permission::Admin.includes(&Permission::Write));
         assert!(Permission::Admin.includes(&Permission::Delete));
         assert!(Permission::Admin.includes(&Permission::Admin));
-        
+
         assert!(Permission::Delete.includes(&Permission::Read));
         assert!(Permission::Delete.includes(&Permission::Write));
         assert!(Permission::Delete.includes(&Permission::Delete));
         assert!(!Permission::Delete.includes(&Permission::Admin));
-        
+
         assert!(Permission::Write.includes(&Permission::Read));
         assert!(Permission::Write.includes(&Permission::Write));
         assert!(!Permission::Write.includes(&Permission::Delete));
-        
+
         assert!(Permission::Read.includes(&Permission::Read));
         assert!(!Permission::Read.includes(&Permission::Write));
     }
@@ -130,7 +130,7 @@ mod tests {
         let read_perm = Permission::Read;
         let json = serde_json::to_string(&read_perm).unwrap();
         assert_eq!(json, "\"read\"");
-        
+
         let deserialized: Permission = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized, Permission::Read);
     }
@@ -202,6 +202,7 @@ pub struct TemplateCategoryResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct ListTemplatesQuery {
     pub page: Option<u32>,
     pub page_size: Option<u32>,
@@ -212,6 +213,7 @@ pub struct ListTemplatesQuery {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct ListTemplatesResponse {
     pub items: Vec<TemplateResponse>,
     pub total: i64,
@@ -244,6 +246,7 @@ pub enum SecurityLevel {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, sqlx::Type, ToSchema)]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub enum BorrowType {
     View,
     Download,
@@ -253,6 +256,7 @@ pub enum BorrowType {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, sqlx::Type, ToSchema)]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub enum BorrowStatus {
     Pending,
     Approved,
@@ -264,6 +268,7 @@ pub enum BorrowStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, sqlx::Type, ToSchema)]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub enum DestructionStatus {
     Pending,
     Approved,
@@ -310,6 +315,7 @@ pub struct Archive {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+#[allow(dead_code)]
 pub struct ArchiveBorrow {
     pub id: Uuid,
     pub archive_id: Uuid,
@@ -330,6 +336,7 @@ pub struct ArchiveBorrow {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+#[allow(dead_code)]
 pub struct ArchiveDestruction {
     pub id: Uuid,
     pub archive_id: Uuid,
@@ -343,6 +350,7 @@ pub struct ArchiveDestruction {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+#[allow(dead_code)]
 pub struct ArchiveMetadata {
     pub id: Uuid,
     pub archive_id: Uuid,
@@ -407,6 +415,7 @@ pub struct UpdateArchiveRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct CreateBorrowRequest {
     pub archive_id: Uuid,
     pub borrow_reason: String,
@@ -416,12 +425,14 @@ pub struct CreateBorrowRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct ApproveBorrowRequest {
     pub approval_comment: Option<String>,
     pub approved: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
 pub struct CreateDestructionRequest {
     pub archive_id: Uuid,
     pub reason: String,
@@ -484,4 +495,3 @@ pub struct ArchiveCategoryResponse {
     pub archive_count: i64,
     pub children: Vec<ArchiveCategoryResponse>,
 }
-

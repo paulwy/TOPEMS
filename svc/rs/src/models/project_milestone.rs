@@ -4,18 +4,13 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum MilestoneStatus {
+    #[default]
     Pending,
     Achieved,
     Delayed,
-}
-
-impl Default for MilestoneStatus {
-    fn default() -> Self {
-        MilestoneStatus::Pending
-    }
 }
 
 impl std::fmt::Display for MilestoneStatus {
@@ -40,7 +35,7 @@ pub struct ProjectMilestone {
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    
+
     // 验收相关字段
     pub deliverable_type: Option<String>,
     pub acceptance_criteria: Option<String>,
@@ -56,7 +51,7 @@ pub struct CreateMilestoneRequest {
     pub name: String,
     pub description: Option<String>,
     pub target_date: DateTime<Utc>,
-    
+
     // 验收相关字段
     pub deliverable_type: Option<String>,
     pub acceptance_criteria: Option<String>,
@@ -69,7 +64,7 @@ pub struct UpdateMilestoneRequest {
     pub target_date: Option<DateTime<Utc>>,
     pub actual_date: Option<DateTime<Utc>>,
     pub status: Option<MilestoneStatus>,
-    
+
     // 验收相关字段
     pub deliverable_type: Option<String>,
     pub acceptance_criteria: Option<String>,

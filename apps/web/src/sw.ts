@@ -53,7 +53,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request).catch(() => {
-        return caches.match("/offline.html");
+        return caches.match("/offline.html") as Promise<Response>;
       }),
     );
   }
@@ -61,8 +61,12 @@ self.addEventListener("fetch", (event) => {
 
 // Background sync for failed requests
 self.addEventListener("sync", (event) => {
-  if (event.tag === "sync-data") {
-    event.waitUntil(syncData());
+  const syncEvent = event as unknown as {
+    tag: string;
+    waitUntil: (promise: Promise<unknown>) => void;
+  };
+  if (syncEvent.tag === "sync-data") {
+    syncEvent.waitUntil(syncData());
   }
 });
 

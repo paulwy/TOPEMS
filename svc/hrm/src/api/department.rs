@@ -7,16 +7,21 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
-use topems_shared::{ApiResponse, api_error};
 use super::ApiState;
+use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
+use topems_shared::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/departments", get(list_departments).post(create_department))
+        .route(
+            "/api/v1/departments",
+            get(list_departments).post(create_department),
+        )
         .route(
             "/api/v1/departments/{id}",
-            get(get_department).put(update_department).delete(delete_department),
+            get(get_department)
+                .put(update_department)
+                .delete(delete_department),
         )
 }
 
@@ -101,11 +106,11 @@ async fn create_department(
 ) -> Json<ApiResponse<Department>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     // 如果没有提供 organization_id，使用默认的 organization
-    let org_id = req.organization_id.unwrap_or_else(|| {
-        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
+    let org_id = req
+        .organization_id
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
 
     let result = sqlx::query_as::<_, Department>(
         r#"
@@ -233,7 +238,9 @@ async fn delete_department(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "部门删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "部门删除成功"))
+        }
         Ok(_) => Json(api_error(404, "部门不存在")),
         Err(e) => {
             tracing::error!("删除部门失败: {}", e);

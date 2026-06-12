@@ -8,7 +8,6 @@ import {
   FileText,
   Image,
   Database,
-  CheckCircle,
   Loader2,
   ChevronRight,
 } from "lucide-react";

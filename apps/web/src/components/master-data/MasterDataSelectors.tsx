@@ -20,12 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -208,16 +203,14 @@ export function CounterpartySelector({
   // 获取客户列表
   const { data: customersData, isLoading: customersLoading } = useQuery({
     queryKey: ["counterparties", "customer", search, status],
-    queryFn: () =>
-      crmApi.customers.list(),
+    queryFn: () => crmApi.customers.list(),
     enabled: open && activeTab === "customer",
   });
 
   // 获取供应商列表
   const { data: suppliersData, isLoading: suppliersLoading } = useQuery({
     queryKey: ["counterparties", "supplier", search, status],
-    queryFn: () =>
-      srmApi.listSuppliers(),
+    queryFn: () => srmApi.listSuppliers(),
     enabled: open && activeTab === "supplier",
   });
 
@@ -252,7 +245,11 @@ export function CounterpartySelector({
       >
         {selectedEntity ? (
           <span className="flex items-center gap-2">
-            <Badge variant="secondary">{(selectedEntity as any).code || (selectedEntity as any).supplier_no || ""}</Badge>
+            <Badge variant="secondary">
+              {(selectedEntity as any).code ||
+                (selectedEntity as any).supplier_no ||
+                ""}
+            </Badge>
             <span>{selectedEntity.name}</span>
           </span>
         ) : (
@@ -905,7 +902,9 @@ export function EmployeeSelector({
       >
         {selectedEmployee ? (
           <span className="flex items-center gap-2">
-            <Badge variant="secondary">{selectedEmployee.employee_number}</Badge>
+            <Badge variant="secondary">
+              {selectedEmployee.employee_number}
+            </Badge>
             <span>{selectedEmployee.name}</span>
           </span>
         ) : (
@@ -960,7 +959,9 @@ export function EmployeeSelector({
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{employee.employee_number}</Badge>
+                      <Badge variant="outline">
+                        {employee.employee_number}
+                      </Badge>
                       <span className="font-medium">{employee.name}</span>
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">

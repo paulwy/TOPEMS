@@ -1,6 +1,6 @@
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 struct IntegrationEvent {
@@ -137,13 +137,17 @@ mod integration_event_tests {
             source_system: "lims".to_string(),
             target_system: "qms".to_string(),
             event_type: "sample_updated".to_string(),
-            source_record_id: Some(Uuid::parse_str("87654321-4321-8765-4321-876543218765").unwrap()),
+            source_record_id: Some(
+                Uuid::parse_str("87654321-4321-8765-4321-876543218765").unwrap(),
+            ),
             target_record_id: None,
             payload: Some(serde_json::json!({ "status": "completed" })),
             status: "processing".to_string(),
             error_message: None,
             synced_at: None,
-            created_at: DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z").unwrap().with_timezone(&Utc),
+            created_at: DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
         };
 
         let json = serde_json::to_string(&event).unwrap();
@@ -405,8 +409,8 @@ mod http_endpoint_tests {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
-        Router,
         routing::get,
+        Router,
     };
     use tower::ServiceExt;
 
@@ -465,7 +469,7 @@ mod system_mapping_tests {
     fn test_lims_qms_mapping() {
         let lims_sample_id = Uuid::new_v4();
         let qms_inspection_id = Uuid::new_v4();
-        
+
         let sync = LimsQmsSync {
             id: Uuid::new_v4(),
             lims_sample_id,
@@ -490,7 +494,7 @@ mod system_mapping_tests {
     fn test_mes_erp_mapping() {
         let mes_order_id = Uuid::new_v4();
         let erp_order_id = Uuid::new_v4();
-        
+
         let sync = MesErpSync {
             id: Uuid::new_v4(),
             mes_order_id,
@@ -515,7 +519,7 @@ mod system_mapping_tests {
     fn test_wms_scm_mapping() {
         let wms_inventory_id = Uuid::new_v4();
         let scm_supply_id = Uuid::new_v4();
-        
+
         let sync = WmsScmSync {
             id: Uuid::new_v4(),
             wms_inventory_id,

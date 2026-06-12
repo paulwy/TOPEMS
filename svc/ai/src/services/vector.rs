@@ -246,23 +246,22 @@ impl VectorService {
 
     /// 获取统计信息
     pub async fn get_stats(&self) -> Result<VectorStats, sqlx::Error> {
-        let doc_count: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM ai.documents")
-                .fetch_one(self.db.pool())
-                .await?;
+        let doc_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM ai.documents")
+            .fetch_one(self.db.pool())
+            .await?;
 
-        let chunk_count: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM ai.document_chunks")
-                .fetch_one(self.db.pool())
-                .await?;
+        let chunk_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM ai.document_chunks")
+            .fetch_one(self.db.pool())
+            .await?;
 
-        let vector_count: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM ai.document_chunks WHERE embedding IS NOT NULL")
-                .fetch_one(self.db.pool())
-                .await?;
+        let vector_count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM ai.document_chunks WHERE embedding IS NOT NULL",
+        )
+        .fetch_one(self.db.pool())
+        .await?;
 
         let dimension: Option<i64> = sqlx::query_scalar(
-            "SELECT vector_dimensions FROM ai.document_chunks WHERE embedding IS NOT NULL LIMIT 1"
+            "SELECT vector_dimensions FROM ai.document_chunks WHERE embedding IS NOT NULL LIMIT 1",
         )
         .fetch_optional(self.db.pool())
         .await?;
@@ -340,8 +339,10 @@ impl VectorService {
         let keyword_results = self.keyword_search(query_text, top_k * 2).await?;
 
         // 合并结果
-        let mut combined_map: std::collections::HashMap<uuid::Uuid, crate::api::models::HybridSearchResult> =
-            std::collections::HashMap::new();
+        let mut combined_map: std::collections::HashMap<
+            uuid::Uuid,
+            crate::api::models::HybridSearchResult,
+        > = std::collections::HashMap::new();
 
         // 处理向量搜索结果
         for result in vector_results {
@@ -475,8 +476,10 @@ pub struct SaveChunkRequest {
 #[derive(Debug, Clone)]
 pub struct SaveVectorRequest {
     pub document_id: Uuid,
+    #[allow(dead_code)]
     pub chunk_id: Uuid,
     pub chunk_index: i32,
+    #[allow(dead_code)]
     pub content: String,
     pub embedding: Vec<f32>,
 }

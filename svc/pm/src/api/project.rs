@@ -2,8 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -80,8 +79,14 @@ pub struct ProjectGanttResponse {
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route("/api/v1/projects", get(list_projects).post(create_project))
-        .route("/api/v1/projects/{id}", get(get_project).put(update_project).delete(delete_project))
-        .route("/api/v1/projects/{id}/dashboard", get(get_project_dashboard))
+        .route(
+            "/api/v1/projects/{id}",
+            get(get_project).put(update_project).delete(delete_project),
+        )
+        .route(
+            "/api/v1/projects/{id}/dashboard",
+            get(get_project_dashboard),
+        )
         .route("/api/v1/projects/{id}/gantt", get(get_project_gantt))
         .with_state(pool)
 }
@@ -113,27 +118,36 @@ async fn list_projects(
         Ok(p) => p,
         Err(e) => {
             tracing::error!("获取项目列表失败: {}", e);
-            return Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取项目列表失败"));
+            return Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取项目列表失败",
+            ));
         }
     };
 
     let filtered_projects: Vec<Project> = projects
         .into_iter()
         .filter(|p| {
-            let type_ok = query.project_type.as_ref().map_or(true, |t| &p.project_type == t);
-            let status_ok = query.status.as_ref().map_or(true, |s| &p.status == s);
+            let type_ok = query
+                .project_type
+                .as_ref()
+                .is_none_or(|t| &p.project_type == t);
+            let status_ok = query.status.as_ref().is_none_or(|s| &p.status == s);
             type_ok && status_ok
         })
         .collect();
 
     let total = filtered_projects.len() as i32;
 
-    Json(ApiResponse::success(ProjectListResponse {
-        projects: filtered_projects,
-        total,
-        page,
-        page_size,
-    }, "获取项目列表成功"))
+    Json(ApiResponse::success(
+        ProjectListResponse {
+            projects: filtered_projects,
+            total,
+            page,
+            page_size,
+        },
+        "获取项目列表成功",
+    ))
 }
 
 #[utoipa::path(
@@ -173,8 +187,8 @@ async fn create_project(
     .bind(&req.project_type)
     .bind("draft")
     .bind(&req.leader)
-    .bind(&req.start_date)
-    .bind(&req.end_date)
+    .bind(req.start_date)
+    .bind(req.end_date)
     .bind(req.budget)
     .bind(0)
     .bind(&req.project_config)
@@ -214,12 +228,10 @@ async fn get_project(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Project>> {
-    let result = sqlx::query_as::<_, Project>(
-        "SELECT * FROM pm.projects WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_optional(&pool)
-    .await;
+    let result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&pool)
+        .await;
 
     match result {
         Ok(Some(project)) => Json(ApiResponse::success(project, "获取项目成功")),
@@ -275,7 +287,7 @@ async fn update_project(
     .bind(&req.description)
     .bind(&req.status)
     .bind(&req.leader)
-    .bind(&req.end_date)
+    .bind(req.end_date)
     .bind(req.budget)
     .bind(req.progress)
     .bind(&req.project_config)
@@ -345,12 +357,10 @@ async fn get_project_dashboard(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
-    let project_result = sqlx::query_as::<_, Project>(
-        "SELECT * FROM pm.projects WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_optional(&pool)
-    .await;
+    let project_result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&pool)
+        .await;
 
     let project = match project_result {
         Ok(Some(p)) => p,
@@ -362,7 +372,7 @@ async fn get_project_dashboard(
     };
 
     let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT * FROM pm.project_phases WHERE project_id = $1"
+        "SELECT * FROM pm.project_phases WHERE project_id = $1",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -393,7 +403,7 @@ async fn get_project_dashboard(
     });
 
     let members_result = sqlx::query_as::<_, crate::models::project_member::ProjectMember>(
-        "SELECT * FROM pm.project_members WHERE project_id = $1"
+        "SELECT * FROM pm.project_members WHERE project_id = $1",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -402,10 +412,12 @@ async fn get_project_dashboard(
     let members: Vec<serde_json::Value> = members_result
         .unwrap_or_default()
         .into_iter()
-        .map(|m| serde_json::json!({
-            "user_id": m.user_id,
-            "role": m.role
-        }))
+        .map(|m| {
+            serde_json::json!({
+                "user_id": m.user_id,
+                "role": m.role
+            })
+        })
         .collect();
 
     let mut risks = Vec::new();
@@ -460,7 +472,7 @@ async fn get_project_gantt(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
     let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC"
+        "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -486,12 +498,13 @@ async fn get_project_gantt(
         }
     };
 
-    let milestones_result = sqlx::query_as::<_, crate::models::project_milestone::ProjectMilestone>(
-        "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC"
-    )
-    .bind(id)
-    .fetch_all(&pool)
-    .await;
+    let milestones_result =
+        sqlx::query_as::<_, crate::models::project_milestone::ProjectMilestone>(
+            "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
+        )
+        .bind(id)
+        .fetch_all(&pool)
+        .await;
 
     let milestones: Vec<GanttMilestone> = match milestones_result {
         Ok(milestone_rows) => milestone_rows

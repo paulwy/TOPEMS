@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
-use uuid::Uuid;
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use uuid::Uuid;
 
 // ==================== 聊天室相关模型 ====================
 

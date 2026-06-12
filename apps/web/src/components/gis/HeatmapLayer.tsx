@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { DevicePoint, StorageLocation } from "../../api/gis";
@@ -18,9 +18,7 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
   visible,
   intensityMode,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const heatmapRef = useRef<any>(null);
-  const [isReady, setIsReady] = useState(false);
+  const heatmapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!visible || !mapRef.current) {
@@ -32,7 +30,6 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     }
 
     const map = mapRef.current;
-    const bounds = map.getBounds();
     const size = map.getSize();
 
     const canvas = document.createElement("canvas");
@@ -101,7 +98,6 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     if (pane) {
       pane.appendChild(overlay);
       heatmapRef.current = overlay;
-      setIsReady(true);
     }
 
     const handleMove = () => {
@@ -178,11 +174,11 @@ const drawHeatmap = (
   ctx.globalAlpha = 1;
 };
 
-const createGradient = (): CanvasGradient => {
+const createGradient = (): CanvasGradient | null => {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) {
-    return null as any;
+    return null;
   }
 
   canvas.width = 256;
@@ -201,7 +197,10 @@ const createGradient = (): CanvasGradient => {
   return gradient;
 };
 
-const getColor = (gradient: CanvasGradient, intensity: number): string => {
+const getColor = (
+  gradient: CanvasGradient | null,
+  intensity: number,
+): string => {
   if (!gradient) return "rgba(255, 0, 0, 0.5)";
 
   const canvas = document.createElement("canvas");

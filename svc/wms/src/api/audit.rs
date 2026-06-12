@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
-use crate::models::AuditLog;
 use crate::api::ApiState;
+use crate::models::AuditLog;
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {

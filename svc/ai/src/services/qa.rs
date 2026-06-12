@@ -17,6 +17,7 @@ pub struct QAConfig {
     pub base_url: String,
     pub api_key: Option<String>,
     pub model: String,
+    #[allow(dead_code)]
     pub embedding_model: String,
 }
 
@@ -56,12 +57,14 @@ impl QAService {
         let confidence = self.calculate_confidence(&answer);
 
         // 保存问答历史
-        let qa_id = self.save_qa_history(
-            question,
-            &answer,
-            context.map(|c| serde_json::json!({ "context": c })),
-            None,
-        ).await?;
+        let qa_id = self
+            .save_qa_history(
+                question,
+                &answer,
+                context.map(|c| serde_json::json!({ "context": c })),
+                None,
+            )
+            .await?;
 
         Ok((answer, vec![], qa_id, confidence))
     }
@@ -76,7 +79,16 @@ impl QAService {
         // 构建上下文
         let context = context_chunks
             .iter()
-            .map(|chunk| format!("【文档：{}】\n{}", chunk.document_title.as_ref().unwrap_or(&"未知文档".to_string()), chunk.content))
+            .map(|chunk| {
+                format!(
+                    "【文档：{}】\n{}",
+                    chunk
+                        .document_title
+                        .as_ref()
+                        .unwrap_or(&"未知文档".to_string()),
+                    chunk.content
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n\n");
 
@@ -92,12 +104,14 @@ impl QAService {
         let confidence = self.calculate_confidence(&answer);
 
         // 保存问答历史
-        let qa_id = self.save_qa_history(
-            question,
-            &answer,
-            Some(serde_json::json!({ "document_ids": document_ids })),
-            Some(context_chunks),
-        ).await?;
+        let qa_id = self
+            .save_qa_history(
+                question,
+                &answer,
+                Some(serde_json::json!({ "document_ids": document_ids })),
+                Some(context_chunks),
+            )
+            .await?;
 
         Ok((answer, context_chunks.to_vec(), qa_id, confidence))
     }
@@ -249,7 +263,9 @@ impl QAService {
 
         // 检查是否包含不确定的表达
         let uncertainty_phrases = ["不知道", "不确定", "无法", "抱歉", "没有找到"];
-        let has_uncertainty = uncertainty_phrases.iter().any(|phrase| answer.contains(phrase));
+        let has_uncertainty = uncertainty_phrases
+            .iter()
+            .any(|phrase| answer.contains(phrase));
 
         if has_uncertainty {
             length_score * 0.5

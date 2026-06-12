@@ -1,4 +1,3 @@
-use topems_shared::Result;
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -7,12 +6,15 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared::Result;
 use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;
-use crate::models::{CreateInspectionProcessRequest, InspectionProcess, UpdateInspectionProcessRequest};
 use crate::api::ApiState;
-use topems_shared::response::{ApiResponse, api_error};
+use crate::models::{
+    CreateInspectionProcessRequest, InspectionProcess, UpdateInspectionProcessRequest,
+};
+use topems_shared::response::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -24,7 +26,10 @@ pub struct PaginationParams {
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/processes", get(list_processes).post(create_process))
+        .route(
+            "/api/v1/processes",
+            get(list_processes).post(create_process),
+        )
         .route(
             "/api/v1/processes/{id}",
             get(get_process).put(update_process).delete(delete_process),
@@ -40,7 +45,7 @@ async fn list_processes(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    
+
     // 预先处理搜索参数，避免所有权问题
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
@@ -214,7 +219,8 @@ async fn update_process(
     let description = req.description.or(existing.description);
     let status = req.status.unwrap_or(existing.status);
     // 修复steps所有权问题，使用clone
-    let steps = req.steps
+    let steps = req
+        .steps
         .map(|s| serde_json::to_value(s).unwrap_or_else(|_| existing.steps.clone()))
         .unwrap_or(existing.steps);
     let now = Utc::now();

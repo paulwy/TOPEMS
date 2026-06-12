@@ -7,15 +7,12 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{
-    SafetyIncident, SafetyHazard,
-    CreateSafetyIncidentRequest, UpdateSafetyIncidentRequest,
-    HandleIncidentRequest, CreateSafetyHazardRequest, RectifyHazardRequest,
+    CreateSafetyHazardRequest, CreateSafetyIncidentRequest, HandleIncidentRequest,
+    RectifyHazardRequest, SafetyHazard, SafetyIncident, UpdateSafetyIncidentRequest,
 };
-use crate::services::permission::{
-    check_safety_permission, check_safety_write_permission,
-};
-use topems_shared::ApiResponse;
+use crate::services::permission::{check_safety_permission, check_safety_write_permission};
 use topems_shared::auth::Claims;
+use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct ListQueryParams {
@@ -28,10 +25,24 @@ pub struct ListQueryParams {
 
 pub fn create_routes(state: super::ApiState) -> Router<super::ApiState> {
     Router::new()
-        .route("/api/v1/safety/incidents", get(list_incidents).post(create_incident))
-        .route("/api/v1/safety/incidents/{id}", get(get_incident).put(update_incident).delete(delete_incident))
-        .route("/api/v1/safety/incidents/{id}/handle", post(handle_incident))
-        .route("/api/v1/safety/hazards", get(list_hazards).post(create_hazard))
+        .route(
+            "/api/v1/safety/incidents",
+            get(list_incidents).post(create_incident),
+        )
+        .route(
+            "/api/v1/safety/incidents/{id}",
+            get(get_incident)
+                .put(update_incident)
+                .delete(delete_incident),
+        )
+        .route(
+            "/api/v1/safety/incidents/{id}/handle",
+            post(handle_incident),
+        )
+        .route(
+            "/api/v1/safety/hazards",
+            get(list_hazards).post(create_hazard),
+        )
         .route("/api/v1/safety/hazards/{id}/rectify", post(rectify_hazard))
         .with_state(state)
 }
@@ -46,15 +57,22 @@ async fn list_incidents(
     if let Err(e) = check_safety_permission(&state.ehs_service.pool, &claims).await {
         return e;
     }
-    
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    match state.ehs_service.list_safety_incidents(page, page_size, params.search, params.status, params.level).await {
+    match state
+        .ehs_service
+        .list_safety_incidents(page, page_size, params.search, params.status, params.level)
+        .await
+    {
         Ok((incidents, _)) => Json(ApiResponse::success(incidents, "获取安全事故列表成功")),
         Err(e) => {
             tracing::error!("获取安全事故列表失败: {}", e);
-            Json(ApiResponse::<Vec<SafetyIncident>>::error(500, "获取安全事故列表失败"))
+            Json(ApiResponse::<Vec<SafetyIncident>>::error(
+                500,
+                "获取安全事故列表失败",
+            ))
         }
     }
 }
@@ -67,12 +85,15 @@ async fn create_incident(
     if let Err(e) = check_safety_write_permission(&state.ehs_service.pool, &claims).await {
         return e;
     }
-    
+
     match state.ehs_service.create_safety_incident(req).await {
         Ok(incident) => Json(ApiResponse::success(incident, "安全事故创建成功")),
         Err(e) => {
             tracing::error!("创建安全事故失败: {}", e);
-            Json(ApiResponse::<SafetyIncident>::error(500, "安全事故创建失败"))
+            Json(ApiResponse::<SafetyIncident>::error(
+                500,
+                "安全事故创建失败",
+            ))
         }
     }
 }
@@ -85,13 +106,16 @@ async fn get_incident(
     if let Err(e) = check_safety_permission(&state.ehs_service.pool, &claims).await {
         return e;
     }
-    
+
     match state.ehs_service.get_safety_incident(id).await {
         Ok(Some(incident)) => Json(ApiResponse::success(incident, "获取事故详情成功")),
         Ok(None) => Json(ApiResponse::<SafetyIncident>::error(404, "安全事故不存在")),
         Err(e) => {
             tracing::error!("获取事故详情失败: {}", e);
-            Json(ApiResponse::<SafetyIncident>::error(500, "获取事故详情失败"))
+            Json(ApiResponse::<SafetyIncident>::error(
+                500,
+                "获取事故详情失败",
+            ))
         }
     }
 }
@@ -105,12 +129,15 @@ async fn update_incident(
     if let Err(e) = check_safety_write_permission(&state.ehs_service.pool, &claims).await {
         return e;
     }
-    
+
     match state.ehs_service.update_safety_incident(id, req).await {
         Ok(incident) => Json(ApiResponse::success(incident, "安全事故更新成功")),
         Err(e) => {
             tracing::error!("更新安全事故失败: {}", e);
-            Json(ApiResponse::<SafetyIncident>::error(500, "安全事故更新失败"))
+            Json(ApiResponse::<SafetyIncident>::error(
+                500,
+                "安全事故更新失败",
+            ))
         }
     }
 }
@@ -123,7 +150,7 @@ async fn delete_incident(
     if let Err(e) = check_safety_write_permission(&state.ehs_service.pool, &claims).await {
         return e;
     }
-    
+
     match state.ehs_service.delete_safety_incident(id).await {
         Ok(true) => Json(ApiResponse::success("".to_string(), "安全事故删除成功")),
         Ok(false) => Json(ApiResponse::<String>::error(404, "安全事故不存在")),
@@ -143,12 +170,15 @@ async fn handle_incident(
     if let Err(e) = check_safety_write_permission(&state.ehs_service.pool, &claims).await {
         return e;
     }
-    
+
     match state.ehs_service.handle_safety_incident(id, req).await {
         Ok(incident) => Json(ApiResponse::success(incident, "安全事故处理成功")),
         Err(e) => {
             tracing::error!("处理安全事故失败: {}", e);
-            Json(ApiResponse::<SafetyIncident>::error(500, "处理安全事故失败"))
+            Json(ApiResponse::<SafetyIncident>::error(
+                500,
+                "处理安全事故失败",
+            ))
         }
     }
 }
@@ -163,15 +193,22 @@ async fn list_hazards(
     if let Err(e) = check_safety_permission(&state.ehs_service.pool, &claims).await {
         return e;
     }
-    
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    match state.ehs_service.list_safety_hazards(page, page_size, params.search, params.status, params.level).await {
+    match state
+        .ehs_service
+        .list_safety_hazards(page, page_size, params.search, params.status, params.level)
+        .await
+    {
         Ok((hazards, _)) => Json(ApiResponse::success(hazards, "获取安全隐患列表成功")),
         Err(e) => {
             tracing::error!("获取安全隐患列表失败: {}", e);
-            Json(ApiResponse::<Vec<SafetyHazard>>::error(500, "获取安全隐患列表失败"))
+            Json(ApiResponse::<Vec<SafetyHazard>>::error(
+                500,
+                "获取安全隐患列表失败",
+            ))
         }
     }
 }
@@ -184,7 +221,7 @@ async fn create_hazard(
     if let Err(e) = check_safety_write_permission(&state.ehs_service.pool, &claims).await {
         return e;
     }
-    
+
     match state.ehs_service.create_safety_hazard(req).await {
         Ok(hazard) => Json(ApiResponse::success(hazard, "安全隐患创建成功")),
         Err(e) => {
@@ -203,7 +240,7 @@ async fn rectify_hazard(
     if let Err(e) = check_safety_write_permission(&state.ehs_service.pool, &claims).await {
         return e;
     }
-    
+
     match state.ehs_service.rectify_safety_hazard(id, req).await {
         Ok(hazard) => Json(ApiResponse::success(hazard, "安全隐患整改成功")),
         Err(e) => {

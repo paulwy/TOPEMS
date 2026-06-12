@@ -6,6 +6,7 @@ use super::permission::Principal;
 /// 文件事件枚举
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
+#[allow(dead_code)]
 pub enum FileEvent {
     /// 文件上传事件
     FileUploaded {
@@ -40,10 +41,7 @@ pub enum FileEvent {
     },
 
     /// 文件分享取消事件
-    FileUnshared {
-        file_id: Uuid,
-        principal: Principal,
-    },
+    FileUnshared { file_id: Uuid, principal: Principal },
 
     /// 向量化状态更新事件
     VectorStatusUpdated {
@@ -55,6 +53,7 @@ pub enum FileEvent {
 
 impl FileEvent {
     /// 获取事件类型名称
+    #[allow(dead_code)]
     pub fn event_type(&self) -> &'static str {
         match self {
             FileEvent::FileUploaded { .. } => "file.uploaded",

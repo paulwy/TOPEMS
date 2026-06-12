@@ -25,8 +25,9 @@ pub fn suggest_query_optimization(query: &str) -> QueryOptimizationSuggestion {
         suggestions.push("Avoid SELECT *, specify only needed columns".to_string());
     }
 
-    if !query.to_lowercase().contains("limit") && 
-       (query.to_lowercase().contains("select") || query.to_lowercase().contains("from")) {
+    if !query.to_lowercase().contains("limit")
+        && (query.to_lowercase().contains("select") || query.to_lowercase().contains("from"))
+    {
         suggestions.push("Consider adding LIMIT for large datasets".to_string());
     }
 
@@ -54,15 +55,11 @@ pub struct BatchOperations;
 
 impl BatchOperations {
     pub fn chunk_ids<T: Clone>(ids: &[T], chunk_size: usize) -> Vec<Vec<T>> {
-        ids.chunks(chunk_size)
-            .map(|chunk| chunk.to_vec())
-            .collect()
+        ids.chunks(chunk_size).map(|chunk| chunk.to_vec()).collect()
     }
 
     pub fn build_in_clause(column_name: &str, count: usize) -> String {
-        let placeholders: Vec<String> = (1..=count)
-            .map(|i| format!("${}", i))
-            .collect();
+        let placeholders: Vec<String> = (1..=count).map(|i| format!("${}", i)).collect();
         format!("{} IN ({})", column_name, placeholders.join(", "))
     }
 }
@@ -100,12 +97,12 @@ pub struct NPlusOneDetector;
 impl NPlusOneDetector {
     pub fn analyze_queries(queries: &[String]) -> Vec<NPlusOneWarning> {
         let mut pattern_counts: HashMap<String, Vec<String>> = HashMap::new();
-        
+
         for query in queries {
             let normalized = Self::normalize_query(query);
             pattern_counts
                 .entry(normalized)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(query.clone());
         }
 

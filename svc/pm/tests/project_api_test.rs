@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -14,19 +14,14 @@ enum ProjectStatus {
     Cancelled,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 enum RiskLevel {
     Low,
+    #[default]
     Medium,
     High,
     Critical,
-}
-
-impl Default for RiskLevel {
-    fn default() -> Self {
-        RiskLevel::Medium
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,7 +59,7 @@ struct UpdateProjectRequest {
 fn test_project_status_enum() {
     let status = ProjectStatus::Active;
     assert_eq!(serde_json::to_string(&status).unwrap(), "\"ACTIVE\"");
-    
+
     let status: ProjectStatus = serde_json::from_str("\"DRAFT\"").unwrap();
     assert_eq!(status, ProjectStatus::Draft);
 }
@@ -73,10 +68,10 @@ fn test_project_status_enum() {
 fn test_risk_level_enum() {
     let risk = RiskLevel::High;
     assert_eq!(serde_json::to_string(&risk).unwrap(), "\"HIGH\"");
-    
+
     let risk: RiskLevel = serde_json::from_str("\"LOW\"").unwrap();
     assert_eq!(risk, RiskLevel::Low);
-    
+
     let default_risk = RiskLevel::default();
     assert_eq!(default_risk, RiskLevel::Medium);
 }
@@ -90,7 +85,7 @@ fn test_create_project_request_validation() {
         project_type: "engineering".to_string(),
         budget: Some(Decimal::from(100000)),
     };
-    
+
     assert_eq!(req.name, "测试项目");
     assert_eq!(req.code, "TEST-001");
     assert!(req.description.is_some());
@@ -105,7 +100,7 @@ fn test_update_project_request_partial_update() {
         progress: Some(50),
         budget: Some(Decimal::from(150000)),
     };
-    
+
     assert!(req.name.is_some());
     assert!(req.status.is_some());
     assert_eq!(req.progress.unwrap(), 50);
@@ -126,7 +121,7 @@ fn test_project_struct_creation() {
         created_at: now,
         updated_at: now,
     };
-    
+
     assert_eq!(project.name, "示例项目");
     assert_eq!(project.status, "active");
     assert_eq!(project.progress, 30);
@@ -148,10 +143,10 @@ fn test_project_serialization() {
         created_at: now,
         updated_at: now,
     };
-    
+
     let json_str = serde_json::to_string(&project).unwrap();
     let deserialized: Project = serde_json::from_str(&json_str).unwrap();
-    
+
     assert_eq!(deserialized.id, project.id);
     assert_eq!(deserialized.name, project.name);
     assert_eq!(deserialized.status, project.status);
@@ -171,13 +166,13 @@ fn test_project_status_transitions() {
         created_at: Utc::now(),
         updated_at: Utc::now(),
     };
-    
+
     project.status = "pending_approval".to_string();
     assert_eq!(project.status, "pending_approval");
-    
+
     project.status = "active".to_string();
     assert_eq!(project.status, "active");
-    
+
     project.status = "completed".to_string();
     assert_eq!(project.status, "completed");
 }
@@ -196,10 +191,10 @@ fn test_project_budget_calculations() {
         created_at: Utc::now(),
         updated_at: Utc::now(),
     };
-    
+
     let budget = project.budget.unwrap();
     assert_eq!(budget, Decimal::from(1000000));
-    
+
     let spent = budget * Decimal::from_str_exact("0.5").unwrap();
     assert_eq!(spent, Decimal::from(500000));
 }
@@ -208,16 +203,16 @@ fn test_project_budget_calculations() {
 fn test_uuid_generation() {
     let id1 = Uuid::new_v4();
     let id2 = Uuid::new_v4();
-    
+
     assert_ne!(id1, id2);
-    assert!(id1.to_string().len() > 0);
+    assert!(!id1.to_string().is_empty());
 }
 
 #[test]
 fn test_date_time_operations() {
     let now = Utc::now();
     let tomorrow = now + Duration::days(1);
-    
+
     assert!(tomorrow > now);
     assert_eq!(tomorrow - now, Duration::days(1));
 }
@@ -226,7 +221,7 @@ fn test_date_time_operations() {
 fn test_decimal_precision() {
     let val1 = Decimal::from(100);
     let val2 = Decimal::from_str_exact("0.5").unwrap();
-    
+
     assert_eq!(val1 * val2, Decimal::from(50));
     assert_eq!(val1 + val2, Decimal::from_str_exact("100.5").unwrap());
 }

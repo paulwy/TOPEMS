@@ -1,36 +1,39 @@
+use axum::middleware as axum_middleware;
 use axum::{
-    extract::{Path, Query, State, DefaultBodyLimit},
-    http::{StatusCode, header},
+    extract::{DefaultBodyLimit, Path, Query, State},
+    http::{header, StatusCode},
     response::IntoResponse,
-    routing::{get, post, delete, put},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
-use prometheus::{Gauge, Counter, Histogram, HistogramOpts, default_registry};
-use axum::middleware as axum_middleware;
 use chrono::Utc;
+use prometheus::{default_registry, Counter, Gauge, Histogram, HistogramOpts};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
-use tower_http::cors::{AllowOrigin, CorsLayer};
-use uuid::Uuid;
-use utoipa::{OpenApi, ToSchema};
 use topems_shared::init_logging;
+use tower_http::cors::{AllowOrigin, CorsLayer};
+use utoipa::{OpenApi, ToSchema};
+use uuid::Uuid;
 
-mod models;
-mod db;
-mod services;
-mod middleware;
 mod api;
+mod db;
+mod middleware;
+mod models;
+mod services;
 
-use db::repository::{FileRepository, FolderRepository, FileVersionRepository, TemplateRepository, TemplateCategoryRepository, ArchiveCategoryRepository, ArchiveRepository};
-use models::{FileMetadata, Permission};
-use services::storage_service::StorageService;
-use services::doc_storage_service::DocStorageService;
-use services::conversion_service::ConversionService;
-use services::permission_service::PermissionService;
-use middleware::auth::{AuthState, optional_auth_middleware, OptionalClaims};
 use api::handlers::archive::ArchiveState;
 use api::handlers::archive::*;
+use db::repository::{
+    ArchiveCategoryRepository, ArchiveRepository, FileRepository, FileVersionRepository,
+    FolderRepository, TemplateCategoryRepository, TemplateRepository,
+};
+use middleware::auth::{optional_auth_middleware, AuthState, OptionalClaims};
+use models::{FileMetadata, Permission};
+use services::conversion_service::ConversionService;
+use services::doc_storage_service::DocStorageService;
+use services::permission_service::PermissionService;
+use services::storage_service::StorageService;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ApiResponse<T> {
@@ -293,14 +296,25 @@ async fn connect_db() -> sqlx::PgPool {
 async fn init_database_tables(pool: &sqlx::PgPool) -> anyhow::Result<()> {
     // 定义所有迁移的 SQL
     let migrations: Vec<(&str, &str)> = vec![
-        ("基础表结构", include_str!("./db/migrations/20260523000001_create_doc_schema.sql")),
-        ("模板和帮助中心表", include_str!("./db/migrations/20260527000001_create_templates_and_help_center_schema.sql")),
-        ("预置数据", include_str!("./db/migrations/20260527000002_seed_templates_and_help_center.sql")),
+        (
+            "基础表结构",
+            include_str!("./db/migrations/20260523000001_create_doc_schema.sql"),
+        ),
+        (
+            "模板和帮助中心表",
+            include_str!(
+                "./db/migrations/20260527000001_create_templates_and_help_center_schema.sql"
+            ),
+        ),
+        (
+            "预置数据",
+            include_str!("./db/migrations/20260527000002_seed_templates_and_help_center.sql"),
+        ),
     ];
-    
+
     for (name, migration) in migrations {
         tracing::info!("🔄 执行迁移: {}", name);
-        
+
         // 将 SQL 文件分割成单独的语句
         for statement in migration.split(';') {
             let statement = statement.trim();
@@ -309,8 +323,9 @@ async fn init_database_tables(pool: &sqlx::PgPool) -> anyhow::Result<()> {
                     Ok(_) => {}
                     Err(e) => {
                         // 忽略已经存在的表的错误
-                        if !e.to_string().contains("already exists") && 
-                           !e.to_string().contains("duplicate key") {
+                        if !e.to_string().contains("already exists")
+                            && !e.to_string().contains("duplicate key")
+                        {
                             tracing::warn!("⚠️ 迁移 {} 执行警告: {}", name, e);
                         }
                     }
@@ -318,7 +333,7 @@ async fn init_database_tables(pool: &sqlx::PgPool) -> anyhow::Result<()> {
             }
         }
     }
-    
+
     tracing::info!("🗄️ 数据库表初始化完成");
     Ok(())
 }
@@ -392,7 +407,8 @@ static START_TIME: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock
 fn get_uptime() -> String {
     let start_time = START_TIME.get_or_init(std::time::Instant::now);
     let duration = start_time.elapsed();
-    format!("{}h {}m {}s", 
+    format!(
+        "{}h {}m {}s",
         duration.as_secs() / 3600,
         (duration.as_secs() % 3600) / 60,
         duration.as_secs() % 60
@@ -401,9 +417,9 @@ fn get_uptime() -> String {
 
 async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
     let storage_backend = state.storage_service.get_backend_type().to_string();
-    
+
     let mut dependencies = Vec::new();
-    
+
     let storage_health = DependencyHealth {
         name: "storage".to_string(),
         status: HealthStatus::Healthy,
@@ -453,12 +469,23 @@ async fn list_files(
         return Json(ApiResponse::error(401, "未授权：需要有效的认证令牌"));
     }
 
-    tracing::debug!("用户 {} 已通过身份验证，允许读取文件列表", claims.0.username);
+    tracing::debug!(
+        "用户 {} 已通过身份验证，允许读取文件列表",
+        claims.0.username
+    );
 
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(20);
 
-    let files = state.file_repo.list(query.folder_id, page_size as i64, ((page - 1) * page_size) as i64).await.unwrap_or_default();
+    let files = state
+        .file_repo
+        .list(
+            query.folder_id,
+            page_size as i64,
+            ((page - 1) * page_size) as i64,
+        )
+        .await
+        .unwrap_or_default();
     let total = state.file_repo.count(query.folder_id).await.unwrap_or(0);
 
     Json(ApiResponse::success(
@@ -499,7 +526,12 @@ async fn upload_file(
 
     // 获取 token 用于调用 File 服务
     let token = claims.1.clone();
-    tracing::info!("🔑 Token for File service: {:?}", token.as_ref().map(|t| format!("{}...", &t[..50.min(t.len())])));
+    tracing::info!(
+        "🔑 Token for File service: {:?}",
+        token
+            .as_ref()
+            .map(|t| format!("{}...", &t[..50.min(t.len())]))
+    );
 
     let mut file_name = "uploaded_file.txt".to_string();
     let mut file_size: i64 = 0;
@@ -530,7 +562,7 @@ async fn upload_file(
                     file_size = file_content.len() as i64;
                 } else if name == "folder_id" {
                     if let Ok(value) = field.text().await {
-                        folder_id = Uuid::parse_str(&*value).ok();
+                        folder_id = Uuid::parse_str(&value).ok();
                     }
                 }
             }
@@ -556,10 +588,17 @@ async fn upload_file(
     };
 
     // 调用 File 服务上传文件
-    match doc_storage.upload_to_file_service(&file_name, file_content.clone(), &content_type).await {
+    match doc_storage
+        .upload_to_file_service(&file_name, file_content.clone(), &content_type)
+        .await
+    {
         Ok(response) => {
-            tracing::info!("文件上传到 File 服务成功: file_id={}, storage_path={}", response.id, response.storage_path);
-            
+            tracing::info!(
+                "文件上传到 File 服务成功: file_id={}, storage_path={}",
+                response.id,
+                response.storage_path
+            );
+
             let file = models::FileMetadata {
                 id: response.id,
                 name: file_name.clone(),
@@ -576,20 +615,22 @@ async fn upload_file(
                 Ok(saved_file) => {
                     // 保存文件版本到本地存储（用于版本控制）
                     let _version_id = Uuid::new_v4();
-                    let _ = save_file_version(&state, response.id, 1, file_content.clone(), uploader).await;
-                    return Json(ApiResponse::success(saved_file, "文件上传成功"));
+                    let _ =
+                        save_file_version(&state, response.id, 1, file_content.clone(), uploader)
+                            .await;
+                    Json(ApiResponse::success(saved_file, "文件上传成功"))
                 }
                 Err(e) => {
                     tracing::error!("保存文件到数据库失败: {:?}", e);
                     // 尝试从 File 服务删除已上传的文件
                     let _ = doc_storage.delete_from_file_service(response.id).await;
-                    return Json(ApiResponse::error(500, "保存文件失败"));
+                    Json(ApiResponse::error(500, "保存文件失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("上传文件到 File 服务失败: {:?}", e);
-            return Json(ApiResponse::error(500, &format!("上传失败: {}", e)));
+            Json(ApiResponse::error(500, &format!("上传失败: {}", e)))
         }
     }
 }
@@ -625,12 +666,11 @@ async fn get_file(
 
     if let Some(user_id) = claims.0.get_user_id() {
         if !claims.0.is_admin() {
-            match state.permission_service.check_file_permission(
-                id,
-                user_id,
-                &[],
-                &Permission::Read,
-            ).await {
+            match state
+                .permission_service
+                .check_file_permission(id, user_id, &[], &Permission::Read)
+                .await
+            {
                 Ok(true) => {
                     tracing::debug!("用户 {} 有文件 {} 的读取权限", claims.0.username, id);
                 }
@@ -654,13 +694,13 @@ async fn get_file(
     }
 }
 
-async fn download_file(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
+async fn download_file(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     tracing::debug!("下载文件: {}", id);
 
-    if let (Some(metadata), Some(content)) = (get_file_by_id(&state, id).await, get_file_content(&state, id).await) {
+    if let (Some(metadata), Some(content)) = (
+        get_file_by_id(&state, id).await,
+        get_file_content(&state, id).await,
+    ) {
         let mut headers = axum::http::HeaderMap::new();
         headers.insert(
             header::CONTENT_TYPE,
@@ -668,7 +708,9 @@ async fn download_file(
         );
         headers.insert(
             header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{}\"", metadata.name).parse().unwrap(),
+            format!("attachment; filename=\"{}\"", metadata.name)
+                .parse()
+                .unwrap(),
         );
         return (StatusCode::OK, headers, content);
     }
@@ -678,29 +720,45 @@ async fn download_file(
     (StatusCode::NOT_FOUND, headers, b"File not found".to_vec())
 }
 
-async fn preview_file(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
+async fn preview_file(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     tracing::info!("📄 预览文件请求: {}", id);
 
-    if let (Some(metadata), Some(content)) = (get_file_by_id(&state, id).await, get_file_content(&state, id).await) {
-        tracing::info!("📄 文件信息: name={}, content-type={}, size={} bytes",
-            metadata.name, metadata.content_type, content.len());
+    if let (Some(metadata), Some(content)) = (
+        get_file_by_id(&state, id).await,
+        get_file_content(&state, id).await,
+    ) {
+        tracing::info!(
+            "📄 文件信息: name={}, content-type={}, size={} bytes",
+            metadata.name,
+            metadata.content_type,
+            content.len()
+        );
 
         if state.conversion_service.can_convert(&metadata.name) {
             tracing::info!("🔄 尝试转换 {} 为 PDF 预览", metadata.name);
             if state.conversion_service.is_available() {
                 tracing::info!("✅ LibreOffice 可用，开始转换");
-                match state.conversion_service.convert_to_pdf(&content, &metadata.name).await {
+                match state
+                    .conversion_service
+                    .convert_to_pdf(&content, &metadata.name)
+                    .await
+                {
                     Ok(pdf_content) => {
                         tracing::info!("✅ PDF转换成功，大小: {} bytes", pdf_content.len());
                         let mut headers = axum::http::HeaderMap::new();
                         headers.insert(header::CONTENT_TYPE, "application/pdf".parse().unwrap());
-                        let pdf_name = format!("{}.pdf", std::path::Path::new(&metadata.name).file_stem().and_then(|s| s.to_str()).unwrap_or("document"));
+                        let pdf_name = format!(
+                            "{}.pdf",
+                            std::path::Path::new(&metadata.name)
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .unwrap_or("document")
+                        );
                         headers.insert(
                             header::CONTENT_DISPOSITION,
-                            format!("inline; filename=\"{}\"", pdf_name).parse().unwrap(),
+                            format!("inline; filename=\"{}\"", pdf_name)
+                                .parse()
+                                .unwrap(),
                         );
                         return (StatusCode::OK, headers, pdf_content);
                     }
@@ -721,7 +779,9 @@ async fn preview_file(
         );
         headers.insert(
             header::CONTENT_DISPOSITION,
-            format!("inline; filename=\"{}\"", metadata.name).parse().unwrap(),
+            format!("inline; filename=\"{}\"", metadata.name)
+                .parse()
+                .unwrap(),
         );
         return (StatusCode::OK, headers, content);
     }
@@ -758,12 +818,11 @@ async fn delete_file(
 
     if let Some(user_id) = claims.0.get_user_id() {
         if !claims.0.is_admin() {
-            match state.permission_service.check_file_permission(
-                id,
-                user_id,
-                &[],
-                &Permission::Delete,
-            ).await {
+            match state
+                .permission_service
+                .check_file_permission(id, user_id, &[], &Permission::Delete)
+                .await
+            {
                 Ok(true) => {
                     tracing::debug!("用户 {} 有文件 {} 的删除权限", claims.0.username, id);
                 }
@@ -797,12 +856,11 @@ async fn extract_text(
 
     if let Some(user_id) = claims.0.get_user_id() {
         if !claims.0.is_admin() {
-            match state.permission_service.check_file_permission(
-                id,
-                user_id,
-                &[],
-                &Permission::Read,
-            ).await {
+            match state
+                .permission_service
+                .check_file_permission(id, user_id, &[], &Permission::Read)
+                .await
+            {
                 Ok(true) => {
                     tracing::debug!("用户 {} 有文件 {} 的读取权限", claims.0.username, id);
                 }
@@ -854,12 +912,19 @@ async fn list_folders(
 ) -> Json<ApiResponse<ListFoldersResponse>> {
     tracing::debug!("获取文件夹列表: {:?}, 用户: {}", query, claims.0.username);
 
-    tracing::debug!("用户 {} 已通过身份验证，允许读取文件夹列表", claims.0.username);
+    tracing::debug!(
+        "用户 {} 已通过身份验证，允许读取文件夹列表",
+        claims.0.username
+    );
 
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(20);
 
-    let folders = state.folder_repo.list(query.parent_id).await.unwrap_or_default();
+    let folders = state
+        .folder_repo
+        .list(query.parent_id)
+        .await
+        .unwrap_or_default();
     let total = folders.len() as u64;
 
     let start = (page - 1) * page_size;
@@ -918,12 +983,8 @@ async fn create_folder(
     };
 
     match state.folder_repo.create(folder.clone()).await {
-        Ok(saved_folder) => {
-            return Json(ApiResponse::success(saved_folder, "文件夹创建成功"));
-        }
-        Err(_) => {
-            return Json(ApiResponse::error(500, "创建文件夹失败"));
-        }
+        Ok(saved_folder) => Json(ApiResponse::success(saved_folder, "文件夹创建成功")),
+        Err(_) => Json(ApiResponse::error(500, "创建文件夹失败")),
     }
 }
 
@@ -953,12 +1014,11 @@ async fn get_folder(
 
     if let Some(user_id) = claims.0.get_user_id() {
         if !claims.0.is_admin() {
-            match state.permission_service.check_folder_permission(
-                id,
-                user_id,
-                &[],
-                &Permission::Read,
-            ).await {
+            match state
+                .permission_service
+                .check_folder_permission(id, user_id, &[], &Permission::Read)
+                .await
+            {
                 Ok(true) => {
                     tracing::debug!("用户 {} 有文件夹 {} 的读取权限", claims.0.username, id);
                 }
@@ -1008,16 +1068,20 @@ async fn update_folder(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateFolderRequest>,
 ) -> Json<ApiResponse<models::Folder>> {
-    tracing::debug!("更新文件夹: {}, 请求: {:?}, 用户: {}", id, req, claims.0.username);
+    tracing::debug!(
+        "更新文件夹: {}, 请求: {:?}, 用户: {}",
+        id,
+        req,
+        claims.0.username
+    );
 
     if let Some(user_id) = claims.0.get_user_id() {
         if !claims.0.is_admin() {
-            match state.permission_service.check_folder_permission(
-                id,
-                user_id,
-                &[],
-                &Permission::Write,
-            ).await {
+            match state
+                .permission_service
+                .check_folder_permission(id, user_id, &[], &Permission::Write)
+                .await
+            {
                 Ok(true) => {
                     tracing::debug!("用户 {} 有文件夹 {} 的写入权限", claims.0.username, id);
                 }
@@ -1035,15 +1099,11 @@ async fn update_folder(
     tracing::debug!("用户 {} 已通过身份验证，允许更新文件夹", claims.0.username);
 
     match state.folder_repo.update(id, &req.name, req.parent_id).await {
-        Ok(Some(folder)) => {
-            return Json(ApiResponse::success(folder, "文件夹更新成功"));
-        }
-        Ok(None) => {
-            return Json(ApiResponse::error(404, "文件夹不存在"));
-        }
+        Ok(Some(folder)) => Json(ApiResponse::success(folder, "文件夹更新成功")),
+        Ok(None) => Json(ApiResponse::error(404, "文件夹不存在")),
         Err(e) => {
             tracing::error!("更新文件夹失败: {}", e);
-            return Json(ApiResponse::error(500, "更新文件夹失败"));
+            Json(ApiResponse::error(500, "更新文件夹失败"))
         }
     }
 }
@@ -1074,12 +1134,11 @@ async fn delete_folder(
 
     if !claims.0.is_admin() {
         if let Some(user_id) = claims.0.get_user_id() {
-            match state.permission_service.check_folder_permission(
-                id,
-                user_id,
-                &[],
-                &Permission::Delete,
-            ).await {
+            match state
+                .permission_service
+                .check_folder_permission(id, user_id, &[], &Permission::Delete)
+                .await
+            {
                 Ok(true) => {
                     tracing::debug!("用户 {} 有文件夹 {} 的删除权限", claims.0.username, id);
                 }
@@ -1158,16 +1217,19 @@ async fn list_file_versions(
     Path(file_id): Path<Uuid>,
     Query(query): Query<ListFileVersionsQuery>,
 ) -> Json<ApiResponse<ListFileVersionsResponse>> {
-    tracing::debug!("获取文件 {} 的版本列表，用户: {}", file_id, claims.0.username);
+    tracing::debug!(
+        "获取文件 {} 的版本列表，用户: {}",
+        file_id,
+        claims.0.username
+    );
 
     if let Some(user_id) = claims.0.get_user_id() {
         if !claims.0.is_admin() {
-            match state.permission_service.check_file_permission(
-                file_id,
-                user_id,
-                &[],
-                &Permission::Read,
-            ).await {
+            match state
+                .permission_service
+                .check_file_permission(file_id, user_id, &[], &Permission::Read)
+                .await
+            {
                 Ok(true) => {
                     tracing::debug!("用户 {} 有文件 {} 的读取权限", claims.0.username, file_id);
                 }
@@ -1182,18 +1244,22 @@ async fn list_file_versions(
         }
     }
 
-    tracing::debug!("用户 {} 已通过身份验证，允许查看文件版本", claims.0.username);
+    tracing::debug!(
+        "用户 {} 已通过身份验证，允许查看文件版本",
+        claims.0.username
+    );
 
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(20);
 
-    let versions: Vec<models::FileVersion> = match state.file_version_repo.list_by_file_id(file_id).await {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!("获取文件版本列表失败: {}", e);
-            vec![]
-        }
-    };
+    let versions: Vec<models::FileVersion> =
+        match state.file_version_repo.list_by_file_id(file_id).await {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("获取文件版本列表失败: {}", e);
+                vec![]
+            }
+        };
 
     let total = versions.len() as u64;
     let start = (page - 1) * page_size;
@@ -1239,16 +1305,20 @@ async fn get_file_version(
     claims: OptionalClaims,
     Path((file_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<models::FileVersion>> {
-    tracing::debug!("获取文件 {} 的版本 {}，用户: {}", file_id, version_id, claims.0.username);
+    tracing::debug!(
+        "获取文件 {} 的版本 {}，用户: {}",
+        file_id,
+        version_id,
+        claims.0.username
+    );
 
     if let Some(user_id) = claims.0.get_user_id() {
         if !claims.0.is_admin() {
-            match state.permission_service.check_file_permission(
-                file_id,
-                user_id,
-                &[],
-                &Permission::Read,
-            ).await {
+            match state
+                .permission_service
+                .check_file_permission(file_id, user_id, &[], &Permission::Read)
+                .await
+            {
                 Ok(true) => {
                     tracing::debug!("用户 {} 有文件 {} 的读取权限", claims.0.username, file_id);
                 }
@@ -1263,16 +1333,20 @@ async fn get_file_version(
         }
     }
 
-    tracing::debug!("用户 {} 已通过身份验证，允许获取文件版本", claims.0.username);
+    tracing::debug!(
+        "用户 {} 已通过身份验证，允许获取文件版本",
+        claims.0.username
+    );
 
-    let version: Option<models::FileVersion> = match state.file_version_repo.find_by_id(version_id).await {
-        Ok(Some(v)) if v.file_id == file_id => Some(v),
-        Ok(_) => None,
-        Err(e) => {
-            tracing::error!("获取文件版本失败: {}", e);
-            None
-        }
-    };
+    let version: Option<models::FileVersion> =
+        match state.file_version_repo.find_by_id(version_id).await {
+            Ok(Some(v)) if v.file_id == file_id => Some(v),
+            Ok(_) => None,
+            Err(e) => {
+                tracing::error!("获取文件版本失败: {}", e);
+                None
+            }
+        };
 
     if let Some(v) = version {
         Json(ApiResponse::success(v, "获取文件版本成功"))
@@ -1315,13 +1389,20 @@ async fn download_file_version(
 
     if let Some(c) = content {
         let mut headers = axum::http::HeaderMap::new();
-        headers.insert(header::CONTENT_TYPE, "application/octet-stream".parse().unwrap());
+        headers.insert(
+            header::CONTENT_TYPE,
+            "application/octet-stream".parse().unwrap(),
+        );
         return (StatusCode::OK, headers, c);
     }
 
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());
-    (StatusCode::NOT_FOUND, headers, b"Version not found".to_vec())
+    (
+        StatusCode::NOT_FOUND,
+        headers,
+        b"Version not found".to_vec(),
+    )
 }
 
 #[utoipa::path(
@@ -1350,23 +1431,30 @@ async fn list_templates(
     let limit = page_size as i64;
     let offset = ((page - 1) * page_size) as i64;
 
-    let (templates, total) = state.template_repo.list(
-        query.search.as_deref(),
-        query.category.as_deref(),
-        query.module.as_deref(),
-        query.is_active,
-        limit,
-        offset,
-    ).await.unwrap_or_else(|e| {
-        tracing::error!("获取模板列表失败: {}", e);
-        (vec![], 0)
-    });
+    let (templates, total) = state
+        .template_repo
+        .list(
+            query.search.as_deref(),
+            query.category.as_deref(),
+            query.module.as_deref(),
+            query.is_active,
+            limit,
+            offset,
+        )
+        .await
+        .unwrap_or_else(|e| {
+            tracing::error!("获取模板列表失败: {}", e);
+            (vec![], 0)
+        });
 
     // Enrich templates with category names
     let mut enriched_templates = vec![];
     for template in templates {
         let category_name = if let Some(cat_id) = template.category_id {
-            state.template_category_repo.find_by_code(&cat_id.to_string()).await
+            state
+                .template_category_repo
+                .find_by_code(&cat_id.to_string())
+                .await
                 .ok()
                 .flatten()
                 .map(|c| c.name)
@@ -1529,7 +1617,12 @@ async fn update_template(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTemplateRequest>,
 ) -> Json<ApiResponse<models::Template>> {
-    tracing::debug!("更新模板: {}, 请求: {:?}, 用户: {}", id, req, claims.0.username);
+    tracing::debug!(
+        "更新模板: {}, 请求: {:?}, 用户: {}",
+        id,
+        req,
+        claims.0.username
+    );
 
     if !claims.0.has_permission("doc_write") {
         return Json(ApiResponse::error(403, "权限不足"));
@@ -1648,7 +1741,11 @@ async fn list_template_categories(
         Ok(categories) => {
             let mut responses = vec![];
             for cat in categories {
-                let template_count = state.template_category_repo.get_template_count(cat.id).await.unwrap_or(0);
+                let template_count = state
+                    .template_category_repo
+                    .get_template_count(cat.id)
+                    .await
+                    .unwrap_or(0);
                 responses.push(models::TemplateCategoryResponse {
                     id: cat.id,
                     name: cat.name,
@@ -1707,11 +1804,15 @@ async fn duplicate_template(
 
     let now = Utc::now();
     let new_code = format!("{}-copy", original.code);
-    
+
     // Check if new code already exists
     if let Ok(Some(_)) = state.template_repo.find_by_code(&new_code).await {
         // Generate unique code
-        let new_code = format!("{}-{}-copy", original.code, Uuid::new_v4().to_string()[..8].to_string());
+        let new_code = format!(
+            "{}-{}-copy",
+            original.code,
+            &Uuid::new_v4().to_string()[..8]
+        );
         let duplicated = models::Template {
             id: Uuid::new_v4(),
             name: format!("{} (副本)", original.name),
@@ -1870,12 +1971,11 @@ async fn set_file_permission(
         return Json(ApiResponse::error(400, "必须指定用户ID或角色ID"));
     }
 
-    match state.permission_service.set_file_permission(
-        file_id,
-        req.user_id,
-        req.role_id,
-        req.permission,
-    ).await {
+    match state
+        .permission_service
+        .set_file_permission(file_id, req.user_id, req.role_id, req.permission)
+        .await
+    {
         Ok(perm) => Json(ApiResponse::success(perm, "文件权限设置成功")),
         Err(e) => {
             tracing::error!("设置文件权限失败: {}", e);
@@ -1893,12 +1993,11 @@ async fn get_file_permissions(
 
     if !claims.0.is_admin() {
         if let Some(uid) = user_id {
-            if let Ok(has_access) = state.permission_service.check_file_permission(
-                file_id,
-                uid,
-                &[],
-                &Permission::Read,
-            ).await {
+            if let Ok(has_access) = state
+                .permission_service
+                .check_file_permission(file_id, uid, &[], &Permission::Read)
+                .await
+            {
                 if !has_access {
                     return Json(ApiResponse::error(403, "权限不足"));
                 }
@@ -1924,7 +2023,11 @@ async fn delete_file_permission(
         return Json(ApiResponse::error(403, "权限不足：需要管理员权限"));
     }
 
-    match state.permission_service.remove_file_permission(permission_id).await {
+    match state
+        .permission_service
+        .remove_file_permission(permission_id)
+        .await
+    {
         Ok(success) => {
             if success {
                 Json(ApiResponse::ok("文件权限删除成功"))
@@ -1953,13 +2056,17 @@ async fn set_folder_permission(
         return Json(ApiResponse::error(400, "必须指定用户ID或角色ID"));
     }
 
-    match state.permission_service.set_folder_permission(
-        folder_id,
-        req.user_id,
-        req.role_id,
-        req.permission,
-        req.inherit,
-    ).await {
+    match state
+        .permission_service
+        .set_folder_permission(
+            folder_id,
+            req.user_id,
+            req.role_id,
+            req.permission,
+            req.inherit,
+        )
+        .await
+    {
         Ok(perm) => Json(ApiResponse::success(perm, "文件夹权限设置成功")),
         Err(e) => {
             tracing::error!("设置文件夹权限失败: {}", e);
@@ -1977,12 +2084,11 @@ async fn get_folder_permissions(
 
     if !claims.0.is_admin() {
         if let Some(uid) = user_id {
-            if let Ok(has_access) = state.permission_service.check_folder_permission(
-                folder_id,
-                uid,
-                &[],
-                &Permission::Read,
-            ).await {
+            if let Ok(has_access) = state
+                .permission_service
+                .check_folder_permission(folder_id, uid, &[], &Permission::Read)
+                .await
+            {
                 if !has_access {
                     return Json(ApiResponse::error(403, "权限不足"));
                 }
@@ -1990,7 +2096,11 @@ async fn get_folder_permissions(
         }
     }
 
-    match state.permission_service.get_folder_permissions(folder_id).await {
+    match state
+        .permission_service
+        .get_folder_permissions(folder_id)
+        .await
+    {
         Ok(perms) => Json(ApiResponse::success(perms, "获取文件夹权限成功")),
         Err(e) => {
             tracing::error!("获取文件夹权限失败: {}", e);
@@ -2008,7 +2118,11 @@ async fn delete_folder_permission(
         return Json(ApiResponse::error(403, "权限不足：需要管理员权限"));
     }
 
-    match state.permission_service.remove_folder_permission(permission_id).await {
+    match state
+        .permission_service
+        .remove_folder_permission(permission_id)
+        .await
+    {
         Ok(success) => {
             if success {
                 Json(ApiResponse::ok("文件夹权限删除成功"))
@@ -2026,14 +2140,15 @@ async fn delete_folder_permission(
 #[tokio::main]
 async fn main() {
     START_TIME.get_or_init(std::time::Instant::now);
-    
+
     init_logging("topems-doc");
 
     tracing::info!("🚀 TOPEMS-DOC 文档管理服务启动中...");
     dotenv::dotenv().ok();
 
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256".to_string());
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+        "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256".to_string()
+    });
 
     let pool = connect_db().await;
 
@@ -2090,38 +2205,53 @@ async fn main() {
     let auth_state = AuthState { jwt_secret };
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
-    
+
     let request_counter = Counter::new(
         "topems_doc_requests_total",
         "Total number of requests received by TOPEMS-DOC",
-    ).unwrap();
-    default_registry().register(Box::new(request_counter.clone())).unwrap();
-    
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(request_counter.clone()))
+        .unwrap();
+
     let error_counter = Counter::new(
         "topems_doc_errors_total",
         "Total number of errors occurred in TOPEMS-DOC",
-    ).unwrap();
-    default_registry().register(Box::new(error_counter.clone())).unwrap();
-    
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(error_counter.clone()))
+        .unwrap();
+
     let response_time_histogram = Histogram::with_opts(HistogramOpts::new(
         "topems_doc_response_time_seconds",
         "Response time histogram for TOPEMS-DOC requests",
-    )).unwrap();
-    default_registry().register(Box::new(response_time_histogram.clone())).unwrap();
-    
+    ))
+    .unwrap();
+    default_registry()
+        .register(Box::new(response_time_histogram.clone()))
+        .unwrap();
+
     let uptime_gauge = Gauge::new(
         "topems_doc_uptime_seconds",
         "Uptime of TOPEMS-DOC service in seconds",
-    ).unwrap();
-    default_registry().register(Box::new(uptime_gauge.clone())).unwrap();
-    
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(uptime_gauge.clone()))
+        .unwrap();
+
     let service_start_time = Gauge::new(
         "topems_doc_service_start_time_seconds",
         "Timestamp when the service started",
-    ).unwrap();
-    default_registry().register(Box::new(service_start_time.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(service_start_time.clone()))
+        .unwrap();
     service_start_time.set(Utc::now().timestamp() as f64);
-    
+
     let uptime_clone = uptime_gauge.clone();
     tokio::spawn(async move {
         loop {
@@ -2131,7 +2261,7 @@ async fn main() {
             tokio::time::sleep(std::time::Duration::from_secs(10)).await;
         }
     });
-    
+
     tracing::info!("✅ Prometheus 监控已初始化，包含请求计数、错误计数、响应时间、运行时间等指标");
 
     let cors_origins = std::env::var("CORS_ORIGINS")
@@ -2139,9 +2269,7 @@ async fn main() {
 
     let allowed_origins: Vec<axum::http::HeaderValue> = cors_origins
         .split(',')
-        .filter_map(|origin| {
-            origin.trim().parse().ok()
-        })
+        .filter_map(|origin| origin.trim().parse().ok())
         .collect();
 
     // 生产环境禁用通配符，使用明确的允许源列表
@@ -2166,7 +2294,10 @@ async fn main() {
         .route("/files/{id}/download", get(download_file))
         .route("/files/{id}/preview", get(preview_file))
         .route("/files/{id}/preview-pdf", get(preview_file))
-        .route("/files/{file_id}/versions/{version_id}/download", get(download_file_version))
+        .route(
+            "/files/{file_id}/versions/{version_id}/download",
+            get(download_file_version),
+        )
         .with_state(state.clone())
         .without_v07_checks();
 
@@ -2182,13 +2313,28 @@ async fn main() {
         .route("/folders/{id}", put(update_folder))
         .route("/folders/{id}", delete(delete_folder))
         .route("/files/{file_id}/versions", get(list_file_versions))
-        .route("/files/{file_id}/versions/{version_id}", get(get_file_version))
+        .route(
+            "/files/{file_id}/versions/{version_id}",
+            get(get_file_version),
+        )
         .route("/files/{file_id}/permissions", get(get_file_permissions))
         .route("/files/{file_id}/permissions", post(set_file_permission))
-        .route("/files/{file_id}/permissions/{permission_id}", delete(delete_file_permission))
-        .route("/folders/{folder_id}/permissions", get(get_folder_permissions))
-        .route("/folders/{folder_id}/permissions", post(set_folder_permission))
-        .route("/folders/{folder_id}/permissions/{permission_id}", delete(delete_folder_permission))
+        .route(
+            "/files/{file_id}/permissions/{permission_id}",
+            delete(delete_file_permission),
+        )
+        .route(
+            "/folders/{folder_id}/permissions",
+            get(get_folder_permissions),
+        )
+        .route(
+            "/folders/{folder_id}/permissions",
+            post(set_folder_permission),
+        )
+        .route(
+            "/folders/{folder_id}/permissions/{permission_id}",
+            delete(delete_folder_permission),
+        )
         .route("/templates", get(list_templates))
         .route("/templates", post(create_template))
         .route("/templates/{id}", get(get_template))
@@ -2197,7 +2343,10 @@ async fn main() {
         .route("/templates/{id}/duplicate", post(duplicate_template))
         .route("/templates/{id}/toggle-status", put(toggle_template_status))
         .route("/templates/categories", get(list_template_categories))
-        .layer(axum_middleware::from_fn_with_state(auth_state.clone(), optional_auth_middleware))
+        .layer(axum_middleware::from_fn_with_state(
+            auth_state.clone(),
+            optional_auth_middleware,
+        ))
         .with_state(state.clone())
         .without_v07_checks();
 
@@ -2213,7 +2362,10 @@ async fn main() {
         .route("/archives/{id}", put(update_archive))
         .route("/archives/{id}", delete(delete_archive))
         .route("/archives/{id}/archive", post(archive_archive))
-        .layer(axum_middleware::from_fn_with_state(auth_state.clone(), optional_auth_middleware))
+        .layer(axum_middleware::from_fn_with_state(
+            auth_state.clone(),
+            optional_auth_middleware,
+        ))
         .with_state(archive_state)
         .without_v07_checks();
 
@@ -2225,10 +2377,15 @@ async fn main() {
     let health_routes = Router::new()
         .route("/health", get(health))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        );
 
     async fn openapi_docs() -> Json<serde_json::Value> {
-        let openapi_json = ApiDoc::openapi().to_json().unwrap_or_else(|_| "{}".to_string());
+        let openapi_json = ApiDoc::openapi()
+            .to_json()
+            .unwrap_or_else(|_| "{}".to_string());
         let value: serde_json::Value = serde_json::from_str(&openapi_json).unwrap_or_default();
         Json(value)
     }
@@ -2247,9 +2404,9 @@ async fn main() {
 
     let _host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8001".to_string())
+        .unwrap_or_else(|_| "8028".to_string())
         .parse()
-        .unwrap_or(8001);
+        .unwrap_or(8028);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 

@@ -7,18 +7,26 @@ use axum::{
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::models::{Email, EmailListParams, ResendEmailsRequest, SendEmailRequest, SendEmailWithTemplateRequest};
-use crate::services::{check_permission, EmailService, TemplateService, MailPermission};
-use topems_shared::{api_error, ApiResponse, PaginatedResponse, auth::Claims};
+use crate::models::{
+    Email, EmailListParams, ResendEmailsRequest, SendEmailRequest, SendEmailWithTemplateRequest,
+};
+use crate::services::{check_permission, EmailService, MailPermission, TemplateService};
+use topems_shared::{api_error, auth::Claims, ApiResponse, PaginatedResponse};
 
 use super::ApiState;
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
         .route("/api/v1/mail/emails", get(list_emails).post(send_email))
-        .route("/api/v1/mail/emails/send-with-template", post(send_email_with_template))
+        .route(
+            "/api/v1/mail/emails/send-with-template",
+            post(send_email_with_template),
+        )
         .route("/api/v1/mail/emails/resend", post(resend_emails))
-        .route("/api/v1/mail/emails/{id}", get(get_email).delete(delete_email))
+        .route(
+            "/api/v1/mail/emails/{id}",
+            get(get_email).delete(delete_email),
+        )
         .route("/api/v1/mail/emails/stats", get(get_email_stats));
 
     Ok(app)
@@ -30,7 +38,7 @@ async fn list_emails(
     Query(params): Query<EmailListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Email>>> {
     match check_permission(&state.db, &claims, &MailPermission::EmailRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
@@ -39,7 +47,13 @@ async fn list_emails(
     let page_size = params.page_size.unwrap_or(20).min(100);
 
     match email_service
-        .list_emails(page, page_size, params.search, params.status, params.priority)
+        .list_emails(
+            page,
+            page_size,
+            params.search,
+            params.status,
+            params.priority,
+        )
         .await
     {
         Ok((emails, total)) => Json(ApiResponse::success(
@@ -59,7 +73,7 @@ async fn get_email(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Email>> {
     match check_permission(&state.db, &claims, &MailPermission::EmailRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
@@ -76,7 +90,7 @@ async fn send_email(
     Json(req): Json<SendEmailRequest>,
 ) -> Json<ApiResponse<Email>> {
     match check_permission(&state.db, &claims, &MailPermission::EmailWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
@@ -96,18 +110,22 @@ async fn send_email_with_template(
     Json(req): Json<SendEmailWithTemplateRequest>,
 ) -> Json<ApiResponse<Email>> {
     match check_permission(&state.db, &claims, &MailPermission::EmailWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
     let template_service = TemplateService::new(state.db.clone());
 
-    let template = match template_service.get_template_by_code(&req.template_code).await {
+    let template = match template_service
+        .get_template_by_code(&req.template_code)
+        .await
+    {
         Some(t) => t,
         None => return Json(api_error(404, "模板不存在")),
     };
 
-    let (subject, body, body_html) = TemplateService::render_template(&template, &req.template_data);
+    let (subject, body, body_html) =
+        TemplateService::render_template(&template, &req.template_data);
 
     let send_req = SendEmailRequest {
         subject,
@@ -136,7 +154,7 @@ async fn delete_email(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &MailPermission::EmailWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
@@ -157,7 +175,7 @@ async fn resend_emails(
     Json(req): Json<ResendEmailsRequest>,
 ) -> Json<ApiResponse<Value>> {
     match check_permission(&state.db, &claims, &MailPermission::EmailWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());
@@ -172,7 +190,7 @@ async fn get_email_stats(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Value>> {
     match check_permission(&state.db, &claims, &MailPermission::EmailRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let email_service = EmailService::new(state.db.clone());

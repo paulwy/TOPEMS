@@ -4,7 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::{Error as SqlxError};
+use sqlx::Error as SqlxError;
 use uuid::Uuid;
 
 use crate::models::project_member::{

@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub const CREATE_FILES_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS files (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -14,6 +15,7 @@ CREATE INDEX IF NOT EXISTS idx_files_folder_id ON files(folder_id);
 CREATE INDEX IF NOT EXISTS idx_files_created_by ON files(created_by);
 "#;
 
+#[allow(dead_code)]
 pub const CREATE_FOLDERS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS folders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -27,6 +29,7 @@ CREATE TABLE IF NOT EXISTS folders (
 CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON folders(parent_id);
 "#;
 
+#[allow(dead_code)]
 pub const CREATE_FILE_VERSIONS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS file_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -42,6 +45,7 @@ CREATE TABLE IF NOT EXISTS file_versions (
 CREATE INDEX IF NOT EXISTS idx_file_versions_file_id ON file_versions(file_id);
 "#;
 
+#[allow(dead_code)]
 pub const CREATE_FILE_PERMISSIONS_TABLE: &str = r#"
 CREATE TABLE IF NOT EXISTS file_permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

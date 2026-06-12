@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   Plus,
   Search,
@@ -183,7 +183,9 @@ export default function CompanyStructurePage() {
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Building2 className="w-4 h-4 text-blue-600" />
-          <span className="font-medium">{row.original.parent_company_name}</span>
+          <span className="font-medium">
+            {row.original.parent_company_name}
+          </span>
           <span className="text-gray-400 text-sm">
             ({row.original.parent_company_code})
           </span>
@@ -196,7 +198,9 @@ export default function CompanyStructurePage() {
       accessorKey: "relation_type",
       cell: ({ row }) => {
         const relationType = row.getValue<string>("relation_type");
-        const config = RELATION_TYPE_CONFIG[relationType as keyof typeof RELATION_TYPE_CONFIG] || {
+        const config = RELATION_TYPE_CONFIG[
+          relationType as keyof typeof RELATION_TYPE_CONFIG
+        ] || {
           label: relationType,
           color: "bg-gray-100 text-gray-800",
         };
@@ -222,7 +226,9 @@ export default function CompanyStructurePage() {
       header: "持股比例",
       accessorKey: "ownership_percentage",
       cell: ({ row }) => (
-        <span className="font-mono">{row.getValue("ownership_percentage")}%</span>
+        <span className="font-mono">
+          {row.getValue("ownership_percentage")}%
+        </span>
       ),
     },
     {

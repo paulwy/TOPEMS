@@ -17,20 +17,21 @@ use prometheus::{default_registry, Gauge};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 
-use walkdir::WalkDir;
 use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+use walkdir::WalkDir;
 
-use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, create_api_info_router,
-    HealthStatus, DependencyHealth, check_http_health,
+use services::{
+    AnalysisConfig, AnalysisService, Database, DocumentService, QAConfig, QAService, VectorService,
 };
-use services::{Database, DocumentService, VectorService, QAService, QAConfig, AnalysisService, AnalysisConfig};
+use topems_shared::{
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
+    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+};
 
 // AI 生成请求
 #[derive(Debug, Serialize, Deserialize)]
@@ -215,8 +216,7 @@ static CLIENT: std::sync::OnceLock<Client> = std::sync::OnceLock::new();
 static CONFIG: std::sync::OnceLock<Config> = std::sync::OnceLock::new();
 static DOCS_DIR: &str = "docs";
 
-#[derive(Clone)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Config {
     api_key: Option<String>,
     base_url: String,
@@ -359,7 +359,7 @@ impl FromRef<AppState> for AuthState {
 async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
     let mut docs = Vec::new();
     let path = Path::new(dir);
-    
+
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(dir) {
             eprintln!("Failed to create documents directory: {}", e);
@@ -374,11 +374,13 @@ async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
     {
         let file_path = entry.path();
         let metadata = entry.metadata().ok();
-        let filename = file_path.file_name()
+        let filename = file_path
+            .file_name()
             .unwrap_or_default()
             .to_string_lossy()
             .to_string();
-        let title = file_path.file_stem()
+        let title = file_path
+            .file_stem()
             .unwrap_or_default()
             .to_string_lossy()
             .to_string();
@@ -388,17 +390,24 @@ async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
             .as_secs()
             .to_string();
 
-        let ext = file_path.extension().unwrap_or_default().to_string_lossy().to_string();
+        let ext = file_path
+            .extension()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
         let mime_type = match ext.as_str() {
             "txt" => Some("text/plain".to_string()),
             "md" => Some("text/markdown".to_string()),
             "json" => Some("application/json".to_string()),
             "pdf" => Some("application/pdf".to_string()),
             "doc" => Some("application/msword".to_string()),
-            "docx" => Some("application/vnd.openxmlformats-officedocument.wordprocessingml.document".to_string()),
+            "docx" => Some(
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    .to_string(),
+            ),
             _ => None,
         };
-            
+
         docs.push(Document {
             id: filename.clone(),
             title,
@@ -416,7 +425,7 @@ async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
             error_message: None,
         });
     }
-    
+
     docs
 }
 
@@ -433,72 +442,78 @@ async fn read_file_content(file_path: &str) -> Option<String> {
 fn split_into_chunks(content: &str, chunk_size: usize, overlap: usize) -> Vec<String> {
     let mut chunks = Vec::new();
     let content_len = content.len();
-    
+
     if content_len <= chunk_size {
         chunks.push(content.to_string());
         return chunks;
     }
-    
+
     let mut chunks = Vec::new();
     let chars: Vec<char> = content.chars().collect();
     let char_count = chars.len();
     let mut start = 0;
-    
+
     while start < char_count {
         let end = std::cmp::min(start + chunk_size, char_count);
         let chunk: String = chars[start..end].iter().collect();
         chunks.push(chunk);
-        
+
         if end >= char_count {
             break;
         }
-        
+
         let step = chunk_size - overlap;
-        if step <= 0 {
+        if step == 0 {
             break;
         }
         start += step;
     }
-    
+
     chunks
 }
 
-async fn generate_embeddings(texts: Vec<String>) -> Result<Vec<Vec<f32>>, Box<dyn std::error::Error + Send + Sync>> {
+async fn generate_embeddings(
+    texts: Vec<String>,
+) -> Result<Vec<Vec<f32>>, Box<dyn std::error::Error + Send + Sync>> {
     let config = CONFIG.get().ok_or("Config not initialized")?;
     let client = CLIENT.get().ok_or("Client not initialized")?;
-    
+
     let embedding_url = format!("{}/embeddings", config.base_url);
-    
+
     let request = EmbeddingRequest {
         model: config.embedding_model.clone(),
         input: texts,
     };
-    
+
     let mut req_builder = client
         .post(&embedding_url)
         .header("Content-Type", "application/json");
-    
+
     if let Some(key) = &config.api_key {
         if key != "ollama" {
             req_builder = req_builder.header("Authorization", format!("Bearer {}", key));
         }
     }
-    
+
     let response = req_builder.json(&request).send().await?;
     let status = response.status();
-    
+
     if !status.is_success() {
-        let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unknown error".to_string());
         return Err(format!("Embedding API error: {} - {}", status, error_text).into());
     }
-    
+
     let embedding_response: EmbeddingResponse = response.json().await?;
-    
-    let embeddings: Vec<Vec<f32>> = embedding_response.data
+
+    let embeddings: Vec<Vec<f32>> = embedding_response
+        .data
         .into_iter()
         .map(|d| d.embedding)
         .collect();
-    
+
     Ok(embeddings)
 }
 
@@ -506,11 +521,11 @@ fn cosine_similarity(vec1: &[f32], vec2: &[f32]) -> f64 {
     if vec1.is_empty() || vec2.is_empty() || vec1.len() != vec2.len() {
         return 0.0;
     }
-    
+
     let mut dot_product = 0.0;
     let mut norm_a_sq = 0.0;
     let mut norm_b_sq = 0.0;
-    
+
     for (a, b) in vec1.iter().zip(vec2.iter()) {
         let a_f64 = *a as f64;
         let b_f64 = *b as f64;
@@ -518,46 +533,50 @@ fn cosine_similarity(vec1: &[f32], vec2: &[f32]) -> f64 {
         norm_a_sq += a_f64 * a_f64;
         norm_b_sq += b_f64 * b_f64;
     }
-    
+
     let norm_a = norm_a_sq.sqrt();
     let norm_b = norm_b_sq.sqrt();
-    
+
     if norm_a == 0.0 || norm_b == 0.0 {
         return 0.0;
     }
-    
+
     dot_product / (norm_a * norm_b)
 }
 
-async fn process_document_for_embedding(doc: &Document) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn process_document_for_embedding(
+    doc: &Document,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     if doc.file_path.is_none() {
         return Ok(());
     }
-    
+
     let file_path = doc.file_path.as_ref().unwrap();
-    
-    let content = read_file_content(file_path).await.ok_or("Failed to read file")?;
-    
+
+    let content = read_file_content(file_path)
+        .await
+        .ok_or("Failed to read file")?;
+
     let chunks = split_into_chunks(&content, 512, 128);
     let chunks_count = chunks.len();
-    
-    let chunk_contents: Vec<String> = chunks.iter().cloned().collect();
-    
+
+    let chunk_contents: Vec<String> = chunks.to_vec();
+
     let embeddings = generate_embeddings(chunk_contents).await?;
-    
+
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs()
         .to_string();
-    
+
     if let (Some(vectors_arc), Some(chunks_arc)) = (VECTORS.get(), CHUNKS.get()) {
         let mut vectors = vectors_arc.lock().unwrap();
         let mut chunks_storage = chunks_arc.lock().unwrap();
-        
+
         for (idx, (chunk_content, embedding)) in chunks.into_iter().zip(embeddings).enumerate() {
             let chunk_id = Uuid::new_v4().to_string();
-            
+
             chunks_storage.push(DocumentChunk {
                 id: chunk_id.clone(),
                 document_id: doc.id.clone(),
@@ -569,7 +588,7 @@ async fn process_document_for_embedding(doc: &Document) -> Result<(), Box<dyn st
                     "title": doc.title
                 }),
             });
-            
+
             vectors.push(VectorEmbedding {
                 id: chunk_id,
                 document_id: doc.id.clone(),
@@ -579,27 +598,33 @@ async fn process_document_for_embedding(doc: &Document) -> Result<(), Box<dyn st
                 created_at: now.clone(),
             });
         }
-        
-        tracing::info!("✅ 文档 '{}' 已向量化，生成 {} 个向量", doc.title, chunks_count);
+
+        tracing::info!(
+            "✅ 文档 '{}' 已向量化，生成 {} 个向量",
+            doc.title,
+            chunks_count
+        );
     }
-    
+
     Ok(())
 }
 
 async fn index_all_documents() {
-    if let (Some(docs_arc), Some(vectors_arc), Some(chunks_arc)) = (DOCUMENTS.get(), VECTORS.get(), CHUNKS.get()) {
+    if let (Some(docs_arc), Some(vectors_arc), Some(chunks_arc)) =
+        (DOCUMENTS.get(), VECTORS.get(), CHUNKS.get())
+    {
         let docs = {
             let docs_lock = docs_arc.lock().unwrap();
             docs_lock.clone()
         };
-        
+
         {
             let mut vectors = vectors_arc.lock().unwrap();
             let mut chunks = chunks_arc.lock().unwrap();
             vectors.clear();
             chunks.clear();
         }
-        
+
         for doc in docs {
             if doc.status == "processed" {
                 match process_document_for_embedding(&doc).await {
@@ -608,7 +633,7 @@ async fn index_all_documents() {
                 }
             }
         }
-        
+
         let vector_count = {
             let vectors = vectors_arc.lock().unwrap();
             vectors.len()
@@ -625,14 +650,14 @@ async fn vector_search(query: &str, top_k: usize) -> Vec<(VectorEmbedding, f64)>
             return Vec::new();
         }
     };
-    
+
     if query_embedding.is_empty() {
         return Vec::new();
     }
-    
+
     if let Some(vectors_arc) = VECTORS.get() {
         let vectors = vectors_arc.lock().unwrap();
-        
+
         let mut results: Vec<(VectorEmbedding, f64)> = vectors
             .iter()
             .map(|vec| {
@@ -641,10 +666,10 @@ async fn vector_search(query: &str, top_k: usize) -> Vec<(VectorEmbedding, f64)>
             })
             .filter(|(_, sim)| *sim > 0.3)
             .collect();
-        
+
         results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         results.truncate(top_k);
-        
+
         results
     } else {
         Vec::new()
@@ -657,7 +682,7 @@ async fn home() -> &'static str {
 
 async fn health() -> Json<ApiResponse<String>> {
     let iam_health = check_iam_health().await;
-    
+
     let overall_status = if iam_health.status == HealthStatus::Healthy {
         HealthStatus::Healthy
     } else {
@@ -673,9 +698,7 @@ async fn health() -> Json<ApiResponse<String>> {
     Json(ApiResponse::success(status_str, "健康检查"))
 }
 
-async fn health_check_detailed(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<ServiceHealth>> {
+async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
         check_iam_health().await,
         check_database_health(&state.document_service.pool().await).await,
@@ -703,15 +726,15 @@ async fn health_check_detailed(
         HealthStatus::Unhealthy => "存在关键服务故障",
     };
 
-    let health = ServiceHealth::healthy_with_message("topems-ai", message)
-        .with_dependencies(dependencies);
+    let health =
+        ServiceHealth::healthy_with_message("topems-ai", message).with_dependencies(dependencies);
 
     Json(ApiResponse::success(health, "详细健康检查"))
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = std::env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {
@@ -761,9 +784,9 @@ async fn check_ai_service_health() -> DependencyHealth {
         .or_else(|_| std::env::var("OLLAMA_BASE_URL"))
         .or_else(|_| std::env::var("OPENAI_BASE_URL"))
         .unwrap_or_else(|_| "http://localhost:11434/v1".to_string());
-    
+
     let health_url = format!("{}/models", base_url);
-    
+
     let client = Client::new();
     match client.get(&health_url).send().await {
         Ok(response) => {
@@ -797,7 +820,10 @@ async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {
         let connectors = connectors.lock().unwrap();
         Json(ApiResponse::success(connectors.clone(), "Success"))
     } else {
-        Json(ApiResponse::<Vec<DataConnector>>::error(500, "Connectors not initialized"))
+        Json(ApiResponse::<Vec<DataConnector>>::error(
+            500,
+            "Connectors not initialized",
+        ))
     }
 }
 
@@ -807,14 +833,22 @@ async fn get_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiResponse
         if let Some(connector) = connectors.iter().find(|c| c.id == params.id) {
             Json(ApiResponse::success(connector.clone(), "Success"))
         } else {
-            Json(ApiResponse::<DataConnector>::error(404, "Connector not found"))
+            Json(ApiResponse::<DataConnector>::error(
+                404,
+                "Connector not found",
+            ))
         }
     } else {
-        Json(ApiResponse::<DataConnector>::error(500, "Connectors not initialized"))
+        Json(ApiResponse::<DataConnector>::error(
+            500,
+            "Connectors not initialized",
+        ))
     }
 }
 
-async fn create_connector(Json(req): Json<CreateConnectorRequest>) -> Json<ApiResponse<DataConnector>> {
+async fn create_connector(
+    Json(req): Json<CreateConnectorRequest>,
+) -> Json<ApiResponse<DataConnector>> {
     if let Some(connectors) = CONNECTORS.get() {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -837,13 +871,22 @@ async fn create_connector(Json(req): Json<CreateConnectorRequest>) -> Json<ApiRe
         let mut connectors = connectors.lock().unwrap();
         connectors.push(new_connector.clone());
 
-        Json(ApiResponse::success(new_connector, "Connector created successfully"))
+        Json(ApiResponse::success(
+            new_connector,
+            "Connector created successfully",
+        ))
     } else {
-        Json(ApiResponse::<DataConnector>::error(500, "Connectors not initialized"))
+        Json(ApiResponse::<DataConnector>::error(
+            500,
+            "Connectors not initialized",
+        ))
     }
 }
 
-async fn update_connector(Query(params): Query<ConnectorQuery>, Json(req): Json<UpdateConnectorRequest>) -> Json<ApiResponse<DataConnector>> {
+async fn update_connector(
+    Query(params): Query<ConnectorQuery>,
+    Json(req): Json<UpdateConnectorRequest>,
+) -> Json<ApiResponse<DataConnector>> {
     if let Some(connectors) = CONNECTORS.get() {
         let mut connectors = connectors.lock().unwrap();
         if let Some(connector) = connectors.iter_mut().find(|c| c.id == params.id) {
@@ -865,12 +908,21 @@ async fn update_connector(Query(params): Query<ConnectorQuery>, Json(req): Json<
                 .as_secs()
                 .to_string();
 
-            Json(ApiResponse::success(connector.clone(), "Connector updated successfully"))
+            Json(ApiResponse::success(
+                connector.clone(),
+                "Connector updated successfully",
+            ))
         } else {
-            Json(ApiResponse::<DataConnector>::error(404, "Connector not found"))
+            Json(ApiResponse::<DataConnector>::error(
+                404,
+                "Connector not found",
+            ))
         }
     } else {
-        Json(ApiResponse::<DataConnector>::error(500, "Connectors not initialized"))
+        Json(ApiResponse::<DataConnector>::error(
+            500,
+            "Connectors not initialized",
+        ))
     }
 }
 
@@ -879,18 +931,26 @@ async fn delete_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiRespo
         let mut connectors = connectors.lock().unwrap();
         let original_len = connectors.len();
         connectors.retain(|c| c.id != params.id);
-        
+
         if connectors.len() < original_len {
-            Json(ApiResponse::success("Connector deleted successfully".to_string(), "Success"))
+            Json(ApiResponse::success(
+                "Connector deleted successfully".to_string(),
+                "Success",
+            ))
         } else {
             Json(ApiResponse::<String>::error(404, "Connector not found"))
         }
     } else {
-        Json(ApiResponse::<String>::error(500, "Connectors not initialized"))
+        Json(ApiResponse::<String>::error(
+            500,
+            "Connectors not initialized",
+        ))
     }
 }
 
-async fn test_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiResponse<ConnectorStatus>> {
+async fn test_connector(
+    Query(params): Query<ConnectorQuery>,
+) -> Json<ApiResponse<ConnectorStatus>> {
     if let Some(connectors) = CONNECTORS.get() {
         let connectors = connectors.lock().unwrap();
         if let Some(connector) = connectors.iter().find(|c| c.id == params.id) {
@@ -908,13 +968,19 @@ async fn test_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiRespons
                     is_connected,
                     error,
                 },
-                "Connection test completed"
+                "Connection test completed",
             ))
         } else {
-            Json(ApiResponse::<ConnectorStatus>::error(404, "Connector not found"))
+            Json(ApiResponse::<ConnectorStatus>::error(
+                404,
+                "Connector not found",
+            ))
         }
     } else {
-        Json(ApiResponse::<ConnectorStatus>::error(500, "Connectors not initialized"))
+        Json(ApiResponse::<ConnectorStatus>::error(
+            500,
+            "Connectors not initialized",
+        ))
     }
 }
 
@@ -928,13 +994,19 @@ async fn query_data(Json(req): Json<DataQueryRequest>) -> Json<ApiResponse<DataQ
                     rows: vec![],
                     row_count: 0,
                 },
-                "Query executed successfully"
+                "Query executed successfully",
             ))
         } else {
-            Json(ApiResponse::<DataQueryResponse>::error(404, "Connector not found"))
+            Json(ApiResponse::<DataQueryResponse>::error(
+                404,
+                "Connector not found",
+            ))
         }
     } else {
-        Json(ApiResponse::<DataQueryResponse>::error(500, "Connectors not initialized"))
+        Json(ApiResponse::<DataQueryResponse>::error(
+            500,
+            "Connectors not initialized",
+        ))
     }
 }
 
@@ -959,7 +1031,10 @@ fn test_cloud_storage_connection(connector: &DataConnector) -> (bool, Option<Str
     if config.bucket.is_some() && config.region.is_some() {
         return (true, None);
     }
-    (false, Some("Missing bucket or region configuration".to_string()))
+    (
+        false,
+        Some("Missing bucket or region configuration".to_string()),
+    )
 }
 
 #[derive(Debug, Deserialize)]
@@ -970,28 +1045,43 @@ struct ConnectorQuery {
 async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AIGenerateResponse>> {
     let config = CONFIG.get().unwrap();
     let client = CLIENT.get().unwrap();
-    
+
     let prompt = if let Some(p) = req.variables.get("prompt") {
         p.as_str().unwrap_or_default().to_string()
     } else {
         "请生成一些内容".to_string()
     };
-    
+
     let format = req.output_format.unwrap_or("text".to_string());
-    
+
     let content = if config.use_ollama || config.api_key.is_some() {
-        tracing::info!("🤖 正在调用 AI 模型生成内容 ({}: {})...", config.base_url, config.model);
+        tracing::info!(
+            "🤖 正在调用 AI 模型生成内容 ({}: {})...",
+            config.base_url,
+            config.model
+        );
         match tokio::time::timeout(
             tokio::time::Duration::from_secs(120),
-            call_ai_api(client, &config.base_url, &config.api_key, &config.model, &prompt)
-        ).await {
+            call_ai_api(
+                client,
+                &config.base_url,
+                &config.api_key,
+                &config.model,
+                &prompt,
+            ),
+        )
+        .await
+        {
             Ok(Ok(response)) => {
                 tracing::info!("✅ AI 生成成功");
                 response
             }
             Ok(Err(e)) => {
                 tracing::warn!("⚠️ AI 生成失败，使用回退响应: {}", e);
-                format!("抱歉，AI 内容生成暂时不可用。\n\n错误信息：{}\n\n请检查 AI 服务配置后重试。", e)
+                format!(
+                    "抱歉，AI 内容生成暂时不可用。\n\n错误信息：{}\n\n请检查 AI 服务配置后重试。",
+                    e
+                )
             }
             Err(_) => {
                 tracing::warn!("⚠️ AI 调用超时");
@@ -1001,57 +1091,85 @@ async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AIGene
     } else {
         "欢迎使用 TOPEMS 智能生成功能！\n\n当前 AI 功能尚未配置。请参考聊天功能的配置说明，设置 AI 服务后即可体验智能内容生成。".to_string()
     };
-    
-    Json(ApiResponse::success(AIGenerateResponse { content, format }, "Success"))
+
+    Json(ApiResponse::success(
+        AIGenerateResponse { content, format },
+        "Success",
+    ))
 }
 
 async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<ValidateResponse>> {
     let config = CONFIG.get().unwrap();
     let client = CLIENT.get().unwrap();
-    
+
     let context_info = if let Some(ctx) = &req.context {
         format!(
             "模块: {}\n实体类型: {}",
-            ctx.get("module").and_then(|v| v.as_str()).unwrap_or("unknown"),
-            ctx.get("entityType").and_then(|v| v.as_str()).unwrap_or("unknown")
+            ctx.get("module")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown"),
+            ctx.get("entityType")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown")
         )
     } else {
         "通用验证".to_string()
     };
-    
+
     let prompt = format!(
         "你是一个专业的数据验证助手。请检查以下数据是否完整、格式是否正确、逻辑是否合理。\n\n{}\n\n数据内容:\n{}\n\n请以JSON格式返回验证结果，包含以下字段:\n1. issues: 问题列表，每个问题包含 field(字段名), type(类型: error/warning/info), message(问题描述), fix(修复建议，可选)\n2. suggestions: 优化建议列表，每个建议包含 field(字段名), value(建议值), reason(建议原因)\n\n请只返回JSON，不要包含其他内容。",
         context_info,
         serde_json::to_string_pretty(&req.data).unwrap_or_else(|_| "无法解析数据".to_string())
     );
-    
+
     let issues = if config.use_ollama || config.api_key.is_some() {
         tracing::info!("🤖 正在调用 AI 模型进行数据验证...");
         match tokio::time::timeout(
             tokio::time::Duration::from_secs(60),
-            call_ai_api(client, &config.base_url, &config.api_key, &config.model, &prompt)
-        ).await {
+            call_ai_api(
+                client,
+                &config.base_url,
+                &config.api_key,
+                &config.model,
+                &prompt,
+            ),
+        )
+        .await
+        {
             Ok(Ok(response)) => {
                 tracing::info!("✅ AI 验证完成");
-                let cleaned_response = response
-                    .replace("```json", "")
-                    .replace("```", "");
+                let cleaned_response = response.replace("```json", "").replace("```", "");
                 let cleaned_response = cleaned_response.trim();
-                
+
                 if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(cleaned_response) {
                     let mut result_issues: Vec<ValidationIssue> = Vec::new();
-                    
+
                     if let Some(issues_array) = parsed.get("issues").and_then(|v| v.as_array()) {
                         for issue in issues_array {
                             result_issues.push(ValidationIssue {
-                                field: issue.get("field").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
-                                r#type: issue.get("type").and_then(|v| v.as_str()).unwrap_or("info").to_string(),
-                                message: issue.get("message").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                                fix: issue.get("fix").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                                field: issue
+                                    .get("field")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("unknown")
+                                    .to_string(),
+                                r#type: issue
+                                    .get("type")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("info")
+                                    .to_string(),
+                                message: issue
+                                    .get("message")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string(),
+                                fix: issue
+                                    .get("fix")
+                                    .and_then(|v| v.as_str())
+                                    .map(|s| s.to_string()),
                             });
                         }
                     }
-                    
+
                     if result_issues.is_empty() {
                         result_issues.push(ValidationIssue {
                             field: "general".to_string(),
@@ -1060,7 +1178,7 @@ async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Validate
                             fix: None,
                         });
                     }
-                    
+
                     result_issues
                 } else {
                     vec![ValidationIssue {
@@ -1092,10 +1210,11 @@ async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Validate
         }
     } else {
         let mut issues: Vec<ValidationIssue> = Vec::new();
-        
+
         if let Some(obj) = req.data.as_object() {
             for (key, value) in obj {
-                if value.is_null() || (value.is_string() && value.as_str().unwrap_or("").is_empty()) {
+                if value.is_null() || (value.is_string() && value.as_str().unwrap_or("").is_empty())
+                {
                     issues.push(ValidationIssue {
                         field: key.clone(),
                         r#type: "warning".to_string(),
@@ -1105,7 +1224,7 @@ async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Validate
                 }
             }
         }
-        
+
         if issues.is_empty() {
             issues.push(ValidationIssue {
                 field: "general".to_string(),
@@ -1114,69 +1233,96 @@ async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Validate
                 fix: None,
             });
         }
-        
+
         issues
     };
-    
+
     Json(ApiResponse::success(ValidateResponse { issues }, "Success"))
 }
 
 async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<CompleteResponse>> {
     let config = CONFIG.get().unwrap();
     let client = CLIENT.get().unwrap();
-    
-    let existing_data = req.data.clone().or(req.partial_data.clone()).unwrap_or(serde_json::json!({}));
-    
+
+    let existing_data = req
+        .data
+        .clone()
+        .or(req.partial_data.clone())
+        .unwrap_or(serde_json::json!({}));
+
     let context_info = if let Some(ctx) = &req.context {
         format!(
             "模块: {}\n实体类型: {}",
-            ctx.get("module").and_then(|v| v.as_str()).unwrap_or("unknown"),
-            ctx.get("entityType").and_then(|v| v.as_str()).unwrap_or("unknown")
+            ctx.get("module")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown"),
+            ctx.get("entityType")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown")
         )
     } else {
         "通用补全".to_string()
     };
-    
+
     let fields_to_complete = req.fields_to_complete.clone().unwrap_or_default();
     let fields_str = if fields_to_complete.is_empty() {
         "所有可能需要补全的字段".to_string()
     } else {
         fields_to_complete.join(", ")
     };
-    
+
     let prompt = format!(
         "你是一个专业的数据补全助手。请根据已有数据推断并补全相关字段。\n\n{}\n\n已有数据:\n{}\n\n需要补全的字段: {}\n\n请以JSON格式返回补全建议，格式为:\n{{\n  \"suggestions\": [\n    {{\n      \"field\": \"字段名\",\n      \"value\": \"建议值\",\n      \"reason\": \"推断原因\",\n      \"confidence\": 0.8\n    }}\n  ]\n}}\n\n请只返回JSON，不要包含其他内容。confidence 表示置信度(0-1)。",
         context_info,
         serde_json::to_string_pretty(&existing_data).unwrap_or_else(|_| "{}".to_string()),
         fields_str
     );
-    
+
     let suggestions = if config.use_ollama || config.api_key.is_some() {
         tracing::info!("🤖 正在调用 AI 模型进行数据补全...");
         match tokio::time::timeout(
             tokio::time::Duration::from_secs(60),
-            call_ai_api(client, &config.base_url, &config.api_key, &config.model, &prompt)
-        ).await {
+            call_ai_api(
+                client,
+                &config.base_url,
+                &config.api_key,
+                &config.model,
+                &prompt,
+            ),
+        )
+        .await
+        {
             Ok(Ok(response)) => {
                 tracing::info!("✅ AI 补全完成");
-                let cleaned_response = response
-                    .replace("```json", "")
-                    .replace("```", "");
+                let cleaned_response = response.replace("```json", "").replace("```", "");
                 let cleaned_response = cleaned_response.trim();
-                
+
                 if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(cleaned_response) {
                     let mut result_suggestions: Vec<Suggestion> = Vec::new();
-                    
-                    if let Some(suggestions_array) = parsed.get("suggestions").and_then(|v| v.as_array()) {
+
+                    if let Some(suggestions_array) =
+                        parsed.get("suggestions").and_then(|v| v.as_array())
+                    {
                         for suggestion in suggestions_array {
                             result_suggestions.push(Suggestion {
-                                field: suggestion.get("field").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
-                                value: suggestion.get("value").cloned().unwrap_or(serde_json::json!("")),
-                                reason: suggestion.get("reason").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                                field: suggestion
+                                    .get("field")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("unknown")
+                                    .to_string(),
+                                value: suggestion
+                                    .get("value")
+                                    .cloned()
+                                    .unwrap_or(serde_json::json!("")),
+                                reason: suggestion
+                                    .get("reason")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string(),
                             });
                         }
                     }
-                    
+
                     result_suggestions
                 } else {
                     vec![]
@@ -1194,22 +1340,37 @@ async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<Complete
     } else {
         vec![]
     };
-    
-    Json(ApiResponse::success(CompleteResponse { suggestions }, "Success"))
+
+    Json(ApiResponse::success(
+        CompleteResponse { suggestions },
+        "Success",
+    ))
 }
 
 async fn summarize(Json(req): Json<SummarizeRequest>) -> Json<ApiResponse<SummarizeResponse>> {
     let config = CONFIG.get().unwrap();
     let client = CLIENT.get().unwrap();
-    
+
     let prompt = format!("请为以下内容生成摘要：\n\n{}", req.text);
-    
+
     let summary = if config.use_ollama || config.api_key.is_some() {
-        tracing::info!("🤖 正在调用 AI 模型生成摘要 ({}: {})...", config.base_url, config.model);
+        tracing::info!(
+            "🤖 正在调用 AI 模型生成摘要 ({}: {})...",
+            config.base_url,
+            config.model
+        );
         match tokio::time::timeout(
             tokio::time::Duration::from_secs(120),
-            call_ai_api(client, &config.base_url, &config.api_key, &config.model, &prompt)
-        ).await {
+            call_ai_api(
+                client,
+                &config.base_url,
+                &config.api_key,
+                &config.model,
+                &prompt,
+            ),
+        )
+        .await
+        {
             Ok(Ok(response)) => {
                 tracing::info!("✅ AI 摘要生成成功");
                 response
@@ -1229,8 +1390,11 @@ async fn summarize(Json(req): Json<SummarizeRequest>) -> Json<ApiResponse<Summar
         let preview: String = req.text.chars().take(200).collect();
         format!("（AI 功能未配置，显示文本预览）\n\n{}...", preview)
     };
-    
-    Json(ApiResponse::success(SummarizeResponse { summary }, "Success"))
+
+    Json(ApiResponse::success(
+        SummarizeResponse { summary },
+        "Success",
+    ))
 }
 
 async fn list_templates() -> Json<ApiResponse<Vec<AITemplate>>> {
@@ -1263,15 +1427,13 @@ async fn list_templates() -> Json<ApiResponse<Vec<AITemplate>>> {
             name: "职位描述".to_string(),
             description: "生成标准的职位描述".to_string(),
             category: "人力资源".to_string(),
-            fields: vec![
-                TemplateField {
-                    name: "title".to_string(),
-                    r#type: "text".to_string(),
-                    label: "职位名称".to_string(),
-                    required: true,
-                    options: None,
-                },
-            ],
+            fields: vec![TemplateField {
+                name: "title".to_string(),
+                r#type: "text".to_string(),
+                label: "职位名称".to_string(),
+                required: true,
+                options: None,
+            }],
             prompt_template: "请生成一个关于该职位的描述：".to_string(),
         },
     ];
@@ -1280,27 +1442,34 @@ async fn list_templates() -> Json<ApiResponse<Vec<AITemplate>>> {
 
 async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
     let search_results = vector_search(&req.query, 5).await;
-    
+
     let context = search_results
         .iter()
         .map(|(vec, _)| format!("- {}: {}", vec.document_id, vec.content))
         .collect::<Vec<_>>()
         .join("\n");
-    
+
     let prompt = if context.is_empty() {
-        format!("你是 TOPEMS 智能助手。请回答用户的问题。\n\n用户问题：{}", req.query)
+        format!(
+            "你是 TOPEMS 智能助手。请回答用户的问题。\n\n用户问题：{}",
+            req.query
+        )
     } else {
         format!(
             "你是 TOPEMS 智能助手。请根据以下知识库内容回答用户的问题。\n\n知识库内容：\n{}\n\n用户问题：{}",
             context, req.query
         )
     };
-    
+
     let config = CONFIG.get().unwrap();
     let client = CLIENT.get().unwrap();
-    
+
     let answer = if config.use_ollama || config.api_key.is_some() {
-        tracing::info!("🤖 正在调用 AI 模型 ({}: {})...", config.base_url, config.model);
+        tracing::info!(
+            "🤖 正在调用 AI 模型 ({}: {})...",
+            config.base_url,
+            config.model
+        );
         match tokio::time::timeout(
             tokio::time::Duration::from_secs(120),
             call_ai_api(
@@ -1309,8 +1478,10 @@ async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
                 &config.api_key,
                 &config.model,
                 &prompt,
-            )
-        ).await {
+            ),
+        )
+        .await
+        {
             Ok(Ok(response)) => {
                 tracing::info!("✅ AI 响应成功，长度: {} 字符", response.len());
                 response
@@ -1328,7 +1499,7 @@ async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
         tracing::warn!("⚠️ AI API 未配置");
         "欢迎使用 TOPEMS 智能助手！\n\n当前 AI 功能尚未配置。您可以：\n\n1. 使用 Ollama（本地 AI）：\n   - 安装 Ollama: https://ollama.com\n   - 下载模型: ollama pull qwen2.5:7b-instruct\n   - 启动服务: ollama serve\n\n2. 使用云端 AI 服务（OpenAI/通义千问等）：\n   - 设置 OPENAI_API_KEY 环境变量\n   - 可选设置 OPENAI_BASE_URL 和 OPENAI_MODEL\n\n配置完成后即可体验完整的 AI 功能！".to_string()
     };
-    
+
     let sources: Vec<SearchResult> = search_results
         .into_iter()
         .filter_map(|(vec, similarity)| {
@@ -1355,8 +1526,11 @@ async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
             }
         })
         .collect();
-    
-    Json(ApiResponse::success(ChatResponse { answer, sources }, "Success"))
+
+    Json(ApiResponse::success(
+        ChatResponse { answer, sources },
+        "Success",
+    ))
 }
 
 async fn call_ai_api(
@@ -1367,7 +1541,7 @@ async fn call_ai_api(
     prompt: &str,
 ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
     let api_url = format!("{}/chat/completions", base_url);
-    
+
     let request = OpenAIRequest {
         model: model.to_string(),
         messages: vec![OpenAIMessage {
@@ -1376,17 +1550,17 @@ async fn call_ai_api(
         }],
         temperature: 0.7,
     };
-    
+
     let mut req_builder = client
         .post(&api_url)
         .header("Content-Type", "application/json");
-    
+
     if let Some(key) = api_key {
         if key != "ollama" {
             req_builder = req_builder.header("Authorization", format!("Bearer {}", key));
         }
     }
-    
+
     let response = match req_builder.json(&request).send().await {
         Ok(r) => r,
         Err(e) => {
@@ -1394,14 +1568,17 @@ async fn call_ai_api(
             return Err(format!("无法连接到 AI 服务: {}", e).into());
         }
     };
-    
+
     let status = response.status();
     if !status.is_success() {
-        let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unknown error".to_string());
         tracing::error!("AI API 请求失败: {} - {}", status, error_text);
         return Err(format!("AI 服务错误: {} - {}", status, error_text).into());
     }
-    
+
     let openai_response: OpenAIResponse = match response.json().await {
         Ok(r) => r,
         Err(e) => {
@@ -1409,7 +1586,7 @@ async fn call_ai_api(
             return Err(format!("解析 AI 响应失败: {}", e).into());
         }
     };
-    
+
     if let Some(choice) = openai_response.choices.first() {
         Ok(choice.message.content.clone())
     } else {
@@ -1427,8 +1604,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let custom_gauge = Gauge::new(
         "topems_ai_custom_metric",
         "This is a custom metric for TOPEMS-AI",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
@@ -1437,25 +1617,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("📄 PDF 文档解析支持");
 
     // 读取配置
-    let api_key = std::env::var("OLLAMA_API_KEY").ok()
+    let api_key = std::env::var("OLLAMA_API_KEY")
+        .ok()
         .or_else(|| std::env::var("OPENAI_API_KEY").ok());
-    
+
     let base_url = std::env::var("OLLAMA_URL")
         .or_else(|_| std::env::var("OLLAMA_BASE_URL"))
         .or_else(|_| std::env::var("OPENAI_BASE_URL"))
         .unwrap_or_else(|_| "http://localhost:11434/v1".to_string());
-    
+
     let model = std::env::var("OLLAMA_MODEL")
         .or_else(|_| std::env::var("OPENAI_MODEL"))
         .unwrap_or_else(|_| "qwen2.5:7b-instruct".to_string());
-    
-    let embedding_model = std::env::var("EMBEDDING_MODEL")
-        .unwrap_or_else(|_| "nomic-embed-text".to_string());
-    
-    let use_ollama = std::env::var("OLLAMA_URL").is_ok() || 
-                     std::env::var("OLLAMA_BASE_URL").is_ok() ||
-                     base_url.contains("localhost:11434") ||
-                     base_url.contains("127.0.0.1:11434");
+
+    let embedding_model =
+        std::env::var("EMBEDDING_MODEL").unwrap_or_else(|_| "nomic-embed-text".to_string());
+
+    let use_ollama = std::env::var("OLLAMA_URL").is_ok()
+        || std::env::var("OLLAMA_BASE_URL").is_ok()
+        || base_url.contains("localhost:11434")
+        || base_url.contains("127.0.0.1:11434");
 
     let config = Config {
         api_key: api_key.clone(),
@@ -1468,14 +1649,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 初始化数据库
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
-    
+
     std::env::set_var("SEARCH_PATH", "ai_service, shared, public");
-    
-    tracing::info!("🔌 连接数据库: {}", database_url.split('@').last().unwrap_or("..."));
-    
+
+    tracing::info!(
+        "🔌 连接数据库: {}",
+        database_url.split('@').next_back().unwrap_or("...")
+    );
+
     let db = Database::new(&database_url).await?;
     tracing::info!("✅ 数据库连接成功");
-    
+
     // 运行迁移
     db.run_migrations().await?;
     tracing::info!("✅ 数据库表结构已就绪");
@@ -1487,11 +1671,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 创建服务
     let vector_service = VectorService::new(db);
-    
+
     // File 服务 URL（可选，用于从 File 服务获取文件）
-    let file_service_url = std::env::var("FILE_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8080".to_string());
-    
+    let file_service_url =
+        std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
+
     let document_service = if std::env::var("FILE_SERVICE_URL").is_ok() {
         tracing::info!("🔗 连接 File 服务: {}", file_service_url);
         DocumentService::with_file_client(vector_service.clone(), &file_service_url)
@@ -1499,7 +1683,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::warn!("⚠️ FILE_SERVICE_URL 未设置，DocumentService 将以兼容模式运行");
         DocumentService::new(vector_service.clone())
     };
-    
+
     // 创建 QA 和 Analysis 服务
     let qa_config = QAConfig {
         base_url: base_url.clone(),
@@ -1508,13 +1692,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         embedding_model: embedding_model.clone(),
     };
     let qa_service = QAService::new(vector_service.db().clone(), http_client.clone(), qa_config);
-    
+
     let analysis_config = AnalysisConfig {
         base_url: base_url.clone(),
         api_key: api_key.clone(),
         model: model.clone(),
     };
-    let analysis_service = AnalysisService::new(vector_service.db().clone(), http_client.clone(), analysis_config);
+    let analysis_service = AnalysisService::new(
+        vector_service.db().clone(),
+        http_client.clone(),
+        analysis_config,
+    );
 
     // 初始化静态存储（向后兼容）
     let docs = load_documents_from_dir(DOCS_DIR).await;
@@ -1522,7 +1710,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     DOCUMENTS.set(Arc::new(Mutex::new(docs))).unwrap();
     VECTORS.set(Arc::new(Mutex::new(Vec::new()))).unwrap();
     CHUNKS.set(Arc::new(Mutex::new(Vec::new()))).unwrap();
-    
+
     // 后台索引文档（向后兼容）
     if std::env::var("DISABLE_AUTO_INDEX").is_err() {
         tokio::spawn(async {
@@ -1531,7 +1719,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         tracing::info!("⚠️ 自动文档索引已禁用");
     }
-    
+
     CLIENT.set(http_client.clone()).unwrap();
     CONFIG.set(config.clone()).unwrap();
     CONNECTORS.set(Arc::new(Mutex::new(Vec::new()))).unwrap();
@@ -1553,7 +1741,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/health", get(health))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(VectorApi::stats))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
@@ -1566,12 +1757,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // 文档处理 API - 使用 DocumentApi 模块
         .route("/api/v1/documents", get(DocumentApi::list))
         .route("/api/v1/documents/upload", post(DocumentApi::upload))
-        .route("/api/v1/documents/vectorize-from-file", post(DocumentApi::vectorize_from_file))
+        .route(
+            "/api/v1/documents/vectorize-from-file",
+            post(DocumentApi::vectorize_from_file),
+        )
         .route("/api/v1/documents/{id}", get(DocumentApi::get))
         .route("/api/v1/documents/{id}", delete(DocumentApi::delete))
         .route("/api/v1/documents/{id}/process", post(DocumentApi::process))
         .route("/api/v1/documents/{id}/extract", post(DocumentApi::extract))
-        .route("/api/v1/documents/{id}/summarize", post(DocumentApi::summarize))
+        .route(
+            "/api/v1/documents/{id}/summarize",
+            post(DocumentApi::summarize),
+        )
         // 向量检索 API - 使用 VectorApi 模块
         .route("/api/v1/vectors/stats", get(VectorApi::stats))
         .route("/api/v1/vectors/search", post(VectorApi::search))
@@ -1579,7 +1776,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/v1/vectors/{id}", get(VectorApi::get))
         .route("/api/v1/vectors/{id}", delete(VectorApi::delete))
         .route("/api/v1/vectors/batch-store", post(VectorApi::batch_store))
-        .route("/api/v1/vectors/hybrid-search", post(VectorApi::hybrid_search))
+        .route(
+            "/api/v1/vectors/hybrid-search",
+            post(VectorApi::hybrid_search),
+        )
         .route("/api/v1/vectors/clear", post(VectorApi::clear_all))
         // 问答 API - 使用 QaApi 模块
         .route("/api/v1/qa/ask", post(QaApi::ask))
@@ -1604,8 +1804,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let analysis_router = Router::new()
         .route("/api/v1/analysis/sentiment", post(AnalysisApi::sentiment))
         .route("/api/v1/analysis/classify", post(AnalysisApi::classify))
-        .route("/api/v1/analysis/entities", post(AnalysisApi::extract_entities))
-        .route("/api/v1/analysis/keywords", post(AnalysisApi::extract_keywords))
+        .route(
+            "/api/v1/analysis/entities",
+            post(AnalysisApi::extract_entities),
+        )
+        .route(
+            "/api/v1/analysis/keywords",
+            post(AnalysisApi::extract_keywords),
+        )
         .route("/api/v1/analysis/history", post(AnalysisApi::history))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -1622,30 +1828,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(cors)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
 
-    let port = std::env::var("PORT")
-        .or_else(|_| std::env::var("SERVER_PORT"))
-        .unwrap_or_else(|_| "8013".to_string())
+    let port = std::env::var("SERVER_PORT")
+        .or_else(|_| std::env::var("PORT"))
+        .unwrap_or_else(|_| "8062".to_string())
         .parse()
-        .unwrap_or(8013);
-    
+        .unwrap_or(8062);
+
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ TOPEMS-AI 服务运行在 http://{}", addr);
     tracing::info!("🔒 认证保护已启用");
     tracing::info!("📊 向量库功能已启用，嵌入模型: {}", embedding_model);
-    
+
     if use_ollama {
-        tracing::info!("✅ 使用 Ollama 本地 AI 服务 (模型: {}, 地址: {}, 超时: 120 秒)", model, base_url);
+        tracing::info!(
+            "✅ 使用 Ollama 本地 AI 服务 (模型: {}, 地址: {}, 超时: 120 秒)",
+            model,
+            base_url
+        );
     } else if api_key.is_some() {
         tracing::info!("✅ 使用云端 AI 服务 (模型: {}, 超时: 120 秒)", model);
     } else {
         tracing::warn!("⚠️ AI API 未配置，请设置 OPENAI_API_KEY 或配置 Ollama");
     }
-    
+
     axum::serve(
         tokio::net::TcpListener::bind(&addr).await?,
         app.into_make_service(),
     )
     .await?;
-    
+
     Ok(())
 }

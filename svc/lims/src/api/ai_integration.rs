@@ -1,16 +1,18 @@
-use topems_shared::Result;
+#![allow(dead_code)]
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
 use std::env;
+use topems_shared::Result;
+use uuid::Uuid;
 
 use crate::api::ApiState;
 
@@ -97,7 +99,10 @@ pub async fn create_routes() -> Result<Router<ApiState>> {
         .route("/api/v1/ai/analyses", axum::routing::post(create_analysis))
         .route("/api/v1/ai/analyses/{id}", axum::routing::get(get_analysis))
         .route("/api/v1/ai/chat", axum::routing::post(ai_chat))
-        .route("/api/v1/entities/{entity_type}/{entity_id}/analyses", axum::routing::get(get_entity_analyses));
+        .route(
+            "/api/v1/entities/{entity_type}/{entity_id}/analyses",
+            axum::routing::get(get_entity_analyses),
+        );
 
     Ok(router)
 }
@@ -139,7 +144,8 @@ async fn list_analyses(
             (StatusCode::OK, Json(response))
         }
         (_, Err(e)) | (Err(e), _) => {
-            let response: ApiResponse<PaginatedResponse<AiAnalysis>> = ApiResponse::error(500, &format!("获取AI分析列表失败: {}", e));
+            let response: ApiResponse<PaginatedResponse<AiAnalysis>> =
+                ApiResponse::error(500, &format!("获取AI分析列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -156,7 +162,8 @@ async fn create_analysis(
     let ai_response = match call_ai_service(&request.prompt, &ai_service_url).await {
         Ok(resp) => resp,
         Err(e) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error(500, &format!("AI服务调用失败: {}", e));
+            let response: ApiResponse<AiAnalysis> =
+                ApiResponse::error(500, &format!("AI服务调用失败: {}", e));
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(response));
         }
     };
@@ -188,16 +195,14 @@ async fn create_analysis(
             (StatusCode::CREATED, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error(500, &format!("创建AI分析失败: {}", e));
+            let response: ApiResponse<AiAnalysis> =
+                ApiResponse::error(500, &format!("创建AI分析失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
-async fn get_analysis(
-    State(state): State<ApiState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
+async fn get_analysis(State(state): State<ApiState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     let result: std::result::Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
          FROM ai_analyses WHERE id = $1"
@@ -216,15 +221,14 @@ async fn get_analysis(
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<AiAnalysis> = ApiResponse::error(500, &format!("获取AI分析失败: {}", e));
+            let response: ApiResponse<AiAnalysis> =
+                ApiResponse::error(500, &format!("获取AI分析失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
-async fn ai_chat(
-    Json(request): Json<AiChatRequest>,
-) -> impl IntoResponse {
+async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
     let ai_service_url = env::var("AI_SERVICE_URL")
         .ok()
         .or_else(|| Some("http://localhost:8004".to_string()));
@@ -235,7 +239,8 @@ async fn ai_chat(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<AiChatResponse> = ApiResponse::error(500, &format!("AI聊天失败: {}", e));
+            let response: ApiResponse<AiChatResponse> =
+                ApiResponse::error(500, &format!("AI聊天失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -262,13 +267,17 @@ async fn get_entity_analyses(
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response: ApiResponse<Vec<AiAnalysis>> = ApiResponse::error(500, &format!("获取实体AI分析列表失败: {}", e));
+            let response: ApiResponse<Vec<AiAnalysis>> =
+                ApiResponse::error(500, &format!("获取实体AI分析列表失败: {}", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
 }
 
-async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> std::result::Result<String, String> {
+async fn call_ai_service(
+    prompt: &str,
+    ai_service_url: &Option<String>,
+) -> std::result::Result<String, String> {
     let url = ai_service_url.as_deref().unwrap_or("http://localhost:8004");
     let client = Client::new();
 
@@ -283,22 +292,20 @@ async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> std::
         .send()
         .await
     {
-        Ok(resp) if resp.status().is_success() => {
-            match resp.json::<serde_json::Value>().await {
-                Ok(json) => {
-                    if let Some(answer) = json["data"]["answer"].as_str() {
-                        Ok(answer.to_string())
-                    } else if let Some(answer) = json["answer"].as_str() {
-                        Ok(answer.to_string())
-                    } else if let Some(data) = json["data"].as_str() {
-                        Ok(data.to_string())
-                    } else {
-                        Ok("AI服务返回了响应，但格式不符合预期".to_string())
-                    }
+        Ok(resp) if resp.status().is_success() => match resp.json::<serde_json::Value>().await {
+            Ok(json) => {
+                if let Some(answer) = json["data"]["answer"].as_str() {
+                    Ok(answer.to_string())
+                } else if let Some(answer) = json["answer"].as_str() {
+                    Ok(answer.to_string())
+                } else if let Some(data) = json["data"].as_str() {
+                    Ok(data.to_string())
+                } else {
+                    Ok("AI服务返回了响应，但格式不符合预期".to_string())
                 }
-                Err(e) => Err(format!("解析AI响应失败: {}", e)),
             }
-        }
+            Err(e) => Err(format!("解析AI响应失败: {}", e)),
+        },
         Ok(resp) => Err(format!("AI服务返回错误: {}", resp.status())),
         Err(e) => Err(format!("调用AI服务失败: {}", e)),
     }

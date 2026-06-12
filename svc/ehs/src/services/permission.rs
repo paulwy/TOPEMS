@@ -1,7 +1,9 @@
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, ModulePermission as SharedModulePermission,
+};
 use topems_shared::response::ApiResponse;
-use topems_shared::permission::{ModulePermission as SharedModulePermission, check_module_permission};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EhsPermission {
@@ -60,7 +62,7 @@ impl SharedModulePermission for EhsPermission {
     fn module_name() -> &'static str {
         "ehs"
     }
-    
+
     fn all_permission() -> Self {
         EhsPermission::All
     }

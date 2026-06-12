@@ -70,6 +70,7 @@ impl From<PrincipalType> for String {
 
 /// 权限主体
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct Principal {
     pub principal_type: PrincipalType,
     pub principal_id: Uuid,
@@ -127,6 +128,7 @@ pub struct ShareFileRequest {
 
 /// 权限检查结果
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct PermissionCheckResult {
     pub allowed: bool,
     pub reason: Option<String>,

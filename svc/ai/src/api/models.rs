@@ -33,13 +33,16 @@ pub struct AnalysisResult {
 #[derive(Debug, Deserialize)]
 pub struct ProcessDocumentRequest {
     pub document_id: Uuid,
+    #[allow(dead_code)]
     pub chunk_size: Option<usize>,
+    #[allow(dead_code)]
     pub overlap: Option<usize>,
 }
 
 /// 文档提取请求
 #[derive(Debug, Deserialize)]
 pub struct ExtractDocumentRequest {
+    #[allow(dead_code)]
     pub document_id: Uuid,
     pub extract_type: String, // keywords, summary, entities
 }
@@ -47,7 +50,9 @@ pub struct ExtractDocumentRequest {
 /// 文档摘要请求
 #[derive(Debug, Deserialize)]
 pub struct SummarizeDocumentRequest {
+    #[allow(dead_code)]
     pub document_id: Uuid,
+    #[allow(dead_code)]
     pub max_length: Option<i32>,
 }
 
@@ -70,8 +75,10 @@ pub struct BatchStoreVectorsRequest {
 /// 向量搜索请求
 #[derive(Debug, Deserialize)]
 pub struct VectorSearchRequest {
+    #[allow(dead_code)]
     pub query: String,
     pub top_k: Option<usize>,
+    #[allow(dead_code)]
     pub threshold: Option<f64>,
 }
 
@@ -88,6 +95,7 @@ pub struct HybridSearchRequest {
 #[derive(Debug, Deserialize)]
 pub struct AskRequest {
     pub question: String,
+    #[allow(dead_code)]
     pub conversation_id: Option<Uuid>,
     pub top_k: Option<usize>,
 }

@@ -45,21 +45,57 @@ pub struct StatisticsQuery {
     pub time_range: Option<String>,
 }
 
-pub async fn get_statistics(
-    State(state): State<AppState>,
-) -> Json<StatisticsResponse> {
+pub async fn get_statistics(State(state): State<AppState>) -> Json<StatisticsResponse> {
     let pool = state.repo.get_pool();
 
     let total_workflows = get_count(pool, "SELECT COUNT(*) as count FROM flow.workflows").await;
-    let active_workflows = get_count(pool, "SELECT COUNT(*) as count FROM flow.workflows WHERE is_active = true").await;
-    let total_instances = get_count(pool, "SELECT COUNT(*) as count FROM flow.workflow_instances").await;
-    let running_instances = get_count_with_param(pool, "SELECT COUNT(*) as count FROM flow.workflow_instances WHERE status = $1", "running").await;
-    let completed_instances = get_count_with_param(pool, "SELECT COUNT(*) as count FROM flow.workflow_instances WHERE status = $1", "completed").await;
-    let rejected_instances = get_count_with_param(pool, "SELECT COUNT(*) as count FROM flow.workflow_instances WHERE status = $1", "rejected").await;
+    let active_workflows = get_count(
+        pool,
+        "SELECT COUNT(*) as count FROM flow.workflows WHERE is_active = true",
+    )
+    .await;
+    let total_instances = get_count(
+        pool,
+        "SELECT COUNT(*) as count FROM flow.workflow_instances",
+    )
+    .await;
+    let running_instances = get_count_with_param(
+        pool,
+        "SELECT COUNT(*) as count FROM flow.workflow_instances WHERE status = $1",
+        "running",
+    )
+    .await;
+    let completed_instances = get_count_with_param(
+        pool,
+        "SELECT COUNT(*) as count FROM flow.workflow_instances WHERE status = $1",
+        "completed",
+    )
+    .await;
+    let rejected_instances = get_count_with_param(
+        pool,
+        "SELECT COUNT(*) as count FROM flow.workflow_instances WHERE status = $1",
+        "rejected",
+    )
+    .await;
     let total_approvals = get_count(pool, "SELECT COUNT(*) as count FROM flow.approvals").await;
-    let pending_approvals = get_count_with_param(pool, "SELECT COUNT(*) as count FROM flow.approvals WHERE status = $1", "pending").await;
-    let approved_approvals = get_count_with_param(pool, "SELECT COUNT(*) as count FROM flow.approvals WHERE status = $1", "approved").await;
-    let rejected_approvals = get_count_with_param(pool, "SELECT COUNT(*) as count FROM flow.approvals WHERE status = $1", "rejected").await;
+    let pending_approvals = get_count_with_param(
+        pool,
+        "SELECT COUNT(*) as count FROM flow.approvals WHERE status = $1",
+        "pending",
+    )
+    .await;
+    let approved_approvals = get_count_with_param(
+        pool,
+        "SELECT COUNT(*) as count FROM flow.approvals WHERE status = $1",
+        "approved",
+    )
+    .await;
+    let rejected_approvals = get_count_with_param(
+        pool,
+        "SELECT COUNT(*) as count FROM flow.approvals WHERE status = $1",
+        "rejected",
+    )
+    .await;
 
     let approval_rate = if total_approvals > 0 {
         (approved_approvals as f64 / total_approvals as f64) * 100.0
@@ -86,7 +122,7 @@ pub async fn get_statistics(
         LEFT JOIN flow.workflow_instances i ON w.id = i.workflow_id
         GROUP BY w.id, w.name
         ORDER BY instance_count DESC
-        LIMIT 10"
+        LIMIT 10",
     )
     .fetch_all(pool)
     .await
@@ -159,7 +195,7 @@ async fn get_avg_hours(pool: &sqlx::PgPool) -> f64 {
     sqlx::query_as::<_, AvgRow>(
         "SELECT AVG(EXTRACT(EPOCH FROM (approved_at - created_at))/3600) as avg_hours 
          FROM flow.approvals 
-         WHERE approved_at IS NOT NULL"
+         WHERE approved_at IS NOT NULL",
     )
     .fetch_one(pool)
     .await

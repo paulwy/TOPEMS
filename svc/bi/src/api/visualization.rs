@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrows_for_generic_args)]
+
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
@@ -8,9 +10,9 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, Claims};
 use crate::models::visualization::*;
 use crate::services::permission::{check_permission, BIPermission};
+use topems_shared::{ApiResponse, Claims};
 
 /// 创建可视化图表
 pub async fn create_visualization(
@@ -19,7 +21,7 @@ pub async fn create_visualization(
     Json(payload): Json<CreateVisualization>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DataViewWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -46,13 +48,19 @@ pub async fn create_visualization(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "visualization_id": visualization_id,
-            "name": payload.name,
-            "visualization_type": payload.visualization_type,
-            "created_at": Utc::now().to_rfc3339(),
-        }), "创建可视化图表成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建可视化图表失败: {}", e))),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "visualization_id": visualization_id,
+                "name": payload.name,
+                "visualization_type": payload.visualization_type,
+                "created_at": Utc::now().to_rfc3339(),
+            }),
+            "创建可视化图表成功",
+        )),
+        Err(e) => Json(ApiResponse::error(
+            500,
+            &format!("创建可视化图表失败: {}", e),
+        )),
     }
 }
 
@@ -63,7 +71,7 @@ pub async fn list_visualizations(
     Query(params): Query<VisualizationQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DataViewRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -74,7 +82,7 @@ pub async fn list_visualizations(
          AND ($2::text IS NULL OR name LIKE '%' || $2 || '%')
          AND ($3::visualization_type IS NULL OR visualization_type = $3)
          ORDER BY created_at DESC 
-         LIMIT $4 OFFSET $5"
+         LIMIT $4 OFFSET $5",
     )
     .bind(claims.sub)
     .bind(&params.name)
@@ -85,12 +93,13 @@ pub async fn list_visualizations(
     .await;
 
     match visualizations {
-        Ok(visualizations_list) => {
-            Json(ApiResponse::success(json!({
+        Ok(visualizations_list) => Json(ApiResponse::success(
+            json!({
                 "visualizations": visualizations_list,
                 "total": visualizations_list.len(),
-            }), "获取可视化列表成功"))
-        },
+            }),
+            "获取可视化列表成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("查询可视化失败: {}", e))),
     }
 }
@@ -102,23 +111,24 @@ pub async fn get_visualization(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DataViewRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     let visualization = sqlx::query_as::<_, Visualization>(
-        "SELECT * FROM visualizations WHERE id = $1 AND is_active = true"
+        "SELECT * FROM visualizations WHERE id = $1 AND is_active = true",
     )
     .bind(id)
     .fetch_optional(&pool)
     .await;
 
     match visualization {
-        Ok(Some(visualization_data)) => {
-            Json(ApiResponse::success(json!({
+        Ok(Some(visualization_data)) => Json(ApiResponse::success(
+            json!({
                 "visualization": visualization_data,
-            }), "获取可视化详情成功"))
-        },
+            }),
+            "获取可视化详情成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "可视化图表不存在")),
         Err(e) => Json(ApiResponse::error(500, &format!("查询可视化失败: {}", e))),
     }
@@ -132,7 +142,7 @@ pub async fn update_visualization(
     Json(payload): Json<UpdateVisualization>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DataViewWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -149,7 +159,7 @@ pub async fn update_visualization(
          is_active = COALESCE($10, is_active),
          is_public = COALESCE($11, is_public),
          updated_at = $12
-         WHERE id = $1"
+         WHERE id = $1",
     )
     .bind(id)
     .bind(&payload.name)
@@ -167,11 +177,17 @@ pub async fn update_visualization(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "visualization_id": id,
-            "updated_at": Utc::now().to_rfc3339(),
-        }), "更新可视化图表成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新可视化图表失败: {}", e))),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "visualization_id": id,
+                "updated_at": Utc::now().to_rfc3339(),
+            }),
+            "更新可视化图表成功",
+        )),
+        Err(e) => Json(ApiResponse::error(
+            500,
+            &format!("更新可视化图表失败: {}", e),
+        )),
     }
 }
 
@@ -182,24 +198,29 @@ pub async fn delete_visualization(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DataViewWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
-    let result = sqlx::query(
-        "UPDATE visualizations SET is_active = false, updated_at = $2 WHERE id = $1"
-    )
-    .bind(id)
-    .bind(Utc::now())
-    .execute(&pool)
-    .await;
+    let result =
+        sqlx::query("UPDATE visualizations SET is_active = false, updated_at = $2 WHERE id = $1")
+            .bind(id)
+            .bind(Utc::now())
+            .execute(&pool)
+            .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(json!({
-            "visualization_id": id,
-            "deleted_at": Utc::now().to_rfc3339(),
-        }), "删除可视化图表成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除可视化图表失败: {}", e))),
+        Ok(_) => Json(ApiResponse::success(
+            json!({
+                "visualization_id": id,
+                "deleted_at": Utc::now().to_rfc3339(),
+            }),
+            "删除可视化图表成功",
+        )),
+        Err(e) => Json(ApiResponse::error(
+            500,
+            &format!("删除可视化图表失败: {}", e),
+        )),
     }
 }
 
@@ -211,13 +232,13 @@ pub async fn get_visualization_data(
     Json(payload): Json<GetVisualizationData>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&claims, &BIPermission::DataViewRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 查询可视化配置
     let visualization = sqlx::query_as::<_, Visualization>(
-        "SELECT * FROM visualizations WHERE id = $1 AND is_active = true"
+        "SELECT * FROM visualizations WHERE id = $1 AND is_active = true",
     )
     .bind(id)
     .fetch_optional(&pool)
@@ -232,7 +253,7 @@ pub async fn get_visualization_data(
                      WHERE visualization_id = $1 
                      AND cached = true 
                      AND cache_expires_at > $2 
-                     ORDER BY generated_at DESC LIMIT 1"
+                     ORDER BY generated_at DESC LIMIT 1",
                 )
                 .bind(id)
                 .bind(Utc::now())
@@ -240,19 +261,23 @@ pub async fn get_visualization_data(
                 .await;
 
                 if let Ok(Some(cached)) = cached_data {
-                    return Json(ApiResponse::success(json!({
-                        "visualization_id": id,
-                        "visualization_type": visualization_config.visualization_type,
-                        "data": cached.data,
-                        "metadata": cached.metadata,
-                        "generated_at": cached.generated_at.to_rfc3339(),
-                        "cached": true,
-                    }), "获取可视化数据成功（缓存）"));
+                    return Json(ApiResponse::success(
+                        json!({
+                            "visualization_id": id,
+                            "visualization_type": visualization_config.visualization_type,
+                            "data": cached.data,
+                            "metadata": cached.metadata,
+                            "generated_at": cached.generated_at.to_rfc3339(),
+                            "cached": true,
+                        }),
+                        "获取可视化数据成功（缓存）",
+                    ));
                 }
             }
 
             // 执行查询生成数据（简化实现）
-            let generated_data = generate_visualization_data(&visualization_config.visualization_type);
+            let generated_data =
+                generate_visualization_data(&visualization_config.visualization_type);
 
             // 保存缓存数据
             let data_id = Uuid::new_v4();
@@ -274,20 +299,26 @@ pub async fn get_visualization_data(
             .await
             .ok();
 
-            Json(ApiResponse::success(json!({
-                "visualization_id": id,
-                "visualization_type": visualization_config.visualization_type,
-                "data": generated_data,
-                "metadata": {
-                    "parameters": payload.parameters,
-                    "time_range": payload.time_range,
-                },
-                "generated_at": Utc::now().to_rfc3339(),
-                "cached": false,
-            }), "获取可视化数据成功"))
-        },
+            Json(ApiResponse::success(
+                json!({
+                    "visualization_id": id,
+                    "visualization_type": visualization_config.visualization_type,
+                    "data": generated_data,
+                    "metadata": {
+                        "parameters": payload.parameters,
+                        "time_range": payload.time_range,
+                    },
+                    "generated_at": Utc::now().to_rfc3339(),
+                    "cached": false,
+                }),
+                "获取可视化数据成功",
+            ))
+        }
         Ok(None) => Json(ApiResponse::error(404, "可视化图表不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("获取可视化数据失败: {}", e))),
+        Err(e) => Json(ApiResponse::error(
+            500,
+            &format!("获取可视化数据失败: {}", e),
+        )),
     }
 }
 
@@ -304,7 +335,7 @@ fn generate_visualization_data(visualization_type: &VisualizationType) -> serde_
                     "backgroundColor": "rgba(59, 130, 246, 0.1)",
                 }]
             })
-        },
+        }
         VisualizationType::Bar => {
             json!({
                 "labels": ["类别A", "类别B", "类别C", "类别D"],
@@ -314,7 +345,7 @@ fn generate_visualization_data(visualization_type: &VisualizationType) -> serde_
                     "backgroundColor": ["#3B82F6", "#10B981", "#F59E0B", "#EF4444"],
                 }]
             })
-        },
+        }
         VisualizationType::Pie => {
             json!({
                 "labels": ["部分A", "部分B", "部分C", "部分D"],
@@ -323,7 +354,7 @@ fn generate_visualization_data(visualization_type: &VisualizationType) -> serde_
                     "backgroundColor": ["#3B82F6", "#10B981", "#F59E0B", "#EF4444"],
                 }]
             })
-        },
+        }
         VisualizationType::Scatter => {
             json!({
                 "datasets": [{
@@ -337,7 +368,7 @@ fn generate_visualization_data(visualization_type: &VisualizationType) -> serde_
                     ],
                 }]
             })
-        },
+        }
         VisualizationType::Radar => {
             json!({
                 "labels": ["维度A", "维度B", "维度C", "维度D", "维度E"],
@@ -346,7 +377,7 @@ fn generate_visualization_data(visualization_type: &VisualizationType) -> serde_
                     "data": [80, 90, 75, 85, 70],
                 }]
             })
-        },
+        }
         VisualizationType::Gauge => {
             json!({
                 "value": 75,
@@ -354,7 +385,7 @@ fn generate_visualization_data(visualization_type: &VisualizationType) -> serde_
                 "max": 100,
                 "title": "指标值",
             })
-        },
+        }
         VisualizationType::Metric => {
             json!({
                 "value": 1250,
@@ -363,7 +394,7 @@ fn generate_visualization_data(visualization_type: &VisualizationType) -> serde_
                 "change_type": "increase",
                 "target": 1500,
             })
-        },
+        }
         VisualizationType::Table => {
             json!({
                 "columns": [
@@ -378,7 +409,7 @@ fn generate_visualization_data(visualization_type: &VisualizationType) -> serde_
                     {"ID": 3, "名称": "项目C", "数值": 150, "状态": "进行中"},
                 ]
             })
-        },
+        }
         _ => json!({"data": "示例数据"}),
     }
 }

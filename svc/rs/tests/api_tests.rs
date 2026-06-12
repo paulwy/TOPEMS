@@ -1,4 +1,5 @@
 #[cfg(test)]
+#[allow(clippy::needless_borrows_for_generic_args)]
 mod tests {
     use serde_json::json;
 
@@ -47,8 +48,11 @@ mod tests {
         assert_eq!(create_response.status(), 200);
 
         let created_data = create_response.json::<serde_json::Value>().await.unwrap();
-        println!("Create response: {}", serde_json::to_string_pretty(&created_data).unwrap());
-        
+        println!(
+            "Create response: {}",
+            serde_json::to_string_pretty(&created_data).unwrap()
+        );
+
         let project_id = created_data["data"]["id"].as_str().unwrap();
         println!("   Created project with ID: {}", project_id);
 
@@ -275,7 +279,7 @@ mod tests {
             .await
             .expect("Failed to read export content");
         println!("   Export response length: {} bytes", export_content.len());
-        assert!(export_content.len() > 0);
+        assert!(!export_content.is_empty());
 
         // 先删除刚创建的项目，然后测试导入
         println!("\n3. Deleting test projects to prepare for import...");

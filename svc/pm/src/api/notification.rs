@@ -2,8 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     routing::{get, post, put},
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
@@ -11,20 +10,25 @@ use topems_shared::ApiResponse;
 use uuid::Uuid;
 
 use crate::models::notification::{
-    Notification,
-    NotificationSetting,
-    NotificationType,
-    CreateNotificationRequest,
-    CreateNotificationSettingRequest,
-    UpdateNotificationRequest,
+    CreateNotificationRequest, CreateNotificationSettingRequest, Notification, NotificationSetting,
+    NotificationType, UpdateNotificationRequest,
 };
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/notifications", get(get_project_notifications).post(create_notification))
-        .route("/api/v1/notifications/{id}", get(get_notification).put(update_notification))
+        .route(
+            "/api/v1/projects/{project_id}/notifications",
+            get(get_project_notifications).post(create_notification),
+        )
+        .route(
+            "/api/v1/notifications/{id}",
+            get(get_notification).put(update_notification),
+        )
         .route("/api/v1/notifications/{id}/read", post(mark_as_read))
-        .route("/api/v1/projects/{project_id}/notification-settings", get(get_project_settings).post(create_setting))
+        .route(
+            "/api/v1/projects/{project_id}/notification-settings",
+            get(get_project_settings).post(create_setting),
+        )
         .route("/api/v1/notification-settings/{id}", put(update_setting))
         .route("/api/v1/notification-types", get(list_notification_types))
         .with_state(pool)
@@ -34,16 +38,21 @@ async fn get_project_notifications(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Notification>>> {
-    let notifications = sqlx::query_as::<_, Notification>("SELECT * FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC")
-        .bind(project_id)
-        .fetch_all(&pool)
-        .await;
+    let notifications = sqlx::query_as::<_, Notification>(
+        "SELECT * FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC",
+    )
+    .bind(project_id)
+    .fetch_all(&pool)
+    .await;
 
     match notifications {
         Ok(n) => Json(ApiResponse::success(n, "获取通知列表成功")),
         Err(e) => {
             tracing::error!("获取通知失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取通知失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取通知失败",
+            ))
         }
     }
 }
@@ -52,17 +61,24 @@ async fn get_notification(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Notification>> {
-    let notification = sqlx::query_as::<_, Notification>("SELECT * FROM pm.notifications WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let notification =
+        sqlx::query_as::<_, Notification>("SELECT * FROM pm.notifications WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await;
 
     match notification {
         Ok(n) => Json(ApiResponse::success(n, "获取通知详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "通知不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "通知不存在",
+        )),
         Err(e) => {
             tracing::error!("获取通知失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取通知失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取通知失败",
+            ))
         }
     }
 }
@@ -73,7 +89,7 @@ async fn create_notification(
 ) -> Json<ApiResponse<Notification>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let notification = sqlx::query_as::<_, Notification>(
         "INSERT INTO pm.notifications (id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, $11) RETURNING *"
@@ -96,7 +112,10 @@ async fn create_notification(
         Ok(n) => Json(ApiResponse::success(n, "创建通知成功")),
         Err(e) => {
             tracing::error!("创建通知失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建通知失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建通知失败",
+            ))
         }
     }
 }
@@ -111,7 +130,7 @@ async fn update_notification(
             status = COALESCE($1, status),
             read_at = COALESCE($2, read_at),
             updated_at = $3
-        WHERE id = $4 RETURNING *"
+        WHERE id = $4 RETURNING *",
     )
     .bind(req.status)
     .bind(parse_date_opt(&req.read_at))
@@ -122,10 +141,16 @@ async fn update_notification(
 
     match notification {
         Ok(n) => Json(ApiResponse::success(n, "更新通知成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "通知不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "通知不存在",
+        )),
         Err(e) => {
             tracing::error!("更新通知失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新通知失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新通知失败",
+            ))
         }
     }
 }
@@ -139,7 +164,7 @@ async fn mark_as_read(
             status = 'read',
             read_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1 RETURNING *"
+        WHERE id = $1 RETURNING *",
     )
     .bind(id)
     .fetch_one(&pool)
@@ -147,10 +172,16 @@ async fn mark_as_read(
 
     match notification {
         Ok(n) => Json(ApiResponse::success(n, "标记为已读成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "通知不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "通知不存在",
+        )),
         Err(e) => {
             tracing::error!("标记为已读失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "标记为已读失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "标记为已读失败",
+            ))
         }
     }
 }
@@ -159,16 +190,21 @@ async fn get_project_settings(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<NotificationSetting>>> {
-    let settings = sqlx::query_as::<_, NotificationSetting>("SELECT * FROM pm.notification_settings WHERE project_id = $1")
-        .bind(project_id)
-        .fetch_all(&pool)
-        .await;
+    let settings = sqlx::query_as::<_, NotificationSetting>(
+        "SELECT * FROM pm.notification_settings WHERE project_id = $1",
+    )
+    .bind(project_id)
+    .fetch_all(&pool)
+    .await;
 
     match settings {
         Ok(s) => Json(ApiResponse::success(s, "获取通知设置成功")),
         Err(e) => {
             tracing::error!("获取通知设置失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "获取通知设置失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取通知设置失败",
+            ))
         }
     }
 }
@@ -180,7 +216,7 @@ async fn create_setting(
 ) -> Json<ApiResponse<NotificationSetting>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let setting = sqlx::query_as::<_, NotificationSetting>(
         "INSERT INTO pm.notification_settings (id, project_id, user_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at)
         VALUES ($1, $2, 'system', $3, $4, $5, $6, $7, $8) RETURNING *"
@@ -200,7 +236,10 @@ async fn create_setting(
         Ok(s) => Json(ApiResponse::success(s, "创建通知设置成功")),
         Err(e) => {
             tracing::error!("创建通知设置失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "创建通知设置失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "创建通知设置失败",
+            ))
         }
     }
 }
@@ -216,7 +255,7 @@ async fn update_setting(
             notify_before_days = COALESCE($2, notify_before_days),
             preferred_channel = COALESCE($3, preferred_channel),
             updated_at = $4
-        WHERE id = $5 RETURNING *"
+        WHERE id = $5 RETURNING *",
     )
     .bind(req.enabled)
     .bind(req.notify_before_days)
@@ -228,10 +267,16 @@ async fn update_setting(
 
     match setting {
         Ok(s) => Json(ApiResponse::success(s, "更新通知设置成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "通知设置不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "通知设置不存在",
+        )),
         Err(e) => {
             tracing::error!("更新通知设置失败: {}", e);
-            Json(ApiResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "更新通知设置失败"))
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "更新通知设置失败",
+            ))
         }
     }
 }
@@ -302,5 +347,8 @@ async fn list_notification_types(
 }
 
 fn parse_date_opt(date_str: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {
-    date_str.as_ref().and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&chrono::Utc))
+    date_str
+        .as_ref()
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|d| d.with_timezone(&chrono::Utc))
 }

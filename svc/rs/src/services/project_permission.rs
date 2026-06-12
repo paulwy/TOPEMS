@@ -1,7 +1,7 @@
 use sqlx::{PgPool, Row};
-use uuid::Uuid;
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ProjectRole {
@@ -28,10 +28,14 @@ impl std::fmt::Display for ProjectRole {
 pub enum ProjectPermission {
     Read,
     Update,
+    #[allow(dead_code)]
     Delete,
+    #[allow(dead_code)]
     ManageMembers,
     ManagePhases,
+    #[allow(dead_code)]
     ManageMilestones,
+    #[allow(dead_code)]
     All,
 }
 
@@ -49,7 +53,11 @@ impl std::fmt::Display for ProjectPermission {
     }
 }
 
-pub async fn get_project_role(db: &PgPool, user_id: &Uuid, project_id: &Uuid) -> Result<ProjectRole, sqlx::Error> {
+pub async fn get_project_role(
+    db: &PgPool,
+    user_id: &Uuid,
+    project_id: &Uuid,
+) -> Result<ProjectRole, sqlx::Error> {
     let result = sqlx::query(
         r#"
         SELECT leader FROM projects WHERE id = $1
@@ -92,25 +100,22 @@ pub fn has_project_permission(role: &ProjectRole, permission: &ProjectPermission
     match role {
         ProjectRole::Owner => true,
         ProjectRole::Manager => match permission {
-            ProjectPermission::Read | 
-            ProjectPermission::Update | 
-            ProjectPermission::ManageMembers | 
-            ProjectPermission::ManagePhases | 
-            ProjectPermission::ManageMilestones => true,
+            ProjectPermission::Read
+            | ProjectPermission::Update
+            | ProjectPermission::ManageMembers
+            | ProjectPermission::ManagePhases
+            | ProjectPermission::ManageMilestones => true,
             ProjectPermission::Delete => false,
             ProjectPermission::All => false,
         },
-        ProjectRole::Member => match permission {
-            ProjectPermission::Read => true,
-            ProjectPermission::Update => true,
-            ProjectPermission::ManagePhases => true,
-            ProjectPermission::ManageMilestones => true,
-            _ => false,
-        },
-        ProjectRole::Viewer => match permission {
-            ProjectPermission::Read => true,
-            _ => false,
-        },
+        ProjectRole::Member => matches!(
+            permission,
+            ProjectPermission::Read
+                | ProjectPermission::Update
+                | ProjectPermission::ManagePhases
+                | ProjectPermission::ManageMilestones
+        ),
+        ProjectRole::Viewer => matches!(permission, ProjectPermission::Read),
         ProjectRole::None => false,
     }
 }
@@ -145,14 +150,20 @@ pub async fn check_project_permission<T>(
     };
 
     if role == ProjectRole::None {
-        return Err(axum::Json(ApiResponse::error(403, "您不是该项目的成员，无法访问")));
+        return Err(axum::Json(ApiResponse::error(
+            403,
+            "您不是该项目的成员，无法访问",
+        )));
     }
 
     if !has_project_permission(&role, permission) {
-        return Err(axum::Json(ApiResponse::error(403, &format!(
-            "权限不足：您在该项目中的角色是 {}，需要 {} 权限", 
-            role, permission
-        ))));
+        return Err(axum::Json(ApiResponse::error(
+            403,
+            &format!(
+                "权限不足：您在该项目中的角色是 {}，需要 {} 权限",
+                role, permission
+            ),
+        )));
     }
 
     Ok(())
@@ -187,7 +198,10 @@ pub async fn check_project_owner<T>(
     };
 
     if role != ProjectRole::Owner {
-        return Err(axum::Json(ApiResponse::error(403, "权限不足：只有项目负责人才能执行此操作")));
+        return Err(axum::Json(ApiResponse::error(
+            403,
+            "权限不足：只有项目负责人才能执行此操作",
+        )));
     }
 
     Ok(())

@@ -11,8 +11,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
-    Supplier, SupplierPerformance, SupplierProduct, SupplierContract,
-    CreateSupplierRequest, UpdateSupplierRequest,
+    CreateSupplierRequest, Supplier, SupplierContract, SupplierPerformance, SupplierProduct,
+    UpdateSupplierRequest,
 };
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
@@ -37,14 +37,28 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/v1/suppliers", get(list_suppliers).post(create_supplier))
+        .route(
+            "/api/v1/suppliers",
+            get(list_suppliers).post(create_supplier),
+        )
         .route(
             "/api/v1/suppliers/{id}",
-            get(get_supplier).put(update_supplier).delete(delete_supplier),
+            get(get_supplier)
+                .put(update_supplier)
+                .delete(delete_supplier),
         )
-        .route("/api/v1/suppliers/{id}/products", get(get_supplier_products))
-        .route("/api/v1/suppliers/{id}/contracts", get(get_supplier_contracts))
-        .route("/api/v1/suppliers/{id}/performance", get(get_supplier_performance))
+        .route(
+            "/api/v1/suppliers/{id}/products",
+            get(get_supplier_products),
+        )
+        .route(
+            "/api/v1/suppliers/{id}/contracts",
+            get(get_supplier_contracts),
+        )
+        .route(
+            "/api/v1/suppliers/{id}/performance",
+            get(get_supplier_performance),
+        )
         .with_state(state);
 
     Ok(app)
@@ -58,7 +72,7 @@ async fn list_suppliers(
     Query(params): Query<ListQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -70,8 +84,14 @@ async fn list_suppliers(
     let status_filter = params.status.clone();
     let category_filter = params.category.clone();
 
-    let sort_by = params.sort_by.clone().unwrap_or_else(|| "created_at".to_string());
-    let sort_order = params.sort_order.clone().unwrap_or_else(|| "DESC".to_string());
+    let sort_by = params
+        .sort_by
+        .clone()
+        .unwrap_or_else(|| "created_at".to_string());
+    let sort_order = params
+        .sort_order
+        .clone()
+        .unwrap_or_else(|| "DESC".to_string());
     let order_clause = if sort_order == "ASC" { "ASC" } else { "DESC" };
 
     let sort_field = match sort_by.as_str() {
@@ -138,7 +158,10 @@ async fn list_suppliers(
         }
         Err(e) => {
             tracing::error!("获取供应商列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取供应商列表失败",
+            ))
         }
     }
 }
@@ -149,22 +172,24 @@ async fn create_supplier(
     Json(req): Json<CreateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
     // 数据验证
     if req.supplier_no.is_empty() || req.name.is_empty() {
-        return Json(ApiResponse::<Supplier>::error(400, "供应商编号和名称不能为空"));
+        return Json(ApiResponse::<Supplier>::error(
+            400,
+            "供应商编号和名称不能为空",
+        ));
     }
 
     // 检查供应商编号是否已存在
-    let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE supplier_no = $1"
-    )
-    .bind(&req.supplier_no)
-    .fetch_one(&state.db)
-    .await;
+    let existing =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE supplier_no = $1")
+            .bind(&req.supplier_no)
+            .fetch_one(&state.db)
+            .await;
 
     if existing.unwrap_or(0) > 0 {
         return Json(ApiResponse::<Supplier>::error(400, "供应商编号已存在"));
@@ -212,7 +237,8 @@ async fn create_supplier(
                 None,
                 Some(serde_json::to_value(&supplier).ok()),
                 user_id,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::success(supplier, "供应商创建成功"))
         }
@@ -229,7 +255,7 @@ async fn get_supplier(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Supplier>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -260,7 +286,7 @@ async fn update_supplier(
     Json(req): Json<UpdateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -274,7 +300,12 @@ async fn update_supplier(
     let existing = match existing {
         Ok(Some(s)) => s,
         Ok(None) => return Json(ApiResponse::<Supplier>::error(404, "供应商不存在")),
-        Err(e) => return Json(ApiResponse::<Supplier>::error(500, &format!("查询供应商失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::<Supplier>::error(
+                500,
+                &format!("查询供应商失败: {}", e),
+            ))
+        }
     };
 
     let old_values = serde_json::to_value(&existing).ok();
@@ -332,7 +363,8 @@ async fn update_supplier(
                 Some(old_values),
                 Some(serde_json::to_value(&supplier).ok()),
                 user_id,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::success(supplier, "供应商更新成功"))
         }
@@ -349,7 +381,7 @@ async fn delete_supplier(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -361,15 +393,19 @@ async fn delete_supplier(
     .fetch_optional(&state.db)
     .await;
 
-    let old_values = existing.ok().flatten().and_then(|s| serde_json::to_value(&s).ok());
+    let old_values = existing
+        .ok()
+        .flatten()
+        .and_then(|s| serde_json::to_value(&s).ok());
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     // 软删除：更新状态为deleted
-    let result = sqlx::query("UPDATE srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1")
-        .bind(id)
-        .bind(Utc::now())
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1")
+            .bind(id)
+            .bind(Utc::now())
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -382,7 +418,8 @@ async fn delete_supplier(
                 Some(old_values),
                 None,
                 user_id,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::success("".to_string(), "供应商删除成功"))
         }
@@ -402,7 +439,7 @@ async fn get_supplier_products(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SupplierProduct>>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -422,7 +459,10 @@ async fn get_supplier_products(
         Ok(products) => Json(ApiResponse::success(products, "获取供应商产品列表成功")),
         Err(e) => {
             tracing::error!("获取供应商产品列表失败: {}", e);
-            Json(ApiResponse::<Vec<SupplierProduct>>::error(500, "获取供应商产品列表失败"))
+            Json(ApiResponse::<Vec<SupplierProduct>>::error(
+                500,
+                "获取供应商产品列表失败",
+            ))
         }
     }
 }
@@ -435,7 +475,7 @@ async fn get_supplier_contracts(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SupplierContract>>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -455,7 +495,10 @@ async fn get_supplier_contracts(
         Ok(contracts) => Json(ApiResponse::success(contracts, "获取供应商合同列表成功")),
         Err(e) => {
             tracing::error!("获取供应商合同列表失败: {}", e);
-            Json(ApiResponse::<Vec<SupplierContract>>::error(500, "获取供应商合同列表失败"))
+            Json(ApiResponse::<Vec<SupplierContract>>::error(
+                500,
+                "获取供应商合同列表失败",
+            ))
         }
     }
 }
@@ -468,7 +511,7 @@ async fn get_supplier_performance(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierPerformance>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -482,8 +525,18 @@ async fn get_supplier_performance(
 
     let supplier = match supplier {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(ApiResponse::<SupplierPerformance>::error(404, "供应商不存在")),
-        Err(_) => return Json(ApiResponse::<SupplierPerformance>::error(500, "查询供应商失败")),
+        Ok(None) => {
+            return Json(ApiResponse::<SupplierPerformance>::error(
+                404,
+                "供应商不存在",
+            ))
+        }
+        Err(_) => {
+            return Json(ApiResponse::<SupplierPerformance>::error(
+                500,
+                "查询供应商失败",
+            ))
+        }
     };
 
     // 获取订单统计
@@ -502,7 +555,18 @@ async fn get_supplier_performance(
     let total_amount = total_amount.unwrap_or(0.0);
 
     // 获取评估统计
-    let eval_stats = sqlx::query_as::<_, (Option<f64>, Option<f64>, Option<f64>, Option<f64>, Option<f64>, i64, Option<chrono::DateTime<Utc>>)>(
+    let eval_stats = sqlx::query_as::<
+        _,
+        (
+            Option<f64>,
+            Option<f64>,
+            Option<f64>,
+            Option<f64>,
+            Option<f64>,
+            i64,
+            Option<chrono::DateTime<Utc>>,
+        ),
+    >(
         r#"
         SELECT 
             AVG(quality_score) as avg_quality,
@@ -520,8 +584,15 @@ async fn get_supplier_performance(
     .fetch_one(&state.db)
     .await;
 
-    let (avg_quality, avg_delivery, avg_service, avg_price, avg_overall, eval_count, last_eval_date) =
-        eval_stats.unwrap_or((None, None, None, None, None, 0, None));
+    let (
+        avg_quality,
+        avg_delivery,
+        avg_service,
+        avg_price,
+        avg_overall,
+        eval_count,
+        last_eval_date,
+    ) = eval_stats.unwrap_or((None, None, None, None, None, 0, None));
 
     let performance = SupplierPerformance {
         supplier_id: id,

@@ -1,8 +1,8 @@
-use async_trait::async_trait;
-use std::path::Path;
-use crate::Result;
 use crate::error::TopemsError;
-use serde::{Serialize, Deserialize};
+use crate::Result;
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Debug, Clone)]
 pub struct StorageConfig {
@@ -43,7 +43,8 @@ impl Default for FileMetadata {
 
 #[async_trait]
 pub trait StorageService {
-    async fn upload(&self, path: &Path, content: &[u8], content_type: &str) -> Result<FileMetadata>;
+    async fn upload(&self, path: &Path, content: &[u8], content_type: &str)
+        -> Result<FileMetadata>;
     async fn download(&self, path: &str) -> Result<Vec<u8>>;
     async fn delete(&self, path: &str) -> Result<()>;
     async fn exists(&self, path: &str) -> Result<bool>;
@@ -61,9 +62,8 @@ pub struct LocalStorage {
 
 impl LocalStorage {
     pub fn new(config: &StorageConfig) -> Result<Self> {
-        std::fs::create_dir_all(&config.local_path)
-            .map_err(|e| TopemsError::Io(e))?;
-        
+        std::fs::create_dir_all(&config.local_path).map_err(TopemsError::Io)?;
+
         Ok(Self {
             base_path: config.local_path.clone(),
             max_file_size: config.max_file_size,
@@ -72,9 +72,8 @@ impl LocalStorage {
     }
 
     pub fn new_with_path(base_path: &str) -> Result<Self> {
-        std::fs::create_dir_all(base_path)
-            .map_err(|e| TopemsError::Io(e))?;
-        
+        std::fs::create_dir_all(base_path).map_err(TopemsError::Io)?;
+
         Ok(Self {
             base_path: base_path.to_string(),
             max_file_size: 100 * 1024 * 1024,
@@ -89,14 +88,15 @@ impl LocalStorage {
                 self.max_file_size
             )));
         }
-        
-        if !self.allowed_types.is_empty() && !self.allowed_types.contains(&content_type.to_string()) {
+
+        if !self.allowed_types.is_empty() && !self.allowed_types.contains(&content_type.to_string())
+        {
             return Err(TopemsError::Validation(format!(
                 "File type '{}' is not allowed",
                 content_type
             )));
         }
-        
+
         Ok(())
     }
 
@@ -107,18 +107,21 @@ impl LocalStorage {
 
 #[async_trait]
 impl StorageService for LocalStorage {
-    async fn upload(&self, path: &Path, content: &[u8], content_type: &str) -> Result<FileMetadata> {
+    async fn upload(
+        &self,
+        path: &Path,
+        content: &[u8],
+        content_type: &str,
+    ) -> Result<FileMetadata> {
         self.validate_file(content, content_type)?;
-        
+
         let full_path = self.get_full_path(&path.to_string_lossy());
-        
+
         if let Some(parent) = full_path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| TopemsError::Io(e))?;
+            std::fs::create_dir_all(parent).map_err(TopemsError::Io)?;
         }
-        
-        std::fs::write(&full_path, content)
-            .map_err(|e| TopemsError::Io(e))?;
+
+        std::fs::write(&full_path, content).map_err(TopemsError::Io)?;
 
         let etag = format!("{:x}", md5::compute(content));
 
@@ -136,14 +139,12 @@ impl StorageService for LocalStorage {
 
     async fn download(&self, path: &str) -> Result<Vec<u8>> {
         let full_path = self.get_full_path(path);
-        std::fs::read(&full_path)
-            .map_err(|e| TopemsError::Io(e))
+        std::fs::read(&full_path).map_err(TopemsError::Io)
     }
 
     async fn delete(&self, path: &str) -> Result<()> {
         let full_path = self.get_full_path(path);
-        std::fs::remove_file(&full_path)
-            .map_err(|e| TopemsError::Io(e))
+        std::fs::remove_file(&full_path).map_err(TopemsError::Io)
     }
 
     async fn exists(&self, path: &str) -> Result<bool> {
@@ -154,56 +155,61 @@ impl StorageService for LocalStorage {
     async fn list(&self, prefix: &str) -> Result<Vec<FileMetadata>> {
         let full_path = self.get_full_path(prefix);
         let mut results = Vec::new();
-        
+
         if full_path.is_dir() {
-            for entry in std::fs::read_dir(full_path)
-                .map_err(|e| TopemsError::Io(e))?
-            {
-                let entry = entry.map_err(|e| TopemsError::Io(e))?;
+            for entry in std::fs::read_dir(full_path).map_err(TopemsError::Io)? {
+                let entry = entry.map_err(TopemsError::Io)?;
                 let path = entry.path();
-                
+
                 if path.is_file() {
-                    let metadata = entry.metadata().map_err(|e| TopemsError::Io(e))?;
-                    let content = std::fs::read(&path).map_err(|e| TopemsError::Io(e))?;
+                    let metadata = entry.metadata().map_err(TopemsError::Io)?;
+                    let content = std::fs::read(&path).map_err(TopemsError::Io)?;
                     let etag = format!("{:x}", md5::compute(&content));
-                    
+
                     results.push(FileMetadata {
                         id: uuid::Uuid::new_v4().to_string(),
                         filename: path.file_name().unwrap().to_string_lossy().to_string(),
-                        path: path.strip_prefix(&self.base_path).unwrap_or(&path).to_string_lossy().to_string(),
+                        path: path
+                            .strip_prefix(&self.base_path)
+                            .unwrap_or(&path)
+                            .to_string_lossy()
+                            .to_string(),
                         size: metadata.len(),
                         content_type: "application/octet-stream".to_string(),
-                        created_at: chrono::DateTime::from(metadata.created().unwrap_or(std::time::SystemTime::now())),
+                        created_at: chrono::DateTime::from(
+                            metadata.created().unwrap_or(std::time::SystemTime::now()),
+                        ),
                         etag: Some(etag),
                         metadata: std::collections::HashMap::new(),
                     });
                 }
             }
         }
-        
+
         Ok(results)
     }
 
     async fn get_metadata(&self, path: &str) -> Result<Option<FileMetadata>> {
         let full_path = self.get_full_path(path);
-        
+
         if !full_path.exists() {
             return Ok(None);
         }
-        
-        let metadata = std::fs::metadata(&full_path)
-            .map_err(|e| TopemsError::Io(e))?;
-        
-        let content = std::fs::read(&full_path).map_err(|e| TopemsError::Io(e))?;
+
+        let metadata = std::fs::metadata(&full_path).map_err(TopemsError::Io)?;
+
+        let content = std::fs::read(&full_path).map_err(TopemsError::Io)?;
         let etag = format!("{:x}", md5::compute(&content));
-        
+
         Ok(Some(FileMetadata {
             id: uuid::Uuid::new_v4().to_string(),
             filename: full_path.file_name().unwrap().to_string_lossy().to_string(),
             path: path.to_string(),
             size: metadata.len(),
             content_type: "application/octet-stream".to_string(),
-            created_at: chrono::DateTime::from(metadata.created().unwrap_or(std::time::SystemTime::now())),
+            created_at: chrono::DateTime::from(
+                metadata.created().unwrap_or(std::time::SystemTime::now()),
+            ),
             etag: Some(etag),
             metadata: std::collections::HashMap::new(),
         }))
@@ -212,33 +218,37 @@ impl StorageService for LocalStorage {
     async fn copy(&self, source_path: &str, destination_path: &str) -> Result<FileMetadata> {
         let source_full_path = self.get_full_path(source_path);
         let dest_full_path = self.get_full_path(destination_path);
-        
+
         if let Some(parent) = dest_full_path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| TopemsError::Io(e))?;
+            std::fs::create_dir_all(parent).map_err(TopemsError::Io)?;
         }
-        
-        std::fs::copy(&source_full_path, &dest_full_path)
-            .map_err(|e| TopemsError::Io(e))?;
-        
-        self.get_metadata(destination_path).await
-            .map(|m| m.ok_or(TopemsError::Io(std::io::Error::new(std::io::ErrorKind::NotFound, "File not found after copy"))))?
+
+        std::fs::copy(&source_full_path, &dest_full_path).map_err(TopemsError::Io)?;
+
+        self.get_metadata(destination_path).await.map(|m| {
+            m.ok_or(TopemsError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "File not found after copy",
+            )))
+        })?
     }
 
     async fn move_file(&self, source_path: &str, destination_path: &str) -> Result<FileMetadata> {
         let source_full_path = self.get_full_path(source_path);
         let dest_full_path = self.get_full_path(destination_path);
-        
+
         if let Some(parent) = dest_full_path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| TopemsError::Io(e))?;
+            std::fs::create_dir_all(parent).map_err(TopemsError::Io)?;
         }
-        
-        std::fs::rename(&source_full_path, &dest_full_path)
-            .map_err(|e| TopemsError::Io(e))?;
-        
-        self.get_metadata(destination_path).await
-            .map(|m| m.ok_or(TopemsError::Io(std::io::Error::new(std::io::ErrorKind::NotFound, "File not found after move"))))?
+
+        std::fs::rename(&source_full_path, &dest_full_path).map_err(TopemsError::Io)?;
+
+        self.get_metadata(destination_path).await.map(|m| {
+            m.ok_or(TopemsError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "File not found after move",
+            )))
+        })?
     }
 }
 
@@ -251,13 +261,16 @@ mod tests {
     async fn test_local_storage_upload_download() {
         let temp_dir = TempDir::new("storage_test").unwrap();
         let storage = LocalStorage::new_with_path(temp_dir.path().to_str().unwrap()).unwrap();
-        
+
         let content = b"test content";
-        let metadata = storage.upload(Path::new("test.txt"), content, "text/plain").await.unwrap();
-        
+        let metadata = storage
+            .upload(Path::new("test.txt"), content, "text/plain")
+            .await
+            .unwrap();
+
         assert_eq!(metadata.filename, "test.txt");
         assert_eq!(metadata.size, content.len() as u64);
-        
+
         let downloaded = storage.download("test.txt").await.unwrap();
         assert_eq!(downloaded, content);
     }
@@ -266,10 +279,13 @@ mod tests {
     async fn test_local_storage_exists() {
         let temp_dir = TempDir::new("storage_test").unwrap();
         let storage = LocalStorage::new_with_path(temp_dir.path().to_str().unwrap()).unwrap();
-        
+
         assert!(!storage.exists("nonexistent.txt").await.unwrap());
-        
-        storage.upload(Path::new("exists.txt"), b"content", "text/plain").await.unwrap();
+
+        storage
+            .upload(Path::new("exists.txt"), b"content", "text/plain")
+            .await
+            .unwrap();
         assert!(storage.exists("exists.txt").await.unwrap());
     }
 
@@ -277,10 +293,13 @@ mod tests {
     async fn test_local_storage_delete() {
         let temp_dir = TempDir::new("storage_test").unwrap();
         let storage = LocalStorage::new_with_path(temp_dir.path().to_str().unwrap()).unwrap();
-        
-        storage.upload(Path::new("delete_me.txt"), b"content", "text/plain").await.unwrap();
+
+        storage
+            .upload(Path::new("delete_me.txt"), b"content", "text/plain")
+            .await
+            .unwrap();
         assert!(storage.exists("delete_me.txt").await.unwrap());
-        
+
         storage.delete("delete_me.txt").await.unwrap();
         assert!(!storage.exists("delete_me.txt").await.unwrap());
     }
@@ -289,10 +308,16 @@ mod tests {
     async fn test_local_storage_list() {
         let temp_dir = TempDir::new("storage_test").unwrap();
         let storage = LocalStorage::new_with_path(temp_dir.path().to_str().unwrap()).unwrap();
-        
-        storage.upload(Path::new("file1.txt"), b"content1", "text/plain").await.unwrap();
-        storage.upload(Path::new("file2.txt"), b"content2", "text/plain").await.unwrap();
-        
+
+        storage
+            .upload(Path::new("file1.txt"), b"content1", "text/plain")
+            .await
+            .unwrap();
+        storage
+            .upload(Path::new("file2.txt"), b"content2", "text/plain")
+            .await
+            .unwrap();
+
         let files = storage.list("").await.unwrap();
         assert_eq!(files.len(), 2);
     }

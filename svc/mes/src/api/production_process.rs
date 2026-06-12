@@ -8,15 +8,20 @@ use axum::{
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::models::{CreateProductionProcessRequest, ProductionProcess, UpdateProductionProcessRequest};
-use topems_shared::{ApiResponse, PaginationParams, api_error};
 use crate::api::audit::log_audit_event;
+use crate::models::{
+    CreateProductionProcessRequest, ProductionProcess, UpdateProductionProcessRequest,
+};
+use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 use super::ApiState;
 
 pub async fn create_routes() -> Result<Router<ApiState>> {
     let app = Router::new()
-        .route("/api/v1/processes", get(list_processes).post(create_process))
+        .route(
+            "/api/v1/processes",
+            get(list_processes).post(create_process),
+        )
         .route(
             "/api/v1/processes/{id}",
             get(get_process).put(update_process),
@@ -118,14 +123,14 @@ async fn create_process(
         Ok(process) => (
             Json(ApiResponse::success(process.clone(), "生产工序创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建生产工序失败: {}", e);
             (
                 Json(api_error(500, "生产工序创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -148,8 +153,9 @@ async fn create_process(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -186,7 +192,7 @@ async fn update_process(
 ) -> Json<ApiResponse<ProductionProcess>> {
     // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, ProductionProcess>(
         "SELECT id, name, code, description, sequence, standard_time, work_station_id, status, created_at, updated_at FROM production_processes WHERE id = $1",
     )
@@ -233,14 +239,14 @@ async fn update_process(
         Ok(process) => (
             Json(ApiResponse::success(process.clone(), "生产工序更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新生产工序失败: {}", e);
             (
                 Json(api_error(500, "生产工序更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -263,8 +269,9 @@ async fn update_process(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }

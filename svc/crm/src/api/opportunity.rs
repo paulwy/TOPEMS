@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State, Extension},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::{get, post},
     Json, Router,
@@ -8,12 +8,12 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, api_error};
-use topems_shared::auth::Claims;
-use crate::models::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
-use crate::api::audit::log_audit_event;
-use crate::services::permission::{check_permission, ModulePermission};
 use super::ApiState;
+use crate::api::audit::log_audit_event;
+use crate::models::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct OpportunityPaginationParams {
@@ -31,11 +31,19 @@ pub struct BatchDeleteRequest {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/opportunities", get(list_opportunities).post(create_opportunity))
-        .route("/api/v1/opportunities/batch-delete", post(batch_delete_opportunities))
+        .route(
+            "/api/v1/opportunities",
+            get(list_opportunities).post(create_opportunity),
+        )
+        .route(
+            "/api/v1/opportunities/batch-delete",
+            post(batch_delete_opportunities),
+        )
         .route(
             "/api/v1/opportunities/{id}",
-            get(get_opportunity).put(update_opportunity).delete(delete_opportunity),
+            get(get_opportunity)
+                .put(update_opportunity)
+                .delete(delete_opportunity),
         )
 }
 
@@ -45,7 +53,7 @@ async fn list_opportunities(
     Query(params): Query<OpportunityPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -118,7 +126,7 @@ async fn create_opportunity(
     Json(req): Json<CreateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -151,7 +159,10 @@ async fn create_opportunity(
 
     let (response, status_str, error_msg) = match &result {
         Ok(opportunity) => (
-            Json(ApiResponse::success(opportunity.clone(), "销售机会创建成功")),
+            Json(ApiResponse::success(
+                opportunity.clone(),
+                "销售机会创建成功",
+            )),
             "success".to_string(),
             None,
         ),
@@ -197,7 +208,7 @@ async fn get_opportunity(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Opportunity>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -229,7 +240,7 @@ async fn update_opportunity(
     Json(req): Json<UpdateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -282,7 +293,10 @@ async fn update_opportunity(
 
     let (response, status_str, error_msg) = match &result {
         Ok(opportunity) => (
-            Json(ApiResponse::success(opportunity.clone(), "销售机会更新成功")),
+            Json(ApiResponse::success(
+                opportunity.clone(),
+                "销售机会更新成功",
+            )),
             "success".to_string(),
             None,
         ),
@@ -328,7 +342,7 @@ async fn delete_opportunity(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -390,7 +404,7 @@ async fn batch_delete_opportunities(
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -405,7 +419,10 @@ async fn batch_delete_opportunities(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (
-            Json(ApiResponse::success("".to_string(), &format!("成功删除 {} 个销售机会", r.rows_affected()))),
+            Json(ApiResponse::success(
+                "".to_string(),
+                &format!("成功删除 {} 个销售机会", r.rows_affected()),
+            )),
             "success".to_string(),
             None,
         ),

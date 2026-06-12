@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from "@testing-library/react";
 import {
   Dialog,
   DialogTrigger,
@@ -9,11 +8,11 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
+} from "../../components/ui/dialog";
+import { Button } from "../../components/ui/button";
 
-describe('Dialog Component', () => {
-  test('renders Dialog with trigger and content', () => {
+describe("Dialog Component", () => {
+  test("renders Dialog with trigger and content", () => {
     render(
       <Dialog>
         <DialogTrigger asChild>
@@ -26,24 +25,24 @@ describe('Dialog Component', () => {
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant='outline'>Close</Button>
+              <Button variant="outline">Close</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog>,
     );
 
-    const trigger = screen.getByRole('button', { name: /open dialog/i });
+    const trigger = screen.getByRole("button", { name: /open dialog/i });
     expect(trigger).toBeInTheDocument();
 
     fireEvent.click(trigger);
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Test Dialog')).toBeInTheDocument();
-    expect(screen.getByText('This is a test dialog')).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Test Dialog")).toBeInTheDocument();
+    expect(screen.getByText("This is a test dialog")).toBeInTheDocument();
   });
 
-  test('closes dialog when clicking close button', () => {
+  test("closes dialog when clicking close button", () => {
     render(
       <Dialog>
         <DialogTrigger asChild>
@@ -55,25 +54,25 @@ describe('Dialog Component', () => {
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant='outline'>Close</Button>
+              <Button variant="outline">Close</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog>,
     );
 
-    const trigger = screen.getByRole('button', { name: /open dialog/i });
+    const trigger = screen.getByRole("button", { name: /open dialog/i });
     fireEvent.click(trigger);
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
 
-    const closeButton = screen.getByRole('button', { name: /close/i });
+    const closeButton = screen.getByRole("button", { name: /close/i });
     fireEvent.click(closeButton);
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  test('renders DialogHeader and DialogFooter', () => {
+  test("renders DialogHeader and DialogFooter", () => {
     render(
       <Dialog open>
         <DialogContent>
@@ -85,26 +84,26 @@ describe('Dialog Component', () => {
             <Button>Footer Button</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog>,
     );
 
-    expect(screen.getByText('Header Title')).toBeInTheDocument();
-    expect(screen.getByText('Header Description')).toBeInTheDocument();
-    expect(screen.getByText('Footer Button')).toBeInTheDocument();
+    expect(screen.getByText("Header Title")).toBeInTheDocument();
+    expect(screen.getByText("Header Description")).toBeInTheDocument();
+    expect(screen.getByText("Footer Button")).toBeInTheDocument();
   });
 
-  test('renders with custom className', () => {
+  test("renders with custom className", () => {
     render(
       <Dialog open>
-        <DialogContent className='custom-dialog'>
+        <DialogContent className="custom-dialog">
           <DialogHeader>
             <DialogTitle>Custom Dialog</DialogTitle>
           </DialogHeader>
         </DialogContent>
-      </Dialog>
+      </Dialog>,
     );
 
-    const dialogContent = screen.getByRole('dialog');
-    expect(dialogContent).toHaveClass('custom-dialog');
+    const dialogContent = screen.getByRole("dialog");
+    expect(dialogContent).toHaveClass("custom-dialog");
   });
 });

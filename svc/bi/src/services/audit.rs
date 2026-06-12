@@ -2,10 +2,12 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
+#[allow(dead_code)]
 pub struct BiAuditService {
     pool: PgPool,
 }
 
+#[allow(dead_code)]
 impl BiAuditService {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
@@ -20,7 +22,7 @@ impl BiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -51,7 +53,7 @@ impl BiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -82,7 +84,7 @@ impl BiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -113,7 +115,7 @@ impl BiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -174,6 +176,7 @@ impl BiAuditService {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
+#[allow(dead_code)]
 pub struct BiAuditLogEntry {
     pub id: Uuid,
     pub action: String,

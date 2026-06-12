@@ -1,21 +1,25 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json,
-    Router,
+    Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::project_expense::{CreateExpenseRequest, ProjectExpense, UpdateExpenseRequest};
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/v1/projects/{project_id}/expenses", get(list_expenses).post(add_expense))
-        .route("/api/v1/projects/{project_id}/expenses/{id}", get(get_expense).put(update_expense).delete(remove_expense))
+        .route(
+            "/api/v1/projects/{project_id}/expenses",
+            get(list_expenses).post(add_expense),
+        )
+        .route(
+            "/api/v1/projects/{project_id}/expenses/{id}",
+            get(get_expense).put(update_expense).delete(remove_expense),
+        )
         .with_state(pool)
 }
 
@@ -33,7 +37,7 @@ async fn list_expenses(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectExpense>>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        "SELECT * FROM pm.project_expenses WHERE project_id = $1 ORDER BY incurred_date DESC"
+        "SELECT * FROM pm.project_expenses WHERE project_id = $1 ORDER BY incurred_date DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -88,7 +92,7 @@ async fn add_expense(
     .bind(&req.description)
     .bind(req.amount)
     .bind(&req.currency)
-    .bind(&req.incurred_date)
+    .bind(req.incurred_date)
     .bind(now.date_naive())
     .bind(None::<chrono::NaiveDate>)
     .bind(req.budget_item_id)
@@ -127,7 +131,7 @@ async fn get_expense(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectExpense>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        "SELECT * FROM pm.project_expenses WHERE project_id = $1 AND id = $2"
+        "SELECT * FROM pm.project_expenses WHERE project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)
@@ -183,7 +187,7 @@ async fn update_expense(
     .bind(&req.subcategory)
     .bind(&req.description)
     .bind(req.amount)
-    .bind(&req.paid_date)
+    .bind(req.paid_date)
     .bind(&req.status)
     .bind(&req.approved_by)
     .bind(now)
@@ -216,13 +220,11 @@ async fn remove_expense(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query(
-        "DELETE FROM pm.project_expenses WHERE project_id = $1 AND id = $2"
-    )
-    .bind(project_id)
-    .bind(id)
-    .execute(&pool)
-    .await;
+    let result = sqlx::query("DELETE FROM pm.project_expenses WHERE project_id = $1 AND id = $2")
+        .bind(project_id)
+        .bind(id)
+        .execute(&pool)
+        .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

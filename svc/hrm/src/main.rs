@@ -1,13 +1,21 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(dead_code)]
+
 mod api;
 mod models;
 mod services;
 mod utils;
 
 use anyhow::Result;
-use axum::{
-    routing::get,
-    Json, Router,
-};
+use axum::{routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
@@ -16,15 +24,13 @@ use std::sync::Arc;
 use std::time::Instant;
 use utoipa::OpenApi;
 
-use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer,
-    ServiceHealth, HealthStatus, DependencyHealth,
-    SystemMetrics, check_http_health, init_logging,
-    create_api_info_router, create_database_pool, DatabaseConfig,
-    RedisPool, RedisCacheService, CacheService, InMemoryCache,
-    RedisConfig, config::CacheConfig,
-};
 use api::ApiState;
+use topems_shared::{
+    auth_middleware, check_http_health, config::CacheConfig, create_api_info_router,
+    create_cors_layer, create_database_pool, init_logging, ApiResponse, AuthState, CacheService,
+    DatabaseConfig, DependencyHealth, HealthStatus, InMemoryCache, RedisCacheService, RedisConfig,
+    RedisPool, ServiceHealth, SystemMetrics,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -74,13 +80,16 @@ async fn main() -> Result<()> {
     let health_router = Router::new()
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
-        .route("/metrics", get(move || async move {
-            let encoder = TextEncoder::new();
-            let metrics = prometheus::gather();
-            let mut buffer = Vec::new();
-            encoder.encode(&metrics, &mut buffer).unwrap();
-            String::from_utf8(buffer).unwrap()
-        }))
+        .route(
+            "/metrics",
+            get(move || async move {
+                let encoder = TextEncoder::new();
+                let metrics = prometheus::gather();
+                let mut buffer = Vec::new();
+                encoder.encode(&metrics, &mut buffer).unwrap();
+                String::from_utf8(buffer).unwrap()
+            }),
+        )
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .with_state(api_state.clone());
 
@@ -98,7 +107,9 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = env::var("SERVER_PORT").or_else(|_| env::var("PORT")).unwrap_or_else(|_| "8011".to_string());
+    let port = env::var("SERVER_PORT")
+        .or_else(|_| env::var("PORT"))
+        .unwrap_or_else(|_| "8011".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-HRM 人力资源管理系统启动中...");
@@ -201,10 +212,7 @@ struct HrmServiceMetrics {
 }
 
 async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -222,8 +230,8 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {

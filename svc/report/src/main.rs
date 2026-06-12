@@ -1,18 +1,28 @@
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::manual_ok_err)]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::useless_format)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(dead_code)]
+
+use anyhow::Result;
 use axum::{
     extract::{FromRef, State},
     routing::{get, post},
     Json, Router,
 };
-use anyhow::Result;
-use sqlx::PgPool;
-use std::env;
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
+use sqlx::PgPool;
+use std::env;
 
 use topems_shared::{
-    ApiResponse, AuthState, auth_middleware, create_cors_layer, init_logging,
-    ServiceHealth, SimpleHealthConfig, create_api_info_router,
-    HealthStatus, DependencyHealth, check_http_health,
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
+    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth, SimpleHealthConfig,
 };
 
 mod api;
@@ -40,9 +50,7 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-async fn health_check(
-    State(app_state): State<AppState>,
-) -> Json<ApiResponse<String>> {
+async fn health_check(State(app_state): State<AppState>) -> Json<ApiResponse<String>> {
     let database_health = check_database_health(&app_state.pool).await;
     let iam_health = check_iam_health().await;
 
@@ -103,10 +111,7 @@ async fn health_check_detailed(
 }
 
 async fn check_database_health(pool: &PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1")
-        .execute(pool)
-        .await
-    {
+    match sqlx::query("SELECT 1").execute(pool).await {
         Ok(_) => DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Healthy,
@@ -124,8 +129,8 @@ async fn check_database_health(pool: &PgPool) -> DependencyHealth {
 }
 
 async fn check_iam_health() -> DependencyHealth {
-    let iam_url = std::env::var("IAM_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let iam_url =
+        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
     match check_http_health(&health_url).await {
@@ -171,10 +176,9 @@ async fn main() -> Result<()> {
     init_db(&pool).await?;
 
     let auth_state = AuthState::from_env();
-    
-    let health_config = SimpleHealthConfig::new("topems-report")
-        .with_db(pool.clone());
-    
+
+    let health_config = SimpleHealthConfig::new("topems-report").with_db(pool.clone());
+
     let app_state = AppState {
         pool: pool.clone(),
         auth_state: auth_state.clone(),
@@ -187,25 +191,46 @@ async fn main() -> Result<()> {
     let custom_gauge = Gauge::new(
         "topems_report_custom_metric",
         "This is a custom metric for TOPEMS-Report",
-    ).unwrap();
-    default_registry().register(Box::new(custom_gauge.clone())).unwrap();
+    )
+    .unwrap();
+    default_registry()
+        .register(Box::new(custom_gauge.clone()))
+        .unwrap();
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
         .route("/api/v1/report-types", get(list_report_types));
 
     let protected_routes = Router::new()
         .route("/api/v1/reports", get(list_reports).post(create_report))
-        .route("/api/v1/reports/{id}", get(get_report).delete(delete_report))
+        .route(
+            "/api/v1/reports/{id}",
+            get(get_report).delete(delete_report),
+        )
         .route("/api/v1/reports/{id}/export", post(export_report))
-        .route("/api/v1/templates", get(list_templates).post(create_template))
-        .route("/api/v1/templates/{id}", get(get_template).delete(delete_template))
-        .route("/api/v1/reports-center/stats", get(get_reports_center_stats))
-        .route("/api/v1/reports-center/export/{report_type}", post(export_stats_report))
+        .route(
+            "/api/v1/templates",
+            get(list_templates).post(create_template),
+        )
+        .route(
+            "/api/v1/templates/{id}",
+            get(get_template).delete(delete_template),
+        )
+        .route(
+            "/api/v1/reports-center/stats",
+            get(get_reports_center_stats),
+        )
+        .route(
+            "/api/v1/reports-center/export/{report_type}",
+            post(export_stats_report),
+        )
         .layer(axum::middleware::from_fn_with_state(
             auth_state,
             auth_middleware,
@@ -219,7 +244,7 @@ async fn main() -> Result<()> {
         .layer(cors)
         .layer(prometheus_layer);
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8053".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8061".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-Report 报表中心服务启动中...");

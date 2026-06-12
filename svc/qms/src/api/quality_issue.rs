@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::api::audit::log_audit_event;
 use crate::models::{CreateQualityIssueRequest, QualityIssue, UpdateQualityIssueRequest};
-use topems_shared::{ApiResponse, api_error};
+use topems_shared::{api_error, ApiResponse};
 
 use super::ApiState;
 
@@ -90,7 +90,10 @@ async fn list_issues(
         }
         Err(e) => {
             tracing::error!("获取质量问题列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取质量问题列表失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取质量问题列表失败",
+            ))
         }
     }
 }
@@ -213,7 +216,12 @@ async fn update_issue(
     let existing = match existing {
         Ok(Some(i)) => i,
         Ok(None) => return Json(ApiResponse::<QualityIssue>::error(404, "质量问题不存在")),
-        Err(e) => return Json(ApiResponse::<QualityIssue>::error(500, &format!("查询质量问题失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::<QualityIssue>::error(
+                500,
+                &format!("查询质量问题失败: {}", e),
+            ))
+        }
     };
 
     let title = req.title.unwrap_or(existing.title);

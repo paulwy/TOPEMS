@@ -8,4 +8,3 @@ pub use analysis::AnalysisApi;
 pub use document::DocumentApi;
 pub use qa::QaApi;
 pub use vector::VectorApi;
-

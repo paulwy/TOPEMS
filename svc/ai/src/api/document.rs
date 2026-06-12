@@ -40,10 +40,16 @@ impl DocumentApi {
                     let docs_dir = "docs";
                     let path = std::path::Path::new(docs_dir).join(&filename);
                     if let Err(e) = std::fs::create_dir_all(docs_dir) {
-                        return Json(ApiResponse::<UploadDocumentResponse>::error(500, &format!("创建目录失败: {}", e)));
+                        return Json(ApiResponse::<UploadDocumentResponse>::error(
+                            500,
+                            &format!("创建目录失败: {}", e),
+                        ));
                     }
                     if let Err(e) = std::fs::write(&path, &data) {
-                        return Json(ApiResponse::<UploadDocumentResponse>::error(500, &format!("保存文件失败: {}", e)));
+                        return Json(ApiResponse::<UploadDocumentResponse>::error(
+                            500,
+                            &format!("保存文件失败: {}", e),
+                        ));
                     }
                     file_path = path.to_string_lossy().to_string();
 
@@ -67,29 +73,26 @@ impl DocumentApi {
         }
 
         if filename.is_empty() {
-            return Json(ApiResponse::<UploadDocumentResponse>::error(400, "未提供文件"));
+            return Json(ApiResponse::<UploadDocumentResponse>::error(
+                400,
+                "未提供文件",
+            ));
         }
 
         // 使用 document_service 处理上传
-        match state.document_service.process_upload(
-            title,
-            filename.clone(),
-            file_path,
-            file_size,
-            mime_type,
-        ).await {
-            Ok(doc_id) => {
-                Json(ApiResponse::success(
-                    UploadDocumentResponse {
-                        document_id: Uuid::parse_str(&doc_id).unwrap_or(Uuid::nil()),
-                        message: format!("文档 '{}' 上传成功", filename),
-                    },
-                    "Success",
-                ))
-            }
-            Err(e) => {
-                Json(ApiResponse::<UploadDocumentResponse>::error(500, &e))
-            }
+        match state
+            .document_service
+            .process_upload(title, filename.clone(), file_path, file_size, mime_type)
+            .await
+        {
+            Ok(doc_id) => Json(ApiResponse::success(
+                UploadDocumentResponse {
+                    document_id: Uuid::parse_str(&doc_id).unwrap_or(Uuid::nil()),
+                    message: format!("文档 '{}' 上传成功", filename),
+                },
+                "Success",
+            )),
+            Err(e) => Json(ApiResponse::<UploadDocumentResponse>::error(500, &e)),
         }
     }
 
@@ -113,12 +116,11 @@ impl DocumentApi {
                     "文档处理完成",
                 ))
             }
-            Ok(None) => {
-                Json(ApiResponse::<ProcessDocumentResponse>::error(404, "文档不存在"))
-            }
-            Err(e) => {
-                Json(ApiResponse::<ProcessDocumentResponse>::error(500, &e))
-            }
+            Ok(None) => Json(ApiResponse::<ProcessDocumentResponse>::error(
+                404,
+                "文档不存在",
+            )),
+            Err(e) => Json(ApiResponse::<ProcessDocumentResponse>::error(500, &e)),
         }
     }
 
@@ -128,15 +130,14 @@ impl DocumentApi {
         Path(id): Path<Uuid>,
     ) -> Json<ApiResponse<crate::services::vector::Document>> {
         match state.document_service.get_document(id).await {
-            Ok(Some(doc)) => {
-                Json(ApiResponse::success(doc, "Success"))
-            }
-            Ok(None) => {
-                Json(ApiResponse::<crate::services::vector::Document>::error(404, "文档不存在"))
-            }
-            Err(e) => {
-                Json(ApiResponse::<crate::services::vector::Document>::error(500, &e))
-            }
+            Ok(Some(doc)) => Json(ApiResponse::success(doc, "Success")),
+            Ok(None) => Json(ApiResponse::<crate::services::vector::Document>::error(
+                404,
+                "文档不存在",
+            )),
+            Err(e) => Json(ApiResponse::<crate::services::vector::Document>::error(
+                500, &e,
+            )),
         }
     }
 
@@ -146,15 +147,9 @@ impl DocumentApi {
         Path(id): Path<Uuid>,
     ) -> Json<ApiResponse<String>> {
         match state.document_service.delete_document(id).await {
-            Ok(true) => {
-                Json(ApiResponse::success("文档已删除".to_string(), "Success"))
-            }
-            Ok(false) => {
-                Json(ApiResponse::<String>::error(404, "文档不存在"))
-            }
-            Err(e) => {
-                Json(ApiResponse::<String>::error(500, &e))
-            }
+            Ok(true) => Json(ApiResponse::success("文档已删除".to_string(), "Success")),
+            Ok(false) => Json(ApiResponse::<String>::error(404, "文档不存在")),
+            Err(e) => Json(ApiResponse::<String>::error(500, &e)),
         }
     }
 
@@ -163,12 +158,8 @@ impl DocumentApi {
         State(state): State<AppState>,
     ) -> Json<ApiResponse<Vec<crate::services::vector::Document>>> {
         match state.document_service.list_documents().await {
-            Ok(docs) => {
-                Json(ApiResponse::success(docs, "Success"))
-            }
-            Err(e) => {
-                Json(ApiResponse::<Vec<crate::services::vector::Document>>::error(500, &e))
-            }
+            Ok(docs) => Json(ApiResponse::success(docs, "Success")),
+            Err(e) => Json(ApiResponse::<Vec<crate::services::vector::Document>>::error(500, &e)),
         }
     }
 
@@ -194,18 +185,20 @@ impl DocumentApi {
         State(state): State<AppState>,
         Json(req): Json<VectorizeFromFileRequest>,
     ) -> Json<ApiResponse<VectorizeFromFileResponse>> {
-        match state.document_service.vectorize_from_file_service(req.file_id).await {
-            Ok(result) => {
-                Json(ApiResponse::success(
-                    VectorizeFromFileResponse {
-                        document_id: result.document_id,
-                        file_id: result.file_id,
-                        chunks_count: result.chunks_count,
-                        message: format!("文档向量化成功，共 {} 个分块", result.chunks_count),
-                    },
-                    "Success",
-                ))
-            }
+        match state
+            .document_service
+            .vectorize_from_file_service(req.file_id)
+            .await
+        {
+            Ok(result) => Json(ApiResponse::success(
+                VectorizeFromFileResponse {
+                    document_id: result.document_id,
+                    file_id: result.file_id,
+                    chunks_count: result.chunks_count,
+                    message: format!("文档向量化成功，共 {} 个分块", result.chunks_count),
+                },
+                "Success",
+            )),
             Err(e) => {
                 tracing::error!("从 File 服务向量化失败: {}", e);
                 Json(ApiResponse::<VectorizeFromFileResponse>::error(500, &e))

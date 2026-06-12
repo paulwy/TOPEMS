@@ -1,6 +1,6 @@
+use regex::Regex;
 use serde::Serialize;
 use std::collections::HashMap;
-use regex::Regex;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ValidationError {
@@ -51,7 +51,8 @@ impl ValidationResult {
     pub fn to_error_response(&self) -> HashMap<String, Vec<String>> {
         let mut result = HashMap::new();
         for error in &self.errors {
-            result.entry(error.field.clone())
+            result
+                .entry(error.field.clone())
                 .or_insert_with(Vec::new)
                 .push(error.message.clone());
         }
@@ -105,9 +106,9 @@ impl Validator {
     }
 
     pub fn email(value: &str, field: &str) -> ValidationResult {
-        let re = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-            .expect("Invalid regex");
-        
+        let re =
+            Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").expect("Invalid regex");
+
         if !re.is_match(value) {
             ValidationResult::error(field, "无效的邮箱格式")
         } else {
@@ -179,7 +180,11 @@ impl Validator {
         }
     }
 
-    pub fn in_list<T: PartialEq + std::fmt::Display>(value: &T, list: &[T], field: &str) -> ValidationResult {
+    pub fn in_list<T: PartialEq + std::fmt::Display>(
+        value: &T,
+        list: &[T],
+        field: &str,
+    ) -> ValidationResult {
         if !list.contains(value) {
             let values: Vec<String> = list.iter().map(|v| format!("{}", v)).collect();
             ValidationResult::error(field, &format!("必须是以下值之一: {}", values.join(", ")))
@@ -218,12 +223,17 @@ impl Validator {
         }
     }
 
-    pub fn matches_regex(value: &str, pattern: &str, field: &str, message: &str) -> ValidationResult {
+    pub fn matches_regex(
+        value: &str,
+        pattern: &str,
+        field: &str,
+        message: &str,
+    ) -> ValidationResult {
         let re = match Regex::new(pattern) {
             Ok(r) => r,
             Err(_) => return ValidationResult::error(field, "无效的验证规则"),
         };
-        
+
         if !re.is_match(value) {
             ValidationResult::error(field, message)
         } else {
@@ -233,30 +243,35 @@ impl Validator {
 
     pub fn password_strength(value: &str, field: &str) -> ValidationResult {
         let mut result = ValidationResult::ok();
-        
+
         if value.len() < 8 {
             result = result.merge(ValidationResult::error(field, "密码至少需要8个字符"));
         }
-        
+
         if !value.chars().any(|c| c.is_uppercase()) {
-            result = result.merge(ValidationResult::error(field, "密码需要包含至少一个大写字母"));
+            result = result.merge(ValidationResult::error(
+                field,
+                "密码需要包含至少一个大写字母",
+            ));
         }
-        
+
         if !value.chars().any(|c| c.is_lowercase()) {
-            result = result.merge(ValidationResult::error(field, "密码需要包含至少一个小写字母"));
+            result = result.merge(ValidationResult::error(
+                field,
+                "密码需要包含至少一个小写字母",
+            ));
         }
-        
+
         if !value.chars().any(|c| c.is_ascii_digit()) {
             result = result.merge(ValidationResult::error(field, "密码需要包含至少一个数字"));
         }
-        
+
         result
     }
 
     pub fn phone_number(value: &str, field: &str) -> ValidationResult {
-        let re = Regex::new(r"^1[3-9]\d{9}$")
-            .expect("Invalid regex");
-        
+        let re = Regex::new(r"^1[3-9]\d{9}$").expect("Invalid regex");
+
         if !re.is_match(value) {
             ValidationResult::error(field, "无效的手机号码格式")
         } else {
@@ -265,9 +280,8 @@ impl Validator {
     }
 
     pub fn id_card(value: &str, field: &str) -> ValidationResult {
-        let re = Regex::new(r"^\d{17}[\dXx]$")
-            .expect("Invalid regex");
-        
+        let re = Regex::new(r"^\d{17}[\dXx]$").expect("Invalid regex");
+
         if !re.is_match(value) {
             ValidationResult::error(field, "无效的身份证号码格式")
         } else {
@@ -389,7 +403,7 @@ mod tests {
         let result1 = ValidationResult::error("field1", "error1");
         let result2 = ValidationResult::error("field2", "error2");
         let merged = result1.merge(result2);
-        
+
         assert!(!merged.is_valid());
         assert_eq!(merged.errors.len(), 2);
     }
