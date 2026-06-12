@@ -21,7 +21,7 @@ export interface AIDocumentGeneratorProps {
   isOpen: boolean;
   onClose: () => void;
   initialTemplateId?: string;
-  onDocumentGenerated: (document: string) => void;
+  onDocumentGenerated: (_document: string) => void;
 }
 
 export function AIDocumentGenerator({

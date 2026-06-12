@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Download, Check } from "lucide-react";
+import { X, Download } from "lucide-react";
 
 export interface ExportOptionsProps {
   isOpen: boolean;

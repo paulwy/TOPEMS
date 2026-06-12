@@ -49,15 +49,15 @@ interface DataTableProps<TData, TValue> {
   searchKey?: string;
   searchPlaceholder?: string;
   loading?: boolean;
-  onRowClick?: (row: TData) => void;
+  onRowClick?: (_row: TData) => void;
   exportFileName?: string;
   enablePagination?: boolean;
   pageCount?: number;
   totalPages?: number;
   totalItems?: number;
   pageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (size: number) => void;
+  onPageChange?: (_page: number) => void;
+  onPageSizeChange?: (_size: number) => void;
   currentPage?: number;
   responsive?: boolean;
 }
@@ -153,7 +153,7 @@ export function DataTable<TData, TValue>({
         message: "数据已成功导出为 CSV 文件",
         type: "success",
       });
-    } catch (error) {
+    } catch {
       addNotification({
         title: "导出失败",
         message: "导出过程中发生错误",

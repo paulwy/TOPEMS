@@ -84,7 +84,7 @@ else
 fi
 
 # 初始化所有其他 schema
-echo "� 初始化所有服务的数据库 schema..."
+echo "📋 初始化所有服务的数据库 schema..."
 SCHEMA_FILES=(
     "svc/shared/migrations/20260612000001_create_shared_schema.sql"
     "svc/erp/migrations/20260612000001_create_consolidation_schema.sql"

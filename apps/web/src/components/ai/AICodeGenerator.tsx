@@ -9,7 +9,7 @@ export interface AICodeGeneratorProps {
   isOpen: boolean;
   onClose: () => void;
   context: CodeGenerateContext;
-  onSelect: (code: string) => void;
+  onSelect: (_code: string) => void;
   existingCodes?: string[];
 }
 

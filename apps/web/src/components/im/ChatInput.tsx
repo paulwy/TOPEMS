@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Send, Paperclip, Image, FileText, Smile, X } from "lucide-react";
+import { Send, Paperclip, Image, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 

@@ -383,10 +383,12 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                             <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
                               {doc.title}
                             </h3>
-                            <Badge className={getStatusBadgeColor(doc.status)}>
+                            <Badge
+                              className={getStatusBadgeColor(doc.status || "")}
+                            >
                               <div className="flex items-center space-x-1">
-                                {getStatusIcon(doc.status)}
-                                <span>{getStatusText(doc.status)}</span>
+                                {getStatusIcon(doc.status || "")}
+                                <span>{getStatusText(doc.status || "")}</span>
                               </div>
                             </Badge>
                           </div>

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   User,
   FileText,
-  Image,
   Check,
   CheckCheck,
   MoreVertical,

@@ -47,9 +47,9 @@ interface ChartCardProps {
   onFullscreen?: () => void;
   chartTypes?: ChartType[];
   activeChartType?: ChartType;
-  onChartTypeChange?: (type: ChartType) => void;
+  onChartTypeChange?: (_type: ChartType) => void;
   timeRange?: string;
-  onTimeRangeChange?: (range: string) => void;
+  onTimeRangeChange?: (_range: string) => void;
   showTimeRange?: boolean;
   showChartType?: boolean;
   showExport?: boolean;

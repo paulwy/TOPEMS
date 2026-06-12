@@ -174,7 +174,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
+                      `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                     }
                     outerRadius={80}
                     dataKey="value"
@@ -183,9 +183,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    formatter={(value: number) => [`${value} 个`, "数量"]}
-                  />
+                  <Tooltip formatter={(value) => [`${value} 个`, "数量"]} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -207,7 +205,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
+                      `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                     }
                     outerRadius={60}
                     dataKey="value"

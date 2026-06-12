@@ -15,7 +15,7 @@ interface BatchOperationsProps {
   onSelectAll: () => void;
   onDeselectAll: () => void;
   actions: BatchAction[];
-  onAction: (actionId: string) => void;
+  onAction: (_actionId: string) => void;
 }
 
 const BatchOperations: React.FC<BatchOperationsProps> = ({

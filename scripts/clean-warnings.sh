@@ -7,36 +7,38 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# 需要清理的服务列表
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
 SERVICES=(
-    "shared/lib"
-    "services/topems-iam/backend"
-    "services/topems-doc/backend"
-    "services/topems-flow/backend"
-    "services/topems-pm/backend"
-    "services/topems-rs/backend"
-    "services/topems-mail/backend"
-    "services/notification-service"
-    "services/topems-notification/backend"
-    "services/topems-ai/backend"
-    "services/topems-portal/backend"
-    "services/topems-wms/backend"
-    "services/topems-scm/backend"
-    "services/topems-qms/backend"
-    "services/topems-crm/backend"
-    "services/topems-hrm/backend"
-    "services/topems-im/backend"
-    "services/topems-gis/backend"
-    "services/topems-erp/backend"
-    "services/topems-lims/backend"
-    "services/topems-mes/backend"
-    "services/topems-bi/backend"
-    "services/topems-mobile/backend"
-    "services/topems-integration/backend"
-    "services/topems-ehs/backend"
-    "services/topems-srm/backend"
-    "services/topems-pdm/backend"
-    "services/report-service"
+    "lib"
+    "svc/iam"
+    "svc/doc"
+    "svc/flow"
+    "svc/pm"
+    "svc/rs"
+    "svc/mail"
+    "svc/notification"
+    "svc/ai"
+    "svc/portal"
+    "svc/wms"
+    "svc/scm"
+    "svc/qms"
+    "svc/crm"
+    "svc/hrm"
+    "svc/im"
+    "svc/gis"
+    "svc/erp"
+    "svc/lims"
+    "svc/mes"
+    "svc/bi"
+    "svc/mobile"
+    "svc/integration"
+    "svc/ehs"
+    "svc/srm"
+    "svc/pdm"
+    "svc/report"
+    "svc/file"
 )
 
 echo "=============================================="
@@ -45,19 +47,23 @@ echo "=============================================="
 echo ""
 
 for service in "${SERVICES[@]}"; do
-    if [ -d "$service" ]; then
+    SERVICE_PATH="$PROJECT_ROOT/$service"
+    if [ -d "$SERVICE_PATH" ] && [ -f "$SERVICE_PATH/Cargo.toml" ]; then
         echo -n "Cleaning $service ... "
         
-        cd "$service"
+        cd "$SERVICE_PATH"
         
-        # 使用 cargo fix 自动修复
         cargo fix --allow-dirty --bins --tests 2>&1 > /dev/null
         
-        echo -e "${GREEN}✓${NC}"
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓${NC}"
+        else
+            echo -e "${YELLOW}⚠${NC}"
+        fi
         
-        cd - > /dev/null 2>&1
+        cd "$PROJECT_ROOT"
     else
-        echo -e "${YELLOW}⚠ Directory not found: $service${NC}"
+        echo -e "${YELLOW}⚠ Directory not found or missing Cargo.toml: $service${NC}"
     fi
 done
 

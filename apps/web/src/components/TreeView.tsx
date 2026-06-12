@@ -17,7 +17,7 @@ export interface TreeNode {
 
 interface TreeViewProps {
   data: TreeNode[];
-  onSelect?: (node: TreeNode) => void;
+  onSelect?: (_node: TreeNode) => void;
   selectedId?: string;
   showEmployeeCount?: boolean;
 }
@@ -91,7 +91,7 @@ const TreeView: React.FC<TreeViewProps> = ({
         </div>
         {hasChildren && isExpanded && (
           <div>
-            {node.children.map((child) => renderNode(child, level + 1))}
+            {(node.children || []).map((child) => renderNode(child, level + 1))}
           </div>
         )}
       </div>

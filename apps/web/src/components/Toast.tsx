@@ -4,7 +4,7 @@ import type { Notification, NotificationType } from "../hooks/useNotification";
 
 interface ToastProps {
   notification: Notification;
-  onClose: (id: string) => void;
+  onClose: (_id: string) => void;
 }
 
 const iconMap: Record<
@@ -46,6 +46,7 @@ export const Toast: React.FC<ToastProps> = ({ notification, onClose }) => {
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [notification.duration]);
 
   const handleClose = () => {

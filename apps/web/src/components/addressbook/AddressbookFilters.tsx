@@ -2,7 +2,7 @@ import React from "react";
 
 interface AddressbookFiltersProps {
   statusFilter: string;
-  onStatusChange: (status: string) => void;
+  onStatusChange: (_status: string) => void;
 }
 
 export const AddressbookFilters: React.FC<AddressbookFiltersProps> = ({

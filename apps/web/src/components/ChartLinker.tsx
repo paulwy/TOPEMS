@@ -7,10 +7,10 @@ export interface ChartSelection {
 
 interface ChartLinkerContextType {
   selections: ChartSelection[];
-  selectData: (chartId: string, data: any[]) => void;
-  clearSelection: (chartId: string) => void;
+  selectData: (_chartId: string, _data: any[]) => void;
+  clearSelection: (_chartId: string) => void;
   clearAllSelections: () => void;
-  isSelected: (chartId: string, dataItem: any) => boolean;
+  isSelected: (_chartId: string, _dataItem: any) => boolean;
 }
 
 const ChartLinkerContext = createContext<ChartLinkerContextType | undefined>(

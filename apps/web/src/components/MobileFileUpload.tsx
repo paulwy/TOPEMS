@@ -24,8 +24,8 @@ export interface UploadedFile {
 }
 
 interface MobileFileUploadProps {
-  onFilesSelected: (files: File[]) => void;
-  onFilesUploaded?: (files: UploadedFile[]) => void;
+  onFilesSelected: (_files: File[]) => void;
+  onFilesUploaded?: (_files: UploadedFile[]) => void;
   accept?: string;
   multiple?: boolean;
   maxFiles?: number;
@@ -197,8 +197,6 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
     };
     cameraInput.click();
   };
-
-  const remainingSlots = maxFiles - uploadedFiles.length;
 
   return (
     <div className="space-y-4">

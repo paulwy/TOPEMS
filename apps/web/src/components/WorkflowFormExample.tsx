@@ -1,4 +1,3 @@
-import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +40,7 @@ type WorkflowFormValues = {
 };
 
 interface WorkflowFormExampleProps {
-  onSubmit?: (values: WorkflowFormValues) => void;
+  onSubmit?: (_values: WorkflowFormValues) => void;
   initialValues?: Partial<WorkflowFormValues>;
 }
 

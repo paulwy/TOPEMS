@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useAppStore, type Theme } from "@/store";
+import { useAppStore } from "@/store";
 
 type ThemeProviderProps = {
   children: React.ReactNode;

@@ -2,7 +2,7 @@ import { Search, Download } from "lucide-react";
 
 interface AddressbookHeaderProps {
   searchQuery: string;
-  onSearchChange: (query: string) => void;
+  onSearchChange: (_query: string) => void;
   onExport: () => void;
 }
 

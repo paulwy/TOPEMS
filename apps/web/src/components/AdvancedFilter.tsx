@@ -31,7 +31,7 @@ export interface AdvancedFilterProps<T> {
     type: "text" | "number" | "date" | "select";
   }[];
   selectOptions?: Record<string, { label: string; value: string }[]>;
-  onFilterChange: (conditions: FilterCondition[]) => void;
+  onFilterChange: (_conditions: FilterCondition[]) => void;
   initialConditions?: FilterCondition[];
 }
 

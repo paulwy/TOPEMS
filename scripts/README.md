@@ -84,12 +84,16 @@ scripts/
 
 | 脚本 | 说明 |
 |------|------|
-| `build-all-services.sh` | 构建所有服务 |
-| `check-all-rust-services.sh` | 检查所有Rust服务编译状态 |
+| `build-all-services.sh` | 构建所有服务镜像 |
+| `check-all-rust-services.sh` | 检查所有 Rust 服务编译状态 |
 | `cleanup.sh` | 全面清理（端口、进程、缓存） |
-| `run-clippy.sh` | 运行 Clippy 代码检查 |
-| `run-tests.sh` | 运行测试 |
-| `run_ci_tests.sh` | 运行 CI 测试 |
+| `clean-warnings.sh` | 批量清理代码警告（自动修复） |
+| `run-clippy.sh` | 运行 Clippy 静态分析 |
+| `run-tests.sh` | 运行测试套件（单元测试、集成测试、覆盖率） |
+| `run_ci_tests.sh` | CI/CD 测试脚本 |
+| `test-hrm-api.sh` | HRM API 端到端测试 |
+| `collect-test-data.sh` | 收集测试数据 |
+| `encrypt-env.sh` | 加密环境变量文件 |
 
 #### 部署脚本
 
@@ -213,7 +217,7 @@ bash scripts/docker/topems-docker.sh stop
 | | hrm | 8012 |
 | | crm | 8013 |
 | PLM服务 | rs | 8020 |
-| | doc | 8028 |
+| | doc | 8021 |
 | | lims | 8022 |
 | | pdm | 8023 |
 | MES服务 | mes | 8030 |

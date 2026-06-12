@@ -137,7 +137,7 @@ function useErpBase<T extends { id?: string }>(
       try {
         const response = await api.create(item);
         if (response.success && response.data) {
-          setData((prev) => [...prev, response.data]);
+          setData((prev) => [...prev, response.data!]);
           setError(null);
           handleSuccess("创建成功");
           return response.data;

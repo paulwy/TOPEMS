@@ -65,21 +65,21 @@ export interface EnhancedDataTableProps<TData extends RowData, TValue> {
   searchKey?: string;
   searchPlaceholder?: string;
   loading?: boolean;
-  onRowClick?: (row: TData) => void;
+  onRowClick?: (_row: TData) => void;
   exportFileName?: string;
   enablePagination?: boolean;
   pageCount?: number;
   totalPages?: number;
   totalItems?: number;
   pageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (size: number) => void;
+  onPageChange?: (_page: number) => void;
+  onPageSizeChange?: (_size: number) => void;
   currentPage?: number;
   responsive?: boolean;
   onRefresh?: () => void;
   enableSelection?: boolean;
   selectedIds?: string[];
-  onSelectionChange?: (ids: string[]) => void;
+  onSelectionChange?: (_ids: string[]) => void;
   selectionKey?: keyof TData;
   enableAdvancedFilter?: boolean;
   advancedFilters?: {
@@ -88,7 +88,7 @@ export interface EnhancedDataTableProps<TData extends RowData, TValue> {
     type: "text" | "select" | "date" | "number";
     options?: { value: string; label: string }[];
     value?: string;
-    onChange?: (value: string) => void;
+    onChange?: (_value: string) => void;
   }[];
   emptyState?: React.ReactNode;
   striped?: boolean;

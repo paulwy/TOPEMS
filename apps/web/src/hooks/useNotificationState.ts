@@ -24,8 +24,8 @@ export const useNotificationState = () => {
       if (response.success && response.data) {
         setState((prev) => ({
           ...prev,
-          notifications: response.data.notifications,
-          unreadCount: response.data.unread_count,
+          notifications: response.data!.notifications,
+          unreadCount: response.data!.unread_count,
           loading: false,
         }));
       }

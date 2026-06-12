@@ -15,10 +15,6 @@ import {
   Search,
   Building2,
   RefreshCw,
-  MoreHorizontal,
-  ArrowUpDown,
-  Copy,
-  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +47,6 @@ import {
 import {
   useAccounts,
   useAccountTree,
-  useAccount,
   useCreateAccount,
   useUpdateAccount,
   useDeleteAccount,
@@ -91,7 +86,6 @@ interface AccountFormData {
 }
 
 export default function AccountManagementPage() {
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [isDetailFilter, setIsDetailFilter] = useState<string>("all");
@@ -719,7 +713,7 @@ export default function AccountManagementPage() {
       {/* 删除确认对话框 */}
       <AlertDialog
         open={!!deletingId}
-        onOpenChange={(open) => !open && setDeletingId(null)}
+        onOpenChange={(open: boolean) => !open && setDeletingId(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>

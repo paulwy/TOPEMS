@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Upload, FileSpreadsheet, X, Check } from "lucide-react";
+import React from "react";
+import { Upload } from "lucide-react";
 
 export interface ImportButtonProps {
   onImport: () => void;

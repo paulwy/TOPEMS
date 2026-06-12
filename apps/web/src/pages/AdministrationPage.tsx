@@ -2,42 +2,27 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Package,
   Calendar,
-  FileText,
-  Settings,
   ChevronLeft,
   Plus,
-  Search,
   Edit,
   Trash2,
   Eye,
-  Grid,
-  List,
   ShoppingCart,
-  ClipboardList,
-  Building2,
   Users,
-  CheckCircle,
   XCircle,
   Clock,
   Filter,
   Download,
-  Upload,
-  Users2,
   Car,
   BriefcaseBusiness,
-  HardHat,
   Bell,
   CircleDollarSign,
-  CreditCard,
   CheckSquare,
   UserCheck,
-  FileCheck,
   Send,
   CalendarDays,
   Clock12,
-  AlertCircle,
   X,
-  Save,
   ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -63,7 +48,6 @@ import {
   type Employee,
 } from "../api/hrm";
 import MobileHeader from "../components/MobileHeader";
-import MobileNav from "../components/MobileNav";
 
 interface ExpenseClaim {
   id: string;
@@ -92,7 +76,7 @@ const AdministrationPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [activeTab, setActiveTab] = useState<TabType>("overview");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -110,7 +94,7 @@ const AdministrationPage: React.FC = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [currentModalType, setCurrentModalType] = useState<ModalType>("create");
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [_selectedItem, setSelectedItem] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
 
   const [filterStatus, setFilterStatus] = useState("all");
@@ -141,16 +125,6 @@ const AdministrationPage: React.FC = () => {
 
   const getTotalPages = (data: any[]) => {
     return Math.ceil(data.length / pageSize);
-  };
-
-  const handleSelectAll = (
-    data: Array<{ id: string; status?: string; name?: string }>,
-  ) => {
-    if (selectedIds.length === data.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(data.map((item) => item.id));
-    }
   };
 
   const handleSelectItem = (id: string) => {
@@ -776,7 +750,7 @@ const AdministrationPage: React.FC = () => {
                 <span className="text-slate-900">{room.location}</span>
               </div>
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {room.facilities.map((facility, idx) => (
+                {room.facilities?.map((facility, idx) => (
                   <span
                     key={idx}
                     className="px-2 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium"

@@ -70,7 +70,7 @@ export async function safeRequest<T>(
  */
 export async function paginatedRequest<T>(
   requestFn: (
-    params: any,
+    _params: any,
   ) => Promise<
     ApiResponse<{ items: T[]; total: number; page: number; page_size: number }>
   >,

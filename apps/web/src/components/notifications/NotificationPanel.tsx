@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Check, Trash2, Settings, RefreshCw } from "lucide-react";
+import { Check, Settings, RefreshCw } from "lucide-react";
 import NotificationItem from "./NotificationItem";
 import NotificationSettings from "./NotificationSettings";
 import type { Notification } from "../../api/notification";

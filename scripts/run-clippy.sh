@@ -1,40 +1,39 @@
 #!/bin/bash
 
-# 这个脚本会遍历所有包含 Cargo.toml 的目录并运行 clippy
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo "开始检查所有 Rust 项目..."
 
 PROJECTS=(
-    "shared/lib"
-    "services/topems-crm/backend"
-    "services/topems-hrm/backend"
-    "services/topems-pm/backend"
-    "services/topems-im/backend"
-    "services/topems-gis/backend"
-    "services/topems-erp/backend"
-    "services/topems-flow/backend"
-    "services/report-service"
-    "services/topems-lims/backend"
-    "services/topems-qms/backend"
-    "services/topems-mes/backend"
-    "services/topems-bi/backend"
-    "services/topems-doc/backend"
-    "services/notification-service"
-    "services/topems-rs/backend"
-    "services/topems-mail/backend"
-    "services/topems-mobile/backend"
-    "services/topems-iam/backend"
-    "services/topems-integration/backend"
-    "services/topems-wms/backend"
-    "services/topems-ai/backend"
-    "services/topems-portal/backend"
-    "services/topems-ehs/backend"
-    "services/topems-scm/backend"
-    "services/topems-srm/backend"
-    "services/topems-pdm/backend"
+    "lib"
+    "svc/crm"
+    "svc/hrm"
+    "svc/pm"
+    "svc/im"
+    "svc/gis"
+    "svc/erp"
+    "svc/flow"
+    "svc/report"
+    "svc/lims"
+    "svc/qms"
+    "svc/mes"
+    "svc/bi"
+    "svc/doc"
+    "svc/notification"
+    "svc/rs"
+    "svc/mail"
+    "svc/mobile"
+    "svc/iam"
+    "svc/integration"
+    "svc/wms"
+    "svc/ai"
+    "svc/portal"
+    "svc/ehs"
+    "svc/scm"
+    "svc/srm"
+    "svc/pdm"
+    "svc/file"
 )
 
 TOTAL_ERRORS=0
@@ -61,6 +60,11 @@ for project in "${PROJECTS[@]}"; do
         fi
         
         cd "$PROJECT_ROOT" || exit 1
+        echo ""
+    else
+        echo "========================================="
+        echo "跳过项目: $project (目录不存在或缺少 Cargo.toml)"
+        echo "========================================="
         echo ""
     fi
 done

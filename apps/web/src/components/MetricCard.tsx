@@ -120,7 +120,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     const stepDuration = duration / steps;
     const startValue = 0;
     const endValue = value as number;
-    const increment = (endValue - startValue) / steps;
 
     let currentStep = 0;
     const timer = setInterval(() => {

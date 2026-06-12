@@ -25,7 +25,7 @@ export const usePermissionCheck = () => {
           allowed: results.every((r) => r),
           results: permissions.reduce(
             (acc, perm, idx) => {
-              acc[perm] = results[idx];
+              acc[perm] = !!results[idx];
               return acc;
             },
             {} as Record<string, boolean>,

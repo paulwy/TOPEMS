@@ -30,7 +30,7 @@ export interface AITextOptimizerProps {
   onClose: () => void;
   context: TextOptimizeContext;
   originalText: string;
-  onOptimized: (text: string) => void;
+  onOptimized: (_text: string) => void;
 }
 
 const systemPromptTemplates: Record<string, string> = {

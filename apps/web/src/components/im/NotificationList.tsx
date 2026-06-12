@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Bell, Check, CheckCheck, Trash2, Clock } from "lucide-react";
+import { Bell, Check, CheckCheck, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { imApi, type Notification } from "../../api/im";
 import { useAppStore } from "../../store";

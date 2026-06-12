@@ -12,7 +12,7 @@ import {
 
 interface MobileNavProps {
   currentPage: string;
-  onNavigate: (page: string) => void;
+  onNavigate: (_page: string) => void;
 }
 
 const navItems = [

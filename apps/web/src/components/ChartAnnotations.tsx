@@ -14,9 +14,9 @@ export interface Annotation {
 
 interface ChartAnnotationsProps {
   annotations: Annotation[];
-  onAddAnnotation: (annotation: Omit<Annotation, "id">) => void;
-  onUpdateAnnotation: (id: string, updates: Partial<Annotation>) => void;
-  onDeleteAnnotation: (id: string) => void;
+  onAddAnnotation: (_annotation: Omit<Annotation, "id">) => void;
+  onUpdateAnnotation: (_id: string, _updates: Partial<Annotation>) => void;
+  onDeleteAnnotation: (_id: string) => void;
   enabled?: boolean;
 }
 

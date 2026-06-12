@@ -20,20 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import {
-  Search,
-  X,
-  Check,
-  Building2,
-  Users,
-  FolderOpen,
-  Banknote,
-  BookOpen,
-  Loader2,
-} from "lucide-react";
+import { Search, X, Check, Loader2 } from "lucide-react";
 import { crmApi } from "@/api/crm";
 import { srmApi } from "@/api/srm";
 import { hrmApi } from "@/api/hrm";
@@ -50,16 +40,19 @@ import { financeApi } from "@/api/finance";
 type CounterpartyType = "customer" | "supplier" | "both";
 
 /**
- * 往来单位接口
+ * 往来单位接口 - 兼容 Customer 和 Supplier
  */
 interface Counterparty {
   id: string;
-  code: string;
+  code?: string;
+  supplier_no?: string;
   name: string;
   short_name?: string;
   contact_person?: string;
+  contact_name?: string;
   phone?: string;
-  type: CounterpartyType;
+  contact_phone?: string;
+  type?: CounterpartyType;
   status: string;
 }
 
@@ -144,7 +137,7 @@ interface PopupSelectorProps<T> {
 function PopupSelector<T>({
   open,
   onOpenChange,
-  onSelect,
+  onSelect: _,
   onCancel,
   loading,
   title,
@@ -187,11 +180,11 @@ interface CounterpartySelectorProps extends EntitySelectorProps<Counterparty> {
 export function CounterpartySelector({
   value,
   onChange,
-  multiple,
+  multiple: _,
   placeholder = "选择往来单位",
   disabled,
   className,
-  types,
+  types: __,
   status,
 }: CounterpartySelectorProps) {
   const [open, setOpen] = useState(false);
@@ -214,8 +207,8 @@ export function CounterpartySelector({
     enabled: open && activeTab === "supplier",
   });
 
-  const customers = customersData?.data?.items || [];
-  const suppliers = suppliersData?.data || [];
+  const customers = (customersData?.data?.items || []) as Counterparty[];
+  const suppliers = (suppliersData?.data || []) as Counterparty[];
   const list = activeTab === "customer" ? customers : suppliers;
   const loading =
     activeTab === "customer" ? customersLoading : suppliersLoading;
@@ -306,7 +299,7 @@ export function CounterpartySelector({
                   未找到匹配的往来单位
                 </div>
               ) : (
-                list.map((entity) => (
+                list.map((entity: any) => (
                   <div
                     key={entity.id}
                     className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-accent ${
@@ -316,15 +309,22 @@ export function CounterpartySelector({
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">{entity.code}</Badge>
+                        <Badge variant="outline">
+                          {entity.code || entity.supplier_no || ""}
+                        </Badge>
                         <span className="font-medium">{entity.name}</span>
                       </div>
                       <div className="text-sm text-muted-foreground mt-1">
-                        {entity.contact_person && (
-                          <span>联系人: {entity.contact_person}</span>
+                        {(entity.contact_person || entity.contact_name) && (
+                          <span>
+                            联系人:{" "}
+                            {entity.contact_person || entity.contact_name}
+                          </span>
                         )}
-                        {entity.phone && (
-                          <span className="ml-2">电话: {entity.phone}</span>
+                        {(entity.phone || entity.contact_phone) && (
+                          <span className="ml-2">
+                            电话: {entity.phone || entity.contact_phone}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -372,11 +372,11 @@ export function ProjectSelector({
     enabled: open,
   });
 
-  const projects = data?.data?.items || [];
+  const projects = (data?.data?.items || []) as Project[];
 
   const selectedProject = useMemo(() => {
     if (!value) return null;
-    return projects.find((p) => p.id === value);
+    return projects.find((p: Project) => p.id === value);
   }, [value, projects]);
 
   const handleSelect = useCallback(
@@ -444,7 +444,7 @@ export function ProjectSelector({
                 未找到匹配的项目
               </div>
             ) : (
-              projects.map((project) => (
+              projects.map((project: Project) => (
                 <div
                   key={project.id}
                   className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-accent ${
@@ -654,7 +654,7 @@ export function AccountSelector({
   placeholder = "选择会计科目",
   disabled,
   className,
-  category,
+  category: _,
   level,
   balanceDirection,
 }: AccountSelectorProps) {

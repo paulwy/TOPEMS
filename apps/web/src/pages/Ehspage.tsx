@@ -646,8 +646,8 @@ const Ehspage: React.FC = () => {
                   ""
                 )
                   .split(";")
-                  .map((s) => s.trim())
-                  .filter((s) => s),
+                  .map((s: string) => s.trim())
+                  .filter((s: string) => s),
                 status: item["状态"] || item["status"] || "identified",
               };
               await ehsApi.createHazard(req);

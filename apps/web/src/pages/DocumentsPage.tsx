@@ -192,7 +192,7 @@ const DocumentsPage: React.FC = () => {
   const loadFolders = async () => {
     try {
       const response = await docApi.listFolders();
-      if (response.success && response.data.folders) {
+      if (response.success && response.data?.folders) {
         setFolders(response.data.folders);
       }
     } catch (err) {
@@ -203,7 +203,7 @@ const DocumentsPage: React.FC = () => {
   const loadFiles = async () => {
     try {
       const response = await docApi.list(selectedFolderId || undefined);
-      if (response.success && response.data.files) {
+      if (response.success && response.data?.files) {
         const mappedFiles: File[] = response.data.files.map((f) => ({
           id: f.id,
           name: f.name,

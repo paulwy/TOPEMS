@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  X,
-  FileText,
-  Columns,
-  Filter,
-  Loader2,
-  CheckCircle,
-} from "lucide-react";
+import { X, FileText, Loader2, CheckCircle } from "lucide-react";
 import type {
   ReportType,
   ReportTypeInfo,

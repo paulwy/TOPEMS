@@ -179,7 +179,7 @@ export const ChatInterface: React.FC = () => {
     }
   };
 
-  const markAllMessagesRead = async (chatRoomId: string) => {
+  const markAllMessagesRead = async (_chatRoomId: string) => {
     try {
       const unreadMessages = messages.filter(
         (m) => !m.is_read && m.sender_id !== "current-user",
@@ -412,7 +412,7 @@ export const ChatInterface: React.FC = () => {
         });
 
         if (response.success && response.data) {
-          setMessages((prev) => [...prev, response.data]);
+          setMessages((prev) => [...prev, response.data!]);
         }
       }
     } catch (error) {

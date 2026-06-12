@@ -1,5 +1,5 @@
 import React from "react";
-import { Bell, Volume2, VolumeX, Monitor, Smartphone } from "lucide-react";
+import { Volume2, VolumeX, Monitor, Smartphone } from "lucide-react";
 import type { NotificationSettingsData } from "../../hooks/useNotificationSettings";
 import useNotificationSettings from "../../hooks/useNotificationSettings";
 

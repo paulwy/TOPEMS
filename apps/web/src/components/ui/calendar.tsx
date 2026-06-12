@@ -36,7 +36,7 @@ function Calendar({
   defaultMonth,
   disabled,
   className,
-  classNames,
+  classNames: _,
 }: CalendarProps) {
   const [month, setMonth] = React.useState(defaultMonth || new Date());
 

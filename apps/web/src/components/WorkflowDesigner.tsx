@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Separator } from "./ui/separator";
 import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from "lucide-react";
 
 // --- Types ---
@@ -24,14 +25,6 @@ interface EdgeData {
 }
 
 // --- Constants ---
-const NODE_COLORS: Record<NodeType, string> = {
-  start: "bg-green-100 border-green-500 text-green-800",
-  task: "bg-blue-100 border-blue-500 text-blue-800",
-  approval: "bg-purple-100 border-purple-500 text-purple-800",
-  condition: "bg-yellow-100 border-yellow-500 text-yellow-800",
-  end: "bg-red-100 border-red-500 text-red-800",
-};
-
 const NODE_ICONS: Record<NodeType, string> = {
   start: "▶",
   task: "📝",
@@ -44,7 +37,7 @@ const NODE_ICONS: Record<NodeType, string> = {
 interface WorkflowDesignerProps {
   initialNodes?: NodeData[];
   initialEdges?: EdgeData[];
-  onSave?: (nodes: NodeData[], edges: EdgeData[]) => void;
+  onSave?: (_nodes: NodeData[], _edges: EdgeData[]) => void;
 }
 
 export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
