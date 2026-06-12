@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -29,6 +28,12 @@ function DatePicker({
   disabled = false,
   className,
 }: DatePickerProps) {
+  const handleSelect = (selectedDate: Date | Date[] | undefined) => {
+    if (onSelect && !Array.isArray(selectedDate)) {
+      onSelect(selectedDate);
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -50,7 +55,7 @@ function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={date} onSelect={onSelect} />
+        <Calendar mode="single" selected={date} onSelect={handleSelect} />
       </PopoverContent>
     </Popover>
   );

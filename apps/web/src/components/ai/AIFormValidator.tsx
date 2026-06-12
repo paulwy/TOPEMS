@@ -21,8 +21,8 @@ export interface AIFormValidatorProps {
   isOpen: boolean;
   onClose: () => void;
   validateRequest: ValidateRequest;
-  onApplySuggestions?: (suggestions: Suggestion[]) => void;
-  onFixIssue?: (issue: ValidationIssue) => void;
+  onApplySuggestions?: (_suggestions: Suggestion[]) => void;
+  onFixIssue?: (_issue: ValidationIssue) => void;
 }
 
 const issueIconMap: Record<string, React.ReactNode> = {

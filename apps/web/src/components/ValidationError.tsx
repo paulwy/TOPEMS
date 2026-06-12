@@ -89,10 +89,10 @@ interface InlineValidationProps {
     minLength?: number;
     maxLength?: number;
     pattern?: RegExp;
-    custom?: (value: string) => boolean | string;
+    custom?: (_value: string) => boolean | string;
   };
   fieldName: string;
-  onValidChange?: (isValid: boolean) => void;
+  onValidChange?: (_isValid: boolean) => void;
 }
 
 export const InlineValidation: React.FC<InlineValidationProps> = ({

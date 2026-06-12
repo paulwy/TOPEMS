@@ -76,11 +76,11 @@ interface DrawFeature {
 
 const LayerToggle: React.FC<{
   label: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   checked: boolean;
   onChange: (checked: boolean) => void;
   color: string;
-}> = ({ label, icon, checked, onChange, color }) => (
+}> = ({ label, icon: _, checked, onChange, color }) => (
   <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
     <div
       className={`w-3 h-3 rounded-full ${checked ? "" : "bg-gray-300"}`}
@@ -278,7 +278,7 @@ const MapView: React.FC<MapViewProps> = ({
   storageLocations = [],
   onMarkerClick,
 }) => {
-  const [mapCenter, setMapCenter] = useState<[number, number]>([
+  const [mapCenter, _setMapCenter] = useState<[number, number]>([
     31.2304, 121.4737,
   ]);
   const [zoom, setZoom] = useState(14);
@@ -310,7 +310,7 @@ const MapView: React.FC<MapViewProps> = ({
   );
   const [mapType, setMapType] = useState<"osm" | "amap">("osm");
   const [show3DView, setShow3DView] = useState(false);
-  const mapRef = useRef<any>(null);
+  const _mapRef = useRef<any>(null);
   const leafletMapRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -399,7 +399,7 @@ const MapView: React.FC<MapViewProps> = ({
     }
   };
 
-  const handleMapClick = (e: any) => {
+  const _handleMapClick = (e: any) => {
     const latlng = e.latlng;
     const point: [number, number] = [latlng.lat, latlng.lng];
 
@@ -458,7 +458,7 @@ const MapView: React.FC<MapViewProps> = ({
     }
   };
 
-  const handleMapMove = (e: any) => {
+  const _handleMapMove = (e: any) => {
     if (
       (toolMode === "measure-distance" || toolMode === "measure-area") &&
       measurePoints.length > 0
@@ -1246,21 +1246,21 @@ const MapView: React.FC<MapViewProps> = ({
               label="设备点位"
               icon={<MapPin className="w-4 h-4" />}
               checked={visibleLayers.devices}
-              onChange={(checked) => toggleLayer("devices")}
+              onChange={() => toggleLayer("devices")}
               color="#00C897"
             />
             <LayerToggle
               label="管线"
               icon={<Navigation className="w-4 h-4" />}
               checked={visibleLayers.pipelines}
-              onChange={(checked) => toggleLayer("pipelines")}
+              onChange={() => toggleLayer("pipelines")}
               color="#6366F1"
             />
             <LayerToggle
               label="仓储位置"
               icon={<Info className="w-4 h-4" />}
               checked={visibleLayers.storage}
-              onChange={(checked) => toggleLayer("storage")}
+              onChange={() => toggleLayer("storage")}
               color="#F59E0B"
             />
             {drawFeatures.length > 0 && (

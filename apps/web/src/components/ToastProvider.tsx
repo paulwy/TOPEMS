@@ -10,7 +10,7 @@ interface Toast {
 interface ToastContextType {
   toasts: Toast[];
   showToast: (type: Toast["type"], message: string) => void;
-  removeToast: (id: string) => void;
+  removeToast: (_id: string) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);

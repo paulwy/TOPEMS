@@ -6,7 +6,6 @@ import type {
   PaginationState,
   VisibilityState,
   RowData,
-  TableOptions,
 } from "@tanstack/react-table";
 import {
   getCoreRowModel,
@@ -35,13 +34,13 @@ export interface UseDataTableResult<TData extends RowData, TValue> {
   tableOptions: any;
 }
 
-export function useDataTable<TData extends RowData, TValue>({
+export function useDataTable<TData extends RowData>({
   columns,
   data,
   initialPageIndex = 0,
   initialPageSize = 10,
   enablePagination = true,
-}: UseDataTableOptions<TData, TValue>): UseDataTableResult<TData, TValue> {
+}: UseDataTableOptions<TData, any>): UseDataTableResult<TData, any> {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({

@@ -343,18 +343,20 @@ const BudgetManagementPage: React.FC = () => {
           <div className="w-full max-w-xs">
             <div className="flex justify-between text-xs mb-1">
               <span className="text-slate-600 dark:text-slate-400">
-                已用: ¥{row.original.used_amount.toLocaleString()}
+                已用: ¥{(row.original.used_amount ?? 0).toLocaleString()}
               </span>
               <span
-                className={`font-bold ${row.original.usage_rate > 80 ? "text-red-600" : "text-blue-600"}`}
+                className={`font-bold ${(row.original.usage_rate ?? 0) > 80 ? "text-red-600" : "text-blue-600"}`}
               >
-                {row.original.usage_rate.toFixed(1)}%
+                {(row.original.usage_rate ?? 0).toFixed(1)}%
               </span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
               <div
-                className={`h-2 rounded-full transition-all ${getProgressColor(row.original.usage_rate)}`}
-                style={{ width: `${Math.min(row.original.usage_rate, 100)}%` }}
+                className={`h-2 rounded-full transition-all ${getProgressColor(row.original.usage_rate ?? 0)}`}
+                style={{
+                  width: `${Math.min(row.original.usage_rate ?? 0, 100)}%`,
+                }}
               ></div>
             </div>
           </div>
@@ -366,12 +368,13 @@ const BudgetManagementPage: React.FC = () => {
         cell: ({ row }) => (
           <div
             className={`font-bold ${
-              row.original.remaining_amount < row.original.total_budget * 0.2
+              (row.original.remaining_amount ?? 0) <
+              row.original.total_budget * 0.2
                 ? "text-red-600"
                 : "text-green-600"
             }`}
           >
-            ¥{row.original.remaining_amount.toLocaleString()}
+            ¥{(row.original.remaining_amount ?? 0).toLocaleString()}
           </div>
         ),
       },
@@ -408,11 +411,13 @@ const BudgetManagementPage: React.FC = () => {
   );
 
   // 统计卡片数据
+
   const totalBudget = budgets.reduce((sum, b) => sum + b.total_budget, 0);
-  const totalUsed = budgets.reduce((sum, b) => sum + b.used_amount, 0);
+  const totalUsed = budgets.reduce((sum, b) => sum + (b.used_amount ?? 0), 0);
   const avgUsageRate =
     budgets.length > 0
-      ? budgets.reduce((sum, b) => sum + b.usage_rate, 0) / budgets.length
+      ? budgets.reduce((sum, b) => sum + (b.usage_rate ?? 0), 0) /
+        budgets.length
       : 0;
 
   return (

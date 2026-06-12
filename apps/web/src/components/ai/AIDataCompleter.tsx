@@ -11,7 +11,7 @@ export interface AIDataCompleterProps {
   isOpen: boolean;
   onClose: () => void;
   completeRequest: CompleteRequest;
-  onApplyCompletion: (completions: Record<string, CompletionItem>) => void;
+  onApplyCompletion: (_completions: Record<string, CompletionItem>) => void;
 }
 
 const sourceColorMap: Record<string, string> = {

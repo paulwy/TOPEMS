@@ -519,7 +519,7 @@ const AIPage: React.FC = () => {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: response.success
-          ? response.data.answer
+          ? (response.data?.answer ?? "抱歉，处理您的请求时出现了问题。")
           : "抱歉，处理您的请求时出现了问题。",
         timestamp: new Date(),
       };

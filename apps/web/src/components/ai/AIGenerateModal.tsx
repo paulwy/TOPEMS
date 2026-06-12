@@ -15,7 +15,7 @@ export interface AIGenerateModalProps {
   description?: string;
   children: React.ReactNode;
   isLoading?: boolean;
-  onConfirm?: (e?: React.MouseEvent) => void;
+  onConfirm?: (_e?: React.MouseEvent) => void;
   confirmText?: string;
   cancelText?: string;
   extraActions?: React.ReactNode;

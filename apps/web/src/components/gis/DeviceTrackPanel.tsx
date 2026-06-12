@@ -70,6 +70,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({
     } else if (currentIndex >= trackData.length - 1) {
       setIsPlaying(false);
     }
+    return undefined;
   }, [isPlaying, currentIndex, trackData.length]);
 
   const fetchTrackData = async () => {

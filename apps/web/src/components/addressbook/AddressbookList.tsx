@@ -5,7 +5,7 @@ import type { AddressbookEntry } from "../../types/addressbook";
 interface AddressbookListProps {
   contacts: AddressbookEntry[];
   loading: boolean;
-  onContactClick: (contact: AddressbookEntry) => void;
+  onContactClick: (_contact: AddressbookEntry) => void;
 }
 
 export const AddressbookList: React.FC<AddressbookListProps> = ({

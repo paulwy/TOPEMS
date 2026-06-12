@@ -10,7 +10,7 @@ import { getDateRange } from "../utils/export";
 
 interface DateRangePickerProps {
   value: { start: string; end: string };
-  onChange: (range: { start: string; end: string }) => void;
+  onChange: (_range: { start: string; end: string }) => void;
 }
 
 const presets = [

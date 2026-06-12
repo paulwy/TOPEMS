@@ -16,7 +16,7 @@ export interface AlertItem {
 
 interface AlertPanelProps {
   alerts: AlertItem[];
-  onAlertClick?: (alert: AlertItem) => void;
+  onAlertClick?: (_alert: AlertItem) => void;
 }
 
 const filterOptions = [

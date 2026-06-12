@@ -12,9 +12,9 @@ import type { DepartmentNode } from "../../types/addressbook";
 interface AddressbookSidebarProps {
   departments: DepartmentNode[];
   selectedType: "all" | "EMPLOYEE" | "DEPARTMENT" | "COMPANY";
-  onTypeSelect: (type: "all" | "EMPLOYEE" | "DEPARTMENT" | "COMPANY") => void;
+  onTypeSelect: (_type: "all" | "EMPLOYEE" | "DEPARTMENT" | "COMPANY") => void;
   selectedDepartment: string | null;
-  onDepartmentSelect: (id: string | null) => void;
+  onDepartmentSelect: (_id: string | null) => void;
 }
 
 export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({

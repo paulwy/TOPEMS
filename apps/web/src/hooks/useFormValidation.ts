@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { FieldError } from "../components/ValidationError";
 
 export interface ValidationRule {
   required?: boolean;
@@ -10,7 +9,7 @@ export interface ValidationRule {
 }
 
 export function useFormValidation<T extends Record<string, any>>(
-  initialData: T,
+  _initialData?: T,
 ) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});

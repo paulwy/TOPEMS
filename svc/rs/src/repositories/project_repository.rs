@@ -26,11 +26,14 @@ impl ProjectRepository {
             INSERT INTO projects (
                 id, name, code, description, project_type, status, leader,
                 team_members, start_date, end_date, budget, progress, created_by,
-                created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                created_at, updated_at, project_config, benefit_target, risk_level,
+                priority, tags, parent_id, workspace_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+                      $16, $17, $18, $19, $20, $21, $22)
             RETURNING id, name, code, description, project_type, status, leader,
                       team_members, start_date, end_date, budget, progress,
-                      created_by, created_at, updated_at
+                      created_by, created_at, updated_at, project_config,
+                      benefit_target, risk_level, priority, tags, parent_id, workspace_id
             "#,
         )
         .bind(id)
@@ -48,6 +51,13 @@ impl ProjectRepository {
         .bind(&req.leader)
         .bind(now)
         .bind(now)
+        .bind(&req.project_config)
+        .bind(&req.benefit_target)
+        .bind(&req.risk_level)
+        .bind(req.priority)
+        .bind(&req.tags)
+        .bind(req.parent_id)
+        .bind(req.workspace_id)
         .fetch_one(&self.db)
         .await?;
 
@@ -59,7 +69,8 @@ impl ProjectRepository {
             r#"
             SELECT id, name, code, description, project_type, status, leader,
                    team_members, start_date, end_date, budget, progress,
-                   created_by, created_at, updated_at
+                   created_by, created_at, updated_at, project_config,
+                   benefit_target, risk_level, priority, tags, parent_id, workspace_id
             FROM rs.projects
             WHERE id = $1
             "#,
@@ -84,7 +95,8 @@ impl ProjectRepository {
             r#"
             SELECT id, name, code, description, project_type, status, leader,
                    team_members, start_date, end_date, budget, progress,
-                   created_by, created_at, updated_at
+                   created_by, created_at, updated_at, project_config,
+                   benefit_target, risk_level, priority, tags, parent_id, workspace_id
             FROM rs.projects
             WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
               AND ($2::text IS NULL OR status = $2)
@@ -124,25 +136,32 @@ impl ProjectRepository {
         let name = req.name.clone().unwrap_or(existing.name.clone());
         let description = req.description.clone().or(existing.description.clone());
         let leader = req.leader.clone().unwrap_or(existing.leader.clone());
-        let team_members = req
-            .team_members
-            .clone()
-            .or(existing.team_members.clone());
+        let team_members = req.team_members.clone().or(existing.team_members.clone());
         let status = req
             .status
             .map(|s| s.to_string())
             .unwrap_or(existing.status.clone());
         let progress = req.progress.unwrap_or(existing.progress);
+        let project_config = req.project_config.clone().or(existing.project_config.clone());
+        let benefit_target = req.benefit_target.clone().or(existing.benefit_target.clone());
+        let risk_level = req.risk_level.clone().or(existing.risk_level.clone());
+        let priority = req.priority.or(existing.priority);
+        let tags = req.tags.clone().or(existing.tags.clone());
+        let parent_id = req.parent_id.or(existing.parent_id);
+        let workspace_id = req.workspace_id.or(existing.workspace_id);
 
         let project = sqlx::query_as::<_, Project>(
             r#"
             UPDATE rs.projects
             SET name = $1, description = $2, leader = $3, team_members = $4,
-                status = $5, progress = $6, updated_at = $7
-            WHERE id = $8
+                status = $5, progress = $6, updated_at = $7,
+                project_config = $8, benefit_target = $9, risk_level = $10,
+                priority = $11, tags = $12, parent_id = $13, workspace_id = $14
+            WHERE id = $15
             RETURNING id, name, code, description, project_type, status, leader,
                       team_members, start_date, end_date, budget, progress,
-                      created_by, created_at, updated_at
+                      created_by, created_at, updated_at, project_config,
+                      benefit_target, risk_level, priority, tags, parent_id, workspace_id
             "#,
         )
         .bind(name)
@@ -152,6 +171,13 @@ impl ProjectRepository {
         .bind(status)
         .bind(progress)
         .bind(now)
+        .bind(project_config)
+        .bind(benefit_target)
+        .bind(risk_level)
+        .bind(priority)
+        .bind(tags)
+        .bind(parent_id)
+        .bind(workspace_id)
         .bind(id)
         .fetch_optional(&self.db)
         .await?;

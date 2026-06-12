@@ -14,10 +14,6 @@ const LanguageSelector: React.FC = () => {
   const { i18n } = useTranslation();
   const currentLang = i18n.language as LanguageCode;
 
-  const currentLangInfo = SUPPORTED_LANGUAGES.find(
-    (l) => l.code === currentLang,
-  );
-
   const handleChangeLanguage = (code: LanguageCode) => {
     i18n.changeLanguage(code);
     localStorage.setItem("language", code);

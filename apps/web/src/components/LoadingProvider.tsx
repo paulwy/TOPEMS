@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 interface LoadingContextType {
   isLoading: boolean;
   message: string;
-  startLoading: (message?: string) => void;
+  startLoading: (_message?: string) => void;
   stopLoading: () => void;
 }
 

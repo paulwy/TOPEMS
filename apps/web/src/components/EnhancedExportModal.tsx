@@ -34,7 +34,7 @@ export interface ExportOptions {
 interface EnhancedExportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onExport: (options: ExportOptions) => void;
+  onExport: (_options: ExportOptions) => void;
   availableColumns?: string[];
   defaultColumns?: string[];
 }

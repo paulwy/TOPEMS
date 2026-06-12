@@ -16,12 +16,8 @@ import type {
   CustomerMappingRule,
   SupplierMappingRule,
 
-  // 同步
-  SyncLog,
-
   // 连接测试
   ConnectionTestRequest,
-  ConnectionTestResult,
 } from "../types/external-erp";
 
 // ============================================

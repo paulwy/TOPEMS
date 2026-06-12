@@ -16,7 +16,7 @@ export const useEmployeeFinance = (employeeId: string) => {
       const response = await apiClient.hrm.get<{ data: EmployeeFinance }>(
         `/api/v1/hrm/employees/${employeeId}/finance`,
       );
-      return response.data.data;
+      return response.data?.data!;
     },
     enabled: !!employeeId,
   });
@@ -32,7 +32,7 @@ export const useEmployeeFinanceInfo = (employeeId: string) => {
       const response = await apiClient.hrm.get<{ data: EmployeeFinance }>(
         `/api/v1/hrm/employees/${employeeId}/finance`,
       );
-      return response.data.data;
+      return response.data?.data!;
     },
     enabled: !!employeeId,
   });

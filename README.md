@@ -71,31 +71,32 @@ topems/
 │   └── web/                     # Web 应用
 ├── svc/                          # 后端服务
 │   ├── iam/                     # 身份认证服务 (8000)
-│   ├── doc/                     # 文档管理服务 (8001)
-│   ├── notification/            # 通知服务 (8003)
-│   ├── integration/             # 集成服务 (8004)
+│   ├── notification/            # 通知服务 (8004)
 │   ├── portal/                  # 企业门户 (8005)
 │   ├── flow/                    # 工作流服务 (8006)
+│   ├── integration/             # 集成服务 (8007)
 │   ├── erp/                     # 企业资源计划 (8010)
-│   ├── hrm/                     # 人力资源管理 (8011)
-│   ├── crm/                     # 客户关系管理 (8012)
-│   ├── ai/                      # AI 知识库 (8013)
+│   ├── hrm/                     # 人力资源管理 (8012)
+│   ├── crm/                     # 客户关系管理 (8013)
 │   ├── rs/                      # 研发管理系统 (8020)
 │   ├── lims/                    # 实验室系统 (8022)
 │   ├── pdm/                     # 产品数据管理 (8023)
-│   ├── pm/                      # 项目管理 (8024)
+│   ├── pm/                      # 项目管理
+│   ├── doc/                     # 文档管理服务 (8021)
 │   ├── mes/                     # 制造执行系统 (8030)
 │   ├── qms/                     # 质量管理系统 (8031)
 │   ├── ehs/                     # 安全管理系统 (8032)
 │   ├── scm/                     # 供应链系统 (8040)
 │   ├── srm/                     # 供应商管理 (8041)
 │   ├── wms/                     # 仓库管理系统 (8042)
-│   ├── gis/                     # 地理信息系统 (8050)
-│   ├── im/                      # 即时通讯 (8051)
-│   ├── bi/                      # 商业智能 (8052)
-│   ├── report/                  # 报表服务 (8053)
-│   ├── mail/                    # 邮件服务 (8054)
-│   └── mobile/                  # 移动端服务 (8055)
+│   ├── file/                    # 文件服务 (8050)
+│   ├── mail/                    # 邮件服务 (8051)
+│   ├── im/                      # 即时通讯 (8052)
+│   ├── gis/                     # 地理信息系统 (8053)
+│   ├── bi/                      # 商业智能 (8060)
+│   ├── report/                  # 报表服务 (8061)
+│   ├── ai/                      # AI 知识库 (8062)
+│   └── mobile/                  # 移动端服务 (8070)
 ├── lib/                          # 共享库 (topems-shared)
 ├── docker/                       # Docker 配置
 │   ├── init-scripts/            # 数据库初始化脚本
@@ -375,20 +376,27 @@ TOPEMS 提供统一的服务管理脚本 `scripts/topems.sh`，简化服务管�
 
 | 脚本 | 说明 |
 |------|------|
-| `topems.sh` | **统一服务管理脚本**（推荐使用） |
-| `start-local.sh` | 启动核心服务（自动初始化数据库） |
-| `start-all.sh` | 启动所有服务（需要 Docker） |
-| `start-services.sh` | 启动服务脚本 |
-| `start-production.sh` | 生产环境部署脚本 |
+| `topems.sh` | **统一服务管理脚本**（推荐使用，自动检测环境） |
+| `run-tests.sh` | 运行测试套件（单元测试、集成测试、覆盖率） |
+| `run-clippy.sh` | 运行 Clippy 静态分析 |
+| `run_ci_tests.sh` | CI/CD 测试脚本 |
+| `build-all-services.sh` | 构建所有服务镜像 |
+| `clean-warnings.sh` | 批量清理代码警告 |
+| `check-all-rust-services.sh` | 检查所有 Rust 服务编译状态 |
 | `stop-all.sh` | 停止所有服务 |
-| `init-db-unified.sh` | 统一数据库初始化 |
+| `cleanup.sh` | 清理环境（端口、进程、缓存） |
+| `init-database.sh` | 数据库初始化脚本 |
+| `init-db-unified.sh` | 统一数据库初始化（自动检测环境） |
+| `init-db-local.sh` | 本地数据库初始化 |
 | `init-vector-index.sh` | Redis 向量索引初始化 |
 | `install-pgvector.sh` | 安装配置 pgvector |
-| `rebuild-postgres.sh` | 重建 PostgreSQL 容器 |
-| `manage-services.sh` | 管理所有服务 |
-| `build-all-services.sh` | 构建所有服务镜像 |
-| `cleanup.sh` | 清理环境 |
-| `deploy.sh` | 离线部署 |
+| `rebuild-postgres.sh` | 重建支持 pgvector 的 PostgreSQL |
+| `deploy.sh` | 离线部署脚本 |
+| `download-images.sh` | 下载 Docker 镜像 |
+| `monitor.sh` | 启动监控服务 |
+| `encrypt-env.sh` | 加密环境变量文件 |
+| `test-hrm-api.sh` | HRM API 端到端测试 |
+| `collect-test-data.sh` | 收集测试数据 |
 
 详细说明请参考 [脚本工具文档](./scripts/README.md)。
 
@@ -405,5 +413,5 @@ MIT License
 
 ---
 
-**最后更新**: 2026-06-11
-**版本**: v2.4.1
+**最后更新**: 2026-06-12
+**版本**: v2.4.2

@@ -289,7 +289,7 @@ export function useAutoGenerateVouchers() {
       modules?: ("pm" | "crm" | "srm" | "hrm" | "finance")[];
       dry_run?: boolean;
     }) => voucherTemplateApi.autoGenerateVouchers(data),
-    onSuccess: (result, variables) => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["vouchers"] });
       if (variables.dry_run) {
         success("试算完成，请查看预览结果");

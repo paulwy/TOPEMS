@@ -18,6 +18,7 @@ import {
   GitBranch,
   CheckCircle2,
   XCircle,
+  Eye,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type {

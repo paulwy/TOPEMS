@@ -240,7 +240,7 @@ export async function measureApiCall<T>(
 // React Hook: API 调用
 export function useApiCall<T, A extends any[] = any[]>(
   apiCall: (...args: A) => Promise<T>,
-  deps: React.DependencyList = [],
+  _deps: React.DependencyList = [],
 ) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);

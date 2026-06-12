@@ -6,11 +6,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "./useNotification";
 import { financialReportApi } from "../api/financial-report";
-import type {
-  BalanceSheet,
-  IncomeStatement,
-  CashFlowStatement,
-} from "../types/erp-finance";
 
 // ============================================
 // 一、财务报表生成与查询

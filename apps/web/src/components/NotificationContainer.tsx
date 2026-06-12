@@ -4,7 +4,7 @@ import type { Notification } from "../hooks/useNotification";
 
 interface NotificationContainerProps {
   notifications: Notification[];
-  onClose: (id: string) => void;
+  onClose: (_id: string) => void;
 }
 
 const iconMap = {

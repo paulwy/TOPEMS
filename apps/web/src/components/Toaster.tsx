@@ -22,7 +22,7 @@ interface ToastProps {
   onClose: () => void;
 }
 
-const Toast = ({ id, title, message, type, onClose }: ToastProps) => {
+const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
   const [isVisible, setIsVisible] = React.useState(true);
 
   // 自动关闭

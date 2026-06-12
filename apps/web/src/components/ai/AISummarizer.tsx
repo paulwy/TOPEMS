@@ -18,7 +18,7 @@ export interface AISummarizerProps {
   isOpen: boolean;
   onClose: () => void;
   summarizeRequest: SummarizeRequest;
-  onSummaryGenerated: (summary: string) => void;
+  onSummaryGenerated: (_summary: string) => void;
 }
 
 const summaryTypeConfig = {

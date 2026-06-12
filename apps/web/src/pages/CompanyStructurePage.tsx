@@ -98,8 +98,10 @@ const TreeNodeComponent: React.FC<{
         {node.is_parent && (
           <Badge className="bg-blue-100 text-blue-800">母公司</Badge>
         )}
-        <Badge className={RELATION_TYPE_CONFIG[node.relation_type]?.color}>
-          {RELATION_TYPE_CONFIG[node.relation_type]?.label}
+        <Badge
+          className={RELATION_TYPE_CONFIG[node.relation_type || ""]?.color}
+        >
+          {RELATION_TYPE_CONFIG[node.relation_type || ""]?.label}
         </Badge>
         <span className="text-gray-500 text-sm">
           持股 {node.ownership_percentage}%

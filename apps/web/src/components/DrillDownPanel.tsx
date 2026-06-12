@@ -14,8 +14,8 @@ interface DrillDownPanelProps {
   onClose: () => void;
   title: string;
   data: DrillDownData[];
-  columns: { key: string; label: string; format?: (value: any) => string }[];
-  onRowClick?: (row: DrillDownData) => void;
+  columns: { key: string; label: string; format?: (_value: any) => string }[];
+  onRowClick?: (_row: DrillDownData) => void;
 }
 
 export function DrillDownPanel({

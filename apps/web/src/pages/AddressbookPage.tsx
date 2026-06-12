@@ -25,8 +25,8 @@ const AddressbookPage: React.FC = () => {
     null,
   );
   const [statusFilter, setStatusFilter] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [currentPage] = useState(1);
+  const [_total] = useState(0);
 
   const loadContacts = useCallback(async () => {
     setLoading(true);
@@ -52,7 +52,6 @@ const AddressbookPage: React.FC = () => {
       const response = await addressbookApi.getContacts(params);
       if (response.success) {
         setContacts(response.data.items);
-        setTotal(response.data.total);
       }
     } catch (error) {
       console.error("加载联系人失败:", error);

@@ -1,5 +1,4 @@
 import React from "react";
-import { useAppStore } from "../../store";
 import { type Employee, type Department } from "../../api/hrm";
 import {
   AIHelperButton,
@@ -37,8 +36,6 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const addNotification = useAppStore((state) => state.addNotification);
-
   const [showAICodeGenerator, setShowAICodeGenerator] = React.useState(false);
   const [showAIDataCompleter, setShowAIDataCompleter] = React.useState(false);
   const [showAIFormValidator, setShowAIFormValidator] = React.useState(false);
@@ -131,10 +128,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
           <Select
             value={(formData as Employee)?.department_id || "none"}
             onValueChange={(value) =>
-              handleInputChange(
-                "department_id",
-                value === "none" ? undefined : value,
-              )
+              handleInputChange("department_id", value === "none" ? "" : value)
             }
           >
             <SelectTrigger>

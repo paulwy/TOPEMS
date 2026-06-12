@@ -18,13 +18,13 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
   const { user } = useAuth();
 
   const {
-    notifications,
+    notifications: _,
     unreadCount,
-    loading,
-    error,
+    loading: __,
+    error: ___,
     addNotification,
-    updateNotification,
-    removeNotification,
+    updateNotification: ____,
+    removeNotification: _____,
     fetchNotifications,
     fetchUnreadCount,
   } = useNotificationState();
@@ -42,8 +42,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 
   const {
     isConnected,
-    error: wsError,
-    reconnect,
+    error: _wsError,
+    reconnect: _reconnect,
   } = useNotificationWebSocket({
     userId,
     onNotification: handleNewNotification,
@@ -72,7 +72,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
     setShowPanel(false);
   };
 
-  const handleUnreadCountChange = (count: number) => {
+  const handleUnreadCountChange = (_count: number) => {
     fetchUnreadCount();
   };
 

@@ -177,7 +177,7 @@ const PerformanceMonitor: React.FC = () => {
       } else {
         setReportStatus("error");
       }
-    } catch (error) {
+    } catch {
       setReportStatus("error");
     } finally {
       setIsReporting(false);
@@ -199,12 +199,6 @@ const PerformanceMonitor: React.FC = () => {
     if (value < thresholds[0]) return "text-green-500";
     if (value < thresholds[1]) return "text-yellow-500";
     return "text-red-500";
-  };
-
-  const getStatusBg = (value: number, thresholds: [number, number]) => {
-    if (value < thresholds[0]) return "bg-green-100";
-    if (value < thresholds[1]) return "bg-yellow-100";
-    return "bg-red-100";
   };
 
   const getPerformanceScore = () => {

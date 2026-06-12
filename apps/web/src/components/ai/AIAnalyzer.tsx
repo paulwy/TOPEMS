@@ -21,7 +21,7 @@ export interface AIAnalyzerProps {
   isOpen: boolean;
   onClose: () => void;
   initialText?: string;
-  onAnalysisComplete?: (results: AnalysisResults) => void;
+  onAnalysisComplete?: (_results: AnalysisResults) => void;
 }
 
 export interface AnalysisResults {

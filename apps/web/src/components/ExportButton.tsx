@@ -12,7 +12,7 @@ interface ExportButtonProps {
   disabled?: boolean;
   onExportStart?: () => void;
   onExportComplete?: () => void;
-  onExportError?: (error: Error) => void;
+  onExportError?: (_error: Error) => void;
 }
 
 const ExportButton: React.FC<ExportButtonProps> = ({

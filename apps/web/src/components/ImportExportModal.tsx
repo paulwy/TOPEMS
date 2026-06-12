@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+
 import {
   AlertCircle,
   Download,
@@ -26,12 +26,12 @@ import {
 
 interface ImportExportModalProps<T> {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (_open: boolean) => void;
   data: T[];
   columns: ExportColumn<T>[];
   fileName: string;
-  onImportSuccess?: (data: T[]) => void;
-  transform?: (raw: Record<string, any>) => T;
+  onImportSuccess?: (_data: T[]) => void;
+  transform?: (_raw: Record<string, any>) => T;
 }
 
 export const ImportExportModal = <T extends Record<string, any>>({

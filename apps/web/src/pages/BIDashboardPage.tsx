@@ -354,10 +354,10 @@ const BIDashboardPage = () => {
               value={metric.value}
               unit={metric.unit}
               change={metric.change}
-              trend={metric.trend}
+              trend={(metric as any).trend}
               icon={metric.icon}
               color={metric.color}
-              sparklineData={metric.sparklineData}
+              sparklineData={(metric as any).sparklineData}
               className="animate-fade-in"
             />
           ))}
@@ -432,7 +432,7 @@ const BIDashboardPage = () => {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
+                      `${name} ${((percent || 0) * 100).toFixed(0)}%`
                     }
                     outerRadius={80}
                     innerRadius={50}
