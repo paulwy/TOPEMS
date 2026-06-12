@@ -6,7 +6,6 @@ import {
   Grid,
   Card,
   CardContent,
-  Paper,
   Stack,
   Chip,
   Divider,
@@ -14,10 +13,8 @@ import {
 import {
   Analytics as AnalyticsIcon,
   TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
   Science as ScienceIcon,
   Folder as FolderIcon,
-  CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 
 const RsReportPage: React.FC = () => {

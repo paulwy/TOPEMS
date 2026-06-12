@@ -113,7 +113,7 @@ pub struct Project {
     pub project_type: String,
     pub status: String,
     pub leader: String,
-    pub team_members: serde_json::Value,
+    pub team_members: Option<serde_json::Value>,
     pub start_date: DateTime<Utc>,
     pub end_date: Option<DateTime<Utc>>,
     pub budget: Option<f64>,

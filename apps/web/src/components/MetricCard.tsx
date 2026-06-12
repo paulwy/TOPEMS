@@ -81,7 +81,7 @@ interface MetricCardProps {
   icon?: LucideIcon | React.ReactNode;
   color?: string;
   gradient?: [string, string];
-  trend?: "up" | "down" | "stable" | "neutral";
+  trend?: "up" | "down" | "stable" | "neutral" | null;
   sparklineData?: number[];
   animate?: boolean;
   className?: string;

@@ -5,7 +5,6 @@ import {
   Upload,
   Download,
   Search,
-  Filter,
   ChevronLeft,
   ChevronRight,
   MoreVertical,

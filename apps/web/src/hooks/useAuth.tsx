@@ -10,11 +10,6 @@ import React, {
 } from "react";
 import { authApi } from "../api/iam";
 import apiClient from "../api/client";
-import type { ApiResponse } from "../api/client";
-import {
-  mapPermissionIdToName,
-  mapPermissionIdsToNames,
-} from "../config/permissionMapping";
 
 // 权限名称到ID的映射 - 移到组件外部避免重复创建
 const permissionNameToId: Record<string, string> = {
@@ -411,7 +406,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     return (
       permissions.includes(permission) ||
       permissions.includes(altFormat) ||
-      (permissionId && permissions.includes(permissionId))
+      (permissionId !== undefined && permissions.includes(permissionId))
     );
   }, []);
 

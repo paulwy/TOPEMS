@@ -360,7 +360,7 @@ async fn update_project(
     let description = req.description.clone().or(existing.description);
     let status = req.status.map(|s| s.to_string()).unwrap_or(existing.status);
     let leader = req.leader.clone().unwrap_or(existing.leader);
-    let team_members = req.team_members.clone().unwrap_or(existing.team_members);
+    let team_members = req.team_members.clone().or(existing.team_members);
     let end_date = req.end_date.or(existing.end_date);
     let budget = req.budget.or(existing.budget);
     let progress = req.progress.unwrap_or(existing.progress);
@@ -576,7 +576,7 @@ async fn batch_create_projects(
         .bind(serde_json::json!({}))
         .bind("MEDIUM")
         .bind(3)
-        .bind::<Vec<String>>(vec![])
+        .bind(serde_json::Value::Array(vec![]))
         .bind(None::<Uuid>)
         .bind(None::<Uuid>)
         .fetch_one(&state.db)
@@ -1065,7 +1065,7 @@ async fn import_projects(
                 .bind(serde_json::json!({}))
                 .bind("MEDIUM")
                 .bind(3)
-                .bind::<Vec<String>>(vec![])
+                .bind(serde_json::Value::Array(vec![]))
                 .bind(None::<Uuid>)
                 .bind(None::<Uuid>)
                 .fetch_one(&state.db)

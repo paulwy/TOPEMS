@@ -13,7 +13,6 @@ import {
   ChevronRight,
   ChevronDown,
   Search,
-  Filter,
   Building2,
   RefreshCw,
   MoreHorizontal,

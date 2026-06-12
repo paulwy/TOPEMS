@@ -127,7 +127,7 @@ impl ProjectRepository {
         let team_members = req
             .team_members
             .clone()
-            .unwrap_or(existing.team_members.clone());
+            .or(existing.team_members.clone());
         let status = req
             .status
             .map(|s| s.to_string())
