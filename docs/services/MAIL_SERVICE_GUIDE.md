@@ -19,7 +19,7 @@ TOPEMS 邮件服务提供企业级邮件发送功能，支持普通邮件发送�
 
 ### 配置文件
 
-配置文件位于项目根目录：[`.env.mail`](file:///Users/xingzhai/TOPEMS/.env.mail)
+配置文件位于项目根目录：`<项目目录>/.env.mail`
 
 ```bash
 # 复制示例配置

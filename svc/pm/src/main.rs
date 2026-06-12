@@ -76,7 +76,7 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = std::env::var("SERVER_PORT").unwrap_or_else(|_| "8002".to_string());
+    let port = std::env::var("SERVER_PORT").unwrap_or_else(|_| "8001".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-PM 统一项目管理系统启动中...");

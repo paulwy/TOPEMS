@@ -43,7 +43,6 @@ mod tests {
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 updated_at = NOW()
-            RETURNING id
             "#,
         )
         .bind(point_id)
@@ -51,10 +50,10 @@ mod tests {
         .bind("测试监测点")
         .bind("air")
         .bind("active")
-        .fetch_one(&pool)
+        .execute(&pool)
         .await;
 
-        assert!(result.is_ok(), "监测点创建应该成功");
+        assert!(result.is_ok(), "监测点创建应该成功: {:?}", result.err());
     }
 
     // 测试安全事件创建
@@ -71,26 +70,28 @@ mod tests {
             .unwrap();
 
         let incident_id = Uuid::new_v4();
+        let incident_no = format!("INC-{}", &incident_id.to_string()[..8]);
 
         let result = sqlx::query(
             r#"
-            INSERT INTO ehs.safety_incidents (id, incident_no, title, incident_level, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+            INSERT INTO ehs.safety_incidents (id, incident_no, title, incident_type, incident_level, incident_time, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 title = EXCLUDED.title,
                 updated_at = NOW()
-            RETURNING id
             "#,
         )
         .bind(incident_id)
-        .bind(format!("INC-{}", &incident_id.to_string()[..8]))
+        .bind(&incident_no)
         .bind("测试安全事件")
+        .bind("accident")
         .bind("medium")
+        .bind("2024-01-15 10:00:00+00")
         .bind("reported")
-        .fetch_one(&pool)
+        .execute(&pool)
         .await;
 
-        assert!(result.is_ok(), "安全事件创建应该成功");
+        assert!(result.is_ok(), "安全事件创建应该成功: {:?}", result.err());
     }
 
     // 测试风险评估
@@ -107,22 +108,29 @@ mod tests {
             .unwrap();
 
         let assessment_id = Uuid::new_v4();
+        let assessment_no = format!("RA-{}", &assessment_id.to_string()[..8]);
 
         let result = sqlx::query(
             r#"
-            INSERT INTO ehs.risk_assessments (id, title, risk_level, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, NOW(), NOW())
+            INSERT INTO ehs.risk_assessments (id, assessment_no, title, assessment_type, risk_source, risk_category, likelihood, consequence, risk_level, risk_score, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 title = EXCLUDED.title,
                 updated_at = NOW()
-            RETURNING id
             "#,
         )
         .bind(assessment_id)
+        .bind(&assessment_no)
         .bind("测试风险评估")
+        .bind("routine")
+        .bind("设备故障")
+        .bind("生产安全")
+        .bind(3)
+        .bind(4)
         .bind("medium")
+        .bind(12)
         .bind("active")
-        .fetch_one(&pool)
+        .execute(&pool)
         .await;
 
         assert!(result.is_ok(), "风险评估创建应该成功");

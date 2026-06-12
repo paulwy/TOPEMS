@@ -72,7 +72,7 @@ CREATE INDEX IF NOT EXISTS idx_document_chunks_organization_id ON ai.document_ch
 CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON ai.document_chunks(document_id);
 CREATE INDEX IF NOT EXISTS idx_document_chunks_kb_id ON ai.document_chunks(knowledge_base_id);
 CREATE INDEX IF NOT EXISTS idx_document_chunks_chunk_index ON ai.document_chunks(chunk_index);
-CREATE INDEX IF NOT EXISTS idx_chunks_content_search ON ai.document_chunks USING gin(to_tsvector('chinese', content));
+CREATE INDEX IF NOT EXISTS idx_chunks_content_search ON ai.document_chunks USING gin(to_tsvector('simple', content));
 CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding ON ai.document_chunks USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 -- =============================================================

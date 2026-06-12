@@ -122,7 +122,7 @@ const RsProjectCreatePage: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       {/* 页面标题 */}
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           {isEdit ? "编辑研发项目" : "新建研发项目"}
         </Typography>
@@ -131,7 +131,7 @@ const RsProjectCreatePage: React.FC = () => {
             ? "修改项目基本信息和配置"
             : "创建新的研发项目，设置基本信息和团队"}
         </Typography>
-      </Box>
+      </div>
 
       {/* 表单 */}
       <Paper sx={{ p: 3 }}>

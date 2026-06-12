@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ProtectedRoute, GuestRoute } from "./components/ProtectedRoute";
@@ -61,14 +61,16 @@ const AppContent: React.FC = () => {
 
   const renderRoutes = (routes: RouteConfig[]) => {
     return routes.map((route) => {
-      const Element = route.element;
+      const Element = route.element as React.ComponentType;
       return (
         <Route
           key={route.path}
           path={route.path}
           element={
             <ProtectedRouteWrapper route={route}>
-              {Element}
+              <Suspense fallback={<PageLoader />}>
+                <Element />
+              </Suspense>
             </ProtectedRouteWrapper>
           }
         />
@@ -78,62 +80,76 @@ const AppContent: React.FC = () => {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          {authRoutes.map((route) => (
+      <Routes>
+        {authRoutes.map((route) => {
+          const Element = route.element as React.ComponentType;
+          return (
             <Route
               key={route.path}
               path={route.path}
-              element={<GuestRoute>{route.element}</GuestRoute>}
+              element={
+                <GuestRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <Element />
+                  </Suspense>
+                </GuestRoute>
+              }
             />
-          ))}
+          );
+        })}
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                {dashboardRoutes.find((r) => r.path === "/dashboard")?.element}
-              </ProtectedRoute>
-            }
-          />
+        {dashboardRoutes.map((route) => {
+          const Element = route.element as React.ComponentType;
+          return (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <Element />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+          );
+        })}
 
-          {renderRoutes(dashboardRoutes.filter((r) => r.path !== "/dashboard"))}
-          {renderRoutes(hrmRoutes)}
-          {renderRoutes(crmRoutes)}
-          {renderRoutes(erpRoutes)}
-          {renderRoutes(iamRoutes)}
-          {renderRoutes(workflowRoutes)}
-          {renderRoutes(biRoutes)}
-          {renderRoutes(pmRoutes)}
-          {renderRoutes(notificationRoutes)}
-          {renderRoutes(docsRoutes)}
-          {renderRoutes(aiRoutes)}
-          {renderRoutes(professionalRoutes)}
+        {renderRoutes(hrmRoutes)}
+        {renderRoutes(crmRoutes)}
+        {renderRoutes(erpRoutes)}
+        {renderRoutes(iamRoutes)}
+        {renderRoutes(workflowRoutes)}
+        {renderRoutes(biRoutes)}
+        {renderRoutes(pmRoutes)}
+        {renderRoutes(notificationRoutes)}
+        {renderRoutes(docsRoutes)}
+        {renderRoutes(aiRoutes)}
+        {renderRoutes(professionalRoutes)}
 
-          <Route
-            path="/departments"
-            element={<Navigate to="/hrm/departments" replace />}
-          />
-          <Route
-            path="/employees"
-            element={<Navigate to="/hrm/employees" replace />}
-          />
-          <Route
-            path="/contracts"
-            element={<Navigate to="/hrm/contracts" replace />}
-          />
-          <Route
-            path="/reports"
-            element={<Navigate to="/hrm/reports" replace />}
-          />
-          <Route
-            path="/config-debug"
-            element={<Navigate to="/debug" replace />}
-          />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Suspense>
+        <Route
+          path="/departments"
+          element={<Navigate to="/hrm/departments" replace />}
+        />
+        <Route
+          path="/employees"
+          element={<Navigate to="/hrm/employees" replace />}
+        />
+        <Route
+          path="/contracts"
+          element={<Navigate to="/hrm/contracts" replace />}
+        />
+        <Route
+          path="/reports"
+          element={<Navigate to="/hrm/reports" replace />}
+        />
+        <Route
+          path="/config-debug"
+          element={<Navigate to="/debug" replace />}
+        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 };

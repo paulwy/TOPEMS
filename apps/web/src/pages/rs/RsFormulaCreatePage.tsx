@@ -95,14 +95,14 @@ const RsFormulaCreatePage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           {isEdit ? "编辑配方" : "新增配方"}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {isEdit ? "修改配方信息" : "创建新的研发配方"}
         </Typography>
-      </Box>
+      </div>
 
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={3}>

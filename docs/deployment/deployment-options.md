@@ -55,13 +55,13 @@ scripts/
 ├── topems.sh              # 统一入口脚本（推荐）
 ├── build-all-services.sh  # 构建所有服务
 ├── run-tests.sh           # 测试运行工具
-├── docker/
-│   ├── topems-docker.sh   # Docker方案启动脚本
-│   └── docker-compose.yml # Docker Compose配置
-└── standalone/
-    ├── topems-standalone.sh # 非Docker方案启动脚本
-    ├── install-deps.sh       # 依赖安装脚本
-    └── ai-models.sh          # AI模型管理脚本
+├── topems-standalone.sh   # 本地部署脚本
+├── ai-models.sh           # AI模型管理脚本
+├── install-deps.sh        # 依赖安装脚本
+├── setup-db.sh            # 数据库初始化脚本
+└── docker/
+    ├── topems-docker.sh   # Docker方案启动脚本
+    └── docker-compose.yml # Docker Compose配置
 ```
 
 ### 2.3 启动流程
@@ -109,10 +109,16 @@ scripts/
 ### 3.2 目录结构
 
 ```
-scripts/standalone/
-├── topems-standalone.sh   # 非Docker方案启动/停止/状态脚本
-├── install-deps.sh        # 依赖安装脚本（数据库/开发环境/全部）
-└── ai-models.sh           # AI模型管理脚本（启动/下载/测试）
+scripts/
+├── topems.sh              # 主脚本（入口）
+├── topems-standalone.sh   # 本地部署脚本
+├── ai-models.sh           # AI模型管理脚本
+├── install-deps.sh         # 依赖安装脚本
+├── setup-db.sh            # 数据库初始化脚本
+├── docker/                # Docker部署方案
+│   ├── topems-docker.sh
+│   └── docker-compose.yml
+└── ...
 ```
 
 ### 3.3 启动流程

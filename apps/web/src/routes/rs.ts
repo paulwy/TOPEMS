@@ -36,7 +36,7 @@ export const rsRoutes: RouteConfig[] = [
   // RS 仪表盘
   {
     path: "/rs",
-    element: React.createElement(RsDashboardPage),
+    element: RsDashboardPage,
     requiredPermissions: [],
     module: "rs",
     action: "read",
@@ -44,28 +44,28 @@ export const rsRoutes: RouteConfig[] = [
   // 项目管理
   {
     path: "/rs/projects",
-    element: React.createElement(RsProjectListPage),
+    element: RsProjectListPage,
     requiredPermissions: [],
     module: "rs",
     action: "read",
   },
   {
     path: "/rs/projects/create",
-    element: React.createElement(RsProjectCreatePage),
+    element: RsProjectCreatePage,
     requiredPermissions: [],
     module: "rs",
     action: "write",
   },
   {
     path: "/rs/projects/:id",
-    element: React.createElement(RsProjectDetailPage),
+    element: RsProjectDetailPage,
     requiredPermissions: [],
     module: "rs",
     action: "read",
   },
   {
     path: "/rs/projects/:id/edit",
-    element: React.createElement(RsProjectCreatePage),
+    element: RsProjectCreatePage,
     requiredPermissions: [],
     module: "rs",
     action: "write",
@@ -73,28 +73,28 @@ export const rsRoutes: RouteConfig[] = [
   // 试验管理
   {
     path: "/rs/experiments",
-    element: React.createElement(RsExperimentListPage),
+    element: RsExperimentListPage,
     requiredPermissions: [],
     module: "rs",
     action: "read",
   },
   {
     path: "/rs/experiments/create",
-    element: React.createElement(RsExperimentCreatePage),
+    element: RsExperimentCreatePage,
     requiredPermissions: [],
     module: "rs",
     action: "write",
   },
   {
     path: "/rs/experiments/:id",
-    element: React.createElement(RsExperimentDetailPage),
+    element: RsExperimentDetailPage,
     requiredPermissions: [],
     module: "rs",
     action: "read",
   },
   {
     path: "/rs/experiments/:id/edit",
-    element: React.createElement(RsExperimentCreatePage),
+    element: RsExperimentCreatePage,
     requiredPermissions: [],
     module: "rs",
     action: "write",
@@ -102,28 +102,28 @@ export const rsRoutes: RouteConfig[] = [
   // 配方管理
   {
     path: "/rs/formulas",
-    element: React.createElement(RsFormulaListPage),
+    element: RsFormulaListPage,
     requiredPermissions: [],
     module: "rs",
     action: "read",
   },
   {
     path: "/rs/formulas/create",
-    element: React.createElement(RsFormulaCreatePage),
+    element: RsFormulaCreatePage,
     requiredPermissions: [],
     module: "rs",
     action: "write",
   },
   {
     path: "/rs/formulas/:id",
-    element: React.createElement(RsFormulaDetailPage),
+    element: RsFormulaDetailPage,
     requiredPermissions: [],
     module: "rs",
     action: "read",
   },
   {
     path: "/rs/formulas/:id/edit",
-    element: React.createElement(RsFormulaCreatePage),
+    element: RsFormulaCreatePage,
     requiredPermissions: [],
     module: "rs",
     action: "write",
@@ -131,7 +131,7 @@ export const rsRoutes: RouteConfig[] = [
   // 物料管理
   {
     path: "/rs/materials",
-    element: React.createElement(RsMaterialListPage),
+    element: RsMaterialListPage,
     requiredPermissions: [],
     module: "rs",
     action: "read",
@@ -139,7 +139,7 @@ export const rsRoutes: RouteConfig[] = [
   // 报表分析
   {
     path: "/rs/reports",
-    element: React.createElement(RsReportPage),
+    element: RsReportPage,
     requiredPermissions: [],
     module: "rs",
     action: "read",

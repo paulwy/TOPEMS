@@ -1,4 +1,4 @@
-import type { ComponentType, LazyExoticComponent } from "react";
+import type { ComponentType, LazyExoticComponent, ReactElement } from "react";
 import type React from "react";
 import { lazy } from "react";
 import ErrorPage from "../pages/ErrorPage";
@@ -18,7 +18,7 @@ export const lazyWithRetry = <T extends ComponentType<any>>(
 
 export interface RouteConfig {
   path: string;
-  element: React.ReactNode;
+  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
   requiredPermissions?: string[];
   module?: string;
   action?: "read" | "write" | "delete" | "admin";

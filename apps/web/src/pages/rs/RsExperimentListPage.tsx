@@ -235,20 +235,20 @@ const RsExperimentListPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面标题和操作栏 */}
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
         >
-          <Box>
+          <div>
             <Typography variant="h4" fontWeight="bold" gutterBottom>
               试验管理
             </Typography>
             <Typography variant="body2" color="text.secondary">
               管理研发试验、记录数据、追踪批次
             </Typography>
-          </Box>
+          </div>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -258,7 +258,7 @@ const RsExperimentListPage: React.FC = () => {
             新建试验
           </Button>
         </Stack>
-      </Box>
+      </div>
 
       {/* 标签页 */}
       <Paper sx={{ mb: 3 }}>

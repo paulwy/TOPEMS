@@ -22,8 +22,8 @@
 
 ### 1.3 共享库重复
 存在两个共享库：
-- `/Users/xingzhai/TOPEMS/lib` - 主共享库
-- `/Users/xingzhai/TOPEMS/shared/lib` - 重复的共享库
+- `<项目目录>/lib` - 主共享库
+- `<项目目录>/shared/lib` - 重复的共享库（建议删除）
 
 ---
 
@@ -163,7 +163,7 @@ DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems?options=-c%20
 
 ### 3.3 共享库数据库连接池实现
 
-修改 `/Users/xingzhai/TOPEMS/lib/src/database.rs`：
+修改 `<项目目录>/lib/src/database.rs`：
 
 ```rust
 pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
@@ -292,7 +292,7 @@ WHERE id NOT IN (SELECT id FROM shared.companies);
 
 ```bash
 # 删除重复的共享库
-rm -rf /Users/xingzhai/TOPEMS/shared/lib
+rm -rf <项目目录>/shared/lib
 
 # 更新 Cargo.toml 中的依赖路径
 # 将所有 shared/lib 路径更新为 lib

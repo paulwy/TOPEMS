@@ -713,7 +713,7 @@ const Pdmpage: React.FC = () => {
       header: "状态",
       cell: ({ row }) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status || "")}`}
         >
           {row.original.status}
         </span>
@@ -756,7 +756,7 @@ const Pdmpage: React.FC = () => {
       header: "状态",
       cell: ({ row }) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status || "")}`}
         >
           {row.original.status}
         </span>
@@ -798,7 +798,7 @@ const Pdmpage: React.FC = () => {
       header: "状态",
       cell: ({ row }) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status || "")}`}
         >
           {row.original.status}
         </span>
@@ -840,7 +840,7 @@ const Pdmpage: React.FC = () => {
       header: "状态",
       cell: ({ row }) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status || "")}`}
         >
           {row.original.status}
         </span>

@@ -58,13 +58,13 @@ const RsFormulaDetailPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="flex-start"
         >
-          <Box>
+          <div>
             <Stack direction="row" alignItems="center" spacing={2}>
               <Typography variant="h4" fontWeight="bold">
                 {formula.name}
@@ -75,7 +75,7 @@ const RsFormulaDetailPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               编码: {formula.code} | 项目: {formula.project_name}
             </Typography>
-          </Box>
+          </div>
           <Stack direction="row" spacing={2}>
             <Button variant="outlined" startIcon={<HistoryIcon />}>
               版本历史
@@ -85,7 +85,7 @@ const RsFormulaDetailPage: React.FC = () => {
             </Button>
           </Stack>
         </Stack>
-      </Box>
+      </div>
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>

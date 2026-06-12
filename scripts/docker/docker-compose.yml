@@ -70,16 +70,37 @@ services:
       dockerfile: svc/notification/Dockerfile
     container_name: topems-notification
     environment:
-      SERVER_PORT: 8004
+      SERVER_PORT: 8002
       DATABASE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       REDIS_URL: redis://:${REDIS_PASSWORD:-topems_redis_secret}@redis:6379
       JWT_SECRET: ${JWT_SECRET:-topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256}
     ports:
-      - "8004:8004"
+      - "8002:8002"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      iam:
+        condition: service_started
+    networks:
+      - topems-network
+    profiles:
+      - backend
+
+  pm:
+    build:
+      context: ../..
+      dockerfile: svc/pm/Dockerfile
+    container_name: topems-pm
+    environment:
+      SERVER_PORT: 8001
+      DATABASE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      JWT_SECRET: ${JWT_SECRET:-topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256}
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
         condition: service_healthy
       iam:
         condition: service_started
@@ -94,11 +115,11 @@ services:
       dockerfile: svc/portal/Dockerfile
     container_name: topems-portal
     environment:
-      SERVER_PORT: 8005
+      SERVER_PORT: 8003
       DATABASE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       JWT_SECRET: ${JWT_SECRET:-topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256}
     ports:
-      - "8005:8005"
+      - "8003:8003"
     depends_on:
       postgres:
         condition: service_healthy
@@ -115,12 +136,12 @@ services:
       dockerfile: svc/flow/Dockerfile
     container_name: topems-flow
     environment:
-      SERVER_PORT: 8006
+      SERVER_PORT: 8004
       DATABASE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       REDIS_URL: redis://:${REDIS_PASSWORD:-topems_redis_secret}@redis:6379
       JWT_SECRET: ${JWT_SECRET:-topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256}
     ports:
-      - "8006:8006"
+      - "8004:8004"
     depends_on:
       postgres:
         condition: service_healthy
@@ -161,9 +182,10 @@ services:
     container_name: topems-web
     environment:
       VITE_IAM_SERVICE_URL: http://localhost:8000
-      VITE_NOTIFICATION_SERVICE_URL: http://localhost:8004
-      VITE_PORTAL_SERVICE_URL: http://localhost:8005
-      VITE_FLOW_SERVICE_URL: http://localhost:8006
+      VITE_PM_SERVICE_URL: http://localhost:8001
+      VITE_NOTIFICATION_SERVICE_URL: http://localhost:8002
+      VITE_PORTAL_SERVICE_URL: http://localhost:8003
+      VITE_FLOW_SERVICE_URL: http://localhost:8004
       VITE_ERP_SERVICE_URL: http://localhost:8010
     ports:
       - "3000:3000"

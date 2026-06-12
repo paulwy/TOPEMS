@@ -365,7 +365,7 @@ check_service "File" 8055 "http://localhost:8055/health"
 - [ ] **Step 3: 验证启动脚本**
 
 ```bash
-cd /Users/xingzhai/TOPEMS && ./scripts/start-local.sh status
+cd <项目目录> && ./scripts/topems.sh status
 ```
 
 ---
@@ -393,7 +393,7 @@ CREATE INDEX idx_documents_file_id ON documents(file_id);
 - [ ] **Step 2: 执行迁移**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd <项目目录>
 psql "$DATABASE_URL" -f svc/doc/migrations/xxxx_add_file_reference.sql
 ```
 

@@ -185,6 +185,8 @@ const NotificationCenter: React.FC = () => {
         return "告警通知";
       case "message":
         return "消息通知";
+      default:
+        return "全部";
     }
   };
 

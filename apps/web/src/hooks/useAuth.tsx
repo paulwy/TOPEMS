@@ -344,6 +344,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         }
         localStorage.setItem("user", JSON.stringify(user));
 
+        apiClient.setAuthToken(access_token);
+
         // 设置 token 过期时间（1小时后）
         const expiry = Date.now() + 60 * 60 * 1000;
         setTokenExpiry(expiry);

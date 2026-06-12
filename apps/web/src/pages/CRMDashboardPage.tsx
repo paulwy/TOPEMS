@@ -375,7 +375,7 @@ const CRMDashboardPage: React.FC = () => {
                         paddingAngle={2}
                         dataKey="value"
                         label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
+                          `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                         }
                       >
                         {industryDistribution.map((entry, index) => (
@@ -386,9 +386,9 @@ const CRMDashboardPage: React.FC = () => {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number, name: string) => [
-                          `${value} 个客户`,
-                          name,
+                        formatter={(value: unknown) => [
+                          `${String(value)} 个客户`,
+                          String(name),
                         ]}
                       />
                     </RePieChart>

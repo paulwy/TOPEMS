@@ -309,9 +309,9 @@ const PmContractListPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(contract.status)}`}
+                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(contract.status || "")}`}
                       >
-                        {getStatusLabel(contract.status)}
+                        {getStatusLabel(contract.status || "")}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">

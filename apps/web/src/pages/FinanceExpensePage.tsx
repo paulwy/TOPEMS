@@ -1133,7 +1133,7 @@ const FinanceExpensePage: React.FC = () => {
                     onValueChange={(value) =>
                       setEditingExpense({
                         ...editingExpense,
-                        expense_type: value || undefined,
+                        expense_type: value,
                       })
                     }
                   >

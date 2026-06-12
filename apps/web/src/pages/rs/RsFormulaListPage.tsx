@@ -126,20 +126,20 @@ const RsFormulaListPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Box sx={{ mb: 3 }}>
+      <div style={{ marginBottom: 12 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
         >
-          <Box>
+          <div>
             <Typography variant="h4" fontWeight="bold" gutterBottom>
               配方管理
             </Typography>
             <Typography variant="body2" color="text.secondary">
               管理研发配方、版本控制、配方发布
             </Typography>
-          </Box>
+          </div>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -149,7 +149,7 @@ const RsFormulaListPage: React.FC = () => {
             新增配方
           </Button>
         </Stack>
-      </Box>
+      </div>
 
       <Paper sx={{ p: 2, mb: 3 }}>
         <TextField

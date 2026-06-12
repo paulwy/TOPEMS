@@ -333,8 +333,8 @@ const CRMSalesForecastPage: React.FC = () => {
                       <XAxis dataKey="month" />
                       <YAxis />
                       <Tooltip
-                        formatter={(value: number) => [
-                          `¥${value.toLocaleString()}`,
+                        formatter={(value: unknown) => [
+                          `¥${Number(value).toLocaleString()}`,
                           "",
                         ]}
                       />
@@ -370,8 +370,8 @@ const CRMSalesForecastPage: React.FC = () => {
                       <XAxis dataKey="month" />
                       <YAxis />
                       <Tooltip
-                        formatter={(value: number) => [
-                          `¥${value.toLocaleString()}`,
+                        formatter={(value: unknown) => [
+                          `¥${Number(value).toLocaleString()}`,
                           "",
                         ]}
                       />

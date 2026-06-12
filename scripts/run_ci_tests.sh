@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# 获取脚本所在目录并切换到项目根目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
 echo "=== CI/CD Pipeline Test Script ==="
 echo ""
 
@@ -14,7 +18,6 @@ echo "✅ Database setup completed"
 echo ""
 
 echo "2. Running unit tests..."
-cd /Users/xingzhai/TOPEMS
 cargo test --workspace --lib --no-fail-fast 2>&1 | tail -30
 echo "✅ Unit tests completed"
 echo ""

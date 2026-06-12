@@ -270,7 +270,7 @@ impl FinancialReportService {
             create_report_item(
                 "1603",
                 "固定资产净值",
-                Decimal::new(1800000, 2),
+                Decimal::new(2600000, 2),
                 Some(Decimal::new(1950000, 2)),
                 true,
                 3,
@@ -394,7 +394,7 @@ impl FinancialReportService {
             create_report_item(
                 "4103",
                 "未分配利润",
-                Decimal::new(-150000, 2),
+                Decimal::new(-250000, 2),
                 Some(Decimal::new(-170000, 2)),
                 false,
                 3,
@@ -403,9 +403,12 @@ impl FinancialReportService {
 
         // 计算小计
         let current_assets_subtotal = calculate_total(&current_assets);
+        // 非流动资产合计：
+        // - 排除累计折旧(1602)，因为固定资产净值(1603)已包含折旧
+        // - 排除固定资产原值(1601)，因为固定资产净值(1603)是它的净值表示
         let non_current_assets_subtotal = non_current_assets
             .iter()
-            .filter(|i| !i.is_summary)
+            .filter(|i| !i.is_summary && i.code != "1602" && i.code != "1601")
             .map(|i| i.current_period)
             .sum::<Decimal>()
             + non_current_assets

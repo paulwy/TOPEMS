@@ -48,7 +48,7 @@ services:
     volumes:
       - ./loki/promtail-config.yml:/etc/promtail/config.yaml
       - /var/log:/var/log
-      - /Users/xingzhai/TOPEMS/logs:/app/logs
+      - ../logs:/app/logs
     command: -config.file=/etc/promtail/config.yaml
     networks:
       - monitoring

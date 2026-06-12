@@ -27,7 +27,44 @@ impl LocalStorage {
         let full_path = self.base_path.join(path);
 
         // 安全检查：确保路径在基础目录内
-        if !full_path.starts_with(&self.base_path) {
+        // 规范化路径以处理 .. 组件
+        let canonical_base = self.base_path.canonicalize()
+            .map_err(|e| StorageError::InvalidPath(format!("Failed to canonicalize base path: {}", e)))?;
+
+        // 构建规范化路径：从 canonical_base 开始，然后添加 full_path 的相对组件
+        let mut normalized_path = canonical_base.as_os_str().to_os_string();
+        let base_components: Vec<_> = self.base_path.components().collect();
+        let full_components = full_path.components();
+
+        for component in full_components {
+            // 跳过属于 base_path 的组件
+            if base_components.contains(&component) {
+                continue;
+            }
+            match component {
+                std::path::Component::ParentDir => {
+                    if let Some(parent) = std::path::Path::new(&normalized_path).parent() {
+                        // 确保不会 pop 到 base_path 之下
+                        let parent_components: Vec<_> = parent.components().collect();
+                        if parent_components.len() >= base_components.len() {
+                            normalized_path = parent.as_os_str().to_os_string();
+                        }
+                    }
+                }
+                std::path::Component::Normal(name) => {
+                    normalized_path.push(std::path::MAIN_SEPARATOR_STR);
+                    normalized_path.push(name);
+                }
+                std::path::Component::RootDir => {
+                    // 不应该到达这里，因为我们跳过了 base_path 的组件
+                }
+                _ => {}
+            }
+        }
+
+        let normalized_full = std::path::Path::new(&normalized_path);
+
+        if !normalized_full.starts_with(&canonical_base) {
             return Err(StorageError::InvalidPath(format!(
                 "Path {} is outside base directory",
                 path
