@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use topems_shared::init_logging;
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::timeout::TimeoutLayer;
 use utoipa::{OpenApi, ToSchema};
 use uuid::Uuid;
 
@@ -310,6 +311,14 @@ async fn init_database_tables(pool: &sqlx::PgPool) -> anyhow::Result<()> {
             "预置数据",
             include_str!("./db/migrations/20260527000002_seed_templates_and_help_center.sql"),
         ),
+        (
+            "归档系统表",
+            include_str!("./db/migrations/20260605000001_create_archive_schema.sql"),
+        ),
+        (
+            "扩展模板管理系统",
+            include_str!("./db/migrations/20260613000001_extend_templates.sql"),
+        ),
     ];
 
     for (name, migration) in migrations {
@@ -555,10 +564,12 @@ async fn upload_file(
     let mut folder_id: Option<Uuid> = None;
     let mut file_content = Vec::new();
 
+    tracing::info!("开始解析 multipart 请求...");
     while let Some(field) = stream.next_field().await.transpose() {
         match field {
             Ok(mut field) => {
                 let name = field.name().unwrap_or("");
+                tracing::debug!("解析字段: {}", name);
 
                 if name == "file" {
                     file_name = field.file_name().unwrap_or("uploaded_file.txt").to_string();
@@ -604,6 +615,7 @@ async fn upload_file(
     };
 
     // 调用 File 服务上传文件
+    tracing::info!("准备上传文件: name={}, size={}, content_type={}", file_name, file_size, content_type);
     match doc_storage
         .upload_to_file_service(&file_name, file_content.clone(), &content_type)
         .await
@@ -2456,6 +2468,9 @@ async fn main() {
         Json(value)
     }
 
+    // 添加 300 秒（5分钟）超时以支持大文件上传
+    let timeout = TimeoutLayer::new(std::time::Duration::from_secs(300));
+
     let app = Router::new()
         .route("/", get(home))
         .route("/api-docs/openapi.json", get(openapi_docs))
@@ -2464,15 +2479,16 @@ async fn main() {
         .layer(cors)
         .layer(prometheus_layer)
         .layer(tower_http::trace::TraceLayer::new_for_http())
+        .layer(timeout)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024))
         .with_state(state)
         .without_v07_checks();
 
     let _host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8028".to_string())
+    let port = std::env::var("DOC_PORT")
+        .unwrap_or_else(|_| "8024".to_string())
         .parse()
-        .unwrap_or(8028);
+        .unwrap_or(8024);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
