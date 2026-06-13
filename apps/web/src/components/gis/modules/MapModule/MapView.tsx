@@ -275,6 +275,7 @@ const MapView: React.FC<MapViewProps> = ({
   );
   const [mapType, setMapType] = useState<"osm" | "amap">("osm");
   const [show3DView, setShow3DView] = useState(false);
+  const [offlineMode, setOfflineMode] = useState(false);
 
   // Icons
   const deviceIcon = useMemo(() => createDeviceIcon(), []);
@@ -551,7 +552,11 @@ const MapView: React.FC<MapViewProps> = ({
 
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            url={
+              offlineMode
+                ? "/offline_tiles/amap/{z}/{x}/{y}.png"
+                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            }
           />
 
           {/* Pipelines */}
@@ -829,9 +834,11 @@ const MapView: React.FC<MapViewProps> = ({
         onToggleHeatmap={() => setShowHeatmap(!showHeatmap)}
         onToggle3DView={() => setShow3DView(true)}
         onToggleMapType={() => setMapType(mapType === "osm" ? "amap" : "osm")}
+        onToggleOfflineMode={() => setOfflineMode(!offlineMode)}
         showTrackPanel={showTrackPanel}
         showHeatmap={showHeatmap}
         mapType={mapType}
+        offlineMode={offlineMode}
         measurePointsLength={measurePoints.length}
         drawFeaturesLength={drawFeatures.length}
         currentDrawing={currentDrawing}

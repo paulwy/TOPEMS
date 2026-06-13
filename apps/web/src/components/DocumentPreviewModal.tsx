@@ -59,7 +59,21 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         } else if (fileName.endsWith(".docx")) {
           console.log("预览 DOCX");
           const blob = await docApi.download(fileId);
-          console.log("获取到 Blob，大小:", blob.size);
+          console.log("获取到 Blob，大小:", blob.size, "类型:", blob.type);
+
+          // 检查 blob 内容
+          const text = await blob.text();
+          console.log("Blob 内容前 100 字符:", text.substring(0, 100));
+
+          // 如果内容不是以 PK (ZIP 头) 开头，说明返回了错误
+          const bytes = await blob.arrayBuffer();
+          const view = new DataView(bytes);
+          const header = String.fromCharCode(view.getUint8(0)) + String.fromCharCode(view.getUint8(1));
+          console.log("文件头:", header, "(应该是 'PK')");
+
+          if (header !== "PK") {
+            throw new Error(`文件格式错误：期望 DOCX (ZIP)，实际得到 ${blob.type || 'unknown'}`);
+          }
 
           // 再次检查容器是否还存在
           if (containerRef.current) {

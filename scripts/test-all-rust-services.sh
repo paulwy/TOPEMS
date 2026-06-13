@@ -53,21 +53,23 @@ for service in "${ALL_SERVICES[@]}"; do
     
     # 检查是否有测试文件
     if [ -d "tests" ] && [ "$(ls -A tests 2>/dev/null | wc -l)" -gt 0 ]; then
-        # 尝试编译测试
-        if cargo test --no-run --quiet 2>/dev/null; then
-            # 运行测试
-            if cargo test --quiet 2>&1 | tail -n 1 | grep -q "test result:"; then
-                local result=$(cargo test --quiet 2>&1 | tail -n 1)
+        # 运行测试并捕获结果
+        test_output=$(cargo test --quiet 2>&1)
+        test_exit_code=$?
+
+        if [ $test_exit_code -eq 0 ]; then
+            # 测试通过，提取结果行
+            result=$(echo "$test_output" | grep "test result:" | tail -n 1)
+            if [ -n "$result" ]; then
                 echo -e "${GREEN}✅ PASS${NC} $result"
                 SUCCESS+=("$service")
             else
-                # 测试失败
-                echo -e "${RED}❌ FAIL${NC}"
-                FAILED+=("$service")
+                echo -e "${GREEN}✅ PASS${NC}"
+                SUCCESS+=("$service")
             fi
         else
-            # 编译失败
-            echo -e "${RED}❌ COMPILE ERROR${NC}"
+            # 测试失败
+            echo -e "${RED}❌ FAIL${NC}"
             FAILED+=("$service")
         fi
     else

@@ -24,8 +24,6 @@
     "@amap/amap-jsapi-loader": "^1.0.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@heroui/react": "^3.1.0",
-    "@heroui/styles": "^3.1.0",
     "@hookform/resolvers": "^5.4.0",
     "@mui/icons-material": "^5.18.0",
     "@mui/lab": "^5.0.0-alpha.175",

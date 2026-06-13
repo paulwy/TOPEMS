@@ -55,9 +55,9 @@ export default defineConfig({
           if (/^path-to-regexp$/.test(packageName)) return 'vendor-router';
           if (/^query-string$/.test(packageName)) return 'vendor-router';
           
-          // UI 库
-          if (/^@emotion\/react$/.test(scopedPackage)) return 'vendor-emotion';
-          if (/^@emotion\/styled$/.test(scopedPackage)) return 'vendor-emotion';
+          // UI 库 - emotion 合并到 shared 以避免循环依赖
+          if (/^@emotion\/react$/.test(scopedPackage)) return 'vendor-shared';
+          if (/^@emotion\/styled$/.test(scopedPackage)) return 'vendor-shared';
           if (/^@mui\/(material|icons-material|lab)$/.test(scopedPackage)) return 'vendor-mui';
           if (/^@mui\/system$/.test(scopedPackage)) return 'vendor-mui';
           if (/^@heroui\/(react|styles)$/.test(scopedPackage)) return 'vendor-heroui';
@@ -72,8 +72,8 @@ export default defineConfig({
           // 数据处理
           if (/^(xlsx|xlsx-populate|exceljs|file-saver)$/.test(packageName)) return 'vendor-excel';
           
-          // 状态管理
-          if (/^(zustand|jotai|recoil|valtio)$/.test(packageName)) return 'vendor-state';
+          // 状态管理 - 合并到 shared 以避免循环依赖
+          if (/^(zustand|jotai|recoil|valtio)$/.test(packageName)) return 'vendor-shared';
           
           // 表单
           if (/^@hookform\//.test(scopedPackage)) return 'vendor-form';
@@ -95,15 +95,15 @@ export default defineConfig({
           if (/^framer-motion$/.test(packageName)) return 'vendor-animation';
           if (/^react-spring$/.test(packageName)) return 'vendor-animation';
           
-          // 地图
-          if (/^leaflet$/.test(packageName)) return 'vendor-leaflet';
-          if (/^react-leaflet$/.test(packageName)) return 'vendor-leaflet';
-          if (/^leaflet-draw$/.test(packageName)) return 'vendor-leaflet';
-          if (/^leaflet-measure$/.test(packageName)) return 'vendor-leaflet';
+          // 地图 - 合并到 shared 以避免循环依赖
+          if (/^leaflet$/.test(packageName)) return 'vendor-shared';
+          if (/^react-leaflet$/.test(packageName)) return 'vendor-shared';
+          if (/^leaflet-draw$/.test(packageName)) return 'vendor-shared';
+          if (/^leaflet-measure$/.test(packageName)) return 'vendor-shared';
           
-          // 3D
-          if (/^three$/.test(packageName)) return 'vendor-three';
-          if (/^@react-three\//.test(scopedPackage)) return 'vendor-three';
+          // 3D - 合并到 shared 以避免循环依赖
+          if (/^three$/.test(packageName)) return 'vendor-shared';
+          if (/^@react-three\//.test(scopedPackage)) return 'vendor-shared';
           
           // 特殊功能
           if (/^@monaco-editor\//.test(scopedPackage)) return 'vendor-monaco';
@@ -160,6 +160,9 @@ export default defineConfig({
       host: 'localhost',
       clientPort: 3000,
       protocol: 'ws',
+    },
+    fs: {
+      allow: ['..'],
     },
     proxy: {
       '/api/v1/files': createServiceProxyConfig('doc', 'http://localhost:8024', true),

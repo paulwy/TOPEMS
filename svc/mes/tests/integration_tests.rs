@@ -9,6 +9,7 @@ mod tests {
     use super::*;
 
     const TEST_DATABASE_URL: &str = "postgres://topems:topems_secret@localhost:5432/topems";
+    const TEST_ORGANIZATION_ID: &str = "00000000-0000-0000-0000-000000000001";
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
         PgPool::connect(TEST_DATABASE_URL).await
@@ -124,8 +125,8 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO mes.production_orders (id, order_number, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO mes.production_orders (id, organization_id, order_number, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 order_number = EXCLUDED.order_number,
                 updated_at = NOW()
@@ -133,6 +134,7 @@ mod tests {
             "#,
         )
         .bind(order_id)
+        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
         .bind(&order_number)
         .bind(format!("测试产品-{}", &order_id.to_string()[..8]))
         .bind(100)
@@ -185,11 +187,12 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO mes.production_orders (id, order_number, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO mes.production_orders (id, organization_id, order_number, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
         .bind(order_id)
+        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
         .bind(&order_number)
         .bind("测试产品")
         .bind(100)
@@ -246,8 +249,8 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO mes.work_stations (id, station_code, station_name, location, status, capacity, current_load, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO mes.work_stations (id, organization_id, station_code, station_name, location, status, capacity, current_load, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 station_name = EXCLUDED.station_name,
                 updated_at = NOW()
@@ -255,6 +258,7 @@ mod tests {
             "#,
         )
         .bind(station_id)
+        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
         .bind(&station_code)
         .bind(format!("测试工位-{}", &station_id.to_string()[..6]))
         .bind("A车间-1号线")

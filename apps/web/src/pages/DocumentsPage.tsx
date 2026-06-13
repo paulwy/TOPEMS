@@ -894,6 +894,7 @@ const DocumentsPage: React.FC = () => {
                       variant="default"
                       size="sm"
                       className="bg-red-600 hover:bg-red-700"
+                      onClick={handleBatchDelete}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       批量删除

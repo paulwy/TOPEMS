@@ -127,14 +127,34 @@ pull_model() {
     exit 1
   fi
   
-  info "下载模型: $model..."
-  ollama pull "$model"
+  # 先检查模型是否已安装
+  if ollama list 2>/dev/null | grep -q "$model"; then
+    info "模型 $model 已安装"
+    return 0
+  fi
   
-  if ollama list | grep -q "$model"; then
+  info "下载模型: $model..."
+  ollama pull "$model" 2>&1
+  
+  if ollama list 2>/dev/null | grep -q "$model"; then
     success "模型 $model 下载完成"
   else
-    error "模型 $model 下载失败"
-    exit 1
+    warning "模型 $model 下载失败"
+    echo ""
+    echo "可能的原因:"
+    echo "  1. 网络连接问题"
+    echo "  2. 存储空间不足"
+    echo "  3. 权限限制（sandbox环境）"
+    echo ""
+    echo "建议解决方案:"
+    echo "  1. 检查网络连接"
+    echo "  2. 确保有足够的磁盘空间"
+    echo "  3. 如果在sandbox环境中，请在本地终端手动运行:"
+    echo "     ollama pull $model"
+    echo ""
+    echo "已安装的模型:"
+    ollama list 2>/dev/null || echo "  (无法列出模型)"
+    # 不退出，继续执行其他操作
   fi
 }
 

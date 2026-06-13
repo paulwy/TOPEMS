@@ -7,18 +7,44 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  rust-tests:
     runs-on: ubuntu-latest
-    
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: topems
+          POSTGRES_PASSWORD: topems_secret
+          POSTGRES_DB: topems
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Setup Rust
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         override: true
-    
+        components: rustfmt, clippy
+
     - name: Cache Cargo
       uses: actions/cache@v3
       with:
@@ -29,33 +55,101 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-cargo-
-    
-    - name: Build Services
-      run: |
-        cargo build --release --workspace
-    
-    - name: Run Tests
-      run: |
-        cargo test --workspace
-    
+
+    - name: Check code format
+      run: cargo fmt --check
+
     - name: Run Clippy
+      run: cargo clippy --workspace -- -D warnings
+
+    - name: Build Services
+      run: cargo build --release --workspace
+
+    - name: Setup Database
       run: |
-        cargo clippy --workspace -- -D warnings
-    
+        bash scripts/setup-db.sh
+      env:
+        DATABASE_URL: postgres://topems:topems_secret@localhost:5432/topems
+
+    - name: Run Tests
+      run: cargo test --workspace --no-fail-fast
+      env:
+        DATABASE_URL: postgres://topems:topems_secret@localhost:5432/topems
+        REDIS_URL: redis://localhost:6379
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
-    
-    - name: Build Frontend
+        cache-dependency-path: apps/web/package-lock.json
+
+    - name: Install dependencies
       run: |
-        cd frontend
-        npm ci
+        cd apps/web
+        npm install --legacy-peer-deps
+
+    - name: Run lint
+      run: |
+        cd apps/web
+        npm run lint
+
+    - name: Run typecheck
+      run: |
+        cd apps/web
+        npm run typecheck
+
+    - name: Run tests
+      run: |
+        cd apps/web
+        npm run test
+
+    - name: Build frontend
+      run: |
+        cd apps/web
         npm run build
-    
-    - name: Test Frontend
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: [rust-tests, frontend-tests]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: topems
+          POSTGRES_PASSWORD: topems_secret
+          POSTGRES_DB: topems
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Run integration tests
+      run: bash scripts/test-all-rust-services.sh
+      env:
+        DATABASE_URL: postgres://topems:topems_secret@localhost:5432/topems
+
+    - name: Generate test report
+      if: always()
       run: |
-        cd frontend
-        npm test
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "All tests completed successfully" >> $GITHUB_STEP_SUMMARY

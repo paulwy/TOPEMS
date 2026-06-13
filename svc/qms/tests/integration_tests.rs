@@ -11,6 +11,7 @@ mod tests {
     use sqlx::Row;
 
     const TEST_DATABASE_URL: &str = "postgres://topems:topems_secret@localhost:5432/topems";
+    const TEST_ORGANIZATION_ID: &str = "00000000-0000-0000-0000-000000000001";
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
         PgPool::connect(TEST_DATABASE_URL).await
@@ -107,8 +108,8 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO qms.quality_inspections (id, title, description, inspection_type, inspector, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, 'pending', NOW(), NOW())
+            INSERT INTO qms.quality_inspections (id, organization_id, title, description, inspection_type, inspector, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 title = EXCLUDED.title,
                 updated_at = NOW()
@@ -116,6 +117,7 @@ mod tests {
             "#,
         )
         .bind(inspection_id)
+        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
         .bind(&title)
         .bind("这是一条测试质量检查")
         .bind("日常检查")
@@ -161,11 +163,12 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO qms.quality_inspections (id, title, description, inspection_type, inspector, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, 'pending', NOW(), NOW())
+            INSERT INTO qms.quality_inspections (id, organization_id, title, description, inspection_type, inspector, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW(), NOW())
             "#,
         )
         .bind(inspection_id)
+        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
         .bind(&title)
         .bind("测试描述")
         .bind("日常检查")

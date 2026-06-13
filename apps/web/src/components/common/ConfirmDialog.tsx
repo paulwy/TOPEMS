@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, Button } from "@heroui/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@nextui-org/react";
 
 export interface ConfirmDialogConfig {
   isOpen: boolean;
@@ -23,6 +23,7 @@ export default function ConfirmDialog({
   confirmLabel = "确认",
   cancelLabel = "取消",
   confirmColor = "primary",
+  size = "md",
   confirmDisabled = false,
 }: ConfirmDialogConfig) {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -38,23 +39,23 @@ export default function ConfirmDialog({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <div className="p-6 bg-white rounded-lg shadow-xl">
-        <h2 className="text-lg font-semibold mb-4">{title}</h2>
-        <div className="text-sm text-gray-600 mb-6">{message}</div>
-        <div className="flex justify-end gap-3">
-          <Button variant="ghost" onPress={onClose} isDisabled={isLoading}>
+    <Modal isOpen={isOpen} onClose={onClose} size={size}>
+      <ModalContent>
+        <ModalHeader>{title}</ModalHeader>
+        <ModalBody>{message}</ModalBody>
+        <ModalFooter>
+          <Button variant="light" onPress={onClose} isDisabled={isLoading}>
             {cancelLabel}
           </Button>
           <Button
-            variant={confirmColor === "danger" ? "danger" : "primary"}
+            color={confirmColor === "danger" ? "danger" : "primary"}
             onPress={handleConfirm}
             isDisabled={confirmDisabled || isLoading}
           >
             {isLoading ? "处理中..." : confirmLabel}
           </Button>
-        </div>
-      </div>
+        </ModalFooter>
+      </ModalContent>
     </Modal>
   );
 }

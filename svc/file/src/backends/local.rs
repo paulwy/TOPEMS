@@ -28,8 +28,9 @@ impl LocalStorage {
 
         // 安全检查：确保路径在基础目录内
         // 规范化路径以处理 .. 组件
-        let canonical_base = self.base_path.canonicalize()
-            .map_err(|e| StorageError::InvalidPath(format!("Failed to canonicalize base path: {}", e)))?;
+        let canonical_base = self.base_path.canonicalize().map_err(|e| {
+            StorageError::InvalidPath(format!("Failed to canonicalize base path: {}", e))
+        })?;
 
         // 构建规范化路径：从 canonical_base 开始，然后添加 full_path 的相对组件
         let mut normalized_path = canonical_base.as_os_str().to_os_string();

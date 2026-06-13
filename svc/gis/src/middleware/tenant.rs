@@ -1,11 +1,7 @@
 // middleware/tenant.rs
 // 多租户中间件 - 提供租户上下文隔离
 
-use axum::{
-    extract::FromRequestParts,
-    http::request::Parts,
-    Extension,
-};
+use axum::{extract::FromRequestParts, http::request::Parts, Extension};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -35,9 +31,7 @@ where
             .extensions
             .get::<TenantContext>()
             .cloned()
-            .ok_or_else(|| {
-                ApiResponse::error(401, "缺少租户上下文信息")
-            })?;
+            .ok_or_else(|| ApiResponse::error(401, "缺少租户上下文信息"))?;
 
         Ok(TenantRequest { ctx: tenant_ctx })
     }
@@ -65,9 +59,11 @@ impl TenantDataAccess {
     }
 
     /// 设备点位 - 按租户筛选
-    pub async fn list_device_locations(&self) -> Result<Vec<crate::models::DeviceLocation>, sqlx::Error> {
+    pub async fn list_device_locations(
+        &self,
+    ) -> Result<Vec<crate::models::DeviceLocation>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::DeviceLocation>(
-            "SELECT * FROM device_locations WHERE tenant_id = $1 ORDER BY created_at DESC"
+            "SELECT * FROM device_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -75,9 +71,12 @@ impl TenantDataAccess {
     }
 
     /// 设备点位详情 - 按租户筛选
-    pub async fn get_device_location(&self, id: Uuid) -> Result<Option<crate::models::DeviceLocation>, sqlx::Error> {
+    pub async fn get_device_location(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<crate::models::DeviceLocation>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::DeviceLocation>(
-            "SELECT * FROM device_locations WHERE id = $1 AND tenant_id = $2"
+            "SELECT * FROM device_locations WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(self.tenant_id)
@@ -118,9 +117,11 @@ impl TenantDataAccess {
 
     /// 仓储位置 - 按租户筛选
     #[allow(dead_code)]
-    pub async fn list_warehouse_locations(&self) -> Result<Vec<crate::models::WarehouseLocation>, sqlx::Error> {
+    pub async fn list_warehouse_locations(
+        &self,
+    ) -> Result<Vec<crate::models::WarehouseLocation>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::WarehouseLocation>(
-            "SELECT * FROM warehouse_locations WHERE tenant_id = $1 ORDER BY created_at DESC"
+            "SELECT * FROM warehouse_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -131,7 +132,7 @@ impl TenantDataAccess {
     #[allow(dead_code)]
     pub async fn list_pipelines(&self) -> Result<Vec<crate::models::Pipeline>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::Pipeline>(
-            "SELECT * FROM pipelines WHERE tenant_id = $1 ORDER BY created_at DESC"
+            "SELECT * FROM pipelines WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -140,9 +141,11 @@ impl TenantDataAccess {
 
     /// 取证记录 - 按租户筛选
     #[allow(dead_code)]
-    pub async fn list_evidence_records(&self) -> Result<Vec<crate::models::EvidenceRecord>, sqlx::Error> {
+    pub async fn list_evidence_records(
+        &self,
+    ) -> Result<Vec<crate::models::EvidenceRecord>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::EvidenceRecord>(
-            "SELECT * FROM evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC"
+            "SELECT * FROM evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -153,7 +156,7 @@ impl TenantDataAccess {
     #[allow(dead_code)]
     pub async fn list_track_records(&self) -> Result<Vec<crate::models::TrackRecord>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::TrackRecord>(
-            "SELECT * FROM track_records WHERE tenant_id = $1 ORDER BY start_time DESC"
+            "SELECT * FROM track_records WHERE tenant_id = $1 ORDER BY start_time DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -162,7 +165,10 @@ impl TenantDataAccess {
 
     /// 设备轨迹 - 按租户和设备ID筛选
     #[allow(dead_code)]
-    pub async fn get_device_track(&self, device_id: Uuid) -> Result<Vec<crate::models::TrackPosition>, sqlx::Error> {
+    pub async fn get_device_track(
+        &self,
+        device_id: Uuid,
+    ) -> Result<Vec<crate::models::TrackPosition>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::TrackPosition>(
             r#"
             SELECT trp.* FROM track_positions trp

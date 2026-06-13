@@ -2,10 +2,7 @@
 
 use crate::middleware::tenant::TenantRequest;
 use crate::models::{DeviceLocation, EvidenceRecord, TrackPosition, TrackRecord};
-use axum::{
-    extract::State,
-    Json,
-};
+use axum::{extract::State, Json};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -136,10 +133,7 @@ pub async fn batch_upload_positions(
                 &format!("成功同步 {} 个位置", synced_count),
             ))
         }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("位置同步失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("位置同步失败: {}", e))),
     }
 }
 
@@ -222,7 +216,10 @@ pub async fn batch_upload_evidence(
     };
     Json(ApiResponse::success(
         response,
-        &format!("取证同步完成: {} 成功, {} 失败", success_count, failure_count),
+        &format!(
+            "取证同步完成: {} 成功, {} 失败",
+            success_count, failure_count
+        ),
     ))
 }
 
@@ -280,12 +277,7 @@ pub async fn download_offline_data(
 
         match q.fetch_all(&pool).await {
             Ok(data) => tracks = data,
-            Err(e) => {
-                return Json(ApiResponse::error(
-                    500,
-                    &format!("下载轨迹数据失败: {}", e),
-                ))
-            }
+            Err(e) => return Json(ApiResponse::error(500, &format!("下载轨迹数据失败: {}", e))),
         }
 
         // 下载轨迹位置点
@@ -319,12 +311,7 @@ pub async fn download_offline_data(
         .await
         {
             Ok(data) => evidence = data,
-            Err(e) => {
-                return Json(ApiResponse::error(
-                    500,
-                    &format!("下载取证数据失败: {}", e),
-                ))
-            }
+            Err(e) => return Json(ApiResponse::error(500, &format!("下载取证数据失败: {}", e))),
         }
     }
 

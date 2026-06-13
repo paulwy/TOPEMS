@@ -25,7 +25,9 @@ mod tests {
             panic!("Login failed with status: {}", status);
         }
 
-        let json_response = login_response.json::<serde_json::Value>().await
+        let json_response = login_response
+            .json::<serde_json::Value>()
+            .await
             .expect("Failed to parse login response");
 
         let token = json_response["data"]["access_token"]
@@ -439,7 +441,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
     }
 
     #[tokio::test]
-    #[ignore = "Requires correct API endpoints implementation"]
+    #[ignore = "集成测试需要运行 lims:8022 和 iam:8000 服务"]
     async fn test_lims_integration() {
         test_sample_crud().await;
         test_sample_batch_operations().await;

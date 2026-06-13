@@ -1,17 +1,15 @@
 import React, { useCallback } from "react";
 import {
   Input,
-  TextArea,
+  Textarea,
   Select,
-  ListBoxItem,
+  SelectItem,
   Checkbox,
   DatePicker,
   Button,
   Form,
   Card,
-  Label,
-  TextField,
-} from "@heroui/react";
+} from "@nextui-org/react";
 
 export interface FormFieldConfig {
   name: string;
@@ -82,59 +80,58 @@ export default function FormBuilder({
         case "email":
         case "password":
           return (
-            <TextField
+            <Input
               key={field.name}
               name={field.name}
+              label={field.label}
+              type={field.type}
+              placeholder={field.placeholder}
               isRequired={isRequired}
               isDisabled={isDisabled}
               defaultValue={defaultValue}
-            >
-              <Label>{field.label}</Label>
-              <Input type={field.type} placeholder={field.placeholder} />
-            </TextField>
+            />
           );
         case "number":
           return (
-            <TextField
+            <Input
               key={field.name}
               name={field.name}
+              label={field.label}
+              type="number"
+              placeholder={field.placeholder}
               isRequired={isRequired}
               isDisabled={isDisabled}
               defaultValue={defaultValue?.toString()}
-            >
-              <Label>{field.label}</Label>
-              <Input type="number" placeholder={field.placeholder} />
-            </TextField>
+            />
           );
         case "textarea":
           return (
-            <TextField
+            <Textarea
               key={field.name}
               name={field.name}
+              label={field.label}
+              placeholder={field.placeholder}
               isRequired={isRequired}
               isDisabled={isDisabled}
               defaultValue={defaultValue}
-            >
-              <Label>{field.label}</Label>
-              <TextArea placeholder={field.placeholder} />
-            </TextField>
+            />
           );
         case "select":
           return (
             <Select
               key={field.name}
               name={field.name}
+              label={field.label}
               isRequired={isRequired}
               isDisabled={isDisabled}
-              defaultSelectedKey={
-                defaultValue ? String(defaultValue) : undefined
+              defaultSelectedKeys={
+                defaultValue ? [String(defaultValue)] : undefined
               }
             >
-              <Label>{field.label}</Label>
-              {field.options?.map((opt) => (
-                <ListBoxItem key={opt.value} id={opt.value}>
+              {(field.options || []).map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
-                </ListBoxItem>
+                </SelectItem>
               ))}
             </Select>
           );
@@ -154,24 +151,22 @@ export default function FormBuilder({
             <DatePicker
               key={field.name}
               name={field.name}
+              label={field.label}
               isRequired={isRequired}
               isDisabled={isDisabled}
               defaultValue={defaultValue}
-            >
-              <Label>{field.label}</Label>
-            </DatePicker>
+            />
           );
         case "file":
           return (
-            <TextField
+            <Input
               key={field.name}
               name={field.name}
+              label={field.label}
+              type="file"
               isRequired={isRequired}
               isDisabled={isDisabled}
-            >
-              <Label>{field.label}</Label>
-              <Input type="file" />
-            </TextField>
+            />
           );
         default:
           if (field.render) {
@@ -236,11 +231,11 @@ export default function FormBuilder({
           {renderForm()}
           <div className="flex gap-3 justify-end">
             {showReset && (
-              <Button type="reset" variant="secondary">
+              <Button type="reset" variant="light">
                 {resetLabel}
               </Button>
             )}
-            <Button type="submit" variant="primary">
+            <Button type="submit" color="primary">
               {submitLabel}
             </Button>
           </div>

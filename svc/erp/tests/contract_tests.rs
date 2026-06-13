@@ -26,7 +26,9 @@ mod tests {
             panic!("Login failed with status: {}", status);
         }
 
-        let json_response = login_response.json::<serde_json::Value>().await
+        let json_response = login_response
+            .json::<serde_json::Value>()
+            .await
             .expect("Failed to parse login response");
 
         let token = json_response["data"]["access_token"]
@@ -422,7 +424,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "Requires correct API endpoints implementation"]
+    #[ignore = "集成测试需要运行 iam:8000, rs:8020, erp:8010 服务"]
     async fn test_contract_integration() {
         test_project_contract_crud().await;
         test_project_budget_crud().await;

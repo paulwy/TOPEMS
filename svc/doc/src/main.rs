@@ -344,7 +344,11 @@ async fn get_file_by_id(state: &AppState, id: Uuid) -> Option<FileMetadata> {
 
 async fn get_file_content(state: &AppState, id: Uuid) -> Option<Vec<u8>> {
     // 首先尝试从 File 服务获取文件内容
-    match state.doc_storage_service.download_from_file_service(id).await {
+    match state
+        .doc_storage_service
+        .download_from_file_service(id)
+        .await
+    {
         Ok(content) => {
             tracing::debug!("从 File 服务获取文件内容成功: {}", id);
             return Some(content);
@@ -353,7 +357,7 @@ async fn get_file_content(state: &AppState, id: Uuid) -> Option<Vec<u8>> {
             tracing::warn!("从 File 服务获取文件失败: {}, 尝试本地存储", e);
         }
     }
-    
+
     // 如果 File 服务不可用，回退到本地存储
     state.storage_service.load_file(&id).await.ok()
 }
@@ -706,25 +710,50 @@ async fn get_file(
     }
 }
 
-async fn download_file(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
+async fn download_file(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    request: axum::extract::Request,
+) -> impl IntoResponse {
     tracing::debug!("下载文件: {}", id);
 
-    if let (Some(metadata), Some(content)) = (
-        get_file_by_id(&state, id).await,
-        get_file_content(&state, id).await,
-    ) {
-        let mut headers = axum::http::HeaderMap::new();
-        headers.insert(
-            header::CONTENT_TYPE,
-            metadata.content_type.clone().parse().unwrap(),
-        );
-        headers.insert(
-            header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{}\"", metadata.name)
-                .parse()
-                .unwrap(),
-        );
-        return (StatusCode::OK, headers, content);
+    // 从请求头获取 Authorization token
+    let token = request
+        .headers()
+        .get("authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "))
+        .map(|s| s.to_string());
+
+    // 如果有 token，使用带 token 的存储服务
+    let content = if let Some(ref t) = token {
+        let doc_storage = state.doc_storage_service.clone().with_token(t);
+        match doc_storage.download_from_file_service(id).await {
+            Ok(content) => Some(content),
+            Err(e) => {
+                tracing::warn!("从 File 服务下载失败: {}，尝试本地存储", e);
+                state.storage_service.load_file(&id).await.ok()
+            }
+        }
+    } else {
+        get_file_content(&state, id).await
+    };
+
+    if let Some(metadata) = get_file_by_id(&state, id).await {
+        if let Some(content) = content {
+            let mut headers = axum::http::HeaderMap::new();
+            headers.insert(
+                header::CONTENT_TYPE,
+                metadata.content_type.clone().parse().unwrap(),
+            );
+            headers.insert(
+                header::CONTENT_DISPOSITION,
+                format!("attachment; filename=\"{}\"", metadata.name)
+                    .parse()
+                    .unwrap(),
+            );
+            return (StatusCode::OK, headers, content);
+        }
     }
 
     let mut headers = axum::http::HeaderMap::new();
@@ -732,70 +761,95 @@ async fn download_file(State(state): State<AppState>, Path(id): Path<Uuid>) -> i
     (StatusCode::NOT_FOUND, headers, b"File not found".to_vec())
 }
 
-async fn preview_file(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
+async fn preview_file(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    request: axum::extract::Request,
+) -> impl IntoResponse {
     tracing::info!("📄 预览文件请求: {}", id);
 
-    if let (Some(metadata), Some(content)) = (
-        get_file_by_id(&state, id).await,
-        get_file_content(&state, id).await,
-    ) {
-        tracing::info!(
-            "📄 文件信息: name={}, content-type={}, size={} bytes",
-            metadata.name,
-            metadata.content_type,
-            content.len()
-        );
+    // 从请求头获取 Authorization token
+    let token = request
+        .headers()
+        .get("authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "))
+        .map(|s| s.to_string());
 
-        if state.conversion_service.can_convert(&metadata.name) {
-            tracing::info!("🔄 尝试转换 {} 为 PDF 预览", metadata.name);
-            if state.conversion_service.is_available() {
-                tracing::info!("✅ LibreOffice 可用，开始转换");
-                match state
-                    .conversion_service
-                    .convert_to_pdf(&content, &metadata.name)
-                    .await
-                {
-                    Ok(pdf_content) => {
-                        tracing::info!("✅ PDF转换成功，大小: {} bytes", pdf_content.len());
-                        let mut headers = axum::http::HeaderMap::new();
-                        headers.insert(header::CONTENT_TYPE, "application/pdf".parse().unwrap());
-                        let pdf_name = format!(
-                            "{}.pdf",
-                            std::path::Path::new(&metadata.name)
-                                .file_stem()
-                                .and_then(|s| s.to_str())
-                                .unwrap_or("document")
-                        );
-                        headers.insert(
-                            header::CONTENT_DISPOSITION,
-                            format!("inline; filename=\"{}\"", pdf_name)
-                                .parse()
-                                .unwrap(),
-                        );
-                        return (StatusCode::OK, headers, pdf_content);
-                    }
-                    Err(e) => {
-                        tracing::error!("❌ PDF转换失败: {}, 降级到原始文件", e);
-                    }
-                }
-            } else {
-                tracing::warn!("⚠️ LibreOffice 不可用，无法转换，返回原始文件");
+    // 如果有 token，使用带 token 的存储服务
+    let content = if let Some(ref t) = token {
+        let doc_storage = state.doc_storage_service.clone().with_token(t);
+        match doc_storage.download_from_file_service(id).await {
+            Ok(content) => Some(content),
+            Err(e) => {
+                tracing::warn!("从 File 服务下载失败: {}，尝试本地存储", e);
+                state.storage_service.load_file(&id).await.ok()
             }
         }
+    } else {
+        get_file_content(&state, id).await
+    };
 
-        tracing::info!("📄 返回原始文件: {}", metadata.name);
-        let mut headers = axum::http::HeaderMap::new();
-        headers.insert(
-            header::CONTENT_TYPE,
-            metadata.content_type.clone().parse().unwrap(),
-        );
-        headers.insert(
-            header::CONTENT_DISPOSITION,
-            format!("inline; filename=\"{}\"", metadata.name)
-                .parse()
-                .unwrap(),
-        );
-        return (StatusCode::OK, headers, content);
+    if let Some(metadata) = get_file_by_id(&state, id).await {
+        if let Some(content) = content {
+            tracing::info!(
+                "📄 文件信息: name={}, content-type={}, size={} bytes",
+                metadata.name,
+                metadata.content_type,
+                content.len()
+            );
+
+            if state.conversion_service.can_convert(&metadata.name) {
+                tracing::info!("🔄 尝试转换 {} 为 PDF 预览", metadata.name);
+                if state.conversion_service.is_available() {
+                    tracing::info!("✅ LibreOffice 可用，开始转换");
+                    match state
+                        .conversion_service
+                        .convert_to_pdf(&content, &metadata.name)
+                        .await
+                    {
+                        Ok(pdf_content) => {
+                            tracing::info!("✅ PDF转换成功，大小: {} bytes", pdf_content.len());
+                            let mut headers = axum::http::HeaderMap::new();
+                            headers.insert(header::CONTENT_TYPE, "application/pdf".parse().unwrap());
+                            let pdf_name = format!(
+                                "{}.pdf",
+                                std::path::Path::new(&metadata.name)
+                                    .file_stem()
+                                    .and_then(|s| s.to_str())
+                                    .unwrap_or("document")
+                            );
+                            headers.insert(
+                                header::CONTENT_DISPOSITION,
+                                format!("inline; filename=\"{}\"", pdf_name)
+                                    .parse()
+                                    .unwrap(),
+                            );
+                            return (StatusCode::OK, headers, pdf_content);
+                        }
+                        Err(e) => {
+                            tracing::error!("❌ PDF转换失败: {}, 降级到原始文件", e);
+                        }
+                    }
+                } else {
+                    tracing::warn!("⚠️ LibreOffice 不可用，无法转换，返回原始文件");
+                }
+            }
+
+            tracing::info!("📄 返回原始文件: {}", metadata.name);
+            let mut headers = axum::http::HeaderMap::new();
+            headers.insert(
+                header::CONTENT_TYPE,
+                metadata.content_type.clone().parse().unwrap(),
+            );
+            headers.insert(
+                header::CONTENT_DISPOSITION,
+                format!("inline; filename=\"{}\"", metadata.name)
+                    .parse()
+                    .unwrap(),
+            );
+            return (StatusCode::OK, headers, content);
+        }
     }
 
     tracing::error!("❌ 文件未找到: {}", id);

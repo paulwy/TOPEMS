@@ -11,6 +11,25 @@ import React, {
 import { authApi } from "../api/iam";
 import apiClient from "../api/client";
 
+// 默认 token 过期时间（24小时，毫秒）- 当无法解析 JWT 时使用
+const DEFAULT_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+// 从 JWT token payload 解析过期时间戳（毫秒）
+// 这确保前端与后端的 token 过期时间保持一致
+const parseTokenExpiryFromJWT = (token: string): number => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.exp && typeof payload.exp === "number") {
+      // JWT 的 exp 是 Unix 时间戳（秒），转为毫秒
+      return payload.exp * 1000;
+    }
+  } catch (e) {
+    console.warn("Failed to parse token expiry from JWT:", e);
+  }
+  // 解析失败时返回默认过期时间
+  return Date.now() + DEFAULT_TOKEN_EXPIRY_MS;
+};
+
 // 权限名称到ID的映射 - 移到组件外部避免重复创建
 const permissionNameToId: Record<string, string> = {
   "user:read": "00000000-0000-0000-0000-000000000010",
@@ -245,8 +264,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         localStorage.setItem("token", access_token);
         apiClient.setAuthToken(access_token);
 
-        // 设置新的过期时间（当前时间 + 1小时）
-        const newExpiry = Date.now() + 60 * 60 * 1000;
+        // 从新 token 解析过期时间（与后端配置保持一致）
+        const newExpiry = parseTokenExpiryFromJWT(access_token);
         setTokenExpiry(newExpiry);
         localStorage.setItem("token_expiry", newExpiry.toString());
 
@@ -275,7 +294,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userStr = localStorage.getItem("user");
       const rolesStr = localStorage.getItem("roles");
       const permissionsStr = localStorage.getItem("permissions");
-      const tokenExpiryStr = localStorage.getItem("token_expiry");
 
       if (token && userStr) {
         try {
@@ -283,16 +301,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           const roles = rolesStr ? JSON.parse(rolesStr) : [];
           const permissions = permissionsStr ? JSON.parse(permissionsStr) : [];
 
-          // 恢复 token 过期时间
-          if (tokenExpiryStr) {
-            const expiry = parseInt(tokenExpiryStr, 10);
-            setTokenExpiry(expiry);
-          } else {
-            // 如果没有过期时间，假设token会在1小时后过期
-            const newExpiry = Date.now() + 60 * 60 * 1000;
-            setTokenExpiry(newExpiry);
-            localStorage.setItem("token_expiry", newExpiry.toString());
-          }
+          // 优先使用 token 本身的过期时间，其次使用存储的过期时间
+          const tokenExpiry = parseTokenExpiryFromJWT(token);
+          setTokenExpiry(tokenExpiry);
+          localStorage.setItem("token_expiry", tokenExpiry.toString());
 
           apiClient.setAuthToken(token);
 
@@ -346,8 +358,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
         apiClient.setAuthToken(access_token);
 
-        // 设置 token 过期时间（1小时后）
-        const expiry = Date.now() + 60 * 60 * 1000;
+        // 从 JWT token 解析过期时间（与后端配置保持一致）
+        const expiry = parseTokenExpiryFromJWT(access_token);
         setTokenExpiry(expiry);
         localStorage.setItem("token_expiry", expiry.toString());
 

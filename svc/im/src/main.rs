@@ -191,9 +191,9 @@ async fn main() -> Result<()> {
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
+    // 统一使用与其他服务相同的默认 JWT secret
     let _jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
-        tracing::warn!("JWT_SECRET not set, using default (not recommended for production)");
-        "topems-default-jwt-secret-change-me-in-production".to_string()
+        "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256".to_string()
     });
 
     // 创建数据库连接池
