@@ -141,6 +141,8 @@ pub struct TemplateCategory {
     pub id: Uuid,
     pub name: String,
     pub code: String,
+    #[sqlx(rename = "type")]
+    pub category_type: Option<String>,
     pub icon: Option<String>,
     pub description: Option<String>,
     pub sort_order: Option<i32>,
@@ -155,19 +157,24 @@ pub struct Template {
     pub id: Uuid,
     pub name: String,
     pub code: String,
+    #[sqlx(rename = "type")]
+    pub template_type: Option<String>,
     pub category_id: Option<Uuid>,
-    pub module: String,
+    pub module: Option<String>,
     pub description: Option<String>,
     pub content: String,
     pub variables: Option<serde_json::Value>,
     pub is_active: Option<bool>,
     pub is_system: Option<bool>,
+    pub is_public: Option<bool>,
+    pub ai_enabled: Option<bool>,
+    pub version: Option<i32>,
     pub sort_order: Option<i32>,
     pub view_count: Option<i32>,
     pub use_count: Option<i32>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub created_by: String,
+    pub created_by: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -175,19 +182,23 @@ pub struct TemplateResponse {
     pub id: Uuid,
     pub name: String,
     pub code: String,
+    pub template_type: String,
     pub category_id: Option<Uuid>,
     pub category_name: Option<String>,
-    pub module: String,
+    pub module: Option<String>,
     pub description: Option<String>,
     pub content: String,
-    pub variables: Option<serde_json::Value>,
+    pub variables: Vec<TemplateVariableDef>,
     pub is_active: bool,
     pub is_system: bool,
+    pub is_public: bool,
+    pub ai_enabled: bool,
+    pub version: i32,
     pub view_count: i32,
     pub use_count: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub created_by: String,
+    pub created_by: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -195,10 +206,97 @@ pub struct TemplateCategoryResponse {
     pub id: Uuid,
     pub name: String,
     pub code: String,
+    pub category_type: Option<String>,
     pub icon: Option<String>,
     pub description: Option<String>,
     pub template_count: i64,
     pub is_active: bool,
+}
+
+// ==================== 模板变量模型 ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TemplateVariableDef {
+    pub key: String,
+    pub label: String,
+    #[serde(rename = "type")]
+    pub var_type: String,
+    pub required: Option<bool>,
+    pub default_value: Option<serde_json::Value>,
+    pub options: Option<Vec<SelectOption>>,
+    pub data_source: Option<String>,
+    pub validation_rules: Option<serde_json::Value>,
+    pub placeholder: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct SelectOption {
+    pub value: String,
+    pub label: String,
+    pub disabled: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct TemplateVariable {
+    pub id: Uuid,
+    pub template_id: Uuid,
+    pub key: String,
+    pub label: String,
+    #[sqlx(rename = "type")]
+    pub var_type: String,
+    pub required: Option<bool>,
+    pub default_value: Option<serde_json::Value>,
+    pub options: Option<serde_json::Value>,
+    pub data_source: Option<String>,
+    pub validation_rules: Option<serde_json::Value>,
+    pub placeholder: Option<String>,
+    pub description: Option<String>,
+    pub sort_order: Option<i32>,
+    pub created_at: DateTime<Utc>,
+}
+
+// ==================== 模板实例模型 ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct TemplateInstance {
+    pub id: Uuid,
+    pub template_id: Option<Uuid>,
+    pub instance_type: String,
+    pub instance_id: String,
+    pub variables_values: Option<serde_json::Value>,
+    pub rendered_content: Option<String>,
+    pub created_by: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+// ==================== 模板版本模型 ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct TemplateVersion {
+    pub id: Uuid,
+    pub template_id: Uuid,
+    pub version: i32,
+    pub content: String,
+    pub variables: Option<serde_json::Value>,
+    pub change_summary: Option<String>,
+    pub created_by: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+// ==================== 模板审计日志模型 ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct TemplateAuditLog {
+    pub id: Uuid,
+    pub template_id: Option<Uuid>,
+    pub action: String,
+    pub old_value: Option<serde_json::Value>,
+    pub new_value: Option<serde_json::Value>,
+    pub performed_by: Option<String>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
