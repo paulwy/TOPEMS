@@ -51,7 +51,8 @@ export const useNotificationState = (enabled = true) => {
       if (
         error.code !== "ERR_CANCELED" &&
         error.code !== "ECONNABORTED" &&
-        error.name !== "AbortError"
+        error.name !== "AbortError" &&
+        error.response?.status !== 401
       ) {
         console.error("Failed to fetch unread count:", error);
       }

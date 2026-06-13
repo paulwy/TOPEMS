@@ -156,7 +156,7 @@ async fn main() -> Result<()> {
 
     let port = env::var("SERVER_PORT")
         .or_else(|_| env::var("PORT"))
-        .unwrap_or_else(|_| "8009".to_string());
+        .unwrap_or_else(|_| "8010".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-ERP 企业资源计划系统启动中...");

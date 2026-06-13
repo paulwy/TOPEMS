@@ -234,8 +234,8 @@ mod tests {
             r#"
             INSERT INTO rs.experiments (
                 id, name, code, project_id, experiment_type, phase, status,
-                objective, method, experimenter, started_at, created_by, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+                experimenter, started_at, created_by, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
             RETURNING id
             "#,
         )
@@ -246,8 +246,6 @@ mod tests {
         .bind("活性测试")
         .bind("lab")
         .bind("planned")
-        .bind("测试试验目标")
-        .bind("测试实验方法")
         .bind("测试实验员")
         .bind(chrono::Utc::now())
         .bind("测试实验员")
@@ -277,9 +275,9 @@ mod tests {
         let result = sqlx::query(
             r#"
             INSERT INTO rs.formulas (
-                id, name, code, version, description, status, components,
+                id, name, code, version, category, description, status, ingredients,
                 created_by, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 updated_at = NOW()
@@ -290,6 +288,7 @@ mod tests {
         .bind(format!("测试配方-{}", &formula_id.to_string()[..6]))
         .bind(&formula_code)
         .bind("v1.0")
+        .bind("测试类别")
         .bind("这是一个测试配方")
         .bind("draft")
         .bind(serde_json::json!([]))
@@ -442,8 +441,8 @@ mod tests {
         let result = sqlx::query(
             r#"
             INSERT INTO rs.audit_logs (
-                id, action, entity_type, entity_id, status, created_at
-            ) VALUES ($1, $2, $3, $4, $5, NOW())
+                id, action, entity_type, entity_id, created_at
+            ) VALUES ($1, $2, $3, $4, NOW())
             RETURNING id
             "#,
         )
@@ -451,7 +450,6 @@ mod tests {
         .bind("create")
         .bind("project")
         .bind(Uuid::new_v4())
-        .bind("success")
         .fetch_one(&pool)
         .await;
 
@@ -501,8 +499,8 @@ mod tests {
             r#"
             INSERT INTO rs.experiments (
                 id, name, code, project_id, experiment_type, phase, status,
-                objective, experimenter, started_at, created_by, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+                experimenter, started_at, created_by, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
             "#,
         )
         .bind(experiment_id)
@@ -512,7 +510,6 @@ mod tests {
         .bind("活性测试")
         .bind("lab")
         .bind("completed")
-        .bind("测试目标")
         .bind("测试实验员")
         .bind(chrono::Utc::now())
         .bind("测试实验员")

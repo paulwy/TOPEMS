@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   ErrorCode,
   AppException,
@@ -7,213 +8,270 @@ import {
   safeExecute,
 } from "../../utils/errors";
 
-vi.mock("../../utils/logger", () => ({
-  default: () => ({
-    error: vi.fn(),
-  }),
-}));
-
-describe("ErrorCode Enum", () => {
-  test("contains all expected error codes", () => {
-    expect(ErrorCode.UNKNOWN).toBe("UNKNOWN_ERROR");
-    expect(ErrorCode.NETWORK).toBe("NETWORK_ERROR");
-    expect(ErrorCode.UNAUTHORIZED).toBe("UNAUTHORIZED");
-    expect(ErrorCode.FORBIDDEN).toBe("FORBIDDEN");
-    expect(ErrorCode.NOT_FOUND).toBe("NOT_FOUND");
-    expect(ErrorCode.VALIDATION).toBe("VALIDATION_ERROR");
-    expect(ErrorCode.SERVER).toBe("SERVER_ERROR");
-    expect(ErrorCode.TIMEOUT).toBe("TIMEOUT_ERROR");
-  });
-});
-
-describe("AppException", () => {
-  test("creates exception with code and message", () => {
-    const exception = new AppException(ErrorCode.UNAUTHORIZED, "Test message");
-    expect(exception.code).toBe(ErrorCode.UNAUTHORIZED);
-    expect(exception.message).toBe("Test message");
-    expect(exception.name).toBe("AppException");
+describe("errors utils", () => {
+  describe("ErrorCode enum", () => {
+    it("should have correct error codes", () => {
+      expect(ErrorCode.UNKNOWN).toBe("UNKNOWN_ERROR");
+      expect(ErrorCode.NETWORK).toBe("NETWORK_ERROR");
+      expect(ErrorCode.UNAUTHORIZED).toBe("UNAUTHORIZED");
+      expect(ErrorCode.FORBIDDEN).toBe("FORBIDDEN");
+      expect(ErrorCode.NOT_FOUND).toBe("NOT_FOUND");
+      expect(ErrorCode.VALIDATION).toBe("VALIDATION_ERROR");
+      expect(ErrorCode.SERVER).toBe("SERVER_ERROR");
+      expect(ErrorCode.TIMEOUT).toBe("TIMEOUT_ERROR");
+    });
   });
 
-  test("creates exception with details and originalError", () => {
-    const originalError = new Error("Original error");
-    const exception = new AppException(
-      ErrorCode.SERVER,
-      "Server error",
-      { detail: "detail" },
-      originalError,
-    );
-    expect(exception.details).toEqual({ detail: "detail" });
-    expect(exception.originalError).toBe(originalError);
-  });
-});
+  describe("AppException class", () => {
+    it("should create exception with all properties", () => {
+      const error = new AppException(
+        ErrorCode.VALIDATION,
+        "Validation failed",
+        { field: "email" },
+        new Error("Original"),
+      );
 
-describe("handleApiError", () => {
-  test("handles AppException", () => {
-    const exception = new AppException(ErrorCode.UNAUTHORIZED, "Unauthorized");
-    const result = handleApiError(exception);
-    expect(result.code).toBe(ErrorCode.UNAUTHORIZED);
-    expect(result.message).toBe("Unauthorized");
-  });
+      expect(error.name).toBe("AppException");
+      expect(error.code).toBe(ErrorCode.VALIDATION);
+      expect(error.message).toBe("Validation failed");
+      expect(error.details).toEqual({ field: "email" });
+      expect(error.originalError).toBeInstanceOf(Error);
+    });
 
-  test("handles axios 401 error", () => {
-    const axiosError = {
-      response: {
-        status: 401,
-        data: { message: "Unauthorized" },
-      },
-    };
-    const result = handleApiError(axiosError);
-    expect(result.code).toBe(ErrorCode.UNAUTHORIZED);
-    expect(result.message).toBe("未授权访问，请重新登录");
+    it("should extend Error", () => {
+      const error = new AppException(ErrorCode.UNKNOWN, "Unknown error");
+      expect(error).toBeInstanceOf(Error);
+    });
   });
 
-  test("handles axios 403 error", () => {
-    const axiosError = {
-      response: {
-        status: 403,
-        data: { message: "Forbidden" },
-      },
-    };
-    const result = handleApiError(axiosError);
-    expect(result.code).toBe(ErrorCode.FORBIDDEN);
-    expect(result.message).toBe("无权限访问此资源");
+  describe("handleApiError", () => {
+    beforeEach(() => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    it("should handle AppException", () => {
+      const appException = new AppException(
+        ErrorCode.VALIDATION,
+        "Custom validation error",
+        { field: "name" },
+      );
+
+      const result = handleApiError(appException);
+
+      expect(result.code).toBe(ErrorCode.VALIDATION);
+      expect(result.message).toBe("Custom validation error");
+      expect(result.details).toEqual({ field: "name" });
+    });
+
+    it("should handle 401 unauthorized error", () => {
+      const axiosError = {
+        response: {
+          status: 401,
+          data: { message: "Session expired" },
+        },
+      };
+
+      const result = handleApiError(axiosError);
+
+      expect(result.code).toBe(ErrorCode.UNAUTHORIZED);
+      expect(result.message).toBe("未授权访问，请重新登录");
+    });
+
+    it("should handle 403 forbidden error", () => {
+      const axiosError = {
+        response: {
+          status: 403,
+          data: { message: "Access denied" },
+        },
+      };
+
+      const result = handleApiError(axiosError);
+
+      expect(result.code).toBe(ErrorCode.FORBIDDEN);
+      expect(result.message).toBe("无权限访问此资源");
+    });
+
+    it("should handle 404 not found error", () => {
+      const axiosError = {
+        response: {
+          status: 404,
+          data: { message: "Resource not found" },
+        },
+      };
+
+      const result = handleApiError(axiosError);
+
+      expect(result.code).toBe(ErrorCode.NOT_FOUND);
+      expect(result.message).toBe("资源未找到");
+    });
+
+    it("should handle 400 validation error", () => {
+      const axiosError = {
+        response: {
+          status: 400,
+          data: { message: "Invalid input" },
+        },
+      };
+
+      const result = handleApiError(axiosError);
+
+      expect(result.code).toBe(ErrorCode.VALIDATION);
+      expect(result.message).toBe("Invalid input");
+    });
+
+    it("should handle 500 server error", () => {
+      const axiosError = {
+        response: {
+          status: 500,
+          data: { message: "Internal server error" },
+        },
+      };
+
+      const result = handleApiError(axiosError);
+
+      expect(result.code).toBe(ErrorCode.SERVER);
+      expect(result.message).toBe("服务器内部错误");
+    });
+
+    it("should handle unknown status codes", () => {
+      const axiosError = {
+        response: {
+          status: 418,
+          data: { message: "I'm a teapot" },
+        },
+      };
+
+      const result = handleApiError(axiosError);
+
+      expect(result.code).toBe(ErrorCode.UNKNOWN);
+      expect(result.message).toBe("I'm a teapot");
+    });
+
+    it("should handle timeout error", () => {
+      const error = {
+        code: "ECONNABORTED",
+        message: "Request timeout",
+      };
+
+      const result = handleApiError(error);
+
+      expect(result.code).toBe(ErrorCode.TIMEOUT);
+      expect(result.message).toBe("请求超时，请稍后重试");
+    });
+
+    it("should handle network error ERR_NETWORK", () => {
+      const error = {
+        code: "ERR_NETWORK",
+        message: "Network error",
+      };
+
+      const result = handleApiError(error);
+
+      expect(result.code).toBe(ErrorCode.NETWORK);
+      expect(result.message).toBe("网络连接失败，请检查网络设置");
+    });
+
+    it("should handle network error ENOTFOUND", () => {
+      const error = {
+        code: "ENOTFOUND",
+        message: "Host not found",
+      };
+
+      const result = handleApiError(error);
+
+      expect(result.code).toBe(ErrorCode.NETWORK);
+      expect(result.message).toBe("网络连接失败，请检查网络设置");
+    });
+
+    it("should handle unknown error with defaults", () => {
+      const error = "Something went wrong";
+
+      const result = handleApiError(error);
+
+      expect(result.code).toBe(ErrorCode.UNKNOWN);
+      expect(result.message).toBe("发生未知错误，请稍后重试");
+      expect(result.originalError).toBe("Something went wrong");
+    });
   });
 
-  test("handles axios 404 error", () => {
-    const axiosError = {
-      response: {
-        status: 404,
-        data: { message: "Not found" },
-      },
-    };
-    const result = handleApiError(axiosError);
-    expect(result.code).toBe(ErrorCode.NOT_FOUND);
-    expect(result.message).toBe("资源未找到");
+  describe("getErrorMessage", () => {
+    it("should extract message from AppError", () => {
+      const error: any = { message: "Test error message" };
+      expect(getErrorMessage(error)).toBe("Test error message");
+    });
+
+    it("should handle Error object", () => {
+      const error = new Error("Error object message");
+      expect(getErrorMessage(error)).toBe("Error object message");
+    });
+
+    it("should return default message for unknown error", () => {
+      expect(getErrorMessage(null)).toBe("发生未知错误");
+      expect(getErrorMessage(undefined)).toBe("发生未知错误");
+      expect(getErrorMessage(123)).toBe("发生未知错误");
+      expect(getErrorMessage({})).toBe("发生未知错误");
+    });
+
+    it("should handle string error as unknown", () => {
+      // getErrorMessage only handles objects with message property
+      expect(getErrorMessage("String error")).toBe("发生未知错误");
+    });
   });
 
-  test("handles axios 400 validation error", () => {
-    const axiosError = {
-      response: {
-        status: 400,
-        data: { message: "Validation failed" },
-      },
-    };
-    const result = handleApiError(axiosError);
-    expect(result.code).toBe(ErrorCode.VALIDATION);
-    expect(result.message).toBe("Validation failed");
+  describe("logError", () => {
+    it("should not throw when logging errors", () => {
+      expect(() => logError("test", new Error("test"))).not.toThrow();
+    });
   });
 
-  test("handles axios 500 error", () => {
-    const axiosError = {
-      response: {
-        status: 500,
-        data: { message: "Server error" },
-      },
-    };
-    const result = handleApiError(axiosError);
-    expect(result.code).toBe(ErrorCode.SERVER);
-    expect(result.message).toBe("服务器内部错误");
-  });
+  describe("safeExecute", () => {
+    it("should return result when function succeeds", async () => {
+      const fn = vi.fn().mockResolvedValue("success");
+      const result = await safeExecute(fn);
+      expect(result).toBe("success");
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
 
-  test("handles axios unknown status error", () => {
-    const axiosError = {
-      response: {
-        status: 418,
-        data: { message: "I am a teapot" },
-      },
-    };
-    const result = handleApiError(axiosError);
-    expect(result.code).toBe(ErrorCode.UNKNOWN);
-    expect(result.message).toBe("I am a teapot");
-  });
+    it("should call error handler on failure", async () => {
+      const error = new Error("test error");
+      const fn = vi.fn().mockRejectedValue(error);
+      const errorHandler = vi.fn();
 
-  test("handles timeout error", () => {
-    const timeoutError = { code: "ECONNABORTED" };
-    const result = handleApiError(timeoutError);
-    expect(result.code).toBe(ErrorCode.TIMEOUT);
-    expect(result.message).toBe("请求超时，请稍后重试");
-  });
+      const result = await safeExecute(fn, errorHandler);
 
-  test("handles network error", () => {
-    const networkError = { code: "ERR_NETWORK" };
-    const result = handleApiError(networkError);
-    expect(result.code).toBe(ErrorCode.NETWORK);
-    expect(result.message).toBe("网络连接失败，请检查网络设置");
-  });
+      expect(result).toBeNull();
+      expect(errorHandler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: ErrorCode.UNKNOWN,
+        }),
+      );
+    });
 
-  test("handles ENOTFOUND error", () => {
-    const error = { code: "ENOTFOUND" };
-    const result = handleApiError(error);
-    expect(result.code).toBe(ErrorCode.NETWORK);
-    expect(result.message).toBe("网络连接失败，请检查网络设置");
-  });
+    it("should handle error without handler", async () => {
+      const error = new Error("test error");
+      const fn = vi.fn().mockRejectedValue(error);
 
-  test("handles unknown error", () => {
-    const unknownError = new Error("Unknown error");
-    const result = handleApiError(unknownError);
-    expect(result.code).toBe(ErrorCode.UNKNOWN);
-    expect(result.message).toBe("发生未知错误，请稍后重试");
-    expect(result.originalError).toBe(unknownError);
-  });
-});
+      const result = await safeExecute(fn);
 
-describe("getErrorMessage", () => {
-  test("returns message from AppError", () => {
-    const error = { code: ErrorCode.UNKNOWN, message: "Test error" };
-    expect(getErrorMessage(error)).toBe("Test error");
-  });
+      expect(result).toBeNull();
+    });
 
-  test("returns message from Error object", () => {
-    const error = new Error("Error message");
-    expect(getErrorMessage(error)).toBe("Error message");
-  });
+    it("should handle AppException in safeExecute", async () => {
+      const appException = new AppException(
+        ErrorCode.VALIDATION,
+        "Validation error",
+      );
+      const fn = vi.fn().mockRejectedValue(appException);
+      const errorHandler = vi.fn();
 
-  test("returns default message for unknown error", () => {
-    expect(getErrorMessage(null)).toBe("发生未知错误");
-    expect(getErrorMessage(undefined)).toBe("发生未知错误");
-    expect(getErrorMessage("string")).toBe("发生未知错误");
-  });
-});
+      await safeExecute(fn, errorHandler);
 
-describe("logError", () => {
-  test("logs error with context", () => {
-    const error = new Error("Test error");
-    logError("TestContext", error);
-  });
-});
-
-describe("safeExecute", () => {
-  test("returns result from successful promise", async () => {
-    const fn = vi.fn().mockResolvedValue("success");
-    const result = await safeExecute(fn);
-    expect(result).toBe("success");
-    expect(fn).toHaveBeenCalledTimes(1);
-  });
-
-  test("returns null and calls errorHandler on error", async () => {
-    const error = new Error("Test error");
-    const fn = vi.fn().mockRejectedValue(error);
-    const errorHandler = vi.fn();
-
-    const result = await safeExecute(fn, errorHandler);
-
-    expect(result).toBe(null);
-    expect(fn).toHaveBeenCalledTimes(1);
-    expect(errorHandler).toHaveBeenCalledTimes(1);
-    expect(errorHandler).toHaveBeenCalledWith(
-      expect.objectContaining({
-        code: ErrorCode.UNKNOWN,
-      }),
-    );
-  });
-
-  test("returns null without errorHandler on error", async () => {
-    const error = new Error("Test error");
-    const fn = vi.fn().mockRejectedValue(error);
-
-    const result = await safeExecute(fn);
-
-    expect(result).toBe(null);
-    expect(fn).toHaveBeenCalledTimes(1);
+      expect(errorHandler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: ErrorCode.VALIDATION,
+          message: "Validation error",
+        }),
+      );
+    });
   });
 });

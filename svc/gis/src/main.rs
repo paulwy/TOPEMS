@@ -35,6 +35,7 @@ use topems_shared::{
 
 mod api;
 mod db;
+mod middleware;
 mod models;
 mod services;
 use db::schema::init_tables;

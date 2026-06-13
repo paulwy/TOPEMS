@@ -362,9 +362,9 @@ async fn main() -> anyhow::Result<()> {
 
     let _host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8006".to_string())
+        .unwrap_or_else(|_| "8004".to_string())
         .parse()
-        .unwrap_or(8006);
+        .unwrap_or(8004);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(tokio::time::Duration::from_mins(5));

@@ -120,20 +120,20 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let order_id = Uuid::new_v4();
-        let order_no = format!("PO-{}", &order_id.to_string()[..10]);
+        let order_number = format!("PO-{}", &order_id.to_string()[..10]);
 
         let result = sqlx::query(
             r#"
-            INSERT INTO mes.production_orders (id, order_no, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
+            INSERT INTO mes.production_orders (id, order_number, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
-                order_no = EXCLUDED.order_no,
+                order_number = EXCLUDED.order_number,
                 updated_at = NOW()
             RETURNING id
             "#,
         )
         .bind(order_id)
-        .bind(&order_no)
+        .bind(&order_number)
         .bind(format!("测试产品-{}", &order_id.to_string()[..8]))
         .bind(100)
         .bind("planned")
@@ -142,7 +142,7 @@ mod tests {
         .fetch_one(&pool)
         .await;
 
-        assert!(result.is_ok(), "生产订单创建应该成功");
+        assert!(result.is_ok(), "生产订单创建应该成功: {:?}", result.err());
     }
 
     #[tokio::test]
@@ -151,7 +151,12 @@ mod tests {
 
         let result = sqlx::query_as::<_, ProductionOrderRow>(
             r#"
-            SELECT id, order_no, product_name, quantity, status, planned_start_date, planned_end_date, actual_start_date, actual_end_date, created_at, updated_at
+            SELECT id, order_number, product_name, quantity, status,
+                   planned_start_date::timestamp with time zone as planned_start_date,
+                   planned_end_date::timestamp with time zone as planned_end_date,
+                   actual_start_date::timestamp with time zone as actual_start_date,
+                   actual_end_date::timestamp with time zone as actual_end_date,
+                   created_at, updated_at
             FROM mes.production_orders
             ORDER BY created_at DESC
             LIMIT 10
@@ -176,16 +181,16 @@ mod tests {
 
         // 创建一个新的生产订单
         let order_id = Uuid::new_v4();
-        let order_no = format!("PO-TEST-{}", &order_id.to_string()[..8]);
+        let order_number = format!("PO-TEST-{}", &order_id.to_string()[..8]);
 
         sqlx::query(
             r#"
-            INSERT INTO mes.production_orders (id, order_no, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
+            INSERT INTO mes.production_orders (id, order_number, product_name, quantity, status, planned_start_date, planned_end_date, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id)
-        .bind(&order_no)
+        .bind(&order_number)
         .bind("测试产品")
         .bind(100)
         .bind("planned")
@@ -241,10 +246,10 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO mes.work_stations (id, code, name, location, status, capacity, current_load, created_at, updated_at)
+            INSERT INTO mes.work_stations (id, station_code, station_name, location, status, capacity, current_load, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
-                name = EXCLUDED.name,
+                station_name = EXCLUDED.station_name,
                 updated_at = NOW()
             RETURNING id
             "#,
@@ -259,7 +264,7 @@ mod tests {
         .fetch_one(&pool)
         .await;
 
-        assert!(result.is_ok(), "工位创建应该成功");
+        assert!(result.is_ok(), "工位创建应该成功: {:?}", result.err());
     }
 
     #[tokio::test]
@@ -288,7 +293,7 @@ mod tests {
 #[derive(Debug, sqlx::FromRow)]
 struct ProductionOrderRow {
     id: Uuid,
-    order_no: String,
+    order_number: String,
     product_name: String,
     quantity: i32,
     status: String,

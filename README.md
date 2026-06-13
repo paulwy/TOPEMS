@@ -328,7 +328,7 @@ TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
 
 ```bash
 # 运行数据库初始化脚本
-./scripts/init-database.sh
+bash scripts/setup-db.sh
 ```
 
 该脚本会：
@@ -428,17 +428,14 @@ TOPEMS 提供统一的服务管理脚本 `scripts/topems.sh`，简化服务管�
 | `run_ci_tests.sh` | CI/CD 测试脚本 |
 | `build-all-services.sh` | 构建所有服务镜像 |
 | `clean-warnings.sh` | 批量清理代码警告 |
-| `check-all-rust-services.sh` | 检查所有 Rust 服务编译状态 |
+| `test-all-rust-services.sh` | 检查所有 Rust 服务编译状态 |
 | `stop-all.sh` | 停止所有服务 |
 | `cleanup.sh` | 清理环境（端口、进程、缓存） |
-| `init-database.sh` | 数据库初始化脚本 |
+| `setup-db.sh` | 数据库设置脚本 |
 | `init-db-unified.sh` | 统一数据库初始化（自动检测环境） |
-| `init-db-local.sh` | 本地数据库初始化 |
 | `init-vector-index.sh` | Redis 向量索引初始化 |
 | `install-pgvector.sh` | 安装配置 pgvector |
-| `rebuild-postgres.sh` | 重建支持 pgvector 的 PostgreSQL |
 | `deploy.sh` | 离线部署脚本 |
-| `download-images.sh` | 下载 Docker 镜像 |
 | `monitor.sh` | 启动监控服务 |
 | `encrypt-env.sh` | 加密环境变量文件 |
 | `test-hrm-api.sh` | HRM API 端到端测试 |

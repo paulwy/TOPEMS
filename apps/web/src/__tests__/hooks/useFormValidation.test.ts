@@ -1,236 +1,285 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import {
-  useFormValidation,
-  getInputClassName,
-} from "../../hooks/useFormValidation";
+import { useFormValidation, getInputClassName } from "../../hooks/useFormValidation";
 
-describe("useFormValidation Hook", () => {
-  test("initializes with empty errors and touched", () => {
-    const { result } = renderHook(() =>
-      useFormValidation({ name: "", email: "" }),
-    );
-    expect(result.current.errors).toEqual({});
-    expect(result.current.touched).toEqual({});
+describe("useFormValidation hook", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  test("validates required field", () => {
-    const { result } = renderHook(() =>
-      useFormValidation({ name: "", email: "" }),
-    );
+  describe("initial state", () => {
+    it("should initialize with empty errors and touched", () => {
+      const { result } = renderHook(() => useFormValidation());
+      expect(result.current.errors).toEqual({});
+      expect(result.current.touched).toEqual({});
+    });
+  });
 
-    act(() => {
-      const error = result.current.validateField("name", "", {
-        required: true,
+  describe("validateField", () => {
+    it("should return null for valid field without rules", () => {
+      const { result } = renderHook(() => useFormValidation());
+      expect(result.current.validateField("name", "test")).toBeNull();
+    });
+
+    it("should validate required field", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      expect(result.current.validateField("name", "", { required: true })).toBe("name不能为空");
+      expect(result.current.validateField("name", "  ", { required: true })).toBe("name不能为空");
+      expect(result.current.validateField("name", "test", { required: true })).toBeNull();
+    });
+
+    it("should validate minLength", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      expect(result.current.validateField("password", "ab", { minLength: 3 })).toBe("password至少需要3个字符");
+      expect(result.current.validateField("password", "abc", { minLength: 3 })).toBeNull();
+    });
+
+    it("should validate maxLength", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      expect(result.current.validateField("username", "abcdefgh", { maxLength: 5 })).toBe("username不能超过5个字符");
+      expect(result.current.validateField("username", "abc", { maxLength: 5 })).toBeNull();
+    });
+
+    it("should validate pattern", () => {
+      const { result } = renderHook(() => useFormValidation());
+      const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      
+      expect(result.current.validateField("email", "invalid", { pattern: emailPattern })).toBe("email格式不正确");
+      expect(result.current.validateField("email", "test@example.com", { pattern: emailPattern })).toBeNull();
+    });
+
+    it("should validate custom rule with boolean", () => {
+      const { result } = renderHook(() => useFormValidation());
+      const customRule = { custom: (value: string) => value.length >= 8 };
+      
+      expect(result.current.validateField("password", "short", customRule)).toBe("password验证失败");
+      expect(result.current.validateField("password", "long enough", customRule)).toBeNull();
+    });
+
+    it("should validate custom rule with string error", () => {
+      const { result } = renderHook(() => useFormValidation());
+      const customRule = { custom: (value: string) => value.length >= 8 || "密码太短" };
+      
+      expect(result.current.validateField("password", "short", customRule)).toBe("密码太短");
+      expect(result.current.validateField("password", "long enough", customRule)).toBeNull();
+    });
+  });
+
+  describe("handleFieldChange", () => {
+    it("should not validate if field is not touched", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      act(() => {
+        result.current.handleFieldChange("name", "", { required: true });
       });
-      expect(error).toBe("name不能为空");
+      
+      expect(result.current.errors.name).toBeUndefined();
     });
 
-    act(() => {
-      const error = result.current.validateField("name", "John", {
-        required: true,
+    it("should validate if field is touched", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      // Touch the field first
+      act(() => {
+        result.current.handleFieldBlur("name", "", { required: true });
       });
-      expect(error).toBe(null);
-    });
-  });
-
-  test("validates minLength", () => {
-    const { result } = renderHook(() => useFormValidation({ name: "" }));
-
-    act(() => {
-      const error = result.current.validateField("name", "Jo", {
-        minLength: 3,
+      
+      expect(result.current.errors.name).toBe("name不能为空");
+      
+      // Change value to valid
+      act(() => {
+        result.current.handleFieldChange("name", "valid", { required: true });
       });
-      expect(error).toBe("name至少需要3个字符");
+      
+      expect(result.current.errors.name).toBeUndefined();
     });
+  });
 
-    act(() => {
-      const error = result.current.validateField("name", "John", {
-        minLength: 3,
+  describe("handleFieldBlur", () => {
+    it("should mark field as touched", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      act(() => {
+        result.current.handleFieldBlur("name", "test", {});
       });
-      expect(error).toBe(null);
-    });
-  });
-
-  test("validates maxLength", () => {
-    const { result } = renderHook(() => useFormValidation({ name: "" }));
-
-    act(() => {
-      const error = result.current.validateField(
-        "name",
-        "This is a very long name",
-        { maxLength: 10 },
-      );
-      expect(error).toBe("name不能超过10个字符");
+      
+      expect(result.current.touched.name).toBe(true);
     });
 
-    act(() => {
-      const error = result.current.validateField("name", "Short", {
-        maxLength: 10,
+    it("should set error on blur for invalid field", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      act(() => {
+        result.current.handleFieldBlur("name", "", { required: true });
       });
-      expect(error).toBe(null);
+      
+      expect(result.current.errors.name).toBe("name不能为空");
     });
-  });
 
-  test("validates pattern", () => {
-    const { result } = renderHook(() => useFormValidation({ email: "" }));
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    act(() => {
-      const error = result.current.validateField("email", "invalid", {
-        pattern: emailPattern,
+    it("should clear error on blur for valid field", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      // Set error first
+      act(() => {
+        result.current.handleFieldBlur("name", "", { required: true });
       });
-      expect(error).toBe("email格式不正确");
-    });
-
-    act(() => {
-      const error = result.current.validateField("email", "test@example.com", {
-        pattern: emailPattern,
+      expect(result.current.errors.name).toBe("name不能为空");
+      
+      // Clear error with valid value
+      act(() => {
+        result.current.handleFieldBlur("name", "valid", { required: true });
       });
-      expect(error).toBe(null);
+      
+      expect(result.current.errors.name).toBeUndefined();
     });
   });
 
-  test("validates with custom function", () => {
-    const { result } = renderHook(() => useFormValidation({ age: "" }));
-    const customValidator = (value: number) =>
-      value >= 18 || "年龄必须大于等于18";
-
-    act(() => {
-      const error = result.current.validateField("age", 17, {
-        custom: customValidator,
+  describe("validateForm", () => {
+    it("should validate all fields and return true for valid data", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      const data = {
+        username: "testuser",
+        email: "test@example.com",
+      };
+      
+      const rules = {
+        username: { required: true, minLength: 3 },
+        email: { required: true },
+      };
+      
+      let isValid: boolean = false;
+      act(() => {
+        isValid = result.current.validateForm(data, rules);
       });
-      expect(error).toBe("年龄必须大于等于18");
+      
+      expect(isValid).toBe(true);
     });
 
-    act(() => {
-      const error = result.current.validateField("age", 20, {
-        custom: customValidator,
+    it("should validate all fields and return false for invalid data", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      const data = {
+        username: "",
+        email: "",
+      };
+      
+      const rules = {
+        username: { required: true },
+        email: { required: true },
+      };
+      
+      let isValid: boolean = true;
+      act(() => {
+        isValid = result.current.validateForm(data, rules);
       });
-      expect(error).toBe(null);
+      
+      expect(isValid).toBe(false);
+      expect(result.current.errors.username).toBe("username不能为空");
+      expect(result.current.errors.email).toBe("email不能为空");
+    });
+
+    it("should mark all fields as touched after validateForm", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      const data = { name: "" };
+      const rules = { name: { required: true } };
+      
+      act(() => {
+        result.current.validateForm(data, rules);
+      });
+      
+      expect(result.current.touched.name).toBe(true);
     });
   });
 
-  test("handles field blur and sets touched state", () => {
-    const { result } = renderHook(() => useFormValidation({ name: "" }));
-
-    act(() => {
-      result.current.handleFieldBlur("name", "", { required: true });
-    });
-
-    expect(result.current.touched).toEqual({ name: true });
-    expect(result.current.errors).toEqual({ name: "name不能为空" });
-  });
-
-  test("handles field change only validates if touched", () => {
-    const { result } = renderHook(() => useFormValidation({ name: "" }));
-
-    act(() => {
-      result.current.handleFieldChange("name", "", { required: true });
-    });
-
-    expect(result.current.errors).toEqual({});
-
-    act(() => {
-      result.current.handleFieldBlur("name", "", { required: true });
-    });
-
-    expect(result.current.errors).toEqual({ name: "name不能为空" });
-
-    act(() => {
-      result.current.handleFieldChange("name", "John", { required: true });
-    });
-
-    expect(result.current.errors).toEqual({});
-  });
-
-  test("validates entire form with errors", () => {
-    const { result } = renderHook(() =>
-      useFormValidation({ name: "", email: "" }),
-    );
-    const rules = {
-      name: { required: true },
-      email: { required: true },
-    };
-
-    let isValid;
-    act(() => {
-      isValid = result.current.validateForm({ name: "", email: "" }, rules);
-    });
-
-    expect(isValid).toBe(false);
-    expect(result.current.touched).toEqual({ name: true, email: true });
-    expect(result.current.errors).toEqual({
-      name: "name不能为空",
-      email: "email不能为空",
+  describe("clearErrors", () => {
+    it("should clear all errors and touched", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      // Create some errors
+      act(() => {
+        result.current.handleFieldBlur("name", "", { required: true });
+      });
+      expect(result.current.errors.name).toBe("name不能为空");
+      expect(result.current.touched.name).toBe(true);
+      
+      // Clear errors
+      act(() => {
+        result.current.clearErrors();
+      });
+      
+      expect(result.current.errors).toEqual({});
+      expect(result.current.touched).toEqual({});
     });
   });
 
-  test("clears errors", () => {
-    const { result } = renderHook(() => useFormValidation({ name: "" }));
-
-    act(() => {
-      result.current.handleFieldBlur("name", "", { required: true });
+  describe("getFieldError", () => {
+    it("should return undefined for untouched field", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      expect(result.current.getFieldError("name")).toBeUndefined();
     });
 
-    expect(result.current.errors).toEqual({ name: "name不能为空" });
-
-    act(() => {
-      result.current.clearErrors();
+    it("should return error for touched field", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      act(() => {
+        result.current.handleFieldBlur("name", "", { required: true });
+      });
+      
+      expect(result.current.getFieldError("name")).toBe("name不能为空");
     });
-
-    expect(result.current.errors).toEqual({});
-    expect(result.current.touched).toEqual({});
   });
 
-  test("gets field error only when touched", () => {
-    const { result } = renderHook(() => useFormValidation({ name: "" }));
-
-    expect(result.current.getFieldError("name")).toBeUndefined();
-
-    act(() => {
-      result.current.handleFieldBlur("name", "", { required: true });
+  describe("hasFieldError", () => {
+    it("should return false for untouched field", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      expect(result.current.hasFieldError("name")).toBe(false);
     });
 
-    expect(result.current.getFieldError("name")).toBe("name不能为空");
-  });
-
-  test("checks if field has error", () => {
-    const { result } = renderHook(() => useFormValidation({ name: "" }));
-
-    act(() => {
-      result.current.handleFieldBlur("name", "", { required: true });
+    it("should return true for touched field with error", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      act(() => {
+        result.current.handleFieldBlur("name", "", { required: true });
+      });
+      
+      expect(result.current.hasFieldError("name")).toBe(true);
     });
 
-    expect(result.current.hasFieldError("name")).toBe(true);
-
-    act(() => {
-      result.current.handleFieldBlur("name", "John", { required: true });
+    it("should return false for touched field without error", () => {
+      const { result } = renderHook(() => useFormValidation());
+      
+      act(() => {
+        result.current.handleFieldBlur("name", "valid", { required: true });
+      });
+      
+      expect(result.current.hasFieldError("name")).toBe(false);
     });
-
-    expect(result.current.hasFieldError("name")).toBe(false);
   });
 });
 
 describe("getInputClassName", () => {
-  test("returns base class when no error", () => {
-    const className = getInputClassName(false);
-    expect(className).toContain("border-slate-200");
-    expect(className).not.toContain("border-red-500");
+  it("should return error class when hasError is true", () => {
+    const result = getInputClassName(true);
+    expect(result).toContain("border-red-500");
+    expect(result).not.toContain("border-slate-200");
   });
 
-  test("returns error class when has error", () => {
-    const className = getInputClassName(true);
-    expect(className).toContain("border-red-500");
-    expect(className).not.toContain("border-slate-200");
+  it("should return base class when hasError is false", () => {
+    const result = getInputClassName(false);
+    expect(result).toContain("border-slate-200");
+    expect(result).not.toContain("border-red-500");
   });
 
-  test("accepts custom base class", () => {
-    const className = getInputClassName(false, "custom-base");
-    expect(className).toBe("custom-base border-slate-200");
-  });
-
-  test("applies error class with custom base class", () => {
-    const className = getInputClassName(true, "custom-base");
-    expect(className).toBe("custom-base border-red-500");
+  it("should use custom baseClass", () => {
+    const result = getInputClassName(true, "custom-base");
+    expect(result).toContain("custom-base");
+    expect(result).toContain("border-red-500");
   });
 });

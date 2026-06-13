@@ -161,6 +161,17 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
         timestamp: new Date().toISOString(),
       };
     }
+    // 401 errors are handled by the API client interceptor, suppress them here
+    if (error.response?.status === 401) {
+      console.debug("Notification count request returned 401, skipping");
+      return {
+        code: 0,
+        success: true,
+        data: 0,
+        message: "Unauthorized",
+        timestamp: new Date().toISOString(),
+      };
+    }
     console.error("Failed to fetch unread count:", error);
     throw error;
   }

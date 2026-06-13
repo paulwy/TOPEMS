@@ -398,6 +398,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     });
   }, []);
 
+  // Listen for unauthorized events from API client to sync React state with localStorage
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+    };
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => {
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+    };
+  }, [logout]);
+
   const hasPermission = useCallback((permission: string) => {
     const { permissions, user } = stateRef.current;
     if (user?.is_superuser) return true;

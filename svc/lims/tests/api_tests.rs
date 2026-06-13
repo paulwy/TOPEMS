@@ -10,6 +10,7 @@ mod tests {
 
         let login_response = client
             .post("http://localhost:8000/api/v1/auth/login")
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -18,11 +19,18 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
+        // 检查响应状态
+        let status = login_response.status();
+        if !status.is_success() {
+            panic!("Login failed with status: {}", status);
+        }
+
+        let json_response = login_response.json::<serde_json::Value>().await
+            .expect("Failed to parse login response");
 
         let token = json_response["data"]["access_token"]
             .as_str()
-            .unwrap()
+            .expect("No access_token in response")
             .to_string();
 
         println!("1. Testing create sample...");
@@ -431,7 +439,7 @@ id,name,description,status,project_id,received_date,created_at,updated_at
     }
 
     #[tokio::test]
-    #[ignore = "Requires running services"]
+    #[ignore = "Requires correct API endpoints implementation"]
     async fn test_lims_integration() {
         test_sample_crud().await;
         test_sample_batch_operations().await;

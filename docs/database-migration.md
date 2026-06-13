@@ -50,15 +50,13 @@ YYYYMMDDHHMMSS_<description>.sql
 
 ## 运行迁移
 
-### 方式一：使用Docker Compose（推荐）
+### 方式一：使用 init-db-unified.sh（推荐）
 
 ```bash
-cd docker
-docker-compose up -d postgres
-docker-compose exec postgres psql -U topems -d topems -f /docker-entrypoint-initdb.d/init-database.sh
+bash scripts/init-db-unified.sh
 ```
 
-### 方式二：使用psql命令行
+### 方式二：使用 psql 命令行
 
 ```bash
 # 设置环境变量
@@ -149,6 +147,31 @@ sqlx migrate run
 - **BI**: `001_init.sql`
 - **DOC**: `20260523000001_create_doc_schema.sql`, `20260527000001_create_templates_and_help_center_schema.sql`, `20260605000001_create_archive_schema.sql`
 - **ERP**: `20260601000001_project_contracts.sql`, `20260601000002_project_budgets.sql`, `20260601000003_payment_schedules.sql`, `20260608100000_create_erp_schema.sql`
+
+## 迁移方式
+
+TOPEMS 支持两种数据库迁移方式：
+
+### 方式一：SQL 文件迁移
+
+传统的 SQL 迁移脚本，位于各服务的 `migrations` 目录下。
+
+适用服务：`iam`, `pm`, `portal`, `integration`, `erp`, `hrm`, `crm`, `rs`, `lims`, `mes`, `qms`, `ehs`, `scm`, `srm`, `wms`, `file`, `mail`, `im`, `gis`, `bi`, `report`, `ai`
+
+### 方式二：Rust 原生迁移
+
+部分服务使用 Rust 代码在启动时自动创建表结构，无需手动执行 SQL 文件。
+
+适用服务：`notification`, `doc`, `flow`, `pdm`, `mobile`
+
+这些服务的数据库表会在服务首次启动时自动创建，具体逻辑位于各服务的 `init_database()` 或 `init_database_tables()` 函数中。
+
+### 自动迁移检查
+
+启动脚本 `topems-standalone.sh` 会在服务启动前自动检查数据库迁移状态：
+- 对于 SQL 文件迁移的服务，检查是否有未运行的迁移文件
+- 对于 Rust 原生迁移的服务，通过启动服务自动完成表创建
+- 迁移进度可通过 `status` 命令查看
 
 ## 回滚迁移
 

@@ -132,7 +132,7 @@ mod tests {
 
         let result = sqlx::query_as::<_, QualityInspectionRow>(
             r#"
-            SELECT id, title, description, inspection_type, standard_id, inspector, status, result, findings, inspected_at, created_at, updated_at
+            SELECT id, title, description, inspection_type, standard_id, inspector, status, result, findings, actual_date as inspected_at, created_at, updated_at
             FROM qms.quality_inspections
             ORDER BY created_at DESC
             LIMIT 10

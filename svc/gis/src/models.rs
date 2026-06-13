@@ -21,6 +21,7 @@ pub struct FactoryMap {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DeviceLocation {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub device_name: String,
     pub device_code: String,
@@ -36,6 +37,7 @@ pub struct DeviceLocation {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Pipeline {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub name: String,
     pub code: String,
@@ -50,6 +52,7 @@ pub struct Pipeline {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct WarehouseLocation {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub warehouse_name: String,
     pub zone: Option<String>,
@@ -64,6 +67,7 @@ pub struct WarehouseLocation {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct LocationPhoto {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub position: serde_json::Value,
     pub photo_url: String,
@@ -88,23 +92,11 @@ pub struct StorageLocation {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EvidenceRecord {
-    pub id: Uuid,
-    pub title: String,
-    pub evidence_type: String,
-    pub position: serde_json::Value,
-    pub file_url: Option<String>,
-    pub description: Option<String>,
-    pub recorded_by: String,
-    pub recorded_at: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
-}
-
 /// 业务位置 - 支持更广泛的业务范围
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct BusinessLocation {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub business_type: String,
     pub business_name: String,
     pub business_code: Option<String>,
@@ -128,6 +120,7 @@ pub struct BusinessLocation {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct MapMarker {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub marker_type: String,
     pub name: String,
     pub marker_style: Option<String>,
@@ -150,6 +143,7 @@ pub struct MapMarker {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Map {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub name: String,
     pub code: String,
     pub description: Option<String>,
@@ -168,6 +162,7 @@ pub struct Map {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct MapLayer {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub name: String,
     pub layer_type: String,
@@ -189,6 +184,7 @@ pub struct MapLayer {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct GeoData {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub name: String,
     pub data_type: String,
     pub format: String,
@@ -208,6 +204,7 @@ pub struct GeoData {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct GeoFeature {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub geodata_id: Uuid,
     pub feature_type: String,
     pub geometry: serde_json::Value,
@@ -223,6 +220,7 @@ pub struct GeoFeature {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct SpatialAnalysis {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub analysis_type: String,
     pub input_data: serde_json::Value,
     pub parameters: Option<serde_json::Value>,
@@ -239,6 +237,7 @@ pub struct SpatialAnalysis {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Location {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub name: String,
     pub code: Option<String>,
     pub location_type: String,
@@ -255,6 +254,7 @@ pub struct Location {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Device {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub device_code: String,
     pub device_name: String,
     pub device_type: String,
@@ -270,6 +270,7 @@ pub struct Device {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DeviceLocationRecord {
     pub id: Uuid,
+    pub organization_id: Uuid,
     pub device_id: Uuid,
     pub position: serde_json::Value,
     pub accuracy: Option<f64>,
@@ -294,4 +295,84 @@ pub struct AuditLog {
     pub user_id: Option<Uuid>,
     pub ip_address: Option<String>,
     pub created_at: DateTime<Utc>,
+}
+
+// ==================== 多租户模型 (按设计规范新增) ====================
+
+/// 取证记录 - 支持照片/录音/录像取证
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct EvidenceRecord {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub title: String,
+    pub evidence_type: String, // 'photo', 'audio', 'video'
+    pub position: serde_json::Value,
+    pub file_url: Option<String>,
+    pub thumbnail_url: Option<String>,
+    pub duration: Option<i32>,        // 音视频时长，秒
+    pub file_size: Option<i64>,      // 字节
+    pub file_hash: Option<String>,    // SHA256校验
+    pub recorded_by: Uuid,
+    pub recorded_at: DateTime<Utc>,
+    pub tags: Option<Vec<String>>,
+    pub description: Option<String>,
+    pub metadata: Option<serde_json::Value>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// 轨迹记录 - 存储设备/人员轨迹
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct TrackRecord {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub device_id: Uuid,
+    pub device_name: String,
+    pub start_time: DateTime<Utc>,
+    pub end_time: DateTime<Utc>,
+    pub total_distance: f64, // 米
+    pub created_at: DateTime<Utc>,
+}
+
+/// 轨迹位置点 - 存储轨迹的每个点
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct TrackPosition {
+    pub id: Uuid,
+    pub track_id: Uuid,
+    pub position: serde_json::Value, // [lng, lat] 或 {"lat": f64, "lng": f64}
+    pub altitude: Option<f64>,
+    pub speed: Option<f64>,         // m/s
+    pub heading: Option<f64>,        // 度
+    pub accuracy: Option<f64>,     // 米
+    pub battery_level: Option<i32>,   // 百分比
+    pub timestamp: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// 轨迹统计
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrackStatistics {
+    pub total_distance: f64,  // 米
+    pub avg_speed: f64,        // km/h
+    pub max_speed: f64,       // km/h
+    pub min_speed: f64,       // km/h
+    pub total_duration: i64,   // 秒
+    pub point_count: i32,
+    pub start_time: DateTime<Utc>,
+    pub end_time: DateTime<Utc>,
+}
+
+/// 设备点位 (多租户版本)
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct DevicePoint {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub name: String,
+    pub device_type: Option<String>,
+    pub latitude: f64,
+    pub longitude: f64,
+    pub status: String,
+    pub description: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
