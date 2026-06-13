@@ -903,7 +903,7 @@ export function EmployeeSelector({
         {selectedEmployee ? (
           <span className="flex items-center gap-2">
             <Badge variant="secondary">
-              {selectedEmployee.employee_number}
+              {selectedEmployee.employee_no}
             </Badge>
             <span>{selectedEmployee.name}</span>
           </span>
@@ -960,7 +960,7 @@ export function EmployeeSelector({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">
-                        {employee.employee_number}
+                        {employee.employee_no}
                       </Badge>
                       <span className="font-medium">{employee.name}</span>
                     </div>

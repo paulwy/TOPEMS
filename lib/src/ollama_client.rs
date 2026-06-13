@@ -24,8 +24,8 @@ impl Default for OllamaConfig {
     fn default() -> Self {
         Self {
             base_url: "http://localhost:11434".to_string(),
-            model: "qwen2.5:7b-instruct".to_string(),
-            dimension: 3584,
+            model: "nomic-embed-text".to_string(),
+            dimension: 768,
         }
     }
 }

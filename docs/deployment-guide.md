@@ -13,7 +13,7 @@ TOPEMS 支持多种部署方式，适用于不同的环境和需求。
 | CPU | 4 核 | 8 核+ |
 | 内存 | 8 GB | 16 GB+ |
 | 磁盘 | 50 GB | 100 GB+ |
-| 操作系统 | macOS 12+ / Ubuntu 20.04+ | macOS 14+ / Ubuntu 22.04+ |
+| 操作系统 | macOS 12+ / Ubuntu 20.04+ / Windows 10+ / Windows Server 2019+ | macOS 14+ / Ubuntu 22.04+ / Windows 11 / Windows Server 2022+ |
 
 ### 必需软件
 
@@ -87,6 +87,59 @@ docker compose up -d
 # 3. 检查状态
 docker compose ps
 ```
+
+### 方式二（替代）：Windows 部署
+
+适用于 Windows 环境的本地开发。
+
+#### 1. 前置准备
+
+```powershell
+# 启用 PowerShell 脚本执行
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# 安装 PostgreSQL 客户端
+# 下载地址: https://www.postgresql.org/download/windows/
+
+# 安装 Redis 客户端
+# 下载地址: https://github.com/microsoftarchive/redis/releases
+```
+
+**Windows Server 2019 额外步骤：**
+
+```powershell
+# Windows Server 2019 默认不带 curl，需要手动安装
+winget install curl
+```
+
+#### 2. 环境检查
+
+```batch
+cd scripts\windows
+
+# 检查环境是否满足要求
+.\check-env.ps1
+```
+
+#### 3. 启动服务
+
+```batch
+# 启动所有服务
+.\topems-standalone.ps1 start
+
+# 或使用启动器
+topems.bat start
+
+# 查看状态
+.\topems-standalone.ps1 status
+
+# 停止服务
+.\topems-standalone.ps1 stop
+```
+
+#### 4. 详细文档
+
+Windows 部署详细说明请参考：[scripts/windows/README_WINDOWS.md](../../scripts/windows/README_WINDOWS.md)
 
 ### 方式三：生产环境部署
 

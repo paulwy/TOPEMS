@@ -27,7 +27,7 @@ import {
 interface PerformanceReview {
   id: string;
   employee_name: string;
-  employee_number: string;
+  employee_no: string;
   department: string;
   position: string;
   review_period: string;
@@ -225,7 +225,7 @@ const HrmPerformancePage: React.FC = () => {
         return {
           id: review.id,
           employee_name: employee?.name || "未知员工",
-          employee_number: employee?.employee_number || "",
+          employee_no: employee?.employee_no || "",
           department: "",
           position: employee?.position || "",
           review_period: review.review_period,
@@ -461,7 +461,7 @@ const HrmPerformancePage: React.FC = () => {
                               {review.employee_name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {review.employee_number}
+                              {review.employee_no}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">

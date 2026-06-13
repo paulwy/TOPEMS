@@ -23,25 +23,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_devices_table_exists() {
-        let pool = setup_test_pool().await.unwrap();
-
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mobile' AND table_name = 'devices')")
-            .fetch_one(&pool)
-            .await;
-
-        match result {
-            Ok(row) => {
-                let exists: bool = row.get(0);
-                assert!(exists, "设备表应该存在");
-            }
-            Err(e) => {
-                panic!("查询设备表失败: {}", e);
-            }
-        }
-    }
-
-    #[tokio::test]
     async fn test_patrol_records_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -61,61 +42,61 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_tasks_table_exists() {
+    async fn test_mobile_tasks_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mobile' AND table_name = 'tasks')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mobile' AND table_name = 'mobile_tasks')")
             .fetch_one(&pool)
             .await;
 
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
-                assert!(exists, "任务表应该存在");
+                assert!(exists, "移动任务表应该存在");
             }
             Err(e) => {
-                panic!("查询任务表失败: {}", e);
+                panic!("查询移动任务表失败: {}", e);
             }
         }
     }
 
     #[tokio::test]
-    async fn test_create_device() {
+    async fn test_create_patrol_record() {
         let pool = setup_test_pool().await.unwrap();
 
-        let device_id = Uuid::new_v4();
-        let device_name = format!("测试设备-{}", &device_id.to_string()[..8]);
+        let record_id = Uuid::new_v4();
+        let title = format!("测试巡检-{}", &record_id.to_string()[..8]);
 
         let result = sqlx::query(
             r#"
-            INSERT INTO mobile.devices (id, organization_id, device_name, device_type, user_id, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+            INSERT INTO mobile.patrol_records (id, title, location_lat, location_lng, patrol_type, status, checked_by, checked_at, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
-                device_name = EXCLUDED.device_name,
-                updated_at = NOW()
+                title = EXCLUDED.title
             RETURNING id
             "#,
         )
-        .bind(device_id)
-        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
-        .bind(&device_name)
-        .bind("mobile")
+        .bind(record_id)
+        .bind(&title)
+        .bind(31.2304)
+        .bind(121.4737)
+        .bind("routine")
+        .bind("pending")
         .bind("test_user")
-        .bind("active")
         .fetch_one(&pool)
         .await;
 
-        assert!(result.is_ok(), "设备创建应该成功: {:?}", result.err());
+        assert!(result.is_ok(), "巡检记录创建应该成功: {:?}", result.err());
     }
 
     #[tokio::test]
-    async fn test_list_devices() {
+    async fn test_list_patrol_records() {
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
             r#"
-            SELECT id, device_name, device_type, user_id, status, created_at
-            FROM mobile.devices
+            SELECT id, title, patrol_type, status, checked_by, created_at
+            FROM mobile.patrol_records
             ORDER BY created_at DESC
             LIMIT 10
             "#,
@@ -124,11 +105,11 @@ mod tests {
         .await;
 
         match result {
-            Ok(devices) => {
-                assert!(devices.len() <= 10, "返回的设备数量应该不超过10条");
+            Ok(records) => {
+                assert!(records.len() <= 10, "返回的巡检记录数量应该不超过10条");
             }
             Err(e) => {
-                panic!("查询设备列表失败: {}", e);
+                panic!("查询巡检记录列表失败: {}", e);
             }
         }
     }

@@ -29,10 +29,10 @@ impl EmployeeService {
         let employees = sqlx::query_as::<_, Employee>(
             r#"
             SELECT id, company_id, department_id, position_id,
-                   employee_no, name, gender, hire_date, email, phone, status,
+                   employee_number, name, gender, hire_date, email, phone, status,
                    created_at, updated_at
             FROM shared.employees
-            WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_no ILIKE $1)
+            WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
               AND ($2::text IS NULL OR status = $2)
               AND ($3::uuid IS NULL OR department_id = $3)
               AND ($4::uuid IS NULL OR company_id = $4)
@@ -54,7 +54,7 @@ impl EmployeeService {
                 let total = sqlx::query_scalar::<_, i64>(
                     r#"
                     SELECT COUNT(*) FROM shared.employees AS e
-                    WHERE ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_no ILIKE $1)
+                    WHERE ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
                       AND ($2::text IS NULL OR e.status = $2)
                       AND ($3::uuid IS NULL OR e.department_id = $3)
                       AND ($4::uuid IS NULL OR e.company_id = $4)
@@ -89,7 +89,7 @@ impl EmployeeService {
         let result = sqlx::query_as::<_, Employee>(
             r#"
             SELECT id, company_id, department_id, position_id,
-                   employee_no, name, gender, hire_date, email, phone, status,
+                   employee_number, name, gender, hire_date, email, phone, status,
                    created_at, updated_at
             FROM shared.employees WHERE id = $1
             "#,
@@ -118,7 +118,7 @@ impl EmployeeService {
         }
 
         let exists = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM shared.employees WHERE employee_no = $1)",
+            "SELECT EXISTS(SELECT 1 FROM shared.employees WHERE employee_number = $1)",
         )
         .bind(&req.employee_no)
         .fetch_one(&self.db)
@@ -136,11 +136,11 @@ impl EmployeeService {
             r#"
             INSERT INTO shared.employees (
                 id, company_id, department_id, position_id,
-                employee_no, name, gender, hire_date, email, phone,
+                employee_number, name, gender, hire_date, email, phone,
                 status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', $11, $12)
             RETURNING id, company_id, department_id, position_id,
-                      employee_no, name, gender, hire_date, email, phone, status,
+                      employee_number, name, gender, hire_date, email, phone, status,
                       created_at, updated_at
             "#,
         )
@@ -176,7 +176,7 @@ impl EmployeeService {
         let existing = sqlx::query_as::<_, Employee>(
             r#"
             SELECT id, company_id, department_id, position_id,
-                   employee_no, name, gender, hire_date, email, phone, status,
+                   employee_number, name, gender, hire_date, email, phone, status,
                    created_at, updated_at FROM shared.employees WHERE id = $1
             "#,
         )
@@ -209,7 +209,7 @@ impl EmployeeService {
                 status = $10, updated_at = $11
             WHERE id = $1
             RETURNING id, company_id, department_id, position_id,
-                      employee_no, name, gender, hire_date, email, phone, status,
+                      employee_number, name, gender, hire_date, email, phone, status,
                       created_at, updated_at
             "#,
         )

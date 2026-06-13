@@ -794,7 +794,7 @@ const HrmDepartmentPage: React.FC = () => {
                                     </Badge>
                                   </div>
                                   <p className="text-sm text-slate-500 mt-0.5">
-                                    {emp.employee_number} ·{" "}
+                                    {emp.employee_no} ·{" "}
                                     {emp.position || "无职位"}
                                   </p>
                                 </div>

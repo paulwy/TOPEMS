@@ -87,7 +87,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   const loadStats = async () => {
     try {
       const mockStats = {
-        total_documents: documents.length,
+        total_documents: (documents || []).length,
         total_chunks: 0,
         total_vectors: 0,
         vector_dimension: 384,
@@ -174,7 +174,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       });
 
       if (response.success && response.data) {
-        const results = response.data.documents.map(
+        const results = (response.data.documents || []).map(
           (doc: Document, index: number) => ({
             document_title: doc.title,
             similarity: 0.8,
@@ -370,7 +370,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
             </div>
           ) : (
             <div className="space-y-3">
-              {documents.map((doc) => (
+              {(documents || []).map((doc) => (
                 <Card key={doc.id}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
@@ -430,7 +430,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                 </Card>
               ))}
 
-              {documents.length === 0 && (
+              {(documents || []).length === 0 && (
                 <Card>
                   <CardContent className="p-8 text-center">
                     <FileText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />

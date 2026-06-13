@@ -71,11 +71,11 @@ async fn list_audit_logs(
 
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, action, entity_type, entity_id, entity_ids,
+        SELECT id, action_type, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
         FROM lims.audit_logs
-        WHERE ($1::text IS NULL OR action = $1)
+        WHERE ($1::text IS NULL OR action_type = $1)
           AND ($2::text IS NULL OR entity_type = $2)
           AND ($3::text IS NULL OR user_id = $3)
           AND ($4::text IS NULL OR status = $4)
@@ -101,7 +101,7 @@ async fn list_audit_logs(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM lims.audit_logs
-                WHERE ($1::text IS NULL OR action = $1)
+                WHERE ($1::text IS NULL OR action_type = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
                   AND ($3::text IS NULL OR user_id = $3)
                   AND ($4::text IS NULL OR status = $4)
@@ -156,7 +156,7 @@ async fn get_audit_log(
 ) -> Json<ApiResponse<AuditLog>> {
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, action, entity_type, entity_id, entity_ids,
+        SELECT id, action_type, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
         FROM lims.audit_logs WHERE id = $1
@@ -207,7 +207,7 @@ pub async fn log_audit_event(
     let result = sqlx::query(
         r#"
         INSERT INTO lims.audit_logs (
-            id, action, entity_type, entity_id, entity_ids,
+            id, action_type, entity_type, entity_id, entity_ids,
             user_id, user_name, request_details, response_details,
             status, error_message, ip_address, user_agent
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)

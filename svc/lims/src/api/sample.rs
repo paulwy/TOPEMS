@@ -172,15 +172,17 @@ async fn create_sample(
 ) -> Json<ApiResponse<Sample>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let code = format!("SMP-{}", &id.to_string()[..8]); // 自动生成样品编号
 
     let result = sqlx::query_as::<_, Sample>(
         r#"
-        INSERT INTO lims.samples (id, name, description, status, project_id, received_date, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO lims.samples (id, code, name, description, status, project_id, received_date, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, name, description, status, project_id, received_date, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(&code)
     .bind(&req.name)
     .bind(&req.description)
     .bind(&req.status)
@@ -470,15 +472,17 @@ async fn batch_create_samples(
     for (index, sample_req) in req.samples.iter().enumerate() {
         let id = Uuid::new_v4();
         let now = Utc::now();
+        let code = format!("SMP-{}", &id.to_string()[..8]); // 自动生成样品编号
 
         let result = sqlx::query_as::<_, Sample>(
             r#"
-            INSERT INTO lims.samples (id, name, description, status, project_id, received_date, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO lims.samples (id, code, name, description, status, project_id, received_date, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, name, description, status, project_id, received_date, created_at, updated_at
             "#,
         )
         .bind(id)
+        .bind(&code)
         .bind(&sample_req.name)
         .bind(&sample_req.description)
         .bind(&sample_req.status)
@@ -913,15 +917,17 @@ async fn import_samples(
 
                 let id = Uuid::new_v4();
                 let now = Utc::now();
+                let code = format!("SMP-{}", &id.to_string()[..8]); // 自动生成样品编号
 
                 let insert_result = sqlx::query_as::<_, Sample>(
                     r#"
-                    INSERT INTO lims.samples (id, name, description, status, project_id, received_date, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    INSERT INTO lims.samples (id, code, name, description, status, project_id, received_date, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                     RETURNING id, name, description, status, project_id, received_date, created_at, updated_at
                     "#,
                 )
                 .bind(id)
+                .bind(&code)
                 .bind(&name)
                 .bind(&description)
                 .bind(&status)

@@ -395,22 +395,21 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
-    // PostGIS GIST spatial indexes for location queries
-    // These indexes significantly improve spatial query performance (100x faster)
+    // jsonb GIN indexes for efficient JSON querying (instead of GIST which requires PostGIS geometry)
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_device_locations_position_gist ON device_locations USING GIST (position)"
+        "CREATE INDEX IF NOT EXISTS idx_device_locations_position ON device_locations USING GIN (position)"
     )
     .execute(pool)
     .await?;
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_business_locations_position_gist ON business_locations USING GIST (position)"
+        "CREATE INDEX IF NOT EXISTS idx_business_locations_position ON business_locations USING GIN (position)"
     )
     .execute(pool)
     .await?;
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_locations_position_gist ON gis.locations USING GIST (position)"
+        "CREATE INDEX IF NOT EXISTS idx_gis_locations_position ON gis.locations USING GIN (position)"
     )
     .execute(pool)
     .await?;

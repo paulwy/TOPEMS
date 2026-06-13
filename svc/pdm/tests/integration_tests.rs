@@ -26,7 +26,7 @@ mod tests {
     async fn test_products_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'pdm' AND table_name = 'products')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'products')")
             .fetch_one(&pool)
             .await;
 
@@ -45,7 +45,7 @@ mod tests {
     async fn test_documents_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'pdm' AND table_name = 'documents')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'documents')")
             .fetch_one(&pool)
             .await;
 
@@ -64,7 +64,7 @@ mod tests {
     async fn test_versions_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'pdm' AND table_name = 'versions')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'versions')")
             .fetch_one(&pool)
             .await;
 
@@ -83,7 +83,7 @@ mod tests {
     async fn test_materials_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'pdm' AND table_name = 'materials')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'materials')")
             .fetch_one(&pool)
             .await;
 
@@ -107,20 +107,20 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO pdm.products (id, organization_id, product_name, product_code, description, status, created_at, updated_at)
+            INSERT INTO products (id, product_no, name, description, status, version, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
-                product_name = EXCLUDED.product_name,
+                name = EXCLUDED.name,
                 updated_at = NOW()
             RETURNING id
             "#,
         )
         .bind(product_id)
-        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
-        .bind(&product_name)
         .bind(&product_id.to_string()[..8])
+        .bind(&product_name)
         .bind("这是一个测试产品的描述")
         .bind("active")
+        .bind("1.0")
         .fetch_one(&pool)
         .await;
 
@@ -133,8 +133,8 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            SELECT id, product_name, product_code, status, created_at
-            FROM pdm.products
+            SELECT id, name, product_no, status, created_at
+            FROM products
             ORDER BY created_at DESC
             LIMIT 10
             "#,

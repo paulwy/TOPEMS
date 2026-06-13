@@ -1217,7 +1217,7 @@ const HrmTrainingPage: React.FC = () => {
                   <SelectContent>
                     {employees.map((employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
-                        {employee.name} ({employee.employee_number})
+                        {employee.name} ({employee.employee_no})
                       </SelectItem>
                     ))}
                   </SelectContent>

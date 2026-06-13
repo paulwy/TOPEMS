@@ -9,7 +9,7 @@
 | 最后更新 | 2026-06-12 |
 | 状态 | 已批准 |
 | 适用范围 | TOPEMS 全平台部署 |
-| 变更说明 | 新增统一入口脚本、编译测试功能、单一服务管理 |
+| 变更说明 | 新增统一入口脚本、编译测试功能、单一服务管理、Windows部署支持 |
 
 ---
 
@@ -17,14 +17,14 @@
 
 ### 1.1 方案对比
 
-| 特性 | Docker方案 | 非Docker方案 |
-|------|-----------|-------------|
-| **部署复杂度** | 低（一键启动） | 中（需手动安装依赖） |
-| **环境隔离** | 高（容器化） | 低（共享系统环境） |
-| **资源占用** | 中（容器开销） | 低（直接运行） |
-| **外网依赖** | 低（可本地镜像） | 中（需安装软件包） |
-| **扩展性** | 高（K8s支持） | 低（单机部署） |
-| **适合场景** | 开发、测试、生产 | 开发、轻量部署 |
+| 特性 | Docker方案 | Linux/macOS本地 | Windows本地 |
+|------|-----------|-----------------|-------------|
+| **部署复杂度** | 低（一键启动） | 中（需手动安装依赖） | 中（需手动安装依赖） |
+| **环境隔离** | 高（容器化） | 低（共享系统环境） | 低（共享系统环境） |
+| **资源占用** | 中（容器开销） | 低（直接运行） | 低（直接运行） |
+| **外网依赖** | 低（可本地镜像） | 中（需安装软件包） | 中（需安装软件包） |
+| **扩展性** | 高（K8s支持） | 低（单机部署） | 低（单机部署） |
+| **适合场景** | 开发、测试、生产 | Linux/macOS开发 | Windows开发 |
 
 ### 1.2 方案选择建议
 
@@ -35,6 +35,7 @@
 | 生产部署 | Docker方案 | 便于扩展和管理 |
 | 离线环境 | 非Docker方案 | 无容器依赖 |
 | 资源受限 | 非Docker方案 | 资源占用更低 |
+| Windows开发 | Windows本地 | 原生支持 |
 
 ---
 
@@ -147,9 +148,94 @@ scripts/
 
 ---
 
-## 4. AI服务配置
+## 4. Windows 部署方案
 
-### 4.1 Ollama配置
+### 4.1 环境要求
+
+| 软件 | 版本 | 说明 |
+|------|------|------|
+| PostgreSQL | >= 15 | 关系型数据库（客户端 psql） |
+| Redis | >= 7.0 | 缓存数据库（客户端 redis-cli） |
+| Rust | >= 1.75 | 后端开发语言 |
+| Node.js | >= 20 | 前端开发语言 |
+| npm | >= 10 | 前端包管理器 |
+| Ollama | >= 0.1.40 | AI模型运行时（可选） |
+| PowerShell | >= 5.1 | Windows PowerShell |
+| curl | latest | HTTP 客户端 |
+
+### 4.2 操作系统兼容性
+
+| 操作系统 | 支持状态 | 备注 |
+|----------|---------|------|
+| Windows 10 | ✅ 完全支持 | 内置 curl |
+| Windows 11 | ✅ 完全支持 | 内置 curl |
+| Windows Server 2019 | ✅ 支持 | 需手动安装 curl |
+| Windows Server 2022 | ✅ 完全支持 | 内置 curl |
+
+### 4.3 Windows Server 2019 额外配置
+
+```powershell
+# 1. 安装 curl (Server 2019 默认不带)
+winget install curl
+
+# 2. 允许脚本执行
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# 3. 防火墙配置（如需要远程访问）
+New-NetFirewallRule -DisplayName "PostgreSQL" -Direction Inbound -Protocol TCP -LocalPort 5432 -Action Allow
+New-NetFirewallRule -DisplayName "Redis" -Direction Inbound -Protocol TCP -LocalPort 6379 -Action Allow
+```
+
+### 4.4 目录结构
+
+```
+scripts/
+└── windows/
+    ├── topems-standalone.ps1   # Windows 部署脚本
+    ├── topems.bat             # Windows 启动器
+    ├── ports.ps1              # 端口配置
+    ├── check-env.ps1          # 环境检查脚本
+    └── README_WINDOWS.md      # Windows 部署指南
+```
+
+### 4.5 使用方法
+
+```batch
+# 进入脚本目录
+cd scripts\windows
+
+# 检查环境
+.\check-env.ps1
+
+# 启动所有服务
+.\topems-standalone.ps1 start
+
+# 或使用启动器
+topems.bat start
+
+# 查看状态
+.\topems-standalone.ps1 status
+
+# 停止服务
+.\topems-standalone.ps1 stop
+```
+
+### 4.6 配置说明
+
+配置文件：`scripts/windows/ports.ps1`
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| $env:DATABASE_URL | postgres://topems:topems_secret@localhost:5432/topems | 数据库连接URL |
+| $env:REDIS_URL | redis://:topems_redis_secret@localhost:6379 | Redis连接URL |
+| $env:OLLAMA_URL | http://localhost:11434 | Ollama地址 |
+| $env:WEB_PORT | 3000 | 前端端口 |
+
+---
+
+## 5. AI服务配置
+
+### 5.1 Ollama配置
 
 Ollama用于运行本地AI模型，支持以下配置：
 
@@ -172,9 +258,9 @@ ollama pull nomic-embed-text
 
 ---
 
-## 5. 数据库配置
+## 6. 数据库配置
 
-### 5.1 PostgreSQL设置
+### 6.1 PostgreSQL设置
 
 ```sql
 -- 创建用户
@@ -187,7 +273,7 @@ CREATE DATABASE topems OWNER topems;
 GRANT ALL PRIVILEGES ON DATABASE topems TO topems;
 ```
 
-### 5.2 Redis设置
+### 6.2 Redis设置
 
 ```bash
 # 设置密码
@@ -199,9 +285,9 @@ redis-cli config rewrite
 
 ---
 
-## 6. 脚本使用说明
+## 8. 脚本使用说明
 
-### 6.1 统一入口脚本（推荐）
+### 8.1 统一入口脚本（推荐）
 
 `scripts/topems.sh` 是统一的服务管理入口，自动检测并选择合适的部署方案：
 
@@ -219,7 +305,7 @@ bash scripts/topems.sh status
 bash scripts/topems.sh list
 ```
 
-### 6.2 编译构建
+### 8.2 编译构建
 
 ```bash
 # 编译所有服务
@@ -229,7 +315,7 @@ bash scripts/topems.sh build
 bash scripts/topems.sh build iam
 ```
 
-### 6.3 测试
+### 8.3 测试
 
 ```bash
 # 运行所有测试
@@ -248,7 +334,7 @@ bash scripts/topems.sh test coverage
 bash scripts/topems.sh test lint
 ```
 
-### 6.4 单一服务管理
+### 8.4 单一服务管理
 
 ```bash
 # 启动单一服务
@@ -264,7 +350,7 @@ bash scripts/topems.sh restart-service iam
 bash scripts/topems.sh logs iam
 ```
 
-### 6.5 环境变量管理
+### 8.5 环境变量管理
 
 ```bash
 # 显示当前环境变量
@@ -277,7 +363,7 @@ bash scripts/topems.sh env export
 bash scripts/topems.sh env load
 ```
 
-### 6.6 AI模型管理
+### 8.6 AI模型管理
 
 ```bash
 # AI模型管理（启动/停止/下载/测试）
@@ -286,7 +372,7 @@ bash scripts/topems.sh ai pull qwen2.5:7b-instruct
 bash scripts/topems.sh ai test
 ```
 
-### 6.7 依赖安装
+### 8.7 依赖安装
 
 ```bash
 # 安装所有依赖
@@ -299,7 +385,7 @@ bash scripts/topems.sh install-db
 bash scripts/topems.sh install-dev
 ```
 
-### 6.8 Docker方案（直接调用）
+### 8.8 Docker方案（直接调用）
 
 ```bash
 # 启动所有服务
@@ -312,7 +398,7 @@ bash scripts/docker/topems-docker.sh stop
 bash scripts/docker/topems-docker.sh status
 ```
 
-### 6.9 非Docker方案（直接调用）
+### 8.9 非Docker方案（直接调用）
 
 ```bash
 # 安装依赖（首次运行）
@@ -330,9 +416,9 @@ bash scripts/standalone/topems-standalone.sh status
 
 ---
 
-## 7. 验证步骤
+## 9. 验证步骤
 
-### 7.1 基础验证
+### 9.1 基础验证
 
 ```bash
 # 检查数据库连接
@@ -345,7 +431,7 @@ redis-cli -a topems_redis_secret ping
 curl http://localhost:11434/api/tags
 ```
 
-### 7.2 服务验证
+### 9.2 服务验证
 
 ```bash
 # 检查IAM服务
@@ -360,9 +446,9 @@ curl http://localhost:8062/health
 
 ---
 
-## 8. 故障排除
+## 10. 故障排除
 
-### 8.1 常见问题
+### 10.1 常见问题
 
 | 问题 | 解决方案 |
 |------|---------|
@@ -371,7 +457,7 @@ curl http://localhost:8062/health
 | Ollama模型加载失败 | 检查模型是否已下载，磁盘空间是否充足 |
 | 服务启动超时 | 检查依赖服务是否正常运行 |
 
-### 8.2 日志查看
+### 10.2 日志查看
 
 ```bash
 # Docker方案日志

@@ -276,7 +276,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
             </defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
 
-            {/* Edges */}
+            {/* Edges and Nodes Container */}
             <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
               {edges.map((edge) => {
                 const sourceNode = nodes.find((n) => n.id === edge.source);
@@ -292,7 +292,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
 
                 return (
                   <g
-                    key={edge.id}
+                    key={`edge-${edge.id}`}
                     className="edge cursor-pointer hover:opacity-80"
                   >
                     <path
@@ -320,7 +320,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   y1={
                     getNodeCenter(nodes.find((n) => n.id === connectingFrom)!).y
                   }
-                  x2={dragStart.x} // Just using mouse pos roughly
+                  x2={dragStart.x}
                   y2={dragStart.y}
                   stroke="#3b82f6"
                   strokeWidth="2"
@@ -331,7 +331,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
               {/* Nodes */}
               {nodes.map((node) => (
                 <g
-                  key={node.id}
+                  key={`node-${node.id}`}
                   transform={`translate(${node.x}, ${node.y})`}
                   onMouseDown={(e) => handleNodeMouseDown(e, node)}
                   className="node"

@@ -280,7 +280,7 @@ export const getMyNotificationStats = async (): Promise<
   ApiResponse<NotificationStats>
 > => {
   const response = await apiClient.notification.get<NotificationStats>(
-    "/api/v1/notifications/stats",
+    "/api/v1/stats/me",
   );
   return response;
 };
@@ -401,7 +401,7 @@ export const notificationServiceApi = {
   createNotification,
   health: async (): Promise<ApiResponse<HealthResponse>> => {
     const response = await apiClient.notification.get<HealthResponse>(
-      "/api/v1/notifications/health",
+      "/api/v1/health/detailed",
     );
     return response;
   },

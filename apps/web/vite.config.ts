@@ -27,7 +27,9 @@ const createServiceProxyConfig = (serviceName: string, target: string, skipRewri
 });
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
