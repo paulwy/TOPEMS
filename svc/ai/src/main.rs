@@ -1533,6 +1533,86 @@ async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
     ))
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct AiSearchRequest {
+    query: String,
+    limit: Option<usize>,
+    filters: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+struct AiSearchDocument {
+    id: String,
+    title: String,
+    content: String,
+    filename: String,
+    path: Option<String>,
+    file_path: Option<String>,
+    file_size: Option<u64>,
+    mime_type: Option<String>,
+    status: Option<String>,
+    category: Option<String>,
+    tags: Option<Vec<String>>,
+    created_at: String,
+    updated_at: String,
+    description: Option<String>,
+    error_message: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+struct AiSearchResponse {
+    documents: Vec<AiSearchDocument>,
+    total: usize,
+    query_time_ms: u64,
+}
+
+async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiSearchResponse>> {
+    let start_time = std::time::Instant::now();
+    
+    let limit = req.limit.unwrap_or(10);
+    let search_results = vector_search(&req.query, limit).await;
+    
+    let mut documents: Vec<AiSearchDocument> = Vec::new();
+    
+    if let Some(docs_arc) = DOCUMENTS.get() {
+        let docs = docs_arc.lock().unwrap();
+        
+        for (vec, _similarity) in search_results {
+            if let Some(doc) = docs.iter().find(|d| d.id == vec.document_id) {
+                documents.push(AiSearchDocument {
+                    id: doc.id.clone(),
+                    title: doc.title.clone(),
+                    content: vec.content.clone(),
+                    filename: doc.filename.clone(),
+                    path: None,
+                    file_path: doc.file_path.clone(),
+                    file_size: doc.file_size,
+                    mime_type: doc.mime_type.clone(),
+                    status: Some(doc.status.clone()),
+                    category: doc.category.clone(),
+                    tags: doc.tags.clone(),
+                    created_at: doc.created_at.clone(),
+                    updated_at: doc.updated_at.clone(),
+                    description: doc.description.clone(),
+                    error_message: doc.error_message.clone(),
+                });
+            }
+        }
+    }
+    
+    let query_time_ms = start_time.elapsed().as_millis() as u64;
+    let total = documents.len();
+    
+    Json(ApiResponse::success(
+        AiSearchResponse {
+            documents,
+            total,
+            query_time_ms,
+        },
+        "Success",
+    ))
+}
+
 async fn call_ai_api(
     client: &Client,
     base_url: &str,
@@ -1741,6 +1821,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/health", get(health))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(VectorApi::stats))
+        .route("/api/v1/ai/search", post(ai_search))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),

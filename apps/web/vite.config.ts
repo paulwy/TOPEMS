@@ -156,9 +156,7 @@ export default defineConfig({
     host: '0.0.0.0',
     strictPort: true,
     hmr: {
-      port: 3000,
       host: 'localhost',
-      clientPort: 3000,
       protocol: 'ws',
     },
     fs: {
@@ -178,7 +176,7 @@ export default defineConfig({
       '/doc/health': createServiceProxyConfig('doc', 'http://localhost:8024'),
       '/flow/api': createServiceProxyConfig('flow', 'http://localhost:8004'),
       '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8004'),
-      '/notification': { target: 'http://localhost:8003', changeOrigin: true, ws: true, secure: false, rewrite: (path: string) => path.replace(/^\/notification/, '') },
+      '/notification': { target: 'http://localhost:8002', changeOrigin: true, ws: true, secure: false, rewrite: (path: string) => path.replace(/^\/notification/, '') },
       '/im/ws': { target: 'http://127.0.0.1:8052', changeOrigin: true, ws: true, secure: false, rewrite: (path) => path.replace(/^\/im/, '') },
       '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8005'),
       '/integration/health': createServiceProxyConfig('integration', 'http://localhost:8005'),

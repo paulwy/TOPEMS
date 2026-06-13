@@ -3,7 +3,8 @@
  * 项目管理与财务模块集成接口
  */
 
-import { apiClient } from "./client";
+import { apiClient, downloadBlob } from "./client";
+import config from "../config/runtime";
 
 /**
  * 项目财务信息
@@ -423,31 +424,33 @@ export const pmFinanceApi = {
     }),
 
   // 导出
-  exportProjectCostRecords: (params: {
+  exportProjectCostRecords: async (params: {
     project_id?: string;
     cost_type?: string;
     start_date?: string;
     end_date?: string;
     status?: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.pm.get("/api/v1/pm/cost-records/export", {
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.pm as any).defaults?.baseURL || config.services.pm;
+    return downloadBlob(baseURL, "/api/v1/pm/cost-records/export", {
       params,
-      responseType: "blob",
-    }),
+    });
+  },
 
-  exportProjectInvoices: (params: {
+  exportProjectInvoices: async (params: {
     project_id?: string;
     invoice_type?: string;
     status?: string;
     start_date?: string;
     end_date?: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.pm.get("/api/v1/pm/invoices/export", {
-      params,
-      responseType: "blob",
-    }),
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.pm as any).defaults?.baseURL || config.services.pm;
+    return downloadBlob(baseURL, "/api/v1/pm/invoices/export", { params });
+  },
 };
 
 export default pmFinanceApi;

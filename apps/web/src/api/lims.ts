@@ -1,5 +1,6 @@
-import apiClient from "./client";
+import apiClient, { downloadBlob } from "./client";
 import type { ApiResponse } from "./client";
+import config from "../config/runtime";
 
 // ========== 类型定义 ==========
 
@@ -307,9 +308,9 @@ export const sampleApi = {
   },
 
   exportSamples: async (): Promise<Blob> => {
-    return apiClient.lims.get("/api/v1/samples/export", {
-      responseType: "blob",
-    });
+    const baseURL =
+      (apiClient.lims as any).defaults?.baseURL || config.services.lims;
+    return downloadBlob(baseURL, "/api/v1/samples/export");
   },
 
   importSamples: async (

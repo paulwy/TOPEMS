@@ -3,7 +3,8 @@
  * 提供资产负债表、利润表、现金流量表等财务报表的生成和查询功能
  */
 
-import { apiClient } from "./client";
+import { apiClient, downloadBlob } from "./client";
+import config from "../config/runtime";
 
 // ============================================
 // 一、财务报表生成
@@ -330,7 +331,7 @@ export const financialReportApi = {
   /**
    * 导出财务报表
    */
-  exportReport: (params: {
+  exportReport: async (params: {
     report_type: "balance_sheet" | "income_statement" | "cash_flow";
     report_id?: string;
     company_id: string;
@@ -339,11 +340,10 @@ export const financialReportApi = {
     format: "pdf" | "xlsx" | "csv";
     include_notes?: boolean; // 包含附注
     include_comparison?: boolean; // 包含对比数据
-  }) =>
-    apiClient.erp.get("/api/v1/reports/export", {
-      params,
-      responseType: "blob",
-    }),
+  }): Promise<Blob> => {
+    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, "/api/v1/reports/export", { params });
+  },
 
   /**
    * 批量导出报表
@@ -359,25 +359,23 @@ export const financialReportApi = {
   /**
    * 导出合并报表
    */
-  exportConsolidatedReport: (params: {
+  exportConsolidatedReport: async (params: {
     consolidation_id: string;
     report_type: "balance_sheet" | "income_statement" | "cash_flow";
     period: string;
     currency_code?: string;
     format: "pdf" | "xlsx";
-  }) =>
-    apiClient.erp.get(
-      `/api/v1/reports/consolidated/${params.consolidation_id}/export`,
-      {
-        params: {
-          report_type: params.report_type,
-          period: params.period,
-          currency_code: params.currency_code,
-          format: params.format,
-        },
-        responseType: "blob",
+  }): Promise<Blob> => {
+    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, `/api/v1/reports/consolidated/${params.consolidation_id}/export`, {
+      params: {
+        report_type: params.report_type,
+        period: params.period,
+        currency_code: params.currency_code,
+        format: params.format,
       },
-    ),
+    });
+  },
 
   // ============================================
   // 七、报表订阅

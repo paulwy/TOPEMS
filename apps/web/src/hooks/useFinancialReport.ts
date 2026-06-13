@@ -565,8 +565,7 @@ export function useExportFinancialReport() {
       include_notes?: boolean;
       include_comparison?: boolean;
     }) => {
-      const response = await financialReportApi.exportReport(params);
-      const blob = response.data as Blob;
+      const blob = await financialReportApi.exportReport(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -600,9 +599,7 @@ export function useExportConsolidatedReport() {
       currency_code?: string;
       format: "pdf" | "xlsx";
     }) => {
-      const response =
-        await financialReportApi.exportConsolidatedReport(params);
-      const blob = response.data as Blob;
+      const blob = await financialReportApi.exportConsolidatedReport(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

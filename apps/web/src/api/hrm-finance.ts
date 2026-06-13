@@ -3,7 +3,8 @@
  * 包含工资核算、社保公积金等与财务相关的接口
  */
 
-import { apiClient } from "./client";
+import { apiClient, downloadBlob } from "./client";
+import config from "../config/runtime";
 
 // ============================================
 // 一、类型定义
@@ -303,28 +304,32 @@ export const hrmFinanceApi = {
   /**
    * 导出银行报盘文件
    */
-  exportBankFile: (params: {
+  exportBankFile: async (params: {
     period: string;
     company_id: string;
     bank_code: string;
-  }) =>
-    apiClient.hrm.get("/api/v1/hrm/payroll/export-bank-file", {
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
+    return downloadBlob(baseURL, "/api/v1/hrm/payroll/export-bank-file", {
       params,
-      responseType: "blob",
-    }),
+    });
+  },
 
   /**
    * 导出工资条
    */
-  exportPayrollSlips: (params: {
+  exportPayrollSlips: async (params: {
     period: string;
     company_id: string;
     format?: "pdf" | "excel";
-  }) =>
-    apiClient.hrm.get("/api/v1/hrm/payroll/export-slips", {
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
+    return downloadBlob(baseURL, "/api/v1/hrm/payroll/export-slips", {
       params,
-      responseType: "blob",
-    }),
+    });
+  },
 
   /**
    * 更新发放状态
@@ -449,29 +454,35 @@ export const hrmFinanceApi = {
   /**
    * 导出工资单
    */
-  exportPayrollRecords: (params: {
+  exportPayrollRecords: async (params: {
     company_id?: string;
     period?: string;
     department_id?: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.hrm.get("/api/v1/hrm/payroll/export-records", {
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
+    return downloadBlob(baseURL, "/api/v1/hrm/payroll/export-records", {
       params,
-      responseType: "blob",
-    }),
+    });
+  },
 
   /**
    * 导出社保公积金明细
    */
-  exportSocialSecurityDetails: (params: {
+  exportSocialSecurityDetails: async (params: {
     company_id?: string;
     period?: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.hrm.get("/api/v1/hrm/social-security/export-details", {
-      params,
-      responseType: "blob",
-    }),
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
+    return downloadBlob(
+      baseURL,
+      "/api/v1/hrm/social-security/export-details",
+      { params },
+    );
+  },
 };
 
 export default hrmFinanceApi;

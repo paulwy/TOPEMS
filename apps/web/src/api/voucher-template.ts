@@ -3,12 +3,13 @@
  * 提供凭证模板的CRUD操作和自动生成凭证功能
  */
 
-import { apiClient } from "./client";
+import { apiClient, downloadBlob } from "./client";
 import type {
   VoucherTemplate,
   VoucherTemplateType,
   VoucherTemplateEntry,
 } from "../types/erp-finance";
+import config from "../config/runtime";
 
 // ============================================
 // 一、凭证模板管理
@@ -277,11 +278,12 @@ export const voucherTemplateApi = {
   /**
    * 导出模板
    */
-  exportTemplate: (templateId: string, format: "json" | "yaml") =>
-    apiClient.erp.get(`/api/v1/voucher/templates/${templateId}/export`, {
+  exportTemplate: async (templateId: string, format: "json" | "yaml"): Promise<Blob> => {
+    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, `/api/v1/voucher/templates/${templateId}/export`, {
       params: { format },
-      responseType: "blob",
-    }),
+    });
+  },
 
   /**
    * 导入模板
