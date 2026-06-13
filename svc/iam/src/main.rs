@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems?options=-c%20search_path%3Diam%2Cshared%2Cpublic".to_string());
 
     env::set_var("SEARCH_PATH", "iam, shared, public");
 

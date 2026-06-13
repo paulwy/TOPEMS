@@ -32,7 +32,7 @@ export interface Department {
 
 export interface Employee {
   id: string;
-  employee_number: string;
+  employee_no: string;
   name: string;
   gender?: string;
   birth_date?: string;
@@ -46,6 +46,8 @@ export interface Employee {
   emergency_contact_phone?: string;
   status: string;
   user_id?: string;
+  company_id?: string;
+  position_id?: string;
   created_at: string;
   updated_at: string;
 }

@@ -83,10 +83,11 @@ pub async fn upload_file(
                             file_chunks.push(chunk);
                         }
                         Err(e) => {
-                            error!("Error reading file chunk: {}", e);
+                            error!("Error reading file chunk: {:?}", e);
+                            let error_detail = format!("读取文件数据失败: {:?}", e);
                             return Err((
                                 StatusCode::BAD_REQUEST,
-                                Json(ApiResponse::<()>::bad_request("读取文件数据失败")),
+                                Json(ApiResponse::<()>::bad_request(&error_detail)),
                             ));
                         }
                     }

@@ -19,6 +19,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   contentType,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const blobUrlRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,10 +52,23 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           container.appendChild(img);
         } else if (contentType.includes("application/pdf")) {
           console.log("预览 PDF");
-          const pdfUrl = await docApi.preview(fileId);
+          const blob = await docApi.download(fileId);
+          console.log("获取到 PDF Blob，大小:", blob.size);
+          const blobUrl = URL.createObjectURL(blob);
+          blobUrlRef.current = blobUrl;
           const iframe = document.createElement("iframe");
-          iframe.src = pdfUrl;
+          iframe.src = blobUrl;
           iframe.className = "w-full h-[80vh] border-0";
+          iframe.onload = () => {
+            console.log("PDF iframe loaded");
+          };
+          iframe.onerror = (e) => {
+            console.error("PDF iframe error:", e);
+            if (blobUrlRef.current) {
+              URL.revokeObjectURL(blobUrlRef.current);
+              blobUrlRef.current = null;
+            }
+          };
           container.appendChild(iframe);
         } else if (fileName.endsWith(".docx")) {
           console.log("预览 DOCX");
@@ -112,8 +126,25 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     // 延迟一点确保 DOM 已渲染
     const timer = setTimeout(loadAndPreview, 200);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      // 清理 blob URL
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
   }, [isOpen, fileId, fileName, contentType]);
+
+  useEffect(() => {
+    return () => {
+      // 组件卸载时清理 blob URL
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 

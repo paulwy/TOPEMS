@@ -106,11 +106,11 @@ TOPEMS是一个基于微服务架构的企业级数字化平台，提供统一�
 | 服务名称 | 端口 | 功能描述 | API前缀 |
 |---------|-----|---------|---------|
 | topems-iam | 8000 | 身份认证与授权 | /api/v1 |
-| topems-doc | 8001 | 文档管理与存储 | /api/v1 |
-| topems-flow | 8006 | 工作流引擎 | /api/v1 |
-| notification-service | 8003 | 实时通知 | /api/v1 |
-| topems-integration | 8004 | 系统集成 | /api/v1 |
-| topems-portal | 8005 | 企业门户 | /api/v1 |
+| topems-pm | 8001 | 项目管理 | /api/v1 |
+| notification-service | 8002 | 实时通知 | /api/v1 |
+| topems-flow | 8004 | 工作流引擎 | /api/v1 |
+| topems-portal | 8003 | 企业门户 | /api/v1 |
+| topems-integration | 8005 | 系统集成 | /api/v1 |
 | topems-erp | 8010 | 企业资源计划 | /api/v1 |
 | topems-hrm | 8011 | 人力资源管理 | /api/v1 |
 | topems-ai | 8013 | AI知识库 | /api/v1 |
@@ -123,14 +123,17 @@ TOPEMS是一个基于微服务架构的企业级数字化平台，提供统一�
 | topems-scm | 8040 | 供应链 | /api/v1 |
 | topems-srm | 8041 | 供应商管理 | /api/v1 |
 | topems-wms | 8042 | 仓库管理 | /api/v1 |
-| topems-gis | 8050 | 地理信息 | /api/v1 |
-| topems-im | 8051 | 即时通讯 | /api/v1 |
-| topems-bi | 8052 | 商业智能 | /api/v1 |
-| report-service | 8053 | 报表服务 | /api/v1 |
-| topems-mail | 8054 | 邮件服务 | /api/v1 |
-| topems-mobile | 8055 | 移动端服务 | /api/v1 |
+| topems-file | 8050 | 文件存储 | /api/v1 |
+| topems-mail | 8051 | 邮件服务 | /api/v1 |
+| topems-im | 8052 | 即时通讯 | /api/v1 |
+| topems-gis | 8053 | 地理信息 | /api/v1 |
+| topems-bi | 8060 | 商业智能 | /api/v1 |
+| report-service | 8061 | 报表服务 | /api/v1 |
+| topems-ai | 8062 | AI服务 | /api/v1 |
+| topems-mobile | 8070 | 移动端服务 | /api/v1 |
 | topems-pdm | 8023 | 产品数据管理 | /api/v1 |
-| topems-pm | 8024 | 统一项目管理 | /api/v1 |
+| topems-doc | 8024 | 文档管理 | /api/v1 |
+| topems-pm | 8001 | 统一项目管理 | /api/v1 |
 
 ## 技术栈
 

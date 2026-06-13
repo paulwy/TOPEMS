@@ -9,6 +9,7 @@ import { LoadingProvider } from "./components/LoadingProvider";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { Toaster } from "./components/Toaster";
 import { LoadingSpinner } from "./components/LoadingSpinner";
+import { TemplateDemoPage } from "./components/templates/index";
 
 import {
   authRoutes,
@@ -148,6 +149,7 @@ const AppContent: React.FC = () => {
           element={<Navigate to="/debug" replace />}
         />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/template-demo" element={<TemplateDemoPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

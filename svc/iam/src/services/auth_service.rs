@@ -258,10 +258,16 @@ impl AuthService {
     ) -> ApiResponse<RefreshTokenResponse> {
         match self.verify_token(&request.refresh_token) {
             Ok(claims) => {
+                // 将 String 转换为 UUID
+                let user_id = match Uuid::parse_str(&claims.sub) {
+                    Ok(id) => id,
+                    Err(_) => return ApiResponse::error(400, "无效的用户ID"),
+                };
+
                 let result = sqlx::query_as::<_, (Uuid, String, String, Option<String>, String, bool, chrono::DateTime<Utc>, chrono::DateTime<Utc>, bool)>(
                     "SELECT id, username, email, full_name, password_hash, is_active, created_at, updated_at, is_superuser FROM iam.users WHERE id = $1"
                 )
-                .bind(&claims.sub)
+                .bind(user_id)
                 .fetch_optional(&self.db)
                 .await;
 

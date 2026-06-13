@@ -65,9 +65,20 @@ pub struct UploadResponse {
 impl FileServiceClient {
     /// 创建新的 File 服务客户端
     pub fn new(base_url: &str) -> Self {
+        // 配置带超时和代理设置的客户端
+        // 对于大文件上传，使用更长的超时时间
+        let client = Client::builder()
+            .timeout(std::time::Duration::from_secs(300))  // 总超时 5 分钟
+            .connect_timeout(std::time::Duration::from_secs(30))  // 连接超时 30 秒
+            .pool_idle_timeout(std::time::Duration::from_secs(60))  // 连接池空闲超时
+            .tcp_keepalive(std::time::Duration::from_secs(30))  // TCP keep-alive
+            .tcp_nodelay(true)  // 禁用 Nagle 算法，加快小包传输
+            .build()
+            .unwrap_or_else(|_| Client::new());
+        
         Self {
             base_url: base_url.trim_end_matches('/').to_string(),
-            client: Client::new(),
+            client,
             auth_token: None,
         }
     }
@@ -94,6 +105,7 @@ impl FileServiceClient {
         content: Vec<u8>,
         content_type: &str,
     ) -> anyhow::Result<UploadResponse> {
+        let content_length = content.len();
         let part = reqwest::multipart::Part::bytes(content)
             .file_name(filename.to_string())
             .mime_str(content_type)
@@ -101,15 +113,24 @@ impl FileServiceClient {
 
         let form = reqwest::multipart::Form::new().part("file", part);
 
+        let url = format!("{}/api/v1/files/upload", self.base_url);
+        tracing::debug!("Uploading file to: {} ({} bytes)", url, content_length);
+        
         let request = self
             .client
-            .post(format!("{}/api/v1/files/upload", self.base_url))
+            .post(&url)
             .multipart(form);
 
-        let response = self.add_auth_header(request).send().await?;
+        tracing::debug!("Sending request to file service...");
+        let response = self.add_auth_header(request).send().await
+            .map_err(|e| anyhow::anyhow!(
+                "Failed to send request to {}: {}. This could be due to: (1) Connection refused (2) DNS resolution failure (3) Timeout (4) Proxy issues",
+                url, e
+            ))?;
 
         // 获取原始响应文本用于调试
         let status = response.status();
+        tracing::debug!("File service response status: {}", status);
         let text = response.text().await?;
 
         if !status.is_success() {

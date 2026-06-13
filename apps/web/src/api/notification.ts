@@ -113,21 +113,43 @@ export const getNotifications = async (
   pageSize = 20,
   notificationType?: NotificationTypeEnum,
 ): Promise<ApiResponse<NotificationListResponse>> => {
-  const params: Record<string, any> = {
-    page,
-    page_size: pageSize,
-  };
 
-  if (notificationType) {
-    params.notification_type = notificationType;
+  try {
+    const params: Record<string, any> = {
+      page,
+      page_size: pageSize,
+    };
+
+    if (notificationType) {
+      params.notification_type = notificationType;
+    }
+
+    const response = await apiClient.notification.get<NotificationListResponse>(
+      "/api/v1/notifications",
+      { params },
+    );
+
+    return response;
+  } catch (error: any) {
+    // 处理 401 错误
+    if (error.response?.status === 401) {
+      console.debug("Notification list request returned 401, returning empty");
+      return {
+        code: 0,
+        success: true,
+        data: {
+          notifications: [],
+          total: 0,
+          page,
+          page_size: pageSize,
+          unread_count: 0,
+        },
+        message: "Unauthorized",
+        timestamp: new Date().toISOString(),
+      };
+    }
+    throw error;
   }
-
-  const response = await apiClient.notification.get<NotificationListResponse>(
-    "/api/v1/notifications",
-    { params },
-  );
-
-  return response;
 };
 
 export const getUnreadNotifications = async (): Promise<

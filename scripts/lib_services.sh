@@ -9,7 +9,7 @@
 # - schema_name: 数据库 schema 名称
 # - service_path: 服务代码路径
 #
-# 使用 Rust 原生迁移的服务不包含在此列表中: notification, doc, flow, pdm, mobile
+# 使用 Rust 原生迁移的服务不包含在此列表中: notification, flow, pdm, mobile
 
 # 所有使用 SQL 迁移的服务
 declare -a ALL_SERVICES=(
@@ -35,6 +35,7 @@ declare -a ALL_SERVICES=(
   "bi:bi:svc/bi"
   "report:report:svc/report"
   "ai:ai:svc/ai"
+  "doc:doc_service:svc/doc"
 )
 
 # 所有模块（包括使用 Rust 原生迁移的服务）
@@ -68,7 +69,7 @@ declare -a ALL_MODULES=(
   "mobile:移动"
 )
 
-# 服务端口映射
+# 服务端口映射（与 port-planning.md 保持一致）
 declare -A SERVICE_PORTS=(
   ["iam"]="8000"
   ["pm"]="8001"
@@ -79,24 +80,24 @@ declare -A SERVICE_PORTS=(
   ["erp"]="8010"
   ["hrm"]="8011"
   ["crm"]="8012"
-  ["ai"]="8013"
   ["rs"]="8020"
   ["lims"]="8022"
   ["pdm"]="8023"
+  ["doc"]="8024"
   ["mes"]="8030"
   ["qms"]="8031"
   ["ehs"]="8032"
   ["scm"]="8040"
   ["srm"]="8041"
   ["wms"]="8042"
-  ["gis"]="8050"
-  ["file"]="8060"
-  ["mail"]="8070"
-  ["im"]="8080"
-  ["bi"]="8090"
-  ["report"]="8100"
-  ["doc"]="8110"
-  ["mobile"]="8120"
+  ["file"]="8050"
+  ["mail"]="8051"
+  ["im"]="8052"
+  ["gis"]="8053"
+  ["bi"]="8060"
+  ["report"]="8061"
+  ["ai"]="8062"
+  ["mobile"]="8070"
 )
 
 # 导出函数：获取服务端口

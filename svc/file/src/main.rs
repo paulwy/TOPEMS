@@ -5,6 +5,7 @@ mod services;
 
 use anyhow::Result;
 use axum::{
+    extract::DefaultBodyLimit,
     routing::{delete, get, post},
     Router,
 };
@@ -12,6 +13,7 @@ use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::timeout::TimeoutLayer;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
@@ -101,12 +103,17 @@ async fn main() -> Result<()> {
         .allow_methods(tower_http::cors::Any)
         .allow_headers(tower_http::cors::Any);
 
+    // 添加 300 秒（5分钟）超时以支持大文件上传
+    let timeout = TimeoutLayer::new(std::time::Duration::from_secs(300));
+
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
-        .layer(cors);
+        .layer(cors)
+        .layer(timeout)
+        .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
 
-    let port = std::env::var("SERVER_PORT")
+    let port = std::env::var("FILE_PORT")
         .unwrap_or_else(|_| "8050".to_string())
         .parse::<u16>()?;
 

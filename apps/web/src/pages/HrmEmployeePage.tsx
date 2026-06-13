@@ -22,8 +22,10 @@ import {
 import {
   employeeApi,
   departmentApi,
+  companyApi,
   type Employee,
   type Department,
+  type Company,
   type PaginatedResult,
   type ListParams,
 } from "../api/hrm";
@@ -81,6 +83,7 @@ const HrmEmployeePage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [departments, setDepartments] = useState<Department[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [companies, setCompanies] = useState<Company[]>([]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -148,6 +151,18 @@ const HrmEmployeePage: React.FC = () => {
     }
   }, []);
 
+  const fetchCompanies = useCallback(async () => {
+    try {
+      const response = await companyApi.list({ page_size: 100 });
+      if (response.code === 200 && response.data) {
+        const responseData = response.data as any;
+        setCompanies(responseData.items || []);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch companies:", error);
+    }
+  }, []);
+
   const buildTree = useCallback(
     (depts: Department[], emps: Employee[]): TreeNode[] => {
       const deptMap = new Map<string, TreeNode>();
@@ -192,7 +207,8 @@ const HrmEmployeePage: React.FC = () => {
   React.useEffect(() => {
     fetchEmployees();
     fetchDepartments();
-  }, [fetchEmployees, fetchDepartments]);
+    fetchCompanies();
+  }, [fetchEmployees, fetchDepartments, fetchCompanies]);
 
   React.useEffect(() => {
     if (
@@ -268,7 +284,7 @@ const HrmEmployeePage: React.FC = () => {
   }, []);
 
   const handleSelectAICode = useCallback((code: string) => {
-    setFormData((prev) => ({ ...prev, employee_number: code }));
+    setFormData((prev) => ({ ...prev, employee_no: code }));
   }, []);
 
   const handleOpenAIDataCompleter = useCallback((mode: "create" | "edit") => {
@@ -459,9 +475,9 @@ const HrmEmployeePage: React.FC = () => {
                 <div className="font-medium text-gray-900 dark:text-gray-100">
                   {row.original.name}
                 </div>
-                {row.original.employee_number && (
+                {row.original.employee_no && (
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {row.original.employee_number}
+                    {row.original.employee_no}
                   </div>
                 )}
               </div>
@@ -1057,7 +1073,7 @@ const HrmEmployeePage: React.FC = () => {
                                       {emp.name}
                                     </p>
                                     <p className="text-sm text-slate-500">
-                                      {emp.employee_number} ·{" "}
+                                      {emp.employee_no} ·{" "}
                                       {emp.position || "无职位"}
                                     </p>
                                   </div>
@@ -1124,6 +1140,26 @@ const HrmEmployeePage: React.FC = () => {
             </DialogHeader>
             <form onSubmit={handleCreate}>
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="create-company">所属公司 *</Label>
+                  <Select
+                    value={(formData as Employee)?.company_id || ""}
+                    onValueChange={(value) =>
+                      handleInputChange("company_id", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="请选择公司" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="create-name">员工姓名 *</Label>
@@ -1144,11 +1180,13 @@ const HrmEmployeePage: React.FC = () => {
                     <Input
                       id="create-number"
                       type="text"
-                      value={(formData as Employee)?.employee_number || ""}
+                      required
+                      value={(formData as Employee)?.employee_no || ""}
                       onChange={(e) =>
-                        handleInputChange("employee_number", e.target.value)
+                        handleInputChange("employee_no", e.target.value)
                       }
                       placeholder="请输入工号"
+                      aria-required={true}
                     />
                   </div>
                 </div>
@@ -1288,6 +1326,26 @@ const HrmEmployeePage: React.FC = () => {
             {selectedEmployee && (
               <form onSubmit={handleUpdate}>
                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-company">所属公司</Label>
+                    <Select
+                      value={(formData as Employee)?.company_id || ""}
+                      onValueChange={(value) =>
+                        handleInputChange("company_id", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="请选择公司" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {companies.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="edit-name">员工姓名 *</Label>
@@ -1307,9 +1365,9 @@ const HrmEmployeePage: React.FC = () => {
                       <Input
                         id="edit-number"
                         type="text"
-                        value={(formData as Employee)?.employee_number || ""}
+                        value={(formData as Employee)?.employee_no || ""}
                         onChange={(e) =>
-                          handleInputChange("employee_number", e.target.value)
+                          handleInputChange("employee_no", e.target.value)
                         }
                       />
                     </div>
@@ -1447,7 +1505,7 @@ const HrmEmployeePage: React.FC = () => {
                   <div className="space-y-1">
                     <Label className="text-gray-500">工号</Label>
                     <div className="font-medium">
-                      {selectedEmployee.employee_number || "-"}
+                      {selectedEmployee.employee_no || "-"}
                     </div>
                   </div>
                 </div>
@@ -1518,7 +1576,7 @@ const HrmEmployeePage: React.FC = () => {
           }}
           onSelect={handleSelectAICode}
           existingCodes={
-            data.items.map((e) => e.employee_number).filter(Boolean) as string[]
+            data.items.map((e) => e.employee_no).filter(Boolean) as string[]
           }
         />
 
