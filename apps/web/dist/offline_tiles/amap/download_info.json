@@ -1,0 +1,20 @@
+{
+  "source": "amap",
+  "bounds": [
+    [
+      38.5,
+      116.7
+    ],
+    [
+      40.3,
+      118.3
+    ]
+  ],
+  "minZoom": 6,
+  "maxZoom": 10,
+  "downloadedAt": "2026-06-13T01:23:42.749Z",
+  "totalTiles": 79,
+  "successCount": 79,
+  "skippedCount": 79,
+  "failedCount": 0
+}

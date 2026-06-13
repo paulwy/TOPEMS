@@ -34,9 +34,11 @@ interface ToolPanelProps {
   onToggleHeatmap: () => void;
   onToggle3DView: () => void;
   onToggleMapType: () => void;
+  onToggleOfflineMode: () => void;
   showTrackPanel: boolean;
   showHeatmap: boolean;
   mapType: "osm" | "amap";
+  offlineMode: boolean;
   measurePointsLength: number;
   drawFeaturesLength: number;
   currentDrawing: DrawFeature | null;
@@ -56,9 +58,11 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
   onToggleHeatmap,
   onToggle3DView,
   onToggleMapType,
+  onToggleOfflineMode,
   showTrackPanel,
   showHeatmap,
   mapType,
+  offlineMode,
   measurePointsLength,
   drawFeaturesLength,
   currentDrawing,
@@ -250,6 +254,20 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
         >
           <Box className="w-4 h-4" />
           <span className="text-xs">3D视图</span>
+        </button>
+        <div className="border-t border-gray-100 my-2" />
+        <button
+          onClick={onToggleOfflineMode}
+          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
+            offlineMode
+              ? "bg-green-500 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50"
+          }`}
+          title="离线模式"
+        >
+          <span className="text-xs">
+            {offlineMode ? "离线模式" : "在线模式"}
+          </span>
         </button>
       </div>
     </div>

@@ -151,6 +151,50 @@ set_env_vars() {
   export RUST_LOG=info
 }
 
+# 检查并自动启动 Ollama
+check_and_start_ollama() {
+  # 确保日志目录存在
+  mkdir -p "$PROJECT_ROOT/logs"
+  
+  # 检查 Ollama 是否已运行
+  if pgrep -x "ollama" > /dev/null 2>&1; then
+    info "Ollama 已在运行"
+    return 0
+  fi
+  
+  # 检查 Ollama 是否已安装
+  if ! command -v ollama &> /dev/null; then
+    warning "Ollama 未安装，AI 功能将受限"
+    echo "  安装 Ollama: https://ollama.ai/download"
+    echo "  或运行: brew install ollama"
+    return 1
+  fi
+  
+  # 尝试启动 Ollama
+  info "启动 Ollama..."
+  ollama serve > "$PROJECT_ROOT/logs/ollama.log" 2>&1 &
+  
+  # 等待 Ollama 启动
+  local max_attempts=10
+  local attempt=0
+  while [ $attempt -lt $max_attempts ]; do
+    if pgrep -x "ollama" > /dev/null 2>&1; then
+      success "Ollama 启动成功"
+      # 检查可用模型
+      if ollama list 2>/dev/null | grep -q "NAME"; then
+        info "可用模型:"
+        ollama list 2>/dev/null | tail -n +2 | head -5
+      fi
+      return 0
+    fi
+    sleep 1
+    attempt=$((attempt + 1))
+  done
+  
+  warning "Ollama 启动超时，请手动启动: ollama serve"
+  return 1
+}
+
 # 启动前端
 start_frontend() {
   info "启动前端服务..."
@@ -436,6 +480,9 @@ build_service() {
 run_tests() {
   local type="$1"
   
+  # 启动 Ollama（AI 测试需要）
+  check_and_start_ollama || true
+  
   case "$type" in
     all)
       info "运行完整测试套件..."
@@ -628,6 +675,8 @@ start_module_services() {
       ;;
     analytics)
       services="bi:8060 report:8061 ai:8062"
+      # AI 服务需要 Ollama
+      check_and_start_ollama || warning "Ollama 未运行，AI 功能将受限"
       ;;
     *)
       error "未知模块: $module"

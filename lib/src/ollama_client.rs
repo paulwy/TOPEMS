@@ -299,7 +299,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore] // 需要 Ollama 运行
     async fn test_ollama_embedder() {
         let client = OllamaClient::new(OllamaConfig::default());
         let healthy = client.health_check().await.unwrap();
@@ -308,6 +307,7 @@ mod tests {
         if healthy {
             let embedding = client.embed("Hello world").await.unwrap();
             println!("Embedding length: {}", embedding.len());
+            assert!(!embedding.is_empty(), "Embedding should not be empty");
         }
     }
 }

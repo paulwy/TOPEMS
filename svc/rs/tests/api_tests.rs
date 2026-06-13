@@ -478,7 +478,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
     }
 
     #[tokio::test]
-    #[ignore = "需要运行的服务"]
+    #[ignore = "集成测试需要运行 rs:8020 和 iam:8000 服务"]
     async fn test_rs_integration() {
         test_project_crud().await;
         test_project_batch_operations().await;

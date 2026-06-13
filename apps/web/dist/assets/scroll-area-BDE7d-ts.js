@@ -1,1 +1,0 @@
-import{r,j as a}from"./vendor-react-DKdtgsG4.js";const e=r.forwardRef(({className:r,children:e,...s},o)=>a.jsx("div",{ref:o,className:`overflow-auto ${r}`,...s,children:e}));e.displayName="ScrollArea";export{e as S};

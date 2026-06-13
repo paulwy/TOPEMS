@@ -309,9 +309,9 @@ pub struct EvidenceRecord {
     pub position: serde_json::Value,
     pub file_url: Option<String>,
     pub thumbnail_url: Option<String>,
-    pub duration: Option<i32>,        // 音视频时长，秒
-    pub file_size: Option<i64>,      // 字节
-    pub file_hash: Option<String>,    // SHA256校验
+    pub duration: Option<i32>,     // 音视频时长，秒
+    pub file_size: Option<i64>,    // 字节
+    pub file_hash: Option<String>, // SHA256校验
     pub recorded_by: Uuid,
     pub recorded_at: DateTime<Utc>,
     pub tags: Option<Vec<String>>,
@@ -342,9 +342,9 @@ pub struct TrackPosition {
     pub position: serde_json::Value, // [lng, lat] 或 {"lat": f64, "lng": f64}
     pub altitude: Option<f64>,
     pub speed: Option<f64>,         // m/s
-    pub heading: Option<f64>,        // 度
-    pub accuracy: Option<f64>,     // 米
-    pub battery_level: Option<i32>,   // 百分比
+    pub heading: Option<f64>,       // 度
+    pub accuracy: Option<f64>,      // 米
+    pub battery_level: Option<i32>, // 百分比
     pub timestamp: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
 }
@@ -352,11 +352,11 @@ pub struct TrackPosition {
 /// 轨迹统计
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrackStatistics {
-    pub total_distance: f64,  // 米
-    pub avg_speed: f64,        // km/h
-    pub max_speed: f64,       // km/h
-    pub min_speed: f64,       // km/h
-    pub total_duration: i64,   // 秒
+    pub total_distance: f64, // 米
+    pub avg_speed: f64,      // km/h
+    pub max_speed: f64,      // km/h
+    pub min_speed: f64,      // km/h
+    pub total_duration: i64, // 秒
     pub point_count: i32,
     pub start_time: DateTime<Utc>,
     pub end_time: DateTime<Utc>,

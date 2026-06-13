@@ -8,9 +8,9 @@ use serde::{Deserialize, Serialize};
 pub struct TrackPoint {
     pub position: serde_json::Value, // [lng, lat] 或 {"lat": f64, "lng": f64}
     pub altitude: Option<f64>,
-    pub speed: Option<f64>,      // m/s
-    pub heading: Option<f64>,     // 度
-    pub accuracy: Option<f64>,    // 米
+    pub speed: Option<f64>,         // m/s
+    pub heading: Option<f64>,       // 度
+    pub accuracy: Option<f64>,      // 米
     pub battery_level: Option<i32>, // 百分比
     pub timestamp: DateTime<Utc>,
 }
@@ -58,7 +58,11 @@ impl TrackStatisticsCalculator {
         let total_distance = Self::calculate_total_distance(points);
 
         // 计算速度统计
-        let speeds: Vec<f64> = points.iter().filter_map(|p| p.speed).map(|s| s * 3.6).collect(); // m/s -> km/h
+        let speeds: Vec<f64> = points
+            .iter()
+            .filter_map(|p| p.speed)
+            .map(|s| s * 3.6)
+            .collect(); // m/s -> km/h
         let avg_speed = if speeds.is_empty() {
             0.0
         } else {
@@ -74,7 +78,11 @@ impl TrackStatisticsCalculator {
             total_distance,
             avg_speed,
             max_speed,
-            min_speed: if min_speed == f64::MAX { 0.0 } else { min_speed },
+            min_speed: if min_speed == f64::MAX {
+                0.0
+            } else {
+                min_speed
+            },
             total_duration,
             point_count,
             start_time,
@@ -155,7 +163,11 @@ impl TrackStatisticsCalculator {
     }
 
     /// 计算点到线段的垂直距离
-    fn perpendicular_distance(point: &TrackPoint, line_start: &TrackPoint, line_end: &TrackPoint) -> f64 {
+    fn perpendicular_distance(
+        point: &TrackPoint,
+        line_start: &TrackPoint,
+        line_end: &TrackPoint,
+    ) -> f64 {
         let pos = match Self::parse_position(&point.position) {
             Some(p) => p,
             None => return 0.0,
@@ -177,7 +189,8 @@ impl TrackStatisticsCalculator {
         // 计算投影比例
         let dx = end.lng - start.lng;
         let dy = end.lat - start.lat;
-        let t = ((pos.lng - start.lng) * dx + (pos.lat - start.lat) * dy) / (line_length * line_length);
+        let t =
+            ((pos.lng - start.lng) * dx + (pos.lat - start.lat) * dy) / (line_length * line_length);
 
         let projection = if t < 0.0 {
             start.clone()
@@ -197,7 +210,7 @@ impl TrackStatisticsCalculator {
 /// 轨迹统计
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrackStatistics {
-    pub total_distance: f64,  // 米
+    pub total_distance: f64, // 米
     pub avg_speed: f64,      // km/h
     pub max_speed: f64,      // km/h
     pub min_speed: f64,      // km/h
@@ -256,8 +269,14 @@ mod tests {
 
     #[test]
     fn test_geo_position_haversine_distance() {
-        let shanghai = GeoPosition { lat: 31.2304, lng: 121.4737 };
-        let beijing = GeoPosition { lat: 39.9042, lng: 116.4074 };
+        let shanghai = GeoPosition {
+            lat: 31.2304,
+            lng: 121.4737,
+        };
+        let beijing = GeoPosition {
+            lat: 39.9042,
+            lng: 116.4074,
+        };
 
         let distance = shanghai.haversine_distance(&beijing);
 

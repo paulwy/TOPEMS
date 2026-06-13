@@ -502,6 +502,10 @@ mod tests {
 
         let (projects, total) = repo.list(None, None, 1, 10).await.unwrap();
         assert!(total >= 5, "列表应该至少返回5个项目，实际: {}", total);
-        assert!(projects.len() <= 10 && projects.len() >= 1, "分页应该返回1-10个项目，实际: {}", projects.len());
+        assert!(
+            projects.len() <= 10 && projects.len() >= 1,
+            "分页应该返回1-10个项目，实际: {}",
+            projects.len()
+        );
     }
 }

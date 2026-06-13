@@ -156,7 +156,7 @@ export interface CreateQualityStandardRequest {
   description: string;
   content: string;
   status: string;
-  effective_date: string;
+  effective_date?: string;
 }
 
 export interface QualityCheck {

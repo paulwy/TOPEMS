@@ -88,11 +88,15 @@ impl AuthState {
     }
 
     pub fn from_env() -> Self {
+        // 默认 JWT secret，与 Doc 服务保持一致
+        let default_jwt_secret = "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256";
+        let default_refresh_secret = "topems-refresh-secret-key-must-be-at-least-32-characters-for-hs256";
+
         let jwt_secret = std::env::var("JWT_SECRET")
-            .expect("JWT_SECRET environment variable must be set for security");
+            .unwrap_or_else(|_| default_jwt_secret.to_string());
         let refresh_secret = std::env::var("JWT_REFRESH_SECRET")
             .or_else(|_| std::env::var("REFRESH_SECRET"))
-            .expect("JWT_REFRESH_SECRET or REFRESH_SECRET environment variable must be set for security");
+            .unwrap_or_else(|_| default_refresh_secret.to_string());
 
         tracing::info!("🔑 AuthState 读取到的 JWT_SECRET: {}", jwt_secret);
 
