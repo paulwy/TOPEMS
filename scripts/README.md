@@ -14,7 +14,7 @@
 ./scripts/topems.sh start-docker
 
 # 强制使用本地模式（无外网可用时）
-./scripts/topems.sh start-standalone
+./scripts/topems.sh start-local
 
 # ⚡ 优化启动（推荐开发环境）
 ./scripts/topems.sh start-core              # 核心服务（~200 MB）
@@ -46,6 +46,36 @@
 
 # 显示帮助
 ./scripts/topems.sh help
+```
+
+## 🧪 测试工具
+
+### 统一测试脚本
+
+```bash
+# 运行所有测试（格式检查 + 静态分析 + 单元测试 + 集成测试）
+bash scripts/run-tests.sh all
+
+# 仅运行单元测试
+bash scripts/run-tests.sh unit
+
+# 仅运行集成测试
+bash scripts/run-tests.sh integration
+
+# 生成测试覆盖率报告（需要安装 cargo-llvm-cov）
+bash scripts/run-tests.sh coverage
+
+# 运行静态分析
+bash scripts/run-tests.sh lint
+
+# 检查代码格式
+bash scripts/run-tests.sh format
+```
+
+### 测试所有 Rust 服务
+
+```bash
+bash scripts/test-all-rust-services.sh
 ```
 
 ### ⚡ 优化启动命令
@@ -121,33 +151,30 @@ scripts/
 
 | 脚本 | 说明 |
 |------|------|
-| `standalone/install-deps.sh` | 依赖安装脚本（PostgreSQL, Redis, Rust, Node.js） |
-| `standalone/topems-standalone.sh` | 本地模式启动脚本 |
-| `standalone/ai-models.sh` | AI模型管理脚本（Ollama） |
+| `topems-standalone.sh` | 本地部署启动脚本 |
+| `install-deps.sh` | 依赖安装脚本（PostgreSQL, Redis, Rust, Node.js） |
+| `ai-models.sh` | AI模型管理脚本（Ollama） |
 
 #### 数据库脚本
 
 | 脚本 | 说明 |
 |------|------|
-| `init-db-unified.sh` | 统一数据库初始化（自动检测环境） |
-| `init-db-local.sh` | 本地模式数据库初始化脚本 |
+| `setup-db.sh` | 数据库设置脚本（推荐，自动检测环境） |
+| `init-db-unified.sh` | 交互式数据库初始化 |
+| `init-db-local.sh` | 本地模式详细初始化（含 .env.local 生成） |
 | `init-vector-index.sh` | 初始化向量索引 |
 | `install-pgvector.sh` | 安装配置 pgvector |
-| `rebuild-postgres.sh` | 重建支持 pgvector 的 PostgreSQL 容器 |
 
 #### 开发脚本
 
 | 脚本 | 说明 |
 |------|------|
 | `build-all-services.sh` | 构建所有服务（已整合到 topems.sh build） |
-| `check-all-rust-services.sh` | 检查所有 Rust 服务编译状态 |
+| `test-all-rust-services.sh` | 检查所有 Rust 服务编译状态 |
 | `cleanup.sh` | 全面清理（端口、进程、缓存） |
 | `clean-warnings.sh` | 批量清理代码警告（自动修复） |
-| `run-clippy.sh` | 运行 Clippy 静态分析 |
 | `run-tests.sh` | 运行测试套件（已整合到 topems.sh test） |
-| `run_ci_tests.sh` | CI/CD 测试脚本 |
 | `test-hrm-api.sh` | HRM API 端到端测试 |
-| `collect-test-data.sh` | 收集测试数据 |
 | `encrypt-env.sh` | 加密环境变量文件 |
 
 #### 部署脚本
@@ -208,17 +235,14 @@ bash scripts/topems.sh status-docker
 ### 数据库初始化
 
 ```bash
-# 方式一：统一初始化脚本（交互式）
+# 方式一：自动检测（推荐）
+bash scripts/setup-db.sh
+
+# 方式二：交互式初始化
 bash scripts/init-db-unified.sh
 
-# 方式二：本地模式
+# 方式三：本地详细模式
 bash scripts/init-db-local.sh
-
-# 方式三：手动创建
-psql -U postgres << 'EOF'
-CREATE USER topems WITH PASSWORD 'topems_secret';
-CREATE DATABASE topems OWNER topems;
-EOF
 ```
 
 ### AI模型管理

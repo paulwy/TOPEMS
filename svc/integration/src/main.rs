@@ -245,9 +245,9 @@ async fn main() {
         .layer(cors);
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8004".to_string())
+        .unwrap_or_else(|_| "8005".to_string())
         .parse()
-        .unwrap_or(8004);
+        .unwrap_or(8005);
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     tracing::info!(

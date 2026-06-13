@@ -62,10 +62,10 @@ load_config() {
   export RUST_LOG="${RUST_LOG:-info}"
 }
 
-# 检查数据库
+# 检查数据库并运行迁移
 check_database() {
   info "检查数据库连接..."
-  
+
   # 检查PostgreSQL
   if psql "$DATABASE_URL" -c "SELECT 1" >/dev/null 2>&1; then
     success "PostgreSQL 连接正常"
@@ -75,7 +75,7 @@ check_database() {
     info "当前配置: $DATABASE_URL"
     exit 1
   fi
-  
+
   # 检查Redis
   if redis-cli -u "$REDIS_URL" ping >/dev/null 2>&1; then
     success "Redis 连接正常"
@@ -84,6 +84,91 @@ check_database() {
     info "请确保Redis服务已启动，并且配置正确"
     info "当前配置: $REDIS_URL"
     exit 1
+  fi
+
+  # 检查数据库迁移状态
+  check_migrations
+}
+
+# 检查并运行数据库迁移
+check_migrations() {
+  info "检查数据库迁移状态..."
+
+  local missing_migrations=()
+  # 定义有SQL迁移文件的服务（使用Rust原生迁移的服务不包含在此列表中）
+  local all_services=(
+    "iam:iam:svc/iam"
+    "pm:pm:svc/pm"
+    "portal:portal:svc/portal"
+    "integration:integration:svc/integration"
+    "erp:erp:svc/erp"
+    "hrm:hrm:svc/hrm"
+    "crm:crm:svc/crm"
+    "rs:rs:svc/rs"
+    "lims:lims:svc/lims"
+    "mes:mes:svc/mes"
+    "qms:qms:svc/qms"
+    "ehs:ehs:svc/ehs"
+    "scm:scm:svc/scm"
+    "srm:srm:svc/srm"
+    "wms:wms:svc/wms"
+    "file:storage:svc/file"
+    "mail:mail:svc/mail"
+    "im:im:svc/im"
+    "gis:GIS:svc/gis"
+    "bi:bi:svc/bi"
+    "report:report:svc/report"
+    "ai:ai:svc/ai"
+  )
+  # 注意：以下服务使用Rust原生迁移，不在此列表中：
+  # notification, doc, flow, pdm, mobile
+  # 这些服务会在启动时自动创建表
+
+  for service_info in "${all_services[@]}"; do
+    local svc_name="${service_info%%:*}"
+    local remaining="${service_info#*:}"
+    local schema_name="${remaining%%:*}"
+    local svc_path="${remaining##*:}"
+
+    # 检查 schema 是否存在且有表
+    local table_count=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE LOWER(table_schema) = LOWER('$schema_name');" 2>/dev/null | tr -d ' ')
+
+    if [ -z "$table_count" ] || [ "$table_count" = "0" ] || [ "$table_count" = "" ]; then
+      # 检查是否有迁移文件
+      if [ -d "$PROJECT_ROOT/$svc_path/migrations" ] && [ "$(ls -A "$PROJECT_ROOT/$svc_path/migrations" 2>/dev/null | wc -l)" -gt 0 ]; then
+        missing_migrations+=("$svc_name:$schema_name:$svc_path")
+      fi
+    fi
+  done
+
+  if [ ${#missing_migrations[@]} -gt 0 ]; then
+    warning "检测到 ${#missing_migrations[@]} 个模块缺少数据库表"
+    info "正在自动运行数据库迁移..."
+
+    for migration_info in "${missing_migrations[@]}"; do
+      local svc_name="${migration_info%%:*}"
+      local remaining="${migration_info#*:}"
+      local schema_name="${remaining%%:*}"
+      local svc_path="${remaining##*:}"
+
+      info "  迁移 $svc_name schema..."
+
+      # 创建 schema
+      psql "$DATABASE_URL" -c "CREATE SCHEMA IF NOT EXISTS $schema_name;" >/dev/null 2>&1 || true
+
+      # 运行迁移文件
+      if [ -d "$PROJECT_ROOT/$svc_path/migrations" ]; then
+        for migration_file in "$PROJECT_ROOT/$svc_path/migrations"/*.sql; do
+          if [ -f "$migration_file" ]; then
+            psql "$DATABASE_URL" -f "$migration_file" >/dev/null 2>&1 || true
+          fi
+        done
+      fi
+    done
+
+    success "数据库迁移完成"
+  else
+    success "数据库迁移状态正常"
   fi
 }
 
@@ -419,29 +504,76 @@ show_status() {
     # 检查数据库迁移状态
     echo ""
     echo "  📋 数据库迁移状态:"
-    
-    # 检查关键表是否存在（IAM 模块）
-    local iam_tables=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'iam';" 2>/dev/null | tr -d ' ')
-    if [ -n "$iam_tables" ] && [ "$iam_tables" -gt 0 ]; then
-      echo "     ✅ IAM 模块已迁移 ($iam_tables 张表)"
-    else
-      echo "     ❌ IAM 模块未迁移"
-    fi
-    
-    # 检查其他关键模块
-    local hrm_tables=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'hrm';" 2>/dev/null | tr -d ' ')
-    if [ -n "$hrm_tables" ] && [ "$hrm_tables" -gt 0 ]; then
-      echo "     ✅ HRM 模块已迁移 ($hrm_tables 张表)"
-    else
-      echo "     ❌ HRM 模块未迁移"
-    fi
-    
-    local ai_tables=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'ai';" 2>/dev/null | tr -d ' ')
-    if [ -n "$ai_tables" ] && [ "$ai_tables" -gt 0 ]; then
-      echo "     ✅ AI 模块已迁移 ($ai_tables 张表)"
-    else
-      echo "     ❌ AI 模块未迁移"
-    fi
+
+    # 检查所有模块的迁移状态
+    # 格式: schema_name:display_name
+    # 注意: 以下服务使用Rust原生迁移，启动时会自动创建表
+    #   notification, doc, flow, pdm, mobile
+    local all_services=(
+      "iam:IAM"
+      "pm:PM"
+      "portal:门户"
+      "integration:集成"
+      "erp:ERP"
+      "hrm:HRM"
+      "crm:CRM"
+      "rs:研发"
+      "lims:LIMS"
+      "mes:MES"
+      "qms:QMS"
+      "ehs:EHS"
+      "scm:SCM"
+      "srm:SRM"
+      "wms:WMS"
+      "storage:文件"
+      "mail:邮件"
+      "im:IM"
+      "gis:GIS"
+      "bi:BI"
+      "report:报表"
+      "ai:AI"
+    )
+
+    local migrated_count=0
+    local total_count=0
+
+    for service_info in "${all_services[@]}"; do
+      local schema_name="${service_info%%:*}"
+      local display_name="${service_info##*:}"
+      local table_count=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE LOWER(table_schema) = LOWER('$schema_name');" 2>/dev/null | tr -d ' ')
+
+      # BI 服务特殊处理：检查 bi schema 和 public schema 中的 BI 相关表
+      if [ "$schema_name" = "bi" ]; then
+        local bi_table_count=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE LOWER(table_schema) = 'bi' OR (table_schema = 'public' AND table_name IN ('data_sources', 'datasource_tables', 'datasource_fields', 'analysis_queries', 'analysis_results', 'analysis_history', 'saved_analysis_results', 'visualizations', 'visualization_data', 'dashboards', 'dashboard_widgets', 'report_templates', 'reports', 'report_data', 'report_schedules', 'audit_logs'));" 2>/dev/null | tr -d ' ')
+        table_count=$bi_table_count
+      fi
+
+      ((total_count++))
+
+      if [ -n "$table_count" ] && [ "$table_count" -gt 0 ]; then
+        echo "     ✅ $display_name ($table_count 张表)"
+        ((migrated_count++))
+      else
+        echo "     ❌ $display_name (未迁移)"
+      fi
+    done
+
+    # Rust 原生迁移的服务
+    echo ""
+    echo "  🔧 Rust 原生迁移服务 (启动时自动创建):"
+    for native_svc in "notification:通知" "flow:Flow" "pdm:PDM" "doc:文档" "mobile:移动"; do
+      local schema_name="${native_svc%%:*}"
+      local display_name="${native_svc##*:}"
+      local schema_exists=$(psql "$DATABASE_URL" -t -c "SELECT 1 FROM information_schema.schemata WHERE LOWER(schema_name) = LOWER('$schema_name');" 2>/dev/null | tr -d ' ')
+      if [ -n "$schema_exists" ] && [ "$schema_exists" = "1" ]; then
+        echo "     ✅ $display_name (schema 已创建)"
+      else
+        echo "     ⏳ $display_name (启动服务后创建)"
+      fi
+    done
+
+    echo ""
+    echo "     迁移进度: $migrated_count / $total_count 模块"
     
     # AI 向量数据
     local doc_count=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM ai.documents;" 2>/dev/null | tr -d ' ')
@@ -619,26 +751,54 @@ show_status() {
     echo "   • 安装模型: ollama pull qwen2.5:7b-instruct"
   fi
   
-  # 检查数据库迁移状态
+  # 检查数据库迁移状态（只检查有SQL迁移文件的服务）
   local missing_migrations=""
-  local iam_tables=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'iam';" 2>/dev/null | tr -d ' ')
-  if [ -z "$iam_tables" ] || [ "$iam_tables" = "0" ]; then
-    missing_migrations="$missing_migrations IAM"
-  fi
-  local hrm_tables=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'hrm';" 2>/dev/null | tr -d ' ')
-  if [ -z "$hrm_tables" ] || [ "$hrm_tables" = "0" ]; then
-    missing_migrations="$missing_migrations HRM"
-  fi
-  local ai_tables=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'ai';" 2>/dev/null | tr -d ' ')
-  if [ -z "$ai_tables" ] || [ "$ai_tables" = "0" ]; then
-    missing_migrations="$missing_migrations AI"
-  fi
-  
+  # 定义有SQL迁移文件的服务（使用Rust原生迁移的服务不包含在此列表中）
+  local services_with_migrations=(
+    "iam:svc/iam"
+    "pm:svc/pm"
+    "portal:svc/portal"
+    "integration:svc/integration"
+    "erp:svc/erp"
+    "hrm:svc/hrm"
+    "crm:svc/crm"
+    "rs:svc/rs"
+    "lims:svc/lims"
+    "mes:svc/mes"
+    "qms:svc/qms"
+    "ehs:svc/ehs"
+    "scm:svc/scm"
+    "srm:svc/srm"
+    "wms:svc/wms"
+    "file:svc/file"
+    "mail:svc/mail"
+    "im:svc/im"
+    "gis:svc/gis"
+    "bi:svc/bi"
+    "report:svc/report"
+    "ai:svc/ai"
+  )
+  # 注意：以下服务使用Rust原生迁移，不在此列表中：
+  # notification, doc, flow, pdm, mobile
+  # 这些服务会在启动时自动创建表
+
+  for service_info in "${services_with_migrations[@]}"; do
+    local svc_name="${service_info%%:*}"
+    local svc_path="${service_info##*:}"
+    local table_count=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$svc_name';" 2>/dev/null | tr -d ' ')
+
+    # 只检查有SQL迁移文件但未运行的服务
+    if [ -z "$table_count" ] || [ "$table_count" = "0" ] || [ "$table_count" = "" ]; then
+      if [ -d "$PROJECT_ROOT/$svc_path/migrations" ] && [ "$(ls -A "$PROJECT_ROOT/$svc_path/migrations" 2>/dev/null | wc -l)" -gt 0 ]; then
+        missing_migrations="$missing_migrations $svc_name"
+      fi
+    fi
+  done
+
   if [ -n "$missing_migrations" ]; then
     echo ""
-    echo "⚠️  数据库迁移未完成: $missing_migrations"
-    echo "   • 运行迁移: ./scripts/topems.sh setup-db"
-    echo "   • 或手动迁移: psql \"\$DATABASE_URL\" -f scripts/migrations/xxx.sql"
+    echo "⚠️  数据库迁移未完成:$missing_migrations"
+    echo "   • 启动时将自动运行迁移"
   fi
 }
 

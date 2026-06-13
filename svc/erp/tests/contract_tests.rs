@@ -11,6 +11,7 @@ mod tests {
 
         let login_response = client
             .post("http://localhost:8000/api/v1/auth/login")
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -19,7 +20,14 @@ mod tests {
             .await
             .expect("Login failed");
 
-        let json_response = login_response.json::<serde_json::Value>().await.unwrap();
+        // 检查响应状态
+        let status = login_response.status();
+        if !status.is_success() {
+            panic!("Login failed with status: {}", status);
+        }
+
+        let json_response = login_response.json::<serde_json::Value>().await
+            .expect("Failed to parse login response");
 
         let token = json_response["data"]["access_token"]
             .as_str()
@@ -33,7 +41,7 @@ mod tests {
                 "name": "Contract Test Project",
                 "code": "CONTRACT-TEST-001",
                 "description": "Project for contract testing",
-                "project_type": "R&D",
+                "project_type": "R_D",
                 "leader": "admin",
                 "start_date": "2024-01-01T00:00:00Z",
                 "budget": 200000.00
@@ -414,7 +422,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "Requires running services"]
+    #[ignore = "Requires correct API endpoints implementation"]
     async fn test_contract_integration() {
         test_project_contract_crud().await;
         test_project_budget_crud().await;

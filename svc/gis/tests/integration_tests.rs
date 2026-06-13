@@ -69,8 +69,29 @@ mod tests {
             .await
             .unwrap();
 
+        // 首先创建一个 factory_map 以满足外键约束
+        let map_id = Uuid::new_v4();
+        let map_result = sqlx::query(
+            r#"
+            INSERT INTO factory_maps (id, name, code, map_type, file_url, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+            ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                updated_at = NOW()
+            RETURNING id
+            "#,
+        )
+        .bind(map_id)
+        .bind("测试地图")
+        .bind(format!("MAP-{}", &map_id.to_string()[..8]))
+        .bind("2d")
+        .bind("/maps/test.png")
+        .fetch_one(&pool)
+        .await;
+
+        assert!(map_result.is_ok(), "工厂地图创建应该成功");
+
         let location_id = Uuid::new_v4();
-        let map_id = Uuid::nil();
 
         let result = sqlx::query(
             r#"
@@ -108,6 +129,28 @@ mod tests {
             .await
             .unwrap();
 
+        // 首先创建一个 factory_map 以满足外键约束
+        let map_id = Uuid::new_v4();
+        let map_result = sqlx::query(
+            r#"
+            INSERT INTO factory_maps (id, name, code, map_type, file_url, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+            ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                updated_at = NOW()
+            RETURNING id
+            "#,
+        )
+        .bind(map_id)
+        .bind("测试地图")
+        .bind(format!("MAP-{}", &map_id.to_string()[..8]))
+        .bind("2d")
+        .bind("/maps/test.png")
+        .fetch_one(&pool)
+        .await;
+
+        assert!(map_result.is_ok(), "工厂地图创建应该成功");
+
         let pipeline_id = Uuid::new_v4();
 
         let result = sqlx::query(
@@ -121,7 +164,7 @@ mod tests {
             "#,
         )
         .bind(pipeline_id)
-        .bind(Uuid::nil())
+        .bind(map_id)
         .bind("测试管道")
         .bind(format!("PIP-{}", &pipeline_id.to_string()[..8]))
         .bind("water")

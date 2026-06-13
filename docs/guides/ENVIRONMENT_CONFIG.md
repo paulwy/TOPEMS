@@ -366,8 +366,8 @@ CSRF_PROTECTION=true
 # 1. 验证环境变量
 ./scripts/manage-services.sh validate-env
 
-# 2. 初始化生产数据库
-./scripts/init-database.sh
+# 2. 初始化数据库
+bash scripts/setup-db.sh
 
 # 3. 启动服务
 ./scripts/deploy.sh

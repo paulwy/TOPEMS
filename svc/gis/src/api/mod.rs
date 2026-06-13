@@ -4,3 +4,4 @@ pub mod location;
 pub mod map;
 pub mod openapi;
 pub mod spatial;
+pub mod sync;

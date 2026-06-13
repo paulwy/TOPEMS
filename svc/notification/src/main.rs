@@ -248,9 +248,9 @@ async fn main() {
         .with_state(state);
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8003".to_string())
+        .unwrap_or_else(|_| "8002".to_string())
         .parse()
-        .unwrap_or(8003);
+        .unwrap_or(8002);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ Notification Service is running at http://{}", addr);
 

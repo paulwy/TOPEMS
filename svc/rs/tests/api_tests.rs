@@ -478,6 +478,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
     }
 
     #[tokio::test]
+    #[ignore = "需要运行的服务"]
     async fn test_rs_integration() {
         test_project_crud().await;
         test_project_batch_operations().await;

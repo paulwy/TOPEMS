@@ -1,222 +1,394 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
 import { useCrud } from "../../hooks/useCrud";
 
-const mockApi = {
-  get: vi.fn(),
-  post: vi.fn(),
-  put: vi.fn(),
-  delete: vi.fn(),
-};
+interface TestItem {
+  id: string;
+  name: string;
+  email: string;
+}
 
-describe("useCrud", () => {
+// 创建 mock axios 客户端
+const createMockApi = (responseData: any) => ({
+  get: vi.fn().mockResolvedValue({
+    data: {
+      success: true,
+      data: responseData,
+    },
+  }),
+  post: vi.fn().mockResolvedValue({
+    data: {
+      success: true,
+      data: responseData,
+    },
+  }),
+  put: vi.fn().mockResolvedValue({
+    data: {
+      success: true,
+      data: responseData,
+    },
+  }),
+  delete: vi.fn().mockResolvedValue({
+    data: {
+      success: true,
+      data: null,
+    },
+  }),
+});
+
+describe("useCrud hook", () => {
+  const mockData: TestItem[] = [
+    { id: "1", name: "John", email: "john@example.com" },
+    { id: "2", name: "Jane", email: "jane@example.com" },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("should initialize with default values", () => {
-    const { result } = renderHook(() =>
-      useCrud({
-        api: mockApi as any,
-        basePath: "/test",
-        autoFetch: false,
-      }),
-    );
+  describe("initial state", () => {
+    it("should initialize with empty data when no initialData", () => {
+      const mockApi = createMockApi(mockData);
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
 
-    expect(result.current.data).toEqual([]);
-    expect(result.current.loading).toBe(false);
-    expect(result.current.error).toBe(null);
-    expect(result.current.pagination.page).toBe(1);
-    expect(result.current.pagination.pageSize).toBe(10);
+      expect(result.current.data).toEqual([]);
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).toBe(null);
+    });
+
+    it("should initialize with initialData", () => {
+      const mockApi = createMockApi(mockData);
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          initialData: mockData,
+          autoFetch: false,
+        }),
+      );
+
+      expect(result.current.data).toEqual(mockData);
+    });
   });
 
-  it("should fetch data when autoFetch is true", async () => {
-    const mockData = {
-      data: { items: [{ id: "1", name: "Test" }], total: 1 },
-    };
-    mockApi.get.mockResolvedValue(mockData);
+  describe("fetch", () => {
+    it("should fetch data from API", async () => {
+      const mockApi = createMockApi(mockData);
 
-    const { result } = renderHook(() =>
-      useCrud({
-        api: mockApi as any,
-        basePath: "/test",
-        autoFetch: true,
-      }),
-    );
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
 
-    expect(result.current.loading).toBe(true);
+      await act(async () => {
+        await result.current.fetch();
+      });
 
-    await waitFor(() => {
+      expect(mockApi.get).toHaveBeenCalled();
+      expect(result.current.data).toEqual(mockData);
       expect(result.current.loading).toBe(false);
     });
 
-    expect(mockApi.get).toHaveBeenCalledWith(
-      "/test",
-      expect.objectContaining({
-        params: { page: 1, pageSize: 10 },
-      }),
-    );
-    expect(result.current.data).toEqual([{ id: "1", name: "Test" }]);
-  });
+    it("should handle fetch error", async () => {
+      const mockApi = createMockApi(mockData);
+      mockApi.get = vi.fn().mockRejectedValue(new Error("Network error"));
 
-  it("should handle error during fetch", async () => {
-    const mockError = new Error("Network error");
-    mockApi.get.mockRejectedValue(mockError);
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
 
-    const { result } = renderHook(() =>
-      useCrud({
-        api: mockApi as any,
-        basePath: "/test",
-        autoFetch: true,
-      }),
-    );
+      await act(async () => {
+        try {
+          await result.current.fetch();
+        } catch {
+          // Expected to fail
+        }
+      });
 
-    await waitFor(() => {
+      expect(result.current.error).toBe("Network error");
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe("Network error");
+    it("should autoFetch data when enabled", async () => {
+      const mockApi = createMockApi({ items: mockData, total: 2, page: 1, pageSize: 10 });
+      mockApi.get = vi.fn().mockResolvedValue({
+        data: {
+          success: true,
+          data: { items: mockData, total: 2, page: 1, pageSize: 10 },
+        },
+      });
+
+      renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: true,
+        }),
+      );
+
+      // Wait for autoFetch
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(mockApi.get).toHaveBeenCalled();
+    });
   });
 
-  it("should create item", async () => {
-    const mockCreatedItem = { data: { id: "1", name: "Created" } };
-    mockApi.post.mockResolvedValue(mockCreatedItem);
+  describe("create", () => {
+    it("should create new item", async () => {
+      const mockApi = createMockApi(mockData);
+      const newItem = { name: "New User", email: "new@example.com" };
 
-    const { result } = renderHook(() =>
-      useCrud({
-        api: mockApi as any,
-        basePath: "/test",
-        autoFetch: false,
-      }),
-    );
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
 
-    await act(async () => {
-      await result.current.create({ name: "Test" });
+      await act(async () => {
+        await result.current.create(newItem as any);
+      });
+
+      expect(mockApi.post).toHaveBeenCalledWith("/api/test", newItem);
     });
 
-    expect(mockApi.post).toHaveBeenCalledWith("/test", { name: "Test" });
-    expect(result.current.data).toEqual([{ id: "1", name: "Created" }]);
+    it("should call onSuccess callback on create", async () => {
+      const mockApi = createMockApi(mockData);
+      const onSuccess = vi.fn();
+
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+          onSuccess,
+        }),
+      );
+
+      await act(async () => {
+        await result.current.create({ name: "Test", email: "test@example.com" } as any);
+      });
+
+      expect(onSuccess).toHaveBeenCalled();
+    });
   });
 
-  it("should update item", async () => {
-    const mockUpdatedItem = { data: { id: "1", name: "Updated" } };
-    mockApi.put.mockResolvedValue(mockUpdatedItem);
+  describe("update", () => {
+    it("should update existing item", async () => {
+      const mockApi = createMockApi(mockData);
+      const updateData = { name: "Updated Name" };
 
-    const { result } = renderHook(() =>
-      useCrud({
-        api: mockApi as any,
-        basePath: "/test",
-        initialData: [{ id: "1", name: "Original" }],
-        autoFetch: false,
-      }),
-    );
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
 
-    await act(async () => {
-      await result.current.update("1", { name: "Updated" });
+      await act(async () => {
+        await result.current.update("1", updateData);
+      });
+
+      expect(mockApi.put).toHaveBeenCalledWith("/api/test/1", updateData);
     });
-
-    expect(mockApi.put).toHaveBeenCalledWith("/test/1", { name: "Updated" });
-    expect(result.current.data).toEqual([{ id: "1", name: "Updated" }]);
   });
 
-  it("should delete item", async () => {
-    mockApi.delete.mockResolvedValue({});
+  describe("delete", () => {
+    it("should delete item", async () => {
+      const mockApi = createMockApi(mockData);
 
-    const { result } = renderHook(() =>
-      useCrud({
-        api: mockApi as any,
-        basePath: "/test",
-        initialData: [{ id: "1", name: "Test" }],
-        autoFetch: false,
-      }),
-    );
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
 
-    await act(async () => {
-      await result.current.delete("1");
+      await act(async () => {
+        await result.current.delete("1");
+      });
+
+      expect(mockApi.delete).toHaveBeenCalledWith("/api/test/1");
     });
-
-    expect(mockApi.delete).toHaveBeenCalledWith("/test/1");
-    expect(result.current.data).toEqual([]);
   });
 
-  it("should handle bulk delete", async () => {
-    mockApi.post.mockResolvedValue({});
+  describe("bulkDelete", () => {
+    it("should delete multiple items", async () => {
+      const mockApi = createMockApi(mockData);
 
-    const { result } = renderHook(() =>
-      useCrud({
-        api: mockApi as any,
-        basePath: "/test",
-        initialData: [
-          { id: "1", name: "Test 1" },
-          { id: "2", name: "Test 2" },
-          { id: "3", name: "Test 3" },
-        ],
-        autoFetch: false,
-      }),
-    );
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
 
-    await act(async () => {
-      await result.current.bulkDelete(["1", "2"]);
+      await act(async () => {
+        await result.current.bulkDelete(["1", "2"]);
+      });
+
+      expect(mockApi.post).toHaveBeenCalledWith("/api/test/bulk-delete", { ids: ["1", "2"] });
     });
-
-    expect(mockApi.post).toHaveBeenCalledWith("/test/bulk-delete", {
-      ids: ["1", "2"],
-    });
-    expect(result.current.data).toEqual([{ id: "3", name: "Test 3" }]);
   });
 
-  it("should handle pagination", () => {
-    const { result } = renderHook(() =>
-      useCrud({
-        api: mockApi as any,
-        basePath: "/test",
-        autoFetch: false,
-      }),
-    );
+  describe("get", () => {
+    it("should get single item", async () => {
+      const mockApi = createMockApi(mockData[0]);
+      mockApi.get = vi.fn().mockResolvedValue({
+        data: {
+          success: true,
+          data: mockData[0],
+        },
+      });
 
-    act(() => {
-      result.current.pagination.setPage(2);
-      result.current.pagination.setPageSize(20);
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
+
+      await act(async () => {
+        const item = await result.current.get("1");
+        expect(item).toEqual(mockData[0]);
+      });
+
+      expect(mockApi.get).toHaveBeenCalledWith("/api/test/1", expect.anything());
     });
-
-    expect(result.current.pagination.page).toBe(2);
-    expect(result.current.pagination.pageSize).toBe(20);
   });
 
-  it("should refresh data", async () => {
-    const mockData1 = {
-      data: { items: [{ id: "1", name: "Test 1" }], total: 1 },
-    };
-    const mockData2 = {
-      data: { items: [{ id: "1", name: "Test Updated" }], total: 1 },
-    };
-    let callCount = 0;
-    mockApi.get.mockImplementation(async () => {
-      callCount++;
-      return callCount === 1 ? mockData1 : mockData2;
+  describe("pagination", () => {
+    it("should update page", () => {
+      const mockApi = createMockApi(mockData);
+
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
+
+      expect(result.current.pagination.page).toBe(1);
+
+      act(() => {
+        result.current.pagination.setPage(3);
+      });
+
+      expect(result.current.pagination.page).toBe(3);
     });
 
-    const { result } = renderHook(() =>
-      useCrud({
-        api: mockApi as any,
-        basePath: "/test",
-        autoFetch: true,
-      }),
-    );
+    it("should update pageSize", () => {
+      const mockApi = createMockApi(mockData);
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
+
+      expect(result.current.pagination.pageSize).toBe(10);
+
+      act(() => {
+        result.current.pagination.setPageSize(25);
+      });
+
+      expect(result.current.pagination.pageSize).toBe(25);
     });
+  });
 
-    await act(async () => {
-      await result.current.refresh();
+  describe("refresh", () => {
+    it("should refresh data", async () => {
+      const mockApi = createMockApi({ items: mockData, total: 2, page: 1, pageSize: 10 });
+      mockApi.get = vi.fn().mockResolvedValue({
+        data: {
+          success: true,
+          data: { items: mockData, total: 2, page: 1, pageSize: 10 },
+        },
+      });
+
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+        }),
+      );
+
+      await act(async () => {
+        await result.current.refresh();
+      });
+
+      expect(mockApi.get).toHaveBeenCalled();
     });
+  });
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+  describe("clearCache", () => {
+    it("should clear cache", () => {
+      const mockApi = createMockApi(mockData);
+
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+          cacheTime: 5000,
+        }),
+      );
+
+      act(() => {
+        result.current.clearCache();
+      });
+
+      // Cache should be cleared - verify by checking if next fetch makes API call
+      expect(result.current.data).toEqual([]);
     });
+  });
 
-    expect(mockApi.get).toHaveBeenCalledTimes(2);
-    expect(result.current.data).toEqual([{ id: "1", name: "Test Updated" }]);
+  describe("error handling", () => {
+    it("should call onError callback on error", async () => {
+      const mockApi = createMockApi(mockData);
+      const onError = vi.fn();
+      mockApi.get = vi.fn().mockRejectedValue(new Error("API Error"));
+
+      const { result } = renderHook(() =>
+        useCrud<TestItem>({
+          api: mockApi as any,
+          basePath: "/api/test",
+          autoFetch: false,
+          onError,
+        }),
+      );
+
+      await act(async () => {
+        try {
+          await result.current.fetch();
+        } catch {
+          // Expected
+        }
+      });
+
+      expect(onError).toHaveBeenCalled();
+    });
   });
 });

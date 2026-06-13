@@ -158,19 +158,21 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
+        let organization_id = Uuid::new_v4();
         let warehouse_code = format!("WH-{}", &warehouse_id.to_string()[..8]);
 
         let result = sqlx::query(
             r#"
-            INSERT INTO wms.warehouses (id, code, name, type, status, address, manager, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO wms.warehouses (id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, address, manager, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
-                name = EXCLUDED.name,
+                warehouse_name = EXCLUDED.warehouse_name,
                 updated_at = NOW()
             RETURNING id
             "#,
         )
         .bind(warehouse_id)
+        .bind(organization_id)
         .bind(&warehouse_code)
         .bind(format!("测试仓库-{}", &warehouse_id.to_string()[..8]))
         .bind("原材料仓库")
@@ -189,7 +191,7 @@ mod tests {
 
         let result = sqlx::query_as::<_, WarehouseRow>(
             r#"
-            SELECT id, code, name, type, status, address, manager, contact, phone, capacity, current_stock, created_at, updated_at
+            SELECT id, warehouse_code, warehouse_name, warehouse_type, status, address, manager, contact_person, contact_phone, total_capacity, current_capacity, created_at, updated_at
             FROM wms.warehouses
             WHERE status = 'active'
             ORDER BY created_at DESC
@@ -215,15 +217,17 @@ mod tests {
 
         // 创建测试仓库
         let warehouse_id = Uuid::new_v4();
+        let organization_id = Uuid::new_v4();
         let warehouse_code = format!("WH-TEST-{}", &warehouse_id.to_string()[..6]);
 
         sqlx::query(
             r#"
-            INSERT INTO wms.warehouses (id, code, name, type, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+            INSERT INTO wms.warehouses (id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             "#,
         )
         .bind(warehouse_id)
+        .bind(organization_id)
         .bind(&warehouse_code)
         .bind("测试仓库")
         .bind("原材料仓库")
@@ -234,19 +238,23 @@ mod tests {
 
         // 创建测试库位
         let location_id = Uuid::new_v4();
+        let location_code = format!("{}-A-01-01-01", &warehouse_code[..6]);
         sqlx::query(
             r#"
-            INSERT INTO wms.locations (id, warehouse_id, zone, rack, shelf, bin, location_code, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            INSERT INTO wms.locations (id, organization_id, warehouse_id, location_code, location_name, zone, aisle, shelf, level, position, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
             "#,
         )
         .bind(location_id)
+        .bind(organization_id)
         .bind(warehouse_id)
+        .bind(&location_code)
+        .bind(format!("库位-{}", &location_id.to_string()[..6]))
         .bind("A区")
         .bind("01")
         .bind("01")
         .bind("01")
-        .bind(format!("{}-A-01-01-01", &warehouse_code[..6]))
+        .bind("01")
         .bind("active")
         .execute(&pool)
         .await
@@ -254,21 +262,22 @@ mod tests {
 
         // 创建入库单
         let inbound_id = Uuid::new_v4();
-        let inbound_no = format!("IN-{}", &inbound_id.to_string()[..10]);
+        let order_number = format!("IN-{}", &inbound_id.to_string()[..10]);
 
         let inbound_result = sqlx::query(
             r#"
-            INSERT INTO wms.inbound_orders (id, order_no, warehouse_id, order_type, status, supplier, expected_arrival_date, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO wms.inbound_orders (id, organization_id, order_number, warehouse_id, order_type, status, supplier_name, expected_arrival_date, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
         .bind(inbound_id)
-        .bind(&inbound_no)
+        .bind(organization_id)
+        .bind(&order_number)
         .bind(warehouse_id)
         .bind("采购入库")
         .bind("pending")
         .bind("测试供应商")
-        .bind(chrono::Utc::now())
+        .bind(chrono::Utc::now().date_naive())
         .execute(&pool)
         .await;
 
@@ -316,17 +325,16 @@ mod tests {
 #[allow(unused)]
 struct WarehouseRow {
     id: Uuid,
-    code: String,
-    name: String,
-    #[sqlx(rename = "type")]
+    warehouse_code: String,
+    warehouse_name: String,
     warehouse_type: String,
     status: String,
     address: Option<String>,
     manager: Option<String>,
-    contact: Option<String>,
-    phone: Option<String>,
-    capacity: Option<i32>,
-    current_stock: Option<i32>,
+    contact_person: Option<String>,
+    contact_phone: Option<String>,
+    total_capacity: Option<f64>,
+    current_capacity: Option<f64>,
     created_at: chrono::DateTime<chrono::Utc>,
     updated_at: chrono::DateTime<chrono::Utc>,
 }

@@ -2,6 +2,12 @@
 -- 创建时间: 2024-01-01
 -- 版本: 001
 
+-- 创建 schema（如果不存在）
+CREATE SCHEMA IF NOT EXISTS bi;
+
+-- 设置搜索路径
+SET search_path TO bi, public;
+
 -- 创建枚举类型
 CREATE TYPE analysis_type AS ENUM ('query', 'aggregation', 'comparison', 'trend');
 CREATE TYPE report_type AS ENUM ('table', 'chart', 'dashboard', 'pdf', 'excel', 'custom');

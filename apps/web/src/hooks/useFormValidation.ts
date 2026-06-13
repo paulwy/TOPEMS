@@ -126,7 +126,7 @@ export function useFormValidation<T extends Record<string, any>>(
 
   const hasFieldError = useCallback(
     (field: string): boolean => {
-      return touched[field] && !!errors[field];
+      return Boolean(touched[field] && errors[field]);
     },
     [errors, touched],
   );

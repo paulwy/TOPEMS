@@ -83,7 +83,7 @@ start_local_postgres() {
     # 检查数据目录是否存在
     if [ ! -d "$pg_data_dir" ] || [ -z "$(ls -A "$pg_data_dir")" ]; then
         info "初始化 PostgreSQL 数据目录..."
-        initdb -D "$pg_data_dir" || return 1
+        initdb -D "$pg_data_dir" || { error "PostgreSQL 数据目录初始化失败"; return 1; }
     fi
     
     # 配置监听地址
@@ -98,7 +98,7 @@ start_local_postgres() {
     
     # 启动 PostgreSQL
     info "启动本地 PostgreSQL..."
-    pg_ctl -D "$pg_data_dir" -l /tmp/postgres.log start || return 1
+    pg_ctl -D "$pg_data_dir" -l /tmp/postgres.log start || { error "PostgreSQL 启动失败"; cat /tmp/postgres.log 2>/dev/null | tail -10; return 1; }
     
     # 等待启动
     info "等待 PostgreSQL 启动..."

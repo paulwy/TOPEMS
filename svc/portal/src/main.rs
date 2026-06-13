@@ -116,7 +116,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(CookieManagerLayer::new())
         .layer(prometheus_layer);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8005".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8003".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-PORTAL 统一门户系统启动中...");

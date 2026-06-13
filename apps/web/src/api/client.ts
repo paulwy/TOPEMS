@@ -152,17 +152,24 @@ class ApiClient {
 
           if (error.response?.status === 401) {
             const currentPath = window.location.pathname;
-            if (currentPath !== "/login" && currentPath !== "/register") {
+            // Skip token clearing for notification service - it may return 401
+            // even with a valid IAM token (separate user database)
+            const isNotificationService =
+              error.config?.baseURL?.includes("8002");
+            if (
+              currentPath !== "/login" &&
+              currentPath !== "/register" &&
+              !isNotificationService
+            ) {
               if (localStorage.getItem("token")) {
-                logger.warn(
-                  "Unauthorized, clearing invalid token and redirecting to login",
-                );
+                logger.warn("Unauthorized, clearing invalid token");
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
                 localStorage.removeItem("roles");
                 localStorage.removeItem("permissions");
                 apiClient.clearAuthToken();
-                window.location.href = "/login";
+                // Dispatch custom event to notify AuthProvider to update React state
+                window.dispatchEvent(new CustomEvent("auth:unauthorized"));
               }
             }
           }

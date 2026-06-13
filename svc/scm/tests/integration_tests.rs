@@ -101,26 +101,39 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let order_id = Uuid::new_v4();
-        let order_no = format!("PO-{}", &order_id.to_string()[..10]);
+        let po_no = format!("PO-{}", &order_id.to_string()[..10]);
+
+        // 先创建一个供应商
+        let supplier_id = Uuid::new_v4();
+        let supplier_no = format!("SUP-{}", &supplier_id.to_string()[..8]);
+        sqlx::query(
+            r#"
+            INSERT INTO scm.suppliers (id, supplier_no, name, category, status, risk_level, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, 'active', 'low', NOW(), NOW())
+            ON CONFLICT (id) DO UPDATE SET updated_at = NOW()
+            "#,
+        )
+        .bind(supplier_id)
+        .bind(&supplier_no)
+        .bind(format!("Test Supplier {}", &supplier_id.to_string()[..6]))
+        .bind("raw_material")
+        .execute(&pool)
+        .await
+        .expect("创建供应商失败");
 
         let result = sqlx::query(
             r#"
-            INSERT INTO scm.purchase_orders (id, order_no, supplier_id, status, order_date, expected_date, total_amount, created_by, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-            ON CONFLICT (id) DO UPDATE SET
-                order_no = EXCLUDED.order_no,
-                updated_at = NOW()
+            INSERT INTO scm.purchase_orders (id, po_no, supplier_id, status, order_date, currency, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, 'CNY', NOW(), NOW())
+            ON CONFLICT (id) DO UPDATE SET updated_at = NOW()
             RETURNING id
             "#,
         )
         .bind(order_id)
-        .bind(&order_no)
-        .bind(Uuid::new_v4())
-        .bind("pending")
+        .bind(&po_no)
+        .bind(supplier_id)
+        .bind("draft")
         .bind(chrono::Utc::now())
-        .bind(chrono::Utc::now())
-        .bind(10000.00)
-        .bind("admin")
         .fetch_one(&pool)
         .await;
 
@@ -133,7 +146,7 @@ mod tests {
 
         let result = sqlx::query_as::<_, PurchaseOrderRow>(
             r#"
-            SELECT id, order_no, supplier_id, status, order_date, expected_date, actual_date, total_amount, discount_amount, final_amount, payment_status, created_by, created_at, updated_at
+            SELECT id, po_no, supplier_id, status, order_date, expected_date, actual_date, total_amount, currency, created_at, updated_at
             FROM scm.purchase_orders
             ORDER BY created_at DESC
             LIMIT 10
@@ -156,24 +169,39 @@ mod tests {
     async fn test_purchase_order_status_update() {
         let pool = setup_test_pool().await.unwrap();
 
+        // 先创建一个供应商
+        let supplier_id = Uuid::new_v4();
+        let supplier_no = format!("SUP-{}", &supplier_id.to_string()[..8]);
+        sqlx::query(
+            r#"
+            INSERT INTO scm.suppliers (id, supplier_no, name, category, status, risk_level, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, 'active', 'low', NOW(), NOW())
+            ON CONFLICT (id) DO UPDATE SET updated_at = NOW()
+            "#,
+        )
+        .bind(supplier_id)
+        .bind(&supplier_no)
+        .bind(format!("Test Supplier {}", &supplier_id.to_string()[..6]))
+        .bind("raw_material")
+        .execute(&pool)
+        .await
+        .expect("创建供应商失败");
+
         // 创建一个新的采购订单
         let order_id = Uuid::new_v4();
-        let order_no = format!("PO-TEST-{}", &order_id.to_string()[..8]);
+        let po_no = format!("PO-TEST-{}", &order_id.to_string()[..8]);
 
         sqlx::query(
             r#"
-            INSERT INTO scm.purchase_orders (id, order_no, supplier_id, status, order_date, expected_date, total_amount, created_by, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            INSERT INTO scm.purchase_orders (id, po_no, supplier_id, status, order_date, currency, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, 'CNY', NOW(), NOW())
             "#,
         )
         .bind(order_id)
-        .bind(&order_no)
-        .bind(Uuid::new_v4())
-        .bind("pending")
+        .bind(&po_no)
+        .bind(supplier_id)
+        .bind("draft")
         .bind(chrono::Utc::now())
-        .bind(chrono::Utc::now())
-        .bind(10000.00)
-        .bind("admin")
         .execute(&pool)
         .await
         .expect("创建测试数据失败");
@@ -219,12 +247,12 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let supplier_id = Uuid::new_v4();
-        let supplier_code = format!("SUP-{}", &supplier_id.to_string()[..8]);
+        let supplier_no = format!("SUP-{}", &supplier_id.to_string()[..8]);
 
         let result = sqlx::query(
             r#"
-            INSERT INTO scm.suppliers (id, code, name, contact_person, phone, email, address, status, rating, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+            INSERT INTO scm.suppliers (id, supplier_no, name, category, status, risk_level, contact_person, phone, email, address, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 updated_at = NOW()
@@ -232,14 +260,15 @@ mod tests {
             "#,
         )
         .bind(supplier_id)
-        .bind(&supplier_code)
+        .bind(&supplier_no)
         .bind(format!("测试供应商-{}", &supplier_id.to_string()[..6]))
+        .bind("raw_material")
+        .bind("active")
+        .bind("low")
         .bind("联系人")
         .bind("13800138000")
         .bind("test@example.com")
         .bind("测试地址")
-        .bind("active")
-        .bind(4.5)
         .fetch_one(&pool)
         .await;
 
@@ -272,17 +301,14 @@ mod tests {
 #[derive(Debug, sqlx::FromRow)]
 struct PurchaseOrderRow {
     id: Uuid,
-    order_no: String,
+    po_no: String,
     supplier_id: Uuid,
     status: String,
     order_date: chrono::DateTime<chrono::Utc>,
-    expected_date: chrono::DateTime<chrono::Utc>,
+    expected_date: Option<chrono::DateTime<chrono::Utc>>,
     actual_date: Option<chrono::DateTime<chrono::Utc>>,
     total_amount: Option<rust_decimal::Decimal>,
-    discount_amount: Option<rust_decimal::Decimal>,
-    final_amount: Option<rust_decimal::Decimal>,
-    payment_status: Option<String>,
-    created_by: Option<String>,
+    currency: String,
     created_at: chrono::DateTime<chrono::Utc>,
     updated_at: chrono::DateTime<chrono::Utc>,
 }

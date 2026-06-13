@@ -19,6 +19,18 @@ warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 step() { echo -e "${BLUE}[STEP]${NC} $1"; }
 
+# 获取所有有测试的服务
+get_services_with_tests() {
+    local services=()
+    for dir in svc/*/; do
+        local svc_name=$(basename "$dir")
+        if [ -d "$dir/tests" ] && [ "$(ls -A "$dir/tests" 2>/dev/null | wc -l)" -gt 0 ]; then
+            services+=("$svc_name")
+        fi
+    done
+    echo "${services[@]}"
+}
+
 check_dependencies() {
     step "检查测试依赖..."
     
@@ -27,13 +39,10 @@ check_dependencies() {
     fi
     
     if ! command -v cargo-nextest &> /dev/null; then
-        warn "未找到 cargo-nextest，正在安装..."
-        cargo install cargo-nextest --locked
-    fi
-    
-    if ! command -v cargo-llvm-cov &> /dev/null; then
-        warn "未找到 cargo-llvm-cov，正在安装..."
-        cargo install cargo-llvm-cov --locked
+        warn "未找到 cargo-nextest，使用标准 cargo test"
+        USE_NEXTEST=false
+    else
+        USE_NEXTEST=true
     fi
     
     log "依赖检查完成"
@@ -42,7 +51,11 @@ check_dependencies() {
 run_unit_tests() {
     step "运行单元测试..."
     
-    cargo nextest run --all --no-fail-fast --test-threads=4
+    if [ "$USE_NEXTEST" = true ]; then
+        cargo nextest run --workspace --no-fail-fast --test-threads=4
+    else
+        cargo test --workspace --no-fail-fast
+    fi
     
     if [ $? -eq 0 ]; then
         log "${GREEN}✓${NC} 单元测试通过"
@@ -54,38 +67,51 @@ run_unit_tests() {
 run_integration_tests() {
     step "运行集成测试..."
     
-    local services=(
-        "iam"
-        "hrm"
-        "erp"
-        "crm"
-        "doc"
-    )
+    # 获取所有有测试的服务
+    local services=($(get_services_with_tests))
+    
+    log "发现 ${#services[@]} 个服务有测试"
+    
+    local passed=0
+    local failed=0
     
     for service in "${services[@]}"; do
         svc_dir="$PROJECT_ROOT/svc/$service"
-        if [ -d "$svc_dir/tests" ]; then
-            log "运行 $service 集成测试..."
-            cd "$svc_dir"
-            cargo nextest run --test '*_tests' --no-fail-fast
-            
-            if [ $? -ne 0 ]; then
-                error "$service 集成测试失败"
-            fi
+        log "运行 $service 集成测试..."
+        
+        cd "$svc_dir"
+        
+        if cargo test --quiet 2>&1 | tail -n 1 | grep -q "test result:"; then
+            local result=$(cargo test --quiet 2>&1 | tail -n 1)
+            echo -e "     ${GREEN}✓${NC} $result"
+            ((passed++))
         else
-            warn "跳过 $service：无测试目录"
+            echo -e "     ${RED}✗${NC} 测试失败"
+            ((failed++))
+            FAILED+=("$service")
         fi
+        
+        cd - > /dev/null 2>&1
     done
     
-    cd "$PROJECT_ROOT"
-    log "${GREEN}✓${NC} 集成测试通过"
+    echo ""
+    log "集成测试完成: ${GREEN}$passed 通过${NC}, ${RED}$failed 失败${NC}"
+    
+    if [ $failed -gt 0 ]; then
+        error "部分集成测试失败"
+    fi
 }
 
 run_coverage() {
     step "生成测试覆盖率报告..."
     
+    if ! command -v cargo-llvm-cov &> /dev/null; then
+        warn "未找到 cargo-llvm-cov，正在安装..."
+        cargo install cargo-llvm-cov --locked
+    fi
+    
     cargo llvm-cov clean --workspace
-    cargo llvm-cov run --all --no-fail-fast
+    cargo llvm-cov run --workspace --no-fail-fast
     cargo llvm-cov report --lcov --output-path lcov.info
     cargo llvm-cov show --html --output-dir target/coverage/html
     
@@ -94,23 +120,10 @@ run_coverage() {
     log "LCOV 报告: file://$PROJECT_ROOT/lcov.info"
 }
 
-run_mutation_tests() {
-    step "运行变异测试..."
-    
-    if ! command -v cargo-mutants &> /dev/null; then
-        warn "未找到 cargo-mutants，正在安装..."
-        cargo install cargo-mutants --locked
-    fi
-    
-    cargo mutants --all-targets --output-format=html
-    
-    log "${GREEN}✓${NC} 变异测试完成"
-}
-
 run_static_analysis() {
     step "运行静态分析..."
     
-    cargo clippy --all --all-targets -- -D warnings
+    cargo clippy --workspace --all-targets -- -D warnings
     
     if [ $? -eq 0 ]; then
         log "${GREEN}✓${NC} 静态分析通过"
@@ -138,7 +151,6 @@ run_all() {
     run_static_analysis
     run_unit_tests
     run_integration_tests
-    run_coverage
     
     echo ""
     echo "=============================================="
@@ -150,11 +162,10 @@ show_usage() {
     echo "用法: $0 <command>"
     echo ""
     echo "命令:"
-    echo "  all           运行所有测试（格式检查+静态分析+单元测试+集成测试+覆盖率）"
+    echo "  all           运行所有测试（格式检查+静态分析+单元测试+集成测试）"
     echo "  unit          仅运行单元测试"
     echo "  integration   仅运行集成测试"
     echo "  coverage      生成测试覆盖率报告"
-    echo "  mutation      运行变异测试"
     echo "  lint          运行静态分析 (clippy)"
     echo "  format        检查代码格式"
     echo ""
@@ -164,6 +175,10 @@ show_usage() {
     echo "  $0 coverage         # 生成覆盖率报告"
     echo ""
 }
+
+# 主命令处理
+USE_NEXTEST=false
+FAILED=()
 
 case "${1:-help}" in
     all)
@@ -181,10 +196,6 @@ case "${1:-help}" in
     coverage)
         check_dependencies
         run_coverage
-        ;;
-    mutation)
-        check_dependencies
-        run_mutation_tests
         ;;
     lint)
         run_static_analysis
