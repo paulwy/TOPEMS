@@ -29,7 +29,7 @@ impl GisAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO gis.audit_logs (action, resource_type, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -62,7 +62,7 @@ impl GisAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO gis.audit_logs (action, resource_type, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -95,7 +95,7 @@ impl GisAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO gis.audit_logs (action, resource_type, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -128,7 +128,7 @@ impl GisAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO gis.audit_logs (action, resource_type, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -161,7 +161,7 @@ impl GisAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO gis.audit_logs (action, resource_type, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -194,7 +194,7 @@ impl GisAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO gis.audit_logs (action, resource_type, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -223,15 +223,15 @@ impl GisAuditService {
         let logs = sqlx::query_as::<_, GisAuditLogEntry>(
             r#"
             SELECT
-                id, action, resource as entity_type, resource_id as entity_id,
-                user_id::text, details as request_details, status, error_message,
-                ip_address, user_agent, created_at
-            FROM shared.audit_logs
+                id, action, resource_type, resource_id,
+                user_id, details as request_details, status, error_message,
+                ip_address, created_at
+            FROM gis.audit_logs
             WHERE ($1::text IS NULL OR action = $1)
-              AND ($2::text IS NULL OR resource = $2)
+              AND ($2::text IS NULL OR resource_type = $2)
               AND ($3::text IS NULL OR user_id::text = $3)
               AND ($4::text IS NULL OR status = $4)
-              AND resource IN ('factory_map', 'device_location', 'pipeline', 'warehouse_location', 'business_location', 'map_marker', 'geodata')
+              AND resource_type IN ('factory_map', 'device_location', 'pipeline', 'warehouse_location', 'business_location', 'map_marker', 'geodata')
             ORDER BY created_at DESC
             LIMIT $5 OFFSET $6
             "#,
@@ -253,13 +253,15 @@ impl GisAuditService {
 pub struct GisAuditLogEntry {
     pub id: Uuid,
     pub action: String,
+    #[sqlx(rename = "resource_type")]
     pub entity_type: String,
+    #[sqlx(rename = "resource_id")]
     pub entity_id: Option<Uuid>,
-    pub user_id: Option<String>,
+    pub user_id: Option<Uuid>,
+    #[sqlx(rename = "details")]
     pub request_details: Option<serde_json::Value>,
     pub status: String,
     pub error_message: Option<String>,
     pub ip_address: Option<String>,
-    pub user_agent: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }

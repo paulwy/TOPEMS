@@ -179,7 +179,7 @@ async fn get_employee_details(
         r#"
         SELECT 
             e.id, e.company_id, e.department_id, e.position_id,
-            e.employee_no, e.name, e.gender, e.hire_date,
+            e.employee_number, e.name, e.gender, e.hire_date,
             e.email, e.phone, e.status,
             e.created_at, e.updated_at,
             d.name as department_name,
@@ -206,7 +206,7 @@ async fn get_employee_details(
                 "department_name": row.department_name,
                 "position_id": row.position_id,
                 "position_name": row.position_name,
-                "employee_no": row.employee_no,
+                "employee_no": row.employee_number,
                 "name": row.name,
                 "gender": row.gender,
                 "hire_date": row.hire_date,
@@ -440,7 +440,7 @@ async fn export_employees(
             sqlx::query_as::<_, Employee>(
                 r#"
                 SELECT id, company_id, department_id, position_id,
-                       employee_no, name, gender, hire_date,
+                       employee_number, name, gender, hire_date,
                        email, phone, status,
                        created_at, updated_at
                 FROM shared.employees
@@ -455,7 +455,7 @@ async fn export_employees(
             sqlx::query_as::<_, Employee>(
                 r#"
                 SELECT id, company_id, department_id, position_id,
-                       employee_no, name, gender, hire_date,
+                       employee_number, name, gender, hire_date,
                        email, phone, status,
                        created_at, updated_at
                 FROM shared.employees

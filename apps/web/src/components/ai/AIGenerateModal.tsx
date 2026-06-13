@@ -33,16 +33,12 @@ export function AIGenerateModal({
   cancelText = "取消",
   extraActions,
 }: AIGenerateModalProps) {
-  const handleClose = (e?: React.MouseEvent | boolean) => {
-    if (typeof e !== "boolean") {
-      e?.stopPropagation();
-      e?.preventDefault();
-    }
+  const handleClose = () => {
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <div className="flex items-center gap-2">
@@ -61,7 +57,7 @@ export function AIGenerateModal({
           <div className="flex items-center gap-3">
             <Button
               variant="secondary"
-              onClick={(e) => handleClose(e)}
+              onClick={handleClose}
               disabled={isLoading}
             >
               {cancelText}

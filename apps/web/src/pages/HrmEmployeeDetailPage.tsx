@@ -206,7 +206,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
                       <FileText className="w-4 h-4" />
-                      {employee.employee_number}
+                      {employee.employee_no}
                     </span>
                     <span className="flex items-center gap-1">
                       <Briefcase className="w-4 h-4" />

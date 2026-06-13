@@ -26,7 +26,7 @@ mod tests {
     async fn test_files_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'file' AND table_name = 'files')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'storage' AND table_name = 'files')")
             .fetch_one(&pool)
             .await;
 
@@ -42,20 +42,20 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_file_metadata_table_exists() {
+    async fn test_file_permissions_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'file' AND table_name = 'file_metadata')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'storage' AND table_name = 'file_permissions')")
             .fetch_one(&pool)
             .await;
 
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
-                assert!(exists, "文件元数据表应该存在");
+                assert!(exists, "文件权限表应该存在");
             }
             Err(e) => {
-                panic!("查询文件元数据表失败: {}", e);
+                panic!("查询文件权限表失败: {}", e);
             }
         }
     }
@@ -65,11 +65,10 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let file_id = Uuid::new_v4();
-        let filename = format!("test_file-{}.txt", &file_id.to_string()[..8]);
 
         let result = sqlx::query(
             r#"
-            INSERT INTO file.files (id, organization_id, filename, file_path, file_size, mime_type, created_at, updated_at)
+            INSERT INTO storage.files (id, owner_id, filename, storage_path, file_size, content_type, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 filename = EXCLUDED.filename,
@@ -79,7 +78,7 @@ mod tests {
         )
         .bind(file_id)
         .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
-        .bind(&filename)
+        .bind("test_file.txt")
         .bind("/test/path/file.txt")
         .bind(1024)
         .bind("text/plain")
@@ -95,8 +94,8 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            SELECT id, filename, file_size, mime_type, created_at
-            FROM file.files
+            SELECT id, filename, file_size, content_type, created_at
+            FROM storage.files
             ORDER BY created_at DESC
             LIMIT 10
             "#,

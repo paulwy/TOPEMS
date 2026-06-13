@@ -11,6 +11,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct AuditLog {
     pub id: Uuid,
+    #[sqlx(rename = "action_type")]
     pub action: String,
     pub entity_type: String,
     pub entity_id: Option<Uuid>,

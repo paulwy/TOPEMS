@@ -56,10 +56,29 @@ const WorkflowDesignerPage: React.FC = () => {
           name: wf.name,
           description: wf.description || "",
         });
-        // TODO: Convert workflow definition to nodes and edges
+        // Convert workflow definition to nodes and edges
         if (wf.definition && wf.definition.nodes) {
-          setNodes(wf.definition.nodes || []);
-          setEdges([]);
+          const approvalNodes = wf.definition.nodes as any[];
+          const startNode = approvalNodes.find(
+            (n) => n.node_id === wf.definition.start_node,
+          );
+          const convertedNodes = approvalNodes.map((node, index) => ({
+            id: node.node_id,
+            type: index === 0 ? "start" : node.approvers?.length > 1 ? "approval" : "task",
+            x: 100 + (index % 3) * 250,
+            y: 100 + Math.floor(index / 3) * 150,
+            label: node.name || node.node_id,
+            description: node.name,
+          }));
+          const convertedEdges = approvalNodes.flatMap((node) =>
+            (node.next_nodes || []).map((targetId: string) => ({
+              id: `edge-${node.node_id}-${targetId}`,
+              source: node.node_id,
+              target: targetId,
+            })),
+          );
+          setNodes(convertedNodes);
+          setEdges(convertedEdges);
         }
       } else {
         addNotification({
@@ -169,7 +188,7 @@ const WorkflowDesignerPage: React.FC = () => {
           });
           setShowSaveDialog(false);
           // Navigate to edit mode
-          navigate(`/workflow/designer?id=${response.data.id}`);
+          navigate(`/workflow-designer?id=${response.data.id}`);
         } else {
           addNotification({
             title: "保存失败",
@@ -204,7 +223,7 @@ const WorkflowDesignerPage: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => navigate("/flow/workflows")}>
+            <Button variant="ghost" onClick={() => navigate("/workflows")}>
               <ArrowLeft className="w-5 h-5 mr-2" />
               返回
             </Button>

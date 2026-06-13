@@ -62,6 +62,74 @@ load_config() {
   export RUST_LOG="${RUST_LOG:-info}"
 }
 
+# 检查必需的命令行工具
+check_required_tools() {
+  info "检查必需工具..."
+
+  local missing_tools=()
+  local required_tools=("psql" "redis-cli" "curl" "lsof" "cargo" "pkill")
+
+  for tool in "${required_tools[@]}"; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+      missing_tools+=("$tool")
+    fi
+  done
+
+  if [ ${#missing_tools[@]} -gt 0 ]; then
+    error "缺少必需工具: ${missing_tools[*]}"
+    info "请安装以下工具后重试:"
+    for tool in "${missing_tools[@]}"; do
+      case "$tool" in
+        psql)
+          info "  psql - PostgreSQL 客户端 (通常随 postgresql 包安装)" ;;
+        redis-cli)
+          info "  redis-cli - Redis 客户端 (通常随 redis-tools 包安装)" ;;
+        curl)
+          info "  curl - HTTP 客户端" ;;
+        lsof)
+          info "  lsof - 端口检测工具 (通常随 lsof 包安装)" ;;
+        cargo)
+          info "  cargo - Rust 构建工具 (安装 Rust: rustup.rs)" ;;
+        pkill)
+          info "  pkill - 进程终止工具 (通常随 procps 包安装)" ;;
+      esac
+    done
+    exit 1
+  fi
+
+  success "必需工具检查通过"
+}
+
+# 检查Ollama服务（AI服务可选依赖）
+check_ollama() {
+  local ollama_port="${OLLAMA_PORT:-11434}"
+
+  if curl -s "http://localhost:$ollama_port/api/tags" >/dev/null 2>&1; then
+    success "Ollama 服务运行正常"
+
+    # 检查必要的模型是否已安装
+    local llm_model="${OLLAMA_MODEL:-qwen2.5:7b-instruct}"
+    local embedding_model="${EMBEDDING_MODEL:-nomic-embed-text}"
+
+    if ollama list 2>/dev/null | grep -q "$llm_model"; then
+      success "LLM 模型已安装: $llm_model"
+    else
+      warning "LLM 模型未安装: $llm_model (AI服务将无法使用)"
+      info "提示: 运行 'ollama pull $llm_model' 安装"
+    fi
+
+    if ollama list 2>/dev/null | grep -q "$embedding_model"; then
+      success "嵌入模型已安装: $embedding_model"
+    else
+      warning "嵌入模型未安装: $embedding_model (AI服务将无法使用)"
+      info "提示: 运行 'ollama pull $embedding_model' 安装"
+    fi
+  else
+    warning "Ollama 服务未运行 (AI服务将无法使用)"
+    info "提示: 运行 'ollama serve' 启动 Ollama 服务"
+  fi
+}
+
 # 检查数据库并运行迁移
 check_database() {
   info "检查数据库连接..."
@@ -85,6 +153,9 @@ check_database() {
     info "当前配置: $REDIS_URL"
     exit 1
   fi
+
+  # 检查Ollama（AI服务可选依赖）
+  check_ollama
 
   # 检查数据库迁移状态
   check_migrations
@@ -142,7 +213,7 @@ check_migrations() {
       elif [ -d "$PROJECT_ROOT/$svc_path/src/db/migrations" ] && [ "$(ls -A "$PROJECT_ROOT/$svc_path/src/db/migrations" 2>/dev/null | wc -l)" -gt 0 ]; then
         migration_dir="$PROJECT_ROOT/$svc_path/src/db/migrations"
       fi
-      
+
       if [ -n "$migration_dir" ]; then
         missing_migrations+=("$svc_name:$schema_name:$svc_path")
       fi
@@ -164,9 +235,15 @@ check_migrations() {
       # 创建 schema
       psql "$DATABASE_URL" -c "CREATE SCHEMA IF NOT EXISTS $schema_name;" >/dev/null 2>&1 || true
 
+      # 确保必要的扩展已安装
+      if [ "$svc_name" = "gis" ]; then
+        psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS postgis;" >/dev/null 2>&1 || true
+        psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS btree_gin;" >/dev/null 2>&1 || true
+      fi
+
       # 确定迁移目录并运行迁移文件
       local migration_dirs=("$PROJECT_ROOT/$svc_path/migrations" "$PROJECT_ROOT/$svc_path/src/db/migrations")
-      
+
       for migration_dir in "${migration_dirs[@]}"; do
         if [ -d "$migration_dir" ]; then
           for migration_file in "$migration_dir"/*.sql; do
@@ -238,10 +315,12 @@ stop_all() {
   for service in "${services[@]}"; do
     pkill -f "topems-$service" 2>/dev/null || true
     pkill -f "cargo run.*$service" 2>/dev/null || true
+    pkill -f "$service-service" 2>/dev/null || true
   done
   
   # 停止前端服务
   pkill -f "npm run dev" 2>/dev/null || true
+  pkill -f "node.*vite" 2>/dev/null || true
   
   success "所有服务已停止"
 }
@@ -734,8 +813,13 @@ show_status() {
     fi
     
     if lsof -Pi ":$port" -sTCP:LISTEN -t >/dev/null 2>&1; then
-      if curl -s "http://localhost:$port/health" >/dev/null 2>&1; then
-        echo "  ✅ $name (端口 $port)"
+      response=$(curl -s --connect-timeout 3 "http://localhost:$port/health" 2>/dev/null)
+      if [ $? -eq 0 ] && [ -n "$response" ]; then
+        if echo "$response" | grep -qE '"status"|"healthy"|"success"|"degraded"'; then
+          echo "  ✅ $name (端口 $port)"
+        else
+          echo "  ⚠️ $name (端口 $port)"
+        fi
       else
         echo "  ⚠️ $name (端口 $port)"
       fi
@@ -784,7 +868,7 @@ show_status() {
     "scm:svc/scm"
     "srm:svc/srm"
     "wms:svc/wms"
-    "file:svc/file"
+    "storage:svc/file"
     "mail:svc/mail"
     "im:svc/im"
     "gis:svc/gis"
@@ -827,6 +911,7 @@ show_status() {
 case "$1" in
   start)
     load_config
+    check_required_tools
     check_database
     check_ollama
     start_core
@@ -842,12 +927,14 @@ case "$1" in
     ;;
   start-core)
     load_config
+    check_required_tools
     check_database
     start_core
     show_status
     ;;
   start-backend)
     load_config
+    check_required_tools
     check_database
     start_core
     start_erp
@@ -866,9 +953,12 @@ case "$1" in
       exit 1
     fi
     load_config
+    check_required_tools
     start_service "$2" "$3"
     ;;
   start-frontend)
+    load_config
+    check_required_tools
     start_frontend
     show_status
     ;;
@@ -877,6 +967,7 @@ case "$1" in
     ;;
   status)
     load_config
+    check_required_tools
     show_status
     ;;
   restart)

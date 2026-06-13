@@ -512,6 +512,312 @@ run_tests() {
   esac
 }
 
+# 数据库迁移状态检查（带详情）
+check_service_migration() {
+  local service="$1"
+  local db_name="topems"
+  local db_user="topems"
+  local db_password="topems_secret"
+  local db_host="localhost"
+  local db_port="5432"
+  
+  local conn_str="postgres://$db_user:$db_password@$db_host:$db_port/$db_name"
+  
+  case "$service" in
+    lims)
+      # 检查 lims 服务关键表
+      local tables=("samples" "audit_logs" "instruments" "reagents" "inspection_processes")
+      local missing_tables=()
+      for table in "${tables[@]}"; do
+        if ! psql "$conn_str" -t -c "SELECT 1 FROM information_schema.tables WHERE table_schema='lims' AND table_name='$table';" 2>/dev/null | grep -q 1; then
+          missing_tables+=("$table")
+        fi
+      done
+      if [ ${#missing_tables[@]} -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} lims 迁移完整"
+        return 0
+      else
+        echo -e "${RED}✗${NC} lims 迁移不完整，缺少表: ${missing_tables[*]}"
+        return 1
+      fi
+      ;;
+    gis)
+      # 检查 gis 服务关键表
+      local tables=("factory_maps" "device_locations" "pipelines" "warehouse_locations" "locations" "devices")
+      local missing_tables=()
+      for table in "${tables[@]}"; do
+        if ! psql "$conn_str" -t -c "SELECT 1 FROM information_schema.tables WHERE table_schema='gis' AND table_name='$table';" 2>/dev/null | grep -q 1; then
+          missing_tables+=("$table")
+        fi
+      done
+      if [ ${#missing_tables[@]} -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} gis 迁移完整"
+        return 0
+      else
+        echo -e "${RED}✗${NC} gis 迁移不完整，缺少表: ${missing_tables[*]}"
+        return 1
+      fi
+      ;;
+    file|storage)
+      # 检查 file 服务关键表
+      local tables=("files" "file_permissions" "backends")
+      local missing_tables=()
+      for table in "${tables[@]}"; do
+        if ! psql "$conn_str" -t -c "SELECT 1 FROM information_schema.tables WHERE table_schema='storage' AND table_name='$table';" 2>/dev/null | grep -q 1; then
+          missing_tables+=("$table")
+        fi
+      done
+      if [ ${#missing_tables[@]} -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} file 迁移完整"
+        return 0
+      else
+        echo -e "${RED}✗${NC} file 迁移不完整，缺少表: ${missing_tables[*]}"
+        return 1
+      fi
+      ;;
+    *)
+      # 通用检查：检查服务 schema 是否存在
+      if psql "$conn_str" -t -c "SELECT 1 FROM information_schema.schemata WHERE schema_name='$service';" 2>/dev/null | grep -q 1; then
+        echo -e "${GREEN}✓${NC} $service schema 存在"
+        return 0
+      else
+        echo -e "${RED}✗${NC} $service schema 不存在"
+        return 1
+      fi
+      ;;
+  esac
+}
+
+# 检查服务健康状态
+check_service_health() {
+  local service="$1"
+  local port="$2"
+  local timeout="${3:-5}"
+  
+  # 检查端口是否被占用
+  if ! lsof -i ":$port" >/dev/null 2>&1; then
+    echo -e "${RED}✗${NC} $service (端口 $port) - 未运行"
+    return 1
+  fi
+  
+  # 尝试健康检查
+  local response=$(curl -s --connect-timeout "$timeout" "http://localhost:$port/health" 2>/dev/null)
+  if [ $? -eq 0 ] && [ -n "$response" ]; then
+    # 检查响应中是否包含 healthy 或 success
+    if echo "$response" | grep -qE '"status"|"healthy"|"success"'; then
+      echo -e "${GREEN}✓${NC} $service (端口 $port) - 健康"
+      return 0
+    else
+      echo -e "${YELLOW}⚠${NC} $service (端口 $port) - 响应异常"
+      return 2
+    fi
+  else
+    echo -e "${RED}✗${NC} $service (端口 $port) - 健康检查失败"
+    return 1
+  fi
+}
+
+# 显示所有服务状态概览
+show_services_overview() {
+  info "服务状态概览..."
+  echo ""
+  
+  local services=(
+    "iam:8000:核心服务"
+    "pm:8001:核心服务"
+    "notification:8002:核心服务"
+    "portal:8003:核心服务"
+    "flow:8004:核心服务"
+    "integration:8005:核心服务"
+    "erp:8010:ERP服务"
+    "hrm:8011:ERP服务"
+    "crm:8012:ERP服务"
+    "rs:8020:PLM服务"
+    "lims:8022:PLM服务"
+    "pdm:8023:PLM服务"
+    "doc:8024:PLM服务"
+    "mes:8030:MES服务"
+    "qms:8031:MES服务"
+    "ehs:8032:MES服务"
+    "scm:8040:SCM服务"
+    "srm:8041:SCM服务"
+    "wms:8042:SCM服务"
+    "file:8050:基础设施"
+    "mail:8051:基础设施"
+    "im:8052:基础设施"
+    "gis:8053:基础设施"
+    "bi:8060:数据分析"
+    "report:8061:数据分析"
+    "ai:8062:数据分析"
+    "mobile:8070:扩展服务"
+  )
+  
+  local running=0
+  local total=0
+  local current_module=""
+  
+  for svc in "${services[@]}"; do
+    name=$(echo "$svc" | cut -d':' -f1)
+    port=$(echo "$svc" | cut -d':' -f2)
+    module=$(echo "$svc" | cut -d':' -f3)
+    
+    if [ "$module" != "$current_module" ]; then
+      echo ""
+      echo "${BLUE}=== $module ===${NC}"
+      current_module="$module"
+    fi
+    
+    ((total++))
+    check_service_health "$name" "$port" 2>/dev/null
+    if [ $? -eq 0 ]; then
+      ((running++))
+    fi
+  done
+  
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  info "服务状态: $running / $total 运行中"
+  
+  if [ $running -lt $total ]; then
+    local stopped=$((total - running))
+    warning "$stopped 个服务未运行"
+  fi
+}
+
+# 自动修复服务
+auto_fix_service() {
+  local service="$1"
+  local port=""
+  
+  # 查找服务端口
+  for svc in "${SERVICES[@]}"; do
+    s_name=$(echo "$svc" | cut -d':' -f1)
+    s_port=$(echo "$svc" | cut -d':' -f2)
+    if [ "$s_name" == "$service" ]; then
+      port="$s_port"
+      break
+    fi
+  done
+  
+  if [ -z "$port" ]; then
+    error "未知服务: $service"
+    return 1
+  fi
+  
+  info "自动修复 $service..."
+  
+  # 1. 检查数据库迁移
+  echo "  检查数据库迁移..."
+  if check_service_migration "$service" >/dev/null 2>&1; then
+    echo "    数据库迁移正常"
+  else
+    echo "    修复数据库迁移..."
+    fix_service_migration "$service"
+  fi
+  
+  # 2. 停止现有进程（如果存在）
+  echo "  停止现有进程..."
+  lsof -ti ":$port" | xargs -r kill -9 2>/dev/null || true
+  sleep 1
+  
+  # 3. 重新启动服务
+  echo "  启动服务..."
+  start_single_service "$service"
+}
+
+# 运行服务数据库迁移
+run_service_migration() {
+  local service="$1"
+  local db_name="topems"
+  local db_user="topems"
+  local db_password="topems_secret"
+  local db_host="localhost"
+  local db_port="5432"
+  
+  if [ ! -d "$PROJECT_ROOT/svc/$service/migrations" ]; then
+    warning "$service 没有迁移文件"
+    return 1
+  fi
+  
+  info "运行 $service 数据库迁移..."
+  
+  local conn_str="postgres://$db_user:$db_password@$db_host:$db_port/$db_name"
+  
+  # 创建 schema
+  psql "$conn_str" -c "CREATE SCHEMA IF NOT EXISTS $service;" >/dev/null 2>&1
+  
+  # 运行迁移文件
+  local migration_count=0
+  for migration in "$PROJECT_ROOT/svc/$service/migrations"/*.sql; do
+    if [ -f "$migration" ]; then
+      if psql "$conn_str" -f "$migration" >/dev/null 2>&1; then
+        migration_count=$((migration_count + 1))
+      else
+        warning "迁移文件 $(basename "$migration") 执行失败"
+      fi
+    fi
+  done
+  
+  success "$service 迁移完成 ($migration_count 个文件)"
+}
+
+# 检查所有服务迁移状态
+check_all_migrations() {
+  info "检查所有服务数据库迁移状态..."
+  echo ""
+  
+  local services=("iam" "pm" "notification" "portal" "flow" "integration" "erp" "hrm" "crm" "rs" "lims" "pdm" "doc" "mes" "qms" "ehs" "scm" "srm" "wms" "file" "mail" "im" "gis" "bi" "report" "ai" "mobile")
+  local failed=0
+  
+  for service in "${services[@]}"; do
+    if [ -d "$PROJECT_ROOT/svc/$service/migrations" ]; then
+      if ! check_service_migration "$service"; then
+        failed=$((failed + 1))
+      fi
+    fi
+  done
+  
+  echo ""
+  if [ $failed -eq 0 ]; then
+    success "所有服务迁移状态正常"
+    return 0
+  else
+    error "$failed 个服务迁移有问题，请运行 '$0 migrate-fix <服务名>' 修复"
+    return 1
+  fi
+}
+
+# 修复服务迁移
+fix_service_migration() {
+  local service="$1"
+  
+  if [ -z "$service" ]; then
+    error "请指定服务名"
+    echo "用法: $0 migrate-fix <服务名>"
+    echo "可用服务: lims, gis, file, 或 'all' (修复所有)"
+    exit 1
+  fi
+  
+  if [ "$service" == "all" ]; then
+    info "修复所有服务的数据库迁移..."
+    local services=("lims" "gis" "file")
+    for svc in "${services[@]}"; do
+      if [ -d "$PROJECT_ROOT/svc/$svc/migrations" ]; then
+        run_service_migration "$svc"
+      fi
+    done
+    success "迁移修复完成"
+    return 0
+  fi
+  
+  if [ ! -d "$PROJECT_ROOT/svc/$service" ]; then
+    error "服务目录不存在: svc/$service"
+    exit 1
+  fi
+  
+  run_service_migration "$service"
+}
+
 # 显示服务列表
 list_services() {
   echo "可用服务列表:"
@@ -805,34 +1111,16 @@ show_help() {
   echo "=== 日志与状态 ==="
   echo "  logs            - 查看所有服务日志"
   echo "  logs <服务名>   - 查看指定服务日志"
-  echo "  status          - 查看服务状态"
+  echo "  status/health   - 查看所有服务健康状态"
   echo "  list            - 列出所有服务"
   echo ""
-  echo "=== 编译构建 ==="
-  echo "  build           - 编译所有服务（Release模式）"
-  echo "  build <服务名>  - 编译单一服务"
-  echo "  build-debug     - 编译所有服务（Debug模式）"
+  echo "=== 服务修复 ==="
+  echo "  fix <服务名>    - 自动修复指定服务（检查迁移+重启）"
   echo ""
-  echo "=== 测试 ==="
-  echo "  test            - 运行所有测试"
-  echo "  test unit       - 运行单元测试"
-  echo "  test integration - 运行集成测试"
-  echo "  test coverage   - 生成覆盖率报告"
-  echo "  test lint       - 运行静态分析"
-  echo ""
-  echo "=== AI模型管理 ==="
-  echo "  ai <命令>       - AI模型管理（start/stop/pull/test等）"
-  echo ""
-  echo "=== 依赖安装 ==="
-  echo "  install         - 安装依赖（本地模式）"
-  echo "  install-db      - 仅安装数据库"
-  echo "  install-dev     - 仅安装开发环境"
-  echo "  setup-db        - 初始化数据库（启动PostgreSQL+创建用户+运行迁移）"
-  echo ""
-  echo "=== 环境变量管理 ==="
-  echo "  env show        - 显示当前环境变量"
-  echo "  env export      - 导出环境变量到文件"
-  echo "  env load        - 从文件加载环境变量"
+  echo "=== 数据库迁移 ==="
+  echo "  migrate-status  - 检查所有服务数据库迁移状态"
+  echo "  migrate-fix <服务名> - 修复指定服务的数据库迁移"
+  echo "                     使用 'all' 修复所有服务"
   echo ""
   echo "=== 帮助 ==="
   echo "  help            - 显示此帮助信息"
@@ -967,6 +1255,24 @@ case "$1" in
       exit 1
     fi
     manage_env "$2" "$3"
+    ;;
+  migrate-status)
+    check_all_migrations
+    ;;
+  migrate-fix)
+    fix_service_migration "$2"
+    ;;
+  status|health)
+    show_services_overview
+    ;;
+  fix)
+    if [ -z "$2" ]; then
+      error "请指定服务名"
+      echo "用法: $0 fix <服务名>"
+      echo "示例: $0 fix lims"
+      exit 1
+    fi
+    auto_fix_service "$2"
     ;;
   help)
     show_help

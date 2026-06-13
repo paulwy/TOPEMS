@@ -31,8 +31,23 @@
 # 查看服务状态
 ./scripts/topems.sh status
 
-# 安装依赖（本地模式）
-./scripts/topems.sh install
+# 查看服务健康状态（详细）
+./scripts/topems.sh health
+
+# 查看特定服务日志
+./scripts/topems.sh logs lims
+./scripts/topems.sh logs gis
+
+# 检查数据库迁移状态
+./scripts/topems.sh migrate-status
+
+# 修复数据库迁移问题
+./scripts/topems.sh migrate-fix lims
+./scripts/topems.sh migrate-fix all
+
+# 自动修复服务（检查迁移+重启）
+./scripts/topems.sh fix lims
+./scripts/topems.sh fix gis
 
 # AI模型管理（独立管理，资源占用高）
 ./scripts/topems.sh ai start

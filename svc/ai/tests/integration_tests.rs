@@ -42,20 +42,20 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_qa_sessions_table_exists() {
+    async fn test_qa_history_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'ai' AND table_name = 'qa_sessions')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'ai' AND table_name = 'qa_history')")
             .fetch_one(&pool)
             .await;
 
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
-                assert!(exists, "问答会话表应该存在");
+                assert!(exists, "问答历史表应该存在");
             }
             Err(e) => {
-                panic!("查询问答会话表失败: {}", e);
+                panic!("查询问答历史表失败: {}", e);
             }
         }
     }
@@ -80,20 +80,20 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_vector_embeddings_table_exists() {
+    async fn test_document_chunks_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'ai' AND table_name = 'vector_embeddings')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'ai' AND table_name = 'document_chunks')")
             .fetch_one(&pool)
             .await;
 
         match result {
             Ok(row) => {
                 let exists: bool = row.get(0);
-                assert!(exists, "向量嵌入表应该存在");
+                assert!(exists, "文档分块表应该存在");
             }
             Err(e) => {
-                panic!("查询向量嵌入表失败: {}", e);
+                panic!("查询文档分块表失败: {}", e);
             }
         }
     }
@@ -107,8 +107,8 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO ai.documents (id, organization_id, title, content, file_path, file_name, file_type, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO ai.documents (id, organization_id, title, file_path, file_name, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 title = EXCLUDED.title,
                 updated_at = NOW()
@@ -118,10 +118,9 @@ mod tests {
         .bind(document_id)
         .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
         .bind(&title)
-        .bind("这是一个测试文档的内容")
         .bind("/test/path/document.pdf")
         .bind("document.pdf")
-        .bind("pdf")
+        .bind("pending")
         .fetch_one(&pool)
         .await;
 
@@ -134,7 +133,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            SELECT id, title, file_type, created_at
+            SELECT id, title, file_name, created_at
             FROM ai.documents
             ORDER BY created_at DESC
             LIMIT 10

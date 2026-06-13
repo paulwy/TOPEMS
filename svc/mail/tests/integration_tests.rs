@@ -43,10 +43,10 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_email_templates_table_exists() {
+    async fn test_templates_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
-        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mail' AND table_name = 'email_templates')")
+        let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mail' AND table_name = 'templates')")
             .fetch_one(&pool)
             .await;
 
@@ -70,8 +70,8 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO mail.emails (id, organization_id, from_address, to_addresses, subject, body, status, created_at)
-            VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, NOW())
+            INSERT INTO mail.emails (id, from_address, to_addresses, subject, body, status, created_at)
+            VALUES ($1, $2, $3::jsonb, $4, $5, $6, NOW())
             ON CONFLICT (id) DO UPDATE SET
                 subject = EXCLUDED.subject,
                 updated_at = NOW()
@@ -79,7 +79,6 @@ mod tests {
             "#,
         )
         .bind(email_id)
-        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
         .bind("sender@test.com")
         .bind("[\"recipient@test.com\"]")
         .bind(&subject)

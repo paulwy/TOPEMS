@@ -93,9 +93,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
             <Input
               id={`${mode}-number`}
               type="text"
-              value={(formData as Employee)?.employee_number || ""}
+              value={(formData as Employee)?.employee_no || ""}
               onChange={(e) =>
-                handleInputChange("employee_number", e.target.value)
+                handleInputChange("employee_no", e.target.value)
               }
               placeholder="请输入工号"
             />

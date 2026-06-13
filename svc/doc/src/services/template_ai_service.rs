@@ -1,5 +1,4 @@
-use crate::models::{Template, TemplateVariable, TemplateVariableDef};
-use serde_json::Value;
+use crate::models::{Template, TemplateVariableDef};
 
 pub struct TemplateAIService;
 
@@ -244,9 +243,9 @@ mod tests {
 
     #[test]
     fn test_generate_label() {
-        assert_eq!(TemplateAIService::generate_label("user_name"), "User Name");
+        assert_eq!(TemplateAIService::generate_label("user_name"), "名称");
         assert_eq!(TemplateAIService::generate_label("department"), "部门");
-        assert_eq!(TemplateAIService::generate_label("report_title"), "Report Title");
+        assert_eq!(TemplateAIService::generate_label("report_title"), "标题");
     }
 
     #[test]

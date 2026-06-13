@@ -65,24 +65,20 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let report_id = Uuid::new_v4();
-        let title = format!("测试报告-{}", &report_id.to_string()[..8]);
 
         let result = sqlx::query(
             r#"
-            INSERT INTO report.reports (id, organization_id, title, report_type, content, status, config, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, '{}', NOW(), NOW())
+            INSERT INTO report.reports (id, config, row_count, created_at, updated_at)
+            VALUES ($1, $2::jsonb, $3, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
-                title = EXCLUDED.title,
+                row_count = EXCLUDED.row_count,
                 updated_at = NOW()
             RETURNING id
             "#,
         )
         .bind(report_id)
-        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
-        .bind(&title)
-        .bind("monthly")
-        .bind("这是一个测试报告的内容")
-        .bind("draft")
+        .bind("{}")
+        .bind(0)
         .fetch_one(&pool)
         .await;
 
@@ -95,7 +91,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            SELECT id, title, report_type, status, created_at
+            SELECT id, row_count, created_at
             FROM report.reports
             ORDER BY created_at DESC
             LIMIT 10
@@ -115,33 +111,29 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_report_status_update() {
+    async fn test_report_update() {
         let pool = setup_test_pool().await.unwrap();
 
         // 创建一个新的报告
         let report_id = Uuid::new_v4();
-        let title = format!("状态更新测试-{}", &report_id.to_string()[..8]);
 
         sqlx::query(
             r#"
-            INSERT INTO report.reports (id, organization_id, title, report_type, content, status, config, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, '{}', NOW(), NOW())
+            INSERT INTO report.reports (id, config, row_count, created_at, updated_at)
+            VALUES ($1, $2::jsonb, $3, NOW(), NOW())
             "#,
         )
         .bind(report_id)
-        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
-        .bind(&title)
-        .bind("monthly")
-        .bind("测试描述")
-        .bind("draft")
+        .bind("{}")
+        .bind(0)
         .execute(&pool)
         .await
         .expect("创建测试数据失败");
 
-        // 更新状态为已发布
+        // 更新 row_count
         let update_result = sqlx::query(
             r#"
-            UPDATE report.reports SET status = 'published', updated_at = NOW()
+            UPDATE report.reports SET row_count = row_count + 1, updated_at = NOW()
             WHERE id = $1
             "#,
         )
@@ -149,21 +141,21 @@ mod tests {
         .execute(&pool)
         .await;
 
-        assert!(update_result.is_ok(), "状态更新应该成功");
+        assert!(update_result.is_ok(), "更新应该成功");
 
-        // 验证状态已更新
+        // 验证更新
         let check_result =
-            sqlx::query_scalar::<_, String>("SELECT status FROM report.reports WHERE id = $1")
+            sqlx::query_scalar::<_, i32>("SELECT row_count FROM report.reports WHERE id = $1")
                 .bind(report_id)
                 .fetch_one(&pool)
                 .await;
 
         match check_result {
-            Ok(status) => {
-                assert_eq!(status, "published", "状态应该更新为已发布");
+            Ok(row_count) => {
+                assert_eq!(row_count, 1, "row_count 应该更新为 1");
             }
             Err(e) => {
-                panic!("查询状态失败: {}", e);
+                panic!("查询失败: {}", e);
             }
         }
     }

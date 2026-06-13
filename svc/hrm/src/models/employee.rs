@@ -31,6 +31,7 @@ pub struct Employee {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440003")]
     pub position_id: Option<Uuid>,
     #[schema(example = "EMP001")]
+    #[sqlx(rename = "employee_number")]
     pub employee_no: String,
     #[schema(example = "张三")]
     pub name: String,
