@@ -3,7 +3,8 @@
  * 提供与金蝶、用友、SAP等外部ERP系统的集成接口
  */
 
-import { apiClient } from "./client";
+import { apiClient, downloadBlob } from "./client";
+import config from "../config/runtime";
 import type {
   KingdeeConnectionConfig,
   YonyouConnectionConfig,
@@ -699,26 +700,28 @@ export const externalErpApi = {
   /**
    * 导出同步日志
    */
-  exportSyncLogs: (params: {
+  exportSyncLogs: async (params: {
     config_id?: string;
     type?: string;
     status?: string;
     start_date?: string;
     end_date?: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.integration.get(
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.integration as any).defaults?.baseURL ||
+      config.services.integration;
+    return downloadBlob(
+      baseURL,
       "/api/v1/integration/external-erp/export/sync-logs",
-      {
-        params,
-        responseType: "blob",
-      },
-    ),
+      { params },
+    );
+  },
 
   /**
    * 导出映射规则
    */
-  exportMappingRules: (params: {
+  exportMappingRules: async (params: {
     config_id: string;
     mapping_type:
       | "account"
@@ -728,14 +731,16 @@ export const externalErpApi = {
       | "department"
       | "employee";
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.integration.get(
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.integration as any).defaults?.baseURL ||
+      config.services.integration;
+    return downloadBlob(
+      baseURL,
       "/api/v1/integration/external-erp/export/mappings",
-      {
-        params,
-        responseType: "blob",
-      },
-    ),
+      { params },
+    );
+  },
 };
 
 export default externalErpApi;

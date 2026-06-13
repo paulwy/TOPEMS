@@ -412,8 +412,7 @@ export function useExportSalesInvoices() {
       end_date?: string;
       format: "csv" | "xlsx";
     }) => {
-      const response = await crmFinanceApi.exportSalesInvoices(params);
-      const blob = response.data as Blob;
+      const blob = await crmFinanceApi.exportSalesInvoices(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -446,8 +445,7 @@ export function useExportCollectionRecords() {
       end_date?: string;
       format: "csv" | "xlsx";
     }) => {
-      const response = await crmFinanceApi.exportCollectionRecords(params);
-      const blob = response.data as Blob;
+      const blob = await crmFinanceApi.exportCollectionRecords(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -480,8 +478,7 @@ export function useExportReceivableAging() {
       as_of_date: string;
       format: "csv" | "xlsx";
     }) => {
-      const response = await crmFinanceApi.exportReceivableAging(params);
-      const blob = response.data as Blob;
+      const blob = await crmFinanceApi.exportReceivableAging(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

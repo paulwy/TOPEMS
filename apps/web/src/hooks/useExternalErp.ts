@@ -617,8 +617,7 @@ export function useExportSyncLogs() {
       end_date?: string;
       format: "csv" | "xlsx";
     }) => {
-      const response = await externalErpApi.exportSyncLogs(params);
-      const blob = response.data as Blob;
+      const blob = await externalErpApi.exportSyncLogs(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -656,8 +655,7 @@ export function useExportMappingRules() {
         | "employee";
       format: "csv" | "xlsx";
     }) => {
-      const response = await externalErpApi.exportMappingRules(params);
-      const blob = response.data as Blob;
+      const blob = await externalErpApi.exportMappingRules(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

@@ -157,30 +157,25 @@ export const useNotificationWebSocket = ({
     resetState();
 
     try {
-      const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
       const notificationServiceUrl = config.services.notification;
-
-      // 解析服务 URL，提取主机和端口
-      let wsHost: string;
-      let wsPath = "/ws/notifications";
+      const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+      
+      let wsUrl: string;
 
       try {
-        const url = new URL(notificationServiceUrl);
-        // 从服务 URL 获取主机（包含端口）
-        wsHost = url.host;
-        // 如果服务 URL 有路径部分，保留路径
+        const url = new URL(notificationServiceUrl, window.location.origin);
+        const wsHost = url.host;
+        let wsPath = "/ws/notifications";
         if (url.pathname && url.pathname !== "/") {
           wsPath = `${url.pathname}${wsPath}`;
         }
+        wsUrl = `${wsProtocol}://${wsHost}${wsPath}`;
       } catch {
-        // 如果解析失败，回退到当前主机
-        wsHost = window.location.host;
+        wsUrl = `${wsProtocol}://${window.location.host}/notification/ws/notifications`;
         logger.warn(
-          "Failed to parse notification service URL, falling back to current host",
+          "Failed to parse notification service URL, using proxy path",
         );
       }
-
-      const wsUrl = `${wsProtocol}://${wsHost}${wsPath}`;
 
       logger.info("Attempting to connect to notification service:", wsUrl);
 
@@ -198,7 +193,7 @@ export const useNotificationWebSocket = ({
               ws.readyState === WebSocket.CONNECTING ||
               ws.readyState === WebSocket.OPEN
             ) {
-              ws.close(1006, "Connection timeout");
+              ws.close(1000, "Connection timeout");
             }
           } catch (e) {
             logger.error("Failed to close WebSocket on timeout:", e);

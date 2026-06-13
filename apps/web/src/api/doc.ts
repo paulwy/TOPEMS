@@ -1,4 +1,4 @@
-import apiClient, { createBaseAxiosClient } from "./client";
+import apiClient, { downloadBlob } from "./client";
 import type { ApiResponse } from "./client";
 import config from "../config/runtime";
 
@@ -66,11 +66,7 @@ export const docApi = {
   download: async (id: string): Promise<Blob> => {
     const baseURL =
       (apiClient.doc as any).defaults?.baseURL || config.services.doc;
-    const client = createBaseAxiosClient(baseURL);
-    const response = await client.get(`/api/v1/files/${id}/download`, {
-      responseType: "blob",
-    });
-    return response.data;
+    return downloadBlob(baseURL, `/api/v1/files/${id}/download`);
   },
 
   preview: async (id: string): Promise<string> => {

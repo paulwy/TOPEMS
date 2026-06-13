@@ -1,5 +1,6 @@
-import apiClient from "./client";
+import apiClient, { downloadBlob } from "./client";
 import type { ApiResponse } from "./client";
+import config from "../config/runtime";
 
 // 项目相关类型
 export interface Project {
@@ -346,9 +347,9 @@ export const rsApi = {
   },
 
   exportProjects: async (): Promise<Blob> => {
-    return apiClient.rs.get("/api/v1/projects/export", {
-      responseType: "blob",
-    });
+    const baseURL =
+      (apiClient.rs as any).defaults?.baseURL || config.services.rs;
+    return downloadBlob(baseURL, "/api/v1/projects/export");
   },
 
   importProjects: async (

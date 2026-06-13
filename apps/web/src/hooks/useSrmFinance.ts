@@ -439,8 +439,7 @@ export function useExportPurchaseInvoices() {
       end_date?: string;
       format: "csv" | "xlsx";
     }) => {
-      const response = await srmFinanceApi.exportPurchaseInvoices(params);
-      const blob = response.data as Blob;
+      const blob = await srmFinanceApi.exportPurchaseInvoices(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -474,8 +473,7 @@ export function useExportPaymentRequests() {
       end_date?: string;
       format: "csv" | "xlsx";
     }) => {
-      const response = await srmFinanceApi.exportPaymentRequests(params);
-      const blob = response.data as Blob;
+      const blob = await srmFinanceApi.exportPaymentRequests(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -508,8 +506,7 @@ export function useExportPayableAging() {
       as_of_date: string;
       format: "csv" | "xlsx";
     }) => {
-      const response = await srmFinanceApi.exportPayableAging(params);
-      const blob = response.data as Blob;
+      const blob = await srmFinanceApi.exportPayableAging(params);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

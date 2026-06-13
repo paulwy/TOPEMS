@@ -3,7 +3,7 @@
  * 包含科目、凭证、应收应付、财务报表等API
  */
 
-import { apiClient } from "./client";
+import { apiClient, downloadBlob } from "./client";
 import type {
   Account,
   AccountBalance,
@@ -28,6 +28,7 @@ import type {
   ApiResponse,
   BatchOperationResult,
 } from "../types/erp-finance";
+import config from "../config/runtime";
 
 // 创建API客户端实例的基础配置
 const createApiClient = () => {
@@ -345,10 +346,11 @@ export const voucherApi = {
   /**
    * 导出凭证
    */
-  export: (params: VoucherQueryParams): Promise<Blob> => {
-    return createApiClient().get("/api/v1/finance/vouchers/export", {
+  export: async (params: VoucherQueryParams): Promise<Blob> => {
+    const baseURL =
+      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, "/api/v1/finance/vouchers/export", {
       params,
-      responseType: "blob",
     });
   },
 };
@@ -627,30 +629,37 @@ export const reportApi = {
   /**
    * 导出资产负债表
    */
-  exportBalanceSheet: (params: ReportQueryParams): Promise<Blob> => {
-    return createApiClient().get(
+  exportBalanceSheet: async (params: ReportQueryParams): Promise<Blob> => {
+    const baseURL =
+      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(
+      baseURL,
       "/api/v1/finance/reports/balance-sheet/export",
-      { params, responseType: "blob" },
+      { params },
     );
   },
 
   /**
    * 导出利润表
    */
-  exportIncomeStatement: (params: ReportQueryParams): Promise<Blob> => {
-    return createApiClient().get(
+  exportIncomeStatement: async (params: ReportQueryParams): Promise<Blob> => {
+    const baseURL =
+      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(
+      baseURL,
       "/api/v1/finance/reports/income-statement/export",
-      { params, responseType: "blob" },
+      { params },
     );
   },
 
   /**
    * 导出现金流量表
    */
-  exportCashFlowStatement: (params: ReportQueryParams): Promise<Blob> => {
-    return createApiClient().get("/api/v1/finance/reports/cash-flow/export", {
+  exportCashFlowStatement: async (params: ReportQueryParams): Promise<Blob> => {
+    const baseURL =
+      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, "/api/v1/finance/reports/cash-flow/export", {
       params,
-      responseType: "blob",
     });
   },
 };

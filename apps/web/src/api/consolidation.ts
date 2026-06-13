@@ -3,7 +3,7 @@
  * 支持多公司财务报表合并、内部交易抵消
  */
 
-import { apiClient } from "./client";
+import { apiClient, downloadBlob } from "./client";
 import type {
   ConsolidationScope,
   ConsolidationCompany,
@@ -22,6 +22,7 @@ import type {
   ConsolidationReportQueryParams,
 } from "@/types/consolidation";
 import type { ApiResponse, PaginatedResponse } from "./client";
+import config from "../config/runtime";
 
 // ============================================
 // 一、合并范围管理
@@ -373,14 +374,13 @@ export const exportConsolidationReport = async (
   reportId: string,
   format: "excel" | "pdf" = "excel",
 ): Promise<Blob> => {
-  const response = await apiClient.erp.get(
+  const baseURL =
+    (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+  return downloadBlob(
+    baseURL,
     `/api/v1/consolidation/reports/${reportId}/export`,
-    {
-      params: { format },
-      responseType: "blob",
-    },
+    { params: { format } },
   );
-  return response as unknown as Blob;
 };
 
 /**
@@ -390,12 +390,11 @@ export const exportEliminationWorkSheet = async (
   scopeId: string,
   period: string,
 ): Promise<Blob> => {
-  const response = await apiClient.erp.get(
+  const baseURL =
+    (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+  return downloadBlob(
+    baseURL,
     `/api/v1/consolidation/scopes/${scopeId}/elimination-worksheet/export`,
-    {
-      params: { period },
-      responseType: "blob",
-    },
+    { params: { period } },
   );
-  return response as unknown as Blob;
 };

@@ -1,6 +1,6 @@
 import type { AxiosInstance, AxiosResponse, AxiosRequestConfig } from "axios";
 import axios from "axios";
-import config, { isProduction } from "../config/runtime";
+import config, { isProduction, isDevelopment } from "../config/runtime";
 import createLogger from "../utils/logger";
 
 const logger = createLogger("ApiClient");
@@ -94,6 +94,77 @@ export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
   );
 
   return client;
+};
+
+/**
+ * 统一的 Blob 下载函数
+ * 解决使用 responseType: "blob" 时，401 错误被当作 blob 返回的问题
+ */
+export const downloadBlob = async (
+  baseURL: string,
+  url: string,
+  options?: { params?: Record<string, any> },
+): Promise<Blob> => {
+  // 在开发环境中，使用相对路径以便 Vite 代理能正确处理
+  // 检查是否是 localhost 地址，如果是则使用相对路径
+  const isLocalhost =
+    baseURL.startsWith("http://localhost") ||
+    baseURL.startsWith("http://127.0.0.1");
+  const useProxy = isLocalhost && isDevelopment();
+
+  const clientBaseURL = useProxy ? "" : baseURL;
+  const requestUrl = useProxy ? url : url;
+
+  const client = axios.create({
+    baseURL: clientBaseURL,
+    timeout: config.api.timeout,
+    // 让所有状态码都不抛出错误，由我们手动处理
+    validateStatus: () => true,
+  });
+
+  // 添加认证拦截器 - 始终添加 Authorization 头（下载接口都需要认证）
+  client.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    console.log("downloadBlob - token found:", !!token);
+    console.log(
+      "downloadBlob - request URL:",
+      clientBaseURL + (config.url || ""),
+    );
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+      console.log("downloadBlob - Authorization header added");
+    }
+    return config;
+  });
+
+  const response = await client.get(requestUrl, {
+    responseType: "blob",
+    params: options?.params,
+  });
+
+  console.log("downloadBlob - response status:", response.status);
+
+  // 检查是否是错误响应
+  if (response.status !== 200) {
+    // 尝试解析错误信息
+    let errorMessage = `请求失败: ${response.status}`;
+    if (response.data && typeof response.data.text === "function") {
+      const text = await response.data.text();
+      console.log("downloadBlob - error response text:", text);
+      try {
+        const json = JSON.parse(text);
+        errorMessage = json.message || errorMessage;
+      } catch {
+        // 如果不是 JSON，使用原始文本
+        if (text.length < 100) {
+          errorMessage = text;
+        }
+      }
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.data;
 };
 
 class ApiClient {

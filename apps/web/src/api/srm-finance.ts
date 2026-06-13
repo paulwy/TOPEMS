@@ -3,7 +3,8 @@
  * 包含供应商信用、应付款、采购发票等与财务相关的接口
  */
 
-import { apiClient } from "./client";
+import { apiClient, downloadBlob } from "./client";
+import config from "../config/runtime";
 
 // ============================================
 // 一、类型定义
@@ -446,46 +447,50 @@ export const srmFinanceApi = {
   /**
    * 导出采购发票
    */
-  exportPurchaseInvoices: (params: {
+  exportPurchaseInvoices: async (params: {
     supplier_id?: string;
     status?: string;
     start_date?: string;
     end_date?: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.srm.get("/api/v1/srm/exports/invoices", {
-      params,
-      responseType: "blob",
-    }),
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.srm as any).defaults?.baseURL || config.services.srm;
+    return downloadBlob(baseURL, "/api/v1/srm/exports/invoices", { params });
+  },
 
   /**
    * 导出付款申请
    */
-  exportPaymentRequests: (params: {
+  exportPaymentRequests: async (params: {
     supplier_id?: string;
     status?: string;
     start_date?: string;
     end_date?: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.srm.get("/api/v1/srm/exports/payment-requests", {
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.srm as any).defaults?.baseURL || config.services.srm;
+    return downloadBlob(baseURL, "/api/v1/srm/exports/payment-requests", {
       params,
-      responseType: "blob",
-    }),
+    });
+  },
 
   /**
    * 导出应付账龄分析
    */
-  exportPayableAging: (params: {
+  exportPayableAging: async (params: {
     company_id?: string;
     supplier_ids?: string[];
     as_of_date: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.srm.get("/api/v1/srm/exports/payable-aging", {
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.srm as any).defaults?.baseURL || config.services.srm;
+    return downloadBlob(baseURL, "/api/v1/srm/exports/payable-aging", {
       params,
-      responseType: "blob",
-    }),
+    });
+  },
 };
 
 export default srmFinanceApi;

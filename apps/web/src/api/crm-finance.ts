@@ -3,7 +3,8 @@
  * 包含客户信用、应收款、销售发票等与财务相关的接口
  */
 
-import { apiClient } from "./client";
+import { apiClient, downloadBlob } from "./client";
+import config from "../config/runtime";
 
 // ============================================
 // 一、类型定义
@@ -433,43 +434,47 @@ export const crmFinanceApi = {
   /**
    * 导出销售发票
    */
-  exportSalesInvoices: (params: {
+  exportSalesInvoices: async (params: {
     customer_id?: string;
     status?: string;
     start_date?: string;
     end_date?: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.crm.get("/api/v1/crm/exports/invoices", {
-      params,
-      responseType: "blob",
-    }),
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.crm as any).defaults?.baseURL || config.services.crm;
+    return downloadBlob(baseURL, "/api/v1/crm/exports/invoices", { params });
+  },
 
   /**
    * 导出收款记录
    */
-  exportCollectionRecords: (params: {
+  exportCollectionRecords: async (params: {
     customer_id?: string;
     start_date?: string;
     end_date?: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.crm.get("/api/v1/crm/exports/collections", {
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.crm as any).defaults?.baseURL || config.services.crm;
+    return downloadBlob(baseURL, "/api/v1/crm/exports/collections", {
       params,
-      responseType: "blob",
-    }),
+    });
+  },
 
   /**
    * 导出应收账龄分析
    */
-  exportReceivableAging: (params: {
+  exportReceivableAging: async (params: {
     company_id?: string;
     customer_ids?: string[];
     as_of_date: string;
     format: "csv" | "xlsx";
-  }) =>
-    apiClient.crm.get("/api/v1/crm/exports/receivable-aging", {
+  }): Promise<Blob> => {
+    const baseURL =
+      (apiClient.crm as any).defaults?.baseURL || config.services.crm;
+    return downloadBlob(baseURL, "/api/v1/crm/exports/receivable-aging", {
       params,
-      responseType: "blob",
-    }),
+    });
+  },
 };

@@ -1,4 +1,4 @@
-import apiClient from "./client";
+import apiClient, { downloadBlob } from "./client";
 import type {
   AddressbookEntry,
   AddressbookDetail,
@@ -9,6 +9,7 @@ import type {
   ExportParams,
   PaginatedResponse,
 } from "../types/addressbook";
+import config from "../config/runtime";
 
 export const addressbookApi = {
   getContacts: async (
@@ -45,10 +46,8 @@ export const addressbookApi = {
   },
 
   exportContacts: async (params: ExportParams): Promise<Blob> => {
-    const response = await apiClient.erp.get("/api/v1/addressbook/export", {
-      params,
-      responseType: "blob",
-    });
-    return response as unknown as Blob;
+    const baseURL =
+      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, "/api/v1/addressbook/export", { params });
   },
 };
