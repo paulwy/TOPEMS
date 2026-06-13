@@ -119,9 +119,10 @@ check_migrations() {
     "bi:bi:svc/bi"
     "report:report:svc/report"
     "ai:ai:svc/ai"
+    "doc:doc_service:svc/doc"
   )
   # 注意：以下服务使用Rust原生迁移，不在此列表中：
-  # notification, doc, flow, pdm, mobile
+  # notification, flow, pdm, mobile
   # 这些服务会在启动时自动创建表
 
   for service_info in "${all_services[@]}"; do
@@ -134,8 +135,15 @@ check_migrations() {
     local table_count=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE LOWER(table_schema) = LOWER('$schema_name');" 2>/dev/null | tr -d ' ')
 
     if [ -z "$table_count" ] || [ "$table_count" = "0" ] || [ "$table_count" = "" ]; then
-      # 检查是否有迁移文件
+      # 检查是否有迁移文件（包括 src/db/migrations/ 子目录）
+      local migration_dir=""
       if [ -d "$PROJECT_ROOT/$svc_path/migrations" ] && [ "$(ls -A "$PROJECT_ROOT/$svc_path/migrations" 2>/dev/null | wc -l)" -gt 0 ]; then
+        migration_dir="$PROJECT_ROOT/$svc_path/migrations"
+      elif [ -d "$PROJECT_ROOT/$svc_path/src/db/migrations" ] && [ "$(ls -A "$PROJECT_ROOT/$svc_path/src/db/migrations" 2>/dev/null | wc -l)" -gt 0 ]; then
+        migration_dir="$PROJECT_ROOT/$svc_path/src/db/migrations"
+      fi
+      
+      if [ -n "$migration_dir" ]; then
         missing_migrations+=("$svc_name:$schema_name:$svc_path")
       fi
     fi
@@ -156,14 +164,19 @@ check_migrations() {
       # 创建 schema
       psql "$DATABASE_URL" -c "CREATE SCHEMA IF NOT EXISTS $schema_name;" >/dev/null 2>&1 || true
 
-      # 运行迁移文件
-      if [ -d "$PROJECT_ROOT/$svc_path/migrations" ]; then
-        for migration_file in "$PROJECT_ROOT/$svc_path/migrations"/*.sql; do
-          if [ -f "$migration_file" ]; then
-            psql "$DATABASE_URL" -f "$migration_file" >/dev/null 2>&1 || true
-          fi
-        done
-      fi
+      # 确定迁移目录并运行迁移文件
+      local migration_dirs=("$PROJECT_ROOT/$svc_path/migrations" "$PROJECT_ROOT/$svc_path/src/db/migrations")
+      
+      for migration_dir in "${migration_dirs[@]}"; do
+        if [ -d "$migration_dir" ]; then
+          for migration_file in "$migration_dir"/*.sql; do
+            if [ -f "$migration_file" ]; then
+              info "    运行: $(basename "$migration_file")"
+              psql "$DATABASE_URL" -f "$migration_file" >/dev/null 2>&1 || true
+            fi
+          done
+        fi
+      done
     done
 
     success "数据库迁移完成"
@@ -508,7 +521,7 @@ show_status() {
     # 检查所有模块的迁移状态
     # 格式: schema_name:display_name
     # 注意: 以下服务使用Rust原生迁移，启动时会自动创建表
-    #   notification, doc, flow, pdm, mobile
+    #   notification, flow, pdm, mobile
     local all_services=(
       "iam:IAM"
       "pm:PM"
@@ -532,6 +545,7 @@ show_status() {
       "bi:BI"
       "report:报表"
       "ai:AI"
+      "doc_service:文档"
     )
 
     local migrated_count=0
@@ -561,7 +575,7 @@ show_status() {
     # Rust 原生迁移的服务
     echo ""
     echo "  🔧 Rust 原生迁移服务 (启动时自动创建):"
-    for native_svc in "notification:通知" "flow:Flow" "pdm:PDM" "doc:文档" "mobile:移动"; do
+    for native_svc in "notification:通知" "flow:Flow" "pdm:PDM" "mobile:移动"; do
       local schema_name="${native_svc%%:*}"
       local display_name="${native_svc##*:}"
       local schema_exists=$(psql "$DATABASE_URL" -t -c "SELECT 1 FROM information_schema.schemata WHERE LOWER(schema_name) = LOWER('$schema_name');" 2>/dev/null | tr -d ' ')
@@ -777,9 +791,10 @@ show_status() {
     "bi:svc/bi"
     "report:svc/report"
     "ai:svc/ai"
+    "doc_service:svc/doc"
   )
   # 注意：以下服务使用Rust原生迁移，不在此列表中：
-  # notification, doc, flow, pdm, mobile
+  # notification, flow, pdm, mobile
   # 这些服务会在启动时自动创建表
 
   for service_info in "${services_with_migrations[@]}"; do
@@ -787,9 +802,15 @@ show_status() {
     local svc_path="${service_info##*:}"
     local table_count=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$svc_name';" 2>/dev/null | tr -d ' ')
 
-    # 只检查有SQL迁移文件但未运行的服务
+    # 只检查有SQL迁移文件但未运行的服务（包括 src/db/migrations/ 子目录）
     if [ -z "$table_count" ] || [ "$table_count" = "0" ] || [ "$table_count" = "" ]; then
+      local has_migrations=false
       if [ -d "$PROJECT_ROOT/$svc_path/migrations" ] && [ "$(ls -A "$PROJECT_ROOT/$svc_path/migrations" 2>/dev/null | wc -l)" -gt 0 ]; then
+        has_migrations=true
+      elif [ -d "$PROJECT_ROOT/$svc_path/src/db/migrations" ] && [ "$(ls -A "$PROJECT_ROOT/$svc_path/src/db/migrations" 2>/dev/null | wc -l)" -gt 0 ]; then
+        has_migrations=true
+      fi
+      if [ "$has_migrations" = true ]; then
         missing_migrations="$missing_migrations $svc_name"
       fi
     fi

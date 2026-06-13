@@ -178,10 +178,9 @@ async fn get_employee_details(
     let result = sqlx::query!(
         r#"
         SELECT 
-            e.id, e.organization_id, e.company_id, e.department_id, e.position_id,
-            e.employee_number, e.name, e.gender, e.birth_date, e.hire_date,
-            e.position, e.job_title, e.email, e.phone,
-            e.emergency_contact_name, e.emergency_contact_phone, e.address, e.status,
+            e.id, e.company_id, e.department_id, e.position_id,
+            e.employee_no, e.name, e.gender, e.hire_date,
+            e.email, e.phone, e.status,
             e.created_at, e.updated_at,
             d.name as department_name,
             c.name as company_name,
@@ -201,25 +200,18 @@ async fn get_employee_details(
         Ok(Some(row)) => {
             let details = serde_json::json!({
                 "id": row.id,
-                "organization_id": row.organization_id,
                 "company_id": row.company_id,
                 "company_name": row.company_name,
                 "department_id": row.department_id,
                 "department_name": row.department_name,
                 "position_id": row.position_id,
                 "position_name": row.position_name,
-                "employee_number": row.employee_number,
+                "employee_no": row.employee_no,
                 "name": row.name,
                 "gender": row.gender,
-                "birth_date": row.birth_date,
                 "hire_date": row.hire_date,
-                "position": row.position,
-                "job_title": row.job_title,
                 "email": row.email,
                 "phone": row.phone,
-                "emergency_contact_name": row.emergency_contact_name,
-                "emergency_contact_phone": row.emergency_contact_phone,
-                "address": row.address,
                 "status": row.status,
                 "created_at": row.created_at,
                 "updated_at": row.updated_at,
@@ -447,10 +439,9 @@ async fn export_employees(
             }
             sqlx::query_as::<_, Employee>(
                 r#"
-                SELECT id, organization_id, company_id, department_id, position_id,
-                       employee_number, name, gender, birth_date, hire_date,
-                       position, job_title, email, phone,
-                       emergency_contact_name, emergency_contact_phone, address, status,
+                SELECT id, company_id, department_id, position_id,
+                       employee_no, name, gender, hire_date,
+                       email, phone, status,
                        created_at, updated_at
                 FROM shared.employees
                 WHERE id = ANY($1)
@@ -463,10 +454,9 @@ async fn export_employees(
         None => {
             sqlx::query_as::<_, Employee>(
                 r#"
-                SELECT id, organization_id, company_id, department_id, position_id,
-                       employee_number, name, gender, birth_date, hire_date,
-                       position, job_title, email, phone,
-                       emergency_contact_name, emergency_contact_phone, address, status,
+                SELECT id, company_id, department_id, position_id,
+                       employee_no, name, gender, hire_date,
+                       email, phone, status,
                        created_at, updated_at
                 FROM shared.employees
                 "#,

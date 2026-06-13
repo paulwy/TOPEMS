@@ -56,30 +56,19 @@ impl UserService {
     }
 
     pub async fn get_user_by_id(&self, user_id: &Uuid) -> Option<User> {
-        let result = sqlx::query_as::<_, (Uuid, String, String, Option<String>, String, Vec<String>, Vec<String>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>, bool, bool, Option<String>)>(
-            "SELECT id, username, email, full_name, role, roles, permissions, created_at, updated_at, is_active, is_superuser, avatar_url FROM iam.users WHERE id = $1"
+        let result = sqlx::query_as::<_, User>(
+            "SELECT id, username, email, password_hash, full_name, role, roles, permissions, created_at, updated_at, is_active, is_superuser, avatar_url FROM iam.users WHERE id = $1"
         )
         .bind(user_id)
         .fetch_optional(&self.db)
         .await;
 
         match result {
-            Ok(Some(user)) => Some(User {
-                id: user.0,
-                username: user.1,
-                email: user.2,
-                password_hash: "".to_string(),
-                full_name: user.3,
-                role: user.4,
-                roles: user.5,
-                permissions: user.6,
-                created_at: user.7,
-                updated_at: user.8,
-                is_active: user.9,
-                is_superuser: user.10,
-                avatar_url: user.11,
-            }),
-            _ => None,
+            Ok(user) => user,
+            Err(e) => {
+                tracing::error!("查询用户失败: {}", e);
+                None
+            }
         }
     }
 

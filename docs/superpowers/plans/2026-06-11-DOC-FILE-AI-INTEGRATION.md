@@ -338,15 +338,15 @@ cd svc/ai && cargo build
 在启动服务部分添加：
 
 ```bash
-# 启动 File 服务 (8055)
-if lsof -ti :8055 > /dev/null 2>&1; then
-    echo "File 服务已在运行 (端口 8055)"
+# 启动 File 服务 (8050)
+if lsof -ti :8050 > /dev/null 2>&1; then
+    echo "File 服务已在运行 (端口 8050)"
 else
-    echo "启动 File 服务 (8055)..."
+    echo "启动 File 服务 (8050)..."
     cd "$TOPEMS_ROOT/svc/file"
     DATABASE_URL="$DATABASE_URL" \
     STORAGE_LOCAL_PATH="./storage/files" \
-    SERVER_PORT=8055 \
+    FILE_PORT=8050 \
     RUST_LOG=info \
     cargo run --quiet &
     sleep 3
@@ -359,7 +359,7 @@ fi
 
 ```bash
 # 检查 File 服务
-check_service "File" 8055 "http://localhost:8055/health"
+check_service "File" 8050 "http://localhost:8050/health"
 ```
 
 - [ ] **Step 3: 验证启动脚本**

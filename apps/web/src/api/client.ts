@@ -182,11 +182,24 @@ class ApiClient {
       client.interceptors.request.use(
         (config) => {
           const token = localStorage.getItem("token");
+          const url = config.url || '';
+          const baseURL = config.baseURL || '';
+          
+          // Debug log for notification requests
+          if (baseURL.includes("notification") || url.includes("/api/v1/notifications")) {
+            console.debug(`[Notification API Request]`, {
+              url: `${baseURL}${url}`,
+              tokenExists: !!token,
+              hasAuthHeader: !!config.headers["Authorization"],
+              isPublicPath: isPublicPath(url)
+            });
+          }
+          
           // 只对非公开路径添加认证头
           if (
             token &&
             !config.headers["Authorization"] &&
-            !isPublicPath(config.url || "")
+            !isPublicPath(url)
           ) {
             config.headers["Authorization"] = `Bearer ${token}`;
           }
@@ -225,8 +238,21 @@ class ApiClient {
             const currentPath = window.location.pathname;
             // Skip token clearing for notification service - it may return 401
             // even with a valid IAM token (separate user database)
-            const isNotificationService =
-              error.config?.baseURL?.includes("8002");
+            const isNotificationService = 
+              error.config?.baseURL?.includes("8002") || 
+              error.config?.baseURL?.startsWith("notification");
+            // Skip unauthorized handling for notification service
+            if (isNotificationService) {
+              logger.debug("Notification service returned 401, skipping auth cleanup");
+              // Return a successful response instead of rejecting to prevent logout
+              return Promise.resolve({
+                code: 0,
+                success: true,
+                data: 0,
+                message: "Unauthorized",
+                timestamp: new Date().toISOString(),
+              });
+            }          
             if (
               currentPath !== "/login" &&
               currentPath !== "/register" &&
@@ -258,8 +284,8 @@ class ApiClient {
               isHealthCheck ||
               isNotFound ||
               isServiceUnavailable ||
-              isServerError
-            )
+              isServerError ||
+              (error.config?.baseURL?.includes("notification") && error.response?.status === 401)            )
           ) {
             logger.error("Response error:", error);
           }

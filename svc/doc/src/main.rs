@@ -2058,6 +2058,69 @@ async fn toggle_template_status(
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RenderTemplateRequest {
+    pub variables: std::collections::HashMap<String, serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RenderTemplateResponse {
+    pub content: String,
+    pub missing_variables: Vec<String>,
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/templates/{id}/render",
+    tag = "templates",
+    params(
+        ("id" = Uuid, Path, description = "Template UUID")
+    ),
+    request_body(content = RenderTemplateRequest, description = "Render template data", content_type = "application/json"),
+    responses(
+        (status = 200, description = "Template rendered successfully", body = ApiResponse<RenderTemplateResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+async fn render_template(
+    State(state): State<AppState>,
+    claims: OptionalClaims,
+    Path(id): Path<Uuid>,
+    Json(req): Json<RenderTemplateRequest>,
+) -> Json<ApiResponse<RenderTemplateResponse>> {
+    tracing::debug!("渲染模板: {}, 用户: {}", id, claims.0.username);
+
+    let template = match state.template_repo.find_by_id(id).await {
+        Ok(Some(t)) => t,
+        Ok(None) => return Json(ApiResponse::error(404, "模板不存在")),
+        Err(e) => {
+            tracing::error!("获取模板失败: {}", e);
+            return Json(ApiResponse::error(500, "获取模板失败"));
+        }
+    };
+
+    let _ = state.template_repo.increment_use_count(id).await;
+
+    let content = crate::services::template_render_service::TemplateRenderService::render(&template.content, &req.variables);
+    let missing_variables = crate::services::template_render_service::TemplateRenderService::extract_variables(&template.content)
+        .into_iter()
+        .filter(|v| !req.variables.contains_key(v))
+        .collect();
+
+    Json(ApiResponse::success(
+        RenderTemplateResponse {
+            content,
+            missing_variables,
+        },
+        "模板渲染成功",
+    ))
+}
+
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SetFilePermissionRequest {
     pub user_id: Option<Uuid>,
@@ -2458,6 +2521,7 @@ async fn main() {
         .route("/templates/{id}", delete(delete_template))
         .route("/templates/{id}/duplicate", post(duplicate_template))
         .route("/templates/{id}/toggle-status", put(toggle_template_status))
+        .route("/templates/{id}/render", post(render_template))
         .route("/templates/categories", get(list_template_categories))
         .layer(axum_middleware::from_fn_with_state(
             auth_state.clone(),

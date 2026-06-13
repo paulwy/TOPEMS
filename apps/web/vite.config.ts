@@ -2,12 +2,14 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+import type { IncomingMessage, ServerResponse } from 'http';
+
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
   target,
   changeOrigin: true,
-  rewrite: skipRewrite ? undefined : (path) => path.replace(new RegExp(`^\\/${serviceName}`), ''),
-  configure: (proxy) => {
-    proxy.on('error', (err, req, res) => {
+  rewrite: skipRewrite ? undefined : (path: string) => path.replace(new RegExp(`^\\/${serviceName}`), ''),
+  configure: (proxy: any) => {
+    proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
       if (!req.url?.includes('/health')) {
         console.warn(`[Vite Proxy] ${serviceName.toUpperCase()} service unavailable, error:`, err.message);
       }
@@ -158,25 +160,50 @@ export default defineConfig({
     hmr: {
       host: 'localhost',
       protocol: 'ws',
+      port: 3000
     },
     fs: {
       allow: ['..'],
     },
     proxy: {
-      '/api/v1/files': createServiceProxyConfig('doc', 'http://localhost:8024', true),
+      // 文件服务代理 - 必须放在 /api 规则之前，确保 /file/api/* 被正确代理
+      '/file/api': createServiceProxyConfig('file', 'http://localhost:8050'),
+      '/file/health': createServiceProxyConfig('file', 'http://localhost:8050'),
       '/mail/api': createServiceProxyConfig('mail', 'http://localhost:8051'),
       '/mail/health': createServiceProxyConfig('mail', 'http://localhost:8051'),
       '/hrm/api': createServiceProxyConfig('hrm', 'http://localhost:8011'),
       '/hrm/health': createServiceProxyConfig('hrm', 'http://localhost:8011'),
-      '/api': { target: 'http://localhost:8000', changeOrigin: true },
+      // 通知服务代理 - 放在 /api 规则之前，确保优先匹配
+      '/notification': {
+        target: 'http://localhost:8002',
+        changeOrigin: true,
+        ws: true,
+        secure: false,
+        rewrite: (path: string) => {
+          const newPath = path.replace(/^\/notification/, '');
+          console.debug(`[Vite Proxy] /notification -> http://localhost:8002${newPath}`);
+          return newPath;
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (_proxyReq: any, req: any) => {
+            console.debug(`[Vite Proxy] Forwarding to notification service:`, {
+              originalUrl: req.url,
+              headers: req.headers
+            });
+          });
+          proxy.on('error', (err: Error, _req: any, _res: any) => {
+            console.error(`[Vite Proxy] Notification service error:`, err.message);
+          });
+        }
+      },
       '/health': { target: 'http://localhost:8000', changeOrigin: true },
+      '/api': { target: 'http://localhost:8000', changeOrigin: true },
       '/iam/api': { target: 'http://localhost:8000', changeOrigin: true, rewrite: (path) => path.replace(/^\/iam/, '') },
       '/iam/health': { target: 'http://localhost:8000', changeOrigin: true, rewrite: (path) => path.replace(/^\/iam/, '') },
       '/doc/api': createServiceProxyConfig('doc', 'http://localhost:8024'),
       '/doc/health': createServiceProxyConfig('doc', 'http://localhost:8024'),
       '/flow/api': createServiceProxyConfig('flow', 'http://localhost:8004'),
       '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8004'),
-      '/notification': { target: 'http://localhost:8002', changeOrigin: true, ws: true, secure: false, rewrite: (path: string) => path.replace(/^\/notification/, '') },
       '/im/ws': { target: 'http://127.0.0.1:8052', changeOrigin: true, ws: true, secure: false, rewrite: (path) => path.replace(/^\/im/, '') },
       '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8005'),
       '/integration/health': createServiceProxyConfig('integration', 'http://localhost:8005'),
@@ -212,8 +239,6 @@ export default defineConfig({
       '/gis/health': createServiceProxyConfig('gis', 'http://localhost:8053'),
       '/im/api': createServiceProxyConfig('im', 'http://localhost:8052'),
       '/im/health': createServiceProxyConfig('im', 'http://localhost:8052'),
-      '/file/api': createServiceProxyConfig('file', 'http://localhost:8050'),
-      '/file/health': createServiceProxyConfig('file', 'http://localhost:8050'),
       '/bi/api': createServiceProxyConfig('bi', 'http://localhost:8060'),
       '/bi/health': createServiceProxyConfig('bi', 'http://localhost:8060'),
       '/report/api': createServiceProxyConfig('report', 'http://localhost:8061'),

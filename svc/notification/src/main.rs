@@ -247,7 +247,7 @@ async fn main() {
         .layer(prometheus_layer)
         .with_state(state);
 
-    let port = std::env::var("SERVER_PORT")
+    let port = std::env::var("NOTIFICATION_PORT")
         .unwrap_or_else(|_| "8002".to_string())
         .parse()
         .unwrap_or(8002);

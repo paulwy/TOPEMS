@@ -293,8 +293,8 @@ const TemplateManagementPage: React.FC = () => {
                   <div className="space-y-1 text-sm text-gray-500 mb-4">
                     <div>
                       分类：
-                      {categories.find((c) => c.code === template.category)
-                        ?.name || template.category}
+                      {categories.find((c) => c.id === template.category_id)
+                        ?.name || template.category_name || "未分类"}
                     </div>
                     <div>模块：{template.module}</div>
                     <div>变量数：{template.variables?.length || 0}</div>
@@ -367,8 +367,8 @@ const TemplateManagementPage: React.FC = () => {
                       </div>
                       <p className="text-sm text-gray-500">
                         {template.code} ·{" "}
-                        {categories.find((c) => c.code === template.category)
-                          ?.name || template.category}
+                        {categories.find((c) => c.id === template.category_id)
+                          ?.name || template.category_name || "未分类"}
                       </p>
                     </div>
                   </div>
@@ -477,7 +477,7 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const [formData, setFormData] = useState<CreateTemplateRequest>({
     name: template?.name || "",
     code: template?.code || "",
-    category: template?.category || "",
+    category_id: template?.category_id,
     module: template?.module || "",
     description: template?.description || "",
     content: template?.content || "",
@@ -541,15 +541,15 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                 </label>
                 <select
                   required
-                  value={formData.category}
+                  value={formData.category_id || ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
+                    setFormData({ ...formData, category_id: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">请选择分类</option>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.code}>
+                    <option key={cat.id} value={cat.id}>
                       {cat.name}
                     </option>
                   ))}
@@ -658,7 +658,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
             </h4>
             <div className="flex items-center space-x-4 text-sm text-gray-500">
               <span>编码：{template.code}</span>
-              <span>分类：{template.category}</span>
+              <span>分类：{template.category_name || "未分类"}</span>
               <span>模块：{template.module}</span>
             </div>
             {template.description && (

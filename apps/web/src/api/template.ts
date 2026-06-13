@@ -1,47 +1,76 @@
 import apiClient from "./client";
 import type { ApiResponse } from "./client";
 
-export interface Template {
-  id: string;
-  name: string;
-  code: string;
-  category: string;
-  module: string;
-  description?: string;
-  content: string;
-  variables: TemplateVariable[];
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+export type TemplateType = "workflow" | "document" | "form" | "report" | "notification";
+
+export type VariableType = "string" | "number" | "date" | "select" | "multiselect" | "lookup" | "user" | "now" | "context";
+
+export interface SelectOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
 }
 
 export interface TemplateVariable {
   key: string;
   label: string;
-  type: "string" | "number" | "date" | "select";
-  required: boolean;
-  options?: string[];
-  default_value?: string;
+  type: VariableType;
+  required?: boolean;
+  default_value?: any;
+  options?: SelectOption[];
+  data_source?: string;
+  validation_rules?: Record<string, any>;
+  placeholder?: string;
+  description?: string;
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  code: string;
+  template_type: TemplateType;
+  category_id?: string;
+  category_name?: string;
+  module?: string;
+  description?: string;
+  content: string;
+  variables: TemplateVariable[];
+  is_active: boolean;
+  is_system: boolean;
+  is_public: boolean;
+  ai_enabled: boolean;
+  version: number;
+  view_count: number;
+  use_count: number;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
 }
 
 export interface TemplateCategory {
   id: string;
   name: string;
   code: string;
+  category_type?: TemplateType;
   icon?: string;
   description?: string;
   template_count: number;
+  is_active: boolean;
 }
 
 export interface CreateTemplateRequest {
   name: string;
   code: string;
-  category: string;
+  template_type?: TemplateType;
+  category_id?: string;
   module: string;
   description?: string;
   content: string;
-  variables: TemplateVariable[];
+  variables?: TemplateVariable[];
   is_active?: boolean;
+  is_public?: boolean;
+  ai_enabled?: boolean;
+  sort_order?: number;
 }
 
 export interface UpdateTemplateRequest extends Partial<CreateTemplateRequest> {
@@ -52,9 +81,20 @@ export interface PaginationParams {
   page?: number;
   page_size?: number;
   search?: string;
+  type?: TemplateType;
   category?: string;
   module?: string;
   is_active?: boolean;
+  is_public?: boolean;
+}
+
+export interface RenderTemplateRequest {
+  variables: Record<string, any>;
+}
+
+export interface RenderTemplateResponse {
+  content: string;
+  missing_variables: string[];
 }
 
 export interface PaginatedResult<T> {
@@ -73,10 +113,13 @@ export const templateApi = {
     if (params?.page_size)
       searchParams.set("page_size", params.page_size.toString());
     if (params?.search) searchParams.set("search", params.search);
+    if (params?.type) searchParams.set("type", params.type);
     if (params?.category) searchParams.set("category", params.category);
     if (params?.module) searchParams.set("module", params.module);
     if (params?.is_active !== undefined)
       searchParams.set("is_active", String(params.is_active));
+    if (params?.is_public !== undefined)
+      searchParams.set("is_public", String(params.is_public));
 
     const queryString = searchParams.toString();
     return await apiClient.doc.get(
@@ -103,14 +146,24 @@ export const templateApi = {
     return await apiClient.doc.delete(`/api/v1/templates/${id}`);
   },
 
-  async listCategories(): Promise<ApiResponse<TemplateCategory[]>> {
-    return await apiClient.doc.get("/api/v1/templates/categories");
+  async listCategories(
+    params?: Pick<PaginationParams, "is_active" | "type">,
+  ): Promise<ApiResponse<TemplateCategory[]>> {
+    const searchParams = new URLSearchParams();
+    if (params?.is_active !== undefined)
+      searchParams.set("is_active", String(params.is_active));
+    if (params?.type) searchParams.set("type", params.type);
+
+    const queryString = searchParams.toString();
+    return await apiClient.doc.get(
+      `/api/v1/templates/categories${queryString ? "?" + queryString : ""}`,
+    );
   },
 
   async render(
     id: string,
     variables: Record<string, any>,
-  ): Promise<ApiResponse<string>> {
+  ): Promise<ApiResponse<RenderTemplateResponse>> {
     return await apiClient.doc.post(`/api/v1/templates/${id}/render`, {
       variables,
     });

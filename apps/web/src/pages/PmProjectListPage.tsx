@@ -49,7 +49,7 @@ import {
 import Pagination from "../components/pm/Pagination";
 
 const PROJECT_TYPES = [
-  { value: "", label: "全部类型" },
+  { value: "__ALL__", label: "全部类型" },
   { value: "research", label: "科研项目" },
   { value: "production", label: "生产项目" },
   { value: "construction", label: "施工项目" },
@@ -58,7 +58,7 @@ const PROJECT_TYPES = [
 ];
 
 const STATUS_OPTIONS = [
-  { value: "", label: "全部状态" },
+  { value: "__ALL__", label: "全部状态" },
   { value: "draft", label: "草稿" },
   { value: "pending", label: "待审批" },
   { value: "approved", label: "已批准" },
@@ -72,8 +72,8 @@ const PmProjectListPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedType, setSelectedType] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedType, setSelectedType] = useState("__ALL__");
+  const [selectedStatus, setSelectedStatus] = useState("__ALL__");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -88,8 +88,8 @@ const PmProjectListPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await pmApi.projects.list({
-        project_type: selectedType || undefined,
-        status: selectedStatus || undefined,
+        project_type: selectedType === "__ALL__" ? undefined : selectedType,
+        status: selectedStatus === "__ALL__" ? undefined : selectedStatus,
         page,
         page_size: pageSize,
       });

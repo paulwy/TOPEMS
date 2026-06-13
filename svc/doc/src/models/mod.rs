@@ -299,6 +299,44 @@ pub struct TemplateAuditLog {
     pub created_at: DateTime<Utc>,
 }
 
+// ==================== 模板请求/响应模型 ====================
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
+pub struct CreateTemplateRequest {
+    pub name: String,
+    pub code: String,
+    #[serde(rename = "type")]
+    pub template_type: Option<String>,
+    pub category_id: Option<Uuid>,
+    pub module: Option<String>,
+    pub description: Option<String>,
+    pub content: String,
+    pub variables: Option<serde_json::Value>,
+    pub is_active: Option<bool>,
+    pub is_public: Option<bool>,
+    pub ai_enabled: Option<bool>,
+    pub sort_order: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[allow(dead_code)]
+pub struct UpdateTemplateRequest {
+    pub name: Option<String>,
+    pub code: Option<String>,
+    #[serde(rename = "type")]
+    pub template_type: Option<String>,
+    pub category_id: Option<Uuid>,
+    pub module: Option<String>,
+    pub description: Option<String>,
+    pub content: Option<String>,
+    pub variables: Option<serde_json::Value>,
+    pub is_active: Option<bool>,
+    pub is_public: Option<bool>,
+    pub ai_enabled: Option<bool>,
+    pub sort_order: Option<i32>,
+}
+
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[allow(dead_code)]
 pub struct ListTemplatesQuery {
