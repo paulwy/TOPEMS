@@ -165,9 +165,12 @@ pub struct ListTemplatesQuery {
     pub page: Option<u32>,
     pub page_size: Option<u32>,
     pub search: Option<String>,
+    #[serde(rename = "type")]
+    pub template_type: Option<String>,
     pub category: Option<String>,
     pub module: Option<String>,
     pub is_active: Option<bool>,
+    pub is_public: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -1521,7 +1524,9 @@ async fn list_templates(
             query.search.as_deref(),
             query.category.as_deref(),
             query.module.as_deref(),
+            query.template_type.as_deref(),
             query.is_active,
+            query.is_public,
             limit,
             offset,
         )
@@ -1835,7 +1840,7 @@ async fn list_template_categories(
 ) -> Json<ApiResponse<Vec<models::TemplateCategoryResponse>>> {
     tracing::debug!("获取模板分类列表, 用户: {}", claims.0.username);
 
-    match state.template_category_repo.list(Some(true)).await {
+    match state.template_category_repo.list(Some(true), None).await {
         Ok(categories) => {
             let mut responses = vec![];
             for cat in categories {

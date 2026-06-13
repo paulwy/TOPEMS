@@ -305,9 +305,12 @@ pub struct ListTemplatesQuery {
     pub page: Option<u32>,
     pub page_size: Option<u32>,
     pub search: Option<String>,
+    #[serde(rename = "type")]
+    pub template_type: Option<String>,
     pub category: Option<String>,
     pub module: Option<String>,
     pub is_active: Option<bool>,
+    pub is_public: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]

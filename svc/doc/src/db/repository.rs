@@ -514,14 +514,15 @@ impl TemplateRepository {
         let t = sqlx::query_as::<_, Template>(
             r#"
             INSERT INTO doc_service.templates 
-            (id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-            RETURNING id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by
+            (id, name, code, type, category_id, module, description, content, variables, is_active, is_system, is_public, ai_enabled, version, sort_order, view_count, use_count, created_at, updated_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+            RETURNING id, name, code, type, category_id, module, description, content, variables, is_active, is_system, is_public, ai_enabled, version, sort_order, view_count, use_count, created_at, updated_at, created_by
             "#,
         )
         .bind(template.id)
         .bind(&template.name)
         .bind(&template.code)
+        .bind(&template.template_type)
         .bind(template.category_id)
         .bind(&template.module)
         .bind(&template.description)
@@ -529,6 +530,9 @@ impl TemplateRepository {
         .bind(&template.variables)
         .bind(template.is_active)
         .bind(template.is_system)
+        .bind(template.is_public)
+        .bind(template.ai_enabled)
+        .bind(template.version)
         .bind(template.sort_order)
         .bind(template.view_count)
         .bind(template.use_count)
@@ -544,7 +548,7 @@ impl TemplateRepository {
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Template>, RepositoryError> {
         let template = sqlx::query_as::<_, Template>(
             r#"
-            SELECT id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by
+            SELECT id, name, code, type, category_id, module, description, content, variables, is_active, is_system, is_public, ai_enabled, version, sort_order, view_count, use_count, created_at, updated_at, created_by
             FROM doc_service.templates
             WHERE id = $1
             "#,
@@ -559,7 +563,7 @@ impl TemplateRepository {
     pub async fn find_by_code(&self, code: &str) -> Result<Option<Template>, RepositoryError> {
         let template = sqlx::query_as::<_, Template>(
             r#"
-            SELECT id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by
+            SELECT id, name, code, type, category_id, module, description, content, variables, is_active, is_system, is_public, ai_enabled, version, sort_order, view_count, use_count, created_at, updated_at, created_by
             FROM doc_service.templates
             WHERE code = $1
             "#,
@@ -576,13 +580,15 @@ impl TemplateRepository {
         search: Option<&str>,
         category_code: Option<&str>,
         module: Option<&str>,
+        template_type: Option<&str>,
         is_active: Option<bool>,
+        is_public: Option<bool>,
         _limit: i64,
         _offset: i64,
     ) -> Result<(Vec<Template>, i64), RepositoryError> {
         let mut query = String::from(
             r#"
-            SELECT t.id, t.name, t.code, t.category_id, t.module, t.description, t.content, t.variables, t.is_active, t.is_system, t.sort_order, t.view_count, t.use_count, t.created_at, t.updated_at, t.created_by
+            SELECT t.id, t.name, t.code, t.type, t.category_id, t.module, t.description, t.content, t.variables, t.is_active, t.is_system, t.is_public, t.ai_enabled, t.version, t.sort_order, t.view_count, t.use_count, t.created_at, t.updated_at, t.created_by
             FROM doc_service.templates t
             LEFT JOIN doc_service.template_categories tc ON t.category_id = tc.id
             WHERE 1=1
@@ -632,11 +638,27 @@ impl TemplateRepository {
             param_idx += 1;
         }
 
+        if let Some(t_type) = template_type {
+            let condition = format!(" AND t.type = ${}", param_idx);
+            query.push_str(&condition);
+            count_query.push_str(&condition);
+            params.push(t_type.to_string());
+            param_idx += 1;
+        }
+
         if let Some(active) = is_active {
             let condition = format!(" AND t.is_active = ${}", param_idx);
             query.push_str(&condition);
             count_query.push_str(&condition);
             params.push(if active { "true" } else { "false" }.to_string());
+            param_idx += 1;
+        }
+
+        if let Some(public) = is_public {
+            let condition = format!(" AND t.is_public = ${}", param_idx);
+            query.push_str(&condition);
+            count_query.push_str(&condition);
+            params.push(if public { "true" } else { "false" }.to_string());
         }
 
         query.push_str(" ORDER BY t.sort_order ASC, t.created_at DESC");
@@ -667,20 +689,23 @@ impl TemplateRepository {
         let t = sqlx::query_as::<_, Template>(
             r#"
             UPDATE doc_service.templates
-            SET name = $2, code = $3, category_id = $4, module = $5, description = $6, content = $7, variables = $8, is_active = $9, sort_order = $10, updated_at = $11
+            SET name = $2, code = $3, type = $4, category_id = $5, module = $6, description = $7, content = $8, variables = $9, is_active = $10, is_public = $11, ai_enabled = $12, sort_order = $13, updated_at = $14
             WHERE id = $1
-            RETURNING id, name, code, category_id, module, description, content, variables, is_active, is_system, sort_order, view_count, use_count, created_at, updated_at, created_by
+            RETURNING id, name, code, type, category_id, module, description, content, variables, is_active, is_system, is_public, ai_enabled, version, sort_order, view_count, use_count, created_at, updated_at, created_by
             "#,
         )
         .bind(id)
         .bind(&template.name)
         .bind(&template.code)
+        .bind(&template.template_type)
         .bind(template.category_id)
         .bind(&template.module)
         .bind(&template.description)
         .bind(&template.content)
         .bind(&template.variables)
         .bind(template.is_active)
+        .bind(template.is_public)
+        .bind(template.ai_enabled)
         .bind(template.sort_order)
         .bind(template.updated_at)
         .fetch_optional(&self.pool)
@@ -731,29 +756,59 @@ impl TemplateCategoryRepository {
     pub async fn list(
         &self,
         is_active: Option<bool>,
+        category_type: Option<&str>,
     ) -> Result<Vec<TemplateCategory>, RepositoryError> {
         let result = if let Some(active) = is_active {
-            sqlx::query_as::<_, TemplateCategory>(
-                r#"
-                SELECT id, name, code, icon, description, sort_order, is_active, created_at, updated_at, created_by
-                FROM doc_service.template_categories
-                WHERE is_active = $1
-                ORDER BY sort_order ASC, name ASC
-                "#,
-            )
-            .bind(active)
-            .fetch_all(&self.pool)
-            .await?
+            if let Some(t_type) = category_type {
+                sqlx::query_as::<_, TemplateCategory>(
+                    r#"
+                    SELECT id, name, code, type, icon, description, sort_order, is_active, created_at, updated_at, created_by
+                    FROM doc_service.template_categories
+                    WHERE is_active = $1 AND type = $2
+                    ORDER BY sort_order ASC, name ASC
+                    "#,
+                )
+                .bind(active)
+                .bind(t_type)
+                .fetch_all(&self.pool)
+                .await?
+            } else {
+                sqlx::query_as::<_, TemplateCategory>(
+                    r#"
+                    SELECT id, name, code, type, icon, description, sort_order, is_active, created_at, updated_at, created_by
+                    FROM doc_service.template_categories
+                    WHERE is_active = $1
+                    ORDER BY sort_order ASC, name ASC
+                    "#,
+                )
+                .bind(active)
+                .fetch_all(&self.pool)
+                .await?
+            }
         } else {
-            sqlx::query_as::<_, TemplateCategory>(
-                r#"
-                SELECT id, name, code, icon, description, sort_order, is_active, created_at, updated_at, created_by
-                FROM doc_service.template_categories
-                ORDER BY sort_order ASC, name ASC
-                "#,
-            )
-            .fetch_all(&self.pool)
-            .await?
+            if let Some(t_type) = category_type {
+                sqlx::query_as::<_, TemplateCategory>(
+                    r#"
+                    SELECT id, name, code, type, icon, description, sort_order, is_active, created_at, updated_at, created_by
+                    FROM doc_service.template_categories
+                    WHERE type = $1
+                    ORDER BY sort_order ASC, name ASC
+                    "#,
+                )
+                .bind(t_type)
+                .fetch_all(&self.pool)
+                .await?
+            } else {
+                sqlx::query_as::<_, TemplateCategory>(
+                    r#"
+                    SELECT id, name, code, type, icon, description, sort_order, is_active, created_at, updated_at, created_by
+                    FROM doc_service.template_categories
+                    ORDER BY sort_order ASC, name ASC
+                    "#,
+                )
+                .fetch_all(&self.pool)
+                .await?
+            }
         };
 
         Ok(result)
@@ -765,12 +820,30 @@ impl TemplateCategoryRepository {
     ) -> Result<Option<TemplateCategory>, RepositoryError> {
         let category = sqlx::query_as::<_, TemplateCategory>(
             r#"
-            SELECT id, name, code, icon, description, sort_order, is_active, created_at, updated_at, created_by
+            SELECT id, name, code, type, icon, description, sort_order, is_active, created_at, updated_at, created_by
             FROM doc_service.template_categories
             WHERE code = $1
             "#,
         )
         .bind(code)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(category)
+    }
+
+    pub async fn find_by_id(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<TemplateCategory>, RepositoryError> {
+        let category = sqlx::query_as::<_, TemplateCategory>(
+            r#"
+            SELECT id, name, code, type, icon, description, sort_order, is_active, created_at, updated_at, created_by
+            FROM doc_service.template_categories
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
         .fetch_optional(&self.pool)
         .await?;
 
