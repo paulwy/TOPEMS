@@ -1,0 +1,314 @@
+# TOPEMS 服务配置
+# 与 port-planning.md 保持严格一致
+# 版本: v4.0
+
+service_groups:
+  # 核心服务 (8000-8009)
+  core:
+    - name: iam
+      port: 8000
+      env_var: IAM_PORT
+      description: 身份认证服务
+      status: implemented
+      dependencies: []
+
+    - name: pm
+      port: 8001
+      env_var: PM_PORT
+      description: 项目管理服务
+      status: implemented
+      dependencies: [iam]
+
+    - name: notification
+      port: 8002
+      env_var: NOTIFICATION_PORT
+      description: 通知服务
+      status: implemented
+      dependencies: [iam]
+
+    - name: portal
+      port: 8003
+      env_var: PORTAL_PORT
+      description: 统一门户
+      status: implemented
+      dependencies: [iam]
+
+    - name: flow
+      port: 8004
+      env_var: FLOW_PORT
+      description: 工作流引擎
+      status: implemented
+      dependencies: [iam]
+
+    - name: integration
+      port: 8005
+      env_var: INTEGRATION_PORT
+      description: 集成服务
+      status: implemented
+      dependencies: [iam]
+
+  # ERP/财务服务 (8010-8019)
+  erp:
+    - name: erp
+      port: 8010
+      env_var: ERP_PORT
+      description: 企业资源计划
+      status: implemented
+      dependencies: [iam]
+
+    - name: hrm
+      port: 8011
+      env_var: HRM_PORT
+      description: 人力资源管理
+      status: implemented
+      dependencies: [iam]
+
+    - name: crm
+      port: 8012
+      env_var: CRM_PORT
+      description: 客户关系管理
+      status: implemented
+      dependencies: [iam]
+
+  # PLM/研发服务 (8020-8029)
+  plm:
+    - name: rs
+      port: 8020
+      env_var: RS_PORT
+      description: 研发管理
+      status: implemented
+      dependencies: [iam]
+
+    - name: lims
+      port: 8022
+      env_var: LIMS_PORT
+      description: 实验室管理
+      status: implemented
+      dependencies: [iam]
+
+    - name: pdm
+      port: 8023
+      env_var: PDM_PORT
+      description: 产品数据管理
+      status: implemented
+      dependencies: [iam]
+
+    - name: doc
+      port: 8024
+      env_var: DOC_PORT
+      description: 文档管理
+      status: implemented
+      dependencies: [iam]
+
+  # MES/生产服务 (8030-8039)
+  mes:
+    - name: mes
+      port: 8030
+      env_var: MES_PORT
+      description: 制造执行系统
+      status: implemented
+      dependencies: [iam]
+
+    - name: qms
+      port: 8031
+      env_var: QMS_PORT
+      description: 质量管理
+      status: implemented
+      dependencies: [iam]
+
+    - name: ehs
+      port: 8032
+      env_var: EHS_PORT
+      description: 环境健康安全
+      status: implemented
+      dependencies: [iam]
+
+  # SCM/供应链服务 (8040-8049)
+  scm:
+    - name: scm
+      port: 8040
+      env_var: SCM_PORT
+      description: 供应链管理
+      status: implemented
+      dependencies: [iam]
+
+    - name: srm
+      port: 8041
+      env_var: SRM_PORT
+      description: 供应商管理
+      status: implemented
+      dependencies: [iam]
+
+    - name: wms
+      port: 8042
+      env_var: WMS_PORT
+      description: 仓储管理
+      status: implemented
+      dependencies: [iam]
+
+  # 基础设施服务 (8050-8059)
+  infrastructure:
+    - name: file
+      port: 8050
+      env_var: FILE_PORT
+      description: 文件存储服务
+      status: implemented
+      dependencies: []
+
+    - name: mail
+      port: 8051
+      env_var: MAIL_PORT
+      description: 邮件服务
+      status: implemented
+      dependencies: []
+
+    - name: im
+      port: 8052
+      env_var: IM_PORT
+      description: 即时通讯
+      status: implemented
+      dependencies: []
+
+    - name: gis
+      port: 8053
+      env_var: GIS_PORT
+      description: 地理信息服务
+      status: implemented
+      dependencies: []
+
+  # 数据分析服务 (8060-8069)
+  analytics:
+    - name: bi
+      port: 8060
+      env_var: BI_PORT
+      description: 商业智能
+      status: implemented
+      dependencies: []
+
+    - name: report
+      port: 8061
+      env_var: REPORT_PORT
+      description: 报表服务
+      status: implemented
+      dependencies: []
+
+    - name: ai
+      port: 8062
+      env_var: AI_PORT
+      description: 人工智能服务
+      status: implemented
+      dependencies: [file]
+
+  # 扩展服务 (8070-8079)
+  extensions:
+    - name: mobile
+      port: 8070
+      env_var: MOBILE_PORT
+      description: 移动服务
+      status: implemented
+      dependencies: [iam]
+
+# 特殊端口配置
+special_ports:
+  api_gateway:
+    port: 8080
+    env_var: GATEWAY_PORT
+    description: API网关
+    status: reserved
+    deployment_modes: [docker, saas]
+
+  frontend:
+    port: 3000
+    env_var: WEB_PORT
+    description: Web应用
+    status: implemented
+    deployment_modes: [local, docker, saas]
+
+  postgres:
+    port: 5432
+    env_var: POSTGRES_PORT
+    description: 数据库
+    deployment_modes: [local, docker, saas]
+
+  redis:
+    port: 6379
+    env_var: REDIS_PORT
+    description: 缓存
+    deployment_modes: [local, docker, saas]
+
+  ollama:
+    port: 11434
+    env_var: OLLAMA_PORT
+    description: AI模型服务
+    deployment_modes: [local, docker, saas]
+
+# 服务模块分组 (用于 start-module 命令)
+module_groups:
+  core:
+    - iam
+    - pm
+    - notification
+    - portal
+    - flow
+    - integration
+
+  erp:
+    - erp
+    - hrm
+    - crm
+
+  plm:
+    - rs
+    - lims
+    - pdm
+    - doc
+
+  mes:
+    - mes
+    - qms
+    - ehs
+
+  scm:
+    - scm
+    - srm
+    - wms
+
+  infrastructure:
+    - file
+    - mail
+    - im
+    - gis
+
+  analytics:
+    - bi
+    - report
+    - ai
+
+  all:
+    - iam
+    - pm
+    - notification
+    - portal
+    - flow
+    - integration
+    - erp
+    - hrm
+    - crm
+    - rs
+    - lims
+    - pdm
+    - doc
+    - mes
+    - qms
+    - ehs
+    - scm
+    - srm
+    - wms
+    - file
+    - mail
+    - im
+    - gis
+    - bi
+    - report
+    - ai
+    - mobile

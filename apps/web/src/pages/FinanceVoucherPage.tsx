@@ -1,3 +1,23 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Tabs,
+  Tab,
+  Checkbox,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   FileText,
@@ -32,28 +52,6 @@ import {
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
 
 const FinanceVoucherPage: React.FC = () => {
   const navigate = useNavigate();
@@ -412,7 +410,7 @@ const FinanceVoucherPage: React.FC = () => {
       variant: "outline" as const,
       label: status,
     };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <Chip size="small" variant={config.variant === "outline" ? "outlined" : "filled"} label={config.label} />;
   };
 
   const formatCurrency = (amount: number) =>
@@ -485,8 +483,8 @@ const FinanceVoucherPage: React.FC = () => {
         cell: ({ row }) => (
           <div className="flex items-center space-x-2">
             <Button
-              variant="ghost"
-              size="sm"
+              variant="text"
+              size="small"
               onClick={() => {
                 setCurrentVoucher(row.original);
                 loadVoucherItems(row.original.id);
@@ -496,8 +494,8 @@ const FinanceVoucherPage: React.FC = () => {
               <Eye className="w-4 h-4" />
             </Button>
             <Button
-              variant="ghost"
-              size="sm"
+              variant="text"
+              size="small"
               onClick={() => {
                 setNewVoucher({
                   voucher_number: row.original.voucher_number,
@@ -514,8 +512,8 @@ const FinanceVoucherPage: React.FC = () => {
               <Edit className="w-4 h-4" />
             </Button>
             <Button
-              variant="ghost"
-              size="sm"
+              variant="text"
+              size="small"
               className="text-red-600"
               onClick={() => handleDelete(row.original.id)}
             >
@@ -548,7 +546,7 @@ const FinanceVoucherPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
               <div>
@@ -584,25 +582,12 @@ const FinanceVoucherPage: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger
-              value="vouchers"
-              className="flex items-center space-x-2"
-            >
-              <FileText className="w-4 h-4" />
-              <span>财务凭证</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="subjects"
-              className="flex items-center space-x-2"
-            >
-              <Search className="w-4 h-4" />
-              <span>会计科目</span>
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} sx={{ mb: 2 }}>
+          <Tab value="vouchers" label="财务凭证" icon={<FileText className="w-4 h-4" />} iconPosition="start" />
+          <Tab value="subjects" label="会计科目" icon={<Search className="w-4 h-4" />} iconPosition="start" />
+        </Tabs>
 
-          <TabsContent value="vouchers" className="space-y-4">
+        <div className={activeTab === "vouchers" ? "" : "hidden"}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white">
                 <CardContent className="p-6">
@@ -681,16 +666,14 @@ const FinanceVoucherPage: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <span className="text-sm text-blue-700">
                     已选择{" "}
-                    <Badge variant="default" className="ml-2">
-                      {selectedIds.length}
-                    </Badge>{" "}
+                    <Chip size="small" sx={{ marginLeft: 2 }} label={selectedIds.length.toString()} />
                     条记录
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="outlined"
+                    size="small"
                     onClick={handleBatchAudit}
                     className="text-green-600 hover:text-green-700 hover:border-green-500"
                   >
@@ -698,8 +681,8 @@ const FinanceVoucherPage: React.FC = () => {
                     批量审核
                   </Button>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="outlined"
+                    size="small"
                     onClick={handleBatchDelete}
                     className="text-red-600 hover:text-red-700 hover:border-red-500"
                   >
@@ -707,8 +690,8 @@ const FinanceVoucherPage: React.FC = () => {
                     批量删除
                   </Button>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="outlined"
+                    size="small"
                     onClick={() => setSelectedIds([])}
                   >
                     取消选择
@@ -719,10 +702,10 @@ const FinanceVoucherPage: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center">
                   <FileText className="w-5 h-5 mr-2 text-indigo-600" />
                   财务凭证列表
-                </CardTitle>
+                </Typography>
               </CardHeader>
               <CardContent className="p-0">
                 {loading ? (
@@ -751,9 +734,10 @@ const FinanceVoucherPage: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
+        </div>
 
-          <TabsContent value="subjects" className="space-y-4">
+        <div className={activeTab === "subjects" ? "" : "hidden"}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
                 <CardContent className="p-6">
@@ -833,19 +817,15 @@ const FinanceVoucherPage: React.FC = () => {
                           {subject.code}
                         </span>
                         {subject.is_cash_flow && (
-                          <Badge variant="secondary" className="text-xs">
-                            现金流量
-                          </Badge>
+                          <Chip size="small" variant="outlined" sx={{ fontSize: "0.75rem" }} label="现金流量" />
                         )}
                       </div>
-                      <Badge
-                        variant={
-                          subject.status === "active" ? "default" : "outline"
-                        }
-                        className="bg-green-100 text-green-700 hover:bg-green-100"
-                      >
-                        {subject.status === "active" ? "启用" : "禁用"}
-                      </Badge>
+                      <Chip
+                        size="small"
+                        variant={subject.status === "active" ? "filled" : "outlined"}
+                        sx={{ backgroundColor: "green.100", color: "green.700" }}
+                        label={subject.status === "active" ? "启用" : "禁用"}
+                      />
                     </div>
                     <h3 className="text-lg font-semibold text-slate-900">
                       {subject.name}
@@ -872,185 +852,168 @@ const FinanceVoucherPage: React.FC = () => {
                 </Card>
               ))}
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {newVoucher.voucher_number ? "编辑凭证" : "新增财务凭证"}
-            </DialogTitle>
-          </DialogHeader>
+      <Dialog open={showCreateModal} onClose={() => { setShowCreateModal(false); resetForm(); }} maxWidth="lg">
+        <DialogTitle>{newVoucher.voucher_number ? "编辑凭证" : "新增财务凭证"}</DialogTitle>
+        <DialogContent>
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>凭证编号 *</Label>
-                <Input
-                  value={newVoucher.voucher_number}
-                  onChange={(e) =>
-                    setNewVoucher((prev) => ({
-                      ...prev,
-                      voucher_number: e.target.value,
-                    }))
-                  }
-                  placeholder="请输入凭证编号"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>凭证日期 *</Label>
-                <Input
-                  type="date"
-                  value={newVoucher.voucher_date}
-                  onChange={(e) =>
-                    setNewVoucher((prev) => ({
-                      ...prev,
-                      voucher_date: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>期间 *</Label>
-                <Input
-                  value={newVoucher.period}
-                  onChange={(e) =>
-                    setNewVoucher((prev) => ({
-                      ...prev,
-                      period: e.target.value,
-                    }))
-                  }
-                  placeholder="如: 2024-06"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>附件数量</Label>
-                <Input
-                  type="number"
-                  value={newVoucher.attachment_count}
-                  onChange={(e) =>
-                    setNewVoucher((prev) => ({
-                      ...prev,
-                      attachment_count: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>制单人</Label>
-                <Input
-                  value={newVoucher.maker_name}
-                  onChange={(e) =>
-                    setNewVoucher((prev) => ({
-                      ...prev,
-                      maker_name: e.target.value,
-                    }))
-                  }
-                  placeholder="制单人姓名"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>摘要</Label>
-              <textarea
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newVoucher.summary}
+              <TextField
+                label="凭证编号 *"
+                value={newVoucher.voucher_number}
                 onChange={(e) =>
                   setNewVoucher((prev) => ({
                     ...prev,
-                    summary: e.target.value,
+                    voucher_number: e.target.value,
                   }))
                 }
-                placeholder="凭证摘要"
-                rows={2}
+                placeholder="请输入凭证编号"
+                fullWidth
+              />
+              <TextField
+                label="凭证日期 *"
+                type="date"
+                value={newVoucher.voucher_date}
+                onChange={(e) =>
+                  setNewVoucher((prev) => ({
+                    ...prev,
+                    voucher_date: e.target.value,
+                  }))
+                }
+                fullWidth
+              />
+              <TextField
+                label="期间 *"
+                value={newVoucher.period}
+                onChange={(e) =>
+                  setNewVoucher((prev) => ({
+                    ...prev,
+                    period: e.target.value,
+                  }))
+                }
+                placeholder="如: 2024-06"
+                fullWidth
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
+                label="附件数量"
+                type="number"
+                value={newVoucher.attachment_count}
+                onChange={(e) =>
+                  setNewVoucher((prev) => ({
+                    ...prev,
+                    attachment_count: parseInt(e.target.value) || 0,
+                  }))
+                }
+                fullWidth
+              />
+              <TextField
+                label="制单人"
+                value={newVoucher.maker_name}
+                onChange={(e) =>
+                  setNewVoucher((prev) => ({
+                    ...prev,
+                    maker_name: e.target.value,
+                  }))
+                }
+                placeholder="制单人姓名"
+                fullWidth
+              />
+            </div>
+            <TextField
+              label="摘要"
+              multiline
+              rows={2}
+              value={newVoucher.summary}
+              onChange={(e) =>
+                setNewVoucher((prev) => ({
+                  ...prev,
+                  summary: e.target.value,
+                }))
+              }
+              placeholder="凭证摘要"
+              fullWidth
+            />
 
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">凭证明细</h3>
-                <Button size="sm" onClick={addVoucherItem}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>凭证明细</Typography>
+                <Button size="small" onClick={addVoucherItem}>
                   <Plus className="w-4 h-4" />
                   添加分录
                 </Button>
               </div>
-              <ScrollArea className="h-64">
-                <div className="space-y-2">
-                  {newVoucher.items.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center space-x-2 p-3 bg-slate-50 rounded-md"
-                    >
-                      <span className="w-6 text-center text-sm font-medium text-slate-500">
-                        {item.line_number}
-                      </span>
-                      <div className="flex-1">
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {newVoucher.items.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center space-x-2 p-3 bg-slate-50 rounded-md"
+                  >
+                    <span className="w-6 text-center text-sm font-medium text-slate-500">
+                      {item.line_number}
+                    </span>
+                    <div className="flex-1">
+                      <FormControl fullWidth>
+                        <InputLabel>选择科目</InputLabel>
                         <Select
                           value={item.subject_code}
-                          onValueChange={(value) =>
-                            updateVoucherItem(index, "subject_code", value)
+                          label="选择科目"
+                          onChange={(e) =>
+                            updateVoucherItem(index, "subject_code", e.target.value)
                           }
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="选择科目" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {subjects.map((s) => (
-                              <SelectItem key={s.id} value={s.code}>
-                                {s.code} - {s.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
+                          {subjects.map((s) => (
+                            <MenuItem key={s.id} value={s.code}>
+                              {s.code} - {s.name}
+                            </MenuItem>
+                          ))}
                         </Select>
-                      </div>
-                      <Input
-                        className="w-32"
-                        type="text"
-                        value={item.subject_name}
-                        readOnly
-                        placeholder="科目名称"
-                      />
-                      <Input
-                        className="w-32"
-                        type="number"
-                        value={item.debit_amount || ""}
-                        onChange={(e) =>
-                          updateVoucherItem(
-                            index,
-                            "debit_amount",
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                        placeholder="借方"
-                      />
-                      <Input
-                        className="w-32"
-                        type="number"
-                        value={item.credit_amount || ""}
-                        onChange={(e) =>
-                          updateVoucherItem(
-                            index,
-                            "credit_amount",
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                        placeholder="贷方"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600"
-                        onClick={() => removeVoucherItem(index)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
+                      </FormControl>
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
+                    <TextField
+                      className="w-32"
+                      value={item.subject_name}
+                      slotProps={{ input: { readOnly: true } }}
+                      placeholder="科目名称"
+                    />
+                    <TextField
+                      className="w-32"
+                      type="number"
+                      value={item.debit_amount || ""}
+                      onChange={(e) =>
+                        updateVoucherItem(
+                          index,
+                          "debit_amount",
+                          parseFloat(e.target.value) || 0,
+                        )
+                      }
+                      placeholder="借方"
+                    />
+                    <TextField
+                      className="w-32"
+                      type="number"
+                      value={item.credit_amount || ""}
+                      onChange={(e) =>
+                        updateVoucherItem(
+                          index,
+                          "credit_amount",
+                          parseFloat(e.target.value) || 0,
+                        )
+                      }
+                      placeholder="贷方"
+                    />
+                    <Button
+                      variant="text"
+                      size="small"
+                      sx={{ color: "red" }}
+                      onClick={() => removeVoucherItem(index)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
               <div className="flex justify-end mt-3 space-x-4">
                 <div className="text-right">
                   <p className="text-sm text-slate-500">借方合计</p>
@@ -1077,47 +1040,42 @@ const FinanceVoucherPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <DialogFooter className="mt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowCreateModal(false);
-                resetForm();
-              }}
-            >
+          <DialogActions>
+            <Button variant="outlined" onClick={() => { setShowCreateModal(false); resetForm(); }}>
               取消
             </Button>
             <Button onClick={handleCreate}>
               <Check className="w-4 h-4 mr-2" />
               保存凭证
             </Button>
-          </DialogFooter>
+          </DialogActions>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>导入用友财务凭证</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showImportModal} onClose={() => setShowImportModal(false)} maxWidth="lg">
+        <DialogTitle>导入用友财务凭证</DialogTitle>
+        <DialogContent>
           <div className="space-y-4 mt-4">
             <div className="p-4 bg-blue-50 rounded-lg">
               <AlertCircle className="w-5 h-5 text-blue-600 mb-2" />
-              <p className="text-sm text-blue-800">
+              <Typography variant="body2" sx={{ color: "blue.800" }}>
                 请将用友U8系统导出的凭证数据粘贴到下方文本框中。支持JSON格式数据导入。
-              </p>
+              </Typography>
             </div>
             <div className="space-y-2">
-              <Label>用友凭证数据 (JSON格式)</Label>
-              <textarea
-                className="w-full h-64 rounded-md border border-slate-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>用友凭证数据 (JSON格式)</Typography>
+              <TextField
                 id="importData"
+                multiline
+                rows={12}
                 placeholder='[{"voucher_number": "记-001", "voucher_date": "2024-01-15", "period": "2024-01", "summary": "支付办公费用", "maker": "张三", "items": [{"line_number": 1, "subject_code": "6602", "subject_name": "管理费用", "summary": "办公用品", "debit_amount": 500.00, "credit_amount": 0}]}]'
+                fullWidth
+                sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}
               />
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="outline"
+                variant="outlined"
                 onClick={() => {
                   const sampleData = JSON.stringify(
                     [
@@ -1160,12 +1118,12 @@ const FinanceVoucherPage: React.FC = () => {
               </Button>
             </div>
           </div>
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setShowImportModal(false)}>
+          <DialogActions>
+            <Button variant="outlined" onClick={() => setShowImportModal(false)}>
               取消
             </Button>
             <Button
-              className="bg-green-600 hover:bg-green-700"
+              sx={{ backgroundColor: "green", "&:hover": { backgroundColor: "green" } }}
               onClick={() => {
                 const content = (
                   document.getElementById("importData") as HTMLTextAreaElement
@@ -1184,59 +1142,57 @@ const FinanceVoucherPage: React.FC = () => {
               <Upload className="w-4 h-4 mr-2" />
               开始导入
             </Button>
-          </DialogFooter>
+          </DialogActions>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>凭证详情</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="lg">
+        <DialogTitle>凭证详情</DialogTitle>
+        <DialogContent>
           {currentVoucher && (
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">凭证编号</p>
-                  <p className="font-bold text-indigo-600">
+                  <Typography variant="body2" sx={{ color: "gray.500" }}>凭证编号</Typography>
+                  <Typography variant="h6" sx={{ color: "indigo.600", fontWeight: "bold" }}>
                     {currentVoucher.voucher_number}
-                  </p>
+                  </Typography>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">凭证日期</p>
-                  <p className="font-bold">
+                  <Typography variant="body2" sx={{ color: "gray.500" }}>凭证日期</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                     {currentVoucher.voucher_date?.split("T")[0]}
-                  </p>
+                  </Typography>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">期间</p>
-                  <p className="font-bold">{currentVoucher.period}</p>
+                  <Typography variant="body2" sx={{ color: "gray.500" }}>期间</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>{currentVoucher.period}</Typography>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">状态</p>
+                  <Typography variant="body2" sx={{ color: "gray.500" }}>状态</Typography>
                   {getStatusBadge(currentVoucher.status)}
                 </div>
               </div>
               <div className="p-3 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">摘要</p>
-                <p className="font-medium">{currentVoucher.summary || "-"}</p>
+                <Typography variant="body2" sx={{ color: "gray.500" }}>摘要</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>{currentVoucher.summary || "-"}</Typography>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">制单人</p>
-                  <p className="font-medium">
+                  <Typography variant="body2" sx={{ color: "gray.500" }}>制单人</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
                     {currentVoucher.maker_name || "-"}
-                  </p>
+                  </Typography>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">审核人</p>
-                  <p className="font-medium">
+                  <Typography variant="body2" sx={{ color: "gray.500" }}>审核人</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
                     {currentVoucher.checker_name || "-"}
-                  </p>
+                  </Typography>
                 </div>
               </div>
               <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">凭证明细</h3>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>凭证明细</Typography>
                 <div className="space-y-2">
                   {voucherItems.map((item) => (
                     <div
@@ -1270,26 +1226,27 @@ const FinanceVoucherPage: React.FC = () => {
                 </div>
                 <div className="flex justify-end mt-4 space-x-8 border-t pt-4">
                   <div className="text-right">
-                    <p className="text-sm text-slate-500">借方合计</p>
-                    <p className="font-bold text-red-600">
+                    <Typography variant="body2" sx={{ color: "gray.500" }}>借方合计</Typography>
+                    <Typography variant="h6" sx={{ color: "red.600", fontWeight: "bold" }}>
                       {formatCurrency(currentVoucher.total_debit)}
-                    </p>
+                    </Typography>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-slate-500">贷方合计</p>
-                    <p className="font-bold text-green-600">
+                    <Typography variant="body2" sx={{ color: "gray.500" }}>贷方合计</Typography>
+                    <Typography variant="h6" sx={{ color: "green.600", fontWeight: "bold" }}>
                       {formatCurrency(currentVoucher.total_credit)}
-                    </p>
+                    </Typography>
                   </div>
                 </div>
               </div>
             </div>
           )}
-          <DialogFooter className="mt-4">
+          <DialogActions>
             <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
-          </DialogFooter>
+          </DialogActions>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };

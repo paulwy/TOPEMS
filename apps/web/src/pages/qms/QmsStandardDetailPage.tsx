@@ -13,18 +13,20 @@ import {
   Download,
   Upload,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { qmsApi } from "../../api/qms";
@@ -107,7 +109,7 @@ const QmsStandardDetailPage: React.FC = () => {
       color: "bg-gray-100 text-gray-700",
       label: status,
     };
-    return <Badge className={item.color}>{item.label}</Badge>;
+    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.color.includes('green') ? '#dcfce7' : item.color.includes('yellow') ? '#fef9c3' : item.color.includes('red') ? '#fee2e2' : '#f3f4f6', color: item.color.includes('green') ? '#15803d' : item.color.includes('yellow') ? '#a16207' : item.color.includes('red') ? '#b91c1c' : '#4b5563' }} />;
   };
 
   const handleUpdateStandard = async () => {
@@ -164,9 +166,7 @@ const QmsStandardDetailPage: React.FC = () => {
       accessorKey: "version",
       header: "版本号",
       cell: ({ row }) => (
-        <Badge className="bg-purple-100 text-purple-700 font-medium">
-          v{row.original.version}
-        </Badge>
+        <Chip label={`v${row.original.version}`} size="small" sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }} />
       ),
     },
     { accessorKey: "description", header: "变更说明" },
@@ -225,13 +225,12 @@ const QmsStandardDetailPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/qms")}
-                className="h-8 w-8"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
+              variant="outlined"
+              onClick={() => navigate("/qms")}
+              sx={{ minWidth: 'auto', padding: '4px 8px' }}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
               <div>
                 <h1 className="text-xl font-bold text-slate-900">
                   质量标准详情
@@ -243,18 +242,17 @@ const QmsStandardDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="outline"
+                variant="outlined"
                 onClick={() => setShowRevisionModal(true)}
+                startIcon={<Plus className="w-4 h-4" />}
               >
-                <Plus className="w-4 h-4 mr-2" />
                 新建版本
               </Button>
               <Button
-                variant="outline"
+                variant="outlined"
                 onClick={() => setShowEditModal(true)}
-                className="flex items-center gap-2"
+                startIcon={<Edit3 className="w-4 h-4" />}
               >
-                <Edit3 className="w-4 h-4" />
                 编辑
               </Button>
             </div>
@@ -266,11 +264,11 @@ const QmsStandardDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-600" />
+              <CardHeader sx={{ pb: 1 }}>
+                <Typography variant="h6" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
+                  <FileText className="w-5 h-5" />
                   标准信息
-                </CardTitle>
+                </Typography>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-start">
@@ -292,9 +290,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   <div>
                     <p className="text-sm text-slate-500">版本</p>
                     <p className="text-slate-900 mt-1">
-                      <Badge className="bg-purple-100 text-purple-700">
-                        v{standard.version}
-                      </Badge>
+                      <Chip label={`v${standard.version}`} size="small" sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }} />
                     </p>
                   </div>
                   <div>
@@ -325,19 +321,17 @@ const QmsStandardDetailPage: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <FileCheck className="w-5 h-5 text-green-600" />
+              <CardHeader sx={{ pb: 1 }}>
+                <Typography variant="h6" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'success.main' }}>
+                  <FileCheck className="w-5 h-5" />
                   操作
-                </CardTitle>
+                </Typography>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
+                <Button fullWidth sx={{ justifyContent: 'flex-start' }} variant="outlined" startIcon={<Download className="w-4 h-4" />}>
                   下载标准文档
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Upload className="w-4 h-4 mr-2" />
+                <Button fullWidth sx={{ justifyContent: 'flex-start' }} variant="outlined" startIcon={<Upload className="w-4 h-4" />}>
                   上传新版本文件
                 </Button>
               </CardContent>
@@ -346,11 +340,11 @@ const QmsStandardDetailPage: React.FC = () => {
 
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-600" />
+              <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+                <Typography variant="h6" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
+                  <FileText className="w-5 h-5" />
                   版本历史
-                </CardTitle>
+                </Typography>
                 <span className="text-sm text-slate-500">
                   共 {revisions.length} 个版本
                 </span>
@@ -367,12 +361,12 @@ const QmsStandardDetailPage: React.FC = () => {
                     <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
                     <p>暂无版本记录</p>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-4"
+                      variant="outlined"
+                      size="small"
+                      sx={{ mt: 2 }}
                       onClick={() => setShowRevisionModal(true)}
+                      startIcon={<Plus className="w-3 h-3" />}
                     >
-                      <Plus className="w-3 h-3 mr-1" />
                       创建第一个版本
                     </Button>
                   </div>
@@ -383,26 +377,28 @@ const QmsStandardDetailPage: React.FC = () => {
         </div>
       </main>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>编辑质量标准</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>标准编号 *</Label>
-                <Input
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>编辑质量标准</DialogTitle>
+        <DialogContent>
+          <Box className="space-y-4" sx={{ mt: 1 }}>
+            <Box className="grid grid-cols-2 gap-4">
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>标准编号 *</Box>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.code}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, code: e.target.value }))
                   }
                   placeholder="请输入标准编号"
                 />
-              </div>
-              <div>
-                <Label>版本号</Label>
-                <Input
+              </Box>
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>版本号</Box>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.version}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -412,22 +408,26 @@ const QmsStandardDetailPage: React.FC = () => {
                   }
                   placeholder="如 1.0"
                 />
-              </div>
-            </div>
-            <div>
-              <Label>标准名称 *</Label>
-              <Input
+              </Box>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>标准名称 *</Box>
+              <TextField
+                size="small"
+                fullWidth
                 value={formData.title}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, title: e.target.value }))
                 }
                 placeholder="请输入标准名称"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>分类</Label>
-                <Input
+            </Box>
+            <Box className="grid grid-cols-2 gap-4">
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>分类</Box>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.category}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -437,27 +437,29 @@ const QmsStandardDetailPage: React.FC = () => {
                   }
                   placeholder="请输入分类"
                 />
-              </div>
-              <div>
-                <Label>状态</Label>
+              </Box>
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>状态</Box>
                 <select
                   value={formData.status}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, status: e.target.value }))
                   }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                 >
                   <option value="active">有效</option>
                   <option value="draft">草稿</option>
                   <option value="expired">已过期</option>
                   <option value="archived">已归档</option>
                 </select>
-              </div>
-            </div>
-            <div>
-              <Label>生效日期</Label>
-              <Input
+              </Box>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>生效日期</Box>
+              <TextField
                 type="date"
+                size="small"
+                fullWidth
                 value={formData.effective_date}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -466,9 +468,9 @@ const QmsStandardDetailPage: React.FC = () => {
                   }))
                 }
               />
-            </div>
-            <div>
-              <Label>描述</Label>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>描述</Box>
               <textarea
                 value={formData.description}
                 onChange={(e) =>
@@ -478,54 +480,41 @@ const QmsStandardDetailPage: React.FC = () => {
                   }))
                 }
                 placeholder="请输入标准描述..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-24"
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-              取消
-            </Button>
-            <Button onClick={handleUpdateStandard}>保存更改</Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowEditModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleUpdateStandard}>保存更改</Button>
+        </DialogActions>
       </Dialog>
 
-      <Dialog open={showRevisionModal} onOpenChange={setShowRevisionModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>新建版本</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-slate-600">
-              当前版本: <span className="font-medium">{standard.version}</span>
-            </p>
-            <p className="text-slate-600 mt-2">
+      <Dialog open={showRevisionModal} onClose={() => setShowRevisionModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>新建版本</DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Box component="span" sx={{ color: 'text.secondary' }}>当前版本:</Box>
+              <Box component="span" sx={{ fontWeight: 500 }}>{standard.version}</Box>
+            </Box>
+            <Box sx={{ color: 'text.secondary', mt: 2 }}>
               创建新版本后，版本号将自动递增（如 1.0 → 1.1）
-            </p>
-            <div className="mt-4">
-              <Label>变更说明</Label>
+            </Box>
+            <Box sx={{ mt: 2 }}>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>变更说明</Box>
               <textarea
                 placeholder="请描述本次版本变更的内容..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-24"
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowRevisionModal(false)}
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleCreateRevision}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              创建版本
-            </Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowRevisionModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleCreateRevision} sx={{ backgroundColor: '#7c3aed', '&:hover': { backgroundColor: '#6d28d9' } }}>创建版本</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

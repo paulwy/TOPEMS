@@ -4,6 +4,25 @@
  */
 
 import React, { useState, useMemo } from "react";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Box,
+  IconButton,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -16,34 +35,6 @@ import {
   Building2,
   RefreshCw,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   useAccounts,
   useAccountTree,
@@ -56,22 +47,22 @@ import type { Account, BalanceDirection } from "@/types/erp-finance";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
 /** 科目类型配置 */
-const ACCOUNT_TYPE_CONFIG: Record<string, { label: string; color: string }> = {
-  asset: { label: "资产", color: "bg-blue-100 text-blue-800" },
-  liability: { label: "负债", color: "bg-red-100 text-red-800" },
-  equity: { label: "权益", color: "bg-green-100 text-green-800" },
-  revenue: { label: "收入", color: "bg-purple-100 text-purple-800" },
-  expense: { label: "费用", color: "bg-orange-100 text-orange-800" },
-  cost: { label: "成本", color: "bg-yellow-100 text-yellow-800" },
+const ACCOUNT_TYPE_CONFIG: Record<string, { label: string; color: "primary" | "error" | "success" | "info" | "warning" | "default" }> = {
+  asset: { label: "资产", color: "primary" },
+  liability: { label: "负债", color: "error" },
+  equity: { label: "权益", color: "success" },
+  revenue: { label: "收入", color: "info" },
+  expense: { label: "费用", color: "warning" },
+  cost: { label: "成本", color: "default" },
 };
 
 /** 余额方向配置 */
 const BALANCE_DIRECTION_CONFIG: Record<
   string,
-  { label: string; color: string }
+  { label: string; color: "primary" | "error" }
 > = {
-  debit: { label: "借", color: "bg-blue-100 text-blue-800" },
-  credit: { label: "贷", color: "bg-red-100 text-red-800" },
+  debit: { label: "借", color: "primary" },
+  credit: { label: "贷", color: "error" },
 };
 
 interface AccountFormData {
@@ -237,7 +228,7 @@ export default function AccountManagementPage() {
       header: "科目编码",
       accessorKey: "code",
       cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.getValue("code")}</span>
+        <span style={{ fontFamily: "monospace", fontSize: "0.875rem" }}>{row.getValue("code")}</span>
       ),
     },
     {
@@ -245,13 +236,13 @@ export default function AccountManagementPage() {
       header: "科目名称",
       accessorKey: "name",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {row.original.is_detail ? (
-            <span className="text-sm">{row.getValue("name")}</span>
+            <span style={{ fontSize: "0.875rem" }}>{row.getValue("name")}</span>
           ) : (
-            <span className="font-medium">{row.getValue("name")}</span>
+            <span style={{ fontWeight: 500 }}>{row.getValue("name")}</span>
           )}
-        </div>
+        </Box>
       ),
     },
     {
@@ -264,9 +255,9 @@ export default function AccountManagementPage() {
           type as keyof typeof ACCOUNT_TYPE_CONFIG
         ] || {
           label: type,
-          color: "bg-gray-100 text-gray-800",
+          color: "default" as const,
         };
-        return <Badge className={config.color}>{config.label}</Badge>;
+        return <Chip size="small" color={config.color} label={config.label} />;
       },
     },
     {
@@ -279,9 +270,9 @@ export default function AccountManagementPage() {
           balanceDirection as keyof typeof BALANCE_DIRECTION_CONFIG
         ] || {
           label: balanceDirection,
-          color: "bg-gray-100 text-gray-800",
+          color: "default" as const,
         };
-        return <Badge className={config.color}>{config.label}</Badge>;
+        return <Chip size="small" color={config.color} label={config.label} />;
       },
     },
     {
@@ -289,9 +280,7 @@ export default function AccountManagementPage() {
       header: "明细",
       accessorKey: "is_detail",
       cell: ({ row }) => (
-        <Badge variant={row.original.is_detail ? "default" : "secondary"}>
-          {row.original.is_detail ? "明细科目" : "总账科目"}
-        </Badge>
+        <Chip size="small" variant={row.original.is_detail ? "filled" : "outlined"} label={row.original.is_detail ? "明细科目" : "总账科目"} />
       ),
     },
     {
@@ -299,9 +288,7 @@ export default function AccountManagementPage() {
       header: "状态",
       accessorKey: "is_active",
       cell: ({ row }) => (
-        <Badge variant={row.original.is_active ? "default" : "destructive"}>
-          {row.original.is_active ? "启用" : "停用"}
-        </Badge>
+        <Chip size="small" variant={row.original.is_active ? "filled" : "outlined"} color={row.original.is_active ? "success" : "default"} label={row.original.is_active ? "启用" : "停用"} />
       ),
     },
     {
@@ -313,9 +300,11 @@ export default function AccountManagementPage() {
         const amount = balance.debit_balance || balance.credit_balance || 0;
         return (
           <span
-            className={`font-mono text-sm ${
-              amount >= 0 ? "text-green-600" : "text-red-600"
-            }`}
+            style={{
+              fontFamily: "monospace",
+              fontSize: "0.875rem",
+              color: amount >= 0 ? "green" : "red",
+            }}
           >
             {amount.toLocaleString("zh-CN", {
               minimumFractionDigits: 2,
@@ -329,26 +318,24 @@ export default function AccountManagementPage() {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
+        <Box sx={{ display: "flex", gap: 0.5 }}>
+          <IconButton
+            size="small"
             onClick={() => {
               setSelectedAccount(row.original);
               setIsEditing(true);
             }}
           >
             <Edit className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
+          </IconButton>
+          <IconButton
+            size="small"
             onClick={() => setDeletingId(row.original.id)}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            sx={{ color: "error.main" }}
           >
             <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
+          </IconButton>
+        </Box>
       ),
     },
   ];
@@ -360,29 +347,34 @@ export default function AccountManagementPage() {
     const balance = getBalance(account.id);
     const typeConfig = ACCOUNT_TYPE_CONFIG[account.type] || {
       label: account.type,
-      color: "bg-gray-100 text-gray-800",
+      color: "default" as const,
     };
     const directionConfig = BALANCE_DIRECTION_CONFIG[
       account.balance_direction
     ] || {
       label: account.balance_direction,
-      color: "bg-gray-100 text-gray-800",
+      color: "default" as const,
     };
 
     return (
-      <div key={account.id}>
-        <div
-          className={`flex items-center hover:bg-gray-50 border-b border-gray-100 ${
-            !account.is_detail ? "bg-gray-50 font-medium" : ""
-          }`}
-          style={{ paddingLeft: `${level * 24 + 12}px` }}
+      <Box key={account.id}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            "&:hover": { bgcolor: "grey.50" },
+            borderBottom: 1,
+            borderColor: "grey.100",
+            bgcolor: !account.is_detail ? "grey.50" : "transparent",
+            fontWeight: !account.is_detail ? 500 : 400,
+            pl: `${level * 24 + 12}px`,
+          }}
         >
           {/* 展开/折叠按钮 */}
-          <div className="w-6 flex-shrink-0">
+          <Box sx={{ width: 24, flexShrink: 0 }}>
             {hasChildren ? (
-              <Button
-                variant="ghost"
-                size="icon"
+              <IconButton
+                size="small"
                 className="h-6 w-6"
                 onClick={() => toggleExpand(account.id)}
               >
@@ -391,43 +383,37 @@ export default function AccountManagementPage() {
                 ) : (
                   <ChevronRight className="w-4 h-4" />
                 )}
-              </Button>
+              </IconButton>
             ) : (
-              <span className="w-6" />
+              <Box sx={{ width: 24 }} />
             )}
-          </div>
+          </Box>
 
           {/* 科目编码 */}
-          <div className="w-32 flex-shrink-0 font-mono text-sm">
+          <Box sx={{ width: 128, flexShrink: 0, fontFamily: "monospace", fontSize: "0.875rem" }}>
             {account.code}
-          </div>
+          </Box>
 
           {/* 科目名称 */}
-          <div className="flex-1 text-sm">{account.name}</div>
+          <Box sx={{ flex: 1, fontSize: "0.875rem" }}>{account.name}</Box>
 
           {/* 科目类型 */}
-          <div className="w-20 flex-shrink-0">
-            <Badge className={typeConfig.color} variant="outline">
-              {typeConfig.label}
-            </Badge>
-          </div>
+          <Box sx={{ width: 80, flexShrink: 0 }}>
+            <Chip size="small" color={typeConfig.color} variant="outlined" label={typeConfig.label} />
+          </Box>
 
           {/* 余额方向 */}
-          <div className="w-16 flex-shrink-0">
-            <Badge className={directionConfig.color} variant="outline">
-              {directionConfig.label}
-            </Badge>
-          </div>
+          <Box sx={{ width: 64, flexShrink: 0 }}>
+            <Chip size="small" color={directionConfig.color} variant="outlined" label={directionConfig.label} />
+          </Box>
 
           {/* 余额 */}
-          <div className="w-32 text-right font-mono text-sm">
+          <Box sx={{ width: 128, textAlign: "right", fontFamily: "monospace", fontSize: "0.875rem" }}>
             {balance ? (
               <span
-                className={
-                  (balance.debit_balance || 0) >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
-                }
+                style={{
+                  color: (balance.debit_balance || 0) >= 0 ? "green" : "red",
+                }}
               >
                 {(
                   balance.debit_balance ||
@@ -441,20 +427,17 @@ export default function AccountManagementPage() {
             ) : (
               "-"
             )}
-          </div>
+          </Box>
 
           {/* 状态 */}
-          <div className="w-16 flex-shrink-0">
-            <Badge variant={account.is_active ? "default" : "secondary"}>
-              {account.is_active ? "启用" : "停用"}
-            </Badge>
-          </div>
+          <Box sx={{ width: 64, flexShrink: 0 }}>
+            <Chip size="small" variant={account.is_active ? "filled" : "outlined"} color={account.is_active ? "success" : "default"} label={account.is_active ? "启用" : "停用"} />
+          </Box>
 
           {/* 操作 */}
-          <div className="w-24 flex-shrink-0 flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
+          <Box sx={{ width: 96, flexShrink: 0, display: "flex", gap: 0.5 }}>
+            <IconButton
+              size="small"
               className="h-8 w-8"
               onClick={() => {
                 setSelectedAccount(account);
@@ -462,54 +445,64 @@ export default function AccountManagementPage() {
               }}
             >
               <Edit className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+            </IconButton>
+            <IconButton
+              size="small"
+              className="h-8 w-8"
+              sx={{ color: "error.main" }}
               onClick={() => setDeletingId(account.id)}
             >
               <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+            </IconButton>
+          </Box>
+        </Box>
 
         {/* 子节点 */}
         {hasChildren && isExpanded && (
-          <div>
+          <Box>
             {account.children.map((child: any) =>
               renderTreeNode(child, level + 1),
             )}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
+      <Box sx={{ maxWidth: 1280, mx: "auto" }}>
         {/* 头部 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center">
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 2,
+                bgcolor: "primary.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <Building2 className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">会计科目管理</h1>
-              <p className="text-sm text-gray-500">
+            </Box>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>会计科目管理</Typography>
+              <Typography variant="body2" color="text.secondary">
                 管理企业会计科目体系，支持多级科目结构
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" size="small" onClick={() => refetch()}>
               <RefreshCw className="w-4 h-4 mr-2" />
               刷新
             </Button>
             <Button
-              variant="outline"
-              size="sm"
+              variant="outlined"
+              size="small"
               onClick={() =>
                 setViewMode(viewMode === "tree" ? "table" : "tree")
               }
@@ -517,7 +510,8 @@ export default function AccountManagementPage() {
               {viewMode === "tree" ? "表格视图" : "树形视图"}
             </Button>
             <Button
-              size="sm"
+              size="small"
+              variant="contained"
               onClick={() => {
                 setSelectedAccount(null);
                 setIsCreating(true);
@@ -526,144 +520,164 @@ export default function AccountManagementPage() {
               <Plus className="w-4 h-4 mr-2" />
               新增科目
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* 统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">
+            <CardContent sx={{ pt: 3 }}>
+              <Typography variant="h4" sx={{ fontWeight: "bold", color: "primary.main" }}>
                 {accountsData?.data?.items?.length || 0}
-              </div>
-              <p className="text-sm text-gray-500">科目总数</p>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">科目总数</Typography>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">
+            <CardContent sx={{ pt: 3 }}>
+              <Typography variant="h4" sx={{ fontWeight: "bold", color: "success.main" }}>
                 {accountsData?.data?.items?.filter((a: Account) => a.is_detail)
                   .length || 0}
-              </div>
-              <p className="text-sm text-gray-500">明细科目</p>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">明细科目</Typography>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-purple-600">
+            <CardContent sx={{ pt: 3 }}>
+              <Typography variant="h4" sx={{ fontWeight: "bold", color: "info.main" }}>
                 {accountsData?.data?.items?.filter((a: Account) => !a.is_detail)
                   .length || 0}
-              </div>
-              <p className="text-sm text-gray-500">总账科目</p>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">总账科目</Typography>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-orange-600">
+            <CardContent sx={{ pt: 3 }}>
+              <Typography variant="h4" sx={{ fontWeight: "bold", color: "warning.main" }}>
                 {accountsData?.data?.items?.filter((a: Account) => !a.is_active)
                   .length || 0}
-              </div>
-              <p className="text-sm text-gray-500">已停用</p>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">已停用</Typography>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         {/* 筛选和搜索 */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex-1 min-w-[200px]">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="搜索科目编码或名称..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="科目类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部类型</SelectItem>
-                  <SelectItem value="asset">资产</SelectItem>
-                  <SelectItem value="liability">负债</SelectItem>
-                  <SelectItem value="equity">权益</SelectItem>
-                  <SelectItem value="revenue">收入</SelectItem>
-                  <SelectItem value="expense">费用</SelectItem>
-                  <SelectItem value="cost">成本</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={isDetailFilter} onValueChange={setIsDetailFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="明细/汇总" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部</SelectItem>
-                  <SelectItem value="detail">明细科目</SelectItem>
-                  <SelectItem value="summary">总账科目</SelectItem>
-                </SelectContent>
-              </Select>
+        <Card sx={{ mb: 3 }}>
+          <CardContent sx={{ pt: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+              <Box sx={{ flex: 1, minWidth: 200 }}>
+                <TextField
+                  size="small"
+                  placeholder="搜索科目编码或名称..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Box sx={{ mr: 1, display: "flex" }}>
+                          <Search className="w-4 h-4 text-gray-400" />
+                        </Box>
+                      ),
+                    },
+                  }}
+                  sx={{ width: "100%" }}
+                />
+              </Box>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <Select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  displayEmpty
+                >
+                  <MenuItem value="all">全部类型</MenuItem>
+                  <MenuItem value="asset">资产</MenuItem>
+                  <MenuItem value="liability">负债</MenuItem>
+                  <MenuItem value="equity">权益</MenuItem>
+                  <MenuItem value="revenue">收入</MenuItem>
+                  <MenuItem value="expense">费用</MenuItem>
+                  <MenuItem value="cost">成本</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <Select
+                  value={isDetailFilter}
+                  onChange={(e) => setIsDetailFilter(e.target.value)}
+                  displayEmpty
+                >
+                  <MenuItem value="all">全部</MenuItem>
+                  <MenuItem value="detail">明细科目</MenuItem>
+                  <MenuItem value="summary">总账科目</MenuItem>
+                </Select>
+              </FormControl>
               {viewMode === "tree" && (
                 <>
-                  <Button variant="outline" size="sm" onClick={expandAll}>
+                  <Button variant="outlined" size="small" onClick={expandAll}>
                     展开全部
                   </Button>
-                  <Button variant="outline" size="sm" onClick={collapseAll}>
+                  <Button variant="outlined" size="small" onClick={collapseAll}>
                     折叠全部
                   </Button>
                 </>
               )}
-            </div>
+            </Box>
           </CardContent>
         </Card>
 
         {/* 科目列表 */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>会计科目列表</CardTitle>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>会计科目列表</Typography>
+              <Box sx={{ display: "flex", gap: 1, typography: "body2", color: "text.secondary" }}>
                 <span>共 {filteredAccounts.length || 0} 个科目</span>
-              </div>
-            </div>
+              </Box>
+            </Box>
           </CardHeader>
           <CardContent>
             {isLoading || treeLoading ? (
-              <div className="flex items-center justify-center py-12">
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
                 <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
+              </Box>
             ) : viewMode === "tree" ? (
               // 树形视图
-              <div className="border rounded-lg overflow-hidden">
+              <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
                 {/* 表头 */}
-                <div className="flex items-center bg-gray-100 border-b px-4 py-3 text-sm font-medium text-gray-700">
-                  <div className="w-6 flex-shrink-0" />
-                  <div className="w-32 flex-shrink-0">科目编码</div>
-                  <div className="flex-1">科目名称</div>
-                  <div className="w-20 flex-shrink-0">类型</div>
-                  <div className="w-16 flex-shrink-0">方向</div>
-                  <div className="w-32 text-right flex-shrink-0">余额</div>
-                  <div className="w-16 flex-shrink-0">状态</div>
-                  <div className="w-24 flex-shrink-0">操作</div>
-                </div>
+                <Box sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  bgcolor: "grey.100",
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  px: 2,
+                  py: 1.5,
+                  typography: "body2",
+                  fontWeight: 500,
+                  color: "grey.700"
+                }}>
+                  <Box sx={{ width: 24, flexShrink: 0 }} />
+                  <Box sx={{ width: 128, flexShrink: 0 }}>科目编码</Box>
+                  <Box sx={{ flex: 1 }}>科目名称</Box>
+                  <Box sx={{ width: 80, flexShrink: 0 }}>类型</Box>
+                  <Box sx={{ width: 64, flexShrink: 0 }}>方向</Box>
+                  <Box sx={{ width: 128, textAlign: "right", flexShrink: 0 }}>余额</Box>
+                  <Box sx={{ width: 64, flexShrink: 0 }}>状态</Box>
+                  <Box sx={{ width: 96, flexShrink: 0 }}>操作</Box>
+                </Box>
                 {/* 树内容 */}
-                <div className="divide-y divide-gray-100">
+                <Box>
                   {treeData.map((account) => renderTreeNode(account))}
-                </div>
+                </Box>
                 {treeData.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 6, color: "text.secondary" }}>
                     <Building2 className="w-12 h-12 mb-4 text-gray-300" />
-                    <p>暂无科目数据</p>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <Typography>暂无科目数据</Typography>
+                    <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
                       点击"新增科目"创建第一个会计科目
-                    </p>
-                  </div>
+                    </Typography>
+                  </Box>
                 )}
-              </div>
+              </Box>
             ) : (
               // 表格视图
               <EnhancedDataTable
@@ -674,28 +688,21 @@ export default function AccountManagementPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
-      {/* 创建/编辑侧边栏 */}
-      <Sheet
+      {/* 创建/编辑对话框 */}
+      <Dialog
         open={isCreating || isEditing}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsCreating(false);
-            setIsEditing(false);
-            setSelectedAccount(null);
-          }
+        onClose={() => {
+          setIsCreating(false);
+          setIsEditing(false);
+          setSelectedAccount(null);
         }}
+        maxWidth="sm"
+        fullWidth
       >
-        <SheetContent className="sm:max-w-[500px]">
-          <SheetHeader>
-            <SheetTitle>{isCreating ? "新增科目" : "编辑科目"}</SheetTitle>
-            <SheetDescription>
-              {isCreating
-                ? "创建新的会计科目"
-                : `编辑科目: ${selectedAccount?.code} ${selectedAccount?.name}`}
-            </SheetDescription>
-          </SheetHeader>
+        <DialogTitle>{isCreating ? "新增科目" : "编辑科目"}</DialogTitle>
+        <DialogContent>
           <AccountForm
             account={selectedAccount}
             accounts={accountsData?.data?.items || []}
@@ -707,40 +714,31 @@ export default function AccountManagementPage() {
             }}
             isLoading={createAccount.isPending || updateAccount.isPending}
           />
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {/* 删除确认对话框 */}
-      <AlertDialog
+      <Dialog
         open={!!deletingId}
-        onOpenChange={(open: boolean) => !open && setDeletingId(null)}
+        onClose={() => setDeletingId(null)}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
-            <AlertDialogDescription>
-              确定要删除该科目吗？此操作不可恢复。
-              {accountsData?.data?.items?.some(
-                (a: Account) => a.parent_id === deletingId,
-              ) && (
-                <span className="block mt-2 text-yellow-600">
-                  警告：该科目存在下级科目，删除后将同时删除所有下级科目。
-                </span>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              删除
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        <DialogTitle>确认删除</DialogTitle>
+        <DialogContent>
+          <Typography>确定要删除该科目吗？此操作不可恢复。</Typography>
+          {accountsData?.data?.items?.some(
+            (a: Account) => a.parent_id === deletingId,
+          ) && (
+            <Typography color="warning.main" sx={{ mt: 2 }}>
+              警告：该科目存在下级科目，删除后将同时删除所有下级科目。
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeletingId(null)}>取消</Button>
+          <Button color="error" onClick={handleDelete} variant="contained">删除</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }
 
@@ -777,180 +775,139 @@ function AccountForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 mt-6">
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            科目编码 <span className="text-red-600">*</span>
-          </label>
-          <Input
-            value={formData.code}
-            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-            placeholder="例如: 1001"
-            required
-          />
-        </div>
+    <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+      <TextField
+        label="科目编码 *"
+        value={formData.code}
+        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+        placeholder="例如: 1001"
+        required
+        size="small"
+      />
 
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            科目名称 <span className="text-red-600">*</span>
-          </label>
-          <Input
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="例如: 库存现金"
-            required
-          />
-        </div>
+      <TextField
+        label="科目名称 *"
+        value={formData.name}
+        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        placeholder="例如: 库存现金"
+        required
+        size="small"
+      />
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              科目类型 <span className="text-red-600">*</span>
-            </label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) =>
-                setFormData({ ...formData, type: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="asset">资产</SelectItem>
-                <SelectItem value="liability">负债</SelectItem>
-                <SelectItem value="equity">权益</SelectItem>
-                <SelectItem value="revenue">收入</SelectItem>
-                <SelectItem value="expense">费用</SelectItem>
-                <SelectItem value="cost">成本</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              余额方向 <span className="text-red-600">*</span>
-            </label>
-            <Select
-              value={formData.balance_direction}
-              onValueChange={(value) =>
-                setFormData({
-                  ...formData,
-                  balance_direction: value as BalanceDirection,
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="debit">借</SelectItem>
-                <SelectItem value="credit">贷</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            上级科目
-          </label>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <FormControl size="small" fullWidth>
+          <InputLabel>科目类型 *</InputLabel>
           <Select
-            value={formData.parent_id || "none"}
-            onValueChange={(value) =>
+            value={formData.type}
+            label="科目类型 *"
+            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+          >
+            <MenuItem value="asset">资产</MenuItem>
+            <MenuItem value="liability">负债</MenuItem>
+            <MenuItem value="equity">权益</MenuItem>
+            <MenuItem value="revenue">收入</MenuItem>
+            <MenuItem value="expense">费用</MenuItem>
+            <MenuItem value="cost">成本</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" fullWidth>
+          <InputLabel>余额方向 *</InputLabel>
+          <Select
+            value={formData.balance_direction}
+            label="余额方向 *"
+            onChange={(e) =>
               setFormData({
                 ...formData,
-                parent_id: value === "none" ? undefined : value,
+                balance_direction: e.target.value as BalanceDirection,
               })
             }
           >
-            <SelectTrigger>
-              <SelectValue placeholder="无（顶级科目）" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">无（顶级科目）</SelectItem>
-              {accounts
-                .filter((a) => !a.is_detail && a.id !== account?.id)
-                .map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.code} - {a.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
+            <MenuItem value="debit">借</MenuItem>
+            <MenuItem value="credit">贷</MenuItem>
           </Select>
-        </div>
+        </FormControl>
+      </Box>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              明细标志
-            </label>
-            <Select
-              value={formData.is_detail ? "detail" : "summary"}
-              onValueChange={(value) =>
-                setFormData({
-                  ...formData,
-                  is_detail: value === "detail",
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="detail">明细科目</SelectItem>
-                <SelectItem value="summary">总账科目</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <FormControl size="small" fullWidth>
+        <InputLabel>上级科目</InputLabel>
+        <Select
+          value={formData.parent_id || ""}
+          label="上级科目"
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              parent_id: e.target.value || undefined,
+            })
+          }
+        >
+          <MenuItem value="">无（顶级科目）</MenuItem>
+          {accounts
+            .filter((a) => !a.is_detail && a.id !== account?.id)
+            .map((a) => (
+              <MenuItem key={a.id} value={a.id}>
+                {a.code} - {a.name}
+              </MenuItem>
+            ))}
+        </Select>
+      </FormControl>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              状态
-            </label>
-            <Select
-              value={formData.is_active ? "active" : "inactive"}
-              onValueChange={(value) =>
-                setFormData({
-                  ...formData,
-                  is_active: value === "active",
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">启用</SelectItem>
-                <SelectItem value="inactive">停用</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            描述
-          </label>
-          <Input
-            value={formData.description || ""}
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <FormControl size="small" fullWidth>
+          <InputLabel>明细标志</InputLabel>
+          <Select
+            value={formData.is_detail ? "detail" : "summary"}
+            label="明细标志"
             onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
+              setFormData({
+                ...formData,
+                is_detail: e.target.value === "detail",
+              })
             }
-            placeholder="可选描述信息"
-          />
-        </div>
-      </div>
+          >
+            <MenuItem value="detail">明细科目</MenuItem>
+            <MenuItem value="summary">总账科目</MenuItem>
+          </Select>
+        </FormControl>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <FormControl size="small" fullWidth>
+          <InputLabel>状态</InputLabel>
+          <Select
+            value={formData.is_active ? "active" : "inactive"}
+            label="状态"
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                is_active: e.target.value === "active",
+              })
+            }
+          >
+            <MenuItem value="active">启用</MenuItem>
+            <MenuItem value="inactive">停用</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
+      <TextField
+        label="描述"
+        value={formData.description || ""}
+        onChange={(e) =>
+          setFormData({ ...formData, description: e.target.value })
+        }
+        placeholder="可选描述信息"
+        size="small"
+        multiline
+        rows={2}
+      />
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, pt: 2, borderTop: 1, borderColor: "divider" }}>
+        <Button type="button" variant="outlined" onClick={onCancel}>
           取消
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" variant="contained" disabled={isLoading}>
           {isLoading ? "保存中..." : "保存"}
         </Button>
-      </div>
-    </form>
+      </Box>
+    </Box>
   );
 }

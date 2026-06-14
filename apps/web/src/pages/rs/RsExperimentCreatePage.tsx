@@ -81,7 +81,7 @@ const RsExperimentCreatePage: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <div style={{ marginBottom: 12 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
           {isEdit ? "编辑试验" : "新建试验"}
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -91,14 +91,14 @@ const RsExperimentCreatePage: React.FC = () => {
 
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom>
               基本信息
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="试验名称"
@@ -109,7 +109,7 @@ const RsExperimentCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="试验编码"
@@ -120,7 +120,7 @@ const RsExperimentCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>所属项目</InputLabel>
               <Select
@@ -139,7 +139,7 @@ const RsExperimentCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>关联配方</InputLabel>
               <Select
@@ -158,7 +158,7 @@ const RsExperimentCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>试验类型</InputLabel>
               <Select
@@ -177,7 +177,7 @@ const RsExperimentCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>试验阶段</InputLabel>
               <Select
@@ -194,14 +194,14 @@ const RsExperimentCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               试验内容
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="试验目标"
@@ -213,7 +213,7 @@ const RsExperimentCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="实验方法"
@@ -225,14 +225,14 @@ const RsExperimentCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               执行信息
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>实验员</InputLabel>
               <Select
@@ -251,7 +251,7 @@ const RsExperimentCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="批次号"
@@ -263,7 +263,7 @@ const RsExperimentCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="试验规模"
@@ -274,7 +274,7 @@ const RsExperimentCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>规模单位</InputLabel>
               <Select
@@ -293,9 +293,9 @@ const RsExperimentCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Divider sx={{ mb: 2 }} />
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end" }}>
               <Button
                 variant="outlined"
                 startIcon={<CancelIcon />}

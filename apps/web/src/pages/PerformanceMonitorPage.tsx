@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Switch } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Activity,
@@ -16,13 +17,7 @@ import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 
 const PerformanceMonitorPage: React.FC = () => {
   const navigate = useNavigate();
@@ -123,13 +118,9 @@ const PerformanceMonitorPage: React.FC = () => {
         header: "状态",
         cell: ({ row }) => {
           return (
-            <Badge
-              variant={
-                row.original.status === "success" ? "secondary" : "destructive"
-              }
-            >
-              {row.original.status === "success" ? "成功" : "失败"}
-            </Badge>
+            <Chip size="small"
+              variant={row.original.status === "success" ? "filled" : "outlined"}
+              label={row.original.status === "success" ? "成功" : "失败"} />
           );
         },
       },
@@ -138,311 +129,185 @@ const PerformanceMonitorPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", p: 3 }}>
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+      <Card sx={{ mb: 3, p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Button variant="text" onClick={() => navigate("/dashboard")}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-              <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                性能监控
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                实时监控系统性能指标
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
+            <Box sx={{ width: 48, height: 48, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Activity style={{ width: 24, height: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: "bold" }}>性能监控</Typography>
+              <Typography variant="body2" color="text.secondary">实时监控系统性能指标</Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <ModeToggle />
-            <Button onClick={handleExport}>
-              <Download className="w-5 h-5 mr-2" />
+            <Button variant="outlined" onClick={handleExport}>
+              <Download className="w-5 h-5" style={{ width: 20, height: 20, marginRight: 8 }} />
               导出报告
             </Button>
-            <Button variant="destructive" onClick={handleClear}>
-              <Trash2 className="w-5 h-5 mr-2" />
+            <Button variant="contained" onClick={handleClear}>
+              <Trash2 className="w-5 h-5" style={{ width: 20, height: 20, marginRight: 8 }} />
               清除数据
             </Button>
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Card>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  页面加载时间
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {(metrics.pageLoadTime / 1000).toFixed(2)}s
-                </p>
-              </div>
-              <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  metrics.pageLoadTime < 2000
-                    ? "bg-green-100 dark:bg-green-900/30"
-                    : "bg-yellow-100 dark:bg-yellow-900/30"
-                }`}
-              >
-                <Clock
-                  className={`w-6 h-6 ${
-                    metrics.pageLoadTime < 2000
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-yellow-600 dark:text-yellow-400"
-                  }`}
-                />
-              </div>
-            </div>
-          </CardContent>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr 1fr" }, gap: 3, mb: 3 }}>
+        <Card sx={{ p: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary">页面加载时间</Typography>
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>{(metrics.pageLoadTime / 1000).toFixed(2)}s</Typography>
+            </Box>
+            <Box sx={{ width: 48, height: 48, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: metrics.pageLoadTime < 2000 ? "success.light" : "warning.light" }}>
+              <Clock style={{ width: 24, height: 24, color: metrics.pageLoadTime < 2000 ? "var(--mui-palette-success-main)" : "var(--mui-palette-warning-main)" }} />
+            </Box>
+          </Box>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  API 平均响应
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {avgResponseTime.toFixed(0)}ms
-                </p>
-              </div>
-              <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  avgResponseTime < 500
-                    ? "bg-green-100 dark:bg-green-900/30"
-                    : avgResponseTime < 1000
-                      ? "bg-yellow-100 dark:bg-yellow-900/30"
-                      : "bg-red-100 dark:bg-red-900/30"
-                }`}
-              >
-                <TrendingUp
-                  className={`w-6 h-6 ${
-                    avgResponseTime < 500
-                      ? "text-green-600 dark:text-green-400"
-                      : avgResponseTime < 1000
-                        ? "text-yellow-600 dark:text-yellow-400"
-                        : "text-red-600 dark:text-red-400"
-                  }`}
-                />
-              </div>
-            </div>
-          </CardContent>
+        <Card sx={{ p: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary">API 平均响应</Typography>
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>{avgResponseTime.toFixed(0)}ms</Typography>
+            </Box>
+            <Box sx={{ width: 48, height: 48, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: avgResponseTime < 500 ? "success.light" : avgResponseTime < 1000 ? "warning.light" : "error.light" }}>
+              <TrendingUp style={{ width: 24, height: 24, color: avgResponseTime < 500 ? "var(--mui-palette-success-main)" : avgResponseTime < 1000 ? "var(--mui-palette-warning-main)" : "var(--mui-palette-error-main)" }} />
+            </Box>
+          </Box>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  API 成功率
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {successRate.toFixed(1)}%
-                </p>
-              </div>
-              <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  successRate >= 95
-                    ? "bg-green-100 dark:bg-green-900/30"
-                    : successRate >= 80
-                      ? "bg-yellow-100 dark:bg-yellow-900/30"
-                      : "bg-red-100 dark:bg-red-900/30"
-                }`}
-              >
-                {successRate >= 95 ? (
-                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                ) : (
-                  <XCircle
-                    className={`w-6 h-6 ${
-                      successRate >= 80
-                        ? "text-yellow-600 dark:text-yellow-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}
-                  />
-                )}
-              </div>
-            </div>
-          </CardContent>
+        <Card sx={{ p: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary">API 成功率</Typography>
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>{successRate.toFixed(1)}%</Typography>
+            </Box>
+            <Box sx={{ width: 48, height: 48, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: successRate >= 95 ? "success.light" : successRate >= 80 ? "warning.light" : "error.light" }}>
+              {successRate >= 95 ? (
+                <CheckCircle style={{ width: 24, height: 24, color: "var(--mui-palette-success-main)" }} />
+              ) : (
+                <XCircle style={{ width: 24, height: 24, color: successRate >= 80 ? "var(--mui-palette-warning-main)" : "var(--mui-palette-error-main)" }} />
+              )}
+            </Box>
+          </Box>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  慢 API 调用
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {slowCalls.length}
-                </p>
-              </div>
-              <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  slowCalls.length === 0
-                    ? "bg-green-100 dark:bg-green-900/30"
-                    : "bg-yellow-100 dark:bg-yellow-900/30"
-                }`}
-              >
-                <AlertTriangle
-                  className={`w-6 h-6 ${
-                    slowCalls.length === 0
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-yellow-600 dark:text-yellow-400"
-                  }`}
-                />
-              </div>
-            </div>
-          </CardContent>
+        <Card sx={{ p: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary">慢 API 调用</Typography>
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>{slowCalls.length}</Typography>
+            </Box>
+            <Box sx={{ width: 48, height: 48, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: slowCalls.length === 0 ? "success.light" : "warning.light" }}>
+              <AlertTriangle style={{ width: 24, height: 24, color: slowCalls.length === 0 ? "var(--mui-palette-success-main)" : "var(--mui-palette-warning-main)" }} />
+            </Box>
+          </Box>
         </Card>
-      </div>
+      </Box>
 
       {/* Performance Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3, mb: 3 }}>
         {/* Page Performance */}
         <Card>
           <CardHeader>
-            <CardTitle>页面性能指标</CardTitle>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>页面性能指标</Typography>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  首次绘制 (FP)
-                </span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {metrics.firstPaint.toFixed(0)}ms
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  首次内容绘制 (FCP)
-                </span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {metrics.firstContentfulPaint.toFixed(0)}ms
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  DOM 内容加载
-                </span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {metrics.domContentLoaded.toFixed(0)}ms
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  页面完全加载
-                </span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {metrics.pageLoadTime.toFixed(0)}ms
-                </span>
-              </div>
-            </div>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2" color="text.secondary">首次绘制 (FP)</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>{metrics.firstPaint.toFixed(0)}ms</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2" color="text.secondary">首次内容绘制 (FCP)</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>{metrics.firstContentfulPaint.toFixed(0)}ms</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2" color="text.secondary">DOM 内容加载</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>{metrics.domContentLoaded.toFixed(0)}ms</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2" color="text.secondary">页面完全加载</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>{metrics.pageLoadTime.toFixed(0)}ms</Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         {/* Slow API Calls */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>慢 API 调用</CardTitle>
-              <div className="flex items-center space-x-2">
-                <Label
-                  htmlFor="slowThreshold"
-                  className="text-sm text-gray-500 dark:text-gray-400"
-                >
-                  阈值:
-                </Label>
-                <Input
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>慢 API 调用</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">阈值:</Typography>
+                <TextField
                   id="slowThreshold"
                   type="number"
                   value={slowCallThreshold}
                   onChange={(e) => setSlowCallThreshold(Number(e.target.value))}
-                  className="w-24"
+                  size="small"
+                  sx={{ width: 80 }}
                 />
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  ms
-                </span>
-              </div>
-            </div>
+                <Typography variant="body2" color="text.secondary">ms</Typography>
+              </Box>
+            </Box>
           </CardHeader>
           <CardContent>
             {slowCalls.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-600 dark:text-green-400" />
-                <p>没有慢 API 调用</p>
-              </div>
+              <Box sx={{ textAlign: "center", py: 4 }}>
+                <CheckCircle style={{ width: 48, height: 48, color: "var(--mui-palette-success-main)", marginBottom: 8 }} />
+                <Typography color="text.secondary">没有慢 API 调用</Typography>
+              </Box>
             ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1, maxHeight: 256, overflow: "auto" }}>
                 {slowCalls.map((call, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between items-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded"
-                  >
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        {call.endpoint}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(call.timestamp).toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium text-red-600 dark:text-red-400">
-                        {(call.duration / 1000).toFixed(2)}s
-                      </div>
-                      <div
-                        className={`text-xs ${
-                          call.status === "success"
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      >
-                        {call.status === "success" ? "成功" : "失败"}
-                      </div>
-                    </div>
-                  </div>
+                  <Box key={idx} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: 2, bgcolor: "warning.light", borderRadius: 1 }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>{call.endpoint}</Typography>
+                      <Typography variant="caption" color="text.secondary">{new Date(call.timestamp).toLocaleString()}</Typography>
+                    </Box>
+                    <Box sx={{ textAlign: "right" }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: "error.main" }}>{(call.duration / 1000).toFixed(2)}s</Typography>
+                      <Typography variant="caption" color={call.status === "success" ? "success.main" : "error.main"}>{call.status === "success" ? "成功" : "失败"}</Typography>
+                    </Box>
+                  </Box>
                 ))}
-              </div>
+              </Box>
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* API Call History */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>API 调用历史</CardTitle>
-            <div className="flex items-center space-x-2">
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>API 调用历史</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Switch
                 id="autoRefresh"
                 checked={autoRefresh}
-                onCheckedChange={setAutoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
               />
-              <Label
-                htmlFor="autoRefresh"
-                className="text-sm text-gray-600 dark:text-gray-400"
-              >
-                自动刷新
-              </Label>
-            </div>
-          </div>
+              <Typography variant="body2" color="text.secondary">自动刷新</Typography>
+            </Box>
+          </Box>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent sx={{ p: 0 }}>
           {apiHistory.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              暂无 API 调用记录
-            </div>
+            <Box sx={{ textAlign: "center", py: 6 }}>
+              <Typography color="text.secondary">暂无 API 调用记录</Typography>
+            </Box>
           ) : (
             <DataTable
               columns={columns}
@@ -453,7 +318,7 @@ const PerformanceMonitorPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 };
 

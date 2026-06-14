@@ -15,10 +15,6 @@ import {
   Clock,
   UserPlus,
   FileText,
-  Star,
-  Target,
-  Users2,
-  Building2,
   Search,
 } from "lucide-react";
 import {
@@ -33,34 +29,29 @@ import {
 } from "../api/hrm";
 import { useNotification } from "../hooks/useNotification";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
+  Button,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
+  MenuItem,
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  Avatar,
+  Box,
+  Tabs,
+  Tab,
+  IconButton,
+  Typography,
+  FormLabel,
+} from "@mui/material";
 
 const HrmTrainingPage: React.FC = () => {
   const { success, error } = useNotification();
@@ -290,7 +281,7 @@ const HrmTrainingPage: React.FC = () => {
               </p>
             </div>
             {activeTab !== "records" && (
-              <Button onClick={() => handleOpenModal()}>
+              <Button variant="contained" onClick={() => handleOpenModal()}>
                 <Plus className="w-4 h-4 mr-2" />
                 新增
               </Button>
@@ -300,46 +291,63 @@ const HrmTrainingPage: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setActiveTab(v as typeof activeTab)}
-          className="space-y-6"
-        >
-          <TabsList className="grid w-[400px] grid-cols-3">
-            <TabsTrigger value="plans" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              培训计划
-            </TabsTrigger>
-            <TabsTrigger value="courses" className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              培训课程
-            </TabsTrigger>
-            <TabsTrigger value="records" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              培训记录
-            </TabsTrigger>
-          </TabsList>
+        <Box sx={{ mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v as typeof activeTab)}
+          >
+            <Tab
+              value="plans"
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Calendar className="w-4 h-4" />
+                  培训计划
+                </Box>
+              }
+            />
+            <Tab
+              value="courses"
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <BookOpen className="w-4 h-4" />
+                  培训课程
+                </Box>
+              }
+            />
+            <Tab
+              value="records"
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Users className="w-4 h-4" />
+                  培训记录
+                </Box>
+              }
+            />
+          </Tabs>
+        </Box>
 
-          <TabsContent value="plans" className="space-y-4">
-            <div className="flex items-center justify-between">
+        {activeTab === "plans" && (
+          <Box sx={{ space: "16px" }}>
+            <div className="flex items-center justify-between mb-4">
               <div className="relative w-64">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   size={16}
                 />
-                <Input
+                <TextField
+                  size="small"
                   type="text"
                   placeholder="搜索培训计划..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  sx={{ width: "100%", "& .MuiOutlinedInput-root": { pl: 4 } }}
                 />
               </div>
             </div>
 
             <Card>
-              <CardContent className="p-0">
-                <ScrollArea className="max-h-[600px]">
+              <CardContent sx={{ p: 0 }}>
+                <Box sx={{ maxHeight: 600, overflow: "auto" }}>
                   <table className="w-full">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
@@ -413,76 +421,60 @@ const HrmTrainingPage: React.FC = () => {
                                   : "-"}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge
-                                  variant={
+                                <Chip
+                                  size="small"
+                                  label={
                                     plan.status === "active"
-                                      ? "default"
-                                      : "secondary"
+                                      ? "进行中"
+                                      : "已结束"
                                   }
-                                >
-                                  {plan.status === "active"
-                                    ? "进行中"
-                                    : "已结束"}
-                                </Badge>
+                                  color={
+                                    plan.status === "active"
+                                      ? "primary"
+                                      : "default"
+                                  }
+                                />
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex space-x-1">
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleOpenModal(plan)}
-                                        >
-                                          <Edit2 className="w-4 h-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>编辑</TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleDelete(plan.id)}
-                                          className="text-red-500 hover:text-red-600"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>删除</TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleStatusChange(
-                                              plan.id,
-                                              plan.status !== "active",
-                                            )
-                                          }
-                                        >
-                                          {plan.status === "active" ? (
-                                            <XCircle className="w-4 h-4 text-orange-500" />
-                                          ) : (
-                                            <CheckCircle className="w-4 h-4 text-green-500" />
-                                          )}
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        {plan.status === "active"
-                                          ? "停用"
-                                          : "启用"}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
+                                  <Tooltip title="编辑">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleOpenModal(plan)}
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="删除">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleDelete(plan.id)}
+                                      sx={{ color: "error.main" }}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip
+                                    title={
+                                      plan.status === "active" ? "停用" : "启用"
+                                    }
+                                  >
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        handleStatusChange(
+                                          plan.id,
+                                          plan.status !== "active",
+                                        )
+                                      }
+                                    >
+                                      {plan.status === "active" ? (
+                                        <XCircle className="w-4 h-4 text-orange-500" />
+                                      ) : (
+                                        <CheckCircle className="w-4 h-4 text-green-500" />
+                                      )}
+                                    </IconButton>
+                                  </Tooltip>
                                 </div>
                               </td>
                             </tr>
@@ -518,24 +510,27 @@ const HrmTrainingPage: React.FC = () => {
                       )}
                     </tbody>
                   </table>
-                </ScrollArea>
+                </Box>
               </CardContent>
             </Card>
-          </TabsContent>
+          </Box>
+        )}
 
-          <TabsContent value="courses" className="space-y-4">
-            <div className="flex items-center justify-between">
+        {activeTab === "courses" && (
+          <Box>
+            <div className="flex items-center justify-between mb-4">
               <div className="relative w-64">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   size={16}
                 />
-                <Input
+                <TextField
+                  size="small"
                   type="text"
                   placeholder="搜索课程..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  sx={{ width: "100%", "& .MuiOutlinedInput-root": { pl: 4 } }}
                 />
               </div>
             </div>
@@ -543,7 +538,7 @@ const HrmTrainingPage: React.FC = () => {
             <div className="grid gap-4">
               {filteredCourses.length === 0 ? (
                 <Card>
-                  <CardContent className="p-8 text-center">
+                  <CardContent sx={{ p: 8, textAlign: "center" }}>
                     <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-500">暂无培训课程</p>
                   </CardContent>
@@ -552,24 +547,35 @@ const HrmTrainingPage: React.FC = () => {
                 filteredCourses.map((course) => (
                   <Card
                     key={course.id}
-                    className="hover:shadow-md transition-shadow"
+                    sx={{
+                      "&:hover": { boxShadow: 3 },
+                      transition: "box-shadow",
+                    }}
                   >
-                    <CardContent className="p-4">
+                    <CardContent sx={{ p: 2 }}>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <Avatar className="w-10 h-10">
-                              <AvatarFallback className="bg-blue-100 text-blue-700">
-                                {course.name.charAt(0).toUpperCase()}
-                              </AvatarFallback>
+                            <Avatar
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: "primary.light",
+                                color: "primary.dark",
+                              }}
+                            >
+                              {course.name.charAt(0).toUpperCase()}
                             </Avatar>
                             <div>
-                              <h3 className="font-semibold text-gray-900">
+                              <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: 600 }}
+                              >
                                 {course.name}
-                              </h3>
-                              <p className="text-sm text-gray-500">
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
                                 {course.code || "未设置代码"}
-                              </p>
+                              </Typography>
                             </div>
                           </div>
                           <div className="grid grid-cols-4 gap-4 text-sm">
@@ -607,63 +613,43 @@ const HrmTrainingPage: React.FC = () => {
                           )}
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                          <Badge
-                            variant={
-                              course.status === "active"
-                                ? "default"
-                                : "secondary"
+                          <Chip
+                            size="small"
+                            label={
+                              course.status === "active" ? "开放报名" : "已关闭"
                             }
-                          >
-                            {course.status === "active" ? "开放报名" : "已关闭"}
-                          </Badge>
+                            color={
+                              course.status === "active" ? "success" : "default"
+                            }
+                          />
                           <div className="flex space-x-1">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleOpenModal(course)}
-                                  >
-                                    <Edit2 className="w-4 h-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>编辑</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDelete(course.id)}
-                                    className="text-red-500 hover:text-red-600"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>删除</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                            <Tooltip title="编辑">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleOpenModal(course)}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="删除">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDelete(course.id)}
+                                sx={{ color: "error.main" }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </IconButton>
+                            </Tooltip>
                             {course.status === "active" && (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleOpenEnrollModal(course)
-                                      }
-                                      className="text-green-500 hover:text-green-600"
-                                    >
-                                      <UserPlus className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>报名</TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                              <Tooltip title="报名">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleOpenEnrollModal(course)}
+                                  sx={{ color: "success.main" }}
+                                >
+                                  <UserPlus className="w-4 h-4" />
+                                </IconButton>
+                              </Tooltip>
                             )}
                           </div>
                         </div>
@@ -673,28 +659,31 @@ const HrmTrainingPage: React.FC = () => {
                 ))
               )}
             </div>
-          </TabsContent>
+          </Box>
+        )}
 
-          <TabsContent value="records" className="space-y-4">
-            <div className="flex items-center justify-between">
+        {activeTab === "records" && (
+          <Box>
+            <div className="flex items-center justify-between mb-4">
               <div className="relative w-64">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   size={16}
                 />
-                <Input
+                <TextField
+                  size="small"
                   type="text"
                   placeholder="搜索员工..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  sx={{ width: "100%", "& .MuiOutlinedInput-root": { pl: 4 } }}
                 />
               </div>
             </div>
 
             <Card>
-              <CardContent className="p-0">
-                <ScrollArea className="max-h-[600px]">
+              <CardContent sx={{ p: 0 }}>
+                <Box sx={{ maxHeight: 600, overflow: "auto" }}>
                   <table className="w-full">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
@@ -736,12 +725,18 @@ const HrmTrainingPage: React.FC = () => {
                           <tr key={record.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-2">
-                                <Avatar className="w-8 h-8">
-                                  <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
-                                    {getEmployeeName(record.employee_id)
-                                      .charAt(0)
-                                      .toUpperCase()}
-                                  </AvatarFallback>
+                                <Avatar
+                                  sx={{
+                                    width: 32,
+                                    height: 32,
+                                    bgcolor: "primary.light",
+                                    color: "primary.dark",
+                                    fontSize: 14,
+                                  }}
+                                >
+                                  {getEmployeeName(record.employee_id)
+                                    .charAt(0)
+                                    .toUpperCase()}
                                 </Avatar>
                                 <span className="text-sm font-medium text-gray-900">
                                   {getEmployeeName(record.employee_id)}
@@ -757,34 +752,48 @@ const HrmTrainingPage: React.FC = () => {
                               ).toLocaleDateString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge
-                                variant={
+                              <Chip
+                                size="small"
+                                label={
                                   record.attendance_status === "attended"
-                                    ? "default"
+                                    ? "已出勤"
                                     : record.attendance_status === "absent"
-                                      ? "destructive"
-                                      : "outline"
+                                      ? "缺勤"
+                                      : "未考勤"
                                 }
-                              >
-                                {record.attendance_status === "attended"
-                                  ? "已出勤"
-                                  : record.attendance_status === "absent"
-                                    ? "缺勤"
-                                    : "未考勤"}
-                              </Badge>
+                                color={
+                                  record.attendance_status === "attended"
+                                    ? "success"
+                                    : record.attendance_status === "absent"
+                                      ? "error"
+                                      : "default"
+                                }
+                                variant={
+                                  record.attendance_status === "pending"
+                                    ? "outlined"
+                                    : "filled"
+                                }
+                              />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge
+                              <Chip
+                                size="small"
+                                label={
+                                  record.completion_status === "completed"
+                                    ? "已完成"
+                                    : "未完成"
+                                }
+                                color={
+                                  record.completion_status === "completed"
+                                    ? "success"
+                                    : "default"
+                                }
                                 variant={
                                   record.completion_status === "completed"
-                                    ? "default"
-                                    : "outline"
+                                    ? "filled"
+                                    : "outlined"
                                 }
-                              >
-                                {record.completion_status === "completed"
-                                  ? "已完成"
-                                  : "未完成"}
-                              </Badge>
+                              />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                               {record.score ? (
@@ -800,35 +809,23 @@ const HrmTrainingPage: React.FC = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex space-x-1">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleViewRecord(record)}
-                                      >
-                                        <Eye className="w-4 h-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>查看详情</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDelete(record.id)}
-                                        className="text-red-500 hover:text-red-600"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>删除</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
+                                <Tooltip title="查看详情">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleViewRecord(record)}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="删除">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleDelete(record.id)}
+                                    sx={{ color: "error.main" }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </IconButton>
+                                </Tooltip>
                               </div>
                             </td>
                           </tr>
@@ -836,29 +833,29 @@ const HrmTrainingPage: React.FC = () => {
                       )}
                     </tbody>
                   </table>
-                </ScrollArea>
+                </Box>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </Box>
+        )}
       </div>
 
       {showModal && (
-        <Dialog open={showModal} onOpenChange={setShowModal}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>
-                {editItem ? "编辑" : "新增"}
-                {activeTab === "plans" ? "培训计划" : "培训课程"}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
+        <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            {editItem ? "编辑" : "新增"}
+            {activeTab === "plans" ? "培训计划" : "培训课程"}
+          </DialogTitle>
+          <DialogContent>
+            <div className="space-y-4 pt-2">
               {activeTab === "plans" ? (
                 <>
                   <div>
-                    <Label htmlFor="plan-name">计划名称 *</Label>
-                    <Input
+                    <FormLabel htmlFor="plan-name">计划名称 *</FormLabel>
+                    <TextField
                       id="plan-name"
+                      size="small"
+                      fullWidth
                       type="text"
                       value={(formData as TrainingPlan).name || ""}
                       onChange={(e) =>
@@ -869,9 +866,11 @@ const HrmTrainingPage: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="plan-code">计划代码</Label>
-                      <Input
+                      <FormLabel htmlFor="plan-code">计划代码</FormLabel>
+                      <TextField
                         id="plan-code"
+                        size="small"
+                        fullWidth
                         type="text"
                         value={(formData as TrainingPlan).code || ""}
                         onChange={(e) =>
@@ -882,9 +881,11 @@ const HrmTrainingPage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="plan-budget">预算</Label>
-                      <Input
+                      <FormLabel htmlFor="plan-budget">预算</FormLabel>
+                      <TextField
                         id="plan-budget"
+                        size="small"
+                        fullWidth
                         type="number"
                         value={
                           (formData as TrainingPlan).budget?.toString() || ""
@@ -901,9 +902,11 @@ const HrmTrainingPage: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="plan-start">开始日期 *</Label>
-                      <Input
+                      <FormLabel htmlFor="plan-start">开始日期 *</FormLabel>
+                      <TextField
                         id="plan-start"
+                        size="small"
+                        fullWidth
                         type="date"
                         value={(formData as TrainingPlan).start_date || ""}
                         onChange={(e) =>
@@ -915,9 +918,11 @@ const HrmTrainingPage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="plan-end">结束日期 *</Label>
-                      <Input
+                      <FormLabel htmlFor="plan-end">结束日期 *</FormLabel>
+                      <TextField
                         id="plan-end"
+                        size="small"
+                        fullWidth
                         type="date"
                         value={(formData as TrainingPlan).end_date || ""}
                         onChange={(e) =>
@@ -927,7 +932,7 @@ const HrmTrainingPage: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="plan-description">描述</Label>
+                    <FormLabel htmlFor="plan-description">描述</FormLabel>
                     <textarea
                       id="plan-description"
                       value={(formData as TrainingPlan).description || ""}
@@ -946,9 +951,11 @@ const HrmTrainingPage: React.FC = () => {
               ) : (
                 <>
                   <div>
-                    <Label htmlFor="course-name">课程名称 *</Label>
-                    <Input
+                    <FormLabel htmlFor="course-name">课程名称 *</FormLabel>
+                    <TextField
                       id="course-name"
+                      size="small"
+                      fullWidth
                       type="text"
                       value={(formData as TrainingCourse).name || ""}
                       onChange={(e) =>
@@ -959,49 +966,53 @@ const HrmTrainingPage: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="course-category">分类 *</Label>
-                      <Select
-                        value={(formData as TrainingCourse).category || ""}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, category: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="请选择分类" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="technical">技术培训</SelectItem>
-                          <SelectItem value="management">管理培训</SelectItem>
-                          <SelectItem value="soft_skill">软技能</SelectItem>
-                          <SelectItem value="onboarding">入职培训</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel htmlFor="course-category">分类 *</FormLabel>
+                      <FormControl size="small" fullWidth>
+                        <Select
+                          value={(formData as TrainingCourse).category || ""}
+                          onChange={(e) =>
+                            setFormData({ ...formData, category: e.target.value })
+                          }
+                          displayEmpty
+                        >
+                          <MenuItem value="" disabled>
+                            请选择分类
+                          </MenuItem>
+                          <MenuItem value="technical">技术培训</MenuItem>
+                          <MenuItem value="management">管理培训</MenuItem>
+                          <MenuItem value="soft_skill">软技能</MenuItem>
+                          <MenuItem value="onboarding">入职培训</MenuItem>
+                        </Select>
+                      </FormControl>
                     </div>
                     <div>
-                      <Label htmlFor="course-level">级别 *</Label>
-                      <Select
-                        value={(formData as TrainingCourse).level || ""}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, level: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="请选择级别" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="beginner">入门级</SelectItem>
-                          <SelectItem value="intermediate">中级</SelectItem>
-                          <SelectItem value="advanced">高级</SelectItem>
-                          <SelectItem value="expert">专家级</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel htmlFor="course-level">级别 *</FormLabel>
+                      <FormControl size="small" fullWidth>
+                        <Select
+                          value={(formData as TrainingCourse).level || ""}
+                          onChange={(e) =>
+                            setFormData({ ...formData, level: e.target.value })
+                          }
+                          displayEmpty
+                        >
+                          <MenuItem value="" disabled>
+                            请选择级别
+                          </MenuItem>
+                          <MenuItem value="beginner">入门级</MenuItem>
+                          <MenuItem value="intermediate">中级</MenuItem>
+                          <MenuItem value="advanced">高级</MenuItem>
+                          <MenuItem value="expert">专家级</MenuItem>
+                        </Select>
+                      </FormControl>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="course-duration">时长(小时)</Label>
-                      <Input
+                      <FormLabel htmlFor="course-duration">时长(小时)</FormLabel>
+                      <TextField
                         id="course-duration"
+                        size="small"
+                        fullWidth
                         type="number"
                         value={
                           (
@@ -1018,9 +1029,11 @@ const HrmTrainingPage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="course-participants">最大人数</Label>
-                      <Input
+                      <FormLabel htmlFor="course-participants">最大人数</FormLabel>
+                      <TextField
                         id="course-participants"
+                        size="small"
+                        fullWidth
                         type="number"
                         value={
                           (
@@ -1038,9 +1051,11 @@ const HrmTrainingPage: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="course-instructor">讲师</Label>
-                    <Input
+                    <FormLabel htmlFor="course-instructor">讲师</FormLabel>
+                    <TextField
                       id="course-instructor"
+                      size="small"
+                      fullWidth
                       type="text"
                       value={(formData as TrainingCourse).instructor_name || ""}
                       onChange={(e) =>
@@ -1053,7 +1068,7 @@ const HrmTrainingPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="course-description">描述</Label>
+                    <FormLabel htmlFor="course-description">描述</FormLabel>
                     <textarea
                       id="course-description"
                       value={(formData as TrainingCourse).description || ""}
@@ -1071,39 +1086,44 @@ const HrmTrainingPage: React.FC = () => {
                 </>
               )}
             </div>
-            <DialogFooter className="mt-6">
-              <Button variant="secondary" onClick={() => setShowModal(false)}>
-                取消
-              </Button>
-              <Button onClick={handleSave}>{editItem ? "保存" : "创建"}</Button>
-            </DialogFooter>
           </DialogContent>
+          <DialogActions>
+            <Button variant="outlined" onClick={() => setShowModal(false)}>
+              取消
+            </Button>
+            <Button variant="contained" onClick={handleSave}>
+              {editItem ? "保存" : "创建"}
+            </Button>
+          </DialogActions>
         </Dialog>
       )}
 
       {showRecordModal && selectedRecord && (
-        <Dialog open={showRecordModal} onOpenChange={setShowRecordModal}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>培训记录详情</DialogTitle>
-            </DialogHeader>
+        <Dialog open={showRecordModal} onClose={() => setShowRecordModal(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>培训记录详情</DialogTitle>
+          <DialogContent>
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <Avatar className="w-12 h-12">
-                    <AvatarFallback className="bg-blue-100 text-blue-700">
-                      {getEmployeeName(selectedRecord.employee_id)
-                        .charAt(0)
-                        .toUpperCase()}
-                    </AvatarFallback>
+                  <Avatar
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      bgcolor: "primary.light",
+                      color: "primary.dark",
+                    }}
+                  >
+                    {getEmployeeName(selectedRecord.employee_id)
+                      .charAt(0)
+                      .toUpperCase()}
                   </Avatar>
                   <div>
-                    <p className="font-semibold">
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                       {getEmployeeName(selectedRecord.employee_id)}
-                    </p>
-                    <p className="text-sm text-gray-500">
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
                       员工ID: {selectedRecord.employee_id.substring(0, 8)}...
-                    </p>
+                    </Typography>
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">
@@ -1123,35 +1143,49 @@ const HrmTrainingPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">出勤状态:</span>
-                    <Badge
-                      variant={
+                    <Chip
+                      size="small"
+                      label={
                         selectedRecord.attendance_status === "attended"
-                          ? "default"
+                          ? "已出勤"
                           : selectedRecord.attendance_status === "absent"
-                            ? "destructive"
-                            : "outline"
+                            ? "缺勤"
+                            : "未考勤"
                       }
-                    >
-                      {selectedRecord.attendance_status === "attended"
-                        ? "已出勤"
-                        : selectedRecord.attendance_status === "absent"
-                          ? "缺勤"
-                          : "未考勤"}
-                    </Badge>
+                      color={
+                        selectedRecord.attendance_status === "attended"
+                          ? "success"
+                          : selectedRecord.attendance_status === "absent"
+                            ? "error"
+                            : "default"
+                      }
+                      variant={
+                        selectedRecord.attendance_status === "pending"
+                          ? "outlined"
+                          : "filled"
+                      }
+                    />
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">完成状态:</span>
-                    <Badge
+                    <Chip
+                      size="small"
+                      label={
+                        selectedRecord.completion_status === "completed"
+                          ? "已完成"
+                          : "未完成"
+                      }
+                      color={
+                        selectedRecord.completion_status === "completed"
+                          ? "success"
+                          : "default"
+                      }
                       variant={
                         selectedRecord.completion_status === "completed"
-                          ? "default"
-                          : "outline"
+                          ? "filled"
+                          : "outlined"
                       }
-                    >
-                      {selectedRecord.completion_status === "completed"
-                        ? "已完成"
-                        : "未完成"}
-                    </Badge>
+                    />
                   </div>
                   {selectedRecord.score && (
                     <div className="flex justify-between items-center">
@@ -1191,49 +1225,51 @@ const HrmTrainingPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <DialogFooter className="mt-4">
-              <Button onClick={() => setShowRecordModal(false)}>关闭</Button>
-            </DialogFooter>
           </DialogContent>
+          <DialogActions>
+            <Button variant="contained" onClick={() => setShowRecordModal(false)}>
+              关闭
+            </Button>
+          </DialogActions>
         </Dialog>
       )}
 
       {showEnrollModal && selectedCourse && (
-        <Dialog open={showEnrollModal} onOpenChange={setShowEnrollModal}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>报名课程: {selectedCourse.name}</DialogTitle>
-            </DialogHeader>
+        <Dialog open={showEnrollModal} onClose={() => setShowEnrollModal(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>报名课程: {selectedCourse.name}</DialogTitle>
+          <DialogContent>
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-600">请选择要报名的员工:</p>
               </div>
               <div>
-                <Label htmlFor="enroll-employee">员工 *</Label>
-                <Select required>
-                  <SelectTrigger id="enroll-employee">
-                    <SelectValue placeholder="请选择员工" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <FormLabel htmlFor="enroll-employee">员工 *</FormLabel>
+                <FormControl size="small" fullWidth>
+                  <Select displayEmpty>
+                    <MenuItem value="" disabled>
+                      请选择员工
+                    </MenuItem>
                     {employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
+                      <MenuItem key={employee.id} value={employee.id}>
                         {employee.name} ({employee.employee_no})
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </div>
             </div>
-            <DialogFooter className="mt-4">
-              <Button
-                variant="secondary"
-                onClick={() => setShowEnrollModal(false)}
-              >
-                取消
-              </Button>
-              <Button onClick={() => handleEnroll("")}>确认报名</Button>
-            </DialogFooter>
           </DialogContent>
+          <DialogActions>
+            <Button
+              variant="outlined"
+              onClick={() => setShowEnrollModal(false)}
+            >
+              取消
+            </Button>
+            <Button variant="contained" onClick={() => handleEnroll("")}>
+              确认报名
+            </Button>
+          </DialogActions>
         </Dialog>
       )}
     </div>

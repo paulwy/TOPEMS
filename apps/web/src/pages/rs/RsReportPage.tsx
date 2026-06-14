@@ -51,7 +51,7 @@ const RsReportPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <div style={{ marginBottom: 12 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
           研发报表分析
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -60,13 +60,15 @@ const RsReportPage: React.FC = () => {
       </div>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="flex-start"
+                sx={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
               >
                 <div>
                   <Typography
@@ -76,10 +78,10 @@ const RsReportPage: React.FC = () => {
                   >
                     项目统计
                   </Typography>
-                  <Typography variant="h4" fontWeight="bold">
+                  <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                     {reportData.projects.total}
                   </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                  <Stack sx={{ mt: 1, flexDirection: "row" }} spacing={1}>
                     <Chip
                       label={`进行中 ${reportData.projects.active}`}
                       size="small"
@@ -98,13 +100,15 @@ const RsReportPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="flex-start"
+                sx={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
               >
                 <div>
                   <Typography
@@ -114,14 +118,12 @@ const RsReportPage: React.FC = () => {
                   >
                     试验统计
                   </Typography>
-                  <Typography variant="h4" fontWeight="bold">
+                  <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                     {reportData.experiments.total}
                   </Typography>
                   <Stack
-                    direction="row"
-                    alignItems="center"
+                    sx={{ mt: 1, flexDirection: "row", alignItems: "center" }}
                     spacing={0.5}
-                    sx={{ mt: 1 }}
                   >
                     <TrendingUpIcon color="success" fontSize="small" />
                     <Typography variant="body2" color="success.main">
@@ -135,13 +137,15 @@ const RsReportPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="flex-start"
+                sx={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
               >
                 <div>
                   <Typography
@@ -151,10 +155,10 @@ const RsReportPage: React.FC = () => {
                   >
                     配方统计
                   </Typography>
-                  <Typography variant="h4" fontWeight="bold">
+                  <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                     {reportData.formulas.total}
                   </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                  <Stack sx={{ mt: 1, flexDirection: "row" }} spacing={1}>
                     <Chip
                       label={`已发布 ${reportData.formulas.published}`}
                       size="small"
@@ -175,7 +179,7 @@ const RsReportPage: React.FC = () => {
       </Grid>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -184,13 +188,15 @@ const RsReportPage: React.FC = () => {
               <Divider sx={{ mb: 2 }} />
               <Stack spacing={2}>
                 <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
+                  sx={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
                 >
                   <Typography variant="body2">小试阶段</Typography>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Typography variant="body2" fontWeight="bold">
+                  <Stack sx={{ flexDirection: "row", alignItems: "center" }} spacing={1}>
+                    <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                       {reportData.experiments.lab}
                     </Typography>
                     <Chip
@@ -200,13 +206,15 @@ const RsReportPage: React.FC = () => {
                   </Stack>
                 </Stack>
                 <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
+                  sx={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
                 >
                   <Typography variant="body2">中试阶段</Typography>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Typography variant="body2" fontWeight="bold">
+                  <Stack sx={{ flexDirection: "row", alignItems: "center" }} spacing={1}>
+                    <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                       {reportData.experiments.pilot}
                     </Typography>
                     <Chip
@@ -217,13 +225,15 @@ const RsReportPage: React.FC = () => {
                   </Stack>
                 </Stack>
                 <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
+                  sx={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
                 >
                   <Typography variant="body2">放大试验</Typography>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Typography variant="body2" fontWeight="bold">
+                  <Stack sx={{ flexDirection: "row", alignItems: "center" }} spacing={1}>
+                    <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                       {reportData.experiments.scaleup}
                     </Typography>
                     <Chip
@@ -238,7 +248,7 @@ const RsReportPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -249,12 +259,14 @@ const RsReportPage: React.FC = () => {
                 {reportData.monthlyProgress.map((item, index) => (
                   <Stack
                     key={index}
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
+                    sx={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
                   >
                     <Typography variant="body2">{item.month}</Typography>
-                    <Stack direction="row" spacing={2}>
+                    <Stack sx={{ flexDirection: "row" }} spacing={2}>
                       <Chip
                         label={`项目 ${item.projects}`}
                         size="small"

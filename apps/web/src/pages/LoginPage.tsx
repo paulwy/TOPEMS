@@ -8,24 +8,13 @@ import { Eye, EyeOff } from "lucide-react";
 import { isDevelopment } from "../config/runtime";
 import { useAppStore } from "../store";
 
-import { Button } from "@/components/ui/button";
+import Button from "@mui/material/Button";
 import {
-  Card,
+  Card as MuiCard,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@mui/material";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
 import { ModeToggle } from "@/components/ModeToggle";
 
 // 登录表单验证 schema
@@ -119,128 +108,105 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <ModeToggle />
       </div>
 
-      <Card className="w-full max-w-md mx-4 shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+      <MuiCard className="w-full max-w-md mx-4 shadow-lg">
+        <div className="text-center p-6">
+          <Typography variant="h5" className="font-bold text-blue-600 dark:text-blue-400">
             TOPEMS
-          </CardTitle>
-          <CardDescription>企业数字化平台</CardDescription>
+          </Typography>
+          <Typography variant="body2" color="text.secondary">企业数字化平台</Typography>
           <h2 className="text-2xl font-semibold pt-4">
             {isRegister ? "用户注册" : "用户登录"}
           </h2>
-        </CardHeader>
+        </div>
         <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-4"
-            >
-              {/* 用户名 */}
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>用户名</FormLabel>
-                    <FormControl>
-                      <Input placeholder="请输入用户名" {...field} />
-                    </FormControl>
-                    {!isRegister && (
-                      <FormDescription>
-                        字母或数字组合，最多20位
-                      </FormDescription>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
+            {/* 用户名 */}
+            <TextField
+              label="用户名"
+              placeholder="请输入用户名"
+              value={form.watch("username")}
+              onChange={(e) => form.setValue("username", e.target.value)}
+              error={!!form.formState.errors.username}
+              helperText={form.formState.errors.username?.message as string}
+              size="small"
+              fullWidth
+            />
+
+            {/* 邮箱 (仅注册时显示) */}
+            {isRegister && (
+              <TextField
+                label="邮箱"
+                type="email"
+                placeholder="请输入邮箱"
+                value={form.watch("email") || ""}
+                onChange={(e) => form.setValue("email", e.target.value)}
+                error={!!form.formState.errors.email}
+                helperText={form.formState.errors.email?.message as string}
+                size="small"
+                fullWidth
               />
+            )}
 
-              {/* 邮箱 (仅注册时显示) */}
-              {isRegister && (
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>邮箱</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="请输入邮箱"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              {/* 密码 */}
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>密码</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="请输入密码"
-                          {...field}
-                          className="pr-12"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5" />
-                          ) : (
-                            <Eye className="h-5 w-5" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormDescription className="flex flex-wrap gap-2 text-xs">
-                      <span className="flex items-center gap-1">
-                        <span
-                          className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[A-Z]/) ? "bg-green-500" : "bg-gray-300"}`}
-                        ></span>
-                        大写字母
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span
-                          className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[a-z]/) ? "bg-green-500" : "bg-gray-300"}`}
-                        ></span>
-                        小写字母
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span
-                          className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[0-9]/) ? "bg-green-500" : "bg-gray-300"}`}
-                        ></span>
-                        数字
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span
-                          className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[^a-zA-Z0-9]/) ? "bg-green-500" : "bg-gray-300"}`}
-                        ></span>
-                        特殊字符
-                      </span>
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            {/* 密码 */}
+            <div className="space-y-1 relative">
+              <TextField
+                label="密码"
+                type={showPassword ? "text" : "password"}
+                placeholder="请输入密码"
+                value={form.watch("password")}
+                onChange={(e) => form.setValue("password", e.target.value)}
+                error={!!form.formState.errors.password}
+                helperText={form.formState.errors.password?.message as string}
+                size="small"
+                fullWidth
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="flex items-center gap-1">
+                  <span
+                    className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[A-Z]/) ? "bg-green-500" : "bg-gray-300"}`}
+                  ></span>
+                  大写字母
+                </span>
+                <span className="flex items-center gap-1">
+                  <span
+                    className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[a-z]/) ? "bg-green-500" : "bg-gray-300"}`}
+                  ></span>
+                  小写字母
+                </span>
+                <span className="flex items-center gap-1">
+                  <span
+                    className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[0-9]/) ? "bg-green-500" : "bg-gray-300"}`}
+                  ></span>
+                  数字
+                </span>
+                <span className="flex items-center gap-1">
+                  <span
+                    className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[^a-zA-Z0-9]/) ? "bg-green-500" : "bg-gray-300"}`}
+                  ></span>
+                  特殊字符
+                </span>
+              </div>
+            </div>
 
-              {/* 提交按钮 */}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "处理中..." : isRegister ? "注册" : "登录"}
-              </Button>
-            </form>
-          </Form>
+            {/* 提交按钮 */}
+            <Button type="submit" variant="contained" className="w-full" disabled={loading}>
+              {loading ? "处理中..." : isRegister ? "注册" : "登录"}
+            </Button>
+          </form>
 
           <div className="mt-4 text-center">
             <button
@@ -261,7 +227,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </div>
           )}
         </CardContent>
-      </Card>
+      </MuiCard>
     </div>
   );
 };

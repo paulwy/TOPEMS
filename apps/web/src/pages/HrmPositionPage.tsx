@@ -1,3 +1,24 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+  Box,
+  Stack,
+  IconButton,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Briefcase,
@@ -22,33 +43,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "../components/DataTable";
 import { HrmLayout } from "../components/HrmLayout";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface PositionManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -244,19 +239,17 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
   const getStatusBadge = (status: string) => {
     const colors: Record<
       string,
-      "default" | "secondary" | "destructive" | "outline"
+      "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"
     > = {
-      active: "default",
-      inactive: "secondary",
+      active: "success",
+      inactive: "default",
     };
     const labels: Record<string, string> = {
       active: "启用",
       inactive: "禁用",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip size="small" color={colors[status] || "default"} label={labels[status] || status} />
     );
   };
 
@@ -324,53 +317,35 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
         cell: ({ row }) => {
           const position = row.original;
           return (
-            <div className="flex items-center justify-end space-x-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleView(position)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>查看</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+              <Tooltip title="查看">
+                <IconButton
+                  size="small"
+                  onClick={() => handleView(position)}
+                >
+                  <Eye className="w-4 h-4" />
+                </IconButton>
+              </Tooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(position)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>编辑</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="编辑">
+                <IconButton
+                  size="small"
+                  onClick={() => handleEdit(position)}
+                >
+                  <Edit className="w-4 h-4" />
+                </IconButton>
+              </Tooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 dark:text-red-400"
-                      onClick={() => handleDelete(position.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>删除</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+              <Tooltip title="删除">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleDelete(position.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </IconButton>
+              </Tooltip>
+            </Box>
           );
         },
       },
@@ -398,45 +373,47 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
               <div className="flex flex-wrap gap-4">
                 <div className="flex-1 min-w-[200px] relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
+                  <TextField
+                    size="small"
                     type="text"
                     placeholder="搜索岗位名称或编码"
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="pl-10"
+                    sx={{ pl: 10, width: "100%" }}
                   />
                 </div>
-                <Select
-                  value={departmentFilter}
-                  onValueChange={setDepartmentFilter}
-                >
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue placeholder="全部部门" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部部门</SelectItem>
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                  <InputLabel>部门</InputLabel>
+                  <Select
+                    value={departmentFilter}
+                    label="部门"
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                  >
+                    <MenuItem value="all">全部部门</MenuItem>
                     {departments.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
+                      <MenuItem key={d.id} value={d.id}>
                         {d.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="全部状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部状态</SelectItem>
-                    <SelectItem value="active">启用</SelectItem>
-                    <SelectItem value="inactive">禁用</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="secondary" onClick={handleSearch}>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>状态</InputLabel>
+                  <Select
+                    value={statusFilter}
+                    label="状态"
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <MenuItem value="all">全部状态</MenuItem>
+                    <MenuItem value="active">启用</MenuItem>
+                    <MenuItem value="inactive">禁用</MenuItem>
+                  </Select>
+                </FormControl>
+                <Button variant="outlined" onClick={handleSearch}>
                   搜索
                 </Button>
-                <Button variant="outline" onClick={handleReset}>
+                <Button variant="outlined" onClick={handleReset}>
                   重置
                 </Button>
               </div>
@@ -473,290 +450,294 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
           </Card>
         </div>
 
-        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>新增岗位</DialogTitle>
-            </DialogHeader>
+        <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)}>
+          <DialogTitle>新增岗位</DialogTitle>
+          <DialogContent sx={{ maxWidth: 500 }}>
             <form onSubmit={handleCreate}>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="create-name">岗位名称 *</Label>
-                  <Input
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>岗位名称 *</Typography>
+                  <TextField
                     id="create-name"
+                    size="small"
                     type="text"
                     required
+                    fullWidth
                     value={(formData as Position)?.name || ""}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("name", e.target.value)}
                     placeholder="请输入岗位名称"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-code">岗位编码</Label>
-                  <Input
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>岗位编码</Typography>
+                  <TextField
                     id="create-code"
+                    size="small"
                     type="text"
+                    fullWidth
                     value={(formData as Position)?.code || ""}
-                    onChange={(e) => handleInputChange("code", e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("code", e.target.value)}
                     placeholder="请输入岗位编码"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-department">所属部门</Label>
-                  <Select
-                    value={(formData as Position)?.department_id || ""}
-                    onValueChange={(value) =>
-                      handleInputChange("department_id", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">无</SelectItem>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>所属部门</Typography>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel>请选择</InputLabel>
+                    <Select
+                      value={(formData as Position)?.department_id || ""}
+                      label="请选择"
+                      onChange={(e) => handleInputChange("department_id", e.target.value)}
+                    >
+                      <MenuItem value="none">无</MenuItem>
                       {departments.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>
+                        <MenuItem key={d.id} value={d.id}>
                           {d.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-level">岗位级别</Label>
-                  <Input
+                    </Select>
+                  </FormControl>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>岗位级别</Typography>
+                  <TextField
                     id="create-level"
+                    size="small"
                     type="text"
+                    fullWidth
                     value={(formData as Position)?.level || ""}
-                    onChange={(e) => handleInputChange("level", e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("level", e.target.value)}
                     placeholder="请输入岗位级别"
                   />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="create-min-salary">最低薪资</Label>
-                    <Input
+                </Box>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>最低薪资</Typography>
+                    <TextField
                       id="create-min-salary"
+                      size="small"
                       type="number"
+                      fullWidth
                       value={(formData as Position)?.min_salary || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "min_salary",
-                          parseFloat(e.target.value) || 0,
-                        )
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange("min_salary", parseFloat(e.target.value) || 0)
                       }
                       placeholder="最低薪资"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create-max-salary">最高薪资</Label>
-                    <Input
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>最高薪资</Typography>
+                    <TextField
                       id="create-max-salary"
+                      size="small"
                       type="number"
+                      fullWidth
                       value={(formData as Position)?.max_salary || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "max_salary",
-                          parseFloat(e.target.value) || 0,
-                        )
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange("max_salary", parseFloat(e.target.value) || 0)
                       }
                       placeholder="最高薪资"
                     />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-description">岗位描述</Label>
-                  <Textarea
+                  </Box>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>岗位描述</Typography>
+                  <TextField
                     id="create-description"
+                    size="small"
+                    multiline
+                    rows={3}
+                    fullWidth
                     value={(formData as Position)?.description || ""}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("description", e.target.value)
                     }
-                    rows={3}
                     placeholder="请输入岗位描述"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-requirements">任职要求</Label>
-                  <Textarea
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>任职要求</Typography>
+                  <TextField
                     id="create-requirements"
+                    size="small"
+                    multiline
+                    rows={3}
+                    fullWidth
                     value={(formData as Position)?.requirements || ""}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("requirements", e.target.value)
                     }
-                    rows={3}
                     placeholder="请输入任职要求"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-status">状态</Label>
-                  <Select
-                    value={(formData as Position)?.status || "active"}
-                    onValueChange={(value) =>
-                      handleInputChange("status", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">启用</SelectItem>
-                      <SelectItem value="inactive">禁用</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter className="mt-6">
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>状态</Typography>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel>请选择</InputLabel>
+                    <Select
+                      value={(formData as Position)?.status || "active"}
+                      label="请选择"
+                      onChange={(e) => handleInputChange("status", e.target.value)}
+                    >
+                      <MenuItem value="active">启用</MenuItem>
+                      <MenuItem value="inactive">禁用</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              </Box>
+              <DialogActions sx={{ mt: 3 }}>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="outlined"
                   onClick={() => setShowCreateModal(false)}
                 >
                   取消
                 </Button>
-                <Button type="submit">创建</Button>
-              </DialogFooter>
+                <Button type="submit" variant="contained">创建</Button>
+              </DialogActions>
             </form>
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>编辑岗位</DialogTitle>
-            </DialogHeader>
+        <Dialog open={showEditModal} onClose={() => setShowEditModal(false)}>
+          <DialogTitle>编辑岗位</DialogTitle>
+          <DialogContent sx={{ maxWidth: 500 }}>
             {selectedPosition && (
               <form onSubmit={handleUpdate}>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-name">岗位名称 *</Label>
-                    <Input
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>岗位名称 *</Typography>
+                    <TextField
                       id="edit-name"
+                      size="small"
                       type="text"
                       required
+                      fullWidth
                       value={(formData as Position)?.name || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("name", e.target.value)
                       }
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-code">岗位编码</Label>
-                    <Input
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>岗位编码</Typography>
+                    <TextField
                       id="edit-code"
+                      size="small"
                       type="text"
+                      fullWidth
                       value={(formData as Position)?.code || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("code", e.target.value)
                       }
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-department">所属部门</Label>
-                    <Select
-                      value={(formData as Position)?.department_id || ""}
-                      onValueChange={(value) =>
-                        handleInputChange("department_id", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">无</SelectItem>
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>所属部门</Typography>
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>请选择</InputLabel>
+                      <Select
+                        value={(formData as Position)?.department_id || ""}
+                        label="请选择"
+                        onChange={(e) => handleInputChange("department_id", e.target.value)}
+                      >
+                        <MenuItem value="none">无</MenuItem>
                         {departments.map((d) => (
-                          <SelectItem key={d.id} value={d.id}>
+                          <MenuItem key={d.id} value={d.id}>
                             {d.name}
-                          </SelectItem>
+                          </MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-level">岗位级别</Label>
-                    <Input
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>岗位级别</Typography>
+                    <TextField
                       id="edit-level"
+                      size="small"
                       type="text"
+                      fullWidth
                       value={(formData as Position)?.level || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("level", e.target.value)
                       }
                     />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-min-salary">最低薪资</Label>
-                      <Input
+                  </Box>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>最低薪资</Typography>
+                      <TextField
                         id="edit-min-salary"
+                        size="small"
                         type="number"
+                        fullWidth
                         value={(formData as Position)?.min_salary || ""}
-                        onChange={(e) =>
-                          handleInputChange(
-                            "min_salary",
-                            parseFloat(e.target.value) || 0,
-                          )
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleInputChange("min_salary", parseFloat(e.target.value) || 0)
                         }
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-max-salary">最高薪资</Label>
-                      <Input
+                    </Box>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>最高薪资</Typography>
+                      <TextField
                         id="edit-max-salary"
+                        size="small"
                         type="number"
+                        fullWidth
                         value={(formData as Position)?.max_salary || ""}
-                        onChange={(e) =>
-                          handleInputChange(
-                            "max_salary",
-                            parseFloat(e.target.value) || 0,
-                          )
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleInputChange("max_salary", parseFloat(e.target.value) || 0)
                         }
                       />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-description">岗位描述</Label>
-                    <Textarea
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>岗位描述</Typography>
+                    <TextField
                       id="edit-description"
+                      size="small"
+                      multiline
+                      rows={3}
+                      fullWidth
                       value={(formData as Position)?.description || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("description", e.target.value)
                       }
-                      rows={3}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-requirements">任职要求</Label>
-                    <Textarea
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>任职要求</Typography>
+                    <TextField
                       id="edit-requirements"
+                      size="small"
+                      multiline
+                      rows={3}
+                      fullWidth
                       value={(formData as Position)?.requirements || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("requirements", e.target.value)
                       }
-                      rows={3}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-status">状态</Label>
-                    <Select
-                      value={(formData as Position)?.status || "active"}
-                      onValueChange={(value) =>
-                        handleInputChange("status", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">启用</SelectItem>
-                        <SelectItem value="inactive">禁用</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter className="mt-6">
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>状态</Typography>
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>请选择</InputLabel>
+                      <Select
+                        value={(formData as Position)?.status || "active"}
+                        label="请选择"
+                        onChange={(e) => handleInputChange("status", e.target.value)}
+                      >
+                        <MenuItem value="active">启用</MenuItem>
+                        <MenuItem value="inactive">禁用</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
+                <DialogActions sx={{ mt: 3 }}>
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="outlined"
                     onClick={() => {
                       setShowEditModal(false);
                       setSelectedPosition(null);
@@ -764,106 +745,86 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                   >
                     取消
                   </Button>
-                  <Button type="submit">保存</Button>
-                </DialogFooter>
+                  <Button type="submit" variant="contained">保存</Button>
+                </DialogActions>
               </form>
             )}
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>岗位详情</DialogTitle>
-            </DialogHeader>
+        <Dialog open={showViewModal} onClose={() => setShowViewModal(false)}>
+          <DialogTitle>岗位详情</DialogTitle>
+          <DialogContent sx={{ maxWidth: 500 }}>
             {selectedPosition && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-gray-500 dark:text-gray-400">
-                      岗位名称
-                    </Label>
-                    <div className="font-medium">{selectedPosition.name}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-gray-500 dark:text-gray-400">
-                      岗位编码
-                    </Label>
-                    <div className="font-medium">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>岗位名称</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>{selectedPosition.name}</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>岗位编码</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedPosition.code || "-"}
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-gray-500 dark:text-gray-400">
-                      所属部门
-                    </Label>
-                    <div className="font-medium">
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>所属部门</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {departments.find(
                         (d) => d.id === selectedPosition.department_id,
                       )?.name || "-"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-gray-500 dark:text-gray-400">
-                      岗位级别
-                    </Label>
-                    <div className="font-medium">
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>岗位级别</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedPosition.level || "-"}
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-gray-500 dark:text-gray-400">
-                      薪资范围
-                    </Label>
-                    <div className="font-medium">
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>薪资范围</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedPosition.min_salary || 0} -{" "}
                       {selectedPosition.max_salary || 0}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-gray-500 dark:text-gray-400">
-                      状态
-                    </Label>
-                    <div className="font-medium">
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>状态</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {getStatusBadge(selectedPosition.status)}
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-gray-500 dark:text-gray-400">
-                    岗位描述
-                  </Label>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>岗位描述</Typography>
+                  <Typography variant="body2" sx={{ color: "text.primary" }}>
                     {selectedPosition.description || "-"}
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-gray-500 dark:text-gray-400">
-                    任职要求
-                  </Label>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>任职要求</Typography>
+                  <Typography variant="body2" sx={{ color: "text.primary" }}>
                     {selectedPosition.requirements || "-"}
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
                 {selectedPosition.created_at && (
-                  <div className="space-y-1">
-                    <Label className="text-gray-500 dark:text-gray-400">
-                      创建时间
-                    </Label>
-                    <div className="text-sm text-gray-500">
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>创建时间</Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       {selectedPosition.created_at}
-                    </div>
-                  </div>
+                    </Typography>
+                  </Box>
                 )}
-              </div>
+              </Box>
             )}
-            <DialogFooter>
-              <Button onClick={() => setShowViewModal(false)}>关闭</Button>
-            </DialogFooter>
+            <DialogActions sx={{ mt: 3 }}>
+              <Button onClick={() => setShowViewModal(false)} variant="contained">关闭</Button>
+            </DialogActions>
           </DialogContent>
         </Dialog>
       </div>

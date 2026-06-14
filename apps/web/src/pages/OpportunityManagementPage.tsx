@@ -1,40 +1,5 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Stack, Paper, IconButton, Pagination } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import type {
   Opportunity,
   CreateOpportunityRequest,
@@ -44,14 +9,6 @@ import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Search, Plus, Edit, Trash2, Eye, TrendingUp } from "lucide-react";
 
 const OpportunityManagementPage: React.FC = () => {
@@ -67,7 +24,7 @@ const OpportunityManagementPage: React.FC = () => {
   const [selectedOpportunity, setSelectedOpportunity] =
     useState<Opportunity | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [formData, setFormData] = useState<CreateOpportunityRequest>({
+  const [formData, setFormData] = useState<CreateOpportunityRequest & { customer_id?: string }>({
     name: "",
     value: undefined,
     probability: undefined,
@@ -231,20 +188,17 @@ const OpportunityManagementPage: React.FC = () => {
   const getStageBadge = (stage: string) => {
     const stageMap: Record<
       string,
-      {
-        label: string;
-        variant: "default" | "secondary" | "destructive" | "outline";
-      }
+      { label: string; color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }
     > = {
-      lead: { label: "线索", variant: "outline" },
-      qualified: { label: "合格", variant: "secondary" },
-      proposal: { label: "提案", variant: "default" },
-      negotiation: { label: "谈判", variant: "default" },
-      closed_won: { label: "赢单", variant: "default" },
-      closed_lost: { label: "输单", variant: "destructive" },
+      lead: { label: "线索", color: "default" },
+      qualified: { label: "合格", color: "info" },
+      proposal: { label: "提案", color: "primary" },
+      negotiation: { label: "谈判", color: "warning" },
+      closed_won: { label: "赢单", color: "success" },
+      closed_lost: { label: "输单", color: "error" },
     };
-    const s = stageMap[stage] || { label: stage, variant: "outline" };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+    const s = stageMap[stage] || { label: stage, color: "default" };
+    return <Chip size="small" color={s.color} label={s.label} />;
   };
 
   // 计算销售漏斗数据
@@ -285,127 +239,147 @@ const OpportunityManagementPage: React.FC = () => {
   const funnelData = getFunnelData();
   const maxValue = Math.max(...funnelData.map((f) => f.value), 1);
 
+  const handlePageChange = (_: React.ChangeEvent<any>, page: number) => {
+    setCurrentPage(page);
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ mt: 3 }}>
       {/* 销售漏斗可视化 */}
-      <Card>
+      <Card sx={{ mb: 3 }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+          <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+            <TrendingUp style={{ width: 20, height: 20 }} />
             销售漏斗
-          </CardTitle>
-          <CardDescription>各阶段商机数量与金额统计</CardDescription>
+          </Typography>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>各阶段商机数量与金额统计</Typography>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)", lg: "repeat(6, 1fr)" }, gap: 2 }}>
             {funnelData.map((item) => (
-              <Card key={item.stage} className="relative overflow-hidden">
-                <div
-                  className="absolute bottom-0 left-0 right-0 bg-primary/10 transition-all"
-                  style={{ height: `${(item.value / maxValue) * 100}%` }}
+              <Card key={item.stage} sx={{ position: "relative", overflow: "hidden" }}>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    bgcolor: "primary.main",
+                    opacity: 0.1,
+                    transition: "height 0.3s",
+                    height: `${(item.value / maxValue) * 100}%`
+                  }}
                 />
-                <CardContent className="relative p-4">
-                  <div className="text-sm font-medium text-muted-foreground">
+                <CardContent sx={{ position: "relative", p: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
                     {item.label}
-                  </div>
-                  <div className="text-2xl font-bold">{item.count}</div>
-                  <div className="text-sm text-muted-foreground">
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                    {item.count}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
                     ¥{item.value.toLocaleString()}
-                  </div>
+                  </Typography>
                 </CardContent>
               </Card>
             ))}
-          </div>
+          </Box>
         </CardContent>
       </Card>
 
       {/* 商机列表 */}
       <Card>
         <CardHeader>
-          <CardTitle>商机管理</CardTitle>
-          <CardDescription>管理商机信息,跟踪销售机会和成交进度</CardDescription>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>商机管理</Typography>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>管理商机信息,跟踪销售机会和成交进度</Typography>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索商机名称..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <Select value={stageFilter} onValueChange={setStageFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="阶段筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部阶段</SelectItem>
-                <SelectItem value="lead">线索</SelectItem>
-                <SelectItem value="qualified">合格</SelectItem>
-                <SelectItem value="proposal">提案</SelectItem>
-                <SelectItem value="negotiation">谈判</SelectItem>
-                <SelectItem value="closed_won">赢单</SelectItem>
-                <SelectItem value="closed_lost">输单</SelectItem>
-              </SelectContent>
-            </Select>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "gray" }} />
+              <TextField
+                size="small"
+                placeholder="搜索商机名称..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                sx={{ pl: 5, width: "100%" }}
+              />
+            </Box>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>阶段筛选</InputLabel>
+              <Select
+                value={stageFilter}
+                label="阶段筛选"
+                onChange={(e) => {
+                  setStageFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <MenuItem value="all">全部阶段</MenuItem>
+                <MenuItem value="lead">线索</MenuItem>
+                <MenuItem value="qualified">合格</MenuItem>
+                <MenuItem value="proposal">提案</MenuItem>
+                <MenuItem value="negotiation">谈判</MenuItem>
+                <MenuItem value="closed_won">赢单</MenuItem>
+                <MenuItem value="closed_lost">输单</MenuItem>
+              </Select>
+            </FormControl>
             <Button
+              variant="contained"
               onClick={() => {
                 resetForm();
                 setShowDialog(true);
               }}
+              startIcon={<Plus style={{ width: 16, height: 16 }} />}
             >
-              <Plus className="mr-2 h-4 w-4" />
               新增商机
             </Button>
-          </div>
+          </Stack>
 
           {selectedIds.length > 0 && (
-            <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between">
-              <span className="text-sm">
-                已选择 {selectedIds.length} 个商机
-              </span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleBatchDelete}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                批量删除
-              </Button>
-            </div>
+            <Paper sx={{ p: 1.5, mb: 2, bgcolor: "grey.100" }}>
+              <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2">已选择 {selectedIds.length} 个商机</Typography>
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={handleBatchDelete}
+                  startIcon={<Trash2 style={{ width: 16, height: 16 }} />}
+                >
+                  批量删除
+                </Button>
+              </Stack>
+            </Paper>
           )}
 
-          <div className="rounded-md border">
+          <TableContainer component={Paper} variant="outlined">
             <Table>
-              <TableHeader>
+              <TableHead>
                 <TableRow>
-                  <TableHead className="w-[50px]">
+                  <TableCell padding="checkbox">
                     <Checkbox
-                      checked={
-                        selectedIds.length === opportunities.length &&
-                        opportunities.length > 0
-                      }
-                      onCheckedChange={toggleSelectAll}
+                      checked={selectedIds.length === opportunities.length && opportunities.length > 0}
+                      onChange={toggleSelectAll}
                     />
-                  </TableHead>
-                  <TableHead>商机名称</TableHead>
-                  <TableHead>金额</TableHead>
-                  <TableHead>阶段</TableHead>
-                  <TableHead>概率</TableHead>
-                  <TableHead>预计成交日期</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  </TableCell>
+                  <TableCell>商机名称</TableCell>
+                  <TableCell>金额</TableCell>
+                  <TableCell>阶段</TableCell>
+                  <TableCell>概率</TableCell>
+                  <TableCell>预计成交日期</TableCell>
+                  <TableCell align="right">操作</TableCell>
                 </TableRow>
-              </TableHeader>
+              </TableHead>
               <TableBody>
                 {opportunities.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">
+                    <TableCell colSpan={7} align="center">
                       <EmptyState
                         title="暂无商机数据"
                         description="点击上方按钮添加第一个商机"
@@ -415,13 +389,13 @@ const OpportunityManagementPage: React.FC = () => {
                 ) : (
                   opportunities.map((opportunity) => (
                     <TableRow key={opportunity.id}>
-                      <TableCell>
+                      <TableCell padding="checkbox">
                         <Checkbox
                           checked={selectedIds.includes(opportunity.id)}
-                          onCheckedChange={() => toggleSelect(opportunity.id)}
+                          onChange={() => toggleSelect(opportunity.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell sx={{ fontWeight: "medium" }}>
                         {opportunity.name}
                       </TableCell>
                       <TableCell>
@@ -440,276 +414,198 @@ const OpportunityManagementPage: React.FC = () => {
                             )
                           : "-"}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetail(opportunity)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(opportunity)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(opportunity.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
+                          <IconButton size="small" onClick={() => handleViewDetail(opportunity)}>
+                            <Eye style={{ width: 16, height: 16 }} />
+                          </IconButton>
+                          <IconButton size="small" onClick={() => handleEdit(opportunity)}>
+                            <Edit style={{ width: 16, height: 16 }} />
+                          </IconButton>
+                          <IconButton size="small" color="error" onClick={() => handleDelete(opportunity.id)}>
+                            <Trash2 style={{ width: 16, height: 16 }} />
+                          </IconButton>
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
-          </div>
+          </TableContainer>
 
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-                {Array.from(
-                  { length: Math.min(5, Math.ceil(total / pageSize)) },
-                  (_, i) => {
-                    const page = i + 1;
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  },
-                )}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage(
-                        Math.min(Math.ceil(total / pageSize), currentPage + 1),
-                      )
-                    }
-                    className={
-                      currentPage >= Math.ceil(total / pageSize)
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              共 {total} 条记录,第 {currentPage} / {Math.ceil(total / pageSize) || 1} 页
+            </Typography>
+            <Pagination
+              count={Math.ceil(total / pageSize) || 1}
+              page={currentPage}
+              onChange={handlePageChange}
+              shape="rounded"
+              size="small"
+            />
+          </Stack>
         </CardContent>
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedOpportunity ? "编辑商机" : "新增商机"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedOpportunity ? "修改商机信息" : "填写新商机信息"}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="name">商机名称 *</Label>
-                <Input
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="value">金额</Label>
-                <Input
-                  id="value"
-                  type="number"
-                  value={formData.value || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      value: e.target.value
-                        ? Number(e.target.value)
-                        : undefined,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="probability">成交概率 (%)</Label>
-                <Input
-                  id="probability"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.probability || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      probability: e.target.value
-                        ? Number(e.target.value)
-                        : undefined,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="close_date">预计成交日期</Label>
-                <Input
-                  id="close_date"
-                  type="date"
-                  value={formData.close_date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, close_date: e.target.value })
-                  }
-                />
-              </div>
+      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>{selectedOpportunity ? "编辑商机" : "新增商机"}</DialogTitle>
+        <form onSubmit={handleSubmit}>
+          <DialogContent>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, pt: 1 }}>
+              <TextField
+                label="商机名称 *"
+                required
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                fullWidth
+                sx={{ gridColumn: "span 2" }}
+              />
+              <TextField
+                label="金额"
+                type="number"
+                value={formData.value || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    value: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  })
+                }
+                fullWidth
+              />
+              <TextField
+                label="成交概率 (%)"
+                type="number"
+                value={formData.probability || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    probability: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  })
+                }
+                fullWidth
+              />
+              <TextField
+                label="预计成交日期"
+                type="date"
+                value={formData.close_date}
+                onChange={(e) =>
+                  setFormData({ ...formData, close_date: e.target.value })
+                }
+                fullWidth
+
+              />
               {selectedOpportunity && (
-                <div className="space-y-2">
-                  <Label htmlFor="stage">阶段</Label>
+                <FormControl fullWidth>
+                  <InputLabel>阶段</InputLabel>
                   <Select
                     value={selectedOpportunity.stage}
-                    onValueChange={(value) =>
+                    label="阶段"
+                    onChange={(e) =>
                       setSelectedOpportunity({
                         ...selectedOpportunity,
-                        stage: value,
+                        stage: e.target.value,
                       })
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lead">线索</SelectItem>
-                      <SelectItem value="qualified">合格</SelectItem>
-                      <SelectItem value="proposal">提案</SelectItem>
-                      <SelectItem value="negotiation">谈判</SelectItem>
-                      <SelectItem value="closed_won">赢单</SelectItem>
-                      <SelectItem value="closed_lost">输单</SelectItem>
-                    </SelectContent>
+                    <MenuItem value="lead">线索</MenuItem>
+                    <MenuItem value="qualified">合格</MenuItem>
+                    <MenuItem value="proposal">提案</MenuItem>
+                    <MenuItem value="negotiation">谈判</MenuItem>
+                    <MenuItem value="closed_won">赢单</MenuItem>
+                    <MenuItem value="closed_lost">输单</MenuItem>
                   </Select>
-                </div>
+                </FormControl>
               )}
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="notes">备注</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
-                  rows={3}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowDialog(false)}
-              >
-                取消
-              </Button>
-              <Button type="submit">保存</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+              <TextField
+                label="备注"
+                multiline
+                rows={3}
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
+                fullWidth
+                sx={{ gridColumn: "span 2" }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowDialog(false)}>取消</Button>
+            <Button type="submit" variant="contained">保存</Button>
+          </DialogActions>
+        </form>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>商机详情</DialogTitle>
-          </DialogHeader>
-          {selectedOpportunity && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground">商机名称</Label>
-                  <p className="font-medium">{selectedOpportunity.name}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">金额</Label>
-                  <p>¥{(selectedOpportunity.value || 0).toLocaleString()}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">阶段</Label>
-                  <div>{getStageBadge(selectedOpportunity.stage)}</div>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">成交概率</Label>
-                  <p>
-                    {selectedOpportunity.probability
-                      ? `${selectedOpportunity.probability}%`
-                      : "-"}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">预计成交日期</Label>
-                  <p>
-                    {selectedOpportunity.close_date
-                      ? new Date(
-                          selectedOpportunity.close_date,
-                        ).toLocaleDateString("zh-CN")
-                      : "-"}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">创建时间</Label>
-                  <p>
-                    {new Date(selectedOpportunity.created_at).toLocaleString(
-                      "zh-CN",
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">更新时间</Label>
-                  <p>
-                    {new Date(selectedOpportunity.updated_at).toLocaleString(
-                      "zh-CN",
-                    )}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground">备注</Label>
-                  <p>{selectedOpportunity.notes || "-"}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
+      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>商机详情</DialogTitle>
+        {selectedOpportunity && (
+          <DialogContent>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+              <Box sx={{ gridColumn: "span 2" }}>
+                <Typography variant="caption" color="text.secondary">商机名称</Typography>
+                <Typography sx={{ fontWeight: "medium" }}>{selectedOpportunity.name}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">金额</Typography>
+                <Typography>¥{(selectedOpportunity.value || 0).toLocaleString()}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">阶段</Typography>
+                <Box sx={{ mt: 0.5 }}>{getStageBadge(selectedOpportunity.stage)}</Box>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">成交概率</Typography>
+                <Typography>
+                  {selectedOpportunity.probability
+                    ? `${selectedOpportunity.probability}%`
+                    : "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">预计成交日期</Typography>
+                <Typography>
+                  {selectedOpportunity.close_date
+                    ? new Date(
+                        selectedOpportunity.close_date,
+                      ).toLocaleDateString("zh-CN")
+                    : "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">创建时间</Typography>
+                <Typography>
+                  {new Date(selectedOpportunity.created_at).toLocaleString(
+                    "zh-CN",
+                  )}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">更新时间</Typography>
+                <Typography>
+                  {new Date(selectedOpportunity.updated_at).toLocaleString(
+                    "zh-CN",
+                  )}
+                </Typography>
+              </Box>
+              <Box sx={{ gridColumn: "span 2" }}>
+                <Typography variant="caption" color="text.secondary">备注</Typography>
+                <Typography>{selectedOpportunity.notes || "-"}</Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+        )}
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

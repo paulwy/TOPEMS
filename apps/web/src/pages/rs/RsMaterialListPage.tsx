@@ -132,13 +132,9 @@ const RsMaterialListPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-        >
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
+            <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
               物料管理
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -152,19 +148,15 @@ const RsMaterialListPage: React.FC = () => {
       </div>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardContent>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <Typography color="text.secondary" variant="body2">
                     物料总数
                   </Typography>
-                  <Typography variant="h4" fontWeight="bold">
+                  <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                     {stats.total}
                   </Typography>
                 </div>
@@ -173,21 +165,16 @@ const RsMaterialListPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardContent>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <Typography color="text.secondary" variant="body2">
                     库存充足
                   </Typography>
                   <Typography
-                    variant="h4"
-                    fontWeight="bold"
+                    variant="h4" sx={{ fontWeight: "bold" }}
                     color="success.main"
                   >
                     {stats.sufficient}
@@ -198,19 +185,15 @@ const RsMaterialListPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardContent>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <Typography color="text.secondary" variant="body2">
                     库存不足
                   </Typography>
-                  <Typography variant="h4" fontWeight="bold" color="error.main">
+                  <Typography variant="h4" sx={{ fontWeight: "bold" }} color="error.main">
                     {stats.low}
                   </Typography>
                 </div>
@@ -227,13 +210,13 @@ const RsMaterialListPage: React.FC = () => {
           size="small"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
+          slotProps={{ input: {
             startAdornment: (
               <InputAdornment position="start">
                 <SearchIcon />
               </InputAdornment>
             ),
-          }}
+           } }}
           sx={{ width: 300 }}
         />
       </Paper>

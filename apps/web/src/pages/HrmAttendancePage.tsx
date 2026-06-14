@@ -2,17 +2,41 @@ import React, { useState, useMemo } from "react";
 import {
   Clock,
   Calendar,
-  Search,
-  Plus,
-  ChevronLeft,
   Download,
   BarChart3,
   Users,
   CheckCircle,
   AlertCircle,
   XCircle,
+  ChevronLeft,
+  Plus,
+  Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  Button,
+  TextField,
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Box,
+  InputAdornment,
+  Chip,
+} from "@mui/material";
 import { useNotification } from "../hooks/useNotification";
 import { NotificationContainer } from "../components/NotificationContainer";
 import { MetricCard } from "../components/MetricCard";
@@ -364,583 +388,468 @@ const HrmAttendancePage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f9fafb" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
+      <Box
+        sx={{
+          bgcolor: "white",
+          boxShadow: 1,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: "7xl",
+            mx: "auto",
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Button
                 onClick={() => navigate("/dashboard")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                sx={{ minWidth: "auto", p: 1 }}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <Clock className="w-7 h-7 mr-3 text-teal-600" />
+                <ChevronLeft />
+              </Button>
+              <Box>
+                <Typography
+                  variant="h5"
+                  component="h1"
+                  sx={{
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    color: "text.primary",
+                  }}
+                >
+                  <Box sx={{ color: "#14b8a6", display: "flex" }}>
+                    <Clock size={28} />
+                  </Box>
                   考勤管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
                   管理员工考勤打卡、请假申请和考勤统计
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <input
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <TextField
                 type="date"
+                size="small"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                slotProps={{
+                  input: {
+                    sx: { borderRadius: 2 },
+                  },
+                }}
               />
-              <button className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                <Download className="w-5 h-5 mr-2" />
+              <Button
+                variant="outlined"
+                startIcon={<Download size={18} />}
+                sx={{ borderRadius: 2 }}
+              >
                 导出
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex space-x-4 mb-6 border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab("records")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "records"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <Calendar className="w-5 h-5" />
-            <span>考勤记录</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("leaves")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "leaves"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <Clock className="w-5 h-5" />
-            <span>请假申请</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("statistics")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "statistics"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <BarChart3 className="w-5 h-5" />
-            <span>考勤统计</span>
-          </button>
-        </div>
+      <Box sx={{ maxWidth: "7xl", mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          sx={{
+            mb: 3,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            "& .MuiTabs-indicator": {
+              bgcolor: "primary.main",
+            },
+          }}
+        >
+          <Tab
+            icon={<Box sx={{ display: "flex" }}><Calendar size={18} /></Box>}
+            iconPosition="start"
+            label="考勤记录"
+            value="records"
+          />
+          <Tab
+            icon={<Box sx={{ display: "flex" }}><Clock size={18} /></Box>}
+            iconPosition="start"
+            label="请假申请"
+            value="leaves"
+          />
+          <Tab
+            icon={<Box sx={{ display: "flex" }}><BarChart3 size={18} /></Box>}
+            iconPosition="start"
+            label="考勤统计"
+            value="statistics"
+          />
+        </Tabs>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
+        <Card sx={{ mb: 3, borderRadius: 2 }}>
+          <CardContent sx={{ py: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <TextField
                 placeholder="搜索员工姓名/部门..."
+                size="small"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                sx={{ flex: 1 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Box sx={{ display: "flex", color: "text.secondary" }}>
+                          <Search size={20} />
+                        </Box>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
-            </div>
-            <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              <Plus className="w-5 h-5 mr-2" />
-              请假申请
-            </button>
-          </div>
-        </div>
+              <Button
+                variant="contained"
+                startIcon={<Plus size={18} />}
+                sx={{ borderRadius: 2 }}
+              >
+                请假申请
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
 
         {/* Content */}
         {activeTab === "records" && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table
-                className="min-w-full divide-y divide-gray-200"
-                role="table"
-                aria-label="考勤记录表"
-              >
-                <thead className="bg-gray-50" role="rowgroup">
-                  <tr role="row">
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      员工姓名
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      部门
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      日期
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      上班打卡
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      下班打卡
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      工时
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      状态
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      操作
-                    </th>
-                  </tr>
-                </thead>
-                <tbody
-                  className="bg-white divide-y divide-gray-200"
-                  role="rowgroup"
-                >
+          <Card sx={{ borderRadius: 2, overflow: "hidden" }}>
+            <TableContainer>
+              <Table>
+                <TableHead sx={{ bgcolor: "grey.50" }}>
+                  <TableRow>
+                    <TableCell>员工姓名</TableCell>
+                    <TableCell>部门</TableCell>
+                    <TableCell>日期</TableCell>
+                    <TableCell>上班打卡</TableCell>
+                    <TableCell>下班打卡</TableCell>
+                    <TableCell>工时</TableCell>
+                    <TableCell>状态</TableCell>
+                    <TableCell>操作</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {filteredRecords.map((record) => (
-                    <tr key={record.id} className="hover:bg-gray-50" role="row">
-                      <td className="px-6 py-4 whitespace-nowrap" role="cell">
-                        <div className="text-sm font-medium text-gray-900">
+                    <TableRow key={record.id} hover>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
                           {record.employee_name}
-                        </div>
-                        <div className="text-sm text-gray-500">
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
                           {record.employee_number}
-                        </div>
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
-                        {record.department}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
-                        {record.date}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
-                        {record.check_in || "-"}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
-                        {record.check_out || "-"}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{record.department}</TableCell>
+                      <TableCell>{record.date}</TableCell>
+                      <TableCell>{record.check_in || "-"}</TableCell>
+                      <TableCell>{record.check_out || "-"}</TableCell>
+                      <TableCell>
                         {record.work_hours > 0 ? `${record.work_hours}h` : "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap" role="cell">
+                      </TableCell>
+                      <TableCell>
                         {getAttendanceStatusBadge(record.status)}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm"
-                        role="cell"
-                      >
-                        <button
-                          className="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          aria-label={`查看${record.employee_name}的考勤详情`}
-                          tabIndex={0}
-                        >
+                      </TableCell>
+                      <TableCell>
+                        <Button size="small" color="primary">
                           详情
-                        </button>
-                      </td>
-                    </tr>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
         )}
 
         {activeTab === "leaves" && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table
-                className="min-w-full divide-y divide-gray-200"
-                role="table"
-                aria-label="请假申请表"
-              >
-                <thead className="bg-gray-50" role="rowgroup">
-                  <tr role="row">
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      申请人
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      部门
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      请假类型
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      开始日期
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      结束日期
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      天数
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      原因
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      状态
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      role="columnheader"
-                      scope="col"
-                    >
-                      操作
-                    </th>
-                  </tr>
-                </thead>
-                <tbody
-                  className="bg-white divide-y divide-gray-200"
-                  role="rowgroup"
-                >
+          <Card sx={{ borderRadius: 2, overflow: "hidden" }}>
+            <TableContainer>
+              <Table>
+                <TableHead sx={{ bgcolor: "grey.50" }}>
+                  <TableRow>
+                    <TableCell>申请人</TableCell>
+                    <TableCell>部门</TableCell>
+                    <TableCell>请假类型</TableCell>
+                    <TableCell>开始日期</TableCell>
+                    <TableCell>结束日期</TableCell>
+                    <TableCell>天数</TableCell>
+                    <TableCell>原因</TableCell>
+                    <TableCell>状态</TableCell>
+                    <TableCell>操作</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {leaves.map((leave) => (
-                    <tr key={leave.id} className="hover:bg-gray-50" role="row">
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                        role="cell"
-                      >
+                    <TableRow key={leave.id} hover>
+                      <TableCell sx={{ fontWeight: 500 }}>
                         {leave.employee_name}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
-                        {leave.department}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
-                        {getLeaveTypeName(leave.leave_type)}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
-                        {leave.start_date}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
-                        {leave.end_date}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        role="cell"
-                      >
-                        {leave.days}天
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate"
-                        role="cell"
-                        title={leave.reason}
-                      >
-                        {leave.reason}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap" role="cell">
-                        {getLeaveStatusBadge(leave.status)}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm"
-                        role="cell"
-                      >
+                      </TableCell>
+                      <TableCell>{leave.department}</TableCell>
+                      <TableCell>{getLeaveTypeName(leave.leave_type)}</TableCell>
+                      <TableCell>{leave.start_date}</TableCell>
+                      <TableCell>{leave.end_date}</TableCell>
+                      <TableCell>{leave.days}天</TableCell>
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            maxWidth: 150,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                          title={leave.reason}
+                        >
+                          {leave.reason}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{getLeaveStatusBadge(leave.status)}</TableCell>
+                      <TableCell>
                         {leave.status === "pending" ? (
-                          <div className="flex space-x-2">
-                            <button
-                              className="text-green-600 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                              aria-label={`批准${leave.employee_name}的请假申请`}
-                              tabIndex={0}
-                            >
+                          <Box sx={{ display: "flex", gap: 0.5 }}>
+                            <Button size="small" color="success">
                               批准
-                            </button>
-                            <button
-                              className="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                              aria-label={`拒绝${leave.employee_name}的请假申请`}
-                              tabIndex={0}
-                            >
+                            </Button>
+                            <Button size="small" color="error">
                               拒绝
-                            </button>
-                          </div>
+                            </Button>
+                          </Box>
                         ) : (
-                          <button
-                            className="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            aria-label={`查看${leave.employee_name}的请假详情`}
-                            tabIndex={0}
-                          >
+                          <Button size="small" color="primary">
                             详情
-                          </button>
+                          </Button>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
         )}
 
         {activeTab === "statistics" && (
-          <div className="space-y-6">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* 统计卡片 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(4, 1fr)",
+                },
+                gap: 2,
+              }}
+            >
               <MetricCard
                 title="总员工数"
                 value={attendanceStats.totalEmployees}
-                icon={<Users className="w-5 h-5" />}
+                icon={<Box sx={{ display: "flex" }}><Users size={20} /></Box>}
                 trend={null}
                 color="blue"
               />
               <MetricCard
                 title="出勤人数"
                 value={attendanceStats.totalPresent}
-                icon={<CheckCircle className="w-5 h-5" />}
+                icon={<Box sx={{ display: "flex" }}><CheckCircle size={20} /></Box>}
                 trend={null}
                 color="green"
               />
               <MetricCard
                 title="出勤率"
                 value={`${attendanceStats.presentRate}%`}
-                icon={<BarChart3 className="w-5 h-5" />}
+                icon={<Box sx={{ display: "flex" }}><BarChart3 size={20} /></Box>}
                 trend={null}
                 color="blue"
               />
               <MetricCard
                 title="平均工时"
                 value={`${attendanceStats.avgWorkHours}h`}
-                icon={<Clock className="w-5 h-5" />}
+                icon={<Box sx={{ display: "flex" }}><Clock size={20} /></Box>}
                 trend={null}
                 color="purple"
               />
-            </div>
+            </Box>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(4, 1fr)",
+                },
+                gap: 2,
+              }}
+            >
               <MetricCard
                 title="迟到人数"
                 value={attendanceStats.totalLate}
-                icon={<AlertCircle className="w-5 h-5" />}
+                icon={<Box sx={{ display: "flex" }}><AlertCircle size={20} /></Box>}
                 trend={null}
                 color="yellow"
               />
               <MetricCard
                 title="缺勤人数"
                 value={attendanceStats.totalAbsent}
-                icon={<XCircle className="w-5 h-5" />}
+                icon={<Box sx={{ display: "flex" }}><XCircle size={20} /></Box>}
                 trend={null}
                 color="red"
               />
               <MetricCard
                 title="待审批请假"
                 value={attendanceStats.pendingLeaves}
-                icon={<Clock className="w-5 h-5" />}
+                icon={<Box sx={{ display: "flex" }}><Clock size={20} /></Box>}
                 trend={null}
                 color="orange"
               />
               <MetricCard
                 title="准时率"
                 value={`${attendanceStats.avgOnTimeRate}%`}
-                icon={<CheckCircle className="w-5 h-5" />}
+                icon={<Box sx={{ display: "flex" }}><CheckCircle size={20} /></Box>}
                 trend={null}
                 color="green"
               />
-            </div>
+            </Box>
 
             {/* 图表区域 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  考勤状态分布
-                </h3>
-                <StatsChart
-                  type="pie"
-                  data={attendanceStatusData}
-                  height={250}
-                />
-              </div>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
+                gap: 3,
+              }}
+            >
+              <Card sx={{ borderRadius: 2 }}>
+                <CardHeader title="考勤状态分布" />
+                <CardContent>
+                  <StatsChart
+                    type="pie"
+                    data={attendanceStatusData}
+                    height={250}
+                  />
+                </CardContent>
+              </Card>
 
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  部门出勤率对比
-                </h3>
+              <Card sx={{ borderRadius: 2 }}>
+                <CardHeader title="部门出勤率对比" />
+                <CardContent>
+                  <StatsChart
+                    type="bar"
+                    data={departmentOnTimeData}
+                    height={250}
+                  />
+                </CardContent>
+              </Card>
+            </Box>
+
+            <Card sx={{ borderRadius: 2 }}>
+              <CardHeader title="各部门出勤人数" />
+              <CardContent>
                 <StatsChart
                   type="bar"
-                  data={departmentOnTimeData}
-                  height={250}
+                  data={departmentAttendanceData}
+                  height={300}
                 />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                各部门出勤人数
-              </h3>
-              <StatsChart
-                type="bar"
-                data={departmentAttendanceData}
-                height={300}
-              />
-            </div>
+              </CardContent>
+            </Card>
 
             {/* 部门明细表格 */}
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        部门
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        总人数
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        出勤人数
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        缺勤人数
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        迟到人数
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        出勤率
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        平均工时
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+            <Card sx={{ borderRadius: 2, overflow: "hidden" }}>
+              <TableContainer>
+                <Table>
+                  <TableHead sx={{ bgcolor: "grey.50" }}>
+                    <TableRow>
+                      <TableCell>部门</TableCell>
+                      <TableCell>总人数</TableCell>
+                      <TableCell>出勤人数</TableCell>
+                      <TableCell>缺勤人数</TableCell>
+                      <TableCell>迟到人数</TableCell>
+                      <TableCell>出勤率</TableCell>
+                      <TableCell>平均工时</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {summaries.map((summary) => (
-                      <tr key={summary.department} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <TableRow key={summary.department} hover>
+                        <TableCell sx={{ fontWeight: 500 }}>
                           {summary.department}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {summary.total_employees}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                        </TableCell>
+                        <TableCell>{summary.total_employees}</TableCell>
+                        <TableCell sx={{ color: "success.main", fontWeight: 500 }}>
                           {summary.present_count}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">
+                        </TableCell>
+                        <TableCell sx={{ color: "error.main", fontWeight: 500 }}>
                           {summary.absent_count}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 font-medium">
+                        </TableCell>
+                        <TableCell sx={{ color: "warning.main", fontWeight: 500 }}>
                           {summary.late_count}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <span className="text-sm text-gray-900 mr-2">
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography variant="body2">
                               {summary.on_time_rate}%
-                            </span>
-                            <div className="w-16 bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-green-500 h-2 rounded-full"
-                                style={{ width: `${summary.on_time_rate}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {summary.average_work_hours}h
-                        </td>
-                      </tr>
+                            </Typography>
+                            <Box
+                              sx={{
+                                width: 64,
+                                bgcolor: "grey.200",
+                                borderRadius: 1,
+                                height: 8,
+                                overflow: "hidden",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: `${summary.on_time_rate}%`,
+                                  bgcolor: "success.main",
+                                  height: "100%",
+                                  borderRadius: 1,
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell>{summary.average_work_hours}h</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Card>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

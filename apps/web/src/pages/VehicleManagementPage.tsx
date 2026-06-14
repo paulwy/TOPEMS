@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Car,
@@ -22,34 +23,23 @@ import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
+  Button as MuiButton,
+  TextField,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
+  MenuItem,
+  Tabs,
+  Tab,
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
+  Checkbox,
+} from "@mui/material";
+import { ModeToggle } from "@/components/ModeToggle";
 
 interface VehicleManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -287,14 +277,11 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
   };
 
   const getVehicleStatusBadge = (status: string) => {
-    const colors: Record<
-      string,
-      "default" | "secondary" | "destructive" | "outline" | "success"
-    > = {
+    const colors: Record<string, "success" | "info" | "warning" | "error"> = {
       available: "success",
-      in_use: "default",
-      maintenance: "outline",
-      out_of_service: "destructive",
+      in_use: "info",
+      maintenance: "warning",
+      out_of_service: "error",
     };
     const labels: Record<string, string> = {
       available: "可用",
@@ -303,21 +290,21 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
       out_of_service: "停用",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip
+        size="small"
+        color={colors[status] || "default"}
+        label={labels[status] || status}
+        variant="outlined"
+      />
     );
   };
 
   const getRequestStatusBadge = (status: string) => {
-    const colors: Record<
-      string,
-      "default" | "secondary" | "destructive" | "outline" | "success"
-    > = {
-      pending: "outline",
+    const colors: Record<string, "default" | "success" | "error" | "info"> = {
+      pending: "default",
       approved: "success",
-      rejected: "destructive",
-      completed: "default",
+      rejected: "error",
+      completed: "info",
     };
     const labels: Record<string, string> = {
       pending: "待审批",
@@ -326,9 +313,12 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
       completed: "已完成",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip
+        size="small"
+        color={colors[status] || "default"}
+        label={labels[status] || status}
+        variant="outlined"
+      />
     );
   };
 
@@ -410,60 +400,44 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
           const vehicle = row.original;
           return (
             <div className="flex items-center justify-end space-x-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setNewRequest({
-                          ...newRequest,
-                          vehicle_id: vehicle.id,
-                          vehicle_plate: vehicle.plate_number,
-                        });
-                        setShowRequestModal(true);
-                      }}
-                    >
-                      用车
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>申请用车</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedVehicle(vehicle);
-                        setShowEditModal(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>编辑</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 dark:text-red-400"
-                      onClick={() => handleDeleteVehicle(vehicle.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>删除</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="申请用车">
+                <MuiButton
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setNewRequest({
+                      ...newRequest,
+                      vehicle_id: vehicle.id,
+                      vehicle_plate: vehicle.plate_number,
+                    });
+                    setShowRequestModal(true);
+                  }}
+                >
+                  用车
+                </MuiButton>
+              </Tooltip>
+              <Tooltip title="编辑">
+                <MuiButton
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setSelectedVehicle(vehicle);
+                    setShowEditModal(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4" />
+                </MuiButton>
+              </Tooltip>
+              <Tooltip title="删除">
+                <MuiButton
+                  variant="text"
+                  size="small"
+                  color="error"
+                  onClick={() => handleDeleteVehicle(vehicle.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </MuiButton>
+              </Tooltip>
             </div>
           );
         },
@@ -548,60 +522,45 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
             <div className="flex items-center justify-end space-x-2">
               {request.status === "pending" && (
                 <>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-green-600 hover:text-green-700 dark:text-green-400"
-                          onClick={() =>
-                            handleUpdateRequestStatus(request.id, "approved")
-                          }
-                        >
-                          批准
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>批准申请</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 dark:text-red-400"
-                          onClick={() =>
-                            handleUpdateRequestStatus(request.id, "rejected")
-                          }
-                        >
-                          拒绝
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>拒绝申请</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip title="批准申请">
+                    <MuiButton
+                      variant="text"
+                      size="small"
+                      color="success"
+                      onClick={() =>
+                        handleUpdateRequestStatus(request.id, "approved")
+                      }
+                    >
+                      批准
+                    </MuiButton>
+                  </Tooltip>
+                  <Tooltip title="拒绝申请">
+                    <MuiButton
+                      variant="text"
+                      size="small"
+                      color="error"
+                      onClick={() =>
+                        handleUpdateRequestStatus(request.id, "rejected")
+                      }
+                    >
+                      拒绝
+                    </MuiButton>
+                  </Tooltip>
                 </>
               )}
               {request.status === "approved" && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
-                        onClick={() =>
-                          handleUpdateRequestStatus(request.id, "completed")
-                        }
-                      >
-                        完成
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>标记完成</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip title="标记完成">
+                  <MuiButton
+                    variant="text"
+                    size="small"
+                    color="info"
+                    onClick={() =>
+                      handleUpdateRequestStatus(request.id, "completed")
+                    }
+                  >
+                    完成
+                  </MuiButton>
+                </Tooltip>
               )}
             </div>
           );
@@ -617,9 +576,9 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              <MuiButton variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
-              </Button>
+              </MuiButton>
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
                   <Car className="w-7 h-7 mr-3 text-blue-600" />
@@ -632,573 +591,473 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
             </div>
             <div className="flex items-center space-x-2">
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
+              <MuiButton variant="contained" onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-5 h-5 mr-2" />
                 添加车辆
-              </Button>
+              </MuiButton>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="vehicles" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="vehicles">车辆列表</TabsTrigger>
-            <TabsTrigger value="requests">用车申请</TabsTrigger>
-          </TabsList>
-          <TabsContent value="vehicles">
-            <Card>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                    <p className="mt-2 text-slate-500 dark:text-slate-400">
-                      加载中...
-                    </p>
-                  </div>
-                ) : error ? (
-                  <div className="p-8 text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                    <p className="text-red-600 dark:text-red-400">{error}</p>
-                    <Button className="mt-4" onClick={loadData}>
-                      重试
-                    </Button>
-                  </div>
-                ) : (
-                  <EnhancedDataTable
-                    columns={vehicleColumns}
-                    data={vehicles}
-                    searchPlaceholder="搜索车牌号、品牌、型号..."
-                    searchKey="plate_number"
-                    loading={loading}
-                    exportFileName="vehicle-report"
-                    onRefresh={loadData}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="requests">
-            <Card>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                    <p className="mt-2 text-slate-500 dark:text-slate-400">
-                      加载中...
-                    </p>
-                  </div>
-                ) : error ? (
-                  <div className="p-8 text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                    <p className="text-red-600 dark:text-red-400">{error}</p>
-                    <Button className="mt-4" onClick={loadData}>
-                      重试
-                    </Button>
-                  </div>
-                ) : (
-                  <EnhancedDataTable
-                    columns={requestColumns}
-                    data={requests}
-                    searchPlaceholder="搜索车牌号、申请人、用途..."
-                    searchKey="requester"
-                    loading={loading}
-                    exportFileName="vehicle-request-report"
-                    onRefresh={loadData}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+        <Tabs value="vehicles" sx={{ mb: 3 }}>
+          <Tab label="车辆列表" value="vehicles" />
+          <Tab label="用车申请" value="requests" />
         </Tabs>
+
+        {true && (
+          <Card>
+            <CardContent sx={{ p: 0 }}>
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
+                  <p className="mt-2 text-slate-500 dark:text-slate-400">
+                    加载中...
+                  </p>
+                </div>
+              ) : error ? (
+                <div className="p-8 text-center">
+                  <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+                  <p className="text-red-600 dark:text-red-400">{error}</p>
+                  <MuiButton className="mt-4" onClick={loadData}>
+                    重试
+                  </MuiButton>
+                </div>
+              ) : (
+                <EnhancedDataTable
+                  columns={vehicleColumns}
+                  data={vehicles}
+                  searchPlaceholder="搜索车牌号、品牌、型号..."
+                  searchKey="plate_number"
+                  loading={loading}
+                  exportFileName="vehicle-report"
+                  onRefresh={loadData}
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>添加车辆</DialogTitle>
-          </DialogHeader>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>添加车辆</DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           <form onSubmit={handleCreateVehicle}>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="plate_number">车牌号 *</Label>
-                  <Input
-                    id="plate_number"
-                    type="text"
-                    required
-                    value={newVehicle.plate_number || ""}
-                    onChange={(e) =>
-                      setNewVehicle({
-                        ...newVehicle,
-                        plate_number: e.target.value,
-                      })
-                    }
-                    placeholder="请输入车牌号"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="brand">品牌</Label>
-                  <Input
-                    id="brand"
-                    type="text"
-                    value={newVehicle.brand || ""}
-                    onChange={(e) =>
-                      setNewVehicle({ ...newVehicle, brand: e.target.value })
-                    }
-                    placeholder="请输入品牌"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="model">型号</Label>
-                  <Input
-                    id="model"
-                    type="text"
-                    value={newVehicle.model || ""}
-                    onChange={(e) =>
-                      setNewVehicle({ ...newVehicle, model: e.target.value })
-                    }
-                    placeholder="请输入型号"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle_type">车辆类型</Label>
-                  <Select
-                    value={newVehicle.vehicle_type || ""}
-                    onValueChange={(value) =>
-                      setNewVehicle({ ...newVehicle, vehicle_type: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择车辆类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sedan">轿车</SelectItem>
-                      <SelectItem value="suv">SUV</SelectItem>
-                      <SelectItem value="van">面包车</SelectItem>
-                      <SelectItem value="truck">货车</SelectItem>
-                      <SelectItem value="bus">客车</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="driver">司机</Label>
-                  <Input
-                    id="driver"
-                    type="text"
-                    value={newVehicle.driver || ""}
-                    onChange={(e) =>
-                      setNewVehicle({ ...newVehicle, driver: e.target.value })
-                    }
-                    placeholder="请输入司机姓名"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fuel_type">燃料类型</Label>
-                  <Select
-                    value={newVehicle.fuel_type || ""}
-                    onValueChange={(value) =>
-                      setNewVehicle({ ...newVehicle, fuel_type: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择燃料类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gasoline">汽油</SelectItem>
-                      <SelectItem value="diesel">柴油</SelectItem>
-                      <SelectItem value="electric">电动</SelectItem>
-                      <SelectItem value="hybrid">混动</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="mileage">里程(km)</Label>
-                  <Input
-                    id="mileage"
-                    type="number"
-                    value={newVehicle.mileage || ""}
-                    onChange={(e) =>
-                      setNewVehicle({
-                        ...newVehicle,
-                        mileage: Number(e.target.value),
-                      })
-                    }
-                    placeholder="请输入里程"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">状态</Label>
-                  <Select
-                    value={newVehicle.status || "available"}
-                    onValueChange={(value) =>
-                      setNewVehicle({ ...newVehicle, status: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="available">可用</SelectItem>
-                      <SelectItem value="in_use">使用中</SelectItem>
-                      <SelectItem value="maintenance">维护中</SelectItem>
-                      <SelectItem value="out_of_service">停用</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="last_service">上次保养时间</Label>
-                <Input
-                  id="last_service"
-                  type="date"
-                  value={newVehicle.last_service || ""}
+                <TextField
+                  label="车牌号 *"
+                  value={newVehicle.plate_number || ""}
                   onChange={(e) =>
                     setNewVehicle({
                       ...newVehicle,
-                      last_service: e.target.value,
+                      plate_number: e.target.value,
                     })
                   }
+                  fullWidth
+                  required
+                />
+                <TextField
+                  label="品牌"
+                  value={newVehicle.brand || ""}
+                  onChange={(e) =>
+                    setNewVehicle({ ...newVehicle, brand: e.target.value })
+                  }
+                  fullWidth
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <TextField
+                  label="型号"
+                  value={newVehicle.model || ""}
+                  onChange={(e) =>
+                    setNewVehicle({ ...newVehicle, model: e.target.value })
+                  }
+                  fullWidth
+                />
+                <FormControl fullWidth>
+                  <InputLabel>车辆类型</InputLabel>
+                  <Select
+                    value={newVehicle.vehicle_type || ""}
+                    label="车辆类型"
+                    onChange={(e) =>
+                      setNewVehicle({ ...newVehicle, vehicle_type: e.target.value })
+                    }
+                  >
+                    <MenuItem value="sedan">轿车</MenuItem>
+                    <MenuItem value="suv">SUV</MenuItem>
+                    <MenuItem value="van">面包车</MenuItem>
+                    <MenuItem value="truck">货车</MenuItem>
+                    <MenuItem value="bus">客车</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <TextField
+                  label="司机"
+                  value={newVehicle.driver || ""}
+                  onChange={(e) =>
+                    setNewVehicle({ ...newVehicle, driver: e.target.value })
+                  }
+                  fullWidth
+                />
+                <FormControl fullWidth>
+                  <InputLabel>燃料类型</InputLabel>
+                  <Select
+                    value={newVehicle.fuel_type || ""}
+                    label="燃料类型"
+                    onChange={(e) =>
+                      setNewVehicle({ ...newVehicle, fuel_type: e.target.value })
+                    }
+                  >
+                    <MenuItem value="gasoline">汽油</MenuItem>
+                    <MenuItem value="diesel">柴油</MenuItem>
+                    <MenuItem value="electric">电动</MenuItem>
+                    <MenuItem value="hybrid">混动</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <TextField
+                  label="里程(km)"
+                  type="number"
+                  value={newVehicle.mileage || ""}
+                  onChange={(e) =>
+                    setNewVehicle({
+                      ...newVehicle,
+                      mileage: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
+                <FormControl fullWidth>
+                  <InputLabel>状态</InputLabel>
+                  <Select
+                    value={newVehicle.status || "available"}
+                    label="状态"
+                    onChange={(e) =>
+                      setNewVehicle({ ...newVehicle, status: e.target.value })
+                    }
+                  >
+                    <MenuItem value="available">可用</MenuItem>
+                    <MenuItem value="in_use">使用中</MenuItem>
+                    <MenuItem value="maintenance">维护中</MenuItem>
+                    <MenuItem value="out_of_service">停用</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+
+              <TextField
+                label="上次保养时间"
+                type="date"
+                value={newVehicle.last_service || ""}
+                onChange={(e) =>
+                  setNewVehicle({
+                    ...newVehicle,
+                    last_service: e.target.value,
+                  })
+                }
+                fullWidth
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </div>
 
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="secondary"
+            <div className="mt-6 flex justify-end space-x-2">
+              <MuiButton
+                variant="outlined"
                 onClick={() => setShowCreateModal(false)}
               >
                 取消
-              </Button>
-              <Button type="submit">添加</Button>
-            </DialogFooter>
+              </MuiButton>
+              <MuiButton variant="contained" type="submit">
+                添加
+              </MuiButton>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>编辑车辆</DialogTitle>
-          </DialogHeader>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>编辑车辆</DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           {selectedVehicle && (
             <form onSubmit={handleEditVehicle}>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_plate_number">车牌号 *</Label>
-                    <Input
-                      id="edit_plate_number"
-                      type="text"
-                      required
-                      value={selectedVehicle.plate_number}
-                      onChange={(e) =>
-                        setSelectedVehicle({
-                          ...selectedVehicle,
-                          plate_number: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_brand">品牌</Label>
-                    <Input
-                      id="edit_brand"
-                      type="text"
-                      value={selectedVehicle.brand || ""}
-                      onChange={(e) =>
-                        setSelectedVehicle({
-                          ...selectedVehicle,
-                          brand: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_model">型号</Label>
-                    <Input
-                      id="edit_model"
-                      type="text"
-                      value={selectedVehicle.model || ""}
-                      onChange={(e) =>
-                        setSelectedVehicle({
-                          ...selectedVehicle,
-                          model: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_vehicle_type">车辆类型</Label>
-                    <Select
-                      value={selectedVehicle.vehicle_type || ""}
-                      onValueChange={(value) =>
-                        setSelectedVehicle({
-                          ...selectedVehicle,
-                          vehicle_type: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择车辆类型" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sedan">轿车</SelectItem>
-                        <SelectItem value="suv">SUV</SelectItem>
-                        <SelectItem value="van">面包车</SelectItem>
-                        <SelectItem value="truck">货车</SelectItem>
-                        <SelectItem value="bus">客车</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_driver">司机</Label>
-                    <Input
-                      id="edit_driver"
-                      type="text"
-                      value={selectedVehicle.driver || ""}
-                      onChange={(e) =>
-                        setSelectedVehicle({
-                          ...selectedVehicle,
-                          driver: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_fuel_type">燃料类型</Label>
-                    <Select
-                      value={selectedVehicle.fuel_type || ""}
-                      onValueChange={(value) =>
-                        setSelectedVehicle({
-                          ...selectedVehicle,
-                          fuel_type: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择燃料类型" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gasoline">汽油</SelectItem>
-                        <SelectItem value="diesel">柴油</SelectItem>
-                        <SelectItem value="electric">电动</SelectItem>
-                        <SelectItem value="hybrid">混动</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_mileage">里程(km)</Label>
-                    <Input
-                      id="edit_mileage"
-                      type="number"
-                      value={selectedVehicle.mileage || ""}
-                      onChange={(e) =>
-                        setSelectedVehicle({
-                          ...selectedVehicle,
-                          mileage: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_status">状态</Label>
-                    <Select
-                      value={selectedVehicle.status}
-                      onValueChange={(value) =>
-                        setSelectedVehicle({
-                          ...selectedVehicle,
-                          status: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择状态" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="available">可用</SelectItem>
-                        <SelectItem value="in_use">使用中</SelectItem>
-                        <SelectItem value="maintenance">维护中</SelectItem>
-                        <SelectItem value="out_of_service">停用</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit_last_service">上次保养时间</Label>
-                  <Input
-                    id="edit_last_service"
-                    type="date"
-                    value={selectedVehicle.last_service || ""}
+                  <TextField
+                    label="车牌号 *"
+                    value={selectedVehicle.plate_number}
                     onChange={(e) =>
                       setSelectedVehicle({
                         ...selectedVehicle,
-                        last_service: e.target.value,
+                        plate_number: e.target.value,
                       })
                     }
+                    fullWidth
+                    required
+                  />
+                  <TextField
+                    label="品牌"
+                    value={selectedVehicle.brand || ""}
+                    onChange={(e) =>
+                      setSelectedVehicle({
+                        ...selectedVehicle,
+                        brand: e.target.value,
+                      })
+                    }
+                    fullWidth
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <TextField
+                    label="型号"
+                    value={selectedVehicle.model || ""}
+                    onChange={(e) =>
+                      setSelectedVehicle({
+                        ...selectedVehicle,
+                        model: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel>车辆类型</InputLabel>
+                    <Select
+                      value={selectedVehicle.vehicle_type || ""}
+                      label="车辆类型"
+                      onChange={(e) =>
+                        setSelectedVehicle({
+                          ...selectedVehicle,
+                          vehicle_type: e.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem value="sedan">轿车</MenuItem>
+                      <MenuItem value="suv">SUV</MenuItem>
+                      <MenuItem value="van">面包车</MenuItem>
+                      <MenuItem value="truck">货车</MenuItem>
+                      <MenuItem value="bus">客车</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <TextField
+                    label="司机"
+                    value={selectedVehicle.driver || ""}
+                    onChange={(e) =>
+                      setSelectedVehicle({
+                        ...selectedVehicle,
+                        driver: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel>燃料类型</InputLabel>
+                    <Select
+                      value={selectedVehicle.fuel_type || ""}
+                      label="燃料类型"
+                      onChange={(e) =>
+                        setSelectedVehicle({
+                          ...selectedVehicle,
+                          fuel_type: e.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem value="gasoline">汽油</MenuItem>
+                      <MenuItem value="diesel">柴油</MenuItem>
+                      <MenuItem value="electric">电动</MenuItem>
+                      <MenuItem value="hybrid">混动</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <TextField
+                    label="里程(km)"
+                    type="number"
+                    value={selectedVehicle.mileage || ""}
+                    onChange={(e) =>
+                      setSelectedVehicle({
+                        ...selectedVehicle,
+                        mileage: Number(e.target.value),
+                      })
+                    }
+                    fullWidth
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel>状态</InputLabel>
+                    <Select
+                      value={selectedVehicle.status}
+                      label="状态"
+                      onChange={(e) =>
+                        setSelectedVehicle({
+                          ...selectedVehicle,
+                          status: e.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem value="available">可用</MenuItem>
+                      <MenuItem value="in_use">使用中</MenuItem>
+                      <MenuItem value="maintenance">维护中</MenuItem>
+                      <MenuItem value="out_of_service">停用</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+
+                <TextField
+                  label="上次保养时间"
+                  type="date"
+                  value={selectedVehicle.last_service || ""}
+                  onChange={(e) =>
+                    setSelectedVehicle({
+                      ...selectedVehicle,
+                      last_service: e.target.value,
+                    })
+                  }
+                  fullWidth
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
               </div>
 
-              <DialogFooter className="mt-6">
-                <Button
-                  type="button"
-                  variant="secondary"
+              <div className="mt-6 flex justify-end space-x-2">
+                <MuiButton
+                  variant="outlined"
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedVehicle(null);
                   }}
                 >
                   取消
-                </Button>
-                <Button type="submit">保存</Button>
-              </DialogFooter>
+                </MuiButton>
+                <MuiButton variant="contained" type="submit">
+                  保存
+                </MuiButton>
+              </div>
             </form>
           )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>申请用车</DialogTitle>
-          </DialogHeader>
+      <Dialog
+        open={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>申请用车</DialogTitle>
+        <DialogContent>
           <form onSubmit={handleCreateRequest}>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="request_vehicle">选择车辆</Label>
+              <FormControl fullWidth>
+                <InputLabel>选择车辆</InputLabel>
                 <Select
                   value={newRequest.vehicle_id || ""}
-                  onValueChange={(value) => {
-                    const vehicle = vehicles.find((v) => v.id === value);
+                  label="选择车辆"
+                  onChange={(e) => {
+                    const vehicle = vehicles.find((v) => v.id === e.target.value);
                     setNewRequest({
                       ...newRequest,
-                      vehicle_id: value,
+                      vehicle_id: e.target.value,
                       vehicle_plate: vehicle?.plate_number || "",
                     });
                   }}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择车辆" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vehicles
-                      .filter((v) => v.status === "available")
-                      .map((vehicle) => (
-                        <SelectItem key={vehicle.id} value={vehicle.id}>
-                          {vehicle.plate_number} - {vehicle.brand}{" "}
-                          {vehicle.model}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
+                  {vehicles
+                    .filter((v) => v.status === "available")
+                    .map((vehicle) => (
+                      <MenuItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.plate_number} - {vehicle.brand}{" "}
+                        {vehicle.model}
+                      </MenuItem>
+                    ))}
                 </Select>
-              </div>
+              </FormControl>
 
-              <div className="space-y-2">
-                <Label htmlFor="requester">申请人 *</Label>
-                <Input
-                  id="requester"
-                  type="text"
-                  required
-                  value={newRequest.requester || ""}
-                  onChange={(e) =>
-                    setNewRequest({ ...newRequest, requester: e.target.value })
-                  }
-                  placeholder="请输入申请人姓名"
-                />
-              </div>
+              <TextField
+                label="申请人 *"
+                value={newRequest.requester || ""}
+                onChange={(e) =>
+                  setNewRequest({ ...newRequest, requester: e.target.value })
+                }
+                fullWidth
+                required
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="purpose">用途</Label>
-                <Input
-                  id="purpose"
-                  type="text"
-                  value={newRequest.purpose || ""}
-                  onChange={(e) =>
-                    setNewRequest({ ...newRequest, purpose: e.target.value })
-                  }
-                  placeholder="请输入用车用途"
-                />
-              </div>
+              <TextField
+                label="用途"
+                value={newRequest.purpose || ""}
+                onChange={(e) =>
+                  setNewRequest({ ...newRequest, purpose: e.target.value })
+                }
+                fullWidth
+              />
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start_time">开始时间 *</Label>
-                  <Input
-                    id="start_time"
-                    type="datetime-local"
-                    required
-                    value={newRequest.start_time || ""}
-                    onChange={(e) =>
-                      setNewRequest({
-                        ...newRequest,
-                        start_time: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="end_time">结束时间 *</Label>
-                  <Input
-                    id="end_time"
-                    type="datetime-local"
-                    required
-                    value={newRequest.end_time || ""}
-                    onChange={(e) =>
-                      setNewRequest({ ...newRequest, end_time: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="driver_required">需要司机</Label>
-                <Select
-                  value={newRequest.driver_required ? "true" : "false"}
-                  onValueChange={(value) =>
+                <TextField
+                  label="开始时间 *"
+                  type="datetime-local"
+                  value={newRequest.start_time || ""}
+                  onChange={(e) =>
                     setNewRequest({
                       ...newRequest,
-                      driver_required: value === "true",
+                      start_time: e.target.value,
+                    })
+                  }
+                  fullWidth
+                  required
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  label="结束时间 *"
+                  type="datetime-local"
+                  value={newRequest.end_time || ""}
+                  onChange={(e) =>
+                    setNewRequest({ ...newRequest, end_time: e.target.value })
+                  }
+                  fullWidth
+                  required
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </div>
+
+              <FormControl fullWidth>
+                <InputLabel>需要司机</InputLabel>
+                <Select
+                  value={newRequest.driver_required ? "true" : "false"}
+                  label="需要司机"
+                  onChange={(e) =>
+                    setNewRequest({
+                      ...newRequest,
+                      driver_required: e.target.value === "true",
                     })
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">是</SelectItem>
-                    <SelectItem value="false">否</SelectItem>
-                  </SelectContent>
+                  <MenuItem value="true">是</MenuItem>
+                  <MenuItem value="false">否</MenuItem>
                 </Select>
-              </div>
+              </FormControl>
             </div>
 
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="secondary"
+            <div className="mt-6 flex justify-end space-x-2">
+              <MuiButton
+                variant="outlined"
                 onClick={() => {
                   setShowRequestModal(false);
                   setNewRequest({
@@ -1214,9 +1073,11 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                 }}
               >
                 取消
-              </Button>
-              <Button type="submit">提交申请</Button>
-            </DialogFooter>
+              </MuiButton>
+              <MuiButton variant="contained" type="submit">
+                提交申请
+              </MuiButton>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

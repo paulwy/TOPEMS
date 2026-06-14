@@ -5,25 +5,21 @@
 
 import React, { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Search, X, Check, Loader2 } from "lucide-react";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import { Search, X, Check } from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
 import { crmApi } from "@/api/crm";
 import { srmApi } from "@/api/srm";
 import { hrmApi } from "@/api/hrm";
@@ -144,25 +140,23 @@ function PopupSelector<T>({
   children,
 }: PopupSelectorProps<T>) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <div className="flex-1 overflow-hidden">
+    <Dialog open={open} onClose={onOpenChange} maxWidth="lg" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent sx={{ maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
+        <Box sx={{ flex: 1, overflow: "auto" }}>
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin" />
-            </div>
+            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 256 }}>
+              <CircularProgress />
+            </Box>
           ) : (
             children
           )}
-        </div>
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onCancel}>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, pt: 2, borderTop: 1, borderColor: "divider" }}>
+          <Button variant="outlined" onClick={onCancel}>
             取消
           </Button>
-        </div>
+        </Box>
       </DialogContent>
     </Dialog>
   );
@@ -230,27 +224,31 @@ export function CounterpartySelector({
   return (
     <>
       <Button
-        variant="outline"
+        variant="outlined"
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        className={`w-full justify-between ${className || ""}`}
+        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
       >
         {selectedEntity ? (
-          <span className="flex items-center gap-2">
-            <Badge variant="secondary">
-              {(selectedEntity as any).code ||
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Chip
+              label={
+                (selectedEntity as any).code ||
                 (selectedEntity as any).supplier_no ||
-                ""}
-            </Badge>
+                ""
+              }
+              size="small"
+              variant="outlined"
+            />
             <span>{selectedEntity.name}</span>
-          </span>
+          </Box>
         ) : (
-          <span className="text-muted-foreground">{placeholder}</span>
+          <Box sx={{ color: "text.secondary" }}>{placeholder}</Box>
         )}
         {value && !disabled && (
           <X
-            className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100"
+            style={{ marginLeft: 8, opacity: 0.5, cursor: "pointer" }}
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
@@ -270,73 +268,87 @@ export function CounterpartySelector({
         loading={loading}
         title="选择往来单位"
       >
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="w-full">
-            <TabsTrigger value="customer" className="flex-1">
-              客户 ({customers.length})
-            </TabsTrigger>
-            <TabsTrigger value="supplier" className="flex-1">
-              供应商 ({suppliers.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="mt-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索编码或名称..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
-
-          <ScrollArea className="h-[400px] mt-4">
-            <div className="space-y-1">
-              {list.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  未找到匹配的往来单位
-                </div>
-              ) : (
-                list.map((entity: any) => (
-                  <div
-                    key={entity.id}
-                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-accent ${
-                      value === entity.id ? "bg-accent" : ""
-                    }`}
-                    onClick={() => handleSelect(entity)}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">
-                          {entity.code || entity.supplier_no || ""}
-                        </Badge>
-                        <span className="font-medium">{entity.name}</span>
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {(entity.contact_person || entity.contact_name) && (
-                          <span>
-                            联系人:{" "}
-                            {entity.contact_person || entity.contact_name}
-                          </span>
-                        )}
-                        {(entity.phone || entity.contact_phone) && (
-                          <span className="ml-2">
-                            电话: {entity.phone || entity.contact_phone}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {value === entity.id && (
-                      <Check className="h-4 w-4 text-primary" />
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </ScrollArea>
+        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v as any)} sx={{ width: "100%" }}>
+          <Tab label={`客户 (${customers.length})`} value="customer" sx={{ flex: 1 }} />
+          <Tab label={`供应商 (${suppliers.length})`} value="supplier" sx={{ flex: 1 }} />
         </Tabs>
+
+        <Box sx={{ mt: 2 }}>
+          <Box sx={{ position: "relative" }}>
+            <Search
+              style={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 16,
+                height: 16,
+                color: "rgba(0,0,0,0.25)",
+              }}
+            />
+            <TextField
+              size="small"
+              placeholder="搜索编码或名称..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ width: "100%", pl: 4 }}
+            />
+          </Box>
+        </Box>
+
+        <Box sx={{ mt: 2, overflow: "auto", height: 400 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            {list.length === 0 ? (
+              <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
+                未找到匹配的往来单位
+              </Box>
+            ) : (
+              list.map((entity: any) => (
+                <Box
+                  key={entity.id}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 1.5,
+                    borderRadius: 1,
+                    cursor: "pointer",
+                    bgcolor: value === entity.id ? "action.selected" : "transparent",
+                    "&:hover": { bgcolor: "action.hover" },
+                  }}
+                  onClick={() => handleSelect(entity)}
+                >
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Chip
+                        label={entity.code || entity.supplier_no || ""}
+                        size="small"
+                        variant="outlined"
+                      />
+                      <span style={{ fontWeight: 500 }}>{entity.name}</span>
+                    </Box>
+                    <Box sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 0.5 }}>
+                      {(entity.contact_person || entity.contact_name) && (
+                        <span>
+                          联系人:{" "}
+                          {entity.contact_person || entity.contact_name}
+                        </span>
+                      )}
+                      {(entity.phone || entity.contact_phone) && (
+                        <span style={{ marginLeft: 8 }}>
+                          电话: {entity.phone || entity.contact_phone}
+                        </span>
+                      )}
+                    </Box>
+                  </Box>
+                  {value === entity.id && (
+                    <Check style={{ width: 16, height: 16, color: "primary.main" }} />
+                  )}
+                </Box>
+              ))
+            )}
+          </Box>
+        </Box>
       </PopupSelector>
     </>
   );
@@ -391,23 +403,23 @@ export function ProjectSelector({
   return (
     <>
       <Button
-        variant="outline"
+        variant="outlined"
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        className={`w-full justify-between ${className || ""}`}
+        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
       >
         {selectedProject ? (
-          <span className="flex items-center gap-2">
-            <Badge variant="secondary">{selectedProject.code}</Badge>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Chip label={selectedProject.code} size="small" variant="outlined" />
             <span>{selectedProject.name}</span>
-          </span>
+          </Box>
         ) : (
-          <span className="text-muted-foreground">{placeholder}</span>
+          <Box sx={{ color: "text.secondary" }}>{placeholder}</Box>
         )}
         {value && !disabled && (
           <X
-            className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100"
+            style={{ marginLeft: 8, opacity: 0.5, cursor: "pointer" }}
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
@@ -427,59 +439,73 @@ export function ProjectSelector({
         loading={isLoading}
         title="选择项目"
       >
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
+        <Box sx={{ position: "relative", mb: 2 }}>
+          <Search
+            style={{
+              position: "absolute",
+              left: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 16,
+              height: 16,
+              color: "rgba(0,0,0,0.25)",
+            }}
+          />
+          <TextField
+            size="small"
             placeholder="搜索项目编码或名称..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            sx={{ width: "100%", pl: 4 }}
           />
-        </div>
+        </Box>
 
-        <ScrollArea className="h-[400px]">
-          <div className="space-y-1">
+        <Box sx={{ overflow: "auto", height: 400 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
             {projects.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
                 未找到匹配的项目
-              </div>
+              </Box>
             ) : (
               projects.map((project: Project) => (
-                <div
+                <Box
                   key={project.id}
-                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-accent ${
-                    value === project.id ? "bg-accent" : ""
-                  }`}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 1.5,
+                    borderRadius: 1,
+                    cursor: "pointer",
+                    bgcolor: value === project.id ? "action.selected" : "transparent",
+                    "&:hover": { bgcolor: "action.hover" },
+                  }}
                   onClick={() => handleSelect(project)}
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{project.code}</Badge>
-                      <span className="font-medium">{project.name}</span>
-                      <Badge
-                        variant={
-                          project.status === "active" ? "default" : "secondary"
-                        }
-                      >
-                        {project.status === "active"
-                          ? "进行中"
-                          : project.status}
-                      </Badge>
-                    </div>
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Chip label={project.code} size="small" variant="outlined" />
+                      <span style={{ fontWeight: 500 }}>{project.name}</span>
+                      <Chip
+                        label={project.status === "active" ? "进行中" : project.status}
+                        size="small"
+                        color={project.status === "active" ? "primary" : "default"}
+                      />
+                    </Box>
                     {project.budget && (
-                      <div className="text-sm text-muted-foreground mt-1">
+                      <Box sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 0.5 }}>
                         预算: ¥{project.budget.toLocaleString()}
-                      </div>
+                      </Box>
                     )}
-                  </div>
+                  </Box>
                   {value === project.id && (
-                    <Check className="h-4 w-4 text-primary" />
+                    <Check style={{ width: 16, height: 16, color: "primary.main" }} />
                   )}
-                </div>
+                </Box>
               ))
             )}
-          </div>
-        </ScrollArea>
+          </Box>
+        </Box>
       </PopupSelector>
     </>
   );
@@ -540,23 +566,30 @@ export function DepartmentSelector({
     const isExpanded = expandedIds.includes(dept.id);
 
     return (
-      <div key={dept.id}>
-        <div
-          className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-accent ${
-            value === dept.id ? "bg-accent" : ""
-          }`}
-          style={{ paddingLeft: `${level * 20 + 8}px` }}
+      <Box key={dept.id}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 1,
+            borderRadius: 1,
+            cursor: "pointer",
+            pl: `${level * 20 + 8}px`,
+            bgcolor: value === dept.id ? "action.selected" : "transparent",
+            "&:hover": { bgcolor: "action.hover" },
+          }}
           onClick={() => {
             onChange(dept.id, dept);
             setOpen(false);
           }}
         >
-          <div className="flex items-center gap-2">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {hasChildren && (
               <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
+                variant="text"
+                size="small"
+                sx={{ minWidth: 24, width: 24, height: 24, p: 0 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleExpand(dept.id);
@@ -565,47 +598,45 @@ export function DepartmentSelector({
                 {isExpanded ? "−" : "+"}
               </Button>
             )}
-            {!hasChildren && <span className="w-6" />}
+            {!hasChildren && <Box sx={{ width: 24 }} />}
             {showCode && dept.code && (
-              <Badge variant="outline" className="text-xs">
-                {dept.code}
-              </Badge>
+              <Chip label={dept.code} size="small" variant="outlined" sx={{ fontSize: "0.75rem" }} />
             )}
             <span>{dept.name}</span>
-          </div>
-          {value === dept.id && <Check className="h-4 w-4 text-primary" />}
-        </div>
+          </Box>
+          {value === dept.id && <Check style={{ width: 16, height: 16, color: "primary.main" }} />}
+        </Box>
         {hasChildren && isExpanded && (
-          <div>
+          <Box>
             {dept.children!.map((child) => renderDepartment(child, level + 1))}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     );
   };
 
   return (
     <>
       <Button
-        variant="outline"
+        variant="outlined"
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        className={`w-full justify-between ${className || ""}`}
+        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
       >
         {selectedDepartment ? (
-          <span className="flex items-center gap-2">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {showCode && selectedDepartment.code && (
-              <Badge variant="secondary">{selectedDepartment.code}</Badge>
+              <Chip label={selectedDepartment.code} size="small" />
             )}
             <span>{selectedDepartment.name}</span>
-          </span>
+          </Box>
         ) : (
-          <span className="text-muted-foreground">{placeholder}</span>
+          <Box sx={{ color: "text.secondary" }}>{placeholder}</Box>
         )}
         {value && !disabled && (
           <X
-            className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100"
+            style={{ marginLeft: 8, opacity: 0.5, cursor: "pointer" }}
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
@@ -622,17 +653,17 @@ export function DepartmentSelector({
         loading={isLoading}
         title="选择部门"
       >
-        <ScrollArea className="h-[400px]">
-          <div className="space-y-0">
+        <Box sx={{ overflow: "auto", height: 400 }}>
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
             {departments.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
                 暂无部门数据
-              </div>
+              </Box>
             ) : (
               departments.map((dept) => renderDepartment(dept))
             )}
-          </div>
-        </ScrollArea>
+          </Box>
+        </Box>
       </PopupSelector>
     </>
   );
@@ -717,12 +748,19 @@ export function AccountSelector({
     const hasChildren = account.children && account.children.length > 0;
 
     return (
-      <div key={account.id}>
-        <div
-          className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-accent ${
-            value === account.id ? "bg-accent" : ""
-          }`}
-          style={{ paddingLeft: `${level * 16 + 8}px` }}
+      <Box key={account.id}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 1,
+            borderRadius: 1,
+            cursor: hasChildren ? "default" : "pointer",
+            pl: `${level * 16 + 8}px`,
+            bgcolor: value === account.id ? "action.selected" : "transparent",
+            "&:hover": { bgcolor: hasChildren ? "transparent" : "action.hover" },
+          }}
           onClick={() => {
             if (!hasChildren) {
               onChange(account.id, account);
@@ -730,56 +768,58 @@ export function AccountSelector({
             }
           }}
         >
-          <div className="flex items-center gap-2">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <span
-              className={`font-mono text-sm ${hasChildren ? "font-medium" : ""}`}
+              style={{
+                fontFamily: "monospace",
+                fontSize: "0.875rem",
+                fontWeight: hasChildren ? 500 : 400,
+              }}
             >
               {account.code}
             </span>
             <span>{account.name}</span>
             {account.balance_direction === "debit" ? (
-              <Badge variant="outline" className="text-xs">
-                借
-              </Badge>
+              <Chip label="借" size="small" variant="outlined" sx={{ fontSize: "0.75rem" }} />
             ) : (
-              <Badge variant="secondary" className="text-xs">
-                贷
-              </Badge>
+              <Chip label="贷" size="small" sx={{ fontSize: "0.75rem" }} />
             )}
-          </div>
+          </Box>
           {value === account.id && !hasChildren && (
-            <Check className="h-4 w-4 text-primary" />
+            <Check style={{ width: 16, height: 16, color: "primary.main" }} />
           )}
-        </div>
+        </Box>
         {hasChildren && (
-          <div>
+          <Box>
             {account.children!.map((child) => renderAccount(child, level + 1))}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     );
   };
 
   return (
     <>
       <Button
-        variant="outline"
+        variant="outlined"
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        className={`w-full justify-between ${className || ""}`}
+        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
       >
         {selectedAccount ? (
-          <span className="flex items-center gap-2">
-            <span className="font-mono text-sm">{selectedAccount.code}</span>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <span style={{ fontFamily: "monospace", fontSize: "0.875rem" }}>
+              {selectedAccount.code}
+            </span>
             <span>{selectedAccount.name}</span>
-          </span>
+          </Box>
         ) : (
-          <span className="text-muted-foreground">{placeholder}</span>
+          <Box sx={{ color: "text.secondary" }}>{placeholder}</Box>
         )}
         {value && !disabled && (
           <X
-            className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100"
+            style={{ marginLeft: 8, opacity: 0.5, cursor: "pointer" }}
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
@@ -796,48 +836,58 @@ export function AccountSelector({
         loading={isLoading}
         title="选择会计科目"
       >
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Box sx={{ position: "relative", flex: 1 }}>
+              <Search
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  color: "rgba(0,0,0,0.25)",
+                }}
+              />
+              <TextField
+                size="small"
                 placeholder="搜索科目编码或名称..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                sx={{ width: "100%", pl: 4 }}
               />
-            </div>
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="科目类别" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">全部</SelectItem>
-                <SelectItem value="asset">资产</SelectItem>
-                <SelectItem value="liability">负债</SelectItem>
-                <SelectItem value="equity">权益</SelectItem>
-                <SelectItem value="cost">成本</SelectItem>
-                <SelectItem value="expense">费用</SelectItem>
-                <SelectItem value="income">收入</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            </Box>
+            <FormControl size="small" sx={{ width: 140 }}>
+              <InputLabel>科目类别</InputLabel>
+              <Select
+                value={selectedCategory}
+                label="科目类别"
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <MenuItem value="">全部</MenuItem>
+                <MenuItem value="asset">资产</MenuItem>
+                <MenuItem value="liability">负债</MenuItem>
+                <MenuItem value="equity">权益</MenuItem>
+                <MenuItem value="cost">成本</MenuItem>
+                <MenuItem value="expense">费用</MenuItem>
+                <MenuItem value="income">收入</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
-          <ScrollArea className="h-[350px]">
-            <div className="space-y-0">
+          <Box sx={{ overflow: "auto", height: 350 }}>
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
               {filteredAccounts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
                   未找到匹配的科目
-                </div>
+                </Box>
               ) : (
                 filteredAccounts.map((account) => renderAccount(account))
               )}
-            </div>
-          </ScrollArea>
-        </div>
+            </Box>
+          </Box>
+        </Box>
       </PopupSelector>
     </>
   );
@@ -894,25 +944,23 @@ export function EmployeeSelector({
   return (
     <>
       <Button
-        variant="outline"
+        variant="outlined"
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        className={`w-full justify-between ${className || ""}`}
+        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
       >
         {selectedEmployee ? (
-          <span className="flex items-center gap-2">
-            <Badge variant="secondary">
-              {selectedEmployee.employee_no}
-            </Badge>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Chip label={selectedEmployee.employee_no} size="small" />
             <span>{selectedEmployee.name}</span>
-          </span>
+          </Box>
         ) : (
-          <span className="text-muted-foreground">{placeholder}</span>
+          <Box sx={{ color: "text.secondary" }}>{placeholder}</Box>
         )}
         {value && !disabled && (
           <X
-            className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100"
+            style={{ marginLeft: 8, opacity: 0.5, cursor: "pointer" }}
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
@@ -932,55 +980,71 @@ export function EmployeeSelector({
         loading={isLoading}
         title="选择员工"
       >
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
+        <Box sx={{ position: "relative", mb: 2 }}>
+          <Search
+            style={{
+              position: "absolute",
+              left: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 16,
+              height: 16,
+              color: "rgba(0,0,0,0.25)",
+            }}
+          />
+          <TextField
+            size="small"
             placeholder="搜索员工编号或姓名..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            sx={{ width: "100%", pl: 4 }}
           />
-        </div>
+        </Box>
 
-        <ScrollArea className="h-[400px]">
-          <div className="space-y-1">
+        <Box sx={{ overflow: "auto", height: 400 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
             {employees.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
                 未找到匹配的员工
-              </div>
+              </Box>
             ) : (
               employees.map((employee) => (
-                <div
+                <Box
                   key={employee.id}
-                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-accent ${
-                    value === employee.id ? "bg-accent" : ""
-                  }`}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 1.5,
+                    borderRadius: 1,
+                    cursor: "pointer",
+                    bgcolor: value === employee.id ? "action.selected" : "transparent",
+                    "&:hover": { bgcolor: "action.hover" },
+                  }}
                   onClick={() => handleSelect(employee)}
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {employee.employee_no}
-                      </Badge>
-                      <span className="font-medium">{employee.name}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground mt-1">
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Chip label={employee.employee_no} size="small" variant="outlined" />
+                      <span style={{ fontWeight: 500 }}>{employee.name}</span>
+                    </Box>
+                    <Box sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 0.5 }}>
                       {employee.department_id && (
                         <span>{employee.department_id}</span>
                       )}
                       {employee.position && (
-                        <span className="ml-2">{employee.position}</span>
+                        <span style={{ marginLeft: 8 }}>{employee.position}</span>
                       )}
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                   {value === employee.id && (
-                    <Check className="h-4 w-4 text-primary" />
+                    <Check style={{ width: 16, height: 16, color: "primary.main" }} />
                   )}
-                </div>
+                </Box>
               ))
             )}
-          </div>
-        </ScrollArea>
+          </Box>
+        </Box>
       </PopupSelector>
     </>
   );

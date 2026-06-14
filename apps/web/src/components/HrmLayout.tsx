@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, Box, Typography, Tooltip } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,15 +20,6 @@ import {
   Users2,
   ClipboardList,
 } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface HrmLayoutProps {
   children: React.ReactNode;
@@ -51,9 +43,7 @@ const hrmMenuItems = [
   { path: "/hrm/reports", label: "报表统计", icon: BarChart3 },
 ];
 
-const getBreadcrumbs = (
-  pathname: string,
-): { label: string; path: string }[] => {
+const getBreadcrumbs = (pathname: string): { label: string; path: string }[] => {
   const crumbs: { label: string; path: string }[] = [
     { label: "首页", path: "/" },
     { label: "人力资源", path: "/hrm" },
@@ -100,235 +90,277 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
     setMobileMenuOpen(false);
   };
 
+  const renderMenuItem = (item: typeof hrmMenuItems[0], isMobile: boolean = false) => {
+    const Icon = item.icon;
+    const isActive = location.pathname === item.path;
+
+    const button = (
+      <Button
+        key={item.path}
+        onClick={() => {
+          navigate(item.path);
+          if (isMobile) setMobileMenuOpen(false);
+        }}
+        sx={{
+          width: "100%",
+          justifyContent: isMobile ? "flex-start" : (sidebarCollapsed ? "center" : "flex-start"),
+          gap: 1.5,
+          px: isMobile ? 2 : (sidebarCollapsed ? 1 : 2),
+          py: 1.5,
+          borderRadius: 1,
+          textTransform: "none",
+          backgroundColor: isActive ? "#eff6ff" : "transparent",
+          color: isActive ? "#1d4ed8" : "#475569",
+          fontWeight: isActive ? 500 : 400,
+          "&:hover": {
+            backgroundColor: isActive ? "#eff6ff" : "#f1f5f9",
+          },
+        }}
+      >
+        <Icon style={{ width: 20, height: 20, flexShrink: 0 }} />
+        {(!sidebarCollapsed || isMobile) && (
+          <span style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            opacity: sidebarCollapsed && !isMobile ? 0 : 1,
+            width: sidebarCollapsed && !isMobile ? 0 : "auto",
+            transition: "opacity 0.2s, width 0.2s",
+          }}>
+            {item.label}
+          </span>
+        )}
+      </Button>
+    );
+
+    if (sidebarCollapsed && !isMobile) {
+      return (
+        <Tooltip key={item.path} title={item.label} placement="right">
+          {button}
+        </Tooltip>
+      );
+    }
+
+    return button;
+  };
+
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        {/* Header */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="lg:hidden"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  aria-label={mobileMenuOpen ? "关闭菜单" : "打开菜单"}
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+      {/* Header */}
+      <Box
+        component="header"
+        sx={{
+          backgroundColor: "white",
+          borderBottom: "1px solid",
+          borderColor: "#e2e8f0",
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                sx={{ display: { lg: "none" } }}
+              >
+                {mobileMenuOpen ? <X style={{ width: 20, height: 20 }} /> : <Menu style={{ width: 20, height: 20 }} />}
+              </Button>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1.5,
+                    background: "linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  {mobileMenuOpen ? (
-                    <X className="w-5 h-5" />
-                  ) : (
-                    <Menu className="w-5 h-5" />
-                  )}
-                </Button>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-lg font-bold text-slate-900">
-                      {title}
-                    </h1>
-                    <p className="text-xs text-slate-500 hidden sm:block">
-                      {subtitle}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                  <Users style={{ width: 20, height: 20, color: "white" }} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, fontSize: 18, color: "#0f172a" }}>
+                    {title}
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: { xs: "none", sm: "block" }, color: "#64748b" }}>
+                    {subtitle}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
 
-              {/* Breadcrumbs */}
-              <nav className="hidden md:flex items-center gap-2 text-sm">
-                {breadcrumbs.map((crumb, index) => (
-                  <div key={crumb.path} className="flex items-center">
-                    {index > 0 && (
-                      <ChevronRight className="w-4 h-4 text-slate-400 mx-1" />
-                    )}
-                    <button
-                      onClick={() => handleBreadcrumbClick(crumb.path)}
-                      className={`transition-colors ${
-                        index === breadcrumbs.length - 1
-                          ? "text-slate-900 font-medium"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                      aria-label={`导航到${crumb.label}`}
-                    >
-                      {crumb.label}
-                    </button>
-                  </div>
-                ))}
-              </nav>
+            {/* Breadcrumbs */}
+            <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 0.5 }}>
+              {breadcrumbs.map((crumb, index) => (
+                <React.Fragment key={crumb.path}>
+                  {index > 0 && <ChevronRight style={{ width: 16, height: 16, color: "#94a3b8", margin: "0 4px" }} />}
+                  <Button
+                    onClick={() => handleBreadcrumbClick(crumb.path)}
+                    sx={{
+                      color: index === breadcrumbs.length - 1 ? "#0f172a" : "#64748b",
+                      fontWeight: index === breadcrumbs.length - 1 ? 500 : 400,
+                      fontSize: 14,
+                      textTransform: "none",
+                      "&:hover": { color: "#0f172a" },
+                    }}
+                  >
+                    {crumb.label}
+                  </Button>
+                </React.Fragment>
+              ))}
+            </Box>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("/")}
-                  className="gap-2"
-                  aria-label="返回首页"
-                >
-                  <Home className="w-4 h-4" />
-                  <span className="hidden sm:inline">返回首页</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </header>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => navigate("/")}
+                startIcon={<Home style={{ width: 16, height: 16 }} />}
+                sx={{ display: { xs: "none", sm: "flex" }, gap: 0.5 }}
+              >
+                返回首页
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-        {/* Main Content */}
-        <div className="flex-1 flex">
-          {/* Mobile Sidebar */}
-          <AnimatePresence>
-            {mobileMenuOpen && (
+      {/* Main Content */}
+      <Box sx={{ display: "flex", flex: 1 }}>
+        {/* Mobile Sidebar */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  zIndex: 40,
+                }}
                 onClick={() => setMobileMenuOpen(false)}
               />
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {mobileMenuOpen && (
               <motion.aside
                 initial={{ x: "-100%" }}
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "tween", duration: 0.2 }}
-                className="fixed left-0 top-16 bottom-0 w-64 bg-white shadow-lg z-50 lg:hidden overflow-y-auto"
+                style={{
+                  position: "fixed",
+                  left: 0,
+                  top: 64,
+                  bottom: 0,
+                  width: 256,
+                  backgroundColor: "white",
+                  boxShadow: "4px 0 6px -1px rgb(0 0 0 / 0.1)",
+                  zIndex: 50,
+                  overflowY: "auto",
+                  display: { xs: "block", lg: "none" } as any,
+                }}
               >
-                <Card className="m-4">
-                  <CardContent className="p-4">
-                    <h3 className="text-sm font-semibold text-slate-700 mb-4 px-3">
+                <Card sx={{ m: 2 }}>
+                  <CardContent sx={{ p: 2 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#334155", mb: 2, px: 1 }}>
                       HRM 模块
-                    </h3>
-                    <nav className="space-y-1">
-                      {hrmMenuItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = location.pathname === item.path;
-                        return (
-                          <button
-                            key={item.path}
-                            onClick={() => {
-                              navigate(item.path);
-                              setMobileMenuOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                              isActive
-                                ? "bg-blue-50 text-blue-700 font-medium"
-                                : "text-slate-600 hover:bg-slate-100"
-                            }`}
-                            aria-current={isActive ? "page" : undefined}
-                          >
-                            <Icon className="w-5 h-5 flex-shrink-0" />
-                            <span>{item.label}</span>
-                          </button>
-                        );
-                      })}
-                    </nav>
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                      {hrmMenuItems.map((item) => renderMenuItem(item, true))}
+                    </Box>
                   </CardContent>
                 </Card>
               </motion.aside>
-            )}
-          </AnimatePresence>
-
-          {/* Desktop Sidebar */}
-          {showSidebar && (
-            <motion.aside
-              initial={false}
-              animate={{ width: sidebarCollapsed ? 64 : 200 }}
-              className="hidden lg:flex flex-col bg-white border-r border-slate-200 flex-shrink-0"
-            >
-              <div className="flex-1 p-4">
-                <div className="mb-4">
-                  <h3
-                    className={`text-sm font-semibold text-slate-700 mb-4 transition-opacity overflow-hidden ${
-                      sidebarCollapsed ? "opacity-0 h-0" : "opacity-100 h-auto"
-                    }`}
-                  >
-                    HRM 模块
-                  </h3>
-                </div>
-                <nav className="space-y-1">
-                  {hrmMenuItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
-                    return (
-                      <Tooltip key={item.path}>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => navigate(item.path)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                              isActive
-                                ? "bg-blue-50 text-blue-700 font-medium"
-                                : "text-slate-600 hover:bg-slate-100"
-                            }`}
-                            aria-label={
-                              sidebarCollapsed ? item.label : undefined
-                            }
-                            aria-current={isActive ? "page" : undefined}
-                          >
-                            <Icon className="w-5 h-5 flex-shrink-0" />
-                            <span
-                              className={`transition-opacity overflow-hidden whitespace-nowrap ${
-                                sidebarCollapsed
-                                  ? "opacity-0 w-0"
-                                  : "opacity-100 w-auto"
-                              }`}
-                            >
-                              {item.label}
-                            </span>
-                          </button>
-                        </TooltipTrigger>
-                        {sidebarCollapsed && (
-                          <TooltipContent side="right">
-                            <p>{item.label}</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    );
-                  })}
-                </nav>
-              </div>
-
-              {/* Collapse Button */}
-              <div className="p-2 border-t border-slate-200">
-                <button
-                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                  aria-label={sidebarCollapsed ? "展开侧边栏" : "折叠侧边栏"}
-                >
-                  {sidebarCollapsed ? (
-                    <ChevronRight className="w-4 h-4" />
-                  ) : (
-                    <ChevronLeft className="w-4 h-4" />
-                  )}
-                  <span
-                    className={`transition-opacity overflow-hidden whitespace-nowrap ${
-                      sidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"
-                    }`}
-                  >
-                    {sidebarCollapsed ? "展开" : "折叠"}
-                  </span>
-                </button>
-              </div>
-            </motion.aside>
+            </>
           )}
+        </AnimatePresence>
 
-          {/* Content Area */}
-          <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              {children}
-            </motion.div>
-          </main>
-        </div>
-      </div>
-    </TooltipProvider>
+        {/* Desktop Sidebar */}
+        {showSidebar && (
+          <Box
+            component={motion.aside}
+            initial={false}
+            animate={{ width: sidebarCollapsed ? 64 : 200 }}
+            sx={{
+              display: { xs: "none", lg: "flex" },
+              flexDirection: "column",
+              backgroundColor: "white",
+              borderRight: "1px solid",
+              borderColor: "#e2e8f0",
+              flexShrink: 0,
+              transition: "width 0.2s",
+            }}
+          >
+            <Box sx={{ flex: 1, p: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 600,
+                  color: "#334155",
+                  mb: 2,
+                  overflow: "hidden",
+                  opacity: sidebarCollapsed ? 0 : 1,
+                  height: sidebarCollapsed ? 0 : "auto",
+                  transition: "opacity 0.2s, height 0.2s",
+                }}
+              >
+                HRM 模块
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                {hrmMenuItems.map((item) => renderMenuItem(item))}
+              </Box>
+            </Box>
+
+            {/* Collapse Button */}
+            <Box sx={{ p: 1, borderTop: "1px solid", borderColor: "#e2e8f0" }}>
+              <Button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                sx={{
+                  width: "100%",
+                  justifyContent: sidebarCollapsed ? "center" : "flex-start",
+                  gap: 1,
+                  px: 2,
+                  py: 1,
+                  color: "#64748b",
+                  borderRadius: 1,
+                  "&:hover": { backgroundColor: "#f1f5f9", color: "#334155" },
+                }}
+              >
+                {sidebarCollapsed ? (
+                  <ChevronRight style={{ width: 16, height: 16 }} />
+                ) : (
+                  <>
+                    <ChevronLeft style={{ width: 16, height: 16 }} />
+                    <span>折叠</span>
+                  </>
+                )}
+              </Button>
+            </Box>
+          </Box>
+        )}
+
+        {/* Content Area */}
+        <Box
+          component="main"
+          sx={{ flex: 1, minWidth: 0, p: { xs: 2, sm: 3, lg: 4 } }}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {children}
+          </motion.div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

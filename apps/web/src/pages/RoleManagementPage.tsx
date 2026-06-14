@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip, IconButton } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   Shield,
@@ -14,25 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { authApi, type Role, type Permission } from "../api/iam";
 import { useAppStore } from "../store";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface RoleManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -264,348 +247,290 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <Shield className="w-7 h-7 mr-3 text-indigo-600" />
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      {/* 顶部导航 */}
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <IconButton onClick={() => navigate("/dashboard")}>
+                <ChevronLeft />
+              </IconButton>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+                  <Shield size={28} color="#6366f1" />
                   角色管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   管理用户角色、权限配置
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+              <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus size={20} />}>
                 创建角色
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              type="text"
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
+        {/* 搜索栏 */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+          <Box sx={{ flex: 1, position: "relative" }}>
+            <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "#9e9e9e" }} />
+            <TextField
+              size="small"
               placeholder="搜索角色名称或描述..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              sx={{ width: "100%", pl: 5 }}
             />
-          </div>
-          <Button variant="secondary" onClick={loadData}>
+          </Box>
+          <Button variant="outlined" onClick={loadData}>
             刷新
           </Button>
-        </div>
+        </Box>
 
+        {/* 角色列表 */}
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
-                <p className="mt-2 text-gray-500 dark:text-gray-400">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTop: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                <Typography sx={{ mt: 2, color: "text.secondary" }}>
                   加载中...
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : error ? (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadData}>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <AlertCircle size={48} color="#d32f2f" />
+                <Typography sx={{ color: "error.main", mt: 2 }}>{error}</Typography>
+                <Button sx={{ mt: 2 }} onClick={loadData}>
                   重试
                 </Button>
-              </div>
+              </Box>
             ) : filteredRoles.length === 0 ? (
-              <div className="p-8 text-center">
-                <Shield className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">暂无角色</p>
-              </div>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Shield size={48} color="#9e9e9e" />
+                <Typography sx={{ color: "text.secondary", mt: 2 }}>暂无角色</Typography>
+              </Box>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <Box>
                 {filteredRoles.map((role) => (
-                  <div
+                  <Box
                     key={role.id}
-                    className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                    sx={{ p: 3, borderBottom: 1, borderColor: "divider", "&:hover": { bgcolor: "grey.50" } }}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Shield className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                        <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: "primary.light", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Shield size={24} color="#6366f1" />
+                        </Box>
+                        <Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                               {role.name}
-                            </h3>
-                          </div>
+                            </Typography>
+                          </Box>
                           {role.description && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                               {role.description}
-                            </p>
+                            </Typography>
                           )}
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                            创建时间:{" "}
-                            {new Date(role.created_at).toLocaleString("zh-CN")}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedRole(role);
-                                  setShowEditModal(true);
-                                }}
-                              >
-                                <Edit className="w-5 h-5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>编辑角色</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openPermissionsModal(role)}
-                              >
-                                <Key className="w-5 h-5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>管理权限</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 dark:text-red-400"
-                                onClick={() => handleDeleteRole(role.id)}
-                              >
-                                <Trash2 className="w-5 h-5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>删除角色</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </div>
-                  </div>
+                          <Typography variant="caption" color="text.disabled" sx={{ mt: 1, display: "block" }}>
+                            创建时间: {new Date(role.created_at).toLocaleString("zh-CN")}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Tooltip title="编辑角色">
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              setSelectedRole(role);
+                              setShowEditModal(true);
+                            }}
+                          >
+                            <Edit size={20} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="管理权限">
+                          <IconButton
+                            size="small"
+                            onClick={() => openPermissionsModal(role)}
+                          >
+                            <Key size={20} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="删除角色">
+                          <IconButton
+                            size="small"
+                            sx={{ color: "error.main" }}
+                            onClick={() => handleDeleteRole(role.id)}
+                          >
+                            <Trash2 size={20} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  </Box>
                 ))}
-              </div>
+              </Box>
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>创建新角色</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateRole}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">角色名称 *</Label>
-                <Input
-                  id="name"
-                  type="text"
+      {/* 创建角色对话框 */}
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>创建新角色</DialogTitle>
+        <form onSubmit={handleCreateRole}>
+          <DialogContent>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <TextField
+                label="角色名称 *"
+                required
+                value={newRole.name}
+                onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
+                placeholder="例如：管理员、普通用户"
+                fullWidth
+              />
+              <TextField
+                label="描述"
+                multiline
+                rows={3}
+                value={newRole.description}
+                onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
+                placeholder="描述这个角色的用途"
+                fullWidth
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => {
+                setShowCreateModal(false);
+                setNewRole({ name: "", description: "" });
+              }}
+            >
+              取消
+            </Button>
+            <Button type="submit" variant="contained">创建</Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* 编辑角色对话框 */}
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>编辑角色</DialogTitle>
+        {selectedRole && (
+          <form onSubmit={handleEditRole}>
+            <DialogContent>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+                <TextField
+                  label="角色名称 *"
                   required
-                  value={newRole.name}
-                  onChange={(e) =>
-                    setNewRole({ ...newRole, name: e.target.value })
-                  }
+                  value={selectedRole.name}
+                  onChange={(e) => setSelectedRole({ ...selectedRole, name: e.target.value })}
                   placeholder="例如：管理员、普通用户"
+                  fullWidth
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">描述</Label>
-                <Textarea
-                  id="description"
-                  value={newRole.description}
-                  onChange={(e) =>
-                    setNewRole({ ...newRole, description: e.target.value })
-                  }
+                <TextField
+                  label="描述"
+                  multiline
                   rows={3}
+                  value={selectedRole.description || ""}
+                  onChange={(e) => setSelectedRole({ ...selectedRole, description: e.target.value })}
                   placeholder="描述这个角色的用途"
+                  fullWidth
                 />
-              </div>
-            </div>
-
-            <DialogFooter className="mt-6">
+              </Box>
+            </DialogContent>
+            <DialogActions>
               <Button
-                type="button"
-                variant="secondary"
                 onClick={() => {
-                  setShowCreateModal(false);
-                  setNewRole({ name: "", description: "" });
+                  setShowEditModal(false);
+                  setSelectedRole(null);
                 }}
               >
                 取消
               </Button>
-              <Button type="submit">创建</Button>
-            </DialogFooter>
+              <Button type="submit" variant="contained">保存</Button>
+            </DialogActions>
           </form>
-        </DialogContent>
+        )}
       </Dialog>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑角色</DialogTitle>
-          </DialogHeader>
-          {selectedRole && (
-            <form onSubmit={handleEditRole}>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">角色名称 *</Label>
-                  <Input
-                    id="edit-name"
-                    type="text"
-                    required
-                    value={selectedRole.name}
-                    onChange={(e) =>
-                      setSelectedRole({ ...selectedRole, name: e.target.value })
-                    }
-                    placeholder="例如：管理员、普通用户"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-description">描述</Label>
-                  <Textarea
-                    id="edit-description"
-                    value={selectedRole.description || ""}
-                    onChange={(e) =>
-                      setSelectedRole({
-                        ...selectedRole,
-                        description: e.target.value,
-                      })
-                    }
-                    rows={3}
-                    placeholder="描述这个角色的用途"
-                  />
-                </div>
-              </div>
-
-              <DialogFooter className="mt-6">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedRole(null);
-                  }}
+      {/* 权限管理对话框 */}
+      <Dialog open={showPermissionsModal} onClose={() => setShowPermissionsModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>角色权限 - {selectedRole?.name}</DialogTitle>
+        <DialogContent sx={{ overflow: "auto", maxHeight: "60vh" }}>
+          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>可选权限</Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {allPermissions.map((perm) => {
+              const hasPermission = rolePermissions.some(
+                (p) => p.id === perm.id,
+              );
+              return (
+                <Box
+                  key={perm.id}
+                  sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.100", borderRadius: 2 }}
                 >
-                  取消
-                </Button>
-                <Button type="submit">保存</Button>
-              </DialogFooter>
-            </form>
-          )}
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography sx={{ fontWeight: 500 }}>
+                        {perm.name}
+                      </Typography>
+                      {hasPermission && (
+                        <CheckCircle size={16} color="#2e7d32" />
+                      )}
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {perm.description}
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled">
+                      分类: {perm.category} | 权限码: {perm.code}
+                    </Typography>
+                  </Box>
+                  {hasPermission ? (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="error"
+                      onClick={() =>
+                        selectedRole &&
+                        handleRemovePermission(selectedRole.id, perm.id)
+                      }
+                    >
+                      移除
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() =>
+                        selectedRole &&
+                        handleAddPermission(selectedRole.id, perm.id)
+                      }
+                    >
+                      添加
+                    </Button>
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPermissionsModal(false)}>
+            关闭
+          </Button>
+        </DialogActions>
       </Dialog>
-
-      <Dialog
-        open={showPermissionsModal}
-        onOpenChange={setShowPermissionsModal}
-      >
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>角色权限 - {selectedRole?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="overflow-y-auto max-h-[60vh]">
-            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-              可选权限
-            </h4>
-            <div className="space-y-2">
-              {allPermissions.map((perm) => {
-                const hasPermission = rolePermissions.some(
-                  (p) => p.id === perm.id,
-                );
-                return (
-                  <div
-                    key={perm.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                          {perm.name}
-                        </span>
-                        {hasPermission && (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {perm.description}
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
-                        分类: {perm.category} | 权限码: {perm.code}
-                      </p>
-                    </div>
-                    {hasPermission ? (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 dark:text-red-400"
-                        onClick={() =>
-                          selectedRole &&
-                          handleRemovePermission(selectedRole.id, perm.id)
-                        }
-                      >
-                        移除
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
-                        onClick={() =>
-                          selectedRole &&
-                          handleAddPermission(selectedRole.id, perm.id)
-                        }
-                      >
-                        添加
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowPermissionsModal(false)}
-            >
-              关闭
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </Box>
   );
 };
 

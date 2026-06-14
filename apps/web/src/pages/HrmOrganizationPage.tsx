@@ -1,3 +1,22 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  TextField,
+  InputAdornment,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  Tooltip,
+  Box,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Building,
@@ -23,33 +42,6 @@ import {
 import { useAppStore } from "../store";
 import { HrmLayout } from "../components/HrmLayout";
 import { AIHelperButton, AICodeGenerator } from "../components/ai";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface OrganizationNode {
   id: string;
@@ -168,55 +160,84 @@ const HrmOrganizationPage: React.FC = () => {
 
   const renderTree = (nodes: OrganizationNode[], level: number = 0) => {
     return nodes.map((node) => (
-      <div key={node.id}>
-        <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-slate-100 ${
-            selectedNode?.id === node.id
-              ? "bg-blue-50 text-blue-700"
-              : "text-slate-700"
-          }`}
-          style={{ paddingLeft: `${level * 16 + 12}px` }}
+      <Box key={node.id}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            px: 1.5,
+            py: 1,
+            borderRadius: 1,
+            cursor: "pointer",
+            transition: "background-color 0.2s",
+            bgcolor: selectedNode?.id === node.id ? "primary.50" : "transparent",
+            color: selectedNode?.id === node.id ? "primary.main" : "text.primary",
+            "&:hover": { bgcolor: "grey.100" },
+            pl: `${level * 16 + 12}px`,
+          }}
           onClick={() => handleNodeSelect(node)}
         >
           {node.children && node.children.length > 0 && (
-            <button
-              className="p-0.5 hover:bg-slate-200 rounded"
+            <Box
+              component="button"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleExpand(node.id);
               }}
+              sx={{
+                p: 0.5,
+                border: "none",
+                bgcolor: "transparent",
+                cursor: "pointer",
+                borderRadius: 0.5,
+                display: "flex",
+                alignItems: "center",
+                "&:hover": { bgcolor: "grey.200" },
+              }}
             >
               <ChevronRight
-                className={`w-4 h-4 transition-transform ${expandedIds.has(node.id) ? "rotate-90" : ""}`}
+                style={{
+                  width: 16,
+                  height: 16,
+                  transform: expandedIds.has(node.id) ? "rotate(90deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }}
               />
-            </button>
+            </Box>
           )}
           {node.children && node.children.length === 0 && (
-            <span className="w-5" />
+            <Box sx={{ width: 20 }} />
           )}
           {node.type === "company" ? (
-            <Building className="w-4 h-4 text-blue-500" />
+            <Building style={{ width: 16, height: 16, color: "primary.main" }} />
           ) : (
-            <Building2 className="w-4 h-4 text-green-500" />
+            <Building2 style={{ width: 16, height: 16, color: "success.main" }} />
           )}
-          <span className="font-medium text-sm">{node.name}</span>
+          <Box sx={{ fontWeight: 500, fontSize: "0.875rem" }}>{node.name}</Box>
           {node.type === "company" && (
-            <Badge variant="outline" className="ml-auto text-xs">
-              {getCompanyEmployeeCount(node.companyId!)} 人
-            </Badge>
+            <Chip
+              size="small"
+              variant="outlined"
+              label={`${getCompanyEmployeeCount(node.companyId!)} 人`}
+              sx={{ ml: "auto", fontSize: "0.75rem" }}
+            />
           )}
           {node.type === "department" && (
-            <Badge variant="outline" className="ml-auto text-xs">
-              {getDeptEmployeeCount(node.id.replace("dept-", ""))} 人
-            </Badge>
+            <Chip
+              size="small"
+              variant="outlined"
+              label={`${getDeptEmployeeCount(node.id.replace("dept-", ""))} 人`}
+              sx={{ ml: "auto", fontSize: "0.75rem" }}
+            />
           )}
-        </div>
+        </Box>
         {node.children &&
           node.children.length > 0 &&
           expandedIds.has(node.id) && (
-            <div>{renderTree(node.children, level + 1)}</div>
+            <Box>{renderTree(node.children, level + 1)}</Box>
           )}
-      </div>
+      </Box>
     ));
   };
 
@@ -509,196 +530,201 @@ const HrmOrganizationPage: React.FC = () => {
 
   return (
     <HrmLayout>
-      <div className="flex h-[calc(100vh-72px)]">
-        <div className="w-80 border-r border-slate-200 bg-white flex flex-col">
-          <div className="p-4 border-b border-slate-200">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-slate-800">组织架构</h2>
-              <Button size="sm" onClick={handleCreateCompany}>
-                <Plus className="w-4 h-4" />
+      <Box sx={{ display: "flex", height: "calc(100vh - 72px)" }}>
+        <Box sx={{ width: 320, borderRight: 1, borderColor: "divider", bgcolor: "background.paper", display: "flex", flexDirection: "column" }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>组织架构</Typography>
+              <Button size="small" onClick={handleCreateCompany} startIcon={<Plus className="w-4 h-4" />}>
+                新增
               </Button>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="搜索公司或部门..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
+            </Box>
+            <TextField
+              size="small"
+              fullWidth
+              placeholder="搜索公司或部门..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search className="w-4 h-4 text-grey-400" />
+                    </InputAdornment>
+                  ),
+                }
+              }}
+            />
+          </Box>
 
-          <div className="flex-1 overflow-y-auto p-2">
+          <Box sx={{ flex: 1, overflowY: "auto", p: 1 }}>
             {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />
-              </div>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 128 }}>
+                <Box sx={{ animation: "spin 1s linear infinite", display: "flex", alignItems: "center" }}>
+                  <RefreshCw className="w-5 h-5 text-primary.main" />
+                </Box>
+              </Box>
             ) : filteredTreeData.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
+              <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
                 <Building className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>暂无组织架构数据</p>
-              </div>
+                <Typography>暂无组织架构数据</Typography>
+              </Box>
             ) : (
               renderTree(filteredTreeData)
             )}
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        <div className="flex-1 flex flex-col">
-          <div className="p-4 border-b border-slate-200 bg-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", bgcolor: "background.paper" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 {selectedNode ? (
                   <>
                     {selectedNode.type === "company" ? (
-                      <Building className="w-6 h-6 text-blue-500" />
+                      <Building style={{ width: 24, height: 24, color: "primary.main" }} />
                     ) : (
-                      <Building2 className="w-6 h-6 text-green-500" />
+                      <Building2 style={{ width: 24, height: 24, color: "success.main" }} />
                     )}
-                    <div>
-                      <h2 className="font-semibold text-slate-800">
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         {selectedNode.name}
-                      </h2>
-                      <p className="text-sm text-slate-500">
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
                         {selectedNode.type === "company" ? "公司" : "部门"}
-                      </p>
-                    </div>
+                      </Typography>
+                    </Box>
                   </>
                 ) : (
-                  <div>
-                    <h2 className="font-semibold text-slate-800">请选择组织</h2>
-                    <p className="text-sm text-slate-500">
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>请选择组织</Typography>
+                    <Typography variant="body2" color="text.secondary">
                       在左侧选择公司或部门查看详情
-                    </p>
-                  </div>
+                    </Typography>
+                  </Box>
                 )}
-              </div>
+              </Box>
 
               {selectedNode && (
-                <div className="flex items-center gap-2">
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="outlined"
+                    size="small"
                     onClick={
                       selectedNode.type === "company"
                         ? handleViewCompany
                         : handleViewDepartment
                     }
+                    startIcon={<Eye className="w-4 h-4" />}
                   >
-                    <Eye className="w-4 h-4" />
                     查看
                   </Button>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="outlined"
+                    size="small"
                     onClick={
                       selectedNode.type === "company"
                         ? handleEditCompany
                         : handleEditDepartment
                     }
+                    startIcon={<Edit className="w-4 h-4" />}
                   >
-                    <Edit className="w-4 h-4" />
                     编辑
                   </Button>
                   {selectedNode.type === "department" && (
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="outlined"
+                      size="small"
                       onClick={handleCreateDepartment}
+                      startIcon={<Plus className="w-4 h-4" />}
                     >
-                      <Plus className="w-4 h-4" />
                       添加子部门
                     </Button>
                   )}
                   <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-500 hover:text-red-600"
+                    variant="outlined"
+                    size="small"
+                    sx={{ color: "error.main", borderColor: "error.main", "&:hover": { borderColor: "error.dark", color: "error.dark" } }}
                     onClick={
                       selectedNode.type === "company"
                         ? handleDeleteCompany
                         : handleDeleteDepartment
                     }
+                    startIcon={<Trash2 className="w-4 h-4" />}
                   >
-                    <Trash2 className="w-4 h-4" />
                     删除
                   </Button>
-                </div>
+                </Box>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
+          <Box sx={{ flex: 1, overflowY: "auto", p: 2, bgcolor: "grey.50" }}>
             {selectedNode ? (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
                     <Users className="w-5 h-5" />
                     员工列表
-                  </CardTitle>
+                  </Typography>
                 </CardHeader>
                 <CardContent>
                   {employees.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400">
+                    <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
                       <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>暂无员工</p>
-                    </div>
+                      <Typography>暂无员工</Typography>
+                    </Box>
                   ) : (
-                    <div className="space-y-3">
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                       {employees.map((emp) => (
-                        <div
+                        <Box
                           key={emp.id}
-                          className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                          sx={{ display: "flex", alignItems: "center", gap: 2, p: 1.5, bgcolor: "grey.50", borderRadius: 1, "&:hover": { bgcolor: "grey.100" } }}
                         >
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-blue-500" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-slate-800">
-                              {emp.name}
-                            </p>
-                            <p className="text-sm text-slate-500">
+                          <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "primary.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Users className="w-5 h-5 text-primary.main" />
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography sx={{ fontWeight: 500 }}>{emp.name}</Typography>
+                            <Typography variant="body2" color="text.secondary">
                               {emp.position || "无职位"}
-                            </p>
-                          </div>
-                          <Badge variant="outline">
-                            {emp.status === "active" ? "在职" : "离职"}
-                          </Badge>
-                        </div>
+                            </Typography>
+                          </Box>
+                          <Chip size="small" variant="outlined" label={emp.status === "active" ? "在职" : "离职"} />
+                        </Box>
                       ))}
-                    </div>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
             ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center text-slate-400">
-                  <Building className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">选择一个组织</p>
-                  <p className="text-sm">在左侧树形结构中选择公司或部门</p>
-                </div>
-              </div>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                <Box sx={{ textAlign: "center", color: "text.secondary" }}>
+                  <Building className="w-16 h-16 mx-auto mb-3 opacity-50" />
+                  <Typography variant="h6" sx={{ fontWeight: 500 }}>选择一个组织</Typography>
+                  <Typography variant="body2">在左侧树形结构中选择公司或部门</Typography>
+                </Box>
+              </Box>
             )}
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
 
-      <Dialog open={showCompanyModal} onOpenChange={setShowCompanyModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {modalMode === "create"
-                ? "创建公司"
-                : modalMode === "edit"
-                  ? "编辑公司"
-                  : "查看公司"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>公司名称</Label>
-              <Input
+      <Dialog open={showCompanyModal} onClose={() => setShowCompanyModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {modalMode === "create"
+            ? "创建公司"
+            : modalMode === "edit"
+              ? "编辑公司"
+              : "查看公司"}
+        </DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司名称</InputLabel>
+              <TextField
+                fullWidth
+                size="small"
                 value={companyFormData.name || ""}
                 onChange={(e) =>
                   setCompanyFormData({
@@ -709,10 +735,12 @@ const HrmOrganizationPage: React.FC = () => {
                 disabled={modalMode === "view"}
                 placeholder="请输入公司名称"
               />
-            </div>
-            <div>
-              <Label>公司简称</Label>
-              <Input
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司简称</InputLabel>
+              <TextField
+                fullWidth
+                size="small"
                 value={companyFormData.short_name || ""}
                 onChange={(e) =>
                   setCompanyFormData({
@@ -723,10 +751,12 @@ const HrmOrganizationPage: React.FC = () => {
                 disabled={modalMode === "view"}
                 placeholder="请输入公司简称"
               />
-            </div>
-            <div>
-              <Label>公司地址</Label>
-              <Input
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司地址</InputLabel>
+              <TextField
+                fullWidth
+                size="small"
                 value={companyFormData.address || ""}
                 onChange={(e) =>
                   setCompanyFormData({
@@ -737,10 +767,14 @@ const HrmOrganizationPage: React.FC = () => {
                 disabled={modalMode === "view"}
                 placeholder="请输入公司地址"
               />
-            </div>
-            <div>
-              <Label>公司描述</Label>
-              <Textarea
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司描述</InputLabel>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={3}
                 value={companyFormData.description || ""}
                 onChange={(e) =>
                   setCompanyFormData({
@@ -751,57 +785,56 @@ const HrmOrganizationPage: React.FC = () => {
                 disabled={modalMode === "view"}
                 placeholder="请输入公司描述"
               />
-            </div>
-            <div>
-              <Label>状态</Label>
-              <Select
-                value={companyFormData.status || ""}
-                onValueChange={(value) =>
-                  setCompanyFormData({
-                    ...companyFormData,
-                    status: value as "active" | "inactive",
-                  })
-                }
-                disabled={modalMode === "view"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">启用</SelectItem>
-                  <SelectItem value="inactive">禁用</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
+              <FormControl fullWidth size="small">
+                <MuiSelect
+                  value={companyFormData.status || ""}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      status: e.target.value as "active" | "inactive",
+                    })
+                  }
+                  disabled={modalMode === "view"}
+                >
+                  <MenuItem value="active">启用</MenuItem>
+                  <MenuItem value="inactive">禁用</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}>
             {modalMode !== "view" && (
-              <Button onClick={handleSaveCompany}>
+              <Button onClick={handleSaveCompany} variant="contained">
                 {modalMode === "create" ? "创建" : "保存"}
               </Button>
             )}
             {modalMode === "view" && (
-              <Button onClick={() => setShowCompanyModal(false)}>关闭</Button>
+              <Button onClick={() => setShowCompanyModal(false)} variant="contained">
+                关闭
+              </Button>
             )}
-          </DialogFooter>
+          </Box>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDeptModal} onOpenChange={setShowDeptModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {modalMode === "create"
-                ? "创建部门"
-                : modalMode === "edit"
-                  ? "编辑部门"
-                  : "查看部门"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>部门名称</Label>
-              <Input
+      <Dialog open={showDeptModal} onClose={() => setShowDeptModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {modalMode === "create"
+            ? "创建部门"
+            : modalMode === "edit"
+              ? "编辑部门"
+              : "查看部门"}
+        </DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>部门名称</InputLabel>
+              <TextField
+                fullWidth
+                size="small"
                 value={deptFormData.name || ""}
                 onChange={(e) =>
                   setDeptFormData({ ...deptFormData, name: e.target.value })
@@ -809,11 +842,13 @@ const HrmOrganizationPage: React.FC = () => {
                 disabled={modalMode === "view"}
                 placeholder="请输入部门名称"
               />
-            </div>
-            <div>
-              <Label>部门编码</Label>
-              <div className="flex gap-2">
-                <Input
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>部门编码</InputLabel>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
                   value={deptFormData.code || ""}
                   onChange={(e) =>
                     setDeptFormData({ ...deptFormData, code: e.target.value })
@@ -826,38 +861,39 @@ const HrmOrganizationPage: React.FC = () => {
                   onClick={() => setShowAICodeGenerator(true)}
                   size="sm"
                   label="AI生成"
-                  variant="secondary"
+                  variant="default"
                 />
-              </div>
-            </div>
-            <div>
-              <Label>上级部门</Label>
-              <Select
-                value={deptFormData.parent_id || "none"}
-                onValueChange={(value) =>
-                  setDeptFormData({
-                    ...deptFormData,
-                    parent_id: value === "none" ? undefined : value,
-                  })
-                }
-                disabled={modalMode === "view"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择上级部门（可选）" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">无上级部门</SelectItem>
+              </Box>
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>上级部门</InputLabel>
+              <FormControl fullWidth size="small">
+                <MuiSelect
+                  value={deptFormData.parent_id || "none"}
+                  onChange={(e) =>
+                    setDeptFormData({
+                      ...deptFormData,
+                      parent_id: e.target.value === "none" ? undefined : e.target.value as string,
+                    })
+                  }
+                  disabled={modalMode === "view"}
+                >
+                  <MenuItem value="none">无上级部门</MenuItem>
                   {availableParentDepts.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
+                    <MenuItem key={dept.id} value={dept.id}>
                       {dept.name}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>部门描述</Label>
-              <Textarea
+                </MuiSelect>
+              </FormControl>
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>部门描述</InputLabel>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={3}
                 value={deptFormData.description || ""}
                 onChange={(e) =>
                   setDeptFormData({
@@ -868,39 +904,38 @@ const HrmOrganizationPage: React.FC = () => {
                 disabled={modalMode === "view"}
                 placeholder="请输入部门描述"
               />
-            </div>
-            <div>
-              <Label>状态</Label>
-              <Select
-                value={deptFormData.status || ""}
-                onValueChange={(value) =>
-                  setDeptFormData({
-                    ...deptFormData,
-                    status: value as "active" | "inactive",
-                  })
-                }
-                disabled={modalMode === "view"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">启用</SelectItem>
-                  <SelectItem value="inactive">禁用</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
+              <FormControl fullWidth size="small">
+                <MuiSelect
+                  value={deptFormData.status || ""}
+                  onChange={(e) =>
+                    setDeptFormData({
+                      ...deptFormData,
+                      status: e.target.value as "active" | "inactive",
+                    })
+                  }
+                  disabled={modalMode === "view"}
+                >
+                  <MenuItem value="active">启用</MenuItem>
+                  <MenuItem value="inactive">禁用</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}>
             {modalMode !== "view" && (
-              <Button onClick={handleSaveDepartment}>
+              <Button onClick={handleSaveDepartment} variant="contained">
                 {modalMode === "create" ? "创建" : "保存"}
               </Button>
             )}
             {modalMode === "view" && (
-              <Button onClick={() => setShowDeptModal(false)}>关闭</Button>
+              <Button onClick={() => setShowDeptModal(false)} variant="contained">
+                关闭
+              </Button>
             )}
-          </DialogFooter>
+          </Box>
         </DialogContent>
       </Dialog>
 

@@ -13,18 +13,20 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { limsApi } from "../../api/lims";
@@ -86,21 +88,22 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { color: string; label: string }> = {
-      normal: { color: "bg-green-100 text-green-700", label: "正常" },
-      正常: { color: "bg-green-100 text-green-700", label: "正常" },
-      calibration: { color: "bg-yellow-100 text-yellow-700", label: "校准中" },
-      校准中: { color: "bg-yellow-100 text-yellow-700", label: "校准中" },
-      maintenance: { color: "bg-red-100 text-red-700", label: "维修中" },
-      维修中: { color: "bg-red-100 text-red-700", label: "维修中" },
-      disabled: { color: "bg-gray-100 text-gray-700", label: "停用" },
-      停用: { color: "bg-gray-100 text-gray-700", label: "停用" },
+    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
+      normal: { bg: '#dcfce7', color: '#16a34a', label: "正常" },
+      正常: { bg: '#dcfce7', color: '#16a34a', label: "正常" },
+      calibration: { bg: '#fef9c3', color: '#ca8a04', label: "校准中" },
+      校准中: { bg: '#fef9c3', color: '#ca8a04', label: "校准中" },
+      maintenance: { bg: '#fee2e2', color: '#dc2626', label: "维修中" },
+      维修中: { bg: '#fee2e2', color: '#dc2626', label: "维修中" },
+      disabled: { bg: '#f3f4f6', color: '#4b5563', label: "停用" },
+      停用: { bg: '#f3f4f6', color: '#4b5563', label: "停用" },
     };
     const item = statusMap[status] || {
-      color: "bg-gray-100 text-gray-700",
+      bg: '#f3f4f6',
+      color: '#4b5563',
       label: status,
     };
-    return <Badge className={item.color}>{item.label}</Badge>;
+    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
   };
 
   const handleCreateMaintenance = async () => {
@@ -196,9 +199,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       accessorKey: "maintenance_type",
       header: "维护类型",
       cell: ({ row }) => (
-        <Badge className="bg-blue-100 text-blue-700">
-          {row.original.maintenance_type || "-"}
-        </Badge>
+        <Chip label={row.original.maintenance_type || "-"} size="small" sx={{ backgroundColor: '#dbeafe', color: '#2563eb' }} />
       ),
     },
     { accessorKey: "performed_by", header: "维护人员" },
@@ -226,23 +227,21 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
-            variant="ghost"
-            size="icon"
+            variant="text"
+            size="small"
             onClick={() => openEditModal(row.original)}
-          >
-            <Edit3 className="w-4 h-4" />
-          </Button>
+            startIcon={<Box component={Edit3} sx={{ fontSize: 16 }} />}
+          />
           <Button
-            variant="ghost"
-            size="icon"
-            className="text-red-500"
+            variant="text"
+            size="small"
+            sx={{ color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2' } }}
             onClick={() => handleDeleteMaintenance(row.original.id)}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
+            startIcon={<Box component={Trash2} sx={{ fontSize: 16 }} />}
+          />
+        </Box>
       ),
     },
   ];
@@ -284,12 +283,11 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Button
-                variant="ghost"
-                size="icon"
+                variant="text"
                 onClick={() => navigate("/lims")}
-                className="h-8 w-8"
+                sx={{ minWidth: 32, height: 32 }}
               >
-                <ArrowLeft className="w-4 h-4" />
+                <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
               </Button>
               <div>
                 <h1 className="text-xl font-bold text-slate-900">
@@ -313,11 +311,11 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <Wrench className="w-5 h-5 text-teal-600" />
+              <CardHeader sx={{ pb: 1 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box component={Wrench} sx={{ fontSize: 20, color: '#14b8a6' }} />
                   仪器信息
-                </CardTitle>
+                </Typography>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-start">
@@ -395,11 +393,11 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
+              <CardHeader sx={{ pb: 1 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box component={DollarSign} sx={{ fontSize: 20, color: '#16a34a' }} />
                   维护统计
-                </CardTitle>
+                </Typography>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -432,14 +430,14 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
 
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-600" />
+              <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box component={FileText} sx={{ fontSize: 20, color: '#2563eb' }} />
                   维护记录列表
-                </CardTitle>
-                <span className="text-sm text-slate-500">
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   共 {maintenanceRecords.length} 条记录
-                </span>
+                </Typography>
               </CardHeader>
               <CardContent>
                 {maintenanceRecords.length > 0 ? (
@@ -453,12 +451,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
                     <p>暂无维护记录</p>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-4"
+                      variant="outlined"
+                      size="small"
+                      sx={{ mt: 2 }}
                       onClick={() => setShowAddModal(true)}
+                      startIcon={<Box component={Plus} sx={{ fontSize: 12 }} />}
                     >
-                      <Plus className="w-3 h-3 mr-1" />
                       添加第一条记录
                     </Button>
                   </div>
@@ -469,15 +467,13 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         </div>
       </main>
 
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>添加维护记录</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>维护类型 *</Label>
+      <Dialog open={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>添加维护记录</DialogTitle>
+        <DialogContent>
+          <Box className="space-y-4" sx={{ mt: 1 }}>
+            <Box className="grid grid-cols-2 gap-4">
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>维护类型 *</Box>
                 <select
                   value={formData.maintenance_type}
                   onChange={(e) =>
@@ -486,7 +482,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                       maintenance_type: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                 >
                   <option value="">请选择类型</option>
                   <option value="定期维护">定期维护</option>
@@ -494,10 +490,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   <option value="校准">校准</option>
                   <option value="升级改造">升级改造</option>
                 </select>
-              </div>
-              <div>
-                <Label>维护人员 *</Label>
-                <Input
+              </Box>
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>维护人员 *</Box>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.performed_by}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -507,13 +505,15 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   }
                   placeholder="请输入维护人员"
                 />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>维护日期 *</Label>
-                <Input
+              </Box>
+            </Box>
+            <Box className="grid grid-cols-2 gap-4">
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>维护日期 *</Box>
+                <TextField
                   type="date"
+                  size="small"
+                  fullWidth
                   value={formData.performed_at}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -522,11 +522,13 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     }))
                   }
                 />
-              </div>
-              <div>
-                <Label>下次维护日期</Label>
-                <Input
+              </Box>
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>下次维护日期</Box>
+                <TextField
                   type="date"
+                  size="small"
+                  fullWidth
                   value={formData.next_maintenance_date}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -535,21 +537,23 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     }))
                   }
                 />
-              </div>
-            </div>
-            <div>
-              <Label>费用 (元)</Label>
-              <Input
+              </Box>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>费用 (元)</Box>
+              <TextField
                 type="number"
+                size="small"
+                fullWidth
                 value={formData.cost}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, cost: e.target.value }))
                 }
                 placeholder="0.00"
               />
-            </div>
-            <div>
-              <Label>维护描述</Label>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>维护描述</Box>
               <textarea
                 value={formData.description}
                 onChange={(e) =>
@@ -559,39 +563,35 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   }))
                 }
                 placeholder="请描述维护内容..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-24"
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
               />
-            </div>
-            <div>
-              <Label>备注</Label>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>备注</Box>
               <textarea
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, notes: e.target.value }))
                 }
                 placeholder="其他备注信息..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-16"
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '64px' }}
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowAddModal(false)}>
-              取消
-            </Button>
-            <Button onClick={handleCreateMaintenance}>保存记录</Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowAddModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleCreateMaintenance}>保存记录</Button>
+        </DialogActions>
       </Dialog>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑维护记录</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>维护类型 *</Label>
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>编辑维护记录</DialogTitle>
+        <DialogContent>
+          <Box className="space-y-4" sx={{ mt: 1 }}>
+            <Box className="grid grid-cols-2 gap-4">
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>维护类型 *</Box>
                 <select
                   value={formData.maintenance_type}
                   onChange={(e) =>
@@ -600,7 +600,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                       maintenance_type: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                 >
                   <option value="">请选择类型</option>
                   <option value="定期维护">定期维护</option>
@@ -608,10 +608,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   <option value="校准">校准</option>
                   <option value="升级改造">升级改造</option>
                 </select>
-              </div>
-              <div>
-                <Label>维护人员 *</Label>
-                <Input
+              </Box>
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>维护人员 *</Box>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.performed_by}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -621,13 +623,15 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   }
                   placeholder="请输入维护人员"
                 />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>维护日期 *</Label>
-                <Input
+              </Box>
+            </Box>
+            <Box className="grid grid-cols-2 gap-4">
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>维护日期 *</Box>
+                <TextField
                   type="date"
+                  size="small"
+                  fullWidth
                   value={formData.performed_at}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -636,11 +640,13 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     }))
                   }
                 />
-              </div>
-              <div>
-                <Label>下次维护日期</Label>
-                <Input
+              </Box>
+              <Box>
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>下次维护日期</Box>
+                <TextField
                   type="date"
+                  size="small"
+                  fullWidth
                   value={formData.next_maintenance_date}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -649,21 +655,23 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     }))
                   }
                 />
-              </div>
-            </div>
-            <div>
-              <Label>费用 (元)</Label>
-              <Input
+              </Box>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>费用 (元)</Box>
+              <TextField
                 type="number"
+                size="small"
+                fullWidth
                 value={formData.cost}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, cost: e.target.value }))
                 }
                 placeholder="0.00"
               />
-            </div>
-            <div>
-              <Label>维护描述</Label>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>维护描述</Box>
               <textarea
                 value={formData.description}
                 onChange={(e) =>
@@ -673,28 +681,26 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   }))
                 }
                 placeholder="请描述维护内容..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-24"
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
               />
-            </div>
-            <div>
-              <Label>备注</Label>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>备注</Box>
               <textarea
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, notes: e.target.value }))
                 }
                 placeholder="其他备注信息..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-16"
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '64px' }}
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-              取消
-            </Button>
-            <Button onClick={handleUpdateMaintenance}>保存更改</Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowEditModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleUpdateMaintenance}>保存更改</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

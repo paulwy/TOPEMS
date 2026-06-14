@@ -236,13 +236,9 @@ const RsExperimentListPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面标题和操作栏 */}
       <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-        >
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
+            <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
               试验管理
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -272,19 +268,19 @@ const RsExperimentListPage: React.FC = () => {
 
       {/* 搜索和筛选 */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
           <TextField
             placeholder="搜索试验名称或编码..."
             size="small"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
+            slotProps={{ input: {
               startAdornment: (
                 <InputAdornment position="start">
                   <SearchIcon />
                 </InputAdornment>
               ),
-            }}
+             } }}
             sx={{ width: 300 }}
           />
           <Button
@@ -358,7 +354,7 @@ const RsExperimentListPage: React.FC = () => {
               .map((exp) => (
                 <TableRow key={exp.id} hover>
                   <TableCell>
-                    <Typography variant="body2" fontWeight="medium">
+                    <Typography variant="body2" sx={{ fontWeight: "medium" }}>
                       {exp.code}
                     </Typography>
                   </TableCell>
@@ -386,7 +382,7 @@ const RsExperimentListPage: React.FC = () => {
                   <TableCell>{exp.started_at}</TableCell>
                   <TableCell>{exp.batch_number || "-"}</TableCell>
                   <TableCell align="center">
-                    <Stack direction="row" spacing={1} justifyContent="center">
+                    <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
                       <Tooltip title="查看详情">
                         <IconButton
                           size="small"

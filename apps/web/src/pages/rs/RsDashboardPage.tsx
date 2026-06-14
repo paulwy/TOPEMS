@@ -120,7 +120,7 @@ const RsDashboardPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <div style={{ marginBottom: 16 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
           研发管理平台
         </Typography>
         <Typography variant="body2" color="text.secondary">

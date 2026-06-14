@@ -22,6 +22,7 @@ import {
   Divider,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemIcon,
   Avatar,
@@ -294,14 +295,10 @@ const RsProjectDetailPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面头部 */}
       <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
-        >
+        <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography variant="h4" fontWeight="bold">
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                 {project.name}
               </Typography>
               <Chip
@@ -341,7 +338,7 @@ const RsProjectDetailPage: React.FC = () => {
 
       {/* 项目概览卡片 */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -352,7 +349,7 @@ const RsProjectDetailPage: React.FC = () => {
               </Typography>
               <Divider sx={{ my: 2 }} />
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <div
                     style={{
                       display: "flex",
@@ -367,7 +364,7 @@ const RsProjectDetailPage: React.FC = () => {
                     </Typography>
                   </div>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <div
                     style={{
                       display: "flex",
@@ -382,7 +379,7 @@ const RsProjectDetailPage: React.FC = () => {
                     </Typography>
                   </div>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <div
                     style={{
                       display: "flex",
@@ -397,7 +394,7 @@ const RsProjectDetailPage: React.FC = () => {
                     </Typography>
                   </div>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <div
                     style={{
                       display: "flex",
@@ -417,7 +414,7 @@ const RsProjectDetailPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -426,7 +423,7 @@ const RsProjectDetailPage: React.FC = () => {
               <div
                 style={{ textAlign: "center", paddingTop: 8, paddingBottom: 8 }}
               >
-                <Typography variant="h3" fontWeight="bold" color="primary">
+                <Typography variant="h3" sx={{ fontWeight: "bold" }} color="primary">
                   {project.progress}%
                 </Typography>
                 <LinearProgress
@@ -445,7 +442,7 @@ const RsProjectDetailPage: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2">已完成阶段</Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                     {phases.filter((p) => p.status === "已完成").length}/
                     {phases.length}
                   </Typography>
@@ -458,7 +455,7 @@ const RsProjectDetailPage: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2">已完成里程碑</Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                     {milestones.filter((m) => m.status === "已完成").length}/
                     {milestones.length}
                   </Typography>
@@ -471,7 +468,7 @@ const RsProjectDetailPage: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2">试验记录</Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                     {experiments.length}
                   </Typography>
                 </div>
@@ -568,7 +565,7 @@ const RsProjectDetailPage: React.FC = () => {
                   </TimelineSeparator>
                   <TimelineContent>
                     <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
+                      <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
                         {milestone.name}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -644,21 +641,21 @@ const RsProjectDetailPage: React.FC = () => {
           {/* 团队成员 */}
           {activeTab === 3 && (
             <List>
-              <ListItem>
+              <ListItemButton>
                 <ListItemIcon>
                   <Avatar>{project.leader[0]}</Avatar>
                 </ListItemIcon>
                 <ListItemText primary={project.leader} secondary="项目负责人" />
                 <Chip label="负责人" color="primary" size="small" />
-              </ListItem>
+              </ListItemButton>
               {project.team_members.map((member, index) => (
-                <ListItem key={index}>
+                <ListItemButton key={index}>
                   <ListItemIcon>
                     <Avatar>{member[0]}</Avatar>
                   </ListItemIcon>
                   <ListItemText primary={member} secondary="团队成员" />
                   <Chip label="成员" variant="outlined" size="small" />
-                </ListItem>
+                </ListItemButton>
               ))}
             </List>
           )}
@@ -666,19 +663,19 @@ const RsProjectDetailPage: React.FC = () => {
           {/* 文档资料 */}
           {activeTab === 4 && (
             <List>
-              <ListItem button>
+              <ListItemButton>
                 <ListItemIcon>
                   <DescriptionIcon />
                 </ListItemIcon>
                 <ListItemText primary="项目立项报告" secondary="2024-01-20" />
-              </ListItem>
-              <ListItem button>
+              </ListItemButton>
+              <ListItemButton>
                 <ListItemIcon>
                   <DescriptionIcon />
                 </ListItemIcon>
                 <ListItemText primary="技术方案设计书" secondary="2024-03-15" />
-              </ListItem>
-              <ListItem button>
+              </ListItemButton>
+              <ListItemButton>
                 <ListItemIcon>
                   <DescriptionIcon />
                 </ListItemIcon>
@@ -686,8 +683,8 @@ const RsProjectDetailPage: React.FC = () => {
                   primary="小试阶段总结报告"
                   secondary="2024-06-30"
                 />
-              </ListItem>
-              <ListItem button>
+              </ListItemButton>
+              <ListItemButton>
                 <ListItemIcon>
                   <DescriptionIcon />
                 </ListItemIcon>
@@ -695,7 +692,7 @@ const RsProjectDetailPage: React.FC = () => {
                   primary="中试阶段进度报告"
                   secondary="2024-08-15"
                 />
-              </ListItem>
+              </ListItemButton>
             </List>
           )}
         </div>

@@ -9,7 +9,12 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Box,
+  Tabs,
+  Tab,
+  Typography,
+} from "@mui/material";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 const CRMDashboardPage = lazy(() => import("./CRMDashboardPage"));
@@ -29,340 +34,302 @@ const LazyLoad = ({ children }: { children: React.ReactNode }) => (
 );
 
 const CRMPage: React.FC = () => {
+  const [tabValue, setTabValue] = useState(0);
+
+  const tabs = [
+    { value: "dashboard", label: "仪表板", icon: LayoutDashboard },
+    { value: "customers", label: "客户", icon: Building2 },
+    { value: "contacts", label: "联系人", icon: Users },
+    { value: "opportunities", label: "商机", icon: Target },
+    { value: "interactions", label: "交互记录", icon: MessageSquare },
+    { value: "scoring", label: "客户评分", icon: Award },
+    { value: "forecast", label: "销售预测", icon: TrendingUp },
+    { value: "finance", label: "财务", icon: Wallet },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">客户关系管理</h1>
-          <p className="mt-2 text-muted-foreground">
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>客户关系管理</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             管理客户、联系人、商机和交互记录
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 lg:w-auto lg:inline-grid">
-            <TabsTrigger
-              value="dashboard"
-              className="flex items-center space-x-2"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden sm:inline">仪表板</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="customers"
-              className="flex items-center space-x-2"
-            >
-              <Building2 className="w-4 h-4" />
-              <span className="hidden sm:inline">客户</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="contacts"
-              className="flex items-center space-x-2"
-            >
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">联系人</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="opportunities"
-              className="flex items-center space-x-2"
-            >
-              <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">商机</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="interactions"
-              className="flex items-center space-x-2"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">交互记录</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="scoring"
-              className="flex items-center space-x-2"
-            >
-              <Award className="w-4 h-4" />
-              <span className="hidden sm:inline">客户评分</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="forecast"
-              className="flex items-center space-x-2"
-            >
-              <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">销售预测</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="finance"
-              className="flex items-center space-x-2"
-            >
-              <Wallet className="w-4 h-4" />
-              <span className="hidden sm:inline">财务</span>
-            </TabsTrigger>
-          </TabsList>
+        <Tabs
+          value={tabValue}
+          onChange={(_, newValue) => setTabValue(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ mb: 3 }}
+        >
+          {tabs.map((tab, index) => (
+            <Tab
+              key={tab.value}
+              label={tab.label}
+              icon={<tab.icon className="w-4 h-4" />}
+              iconPosition="start"
+              id={`crm-tab-${index}`}
+            />
+          ))}
+        </Tabs>
 
-          <TabsContent value="dashboard">
+        <Box role="tabpanel" hidden={tabValue !== 0}>
+          {tabValue === 0 && (
             <LazyLoad>
               <CRMDashboardPage />
             </LazyLoad>
-          </TabsContent>
+          )}
+        </Box>
 
-          <TabsContent value="customers">
+        <Box role="tabpanel" hidden={tabValue !== 1}>
+          {tabValue === 1 && (
             <LazyLoad>
               <CustomerManagementPage />
             </LazyLoad>
-          </TabsContent>
+          )}
+        </Box>
 
-          <TabsContent value="contacts">
+        <Box role="tabpanel" hidden={tabValue !== 2}>
+          {tabValue === 2 && (
             <LazyLoad>
               <ContactManagementPage />
             </LazyLoad>
-          </TabsContent>
+          )}
+        </Box>
 
-          <TabsContent value="opportunities">
+        <Box role="tabpanel" hidden={tabValue !== 3}>
+          {tabValue === 3 && (
             <LazyLoad>
               <OpportunityManagementPage />
             </LazyLoad>
-          </TabsContent>
+          )}
+        </Box>
 
-          <TabsContent value="interactions">
+        <Box role="tabpanel" hidden={tabValue !== 4}>
+          {tabValue === 4 && (
             <LazyLoad>
               <InteractionManagementPage />
             </LazyLoad>
-          </TabsContent>
+          )}
+        </Box>
 
-          <TabsContent value="scoring">
+        <Box role="tabpanel" hidden={tabValue !== 5}>
+          {tabValue === 5 && (
             <LazyLoad>
               <CRMCustomerScoringPage />
             </LazyLoad>
-          </TabsContent>
+          )}
+        </Box>
 
-          <TabsContent value="forecast">
+        <Box role="tabpanel" hidden={tabValue !== 6}>
+          {tabValue === 6 && (
             <LazyLoad>
               <CRMSalesForecastPage />
             </LazyLoad>
-          </TabsContent>
+          )}
+        </Box>
 
-          <TabsContent value="finance">
-            <CrmFinanceTab />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+        <Box role="tabpanel" hidden={tabValue !== 7}>
+          {tabValue === 7 && <CrmFinanceTab />}
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
 // CRM财务Tab组件
 const CrmFinanceTab: React.FC = () => {
-  const [financeTab, setFinanceTab] = useState<
-    "invoices" | "collections" | "aging"
-  >("invoices");
+  const [financeTab, setFinanceTab] = useState<"invoices" | "collections" | "aging">("invoices");
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ mt: 3 }}>
       {/* 子Tab切换 */}
-      <div className="flex space-x-1 bg-slate-50 rounded-lg p-1">
-        <button
+      <Box sx={{ display: "flex", gap: 1, p: 1, bgcolor: "grey.100", borderRadius: 1, mb: 3 }}>
+        <TabButton
+          active={financeTab === "invoices"}
           onClick={() => setFinanceTab("invoices")}
-          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-            financeTab === "invoices"
-              ? "bg-white text-blue-600 shadow-sm"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
         >
           销售发票
-        </button>
-        <button
+        </TabButton>
+        <TabButton
+          active={financeTab === "collections"}
           onClick={() => setFinanceTab("collections")}
-          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-            financeTab === "collections"
-              ? "bg-white text-blue-600 shadow-sm"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
         >
           收款记录
-        </button>
-        <button
+        </TabButton>
+        <TabButton
+          active={financeTab === "aging"}
           onClick={() => setFinanceTab("aging")}
-          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-            financeTab === "aging"
-              ? "bg-white text-blue-600 shadow-sm"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
         >
           账龄分析
-        </button>
-      </div>
+        </TabButton>
+      </Box>
 
       {/* 发票列表 */}
       {financeTab === "invoices" && (
-        <div className="space-y-4">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <p className="text-blue-600 text-sm">
+        <Box sx={{ mt: 3 }}>
+          <Box sx={{ bgcolor: "info.light", borderRadius: 1, p: 2, mb: 3 }}>
+            <Typography variant="body2" color="info.main">
               销售发票模块 - 管理客户销售发票，支持发票开具、作废、红冲等操作
-            </p>
-          </div>
-          <div className="rounded-lg border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+            </Typography>
+          </Box>
+          <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+            <table style={{ width: "100%", fontSize: "0.875rem" }}>
+              <thead style={{ backgroundColor: "#f5f5f5" }}>
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    发票号
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    客户
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    金额
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    税额
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    价税合计
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    发票日期
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    到期日
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-slate-600">
-                    状态
-                  </th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>发票号</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>客户</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>金额</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>税额</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>价税合计</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>发票日期</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>到期日</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 500 }}>状态</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="px-4 py-8 text-center text-slate-400"
-                  >
+                  <td colSpan={8} style={{ padding: "32px 16px", textAlign: "center", color: "text.disabled" }}>
                     暂无发票数据
                   </td>
                 </tr>
               </tbody>
             </table>
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
       {/* 收款记录列表 */}
       {financeTab === "collections" && (
-        <div className="space-y-4">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <p className="text-blue-600 text-sm">
+        <Box sx={{ mt: 3 }}>
+          <Box sx={{ bgcolor: "info.light", borderRadius: 1, p: 2, mb: 3 }}>
+            <Typography variant="body2" color="info.main">
               收款记录模块 - 记录客户收款信息，支持收款确认、批量确认等操作
-            </p>
-          </div>
-          <div className="rounded-lg border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+            </Typography>
+          </Box>
+          <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+            <table style={{ width: "100%", fontSize: "0.875rem" }}>
+              <thead style={{ backgroundColor: "#f5f5f5" }}>
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    收款单号
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    客户
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    收款金额
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    收款方式
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    收款日期
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    关联发票
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-slate-600">
-                    状态
-                  </th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>收款单号</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>客户</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>收款金额</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>收款方式</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>收款日期</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>关联发票</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 500 }}>状态</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-slate-400"
-                  >
+                  <td colSpan={7} style={{ padding: "32px 16px", textAlign: "center", color: "text.disabled" }}>
                     暂无收款记录数据
                   </td>
                 </tr>
               </tbody>
             </table>
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
       {/* 账龄分析 */}
       {financeTab === "aging" && (
-        <div className="space-y-4">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <p className="text-blue-600 text-sm">
+        <Box sx={{ mt: 3 }}>
+          <Box sx={{ bgcolor: "info.light", borderRadius: 1, p: 2, mb: 3 }}>
+            <Typography variant="body2" color="info.main">
               应收账龄分析 - 分析客户应收账款账龄，提供逾期预警
-            </p>
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-green-50 rounded-lg p-4">
-              <p className="text-green-600 text-xs">正常</p>
-              <p className="text-2xl font-bold text-green-700 mt-1">¥0</p>
-            </div>
-            <div className="bg-yellow-50 rounded-lg p-4">
-              <p className="text-yellow-600 text-xs">30天内</p>
-              <p className="text-2xl font-bold text-yellow-700 mt-1">¥0</p>
-            </div>
-            <div className="bg-orange-50 rounded-lg p-4">
-              <p className="text-orange-600 text-xs">60天内</p>
-              <p className="text-2xl font-bold text-orange-700 mt-1">¥0</p>
-            </div>
-            <div className="bg-red-50 rounded-lg p-4">
-              <p className="text-red-600 text-xs">90天以上</p>
-              <p className="text-2xl font-bold text-red-700 mt-1">¥0</p>
-            </div>
-          </div>
-          <div className="rounded-lg border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+            </Typography>
+          </Box>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2, mb: 3 }}>
+            <StatCard label="正常" value="¥0" color="success" />
+            <StatCard label="30天内" value="¥0" color="warning" />
+            <StatCard label="60天内" value="¥0" color="warning" />
+            <StatCard label="90天以上" value="¥0" color="error" />
+          </Box>
+          <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+            <table style={{ width: "100%", fontSize: "0.875rem" }}>
+              <thead style={{ backgroundColor: "#f5f5f5" }}>
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    客户
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    应收总额
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    当前
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    30天内
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    60天内
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    90天以上
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-slate-600">
-                    风险等级
-                  </th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>客户</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>应收总额</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>当前</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>30天内</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>60天内</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>90天以上</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 500 }}>风险等级</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-slate-400"
-                  >
+                  <td colSpan={7} style={{ padding: "32px 16px", textAlign: "center", color: "text.disabled" }}>
                     暂无账龄数据
                   </td>
                 </tr>
               </tbody>
             </table>
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Box>
+  );
+};
+
+// Tab按钮组件
+const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({
+  active,
+  onClick,
+  children,
+}) => (
+  <Box
+    onClick={onClick}
+    sx={{
+      flex: 1,
+      px: 2,
+      py: 1,
+      borderRadius: 1,
+      cursor: "pointer",
+      textAlign: "center",
+      fontSize: "0.875rem",
+      fontWeight: 500,
+      transition: "all 0.2s",
+      bgcolor: active ? "background.paper" : "transparent",
+      color: active ? "primary.main" : "text.secondary",
+      boxShadow: active ? 1 : 0,
+      "&:hover": {
+        bgcolor: active ? "background.paper" : "grey.200",
+      },
+    }}
+  >
+    {children}
+  </Box>
+);
+
+// 统计卡片组件
+const StatCard: React.FC<{ label: string; value: string; color: "success" | "warning" | "error" }> = ({
+  label,
+  value,
+  color,
+}) => {
+  const bgColor = {
+    success: "success.light",
+    warning: "warning.light",
+    error: "error.light",
+  }[color];
+  const textColor = {
+    success: "success.dark",
+    warning: "warning.dark",
+    error: "error.dark",
+  }[color];
+
+  return (
+    <Box sx={{ bgcolor: bgColor, borderRadius: 1, p: 2 }}>
+      <Typography variant="caption" sx={{ color: textColor }}>{label}</Typography>
+      <Typography variant="h6" sx={{ fontWeight: "bold", color: textColor, mt: 0.5 }}>
+        {value}
+      </Typography>
+    </Box>
   );
 };
 

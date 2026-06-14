@@ -13,8 +13,6 @@ import {
   Calendar,
   User,
   RefreshCw,
-  CheckSquare,
-  Square,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { expenseApi, type Expense } from "../api/erp";
@@ -34,28 +32,27 @@ import OrganizationFilter from "@/components/ui/OrganizationFilter";
 import { MetricCard } from "../components/MetricCard";
 import { StatsChart } from "../components/StatsChart";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import {
+  MenuItem,
+  Card,
+  CardContent,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+  DialogContent,
+  DialogActions,
+  Chip,
+  Box,
+  Typography,
+  Stack,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 
 const FinanceExpensePage: React.FC = () => {
   const navigate = useNavigate();
@@ -77,7 +74,6 @@ const FinanceExpensePage: React.FC = () => {
       employeeId: undefined,
     });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [showBatchActions, setShowBatchActions] = useState(false);
 
   const [newExpense, setNewExpense] = useState({
     expense_number: "",
@@ -138,48 +134,19 @@ const FinanceExpensePage: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const badges: Record<
+  const getStatusChip = (status: string) => {
+    const configs: Record<
       string,
-      {
-        variant: "default" | "secondary" | "destructive" | "outline";
-        label: string;
-        icon: React.ReactNode;
-      }
+      { color: "default" | "primary" | "secondary" | "success" | "error" | "info" | "warning"; label: string }
     > = {
-      pending: {
-        variant: "secondary",
-        label: "待审批",
-        icon: <Clock className="w-3 h-3 mr-1" />,
-      },
-      approved: {
-        variant: "default",
-        label: "已审批",
-        icon: <Check className="w-3 h-3 mr-1" />,
-      },
-      reimbursed: {
-        variant: "default",
-        label: "已报销",
-        icon: <DollarSign className="w-3 h-3 mr-1" />,
-      },
-      rejected: {
-        variant: "destructive",
-        label: "已拒绝",
-        icon: <AlertCircle className="w-3 h-3 mr-1" />,
-      },
+      pending: { color: "warning", label: "待审批" },
+      approved: { color: "primary", label: "已审批" },
+      reimbursed: { color: "success", label: "已报销" },
+      rejected: { color: "error", label: "已拒绝" },
     };
 
-    const config = badges[status] || {
-      variant: "outline" as const,
-      label: status,
-      icon: null,
-    };
-    return (
-      <Badge variant={config.variant}>
-        {config.icon}
-        {config.label}
-      </Badge>
-    );
+    const config = configs[status] || { color: "default" as const, label: status };
+    return <Chip label={config.label} color={config.color} size="small" />;
   };
 
   const getEmployeeName = (name: string) => {
@@ -565,7 +532,7 @@ const FinanceExpensePage: React.FC = () => {
       {
         accessorKey: "status",
         header: "状态",
-        cell: ({ row }) => getStatusBadge(row.original.status),
+        cell: ({ row }) => getStatusChip(row.original.status),
       },
       {
         id: "actions",
@@ -573,33 +540,36 @@ const FinanceExpensePage: React.FC = () => {
         cell: ({ row }) => {
           const expense = row.original;
           return (
-            <div className="flex items-center space-x-2">
+            <Stack direction="row" spacing={1}>
               {expense.status === "pending" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-green-600"
-                  onClick={() => handleApprove(expense)}
-                >
-                  <Check className="w-4 h-4" />
-                </Button>
+                <Tooltip title="审批">
+                  <IconButton
+                    size="small"
+                    color="success"
+                    onClick={() => handleApprove(expense)}
+                  >
+                    <Check className="w-4 h-4" />
+                  </IconButton>
+                </Tooltip>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditingExpense(expense)}
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-600"
-                onClick={() => handleDelete(expense.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
+              <Tooltip title="编辑">
+                <IconButton
+                  size="small"
+                  onClick={() => setEditingExpense(expense)}
+                >
+                  <Edit className="w-4 h-4" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="删除">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleDelete(expense.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
           );
         },
       },
@@ -615,7 +585,6 @@ const FinanceExpensePage: React.FC = () => {
   const rejectedCount = expenses.filter((e) => e.status === "rejected").length;
   const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  // 费用统计数据
   const expenseStats = useMemo(
     () => ({
       pendingCount,
@@ -636,7 +605,6 @@ const FinanceExpensePage: React.FC = () => {
     ],
   );
 
-  // 费用状态分布数据
   const expenseStatusData = useMemo(
     () => [
       { name: "待审批", value: pendingCount, color: "#f59e0b" },
@@ -647,7 +615,6 @@ const FinanceExpensePage: React.FC = () => {
     [pendingCount, approvedCount, reimbursedCount, rejectedCount],
   );
 
-  // 费用类型分布数据
   const expenseTypeData = useMemo(
     () => [
       {
@@ -707,29 +674,32 @@ const FinanceExpensePage: React.FC = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+            <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+              <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+              </IconButton>
+              <Box>
+                <Typography variant="h5" className="flex items-center font-bold">
                   <FileText className="w-7 h-7 mr-3 text-indigo-600" />
                   费用报销
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   管理员工费用报销申请，审批报销流程
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1}>
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+              <Button
+                variant="contained"
+                startIcon={<Plus className="w-5 h-5" />}
+                onClick={() => setShowCreateModal(true)}
+              >
                 新建报销
               </Button>
-            </div>
-          </div>
+            </Stack>
+          </Stack>
         </div>
       </div>
 
@@ -789,24 +759,23 @@ const FinanceExpensePage: React.FC = () => {
           />
         </div>
 
-        {/* 图表区域 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <Typography variant="h6" className="mb-4 font-semibold">
               费用状态分布
-            </h3>
+            </Typography>
             <StatsChart type="pie" data={expenseStatusData} height={250} />
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <Typography variant="h6" className="mb-4 font-semibold">
               费用类型分布
-            </h3>
+            </Typography>
             <StatsChart type="bar" data={expenseTypeData} height={250} />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <Stack sx={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }} spacing={2} className="mb-4">
           <OrganizationFilter
             value={organizationFilter}
             onChange={setOrganizationFilter}
@@ -814,77 +783,72 @@ const FinanceExpensePage: React.FC = () => {
             showDepartment={true}
             showEmployee={true}
           />
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={loadData}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              刷新
-            </Button>
-          </div>
-        </div>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<RefreshCw className="w-4 h-4" />}
+            onClick={loadData}
+          >
+            刷新
+          </Button>
+        </Stack>
 
         {selectedIds.length > 0 && (
-          <div className="flex items-center justify-between bg-blue-50 px-4 py-3 rounded-lg mb-4">
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-blue-700">
-                已选择{" "}
-                <Badge variant="default" className="ml-2">
-                  {selectedIds.length}
-                </Badge>{" "}
-                条记录
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBatchApprove}
-                className="text-green-600 hover:text-green-700 hover:border-green-500"
-              >
-                <Check className="w-4 h-4 mr-1" />
-                批量审批
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBatchReject}
-                className="text-orange-600 hover:text-orange-700 hover:border-orange-500"
-              >
-                <AlertCircle className="w-4 h-4 mr-1" />
-                批量拒绝
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBatchDelete}
-                className="text-red-600 hover:text-red-700 hover:border-red-500"
-              >
-                <Trash2 className="w-4 h-4 mr-1" />
-                批量删除
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedIds([])}
-              >
-                取消选择
-              </Button>
-            </div>
-          </div>
+          <Card className="mb-4" sx={{ bgcolor: "action.selected" }}>
+            <CardContent>
+              <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2" color="primary">
+                  已选择 <Chip label={selectedIds.length} size="small" /> 条记录
+                </Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="success"
+                    startIcon={<Check className="w-4 h-4" />}
+                    onClick={handleBatchApprove}
+                  >
+                    批量审批
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="warning"
+                    startIcon={<AlertCircle className="w-4 h-4" />}
+                    onClick={handleBatchReject}
+                  >
+                    批量拒绝
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="error"
+                    startIcon={<Trash2 className="w-4 h-4" />}
+                    onClick={handleBatchDelete}
+                  >
+                    批量删除
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setSelectedIds([])}
+                  >
+                    取消选择
+                  </Button>
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
         )}
 
         <Card>
-          <CardContent className="p-0">
+          <CardContent>
             {loading ? (
               <div className="p-8 text-center">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                <p className="mt-2 text-slate-500 dark:text-slate-400">
+                <Typography variant="body2" color="text.secondary" className="mt-2">
                   加载中...
-                </p>
+                </Typography>
               </div>
             ) : (
               <EnhancedDataTable
@@ -907,346 +871,295 @@ const FinanceExpensePage: React.FC = () => {
         </Card>
       </div>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>新建费用报销</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expense-number">报销编号 *</Label>
-                <Input
-                  id="expense-number"
-                  type="text"
-                  required
-                  value={newExpense.expense_number}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      expense_number: e.target.value,
-                    })
-                  }
-                  placeholder="请输入报销编号"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="applicant">申请人</Label>
-                <Input
-                  id="applicant"
-                  type="text"
-                  value={newExpense.applicant_name}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      applicant_name: e.target.value,
-                    })
-                  }
-                  placeholder="请输入申请人姓名"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="department">部门</Label>
-                <Select
-                  value={newExpense.department_id}
-                  onValueChange={(value) =>
-                    setNewExpense({ ...newExpense, department_id: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择部门" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="type">费用类型</Label>
-                <Select
-                  value={newExpense.expense_type}
-                  onValueChange={(value) =>
-                    setNewExpense({ ...newExpense, expense_type: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择类型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="travel">差旅费</SelectItem>
-                    <SelectItem value="office">办公费</SelectItem>
-                    <SelectItem value="meal">餐费</SelectItem>
-                    <SelectItem value="transportation">交通费</SelectItem>
-                    <SelectItem value="communication">通讯费</SelectItem>
-                    <SelectItem value="training">培训费</SelectItem>
-                    <SelectItem value="other">其他</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount">金额 *</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  required
-                  value={newExpense.amount}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      amount: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="请输入金额"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="date">日期</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={newExpense.expense_date}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      expense_date: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="receipts">票据数量</Label>
-              <Input
-                id="receipts"
-                type="number"
-                min="0"
-                value={newExpense.receipt_count}
+      {/* Create Dialog */}
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>新建费用报销</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} className="pt-4">
+            <Stack direction="row" spacing={2}>
+              <TextField
+                label="报销编号 *"
+                required
+                fullWidth
+                value={newExpense.expense_number}
                 onChange={(e) =>
                   setNewExpense({
                     ...newExpense,
-                    receipt_count: parseInt(e.target.value) || 0,
+                    expense_number: e.target.value,
                   })
                 }
-                placeholder="请输入票据数量"
+                placeholder="请输入报销编号"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">备注</Label>
-              <Textarea
-                id="description"
-                value={newExpense.description}
+              <TextField
+                label="申请人"
+                fullWidth
+                value={newExpense.applicant_name}
                 onChange={(e) =>
-                  setNewExpense({ ...newExpense, description: e.target.value })
+                  setNewExpense({
+                    ...newExpense,
+                    applicant_name: e.target.value,
+                  })
                 }
-                placeholder="请输入报销说明..."
-                rows={3}
+                placeholder="请输入申请人姓名"
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-              取消
-            </Button>
-            <Button onClick={handleCreate}>提交申请</Button>
-          </DialogFooter>
+            </Stack>
+
+            <Stack direction="row" spacing={2}>
+              <FormControl fullWidth>
+                <InputLabel>部门</InputLabel>
+                <Select
+                  value={newExpense.department_id}
+                  label="部门"
+                  onChange={(e) =>
+                    setNewExpense({ ...newExpense, department_id: e.target.value })
+                  }
+                >
+                  <MenuItem value="">请选择部门</MenuItem>
+                  {departments.map((dept) => (
+                    <MenuItem key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>费用类型</InputLabel>
+                <Select
+                  value={newExpense.expense_type}
+                  label="费用类型"
+                  onChange={(e) =>
+                    setNewExpense({ ...newExpense, expense_type: e.target.value })
+                  }
+                >
+                  <MenuItem value="">请选择类型</MenuItem>
+                  <MenuItem value="travel">差旅费</MenuItem>
+                  <MenuItem value="office">办公费</MenuItem>
+                  <MenuItem value="meal">餐费</MenuItem>
+                  <MenuItem value="transportation">交通费</MenuItem>
+                  <MenuItem value="communication">通讯费</MenuItem>
+                  <MenuItem value="training">培训费</MenuItem>
+                  <MenuItem value="other">其他</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+
+            <Stack direction="row" spacing={2}>
+              <TextField
+                label="金额 *"
+                required
+                type="number"
+                fullWidth
+                value={newExpense.amount}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    amount: parseFloat(e.target.value) || 0,
+                  })
+                }
+                slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
+                placeholder="请输入金额"
+              />
+              <TextField
+                label="日期"
+                type="date"
+                fullWidth
+                value={newExpense.expense_date}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    expense_date: e.target.value,
+                  })
+                }
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Stack>
+
+            <TextField
+              label="票据数量"
+              type="number"
+              fullWidth
+              value={newExpense.receipt_count}
+              onChange={(e) =>
+                setNewExpense({
+                  ...newExpense,
+                  receipt_count: parseInt(e.target.value) || 0,
+                })
+              }
+              slotProps={{ htmlInput: { min: 0 } }}
+              placeholder="请输入票据数量"
+            />
+
+            <TextField
+              label="备注"
+              fullWidth
+              multiline
+              rows={3}
+              value={newExpense.description}
+              onChange={(e) =>
+                setNewExpense({ ...newExpense, description: e.target.value })
+              }
+              placeholder="请输入报销说明..."
+            />
+          </Stack>
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowCreateModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleCreate}>提交申请</Button>
+        </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={!!editingExpense}
-        onOpenChange={() => setEditingExpense(null)}
-      >
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>编辑费用报销</DialogTitle>
-          </DialogHeader>
+      {/* Edit Dialog */}
+      <Dialog open={!!editingExpense} onClose={() => setEditingExpense(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>编辑费用报销</DialogTitle>
+        <DialogContent>
           {editingExpense && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-expense-number">报销编号</Label>
-                  <Input
-                    id="edit-expense-number"
-                    type="text"
-                    value={editingExpense.expense_number}
-                    readOnly
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-applicant">申请人</Label>
-                  <Input
-                    id="edit-applicant"
-                    type="text"
-                    value={editingExpense.applicant_name || ""}
-                    onChange={(e) =>
-                      setEditingExpense({
-                        ...editingExpense,
-                        applicant_name: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-department">部门</Label>
-                  <Select
-                    value={editingExpense.department_id || ""}
-                    onValueChange={(value) =>
-                      setEditingExpense({
-                        ...editingExpense,
-                        department_id: value || undefined,
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择部门" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-type">费用类型</Label>
-                  <Select
-                    value={editingExpense.expense_type || ""}
-                    onValueChange={(value) =>
-                      setEditingExpense({
-                        ...editingExpense,
-                        expense_type: value,
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="travel">差旅费</SelectItem>
-                      <SelectItem value="office">办公费</SelectItem>
-                      <SelectItem value="meal">餐费</SelectItem>
-                      <SelectItem value="transportation">交通费</SelectItem>
-                      <SelectItem value="communication">通讯费</SelectItem>
-                      <SelectItem value="training">培训费</SelectItem>
-                      <SelectItem value="other">其他</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-amount">金额</Label>
-                  <Input
-                    id="edit-amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={editingExpense.amount}
-                    onChange={(e) =>
-                      setEditingExpense({
-                        ...editingExpense,
-                        amount: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-date">日期</Label>
-                  <Input
-                    id="edit-date"
-                    type="date"
-                    value={editingExpense.expense_date?.split("T")[0] || ""}
-                    onChange={(e) =>
-                      setEditingExpense({
-                        ...editingExpense,
-                        expense_date: e.target.value || undefined,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-receipts">票据数量</Label>
-                  <Input
-                    id="edit-receipts"
-                    type="number"
-                    min="0"
-                    value={editingExpense.receipt_count || 0}
-                    onChange={(e) =>
-                      setEditingExpense({
-                        ...editingExpense,
-                        receipt_count: parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-status">状态</Label>
-                  <Select
-                    value={editingExpense.status}
-                    onValueChange={(value) =>
-                      setEditingExpense({ ...editingExpense, status: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">待审批</SelectItem>
-                      <SelectItem value="approved">已审批</SelectItem>
-                      <SelectItem value="reimbursed">已报销</SelectItem>
-                      <SelectItem value="rejected">已拒绝</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">备注</Label>
-                <Textarea
-                  id="edit-description"
-                  value={editingExpense.description || ""}
+            <Stack spacing={3} className="pt-4">
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="报销编号"
+                  fullWidth
+                  value={editingExpense.expense_number}
+                  slotProps={{ input: { readOnly: true } }}
+                />
+                <TextField
+                  label="申请人"
+                  fullWidth
+                  value={editingExpense.applicant_name || ""}
                   onChange={(e) =>
                     setEditingExpense({
                       ...editingExpense,
-                      description: e.target.value || undefined,
+                      applicant_name: e.target.value,
                     })
                   }
-                  placeholder="请输入报销说明..."
-                  rows={3}
                 />
-              </div>
-            </div>
+              </Stack>
+
+              <Stack direction="row" spacing={2}>
+                <FormControl fullWidth>
+                  <InputLabel>部门</InputLabel>
+                  <Select
+                    value={editingExpense.department_id || ""}
+                    label="部门"
+                    onChange={(e) =>
+                      setEditingExpense({
+                        ...editingExpense,
+                        department_id: e.target.value || undefined,
+                      })
+                    }
+                  >
+                    <MenuItem value="">请选择部门</MenuItem>
+                    {departments.map((dept) => (
+                      <MenuItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel>费用类型</InputLabel>
+                  <Select
+                    value={editingExpense.expense_type || ""}
+                    label="费用类型"
+                    onChange={(e) =>
+                      setEditingExpense({
+                        ...editingExpense,
+                        expense_type: e.target.value,
+                      })
+                    }
+                  >
+                    <MenuItem value="">请选择类型</MenuItem>
+                    <MenuItem value="travel">差旅费</MenuItem>
+                    <MenuItem value="office">办公费</MenuItem>
+                    <MenuItem value="meal">餐费</MenuItem>
+                    <MenuItem value="transportation">交通费</MenuItem>
+                    <MenuItem value="communication">通讯费</MenuItem>
+                    <MenuItem value="training">培训费</MenuItem>
+                    <MenuItem value="other">其他</MenuItem>
+                  </Select>
+                </FormControl>
+              </Stack>
+
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="金额"
+                  type="number"
+                  fullWidth
+                  value={editingExpense.amount}
+                  onChange={(e) =>
+                    setEditingExpense({
+                      ...editingExpense,
+                      amount: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
+                />
+                <TextField
+                  label="日期"
+                  type="date"
+                  fullWidth
+                  value={editingExpense.expense_date?.split("T")[0] || ""}
+                  onChange={(e) =>
+                    setEditingExpense({
+                      ...editingExpense,
+                      expense_date: e.target.value || undefined,
+                    })
+                  }
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Stack>
+
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="票据数量"
+                  type="number"
+                  fullWidth
+                  value={editingExpense.receipt_count || 0}
+                  onChange={(e) =>
+                    setEditingExpense({
+                      ...editingExpense,
+                      receipt_count: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  slotProps={{ htmlInput: { min: 0 } }}
+                />
+                <FormControl fullWidth>
+                  <InputLabel>状态</InputLabel>
+                  <Select
+                    value={editingExpense.status}
+                    label="状态"
+                    onChange={(e) =>
+                      setEditingExpense({ ...editingExpense, status: e.target.value })
+                    }
+                  >
+                    <MenuItem value="pending">待审批</MenuItem>
+                    <MenuItem value="approved">已审批</MenuItem>
+                    <MenuItem value="reimbursed">已报销</MenuItem>
+                    <MenuItem value="rejected">已拒绝</MenuItem>
+                  </Select>
+                </FormControl>
+              </Stack>
+
+              <TextField
+                label="备注"
+                fullWidth
+                multiline
+                rows={3}
+                value={editingExpense.description || ""}
+                onChange={(e) =>
+                  setEditingExpense({
+                    ...editingExpense,
+                    description: e.target.value || undefined,
+                  })
+                }
+                placeholder="请输入报销说明..."
+              />
+            </Stack>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingExpense(null)}>
-              取消
-            </Button>
-            <Button onClick={handleUpdate}>保存</Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditingExpense(null)}>取消</Button>
+          <Button variant="contained" onClick={handleUpdate}>保存</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

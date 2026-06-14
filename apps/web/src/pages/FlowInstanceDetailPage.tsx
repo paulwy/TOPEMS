@@ -1,3 +1,13 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  IconButton,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   GitBranch,
@@ -19,7 +29,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import type { WorkflowInstance, Approval, ApprovalRecord } from "../api/flow";
 import { flowApi } from "../api/flow";
 import { useAppStore } from "../store";
-import { Button } from "@/components/ui/button";
 
 interface InstanceDetails {
   instance: WorkflowInstance;
@@ -72,15 +81,15 @@ const FlowInstanceDetailPage: React.FC = () => {
     switch (status) {
       case "completed":
       case "approved":
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle size={20} style={{ color: "#16a34a" }} />;
       case "rejected":
-        return <XCircle className="w-5 h-5 text-red-600" />;
+        return <XCircle size={20} style={{ color: "#dc2626" }} />;
       case "running":
-        return <Play className="w-5 h-5 text-blue-600" />;
+        return <Play size={20} style={{ color: "#2563eb" }} />;
       case "pending":
-        return <Clock className="w-5 h-5 text-yellow-600" />;
+        return <Clock size={20} style={{ color: "#ca8a04" }} />;
       default:
-        return <AlertCircle className="w-5 h-5 text-gray-600" />;
+        return <AlertCircle size={20} style={{ color: "#4b5563" }} />;
     }
   };
 
@@ -95,251 +104,237 @@ const FlowInstanceDetailPage: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): "success" | "error" | "info" | "warning" | "default" => {
     switch (status) {
       case "completed":
       case "approved":
-        return "bg-green-100 text-green-700";
+        return "success";
       case "rejected":
-        return "bg-red-100 text-red-700";
+        return "error";
       case "running":
-        return "bg-blue-100 text-blue-700";
+        return "info";
       case "pending":
-        return "bg-yellow-100 text-yellow-700";
+        return "warning";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "default";
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Loader2 size={32} className="animate-spin" style={{ color: "#6366f1" }} />
+      </Box>
     );
   }
 
   if (!details) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="text-center py-12">
-          <AlertCircle className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-          <p className="text-gray-500">实例不存在</p>
-          <Button onClick={() => navigate("/flow/instances")} className="mt-4">
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
+        <Box sx={{ textAlign: "center", py: 12 }}>
+          <AlertCircle size={64} style={{ color: "#d1d5db", margin: "0 auto", marginBottom: 16 }} />
+          <Typography sx={{ color: "grey.500" }}>实例不存在</Typography>
+          <Button onClick={() => navigate("/flow/instances")} sx={{ mt: 2 }}>
             返回列表
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
     );
   }
 
   const { instance, approvals, records } = details;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" onClick={() => navigate("/flow/instances")}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <GitBranch className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">实例详情</h1>
-              <p className="text-sm text-gray-500 font-mono">{instance.id}</p>
-            </div>
-          </div>
-          <span
-            className={`px-3 py-1 text-sm rounded-full flex items-center ${getStatusColor(instance.status)}`}
-          >
-            {getStatusIcon(instance.status)}
-            <span className="ml-1">{getStatusText(instance.status)}</span>
-          </span>
-        </div>
-      </div>
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <IconButton onClick={() => navigate("/flow/instances")}>
+                <ArrowLeft size={20} />
+              </IconButton>
+              <Box sx={{ width: 48, height: 48, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <GitBranch size={24} style={{ color: "#6366f1" }} />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>实例详情</Typography>
+                <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{instance.id}</Typography>
+              </Box>
+            </Stack>
+            <Chip
+              icon={getStatusIcon(instance.status)}
+              label={getStatusText(instance.status)}
+              color={getStatusColor(instance.status)}
+            />
+          </Stack>
+        </CardContent>
+      </Card>
 
-      <div className="grid grid-cols-3 gap-6">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
         {/* Instance Info */}
-        <div className="col-span-2">
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              基本信息
-            </h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">实例ID</div>
-                <div className="font-mono text-sm">{instance.id}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">工作流ID</div>
-                <div className="font-mono text-sm">
-                  {instance.workflow_id || "N/A"}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">当前节点</div>
-                <div className="text-sm">{instance.current_node || "N/A"}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">发起人</div>
-                <div className="text-sm flex items-center">
-                  <User className="w-4 h-4 mr-1" />
-                  {instance.initiator_id || "系统"}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">创建时间</div>
-                <div className="text-sm">
-                  {new Date(instance.created_at).toLocaleString()}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">启动时间</div>
-                <div className="text-sm">
-                  {instance.started_at
-                    ? new Date(instance.started_at).toLocaleString()
-                    : "N/A"}
-                </div>
-              </div>
-              {instance.completed_at && (
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">完成时间</div>
-                  <div className="text-sm">
-                    {new Date(instance.completed_at).toLocaleString()}
-                  </div>
-                </div>
+        <Box sx={{ gridColumn: "span 2" }}>
+          <Card sx={{ mb: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>基本信息</Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500", mb: 0.5 }}>实例ID</Typography>
+                  <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{instance.id}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500", mb: 0.5 }}>工作流ID</Typography>
+                  <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{instance.workflow_id || "N/A"}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500", mb: 0.5 }}>当前节点</Typography>
+                  <Typography variant="body2">{instance.current_node || "N/A"}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500", mb: 0.5 }}>发起人</Typography>
+                  <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                    <User size={16} />
+                    <Typography variant="body2">{instance.initiator_id || "系统"}</Typography>
+                  </Stack>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500", mb: 0.5 }}>创建时间</Typography>
+                  <Typography variant="body2">{new Date(instance.created_at).toLocaleString()}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500", mb: 0.5 }}>启动时间</Typography>
+                  <Typography variant="body2">{instance.started_at ? new Date(instance.started_at).toLocaleString() : "N/A"}</Typography>
+                </Box>
+                {instance.completed_at && (
+                  <Box>
+                    <Typography variant="body2" sx={{ color: "grey.500", mb: 0.5 }}>完成时间</Typography>
+                    <Typography variant="body2">{new Date(instance.completed_at).toLocaleString()}</Typography>
+                  </Box>
+                )}
+              </Box>
+              {instance.data && Object.keys(instance.data).length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500", mb: 1 }}>实例数据</Typography>
+                  <Box component="pre" sx={{ bgcolor: "grey.50", p: 1.5, borderRadius: 1, fontSize: 12, overflow: "auto" }}>
+                    {JSON.stringify(instance.data, null, 2)}
+                  </Box>
+                </Box>
               )}
-            </div>
-            {instance.data && Object.keys(instance.data).length > 0 && (
-              <div className="mt-4">
-                <div className="text-sm text-gray-500 mb-2">实例数据</div>
-                <pre className="bg-gray-50 p-3 rounded text-xs overflow-auto">
-                  {JSON.stringify(instance.data, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Approval Timeline */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              审批节点
-            </h2>
-            {approvals.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-                <p className="text-gray-500">暂无审批节点</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {approvals.map((approval, index) => (
-                  <div
-                    key={approval.id}
-                    className="border border-gray-200 rounded-lg p-4"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-600">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {approval.task_name}
-                          </div>
-                          {approval.node_id && (
-                            <div className="text-xs text-gray-500">
-                              节点: {approval.node_id}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full flex items-center ${getStatusColor(approval.status)}`}
-                      >
-                        {getStatusIcon(approval.status)}
-                        <span className="ml-1">
-                          {getStatusText(approval.status)}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-4 text-xs text-gray-500 ml-8">
-                      <span className="flex items-center">
-                        <User className="w-3 h-3 mr-1" />
-                        审批人: {approval.assignee_id || "N/A"}
-                      </span>
-                      <span className="flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        创建: {new Date(approval.created_at).toLocaleString()}
-                      </span>
-                      {approval.approved_at && (
-                        <span className="flex items-center">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          处理:{" "}
-                          {new Date(approval.approved_at).toLocaleString()}
-                        </span>
+          <Card>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>审批节点</Typography>
+              {approvals.length === 0 ? (
+                <Box sx={{ textAlign: "center", py: 4 }}>
+                  <Users size={48} style={{ color: "#d1d5db", margin: "0 auto", marginBottom: 8 }} />
+                  <Typography sx={{ color: "grey.500" }}>暂无审批节点</Typography>
+                </Box>
+              ) : (
+                <Stack spacing={2}>
+                  {approvals.map((approval, index) => (
+                    <Box
+                      key={approval.id}
+                      sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 2 }}
+                    >
+                      <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }} spacing={2}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                          <Box sx={{ width: 24, height: 24, bgcolor: "primary.light", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: "primary.main" }}>{index + 1}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography sx={{ fontWeight: 500 }}>{approval.task_name}</Typography>
+                            {approval.node_id && (
+                              <Typography variant="caption" color="text.secondary">节点: {approval.node_id}</Typography>
+                            )}
+                          </Box>
+                        </Stack>
+                        <Chip
+                          icon={getStatusIcon(approval.status)}
+                          label={getStatusText(approval.status)}
+                          color={getStatusColor(approval.status)}
+                          size="small"
+                        />
+                      </Stack>
+                      <Stack direction="row" spacing={2} sx={{ ml: 4, mt: 1 }}>
+                        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                          <User size={12} />
+                          <Typography variant="caption" color="text.secondary">审批人: {approval.assignee_id || "N/A"}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                          <Clock size={12} />
+                          <Typography variant="caption" color="text.secondary">创建: {new Date(approval.created_at).toLocaleString()}</Typography>
+                        </Stack>
+                        {approval.approved_at && (
+                          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                            <CheckCircle size={12} />
+                            <Typography variant="caption" color="text.secondary">处理: {new Date(approval.approved_at).toLocaleString()}</Typography>
+                          </Stack>
+                        )}
+                      </Stack>
+                      {approval.comment && (
+                        <Stack direction="row" spacing={1} sx={{ ml: 4, mt: 1, alignItems: "flex-start" }}>
+                          <MessageSquare size={16} style={{ color: "#6b7280", marginTop: 2 }} />
+                          <Typography variant="body2" color="text.secondary">{approval.comment}</Typography>
+                        </Stack>
                       )}
-                    </div>
-                    {approval.comment && (
-                      <div className="mt-2 ml-8 text-sm text-gray-600 flex items-start">
-                        <MessageSquare className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" />
-                        {approval.comment}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
 
         {/* Approval Records */}
-        <div className="col-span-1">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              审批记录
-            </h2>
-            {records.length === 0 ? (
-              <div className="text-center py-8">
-                <FileText className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-                <p className="text-gray-500">暂无审批记录</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {records.map((record) => (
-                  <div
-                    key={record.id}
-                    className="border-l-2 border-gray-200 pl-4 py-2"
-                  >
-                    <div className="flex items-center space-x-2 mb-1">
-                      {record.action === "approve" ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-red-600" />
+        <Box>
+          <Card>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>审批记录</Typography>
+              {records.length === 0 ? (
+                <Box sx={{ textAlign: "center", py: 4 }}>
+                  <FileText size={48} style={{ color: "#d1d5db", margin: "0 auto", marginBottom: 8 }} />
+                  <Typography sx={{ color: "grey.500" }}>暂无审批记录</Typography>
+                </Box>
+              ) : (
+                <Stack spacing={2}>
+                  {records.map((record) => (
+                    <Box
+                      key={record.id}
+                      sx={{ borderLeft: 2, borderColor: "grey.300", pl: 2 }}
+                    >
+                      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                        {record.action === "approve" ? (
+                          <CheckCircle2 size={16} style={{ color: "#16a34a" }} />
+                        ) : (
+                          <XCircle size={16} style={{ color: "#dc2626" }} />
+                        )}
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {record.action === "approve" ? "通过" : "拒绝"}
+                        </Typography>
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                        {record.actor_name || record.actor_id}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                        {new Date(record.created_at).toLocaleString()}
+                      </Typography>
+                      {record.comment && (
+                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic", display: "block", mt: 1 }}>
+                          "{record.comment}"
+                        </Typography>
                       )}
-                      <span className="text-sm font-medium text-gray-900">
-                        {record.action === "approve" ? "通过" : "拒绝"}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      <div>{record.actor_name || record.actor_id}</div>
-                      <div>{new Date(record.created_at).toLocaleString()}</div>
-                    </div>
-                    {record.comment && (
-                      <div className="mt-1 text-xs text-gray-600 italic">
-                        "{record.comment}"
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

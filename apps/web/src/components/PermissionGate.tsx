@@ -1,9 +1,9 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import React from "react";
 import { usePermission } from "../hooks/usePermission";
 import { useRole } from "../hooks/useRole";
 import { Shield, User, Users, Crown, Eye, Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 interface PermissionGateProps {
   children: ReactNode;
@@ -305,10 +305,12 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({
   };
 
   return (
-    <Badge variant={config.variant} className={`${sizeClasses[size]} gap-1`}>
-      {showIcon && <Icon className={iconSizes[size]} />}
-      {config.label}
-    </Badge>
+    <Chip 
+      size="small" 
+      variant={config.variant === "outline" ? "outlined" : "filled"} 
+      className={`${sizeClasses[size]} gap-1`}
+      label={config.label}
+    />
   );
 };
 

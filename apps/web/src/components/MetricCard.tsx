@@ -162,11 +162,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       return <Activity className="w-6 h-6 text-white" />;
     }
     if (React.isValidElement(icon)) {
-      return React.cloneElement(icon as React.ReactElement, {
+      return React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
         className: "w-6 h-6 text-white",
       });
     }
-    return (icon as LucideIcon)({ className: "w-6 h-6 text-white" });
+    const IconComponent = icon as LucideIcon;
+    return <IconComponent className="w-6 h-6 text-white" />;
   };
 
   const iconBgStyle = gradient

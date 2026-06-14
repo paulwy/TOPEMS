@@ -1,3 +1,20 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Box,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tooltip,
+  IconButton,
+  Stack,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   Key,
@@ -7,29 +24,11 @@ import {
   ChevronLeft,
   Shield,
   AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { authApi, type Permission } from "../api/iam";
 import { useAppStore } from "../store";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { ModeToggle } from "@/components/ModeToggle";
 
 interface PermissionManagementPageProps {
@@ -152,261 +151,233 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
   );
 
   const getCategoryBadge = (category: string) => {
-    const badges: Record<string, { variant: string; label: string }> = {
-      doc: { variant: "bg-blue-100 text-blue-700", label: "文档" },
-      ai: { variant: "bg-purple-100 text-purple-700", label: "AI" },
-      workflow: { variant: "bg-green-100 text-green-700", label: "流程" },
-      iam: { variant: "bg-yellow-100 text-yellow-700", label: "IAM" },
-      rs: { variant: "bg-orange-100 text-orange-700", label: "研发" },
-      lims: { variant: "bg-cyan-100 text-cyan-700", label: "LIMS" },
-      qms: { variant: "bg-teal-100 text-teal-700", label: "质量" },
-      ehs: { variant: "bg-red-100 text-red-700", label: "EHS" },
-      srm: { variant: "bg-violet-100 text-violet-700", label: "采购" },
-      pdm: { variant: "bg-amber-100 text-amber-700", label: "产品" },
-      gis: { variant: "bg-emerald-100 text-emerald-700", label: "GIS" },
-      im: { variant: "bg-rose-100 text-rose-700", label: "即时通讯" },
-      mail: { variant: "bg-indigo-100 text-indigo-700", label: "邮件" },
-      system: { variant: "bg-gray-100 text-gray-700", label: "系统" },
-      crm: { variant: "bg-pink-100 text-pink-700", label: "CRM" },
-      pm: { variant: "bg-lime-100 text-lime-700", label: "项目" },
-      integration: { variant: "bg-sky-100 text-sky-700", label: "集成" },
+    const badges: Record<string, { bgcolor: string; color: string; label: string }> = {
+      doc: { bgcolor: "blue.100", color: "blue.700", label: "文档" },
+      ai: { bgcolor: "purple.100", color: "purple.700", label: "AI" },
+      workflow: { bgcolor: "green.100", color: "green.700", label: "流程" },
+      iam: { bgcolor: "yellow.100", color: "yellow.700", label: "IAM" },
+      rs: { bgcolor: "orange.100", color: "orange.700", label: "研发" },
+      lims: { bgcolor: "cyan.100", color: "cyan.700", label: "LIMS" },
+      qms: { bgcolor: "teal.100", color: "teal.700", label: "质量" },
+      ehs: { bgcolor: "red.100", color: "red.700", label: "EHS" },
+      srm: { bgcolor: "violet.100", color: "violet.700", label: "采购" },
+      pdm: { bgcolor: "amber.100", color: "amber.700", label: "产品" },
+      gis: { bgcolor: "emerald.100", color: "emerald.700", label: "GIS" },
+      im: { bgcolor: "rose.100", color: "rose.700", label: "即时通讯" },
+      mail: { bgcolor: "indigo.100", color: "indigo.700", label: "邮件" },
+      system: { bgcolor: "gray.100", color: "gray.700", label: "系统" },
+      crm: { bgcolor: "pink.100", color: "pink.700", label: "CRM" },
+      pm: { bgcolor: "lime.100", color: "lime.700", label: "项目" },
+      integration: { bgcolor: "sky.100", color: "sky.700", label: "集成" },
     };
     const config = badges[category] || {
-      variant: "bg-gray-100 text-gray-700",
+      bgcolor: "gray.100",
+      color: "gray.700",
       label: category,
     };
-    return <Badge className={config.variant}>{config.label}</Badge>;
+    return <Chip size="small" sx={{ bgcolor: config.bgcolor, color: config.color }} label={config.label} />;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      <Box sx={{ bgcolor: "white", borderBottom: 1, borderColor: "grey.200" }}>
+        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <Key className="w-7 h-7 mr-3 text-purple-600" />
-                  权限管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <Box>
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                  <Key className="w-7 h-7 text-purple-600" />
+                  <Typography variant="h5" sx={{ fontWeight: "bold" }}>权限管理</Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   查看和管理系统权限配置
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1}>
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+              <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus className="w-5 h-5" />}>
                 创建权限
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Stack>
+          </Stack>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px] relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  type="text"
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
+        <Card sx={{ mb: 3 }}>
+          <CardContent sx={{ p: 2 }}>
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Box sx={{ flex: 1, position: "relative" }}>
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 text-grey.400" />
+                <TextField
+                  size="small"
                   placeholder="搜索权限名称、资源、操作或描述..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  sx={{ pl: 4, width: "100%" }}
                 />
-              </div>
-              <Button variant="outline" onClick={loadPermissions}>
+              </Box>
+              <Button variant="outlined" onClick={loadPermissions} startIcon={<RefreshCw className="w-4 h-4" />}>
                 刷新
               </Button>
-            </div>
+            </Stack>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent"></div>
-                <p className="mt-2 text-gray-500 dark:text-gray-400">
-                  加载中...
-                </p>
-              </div>
+              <Box sx={{ p: 8, textAlign: "center" }}>
+                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "purple.600", borderRadius: "50%", borderTopColor: "transparent", animation: "spin 1s linear infinite" }} />
+                <Typography sx={{ mt: 2, color: "text.secondary" }}>加载中...</Typography>
+              </Box>
             ) : error ? (
-              <div className="p-8 text-center">
+              <Box sx={{ p: 8, textAlign: "center" }}>
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadPermissions}>
-                  重试
-                </Button>
-              </div>
+                <Typography color="error">{error}</Typography>
+                <Button sx={{ mt: 2 }} onClick={loadPermissions}>重试</Button>
+              </Box>
             ) : filteredPermissions.length === 0 ? (
-              <div className="p-8 text-center">
-                <Key className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">暂无权限</p>
-              </div>
+              <Box sx={{ p: 8, textAlign: "center" }}>
+                <Key className="w-12 h-12 text-grey-400 mx-auto mb-3" />
+                <Typography color="text.secondary">暂无权限</Typography>
+              </Box>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredPermissions.map((perm) => (
-                  <div
+              <Box>
+                {filteredPermissions.map((perm, index) => (
+                  <Box
                     key={perm.id}
-                    className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    sx={{
+                      p: 3,
+                      borderBottom: index < filteredPermissions.length - 1 ? 1 : 0,
+                      borderColor: "grey.200",
+                      "&:hover": { bgcolor: "grey.50" },
+                    }}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 flex-wrap">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                              {perm.name}
-                            </h3>
+                    <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
+                        <Box sx={{ width: 48, height: 48, bgcolor: "purple.100", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Shield className="w-6 h-6 text-purple-600" />
+                        </Box>
+                        <Box>
+                          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{perm.name}</Typography>
                             {getCategoryBadge(perm.category)}
-                          </div>
+                          </Stack>
                           {perm.description && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                               {perm.description}
-                            </p>
+                            </Typography>
                           )}
-                          <p className="text-xs text-gray-400 mt-2">
+                          <Typography variant="caption" color="text.disabled" sx={{ mt: 1, display: "block" }}>
                             权限码: {perm.code}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 dark:text-red-400"
-                                onClick={() => handleDeletePermission(perm.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>删除权限</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </div>
-                  </div>
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Tooltip title="删除权限">
+                        <IconButton
+                          size="small"
+                          sx={{ color: "error.main", "&:hover": { color: "error.dark" } }}
+                          onClick={() => handleDeletePermission(perm.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  </Box>
                 ))}
-              </div>
+              </Box>
             )}
           </CardContent>
         </Card>
 
-        <Card className="mt-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-4">
-            <h4 className="font-medium text-blue-900 dark:text-blue-300 flex items-center">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              关于权限管理
-            </h4>
-            <p className="text-sm text-blue-700 dark:text-blue-400 mt-2">
+        <Card sx={{ mt: 3, bgcolor: "blue.50", border: 1, borderColor: "blue.200" }}>
+          <CardContent sx={{ p: 2 }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <AlertCircle className="w-4 h-4 text-blue-700" />
+              <Typography variant="subtitle2" color="blue.900">关于权限管理</Typography>
+            </Stack>
+            <Typography variant="body2" color="blue.700" sx={{ mt: 1 }}>
               权限是系统级配置，通常由开发人员在后端代码中预先定义。
               您可以在这里查看所有可用权限，并通过角色管理页面将权限分配给不同的角色。
-            </p>
+            </Typography>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>创建新权限</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreatePermission}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="create-name">权限名称 *</Label>
-                <Input
-                  id="create-name"
-                  type="text"
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>创建新权限</DialogTitle>
+        <form onSubmit={handleCreatePermission}>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">权限名称 *</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
                   required
                   value={newPermission.name}
-                  onChange={(e) =>
-                    setNewPermission({ ...newPermission, name: e.target.value })
-                  }
+                  onChange={(e) => setNewPermission({ ...newPermission, name: e.target.value })}
                   placeholder="例如：文档读取"
+                  sx={{ mt: 0.5 }}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="create-code">权限码 *</Label>
-                <Input
-                  id="create-code"
-                  type="text"
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">权限码 *</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
                   required
                   value={newPermission.code}
-                  onChange={(e) =>
-                    setNewPermission({ ...newPermission, code: e.target.value })
-                  }
+                  onChange={(e) => setNewPermission({ ...newPermission, code: e.target.value })}
                   placeholder="例如：doc:read"
+                  sx={{ mt: 0.5 }}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="create-category">分类 *</Label>
-                <Input
-                  id="create-category"
-                  type="text"
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">分类 *</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
                   required
                   value={newPermission.category}
-                  onChange={(e) =>
-                    setNewPermission({
-                      ...newPermission,
-                      category: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setNewPermission({ ...newPermission, category: e.target.value })}
                   placeholder="例如：doc"
+                  sx={{ mt: 0.5 }}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="create-description">描述</Label>
-                <textarea
-                  id="create-description"
-                  value={newPermission.description}
-                  onChange={(e) =>
-                    setNewPermission({
-                      ...newPermission,
-                      description: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800"
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">描述</Typography>
+                <TextField
+                  fullWidth
+                  multiline
                   rows={3}
+                  value={newPermission.description}
+                  onChange={(e) => setNewPermission({ ...newPermission, description: e.target.value })}
                   placeholder="描述这个权限的用途"
+                  sx={{ mt: 0.5 }}
                 />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setNewPermission({
-                    name: "",
-                    code: "",
-                    category: "",
-                    description: "",
-                  });
-                }}
-              >
-                取消
-              </Button>
-              <Button type="submit">创建</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+              </Box>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => {
+                setShowCreateModal(false);
+                setNewPermission({ name: "", code: "", category: "", description: "" });
+              }}
+            >
+              取消
+            </Button>
+            <Button type="submit" variant="contained">创建</Button>
+          </DialogActions>
+        </form>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

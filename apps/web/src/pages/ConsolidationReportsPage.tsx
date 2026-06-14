@@ -24,31 +24,34 @@ import {
   Eye,
   Send,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
+  Stack,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
-  TableHeader,
   TableRow,
-} from "@/components/ui/table";
+  TextField,
+  Typography,
+  Box,
+} from "@mui/material";
 import {
   useConsolidationReports,
   useConsolidationReport,
@@ -166,10 +169,10 @@ export default function ConsolidationReportsPage() {
       header: "报表编号",
       accessorKey: "report_no",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <GitMerge className="w-4 h-4 text-blue-600" />
-          <span className="font-mono text-sm">{row.getValue("report_no")}</span>
-        </div>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <GitMerge style={{ width: 16, height: 16, color: "#2563eb" }} />
+          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{row.getValue("report_no")}</Typography>
+        </Box>
       ),
     },
     {
@@ -180,41 +183,41 @@ export default function ConsolidationReportsPage() {
         const reportType = row.getValue<string>("report_type");
         let IconComponent: React.ElementType = FileText;
         let name = reportType;
-        let color = "text-gray-600";
+        let color = "#4b5563";
 
         switch (reportType) {
           case "consolidated_balance_sheet":
             IconComponent = Building2;
             name = "合并资产负债表";
-            color = "text-blue-600";
+            color = "#2563eb";
             break;
           case "consolidated_income_statement":
             IconComponent = TrendingUp;
             name = "合并利润表";
-            color = "text-green-600";
+            color = "#16a34a";
             break;
           case "consolidated_cash_flow":
             IconComponent = DollarSign;
             name = "合并现金流量表";
-            color = "text-purple-600";
+            color = "#9333ea";
             break;
           case "consolidated_statement_changes":
             IconComponent = BarChart3;
             name = "合并所有者权益变动表";
-            color = "text-orange-600";
+            color = "#ea580c";
             break;
           case "elimination_work_sheet":
             IconComponent = FileSpreadsheet;
             name = "抵消工作底稿";
-            color = "text-gray-600";
+            color = "#4b5563";
             break;
         }
 
         return (
-          <div className={`flex items-center gap-2 font-medium ${color}`}>
-            <IconComponent className="w-4 h-4" />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 500, color }}>
+            <IconComponent style={{ width: 16, height: 16 }} />
             {name}
-          </div>
+          </Box>
         );
       },
     },
@@ -223,7 +226,7 @@ export default function ConsolidationReportsPage() {
       header: "合并范围",
       accessorKey: "scope_name",
       cell: ({ row }) => (
-        <Badge variant="outline">{row.getValue("scope_name")}</Badge>
+        <Chip size="small" variant="outlined" label={row.getValue("scope_name")} />
       ),
     },
     {
@@ -231,7 +234,7 @@ export default function ConsolidationReportsPage() {
       header: "期间",
       accessorKey: "period",
       cell: ({ row }) => (
-        <span className="font-mono">{row.getValue("period")}</span>
+        <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{row.getValue("period")}</Typography>
       ),
     },
     {
@@ -239,15 +242,15 @@ export default function ConsolidationReportsPage() {
       header: "公司数",
       accessorKey: "company_count",
       cell: ({ row }) => (
-        <span>
+        <Typography variant="body2">
           {row.getValue("company_count")}家
           {row.original.eliminated_company_count > 0 && (
-            <span className="text-gray-500">
+            <Typography component="span" color="text.secondary">
               {" "}
               (抵消{row.original.eliminated_company_count}家)
-            </span>
+            </Typography>
           )}
-        </span>
+        </Typography>
       ),
     },
     {
@@ -255,11 +258,11 @@ export default function ConsolidationReportsPage() {
       header: "资产总计",
       accessorKey: "total_assets",
       cell: ({ row }) => (
-        <span className="font-mono text-right">
+        <Typography variant="body2" sx={{ fontFamily: "monospace", textAlign: "right" }}>
           {row.original.total_assets
             ? `¥${row.original.total_assets.toLocaleString("zh-CN")}`
             : "-"}
-        </span>
+        </Typography>
       ),
     },
     {
@@ -269,21 +272,26 @@ export default function ConsolidationReportsPage() {
       cell: ({ row }) => {
         const value =
           row.original.归属于母公司净利润 || row.original.net_profit;
-        if (!value) return <span className="text-gray-400">-</span>;
+        if (!value) return <Typography color="text.disabled">-</Typography>;
         const isPositive = value >= 0;
         return (
-          <div
-            className={`flex items-center gap-1 font-mono justify-end ${
-              isPositive ? "text-green-600" : "text-red-600"
-            }`}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              fontFamily: "monospace",
+              justifyContent: "flex-end",
+              color: isPositive ? "success.main" : "error.main",
+            }}
           >
             {isPositive ? (
-              <TrendingUp className="w-4 h-4" />
+              <TrendingUp style={{ width: 16, height: 16 }} />
             ) : (
-              <TrendingDown className="w-4 h-4" />
+              <TrendingDown style={{ width: 16, height: 16 }} />
             )}
             ¥{Math.abs(value).toLocaleString("zh-CN")}
-          </div>
+          </Box>
         );
       },
     },
@@ -297,7 +305,16 @@ export default function ConsolidationReportsPage() {
           label: status,
           color: "bg-gray-100 text-gray-800",
         };
-        return <Badge className={config.color}>{config.label}</Badge>;
+        return (
+          <Chip
+            size="small"
+            label={config.label}
+            sx={{
+              bgcolor: config.color.split(" ")[0].replace("bg-", "").replace("-100", ".lighter"),
+              color: config.color.split(" ")[1].replace("text-", "").replace("-800", ".main"),
+            }}
+          />
+        );
       },
     },
     {
@@ -312,210 +329,241 @@ export default function ConsolidationReportsPage() {
           label: approvalStatus,
           color: "bg-gray-100 text-gray-800",
         };
-        return <Badge className={config.color}>{config.label}</Badge>;
+        return (
+          <Chip
+            size="small"
+            label={config.label}
+            sx={{
+              bgcolor: config.color.split(" ")[0].replace("bg-", "").replace("-100", ".lighter"),
+              color: config.color.split(" ")[1].replace("text-", "").replace("-800", ".main"),
+            }}
+          />
+        );
       },
     },
     {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleViewReport(row.original)}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <IconButton size="small" onClick={() => handleViewReport(row.original)}>
+            <Eye style={{ width: 16, height: 16 }} />
+          </IconButton>
           {row.original.approval_status === "pending" &&
             row.original.status === "completed" && (
-              <Button
-                variant="ghost"
-                size="sm"
+              <IconButton
+                size="small"
                 onClick={() => approveReport.mutate(row.original.id)}
               >
-                <Check className="w-4 h-4 text-green-600" />
-              </Button>
+                <Check style={{ width: 16, height: 16, color: "#16a34a" }} />
+              </IconButton>
             )}
           {row.original.approval_status === "approved" &&
             row.original.status === "completed" && (
-              <Button
-                variant="ghost"
-                size="sm"
+              <IconButton
+                size="small"
                 onClick={() => publishReport.mutate(row.original.id)}
               >
-                <Send className="w-4 h-4 text-blue-600" />
-              </Button>
+                <Send style={{ width: 16, height: 16, color: "#2563eb" }} />
+              </IconButton>
             )}
-          <Button variant="ghost" size="sm">
-            <Download className="w-4 h-4" />
-          </Button>
-        </div>
+          <IconButton size="small">
+            <Download style={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Box>
       ),
     },
   ];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <Box sx={{ containerType: "inline-size", mx: "auto", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <GitMerge className="w-6 h-6 text-blue-600" />
+      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+            <GitMerge style={{ width: 24, height: 24, color: "#2563eb" }} />
             合并报表
-          </h1>
-          <p className="text-gray-500 mt-1">查看多公司合并后的财务报表</p>
-        </div>
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            查看多公司合并后的财务报表
+          </Typography>
+        </Box>
         <Button
+          variant="contained"
           onClick={() => navigate("/finance/consolidation/reports/generate")}
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus style={{ width: 16, height: 16, marginRight: 8 }} />
           生成合并报表
         </Button>
-      </div>
+      </Stack>
 
       {/* 搜索筛选栏 */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-5 gap-4">
-            <div>
-              <label className="text-sm text-gray-500 mb-2 block">
+        <CardContent sx={{ pt: 3 }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 2.4 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
                 合并范围
-              </label>
-              <Select value={selectedScope} onValueChange={setSelectedScope}>
-                <SelectTrigger>
-                  <SelectValue placeholder="全部范围" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全部范围</SelectItem>
+              </Typography>
+              <FormControl size="small" fullWidth>
+                <Select
+                  value={selectedScope}
+                  onChange={(e) => setSelectedScope(e.target.value)}
+                  displayEmpty
+                >
+                  <MenuItem value="">全部范围</MenuItem>
                   {scopesData?.items?.map((scope) => (
-                    <SelectItem key={scope.id} value={scope.id}>
+                    <MenuItem key={scope.id} value={scope.id}>
                       {scope.name}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm text-gray-500 mb-2 block">
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 2.4 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
                 报表类型
-              </label>
-              <Select
-                value={reportType}
-                onValueChange={(v) =>
-                  setReportType(v as ConsolidationReportType)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="全部类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全部类型</SelectItem>
+              </Typography>
+              <FormControl size="small" fullWidth>
+                <Select
+                  value={reportType}
+                  onChange={(e) =>
+                    setReportType(e.target.value as ConsolidationReportType)
+                  }
+                  displayEmpty
+                >
+                  <MenuItem value="">全部类型</MenuItem>
                   {Object.entries(REPORT_TYPE_CONFIG).map(([key, config]) => (
-                    <SelectItem key={key} value={key}>
+                    <MenuItem key={key} value={key}>
                       {config.name}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm text-gray-500 mb-2 block">
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 2.4 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
                 会计期间
-              </label>
-              <Input
+              </Typography>
+              <TextField
+                size="small"
                 type="month"
+                fullWidth
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
               />
-            </div>
-            <div>
-              <label className="text-sm text-gray-500 mb-2 block">搜索</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
+            </Grid>
+            <Grid size={{ xs: 12, md: 2.4 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                搜索
+              </Typography>
+              <Box sx={{ position: "relative" }}>
+                <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
+                <TextField
+                  size="small"
                   placeholder="报表编号..."
+                  fullWidth
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
-                  className="pl-10"
+                  sx={{ "& .MuiOutlinedInput-root": { pl: 4 } }}
                 />
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <Button variant="outline" onClick={() => refetch()}>
-                <RefreshCw className="w-4 h-4 mr-2" />
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 2.4 }} sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
+              <Button variant="outlined" onClick={() => refetch()}>
+                <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
                 刷新
               </Button>
-              <Button variant="outline">
-                <Download className="w-4 h-4 mr-2" />
+              <Button variant="outlined">
+                <Download style={{ width: 16, height: 16, marginRight: 8 }} />
                 导出
               </Button>
-            </div>
-          </div>
+            </Grid>
+          </Grid>
         </CardContent>
       </Card>
 
       {/* 报表汇总卡片 */}
-      <div className="grid grid-cols-4 gap-4">
+      <Grid container spacing={2}>
         {[
           {
             key: "consolidated_balance_sheet",
             name: "合并资产负债表",
             icon: Building2,
-            color: "text-blue-600",
+            color: "#2563eb",
           },
           {
             key: "consolidated_income_statement",
             name: "合并利润表",
             icon: TrendingUp,
-            color: "text-green-600",
+            color: "#16a34a",
           },
           {
             key: "consolidated_cash_flow",
             name: "合并现金流量表",
             icon: DollarSign,
-            color: "text-purple-600",
+            color: "#9333ea",
           },
           {
             key: "consolidated_statement_changes",
             name: "合并所有者权益变动表",
             icon: BarChart3,
-            color: "text-orange-600",
+            color: "#ea580c",
           },
         ].map(({ key, name, icon: IconComponent, color }) => {
           const count =
             reportsData?.items?.filter((r) => r.report_type === key).length ||
             0;
           return (
-            <Card
-              key={key}
-              className="cursor-pointer hover:border-blue-300 transition-colors"
-              onClick={() => setReportType(key as ConsolidationReportType)}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">{name}</p>
-                    <p className="text-2xl font-bold mt-1">{count}</p>
-                  </div>
-                  <div className={`p-3 rounded-full bg-gray-100 ${color}`}>
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <Grid size={{ xs: 12, md: 3 }} key={key}>
+              <Card
+                sx={{
+                  cursor: "pointer",
+                  border: 1,
+                  borderColor: "divider",
+                  transition: "border-color 0.2s",
+                  "&:hover": { borderColor: "#2563eb" },
+                }}
+                onClick={() => setReportType(key as ConsolidationReportType)}
+              >
+                <CardContent sx={{ pt: 3 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">{name}</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>{count}</Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        bgcolor: "grey.100",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color,
+                      }}
+                    >
+                      <IconComponent style={{ width: 24, height: 24 }} />
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
           );
         })}
-      </div>
+      </Grid>
 
       {/* 报表列表 */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-blue-600" />
-            合并报表列表
-          </CardTitle>
-        </CardHeader>
+        <CardHeader
+          title={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <FileSpreadsheet style={{ width: 20, height: 20, color: "#2563eb" }} />
+              <Typography variant="subtitle1">合并报表列表</Typography>
+            </Box>
+          }
+        />
         <CardContent>
           <EnhancedDataTable
             columns={columns}
@@ -527,87 +575,103 @@ export default function ConsolidationReportsPage() {
 
       {/* 报表详情Modal */}
       {showDetail && selectedReport && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b">
-              <div>
-                <h2 className="text-xl font-bold">
+        <Dialog
+          open={showDetail}
+          onClose={() => setShowDetail(false)}
+          maxWidth="lg"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box>
+                <Typography variant="h6">
                   {REPORT_TYPE_CONFIG[selectedReport.report_type]?.name ||
                     selectedReport.report_type}
-                </h2>
-                <p className="text-gray-500 text-sm mt-1">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   {selectedReport.scope_name} | {selectedReport.period}
-                </p>
-              </div>
-              <Button variant="ghost" onClick={() => setShowDetail(false)}>
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-            <div className="p-6 overflow-auto max-h-[calc(90vh-140px)]">
-              {/* 汇总数据 */}
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                {selectedReport.total_assets && (
-                  <Card>
-                    <CardContent className="pt-4">
-                      <p className="text-sm text-gray-500">资产总计</p>
-                      <p className="text-xl font-bold font-mono">
+                </Typography>
+              </Box>
+              <IconButton onClick={() => setShowDetail(false)}>
+                <X style={{ width: 20, height: 20 }} />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers>
+            {/* 汇总数据 */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              {selectedReport.total_assets && (
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body2" color="text.secondary">资产总计</Typography>
+                      <Typography variant="h6" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
                         ¥{selectedReport.total_assets.toLocaleString("zh-CN")}
-                      </p>
+                      </Typography>
                     </CardContent>
                   </Card>
-                )}
-                {selectedReport.total_liabilities && (
-                  <Card>
-                    <CardContent className="pt-4">
-                      <p className="text-sm text-gray-500">负债合计</p>
-                      <p className="text-xl font-bold font-mono">
+                </Grid>
+              )}
+              {selectedReport.total_liabilities && (
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body2" color="text.secondary">负债合计</Typography>
+                      <Typography variant="h6" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
                         ¥
                         {selectedReport.total_liabilities.toLocaleString(
                           "zh-CN",
                         )}
-                      </p>
+                      </Typography>
                     </CardContent>
                   </Card>
-                )}
-                {selectedReport.total_equity && (
-                  <Card>
-                    <CardContent className="pt-4">
-                      <p className="text-sm text-gray-500">所有者权益</p>
-                      <p className="text-xl font-bold font-mono">
+                </Grid>
+              )}
+              {selectedReport.total_equity && (
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body2" color="text.secondary">所有者权益</Typography>
+                      <Typography variant="h6" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
                         ¥{selectedReport.total_equity.toLocaleString("zh-CN")}
-                      </p>
+                      </Typography>
                     </CardContent>
                   </Card>
-                )}
-                {selectedReport.net_profit && (
-                  <Card>
-                    <CardContent className="pt-4">
-                      <p className="text-sm text-gray-500">净利润</p>
-                      <p
-                        className={`text-xl font-bold font-mono ${
-                          selectedReport.net_profit >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
+                </Grid>
+              )}
+              {selectedReport.net_profit && (
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body2" color="text.secondary">净利润</Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "monospace",
+                          fontWeight: "bold",
+                          color: selectedReport.net_profit >= 0 ? "success.main" : "error.main",
+                        }}
                       >
                         ¥{selectedReport.net_profit.toLocaleString("zh-CN")}
-                      </p>
+                      </Typography>
                     </CardContent>
                   </Card>
-                )}
-              </div>
+                </Grid>
+              )}
+            </Grid>
 
-              {/* 报表行项目 */}
-              <Table>
-                <TableHeader>
+            {/* 报表行项目 */}
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
                   <TableRow>
-                    <TableHead className="w-[200px]">项目</TableHead>
-                    <TableHead className="text-right">本期金额</TableHead>
-                    <TableHead className="text-right">上期金额</TableHead>
-                    <TableHead className="text-right">变动</TableHead>
-                    <TableHead className="text-right">变动率</TableHead>
+                    <TableCell sx={{ width: 200 }}>项目</TableCell>
+                    <TableCell align="right">本期金额</TableCell>
+                    <TableCell align="right">上期金额</TableCell>
+                    <TableCell align="right">变动</TableCell>
+                    <TableCell align="right">变动率</TableCell>
                   </TableRow>
-                </TableHeader>
+                </TableHead>
                 <TableBody>
                   {reportDetail?.data?.map((line) => {
                     const change =
@@ -619,33 +683,30 @@ export default function ConsolidationReportsPage() {
                     return (
                       <TableRow key={line.id}>
                         <TableCell
-                          className={
-                            line.item_level > 1
-                              ? `pl-${line.item_level * 4}`
-                              : ""
-                          }
-                          style={{
-                            paddingLeft: `${line.item_level * 16 + 12}px`,
+                          sx={{
+                            pl: `${line.item_level * 16 + 12}px`,
                           }}
                         >
                           {line.item_name}
                         </TableCell>
-                        <TableCell className="text-right font-mono">
+                        <TableCell align="right" sx={{ fontFamily: "monospace" }}>
                           {line.current_period.toLocaleString("zh-CN", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
                         </TableCell>
-                        <TableCell className="text-right font-mono text-gray-500">
+                        <TableCell align="right" sx={{ fontFamily: "monospace", color: "text.secondary" }}>
                           {line.prior_period?.toLocaleString("zh-CN", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           }) || "-"}
                         </TableCell>
                         <TableCell
-                          className={`text-right font-mono ${
-                            change >= 0 ? "text-green-600" : "text-red-600"
-                          }`}
+                          align="right"
+                          sx={{
+                            fontFamily: "monospace",
+                            color: change >= 0 ? "success.main" : "error.main",
+                          }}
                         >
                           {change.toLocaleString("zh-CN", {
                             minimumFractionDigits: 2,
@@ -653,9 +714,11 @@ export default function ConsolidationReportsPage() {
                           })}
                         </TableCell>
                         <TableCell
-                          className={`text-right font-mono ${
-                            changeRate >= 0 ? "text-green-600" : "text-red-600"
-                          }`}
+                          align="right"
+                          sx={{
+                            fontFamily: "monospace",
+                            color: changeRate >= 0 ? "success.main" : "error.main",
+                          }}
                         >
                           {changeRate.toFixed(2)}%
                         </TableCell>
@@ -664,23 +727,23 @@ export default function ConsolidationReportsPage() {
                   })}
                 </TableBody>
               </Table>
-            </div>
-            <div className="flex items-center justify-end gap-2 p-6 border-t">
-              <Button variant="outline" onClick={() => setShowDetail(false)}>
-                关闭
-              </Button>
-              <Button variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                导出Excel
-              </Button>
-              <Button>
-                <Download className="w-4 h-4 mr-2" />
-                导出PDF
-              </Button>
-            </div>
-          </div>
-        </div>
+            </TableContainer>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button variant="outlined" onClick={() => setShowDetail(false)}>
+              关闭
+            </Button>
+            <Button variant="outlined">
+              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
+              导出Excel
+            </Button>
+            <Button variant="contained">
+              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
+              导出PDF
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
-    </div>
+    </Box>
   );
 }

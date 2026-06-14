@@ -59,14 +59,10 @@ const RsFormulaDetailPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
-        >
+        <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography variant="h4" fontWeight="bold">
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                 {formula.name}
               </Typography>
               <Chip label={formula.version} color="primary" />
@@ -88,7 +84,7 @@ const RsFormulaDetailPage: React.FC = () => {
       </div>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -128,7 +124,7 @@ const RsFormulaDetailPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -137,7 +133,7 @@ const RsFormulaDetailPage: React.FC = () => {
               <Stack spacing={2}>
                 {versions.map((v, index) => (
                   <Paper key={index} variant="outlined" sx={{ p: 2 }}>
-                    <Stack direction="row" justifyContent="space-between">
+                    <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                       <Chip label={v.version} size="small" />
                       <Typography variant="caption">{v.date}</Typography>
                     </Stack>

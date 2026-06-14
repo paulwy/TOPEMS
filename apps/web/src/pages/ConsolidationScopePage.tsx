@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { Button, Card, CardContent, CardHeader, Chip, Typography, TextField, Box, Tabs, Tab } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -21,11 +22,6 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useConsolidationScopes,
   useDeleteConsolidationScope,
@@ -144,7 +140,7 @@ export default function ConsolidationScopePage() {
           label: row.consolidation_method,
           color: "bg-gray-100 text-gray-800",
         };
-        return <Badge className={config.color}>{config.label}</Badge>;
+        return <Chip size="small" className={config.color} label={config.label} />;
       },
     },
     {
@@ -168,7 +164,7 @@ export default function ConsolidationScopePage() {
         const Icon = config.icon;
         return (
           <div className="flex items-center gap-2">
-            <Badge className={config.color}>{config.label}</Badge>
+            <Chip size="small" className={config.color} label={config.label} />
           </div>
         );
       },
@@ -179,16 +175,16 @@ export default function ConsolidationScopePage() {
       cell: ({ row }: { row: ConsolidationScope }) => (
         <div className="flex items-center gap-2">
           <Button
-            variant="ghost"
-            size="sm"
+            variant="text"
+            size="small"
             onClick={() => navigate(`/finance/consolidation/${row.id}/rules`)}
           >
             <Settings className="w-4 h-4" />
             规则
           </Button>
           <Button
-            variant="ghost"
-            size="sm"
+            variant="text"
+            size="small"
             onClick={() => handleDeleteScope(row.id)}
           >
             <Trash2 className="w-4 h-4 text-red-500" />
@@ -221,7 +217,7 @@ export default function ConsolidationScopePage() {
         <div className="flex items-center gap-2">
           <span className="font-medium">{row.getValue("company_name")}</span>
           {row.original.is_parent && (
-            <Badge className="bg-blue-100 text-blue-800">母公司</Badge>
+            <Chip  size="small" className="bg-blue-100 text-blue-800" label="母公司" />
           )}
         </div>
       ),
@@ -238,7 +234,7 @@ export default function ConsolidationScopePage() {
           label: controlType,
           color: "bg-gray-100 text-gray-800",
         };
-        return <Badge className={config.color}>{config.label}</Badge>;
+        return <Chip size="small" className={config.color} label={config.label} />;
       },
     },
     {
@@ -280,8 +276,8 @@ export default function ConsolidationScopePage() {
       header: "操作",
       cell: ({ row }) => (
         <Button
-          variant="ghost"
-          size="sm"
+          variant="text"
+          size="small"
           onClick={() => removeCompany.mutate(row.original.id)}
           disabled={row.original.is_parent}
         >
@@ -292,162 +288,164 @@ export default function ConsolidationScopePage() {
   ];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <Box sx={{ p: 3 }} className="container mx-auto">
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
             <GitMerge className="w-6 h-6 text-blue-600" />
             合并范围管理
-          </h1>
-          <p className="text-gray-500 mt-1">
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
             配置多公司合并报表的合并范围和抵消规则
-          </p>
-        </div>
+          </Typography>
+        </Box>
         <Button
+          variant="contained"
           onClick={() => navigate("/finance/consolidation/scopes/create")}
+          startIcon={<Plus className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4 mr-2" />
           新建合并范围
         </Button>
-      </div>
+      </Box>
 
       {/* 搜索栏 */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ pt: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ position: "relative", flex: 1, maxWidth: 400 }}>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <TextField
                 placeholder="搜索合并范围名称或编码..."
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
-                className="pl-10"
+                size="small"
+                sx={{ pl: 5, width: "100%" }}
               />
-            </div>
-            <Button variant="outline">高级搜索</Button>
-          </div>
+            </Box>
+            <Button variant="outlined">高级搜索</Button>
+          </Box>
         </CardContent>
       </Card>
 
       {/* 合并范围列表和详情 */}
-      <div className="grid grid-cols-12 gap-6">
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "5fr 7fr" }, gap: 3 }}>
         {/* 左侧：合并范围列表 */}
-        <div className="col-span-5">
+        <Box>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem", display: "flex", alignItems: "center", gap: 1 }}>
                 <Network className="w-5 h-5 text-blue-600" />
                 合并范围列表
-              </CardTitle>
+              </Typography>
             </CardHeader>
             <CardContent>
               {scopesLoading ? (
-                <div className="text-center py-8 text-gray-500">加载中...</div>
+                <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>加载中...</Box>
               ) : scopesData?.items?.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
                   暂无合并范围，点击右上角新建
-                </div>
+                </Box>
               ) : (
-                <div className="space-y-2">
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {scopesData?.items?.map((scope) => (
-                    <div
+                    <Box
                       key={scope.id}
-                      className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                        selectedScope?.id === scope.id
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
+                      sx={{
+                        p: 2,
+                        borderRadius: 1,
+                        border: 1,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        borderColor: selectedScope?.id === scope.id ? "primary.main" : "divider",
+                        bgcolor: selectedScope?.id === scope.id ? "primary.50" : "transparent",
+                        "&:hover": { borderColor: "primary.main", bgcolor: "primary.50" },
+                      }}
                       onClick={() => handleSelectScope(scope)}
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{scope.name}</span>
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>{scope.name}</Typography>
                             {STATUS_CONFIG[scope.status] && (
-                              <Badge
-                                className={STATUS_CONFIG[scope.status].color}
-                              >
-                                {STATUS_CONFIG[scope.status].label}
-                              </Badge>
+                              <Chip size="small" label={STATUS_CONFIG[scope.status].label} sx={{ bgcolor: "success.100", color: "success.main" }} />
                             )}
-                          </div>
-                          <div className="text-sm text-gray-500 mt-1">
+                          </Box>
+                          <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5, display: "block" }}>
                             {scope.code} |{" "}
                             {METHOD_CONFIG[scope.consolidation_method]?.label ||
                               scope.consolidation_method}
-                          </div>
-                        </div>
+                          </Typography>
+                        </Box>
                         <ChevronRight className="w-5 h-5 text-gray-400" />
-                      </div>
-                    </div>
+                      </Box>
+                    </Box>
                   ))}
-                </div>
+                </Box>
               )}
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         {/* 右侧：合并范围详情 */}
-        <div className="col-span-7">
+        <Box>
           {selectedScope ? (
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem", display: "flex", alignItems: "center", gap: 1 }}>
                     <Users className="w-5 h-5 text-blue-600" />
                     {selectedScope.name}
-                  </CardTitle>
+                  </Typography>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="outlined"
+                    size="small"
                     onClick={() =>
                       navigate(
                         `/finance/consolidation/scopes/${selectedScope.id}/edit`,
                       )
                     }
+                    startIcon={<Edit2 className="w-4 h-4" />}
                   >
-                    <Edit2 className="w-4 h-4 mr-2" />
                     编辑
                   </Button>
-                </div>
-                <div className="text-sm text-gray-500 mt-2">
+                </Box>
+                <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
                   {selectedScope.code} | {selectedScope.description || "无说明"}
-                </div>
+                </Typography>
               </CardHeader>
               <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList>
-                    <TabsTrigger value="companies">
-                      成员公司 ({companiesData?.data?.length || 0})
-                    </TabsTrigger>
-                    <TabsTrigger value="rules">抵消规则</TabsTrigger>
-                    <TabsTrigger value="transactions">内部交易</TabsTrigger>
-                  </TabsList>
+                <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 2 }}>
+                  <Tab value="companies" label={`成员公司 (${companiesData?.data?.length || 0})`} />
+                  <Tab value="rules" label="抵消规则" />
+                  <Tab value="transactions" label="内部交易" />
+                </Tabs>
 
-                  <TabsContent value="companies" className="mt-4">
-                    <div className="mb-4 flex justify-end">
+                {activeTab === "companies" && (
+                  <Box>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
                       <Button
-                        size="sm"
+                        size="small"
+                        variant="contained"
                         onClick={() =>
                           navigate(
                             `/finance/consolidation/scopes/${selectedScope.id}/add-company`,
                           )
                         }
+                        startIcon={<Plus className="w-4 h-4" />}
                       >
-                        <Plus className="w-4 h-4 mr-2" />
                         添加公司
                       </Button>
-                    </div>
+                    </Box>
 
                     {companiesLoading ? (
-                      <div className="text-center py-8 text-gray-500">
+                      <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
                         加载中...
-                      </div>
+                      </Box>
                     ) : companiesData?.data?.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
+                      <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
                         暂无成员公司
-                      </div>
+                      </Box>
                     ) : (
                       <EnhancedDataTable
                         columns={companyColumns}
@@ -455,47 +453,48 @@ export default function ConsolidationScopePage() {
                         loading={companiesLoading}
                       />
                     )}
-                  </TabsContent>
+                  </Box>
+                )}
 
-                  <TabsContent value="rules" className="mt-4">
-                    <div className="mb-4 flex justify-end">
+                {activeTab === "rules" && (
+                  <Box>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
                       <Button
-                        size="sm"
+                        size="small"
+                        variant="contained"
                         onClick={() =>
                           navigate(
                             `/finance/consolidation/scopes/${selectedScope.id}/rules/create`,
                           )
                         }
+                        startIcon={<Plus className="w-4 h-4" />}
                       >
-                        <Plus className="w-4 h-4 mr-2" />
                         新建规则
                       </Button>
-                    </div>
-                    <div className="text-center py-8 text-gray-500">
+                    </Box>
+                    <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
                       点击上方按钮添加抵消规则
-                    </div>
-                  </TabsContent>
+                    </Box>
+                  </Box>
+                )}
 
-                  <TabsContent value="transactions" className="mt-4">
-                    <div className="text-center py-8 text-gray-500">
-                      内部交易列表将显示在此处
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                {activeTab === "transactions" && (
+                  <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                    内部交易列表将显示在此处
+                  </Box>
+                )}
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardContent className="flex items-center justify-center h-96">
-                <div className="text-center text-gray-500">
-                  <Network className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>请从左侧选择一个合并范围</p>
-                </div>
-              </CardContent>
+            <Card sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 384 }}>
+              <Box sx={{ textAlign: "center", color: "text.secondary" }}>
+                <Network className="w-12 h-12 mx-auto mb: 2, text-gray-300" />
+                <Typography>请从左侧选择一个合并范围</Typography>
+              </Box>
             </Card>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }

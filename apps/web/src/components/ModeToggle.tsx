@@ -1,53 +1,70 @@
 "use client";
 
+import { useState } from "react";
 import { Moon, Sun, Monitor } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Button, Menu, MenuItem } from "@mui/material";
 import { useAppStore } from "@/store";
 
 export function ModeToggle() {
   const setTheme = useAppStore((state) => state.setTheme);
   const theme = useAppStore((state) => state.theme);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const getIcon = () => {
     switch (theme) {
       case "dark":
-        return <Moon className="h-[1.2rem] w-[1.2rem]" />;
+        return <Moon style={{ width: 18, height: 18 }} />;
       case "light":
-        return <Sun className="h-[1.2rem] w-[1.2rem]" />;
+        return <Sun style={{ width: 18, height: 18 }} />;
       default:
-        return <Monitor className="h-[1.2rem] w-[1.2rem]" />;
+        return <Monitor style={{ width: 18, height: 18 }} />;
     }
   };
 
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme);
+    handleMenuClose();
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          {getIcon()}
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          <Sun className="mr-2 h-4 w-4" />
-          <span>浅色模式</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          <Moon className="mr-2 h-4 w-4" />
-          <span>深色模式</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          <Monitor className="mr-2 h-4 w-4" />
-          <span>跟随系统</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <Button variant="outlined" size="small" onClick={handleMenuOpen}>
+        {getIcon()}
+      </Button>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+      >
+        <MenuItem onClick={() => handleThemeChange("light")}>
+          <Sun style={{ width: 16, height: 16, marginRight: 8 }} />
+          浅色模式
+        </MenuItem>
+        <MenuItem onClick={() => handleThemeChange("dark")}>
+          <Moon style={{ width: 16, height: 16, marginRight: 8 }} />
+          深色模式
+        </MenuItem>
+        <MenuItem onClick={() => handleThemeChange("system")}>
+          <Monitor style={{ width: 16, height: 16, marginRight: 8 }} />
+          跟随系统
+        </MenuItem>
+      </Menu>
+    </>
   );
 }

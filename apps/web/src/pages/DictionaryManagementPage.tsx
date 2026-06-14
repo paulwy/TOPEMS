@@ -24,28 +24,35 @@ import {
 } from "../api/system";
 import { useAppStore } from "../store";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Card,
+  CardContent,
+  CardHeader,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Switch } from "@/components/ui/switch";
+  MenuItem,
+  Chip,
+  IconButton,
+  Switch,
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Checkbox,
+} from "@mui/material";
 
 interface DictionaryManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -523,29 +530,27 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
   }, [dictItems]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/dashboard")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <Book className="w-7 h-7 mr-3 text-blue-600" />
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <IconButton onClick={() => navigate("/dashboard")}>
+                <ChevronLeft size={20} />
+              </IconButton>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}>
+                  <Book size={28} style={{ marginRight: 12, color: "#2563eb" }} />
                   字典管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   管理系统字典、业务字典、基础数据字典
-                </p>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
             <Button
+              variant="contained"
+              startIcon={<Plus size={20} />}
               onClick={() => {
                 setEditingType(null);
                 setNewType({
@@ -557,622 +562,471 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                 });
                 setShowTypeModal(true);
               }}
-              className="flex items-center"
             >
-              <Plus className="w-5 h-5 mr-2" />
               新增字典类型
             </Button>
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
 
       {error && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-700">{error}</p>
-          </div>
-        </div>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
+          <Paper sx={{ bgcolor: "#fef2f2", borderColor: "#fecaca", p: 2, border: 1 }}>
+            <Typography color="error">{error}</Typography>
+          </Paper>
+        </Box>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex gap-6">
-          <div className="w-80 flex-shrink-0">
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+        <Box sx={{ display: "flex", gap: 3 }}>
+          <Box sx={{ width: 320, flexShrink: 0 }}>
             <Card>
-              <CardContent className="p-4">
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ position: "relative", mb: 2 }}>
+                  <TextField
                     type="text"
                     placeholder="搜索字典类型..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9"
+                    size="small"
+                    fullWidth
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <Box component="span" sx={{ mr: 1, display: "flex", alignItems: "center" }}>
+                            <Search size={16} style={{ color: "#9ca3af" }} />
+                          </Box>
+                        ),
+                      },
+                    }}
                   />
-                </div>
+                </Box>
 
                 {loading ? (
-                  <div className="text-center py-8">
-                    <RefreshCw className="inline-block animate-spin rounded-full h-6 w-6 text-blue-600" />
-                  </div>
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <CircularProgress size={24} />
+                  </Box>
                 ) : (
-                  <ScrollArea className="h-[600px]">
-                    <div className="space-y-4">
+                  <Box sx={{ maxHeight: 600, overflow: "auto" }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                       {Object.entries(groupedTypes).map(([category, types]) => (
-                        <div key={category}>
-                          <div className="flex items-center space-x-2 text-xs font-medium text-gray-500 uppercase mb-2">
-                            <FolderOpen className="w-4 h-4" />
-                            <span>{categoryLabels[category] || category}</span>
-                          </div>
-                          <div className="space-y-1">
+                        <Box key={category}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                            <FolderOpen size={16} style={{ color: "#6b7280" }} />
+                            <Typography variant="caption" sx={{ fontWeight: 500, color: "text.secondary", textTransform: "uppercase" }}>
+                              {categoryLabels[category] || category}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                             {types.map((type) => (
-                              <div
+                              <Box
                                 key={type.id}
                                 onClick={() => setSelectedType(type)}
-                                className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                                  selectedType?.id === type.id
-                                    ? "bg-blue-50 border border-blue-200"
-                                    : "hover:bg-gray-50 border border-transparent"
-                                }`}
+                                sx={{
+                                  p: 1.5,
+                                  borderRadius: 1,
+                                  cursor: "pointer",
+                                  transition: "all 0.2s",
+                                  border: 1,
+                                  borderColor: selectedType?.id === type.id ? "primary.main" : "transparent",
+                                  bgcolor: selectedType?.id === type.id ? "primary.50" : "transparent",
+                                  "&:hover": { bgcolor: selectedType?.id === type.id ? "primary.50" : "action.hover" },
+                                }}
                               >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <Tag className="w-4 h-4 text-gray-400" />
-                                    <div>
-                                      <div className="font-medium text-gray-900 text-sm">
-                                        {type.name}
-                                      </div>
-                                      <div className="text-xs text-gray-500">
-                                        {type.code}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                                </div>
-                                <Badge
-                                  variant="outline"
-                                  className="mt-2 text-xs"
-                                >
-                                  {statusLabels[type.status]}
-                                </Badge>
-                              </div>
+                                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                    <Tag size={16} style={{ color: "#9ca3af" }} />
+                                    <Box>
+                                      <Typography variant="body2" sx={{ fontWeight: 500 }}>{type.name}</Typography>
+                                      <Typography variant="caption" color="text.secondary">{type.code}</Typography>
+                                    </Box>
+                                  </Box>
+                                  <ChevronRight size={16} style={{ color: "#9ca3af" }} />
+                                </Box>
+                                <Chip
+                                  label={statusLabels[type.status]}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ mt: 1 }}
+                                />
+                              </Box>
                             ))}
-                          </div>
-                        </div>
+                          </Box>
+                        </Box>
                       ))}
-                    </div>
-                  </ScrollArea>
+                    </Box>
+                  </Box>
                 )}
               </CardContent>
             </Card>
-          </div>
+          </Box>
 
-          <div className="flex-1">
+          <Box sx={{ flex: 1 }}>
             {selectedType ? (
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <div>
-                    <CardTitle className="text-lg">
-                      {selectedType.name}
-                    </CardTitle>
-                    <p className="text-sm text-gray-500">
-                      编码: {selectedType.code} | 分类:{" "}
-                      {categoryLabels[selectedType.category] ||
-                        selectedType.category}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setEditingType(selectedType);
-                        setShowTypeModal(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      编辑类型
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => {
-                        if (
-                          confirm(
-                            "确定要删除这个字典类型吗？所有字典项也会被删除！",
-                          )
-                        ) {
-                          handleDeleteType(selectedType.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      删除
-                    </Button>
-                    <Dialog
-                      open={showExportModal}
-                      onOpenChange={setShowExportModal}
-                    >
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Download className="w-4 h-4 mr-1" />
-                          导出
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>导出字典项</DialogTitle>
-                        </DialogHeader>
-                        <p className="text-sm text-gray-600 mb-4">
-                          将当前字典类型的所有字典项导出为 JSON 文件。
-                        </p>
-                        <DialogFooter>
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowExportModal(false)}
-                          >
-                            取消
-                          </Button>
-                          <Button onClick={handleExport}>确认导出</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                    <Dialog
-                      open={showImportModal}
-                      onOpenChange={setShowImportModal}
-                    >
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Upload className="w-4 h-4 mr-1" />
-                          导入
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>导入字典项</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleImport} className="space-y-4">
-                          <div>
-                            <Label htmlFor="import-file">选择 JSON 文件</Label>
-                            <Input
-                              id="import-file"
-                              type="file"
-                              accept=".json"
-                              onChange={(e) =>
-                                setImportFile(e.target.files?.[0] || null)
-                              }
-                              className="mt-1"
-                            />
-                          </div>
-                          <DialogFooter>
-                            <Button
-                              variant="outline"
-                              type="button"
-                              onClick={() => setShowImportModal(false)}
-                            >
-                              取消
-                            </Button>
-                            <Button type="submit">确认导入</Button>
-                          </DialogFooter>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setEditingItem(null);
-                        setNewItem({
-                          code: "",
-                          name: "",
-                          value: "",
-                          sort_order: dictItems.length,
-                          parent_id: undefined,
-                        });
-                        setShowItemModal(true);
-                      }}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      新增字典项
-                    </Button>
-                  </div>
-                </CardHeader>
+                <CardHeader
+                  sx={{ pb: 1 }}
+                  title={
+                    <Typography variant="h6">{selectedType.name}</Typography>
+                  }
+                  subheader={
+                    <Typography variant="body2" color="text.secondary">
+                      编码: {selectedType.code} | 分类: {categoryLabels[selectedType.category] || selectedType.category}
+                    </Typography>
+                  }
+                  action={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Edit size={16} />}
+                        onClick={() => {
+                          setEditingType(selectedType);
+                          setShowTypeModal(true);
+                        }}
+                      >
+                        编辑类型
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="error"
+                        startIcon={<Trash2 size={16} />}
+                        onClick={() => {
+                          if (confirm("确定要删除这个字典类型吗？所有字典项也会被删除！")) {
+                            handleDeleteType(selectedType.id);
+                          }
+                        }}
+                      >
+                        删除
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Download size={16} />}
+                        onClick={() => setShowExportModal(true)}
+                      >
+                        导出
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Upload size={16} />}
+                        onClick={() => setShowImportModal(true)}
+                      >
+                        导入
+                      </Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<Plus size={16} />}
+                        onClick={() => {
+                          setEditingItem(null);
+                          setNewItem({
+                            code: "",
+                            name: "",
+                            value: "",
+                            sort_order: dictItems.length,
+                            parent_id: undefined,
+                          });
+                          setShowItemModal(true);
+                        }}
+                      >
+                        新增字典项
+                      </Button>
+                    </Box>
+                  }
+                />
 
-                <CardContent className="p-4">
+                <CardContent sx={{ p: 2 }}>
                   {itemsLoading ? (
-                    <div className="text-center py-8">
-                      <RefreshCw className="inline-block animate-spin rounded-full h-6 w-6 text-blue-600" />
-                    </div>
+                    <Box sx={{ textAlign: "center", py: 4 }}>
+                      <CircularProgress size={24} />
+                    </Box>
                   ) : dictItems.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Tag className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-500">暂无字典项</p>
-                    </div>
+                    <Box sx={{ textAlign: "center", py: 6 }}>
+                      <Tag size={48} style={{ color: "#9ca3af", marginBottom: 12 }} />
+                      <Typography color="text.secondary">暂无字典项</Typography>
+                    </Box>
                   ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedItems.length === dictItems.length &&
-                              dictItems.length > 0
-                            }
+                    <Box>
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Checkbox
+                            checked={selectedItems.length === dictItems.length && dictItems.length > 0}
+                            indeterminate={selectedItems.length > 0 && selectedItems.length < dictItems.length}
                             onChange={handleSelectAll}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            size="small"
                           />
-                          <span className="text-sm text-gray-600">全选</span>
-                        </label>
+                          <Typography variant="body2" color="text.secondary">全选</Typography>
+                        </Box>
                         {selectedItems.length > 0 && (
                           <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-600 hover:bg-red-50"
+                            variant="outlined"
+                            size="small"
+                            color="error"
+                            startIcon={<Trash2 size={16} />}
                             onClick={() => {
-                              if (
-                                confirm(
-                                  `确定要删除选中的 ${selectedItems.length} 个字典项吗？`,
-                                )
-                              ) {
+                              if (confirm(`确定要删除选中的 ${selectedItems.length} 个字典项吗？`)) {
                                 handleBatchDelete();
                               }
                             }}
                           >
-                            <Trash2 className="w-4 h-4 mr-1" />
                             批量删除 ({selectedItems.length})
                           </Button>
                         )}
-                      </div>
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase w-12">
-                              选择
-                            </th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase w-16">
-                              排序
-                            </th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                              编码
-                            </th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                              名称
-                            </th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                              值
-                            </th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase w-24">
-                              状态
-                            </th>
-                            <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase w-32">
-                              操作
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dictItems.map((item) => (
-                            <tr
-                              key={item.id}
-                              className="border-b border-gray-100 hover:bg-gray-50"
-                            >
-                              <td className="py-3 px-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedItems.includes(item.id)}
-                                  onChange={() => handleSelectItem(item.id)}
-                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                              </td>
-                              <td className="py-3 px-3 text-sm text-gray-600">
-                                {item.sort_order}
-                              </td>
-                              <td className="py-3 px-3 text-sm font-mono text-gray-900">
-                                {item.code}
-                              </td>
-                              <td className="py-3 px-3 text-sm text-gray-900">
-                                {item.parent_id && (
-                                  <span className="text-gray-400 mr-1">└─</span>
-                                )}
-                                {item.name}
-                              </td>
-                              <td className="py-3 px-3 text-sm text-gray-600">
-                                {item.value || "-"}
-                              </td>
-                              <td className="py-3 px-3">
-                                <button
-                                  onClick={() => handleToggleItemStatus(item)}
-                                  className="flex items-center space-x-2"
-                                >
-                                  <Switch
-                                    checked={item.status === "active"}
-                                    onCheckedChange={() => {}}
+                      </Box>
+                      <TableContainer component={Paper} variant="outlined">
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell padding="checkbox" sx={{ width: 48 }}>选择</TableCell>
+                              <TableCell sx={{ width: 64 }}>排序</TableCell>
+                              <TableCell>编码</TableCell>
+                              <TableCell>名称</TableCell>
+                              <TableCell>值</TableCell>
+                              <TableCell sx={{ width: 96 }}>状态</TableCell>
+                              <TableCell align="right" sx={{ width: 128 }}>操作</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {dictItems.map((item) => (
+                              <TableRow key={item.id} hover>
+                                <TableCell padding="checkbox">
+                                  <Checkbox
+                                    checked={selectedItems.includes(item.id)}
+                                    onChange={() => handleSelectItem(item.id)}
+                                    size="small"
                                   />
-                                  <span
-                                    className={`text-xs font-medium ${
-                                      item.status === "active"
-                                        ? "text-green-600"
-                                        : "text-gray-500"
-                                    }`}
-                                  >
-                                    {statusLabels[item.status]}
-                                  </span>
-                                </button>
-                              </td>
-                              <td className="py-3 px-3 text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingItem(item);
-                                    setShowItemModal(true);
-                                  }}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-600"
-                                  onClick={() => {
-                                    if (confirm("确定要删除这个字典项吗？")) {
-                                      handleDeleteItem(item.id);
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" color="text.secondary">{item.sort_order}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{item.code}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2">
+                                    {item.parent_id && <Box component="span" sx={{ color: "text.disabled", mr: 0.5 }}>└─</Box>}
+                                    {item.name}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" color="text.secondary">{item.value || "-"}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                    <Switch
+                                      checked={item.status === "active"}
+                                      onChange={() => handleToggleItemStatus(item)}
+                                      size="small"
+                                    />
+                                    <Typography variant="caption" sx={{ fontWeight: 500, color: item.status === "active" ? "success.main" : "text.disabled" }}>
+                                      {statusLabels[item.status]}
+                                    </Typography>
+                                  </Box>
+                                </TableCell>
+                                <TableCell align="right">
+                                  <IconButton size="small" onClick={() => { setEditingItem(item); setShowItemModal(true); }}>
+                                    <Edit size={16} />
+                                  </IconButton>
+                                  <IconButton size="small" color="error" onClick={() => { if (confirm("确定要删除这个字典项吗？")) handleDeleteItem(item.id); }}>
+                                    <Trash2 size={16} />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
             ) : (
               <Card>
-                <CardContent className="p-12 text-center">
-                  <Book className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    请选择字典类型
-                  </h3>
-                  <p className="text-gray-500">
-                    从左侧列表选择一个字典类型查看和管理字典项
-                  </p>
+                <CardContent sx={{ p: 6, textAlign: "center" }}>
+                  <Book size={64} style={{ color: "#9ca3af", marginBottom: 16 }} />
+                  <Typography variant="h6" sx={{ mb: 1 }}>请选择字典类型</Typography>
+                  <Typography color="text.secondary">从左侧列表选择一个字典类型查看和管理字典项</Typography>
                 </CardContent>
               </Card>
             )}
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
 
-      <Dialog open={showTypeModal} onOpenChange={setShowTypeModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingType ? "编辑字典类型" : "新增字典类型"}
-            </DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={editingType ? handleUpdateType : handleCreateType}
-            className="space-y-4"
-          >
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="type-code">编码 *</Label>
-                <Input
-                  id="type-code"
-                  type="text"
-                  required
-                  disabled={!!editingType}
-                  value={editingType?.code || newType.code || ""}
-                  onChange={(e) => {
-                    if (editingType) {
-                      setEditingType({ ...editingType, code: e.target.value });
-                    } else {
-                      setNewType({ ...newType, code: e.target.value });
-                    }
-                  }}
-                  className="mt-1"
-                  placeholder="如: status_type"
-                />
-              </div>
-              <div>
-                <Label htmlFor="type-name">名称 *</Label>
-                <Input
-                  id="type-name"
-                  type="text"
-                  required
-                  value={editingType?.name || newType.name || ""}
-                  onChange={(e) => {
-                    if (editingType) {
-                      setEditingType({ ...editingType, name: e.target.value });
-                    } else {
-                      setNewType({ ...newType, name: e.target.value });
-                    }
-                  }}
-                  className="mt-1"
-                  placeholder="如: 状态类型"
-                />
-              </div>
-              <div>
-                <Label htmlFor="type-category">分类</Label>
-                <Select
-                  value={
-                    editingType?.category || newType.category || "business"
+      {/* 字典类型对话框 */}
+      <Dialog open={showTypeModal} onClose={() => setShowTypeModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingType ? "编辑字典类型" : "新增字典类型"}</DialogTitle>
+        <Box component="form" onSubmit={editingType ? handleUpdateType : handleCreateType}>
+          <DialogContent>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <TextField
+                fullWidth
+                label="编码 *"
+                required
+                disabled={!!editingType}
+                value={editingType?.code || newType.code || ""}
+                onChange={(e) => {
+                  if (editingType) {
+                    setEditingType({ ...editingType, code: e.target.value });
+                  } else {
+                    setNewType({ ...newType, code: e.target.value });
                   }
-                  onValueChange={(value) => {
+                }}
+                placeholder="如: status_type"
+                size="small"
+              />
+              <TextField
+                fullWidth
+                label="名称 *"
+                required
+                value={editingType?.name || newType.name || ""}
+                onChange={(e) => {
+                  if (editingType) {
+                    setEditingType({ ...editingType, name: e.target.value });
+                  } else {
+                    setNewType({ ...newType, name: e.target.value });
+                  }
+                }}
+                placeholder="如: 状态类型"
+                size="small"
+              />
+              <FormControl size="small" fullWidth>
+                <InputLabel>分类</InputLabel>
+                <Select
+                  value={editingType?.category || newType.category || "business"}
+                  label="分类"
+                  onChange={(e) => {
                     if (editingType) {
-                      setEditingType({ ...editingType, category: value });
+                      setEditingType({ ...editingType, category: e.target.value });
                     } else {
-                      setNewType({ ...newType, category: value });
+                      setNewType({ ...newType, category: e.target.value });
                     }
                   }}
                 >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="选择分类" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="system">系统字典</SelectItem>
-                    <SelectItem value="business">业务字典</SelectItem>
-                    <SelectItem value="basic">基础数据</SelectItem>
-                    <SelectItem value="custom">自定义字典</SelectItem>
-                  </SelectContent>
+                  <MenuItem value="system">系统字典</MenuItem>
+                  <MenuItem value="business">业务字典</MenuItem>
+                  <MenuItem value="basic">基础数据</MenuItem>
+                  <MenuItem value="custom">自定义字典</MenuItem>
                 </Select>
-              </div>
-              <div>
-                <Label htmlFor="type-description">描述</Label>
-                <textarea
-                  id="type-description"
-                  value={editingType?.description || newType.description || ""}
-                  onChange={(e) => {
-                    if (editingType) {
-                      setEditingType({
-                        ...editingType,
-                        description: e.target.value,
-                      });
-                    } else {
-                      setNewType({ ...newType, description: e.target.value });
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1"
-                  rows={2}
-                />
-              </div>
-              {(editingType || !editingType) && (
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="type-status">状态</Label>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">
-                      {editingType?.status === "active" ||
-                      newType.status === "active"
-                        ? "启用"
-                        : "禁用"}
-                    </span>
-                    <Switch
-                      id="type-status"
-                      checked={
-                        editingType?.status === "active" ||
-                        newType.status === "active"
-                      }
-                      onCheckedChange={(checked) => {
-                        const status = checked ? "active" : "inactive";
-                        if (editingType) {
-                          setEditingType({ ...editingType, status });
-                        } else {
-                          setNewType({ ...newType, status });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => {
-                  setShowTypeModal(false);
-                  setEditingType(null);
+              </FormControl>
+              <TextField
+                fullWidth
+                label="描述"
+                value={editingType?.description || newType.description || ""}
+                onChange={(e) => {
+                  if (editingType) {
+                    setEditingType({ ...editingType, description: e.target.value });
+                  } else {
+                    setNewType({ ...newType, description: e.target.value });
+                  }
                 }}
-              >
-                取消
-              </Button>
-              <Button type="submit">{editingType ? "保存" : "创建"}</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+                multiline
+                rows={2}
+                size="small"
+              />
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Typography variant="body2">状态</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {(editingType?.status || newType.status) === "active" ? "启用" : "禁用"}
+                  </Typography>
+                  <Switch
+                    checked={(editingType?.status || newType.status) === "active"}
+                    onChange={(e) => {
+                      const status = e.target.checked ? "active" : "inactive";
+                      if (editingType) {
+                        setEditingType({ ...editingType, status });
+                      } else {
+                        setNewType({ ...newType, status });
+                      }
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="outlined" onClick={() => { setShowTypeModal(false); setEditingType(null); }}>取消</Button>
+            <Button type="submit" variant="contained">{editingType ? "保存" : "创建"}</Button>
+          </DialogActions>
+        </Box>
       </Dialog>
 
-      <Dialog open={showItemModal} onOpenChange={setShowItemModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingItem ? "编辑字典项" : "新增字典项"}
-            </DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={editingItem ? handleUpdateItem : handleCreateItem}
-            className="space-y-4"
-          >
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="item-code">编码 *</Label>
-                <Input
-                  id="item-code"
-                  type="text"
-                  required
-                  value={editingItem?.code || newItem.code || ""}
-                  onChange={(e) => {
-                    if (editingItem) {
-                      setEditingItem({ ...editingItem, code: e.target.value });
-                    } else {
-                      setNewItem({ ...newItem, code: e.target.value });
-                    }
-                  }}
-                  className="mt-1"
-                  placeholder="如: active"
-                />
-              </div>
-              <div>
-                <Label htmlFor="item-name">名称 *</Label>
-                <Input
-                  id="item-name"
-                  type="text"
-                  required
-                  value={editingItem?.name || newItem.name || ""}
-                  onChange={(e) => {
-                    if (editingItem) {
-                      setEditingItem({ ...editingItem, name: e.target.value });
-                    } else {
-                      setNewItem({ ...newItem, name: e.target.value });
-                    }
-                  }}
-                  className="mt-1"
-                  placeholder="如: 启用"
-                />
-              </div>
-              <div>
-                <Label htmlFor="item-value">值</Label>
-                <Input
-                  id="item-value"
-                  type="text"
-                  value={editingItem?.value || newItem.value || ""}
-                  onChange={(e) => {
-                    if (editingItem) {
-                      setEditingItem({ ...editingItem, value: e.target.value });
-                    } else {
-                      setNewItem({ ...newItem, value: e.target.value });
-                    }
-                  }}
-                  className="mt-1"
-                  placeholder="可选，存储实际值"
-                />
-              </div>
-              <div>
-                <Label htmlFor="item-sort">排序</Label>
-                <Input
-                  id="item-sort"
-                  type="number"
-                  value={editingItem?.sort_order || newItem.sort_order || 0}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value) || 0;
-                    if (editingItem) {
-                      setEditingItem({ ...editingItem, sort_order: value });
-                    } else {
-                      setNewItem({ ...newItem, sort_order: value });
-                    }
-                  }}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="item-parent">上级字典项</Label>
+      {/* 字典项对话框 */}
+      <Dialog open={showItemModal} onClose={() => setShowItemModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingItem ? "编辑字典项" : "新增字典项"}</DialogTitle>
+        <Box component="form" onSubmit={editingItem ? handleUpdateItem : handleCreateItem}>
+          <DialogContent>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <TextField
+                fullWidth
+                label="编码 *"
+                required
+                value={editingItem?.code || newItem.code || ""}
+                onChange={(e) => {
+                  if (editingItem) {
+                    setEditingItem({ ...editingItem, code: e.target.value });
+                  } else {
+                    setNewItem({ ...newItem, code: e.target.value });
+                  }
+                }}
+                placeholder="如: active"
+                size="small"
+              />
+              <TextField
+                fullWidth
+                label="名称 *"
+                required
+                value={editingItem?.name || newItem.name || ""}
+                onChange={(e) => {
+                  if (editingItem) {
+                    setEditingItem({ ...editingItem, name: e.target.value });
+                  } else {
+                    setNewItem({ ...newItem, name: e.target.value });
+                  }
+                }}
+                placeholder="如: 启用"
+                size="small"
+              />
+              <TextField
+                fullWidth
+                label="值"
+                value={editingItem?.value || newItem.value || ""}
+                onChange={(e) => {
+                  if (editingItem) {
+                    setEditingItem({ ...editingItem, value: e.target.value });
+                  } else {
+                    setNewItem({ ...newItem, value: e.target.value });
+                  }
+                }}
+                placeholder="可选，存储实际值"
+                size="small"
+              />
+              <TextField
+                fullWidth
+                label="排序"
+                type="number"
+                value={editingItem?.sort_order || newItem.sort_order || 0}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0;
+                  if (editingItem) {
+                    setEditingItem({ ...editingItem, sort_order: value });
+                  } else {
+                    setNewItem({ ...newItem, sort_order: value });
+                  }
+                }}
+                size="small"
+              />
+              <FormControl size="small" fullWidth>
+                <InputLabel>上级字典项</InputLabel>
                 <Select
                   value={editingItem?.parent_id || newItem.parent_id || ""}
-                  onValueChange={(value) => {
-                    const parentId = value || undefined;
+                  label="上级字典项"
+                  onChange={(e) => {
+                    const parentId = e.target.value || undefined;
                     if (editingItem) {
                       setEditingItem({ ...editingItem, parent_id: parentId });
                     } else {
@@ -1180,59 +1034,75 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     }
                   }}
                 >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="选择上级（可选）" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">无（顶级）</SelectItem>
-                    {parentItems
-                      .filter((item) => item.id !== editingItem?.id)
-                      .map((item) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
+                  <MenuItem value="">无（顶级）</MenuItem>
+                  {parentItems
+                    .filter((item) => item.id !== editingItem?.id)
+                    .map((item) => (
+                      <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>
+                    ))}
                 </Select>
-              </div>
+              </FormControl>
               {editingItem && (
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="item-status">状态</Label>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Typography variant="body2">状态</Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
                       {editingItem.status === "active" ? "启用" : "禁用"}
-                    </span>
+                    </Typography>
                     <Switch
-                      id="item-status"
                       checked={editingItem.status === "active"}
-                      onCheckedChange={(checked) => {
-                        setEditingItem({
-                          ...editingItem,
-                          status: checked ? "active" : "inactive",
-                        });
+                      onChange={(e) => {
+                        setEditingItem({ ...editingItem, status: e.target.checked ? "active" : "inactive" });
                       }}
                     />
-                  </div>
-                </div>
+                  </Box>
+                </Box>
               )}
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => {
-                  setShowItemModal(false);
-                  setEditingItem(null);
-                }}
-              >
-                取消
-              </Button>
-              <Button type="submit">{editingItem ? "保存" : "创建"}</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="outlined" onClick={() => { setShowItemModal(false); setEditingItem(null); }}>取消</Button>
+            <Button type="submit" variant="contained">{editingItem ? "保存" : "创建"}</Button>
+          </DialogActions>
+        </Box>
       </Dialog>
-    </div>
+
+      {/* 导出对话框 */}
+      <Dialog open={showExportModal} onClose={() => setShowExportModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>导出字典项</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            将当前字典类型的所有字典项导出为 JSON 文件。
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowExportModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleExport}>确认导出</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 导入对话框 */}
+      <Dialog open={showImportModal} onClose={() => setShowImportModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>导入字典项</DialogTitle>
+        <Box component="form" onSubmit={handleImport}>
+          <DialogContent>
+            <Box sx={{ pt: 1 }}>
+              <Typography variant="body2" sx={{ mb: 1 }}>选择 JSON 文件</Typography>
+              <input
+                type="file"
+                accept=".json"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                style={{ width: "100%" }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="outlined" type="button" onClick={() => setShowImportModal(false)}>取消</Button>
+            <Button type="submit" variant="contained">确认导入</Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+    </Box>
   );
 };
 

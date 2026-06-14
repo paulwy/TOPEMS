@@ -112,41 +112,39 @@ topems/
 
 ## 🚀 快速开始
 
-> **注意**：项目默认使用非 Docker 方案（适合无外网环境），如需使用 Docker 方案请使用 `start-docker` 命令。
+> **推荐使用 Python CLI 工具进行服务管理**。详见 [Python CLI 文档](./cli/README.md)
 
-### 非 Docker 方案（默认，推荐）
+### Python CLI（推荐）
 
 ```bash
-# 1. 安装依赖（首次使用）
-bash scripts/topems.sh install-db   # 安装数据库（PostgreSQL + Redis）
-bash scripts/topems.sh install-dev  # 安装开发环境（Rust + Node.js）
+# 1. 安装 Python CLI
+cd cli
+python -m venv .venv
+source .venv/bin/activate  # macOS/Linux
+pip install pyyaml click rich httpx
 
-# 2. 启动服务
-bash scripts/topems.sh start        # 启动所有服务
+# 2. 查看服务状态
+python -m topems_cli status --all
+
+# 3. 启动服务
+python -m topems_cli start -m core
+
+# 4. 数据库初始化
+python -m topems_cli db init
+python -m topems_cli db migrate
 ```
 
-### ⚡ 优化启动（推荐开发环境）
+### Bash 脚本（备用）
+
+> **注意**: Bash 脚本功能已被 Python CLI 覆盖，主要用于向后兼容。
 
 ```bash
-# 仅启动核心服务（内存占用 ~150 MB）
+# 启动所有服务
+bash scripts/topems.sh start
+
+# 启动核心服务
 bash scripts/topems.sh start-core
-
-# 按模块启动服务
-bash scripts/topems.sh start-module erp       # ERP 模块
-bash scripts/topems.sh start-module plm       # PLM 模块
-bash scripts/topems.sh start-module analytics # 数据分析模块
-
-# 可用模块: core, erp, plm, mes, scm, infra, analytics
 ```
-
-### 📊 资源占用对比
-
-| 启动方式 | 内存占用 | 进程数 | 适用场景 |
-|---------|---------|--------|---------|
-| `start` | ~800 MB | 26 个 | 生产环境、完整测试 |
-| `start-core` | ~150 MB | 3 个 | 开发核心功能 |
-| `start-module erp` | ~120 MB | 3 个 | 开发 ERP 模块 |
-| `start-module plm` | ~180 MB | 4 个 | 开发 PLM 模块 |
 
 ### Docker 方案（需要外网）
 
@@ -186,15 +184,9 @@ cargo check --workspace
 ### 数据库初始化
 
 ```bash
-# 方式一：使用脚本自动初始化（推荐）
-# 自动检测环境（本地/Docker PostgreSQL），初始化所有表结构
-bash scripts/start-local.sh
-
-# 方式二：仅初始化数据库
-bash scripts/init-db-unified.sh
-
-# 方式三：使用 Docker PostgreSQL
-docker compose up -d postgres
+# 使用 Python CLI 初始化（推荐）
+python -m topems_cli db init
+python -m topems_cli db migrate
 ```
 
 ### 数据库配置
@@ -328,7 +320,8 @@ TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
 
 ```bash
 # 运行数据库初始化脚本
-bash scripts/setup-db.sh
+python -m topems_cli db init
+python -m topems_cli db migrate
 ```
 
 该脚本会：
@@ -339,9 +332,11 @@ bash scripts/setup-db.sh
 
 ## 📖 文档
 
+- [Python CLI](./cli/README.md) - 服务管理命令行工具
 - [API概览](./docs/api/API_DOCUMENTATION.md) - API 文档总览
 - [架构设计](./docs/architecture/overview.md) - 系统架构设计
-- [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md) - 部署指南
+- [部署指南](./docs/deployment/README.md) - 部署指南
+- [Windows部署](./docs/deployment/windows-deployment.md) - Windows 部署指南
 - [用户手册](./docs/user/UserManual.md) - 用户使用手册
 - [服务文档](./docs/services/) - 各个服务详细文档
 - [AI 模块](./docs/AI_MODULE.md) - AI 知识库与向量搜索

@@ -1,1 +1,0 @@
-const s={semantic:{success:"#10B981",warning:"#F59E0B"},series:["#3B82F6","#10B981","#F59E0B","#EF4444","#8B5CF6","#06B6D4","#EC4899","#84CC16"]},e=e=>s.series[e%s.series.length];export{s as B,e as g};

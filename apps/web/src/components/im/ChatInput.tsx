@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Send, Paperclip, Image, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 
 interface ChatInputProps {
   onSendMessage: (
@@ -84,11 +84,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       <div className="flex items-end gap-3">
         <div className="relative">
           <Button
-            variant="ghost"
-            size="sm"
+            variant="text"
+            size="small"
             onClick={() => setShowFileMenu(!showFileMenu)}
             disabled={disabled || uploading}
-            className="p-2"
+            sx={{ p: 1 }}
           >
             <Paperclip className="w-5 h-5 text-gray-500" />
           </Button>
@@ -123,22 +123,25 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
 
         <div className="flex-1">
-          <Textarea
+          <TextField
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
             disabled={disabled || uploading}
-            className="min-h-[40px] max-h-[120px] resize-none"
-            rows={1}
+            multiline
+            minRows={1}
+            maxRows={4}
+            sx={{ width: "100%" }}
           />
         </div>
 
         <Button
           onClick={handleSend}
           disabled={!message.trim() || disabled || uploading}
-          size="sm"
-          className="p-2"
+          variant="contained"
+          size="small"
+          sx={{ p: 1 }}
         >
           <Send className="w-5 h-5" />
         </Button>

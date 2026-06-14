@@ -105,7 +105,7 @@ impl TemplateRenderService {
             Value::Null => String::new(),
             Value::Array(arr) => {
                 arr.iter()
-                    .map(|v| Self::value_to_string(v))
+                    .map(Self::value_to_string)
                     .collect::<Vec<_>>()
                     .join(", ")
             }
@@ -131,9 +131,11 @@ impl TemplateRenderService {
         let condition_matches = condition_pattern.find_iter(content).count();
         debug!("找到的条件块数量: {}", condition_matches);
         
+        let re = regex::Regex::new(r"\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{/if\}\}").unwrap();
+        let re_not = regex::Regex::new(r"\{\{#ifnot\s+(\w+)\}\}([\s\S]*?)\{\{/ifnot\}\}").unwrap();
+        
         // 简单的条件处理 {{#if variable}}...{{/if}}
         loop {
-            let re = regex::Regex::new(r"\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{/if\}\}").unwrap();
             let caps = match re.captures(&result) {
                 Some(c) => c,
                 None => break,
@@ -174,7 +176,6 @@ impl TemplateRenderService {
         
         // 处理 {{#ifnot variable}}...{{/ifnot}}
         loop {
-            let re_not = regex::Regex::new(r"\{\{#ifnot\s+(\w+)\}\}([\s\S]*?)\{\{/ifnot\}\}").unwrap();
             let caps = match re_not.captures(&result) {
                 Some(c) => c,
                 None => break,
@@ -281,9 +282,11 @@ impl TemplateRenderService {
     fn process_conditionals(content: &str, variables: &HashMap<String, Value>) -> String {
         let mut result = content.to_string();
         
+        let re = regex::Regex::new(r"\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{/if\}\}").unwrap();
+        let re_not = regex::Regex::new(r"\{\{#ifnot\s+(\w+)\}\}([\s\S]*?)\{\{/ifnot\}\}").unwrap();
+        
         // 简单的条件处理 {{#if variable}}...{{/if}}
         loop {
-            let re = regex::Regex::new(r"\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{/if\}\}").unwrap();
             let caps = match re.captures(&result) {
                 Some(c) => c,
                 None => break,
@@ -308,7 +311,6 @@ impl TemplateRenderService {
         
         // 处理 {{#ifnot variable}}...{{/ifnot}}
         loop {
-            let re_not = regex::Regex::new(r"\{\{#ifnot\s+(\w+)\}\}([\s\S]*?)\{\{/ifnot\}\}").unwrap();
             let caps = match re_not.captures(&result) {
                 Some(c) => c,
                 None => break,
@@ -353,11 +355,10 @@ impl TemplateRenderService {
         for cap in re.captures_iter(content) {
             let var_name = &cap[1];
             // 排除动态变量
-            if !["now", "today", "now_date", "now_time", "now_timestamp"].contains(&var_name) {
-                if !variables.contains(&var_name.to_string()) {
+            if !["now", "today", "now_date", "now_time", "now_timestamp"].contains(&var_name)
+                && !variables.contains(&var_name.to_string()) {
                     variables.push(var_name.to_string());
                 }
-            }
         }
         
         variables

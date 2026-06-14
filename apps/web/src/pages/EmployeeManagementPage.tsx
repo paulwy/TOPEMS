@@ -1,3 +1,16 @@
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Button,
+  TextField,
+  Avatar,
+  Tooltip,
+  Box,
+  Stack,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   User,
@@ -17,18 +30,7 @@ import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 // 懒加载 Dialog 相关组件
 const CreateEmployeeForm = React.lazy(() => import("./forms/CreateEmployeeForm"));
@@ -122,9 +124,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
       archived: "归档",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip size="small" variant={(colors[status] || "outlined") as "filled" | "outlined"} label={labels[status] || status} />
     );
   };
 
@@ -136,21 +136,19 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
         cell: ({ row }) => {
           const emp = row.original;
           return (
-            <div className="flex items-center space-x-3">
-              <Avatar>
-                <AvatarFallback className="bg-blue-100 text-blue-700">
-                  {emp.name.charAt(0).toUpperCase()}
-                </AvatarFallback>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36 }}>
+                {emp.name.charAt(0).toUpperCase()}
               </Avatar>
-              <div>
-                <div className="font-medium text-gray-900 dark:text-gray-100">
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
                   {emp.name}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
                   {emp.employee_no}
-                </div>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           );
         },
       },
@@ -160,17 +158,19 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
         cell: ({ row }) => {
           const emp = row.original;
           return emp.user_id ? (
-            <div className="flex items-center">
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <Link className="w-3 h-3 text-blue-500 mr-1" />
-              <span className="text-sm text-blue-600 dark:text-blue-400">
+              <Typography variant="body2" color="primary.main">
                 已关联
-              </span>
-            </div>
+              </Typography>
+            </Box>
           ) : (
-            <span className="text-sm text-gray-400 dark:text-gray-500 flex items-center">
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <AlertCircle className="w-3 h-3 mr-1" />
-              未关联
-            </span>
+              <Typography variant="body2" color="text.disabled">
+                未关联
+              </Typography>
+            </Box>
           );
         },
       },
@@ -179,9 +179,9 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
         header: "职位",
         cell: ({ row }) => {
           return (
-            <div className="text-sm text-gray-900 dark:text-gray-100">
+            <Typography variant="body2">
               {row.original.position || "-"}
-            </div>
+            </Typography>
           );
         },
       },
@@ -191,20 +191,20 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
         cell: ({ row }) => {
           const emp = row.original;
           return (
-            <div className="text-sm text-gray-900 dark:text-gray-100">
+            <Box>
               {emp.email && (
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
                   <Mail className="w-3 h-3 mr-1" />
-                  {emp.email}
-                </div>
+                  <Typography variant="caption">{emp.email}</Typography>
+                </Box>
               )}
               {emp.phone && (
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <Box sx={{ display: "flex", alignItems: "center" }}>
                   <Phone className="w-3 h-3 mr-1" />
-                  {emp.phone}
-                </div>
+                  <Typography variant="caption">{emp.phone}</Typography>
+                </Box>
               )}
-            </div>
+            </Box>
           );
         },
       },
@@ -218,11 +218,11 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
         header: "入职日期",
         cell: ({ row }) => {
           return (
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <Typography variant="body2" color="text.secondary">
               {row.original.hire_date
                 ? new Date(row.original.hire_date).toLocaleDateString("zh-CN")
                 : "-"}
-            </span>
+            </Typography>
           );
         },
       },
@@ -232,41 +232,31 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
         cell: ({ row }) => {
           const emp = row.original;
           return (
-            <div className="flex items-center justify-end space-x-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedEmployee(emp);
-                        setShowEditModal(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>编辑</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+              <Tooltip title="编辑">
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setSelectedEmployee(emp);
+                    setShowEditModal(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              </Tooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 dark:text-red-400"
-                      onClick={() => handleDeleteEmployee(emp.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>删除</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+              <Tooltip title="删除">
+                <Button
+                  variant="text"
+                  size="small"
+                  color="error"
+                  onClick={() => handleDeleteEmployee(emp.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </Tooltip>
+            </Box>
           );
         },
       },
@@ -275,53 +265,53 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <User className="w-7 h-7 mr-3 text-blue-600" />
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}>
+                  <User className="w-7 h-7 mr-2" />
                   员工管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   管理员工信息、任职信息
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+              <Button variant="contained" onClick={() => setShowCreateModal(true)}>
+                <Plus className="w-5 h-5 mr-1" />
                 新增员工
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 4 }}>
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                <p className="mt-2 text-gray-500 dark:text-gray-400">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                <Typography sx={{ mt: 2 }} color="text.secondary">
                   加载中...
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : error ? (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadEmployees}>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <AlertCircle style={{ fontSize: 48, color: "var(--mui-palette-error-main)", marginBottom: 8 }} />
+                <Typography color="error.main">{error}</Typography>
+                <Button sx={{ mt: 2 }} onClick={loadEmployees}>
                   重试
                 </Button>
-              </div>
+              </Box>
             ) : (
               <DataTable
                 columns={columns}
@@ -332,13 +322,13 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {showCreateModal && (
         <React.Suspense fallback={
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent"></div>
-          </div>
+          <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300 }}>
+            <Box sx={{ width: 32, height: 32, border: 4, borderColor: "white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+          </Box>
         }>
           <CreateEmployeeForm
             open={showCreateModal}
@@ -352,9 +342,9 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
 
       {showEditModal && selectedEmployee && (
         <React.Suspense fallback={
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent"></div>
-          </div>
+          <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300 }}>
+            <Box sx={{ width: 32, height: 32, border: 4, borderColor: "white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+          </Box>
         }>
           <EditEmployeeForm
             open={showEditModal}
@@ -367,7 +357,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
           />
         </React.Suspense>
       )}
-    </div>
+    </Box>
   );
 };
 

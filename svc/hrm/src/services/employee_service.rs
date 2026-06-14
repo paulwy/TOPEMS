@@ -113,14 +113,14 @@ impl EmployeeService {
             return api_error(400, "员工姓名不能为空");
         }
 
-        if req.employee_no.is_empty() {
+        if req.employee_number.is_empty() {
             return api_error(400, "员工编号不能为空");
         }
 
         let exists = sqlx::query_scalar::<_, bool>(
             "SELECT EXISTS(SELECT 1 FROM shared.employees WHERE employee_number = $1)",
         )
-        .bind(&req.employee_no)
+        .bind(&req.employee_number)
         .fetch_one(&self.db)
         .await
         .unwrap_or(false);
@@ -148,7 +148,7 @@ impl EmployeeService {
         .bind(req.company_id)
         .bind(req.department_id)
         .bind(req.position_id)
-        .bind(&req.employee_no)
+        .bind(&req.employee_number)
         .bind(&req.name)
         .bind(&req.gender)
         .bind(req.hire_date)

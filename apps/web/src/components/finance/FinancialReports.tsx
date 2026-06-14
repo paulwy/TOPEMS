@@ -6,11 +6,18 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { reportApi } from "@/api/finance";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Download, AlertCircle } from "lucide-react";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  Chip,
+  Box,
+  Tabs,
+  Tab,
+} from "@mui/material";
+import { Download, AlertCircle } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -48,38 +55,66 @@ interface ReportTableProps {
 
 function ReportTable({ items, totalLabel, totalAmount }: ReportTableProps) {
   return (
-    <div className="space-y-1">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
       {items.map((item, index) => (
-        <div
+        <Box
           key={index}
-          className={`flex justify-between items-center py-1 ${
-            item.isBold ? "font-semibold" : ""
-          } ${item.isTotal ? "border-t pt-1 mt-1" : ""}`}
-          style={{ paddingLeft: `${(item.indent || 0) * 16}px` }}
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            py: 0.5,
+            pl: `${(item.indent || 0) * 16}px`,
+            ...(item.isTotal && {
+              borderTop: 1,
+              borderColor: "divider",
+              pt: 1,
+              mt: 1,
+            }),
+          }}
         >
-          <span className={item.isTotal ? "font-semibold" : ""}>
+          <Typography
+            sx={{
+              fontWeight: item.isBold || item.isTotal ? 600 : 400,
+            }}
+          >
             {item.label}
-          </span>
-          <span className={`font-mono ${item.isTotal ? "font-semibold" : ""}`}>
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "monospace",
+              fontWeight: item.isTotal ? 600 : 400,
+            }}
+          >
             {item.amount.toLocaleString("zh-CN", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
-          </span>
-        </div>
+          </Typography>
+        </Box>
       ))}
       {totalLabel && totalAmount !== undefined && (
-        <div className="flex justify-between items-center py-2 border-t-2 border-black font-semibold">
-          <span>{totalLabel}</span>
-          <span className="font-mono">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            py: 2,
+            borderTop: 2,
+            borderColor: "black",
+            fontWeight: 600,
+          }}
+        >
+          <Typography sx={{ fontWeight: 600 }}>{totalLabel}</Typography>
+          <Typography sx={{ fontFamily: "monospace", fontWeight: 600 }}>
             {totalAmount.toLocaleString("zh-CN", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
-          </span>
-        </div>
+          </Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -95,18 +130,47 @@ interface BalanceSheetViewerProps {
 export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 256,
+        }}
+      >
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            border: "3px solid #e5e7eb",
+            borderTopColor: "#2563eb",
+            animation: "spin 1s linear infinite",
+            "@keyframes spin": {
+              "0%": { transform: "rotate(0deg)" },
+              "100%": { transform: "rotate(360deg)" },
+            },
+          }}
+        />
+      </Box>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-        <AlertCircle className="h-12 w-12 mb-4" />
-        <p>暂无资产负债表数据</p>
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 256,
+          color: "text.secondary",
+        }}
+      >
+        <AlertCircle style={{ width: 48, height: 48, marginBottom: 16 }} />
+        <Typography>暂无资产负债表数据</Typography>
+      </Box>
     );
   }
 
@@ -132,47 +196,51 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
   ];
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* 概览卡片 */}
-      <div className="grid grid-cols-3 gap-4">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold" }}>
               ¥{data.assets.total.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">资产总计</p>
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              资产总计
+            </Typography>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold" }}>
               ¥{data.liabilities.total.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">负债合计</p>
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              负债合计
+            </Typography>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold" }}>
               ¥{data.equity.total.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">所有者权益合计</p>
-            <Badge
-              variant={data.balance_check ? "default" : "destructive"}
-              className="mt-2"
-            >
-              {data.balance_check ? "平衡" : "不平衡"}
-            </Badge>
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              所有者权益合计
+            </Typography>
+            <Chip
+              label={data.balance_check ? "平衡" : "不平衡"}
+              color={data.balance_check ? "success" : "error"}
+              size="small"
+              sx={{ mt: 1 }}
+            />
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* 图表 */}
-      <div className="grid grid-cols-2 gap-4">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">资产构成</CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="subtitle1">资产构成</Typography>} />
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -201,9 +269,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">负债与权益构成</CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="subtitle1">负债与权益构成</Typography>} />
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart
@@ -229,19 +295,17 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* 详细表格 */}
-      <div className="grid grid-cols-2 gap-6">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 3 }}>
         {/* 资产 */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">资产</CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="subtitle1">资产</Typography>} />
           <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium mb-2">流动资产</h4>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <Box>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>流动资产</Typography>
                 <ReportTable
                   items={data.assets.current.items.map((item) => ({
                     label: item.account_name,
@@ -251,9 +315,9 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                   totalLabel="流动资产合计"
                   totalAmount={data.assets.current.total}
                 />
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">非流动资产</h4>
+              </Box>
+              <Box>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>非流动资产</Typography>
                 <ReportTable
                   items={data.assets.non_current.items.map((item) => ({
                     label: item.account_name,
@@ -263,20 +327,18 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                   totalLabel="非流动资产合计"
                   totalAmount={data.assets.non_current.total}
                 />
-              </div>
-            </div>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         {/* 负债和所有者权益 */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">负债及所有者权益</CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="subtitle1">负债及所有者权益</Typography>} />
           <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium mb-2">流动负债</h4>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <Box>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>流动负债</Typography>
                 <ReportTable
                   items={data.liabilities.current.items.map((item) => ({
                     label: item.account_name,
@@ -286,9 +348,9 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                   totalLabel="流动负债合计"
                   totalAmount={data.liabilities.current.total}
                 />
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">非流动负债</h4>
+              </Box>
+              <Box>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>非流动负债</Typography>
                 <ReportTable
                   items={data.liabilities.non_current.items.map((item) => ({
                     label: item.account_name,
@@ -298,9 +360,9 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                   totalLabel="非流动负债合计"
                   totalAmount={data.liabilities.non_current.total}
                 />
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">所有者权益</h4>
+              </Box>
+              <Box>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>所有者权益</Typography>
                 <ReportTable
                   items={[
                     ...data.equity.paid_in.items.map((item) => ({
@@ -322,12 +384,12 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                   totalLabel="所有者权益合计"
                   totalAmount={data.equity.total}
                 />
-              </div>
-            </div>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 
@@ -347,18 +409,47 @@ export function IncomeStatementViewer({
 }: IncomeStatementViewerProps) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 256,
+        }}
+      >
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            border: "3px solid #e5e7eb",
+            borderTopColor: "#2563eb",
+            animation: "spin 1s linear infinite",
+            "@keyframes spin": {
+              "0%": { transform: "rotate(0deg)" },
+              "100%": { transform: "rotate(360deg)" },
+            },
+          }}
+        />
+      </Box>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-        <AlertCircle className="h-12 w-12 mb-4" />
-        <p>暂无利润表数据</p>
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 256,
+          color: "text.secondary",
+        }}
+      >
+        <AlertCircle style={{ width: 48, height: 48, marginBottom: 16 }} />
+        <Typography>暂无利润表数据</Typography>
+      </Box>
     );
   }
 
@@ -385,64 +476,70 @@ export function IncomeStatementViewer({
   ];
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* 关键指标 */}
-      <div className="grid grid-cols-4 gap-4">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "primary.main" }}>
               ¥{data.revenue.total.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">营业收入</p>
-            <div className="flex items-center mt-2 text-sm">
-              <span className="text-green-600">
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              营业收入
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+              <Typography variant="body2" sx={{ color: "success.main" }}>
                 毛利率 {(data.gross_margin * 100).toFixed(2)}%
-              </span>
-            </div>
+              </Typography>
+            </Box>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-orange-600">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "warning.main" }}>
               ¥{data.operating_profit.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">营业利润</p>
-            <div className="flex items-center mt-2 text-sm">
-              <span className="text-green-600">
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              营业利润
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+              <Typography variant="body2" sx={{ color: "success.main" }}>
                 利润率 {(data.operating_margin * 100).toFixed(2)}%
-              </span>
-            </div>
+              </Typography>
+            </Box>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-purple-600">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "secondary.main" }}>
               ¥{data.total_profit.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">利润总额</p>
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              利润总额
+            </Typography>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "success.main" }}>
               ¥{data.net_profit.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">净利润</p>
-            <div className="flex items-center mt-2 text-sm">
-              <span className="text-green-600">
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              净利润
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+              <Typography variant="body2" sx={{ color: "success.main" }}>
                 净利率 {(data.net_margin * 100).toFixed(2)}%
-              </span>
-            </div>
+              </Typography>
+            </Box>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* 图表 */}
-      <div className="grid grid-cols-2 gap-4">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">利润构成</CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="subtitle1">利润构成</Typography>} />
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={trendData}>
@@ -461,9 +558,7 @@ export function IncomeStatementViewer({
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">费用构成</CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="subtitle1">费用构成</Typography>} />
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -493,17 +588,15 @@ export function IncomeStatementViewer({
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* 详细表格 */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">利润明细</CardTitle>
-        </CardHeader>
+        <CardHeader title={<Typography variant="subtitle1">利润明细</Typography>} />
         <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium mb-2">一、营业收入</h4>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box>
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>一、营业收入</Typography>
               <ReportTable
                 items={[
                   ...data.revenue.main_revenue.items.map((item) => ({
@@ -520,10 +613,10 @@ export function IncomeStatementViewer({
                 totalLabel="营业收入合计"
                 totalAmount={data.revenue.total}
               />
-            </div>
+            </Box>
 
-            <div>
-              <h4 className="font-medium mb-2">二、营业成本</h4>
+            <Box>
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>二、营业成本</Typography>
               <ReportTable
                 items={[
                   ...data.cost_of_sales.main_cost.items.map((item) => ({
@@ -535,18 +628,18 @@ export function IncomeStatementViewer({
                 totalLabel="营业成本合计"
                 totalAmount={data.cost_of_sales.total}
               />
-            </div>
+            </Box>
 
-            <div className="flex justify-between py-2 border-t-2">
-              <span className="font-semibold">三、毛利润</span>
-              <span className="font-semibold font-mono">
+            <Box sx={{ display: "flex", justifyContent: "space-between", py: 2, borderTop: 2 }}>
+              <Typography sx={{ fontWeight: 600 }}>三、毛利润</Typography>
+              <Typography sx={{ fontWeight: 600, fontFamily: "monospace" }}>
                 {data.gross_profit.toLocaleString()} (
                 {(data.gross_margin * 100).toFixed(2)}%)
-              </span>
-            </div>
+              </Typography>
+            </Box>
 
-            <div>
-              <h4 className="font-medium mb-2">四、期间费用</h4>
+            <Box>
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>四、期间费用</Typography>
               <ReportTable
                 items={[
                   ...data.operating_expenses.selling_expense.items.map(
@@ -579,27 +672,27 @@ export function IncomeStatementViewer({
                 totalLabel="期间费用合计"
                 totalAmount={data.operating_expenses.total}
               />
-            </div>
+            </Box>
 
-            <div className="flex justify-between py-2 border-t-2">
-              <span className="font-semibold">五、营业利润</span>
-              <span className="font-semibold font-mono">
+            <Box sx={{ display: "flex", justifyContent: "space-between", py: 2, borderTop: 1 }}>
+              <Typography sx={{ fontWeight: 600 }}>五、营业利润</Typography>
+              <Typography sx={{ fontWeight: 600, fontFamily: "monospace" }}>
                 {data.operating_profit.toLocaleString()} (
                 {(data.operating_margin * 100).toFixed(2)}%)
-              </span>
-            </div>
+              </Typography>
+            </Box>
 
-            <div className="flex justify-between py-2 border-t">
-              <span className="font-semibold">六、净利润</span>
-              <span className="font-semibold font-mono text-green-600">
+            <Box sx={{ display: "flex", justifyContent: "space-between", py: 2, borderTop: 1 }}>
+              <Typography sx={{ fontWeight: 600 }}>六、净利润</Typography>
+              <Typography sx={{ fontWeight: 600, fontFamily: "monospace", color: "success.main" }}>
                 {data.net_profit.toLocaleString()} (
                 {(data.net_margin * 100).toFixed(2)}%)
-              </span>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 }
 
@@ -619,18 +712,47 @@ export function CashFlowStatementViewer({
 }: CashFlowStatementViewerProps) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 256,
+        }}
+      >
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            border: "3px solid #e5e7eb",
+            borderTopColor: "#2563eb",
+            animation: "spin 1s linear infinite",
+            "@keyframes spin": {
+              "0%": { transform: "rotate(0deg)" },
+              "100%": { transform: "rotate(360deg)" },
+            },
+          }}
+        />
+      </Box>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-        <AlertCircle className="h-12 w-12 mb-4" />
-        <p>暂无现金流量表数据</p>
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 256,
+          color: "text.secondary",
+        }}
+      >
+        <AlertCircle style={{ width: 48, height: 48, marginBottom: 16 }} />
+        <Typography>暂无现金流量表数据</Typography>
+      </Box>
     );
   }
 
@@ -643,50 +765,60 @@ export function CashFlowStatementViewer({
   ];
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* 关键指标 */}
-      <div className="grid grid-cols-4 gap-4">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "primary.main" }}>
               ¥{data.operating.net_flow.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">经营活动现金流</p>
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              经营活动现金流
+            </Typography>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-orange-600">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "warning.main" }}>
               ¥{data.investing.net_flow.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">投资活动现金流</p>
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              投资活动现金流
+            </Typography>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-purple-600">
+          <CardContent sx={{ pt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "secondary.main" }}>
               ¥{data.financing.net_flow.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">筹资活动现金流</p>
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              筹资活动现金流
+            </Typography>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div
-              className={`text-2xl font-bold ${data.net_cash_flow >= 0 ? "text-green-600" : "text-red-600"}`}
+          <CardContent sx={{ pt: 3 }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: "bold",
+                color: data.net_cash_flow >= 0 ? "success.main" : "error.main",
+              }}
             >
               ¥{data.net_cash_flow.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground">净现金流</p>
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              净现金流
+            </Typography>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* 图表 */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">现金流量构成</CardTitle>
-        </CardHeader>
+        <CardHeader title={<Typography variant="subtitle1">现金流量构成</Typography>} />
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={flowData}>
@@ -712,169 +844,197 @@ export function CashFlowStatementViewer({
       </Card>
 
       {/* 详细表格 */}
-      <div className="grid grid-cols-3 gap-6">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
         {/* 经营活动 */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">经营活动</CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="subtitle1">经营活动</Typography>} />
           <CardContent>
-            <div className="space-y-3">
-              <div>
-                <h4 className="text-sm text-muted-foreground mb-1">现金流入</h4>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+                  现金流入
+                </Typography>
                 {data.operating.inflows.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm py-1">
-                    <span>{item.description}</span>
-                    <span className="font-mono text-green-600">
+                  <Box key={i} sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
+                    <Typography variant="body2">{item.description}</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: "monospace", color: "success.main" }}>
                       +{item.amount.toLocaleString()}
-                    </span>
-                  </div>
+                    </Typography>
+                  </Box>
                 ))}
-              </div>
-              <div>
-                <h4 className="text-sm text-muted-foreground mb-1">现金流出</h4>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+                  现金流出
+                </Typography>
                 {data.operating.outflows.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm py-1">
-                    <span>{item.description}</span>
-                    <span className="font-mono text-red-600">
+                  <Box key={i} sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
+                    <Typography variant="body2">{item.description}</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: "monospace", color: "error.main" }}>
                       -{item.amount.toLocaleString()}
-                    </span>
-                  </div>
+                    </Typography>
+                  </Box>
                 ))}
-              </div>
-              <div className="flex justify-between py-2 border-t font-semibold">
-                <span>净额</span>
-                <span
-                  className={`font-mono ${data.operating.net_flow >= 0 ? "text-green-600" : "text-red-600"}`}
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderTop: 1, fontWeight: 600 }}>
+                <Typography sx={{ fontWeight: 600 }}>净额</Typography>
+                <Typography
+                  sx={{
+                    fontFamily: "monospace",
+                    fontWeight: 600,
+                    color: data.operating.net_flow >= 0 ? "success.main" : "error.main",
+                  }}
                 >
                   {data.operating.net_flow.toLocaleString()}
-                </span>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         {/* 投资活动 */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">投资活动</CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="subtitle1">投资活动</Typography>} />
           <CardContent>
-            <div className="space-y-3">
-              <div>
-                <h4 className="text-sm text-muted-foreground mb-1">现金流入</h4>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+                  现金流入
+                </Typography>
                 {data.investing.inflows.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm py-1">
-                    <span>{item.description}</span>
-                    <span className="font-mono text-green-600">
+                  <Box key={i} sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
+                    <Typography variant="body2">{item.description}</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: "monospace", color: "success.main" }}>
                       +{item.amount.toLocaleString()}
-                    </span>
-                  </div>
+                    </Typography>
+                  </Box>
                 ))}
-              </div>
-              <div>
-                <h4 className="text-sm text-muted-foreground mb-1">现金流出</h4>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+                  现金流出
+                </Typography>
                 {data.investing.outflows.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm py-1">
-                    <span>{item.description}</span>
-                    <span className="font-mono text-red-600">
+                  <Box key={i} sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
+                    <Typography variant="body2">{item.description}</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: "monospace", color: "error.main" }}>
                       -{item.amount.toLocaleString()}
-                    </span>
-                  </div>
+                    </Typography>
+                  </Box>
                 ))}
-              </div>
-              <div className="flex justify-between py-2 border-t font-semibold">
-                <span>净额</span>
-                <span
-                  className={`font-mono ${data.investing.net_flow >= 0 ? "text-green-600" : "text-red-600"}`}
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderTop: 1, fontWeight: 600 }}>
+                <Typography sx={{ fontWeight: 600 }}>净额</Typography>
+                <Typography
+                  sx={{
+                    fontFamily: "monospace",
+                    fontWeight: 600,
+                    color: data.investing.net_flow >= 0 ? "success.main" : "error.main",
+                  }}
                 >
                   {data.investing.net_flow.toLocaleString()}
-                </span>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         {/* 筹资活动 */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">筹资活动</CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="subtitle1">筹资活动</Typography>} />
           <CardContent>
-            <div className="space-y-3">
-              <div>
-                <h4 className="text-sm text-muted-foreground mb-1">现金流入</h4>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+                  现金流入
+                </Typography>
                 {data.financing.inflows.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm py-1">
-                    <span>{item.description}</span>
-                    <span className="font-mono text-green-600">
+                  <Box key={i} sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
+                    <Typography variant="body2">{item.description}</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: "monospace", color: "success.main" }}>
                       +{item.amount.toLocaleString()}
-                    </span>
-                  </div>
+                    </Typography>
+                  </Box>
                 ))}
-              </div>
-              <div>
-                <h4 className="text-sm text-muted-foreground mb-1">现金流出</h4>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+                  现金流出
+                </Typography>
                 {data.financing.outflows.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm py-1">
-                    <span>{item.description}</span>
-                    <span className="font-mono text-red-600">
+                  <Box key={i} sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
+                    <Typography variant="body2">{item.description}</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: "monospace", color: "error.main" }}>
                       -{item.amount.toLocaleString()}
-                    </span>
-                  </div>
+                    </Typography>
+                  </Box>
                 ))}
-              </div>
-              <div className="flex justify-between py-2 border-t font-semibold">
-                <span>净额</span>
-                <span
-                  className={`font-mono ${data.financing.net_flow >= 0 ? "text-green-600" : "text-red-600"}`}
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderTop: 1, fontWeight: 600 }}>
+                <Typography sx={{ fontWeight: 600 }}>净额</Typography>
+                <Typography
+                  sx={{
+                    fontFamily: "monospace",
+                    fontWeight: 600,
+                    color: data.financing.net_flow >= 0 ? "success.main" : "error.main",
+                  }}
                 >
                   {data.financing.net_flow.toLocaleString()}
-                </span>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* 现金变动汇总 */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">现金变动汇总</CardTitle>
-        </CardHeader>
+        <CardHeader title={<Typography variant="subtitle1">现金变动汇总</Typography>} />
         <CardContent>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold">
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {data.beginning_cash.toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">期初现金</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                期初现金
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {data.net_cash_flow.toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">净现金流</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                净现金流
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {data.ending_cash.toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">期末现金</p>
-            </div>
-            <div className="text-center">
-              <div
-                className={`text-2xl font-bold ${data.cash_equivalent_change >= 0 ? "text-green-600" : "text-red-600"}`}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                期末现金
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: "bold",
+                  color: data.cash_equivalent_change >= 0 ? "success.main" : "error.main",
+                }}
               >
                 {data.cash_equivalent_change >= 0 ? "+" : ""}
                 {data.cash_equivalent_change.toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">现金净增加额</p>
-            </div>
-          </div>
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                现金净增加额
+              </Typography>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 }
 
@@ -921,43 +1081,41 @@ export function FinancialReportsViewer({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Tabs
           value={activeReport}
-          onValueChange={(v) => setActiveReport(v as any)}
+          onChange={(_, newValue) => setActiveReport(newValue)}
         >
-          <TabsList>
-            <TabsTrigger value="balance">资产负债表</TabsTrigger>
-            <TabsTrigger value="income">利润表</TabsTrigger>
-            <TabsTrigger value="cash">现金流量表</TabsTrigger>
-          </TabsList>
+          <Tab label="资产负债表" value="balance" />
+          <Tab label="利润表" value="income" />
+          <Tab label="现金流量表" value="cash" />
         </Tabs>
 
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="h-4 w-4 mr-2" />
+        <Button variant="outlined" size="small" onClick={handleExport}>
+          <Download style={{ width: 16, height: 16, marginRight: 4 }} />
           导出
         </Button>
-      </div>
+      </Box>
 
-      <TabsContent value="balance" className="mt-0">
+      {activeReport === "balance" && (
         <BalanceSheetViewer
           data={balanceSheet?.data}
           loading={balanceLoading}
         />
-      </TabsContent>
+      )}
 
-      <TabsContent value="income" className="mt-0">
+      {activeReport === "income" && (
         <IncomeStatementViewer
           data={incomeStatement?.data}
           loading={incomeLoading}
           onExport={handleExport}
         />
-      </TabsContent>
+      )}
 
-      <TabsContent value="cash" className="mt-0">
+      {activeReport === "cash" && (
         <CashFlowStatementViewer data={cashFlow?.data} loading={cashLoading} />
-      </TabsContent>
-    </div>
+      )}
+    </Box>
   );
 }

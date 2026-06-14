@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, Tabs, Tab, TextField, InputLabel, FormControl, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Avatar } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -25,29 +26,6 @@ import {
 } from "../api/hrm";
 import { useNotification } from "../hooks/useNotification";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { EmployeeFinanceTab } from "./hrm/EmployeeFinanceTab";
-
 const HrmEmployeeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -59,6 +37,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Employee>>({});
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("basic");
 
   useEffect(() => {
     if (id) {
@@ -149,7 +128,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate("/hrm/employees")}>
+            <Button variant="text" onClick={() => navigate("/hrm/employees")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               返回
             </Button>
@@ -160,7 +139,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
             <div className="ml-auto">
               {isEditing ? (
                 <div className="flex gap-2">
-                  <Button variant="secondary" onClick={handleCancelEdit}>
+                  <Button variant="outlined" onClick={handleCancelEdit}>
                     <X className="w-4 h-4 mr-2" />
                     取消
                   </Button>
@@ -185,23 +164,17 @@ const HrmEmployeeDetailPage: React.FC = () => {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-start gap-6">
-                <Avatar className="w-20 h-20">
-                  <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
-                    {employee.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
+                <Avatar sx={{ width: 80, height: 80, bgcolor: "blue.100", color: "blue.700", fontSize: "2rem" }}>
+                  {employee.name.charAt(0).toUpperCase()}
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h2 className="text-2xl font-bold text-gray-900">
                       {employee.name}
                     </h2>
-                    <Badge
-                      variant={
-                        employee.status === "active" ? "default" : "secondary"
-                      }
-                    >
-                      {employee.status === "active" ? "在职" : "离职"}
-                    </Badge>
+                    <Chip size="small"
+                      variant={employee.status === "active" ? "filled" : "outlined"}
+                      label={employee.status === "active" ? "在职" : "离职"} />
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
@@ -222,66 +195,68 @@ const HrmEmployeeDetailPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Tabs defaultValue="basic" className="space-y-6">
-            <TabsList className="grid w-[360px] grid-cols-3">
-              <TabsTrigger value="basic" className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                基本信息
-              </TabsTrigger>
-              <TabsTrigger value="contact" className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                联系方式
-              </TabsTrigger>
-              <TabsTrigger
-                value="emergency"
-                className="flex items-center gap-2"
-              >
-                <Heart className="w-4 h-4" />
-                紧急联系人
-              </TabsTrigger>
-            </TabsList>
+          <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+            <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v as string)}>
+              <Tab value="basic" label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <User className="w-4 h-4" />
+                  基本信息
+                </Box>
+              } />
+              <Tab value="contact" label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Phone className="w-4 h-4" />
+                  联系方式
+                </Box>
+              } />
+              <Tab value="emergency" label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Heart className="w-4 h-4" />
+                  紧急联系人
+                </Box>
+              } />
+            </Tabs>
+          </Box>
 
-            <TabsContent value="basic" className="space-y-4">
+          {activeTab === "basic" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">基本信息</CardTitle>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">基本信息</Typography>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label className="text-sm text-gray-500">姓名</Label>
+                      <InputLabel className="text-sm text-gray-500">姓名</InputLabel>
                       {isEditing ? (
-                        <Input
+                        <TextField
+                          size="small"
+                          fullWidth
                           value={editData.name || ""}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setEditData({ ...editData, name: e.target.value })
                           }
-                          className="mt-1"
+                          sx={{ mt: 1 }}
                         />
                       ) : (
                         <p className="mt-1 font-medium">{employee.name}</p>
                       )}
                     </div>
                     <div>
-                      <Label className="text-sm text-gray-500">性别</Label>
+                      <InputLabel className="text-sm text-gray-500">性别</InputLabel>
                       {isEditing ? (
-                        <div className="mt-1">
+                        <FormControl size="small" fullWidth sx={{ mt: 1 }}>
                           <Select
                             value={editData.gender || ""}
-                            onValueChange={(value) =>
-                              setEditData({ ...editData, gender: value })
+                            onChange={(e) =>
+                              setEditData({ ...editData, gender: e.target.value })
                             }
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="请选择" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">未设置</SelectItem>
-                              <SelectItem value="male">男</SelectItem>
-                              <SelectItem value="female">女</SelectItem>
-                            </SelectContent>
+                            <MenuItem value="none">未设置</MenuItem>
+                            <MenuItem value="male">男</MenuItem>
+                            <MenuItem value="female">女</MenuItem>
                           </Select>
-                        </div>
+                        </FormControl>
                       ) : (
                         <p className="mt-1 font-medium">
                           {employee.gender === "male"
@@ -293,18 +268,20 @@ const HrmEmployeeDetailPage: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <Label className="text-sm text-gray-500">出生日期</Label>
+                      <InputLabel className="text-sm text-gray-500">出生日期</InputLabel>
                       {isEditing ? (
-                        <Input
+                        <TextField
+                          size="small"
+                          fullWidth
                           type="date"
                           value={editData.birth_date || ""}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setEditData({
                               ...editData,
                               birth_date: e.target.value,
                             })
                           }
-                          className="mt-1"
+                          sx={{ mt: 1 }}
                         />
                       ) : (
                         <p className="mt-1 font-medium">
@@ -315,18 +292,20 @@ const HrmEmployeeDetailPage: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <Label className="text-sm text-gray-500">入职日期</Label>
+                      <InputLabel className="text-sm text-gray-500">入职日期</InputLabel>
                       {isEditing ? (
-                        <Input
+                        <TextField
+                          size="small"
+                          fullWidth
                           type="date"
                           value={editData.hire_date || ""}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setEditData({
                               ...editData,
                               hire_date: e.target.value,
                             })
                           }
-                          className="mt-1"
+                          sx={{ mt: 1 }}
                         />
                       ) : (
                         <p className="mt-1 font-medium">
@@ -337,31 +316,26 @@ const HrmEmployeeDetailPage: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <Label className="text-sm text-gray-500">部门</Label>
+                      <InputLabel className="text-sm text-gray-500">部门</InputLabel>
                       {isEditing ? (
-                        <div className="mt-1">
+                        <FormControl size="small" fullWidth sx={{ mt: 1 }}>
                           <Select
                             value={editData.department_id || ""}
-                            onValueChange={(value) =>
+                            onChange={(e) =>
                               setEditData({
                                 ...editData,
-                                department_id: value || undefined,
+                                department_id: e.target.value || undefined,
                               })
                             }
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="请选择部门" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">未设置</SelectItem>
-                              {departments.map((dept) => (
-                                <SelectItem key={dept.id} value={dept.id}>
-                                  {dept.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
+                            <MenuItem value="none">未设置</MenuItem>
+                            {departments.map((dept) => (
+                              <MenuItem key={dept.id} value={dept.id}>
+                                {dept.name}
+                              </MenuItem>
+                            ))}
                           </Select>
-                        </div>
+                        </FormControl>
                       ) : (
                         <p className="mt-1 font-medium">
                           {getDepartmentName(employee.department_id)}
@@ -369,17 +343,19 @@ const HrmEmployeeDetailPage: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <Label className="text-sm text-gray-500">职位</Label>
+                      <InputLabel className="text-sm text-gray-500">职位</InputLabel>
                       {isEditing ? (
-                        <Input
+                        <TextField
+                          size="small"
+                          fullWidth
                           value={editData.position || ""}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setEditData({
                               ...editData,
                               position: e.target.value,
                             })
                           }
-                          className="mt-1"
+                          sx={{ mt: 1 }}
                         />
                       ) : (
                         <p className="mt-1 font-medium">
@@ -390,26 +366,30 @@ const HrmEmployeeDetailPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </Box>
+          )}
 
-            <TabsContent value="contact" className="space-y-4">
+          {activeTab === "contact" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">联系方式</CardTitle>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">联系方式</Typography>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm text-gray-500">工作邮箱</Label>
+                      <InputLabel className="text-sm text-gray-500">工作邮箱</InputLabel>
                       {isEditing ? (
-                        <Input
+                        <TextField
+                          size="small"
+                          fullWidth
                           type="email"
                           value={editData.email || ""}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setEditData({ ...editData, email: e.target.value })
                           }
-                          className="mt-1"
                           placeholder="请输入邮箱"
+                          sx={{ mt: 1 }}
                         />
                       ) : (
                         <div className="mt-1 flex items-center gap-2">
@@ -421,15 +401,17 @@ const HrmEmployeeDetailPage: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <Label className="text-sm text-gray-500">联系电话</Label>
+                      <InputLabel className="text-sm text-gray-500">联系电话</InputLabel>
                       {isEditing ? (
-                        <Input
+                        <TextField
+                          size="small"
+                          fullWidth
                           value={editData.phone || ""}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setEditData({ ...editData, phone: e.target.value })
                           }
-                          className="mt-1"
                           placeholder="请输入电话"
+                          sx={{ mt: 1 }}
                         />
                       ) : (
                         <div className="mt-1 flex items-center gap-2">
@@ -441,19 +423,22 @@ const HrmEmployeeDetailPage: React.FC = () => {
                       )}
                     </div>
                     <div className="col-span-2">
-                      <Label className="text-sm text-gray-500">联系地址</Label>
+                      <InputLabel className="text-sm text-gray-500">联系地址</InputLabel>
                       {isEditing ? (
-                        <textarea
+                        <TextField
+                          size="small"
+                          fullWidth
+                          multiline
+                          rows={3}
                           value={editData.address || ""}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setEditData({
                               ...editData,
                               address: e.target.value,
                             })
                           }
-                          className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
-                          rows={3}
                           placeholder="请输入地址"
+                          sx={{ mt: 1 }}
                         />
                       ) : (
                         <div className="mt-1 flex items-start gap-2">
@@ -467,15 +452,17 @@ const HrmEmployeeDetailPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </Box>
+          )}
 
-            <TabsContent value="emergency" className="space-y-4">
+          {activeTab === "emergency" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">紧急联系人</CardTitle>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">紧急联系人</Typography>
                   {isEditing && (
                     <Button
-                      size="sm"
+                      size="small"
                       onClick={() => setShowEmergencyModal(true)}
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -499,19 +486,21 @@ const HrmEmployeeDetailPage: React.FC = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-4 ml-13">
                         <div>
-                          <Label className="text-sm text-gray-500">
+                          <InputLabel className="text-sm text-gray-500">
                             联系电话
-                          </Label>
+                          </InputLabel>
                           {isEditing ? (
-                            <Input
+                            <TextField
+                              size="small"
+                              fullWidth
                               value={editData.emergency_contact_phone || ""}
-                              onChange={(e) =>
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                 setEditData({
                                   ...editData,
                                   emergency_contact_phone: e.target.value,
                                 })
                               }
-                              className="mt-1"
+                              sx={{ mt: 1 }}
                             />
                           ) : (
                             <div className="mt-1 flex items-center gap-2">
@@ -523,19 +512,21 @@ const HrmEmployeeDetailPage: React.FC = () => {
                           )}
                         </div>
                         <div>
-                          <Label className="text-sm text-gray-500">
+                          <InputLabel className="text-sm text-gray-500">
                             联系人姓名
-                          </Label>
+                          </InputLabel>
                           {isEditing ? (
-                            <Input
+                            <TextField
+                              size="small"
+                              fullWidth
                               value={editData.emergency_contact_name || ""}
-                              onChange={(e) =>
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                 setEditData({
                                   ...editData,
                                   emergency_contact_name: e.target.value,
                                 })
                               }
-                              className="mt-1"
+                              sx={{ mt: 1 }}
                             />
                           ) : (
                             <p className="mt-1 font-medium">
@@ -562,12 +553,12 @@ const HrmEmployeeDetailPage: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            </Box>
+          )}
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">其他信息</CardTitle>
+              <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">其他信息</Typography>
             </CardHeader>
             <CardContent className="grid grid-cols-4 gap-4">
               <div className="bg-gray-50 rounded-lg p-4">
@@ -593,13 +584,9 @@ const HrmEmployeeDetailPage: React.FC = () => {
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500">状态</p>
                 <p className="font-medium mt-1">
-                  <Badge
-                    variant={
-                      employee.status === "active" ? "default" : "secondary"
-                    }
-                  >
-                    {employee.status === "active" ? "在职" : "离职"}
-                  </Badge>
+                  <Chip size="small"
+                    variant={employee.status === "active" ? "filled" : "outlined"}
+                    label={employee.status === "active" ? "在职" : "离职"} />
                 </p>
               </div>
             </CardContent>
@@ -607,56 +594,55 @@ const HrmEmployeeDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {showEmergencyModal && (
-        <Dialog open={showEmergencyModal} onOpenChange={setShowEmergencyModal}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>添加紧急联系人</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="emergency-name">联系人姓名 *</Label>
-                <Input
-                  id="emergency-name"
-                  type="text"
-                  value={editData.emergency_contact_name || ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      emergency_contact_name: e.target.value,
-                    })
-                  }
-                  placeholder="请输入联系人姓名"
-                />
-              </div>
-              <div>
-                <Label htmlFor="emergency-phone">联系电话 *</Label>
-                <Input
-                  id="emergency-phone"
-                  type="text"
-                  value={editData.emergency_contact_phone || ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      emergency_contact_phone: e.target.value,
-                    })
-                  }
-                  placeholder="请输入联系电话"
-                />
-              </div>
+      <Dialog open={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>添加紧急联系人</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
+            <div>
+              <InputLabel htmlFor="emergency-name">联系人姓名 *</InputLabel>
+              <TextField
+                id="emergency-name"
+                size="small"
+                fullWidth
+                type="text"
+                value={editData.emergency_contact_name || ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEditData({
+                    ...editData,
+                    emergency_contact_name: e.target.value,
+                  })
+                }
+                placeholder="请输入联系人姓名"
+                sx={{ mt: 1 }}
+              />
             </div>
-            <DialogFooter className="mt-6">
-              <Button
-                variant="secondary"
-                onClick={() => setShowEmergencyModal(false)}
-              >
-                取消
-              </Button>
-              <Button onClick={() => setShowEmergencyModal(false)}>保存</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+            <div>
+              <InputLabel htmlFor="emergency-phone">联系电话 *</InputLabel>
+              <TextField
+                id="emergency-phone"
+                size="small"
+                fullWidth
+                type="text"
+                value={editData.emergency_contact_phone || ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEditData({
+                    ...editData,
+                    emergency_contact_phone: e.target.value,
+                  })
+                }
+                placeholder="请输入联系电话"
+                sx={{ mt: 1 }}
+              />
+            </div>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={() => setShowEmergencyModal(false)}>
+            取消
+          </Button>
+          <Button onClick={() => setShowEmergencyModal(false)}>保存</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

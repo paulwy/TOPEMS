@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, Box, Typography, Dialog, DialogContent, DialogTitle, TextField, Tabs, Tab, Chip, IconButton, Tooltip } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 import {
   Upload,
@@ -9,24 +10,6 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { Document } from "@/api/ai";
 import { aiApi } from "@/api/ai";
 import { useAppStore } from "@/store";
@@ -50,6 +33,8 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   const [uploading, setUploading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [tabValue, setTabValue] = useState(0);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<
     {
       document_title?: string;
@@ -118,6 +103,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         });
         loadDocuments();
         loadStats();
+        setUploadDialogOpen(false);
       } else {
         throw new Error(response.message);
       }
@@ -199,13 +185,13 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "processed":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle style={{ width: 16, height: 16, color: "green" }} />;
       case "pending":
-        return <Loader2 className="w-4 h-4 text-yellow-500 animate-spin" />;
+        return <Loader2 style={{ width: 16, height: 16, color: "orange", animation: "spin 1s linear infinite" }} />;
       case "partial":
-        return <AlertCircle className="w-4 h-4 text-orange-500" />;
+        return <AlertCircle style={{ width: 16, height: 16, color: "orange" }} />;
       default:
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle style={{ width: 16, height: 16, color: "red" }} />;
     }
   };
 
@@ -224,16 +210,16 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "processed":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+        return { bg: "#e8f5e9", text: "#2e7d32" };
       case "pending":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+        return { bg: "#fff3e0", text: "#f57c00" };
       case "partial":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
+        return { bg: "#fff3e0", text: "#ef6c00" };
       default:
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+        return { bg: "#ffebee", text: "#c62828" };
     }
   };
 
@@ -260,267 +246,226 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   };
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            文档管理
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }} className={className}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>文档管理</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             管理知识库文档，支持向量搜索
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button onClick={loadDocuments} disabled={loading}>
-            刷新
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Button onClick={loadDocuments} disabled={loading}>刷新</Button>
+          <Button onClick={() => setUploadDialogOpen(true)}>
+            <Upload style={{ width: 16, height: 16, marginRight: 8 }} />
+            上传文档
           </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Upload className="w-4 h-4 mr-2" />
-                上传文档
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>上传文档</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <p className="text-gray-500">
-                  支持上传文本文件、Markdown、PDF 等格式
-                </p>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".txt,.md,.pdf,.json,.csv"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    <div className="flex flex-col items-center">
-                      <Upload className="w-12 h-12 text-gray-400 mb-3" />
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {uploading ? "上传中..." : "点击选择文件或拖放"}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        支持 .txt, .md, .pdf, .json, .csv
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
           <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                文档总数
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {stats.total_documents}
-              </p>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="body2" color="text.secondary">文档总数</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>{stats.total_documents}</Typography>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">分块数</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {stats.total_chunks}
-              </p>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="body2" color="text.secondary">分块数</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>{stats.total_chunks}</Typography>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">向量数</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {stats.total_vectors}
-              </p>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="body2" color="text.secondary">向量数</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>{stats.total_vectors}</Typography>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                向量维度
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {stats.vector_dimension}
-              </p>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="body2" color="text.secondary">向量维度</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>{stats.vector_dimension}</Typography>
             </CardContent>
           </Card>
-        </div>
+        </Box>
       )}
 
-      <Tabs defaultValue="documents">
-        <TabsList>
-          <TabsTrigger value="documents">文档列表</TabsTrigger>
-          <TabsTrigger value="search">向量搜索</TabsTrigger>
-        </TabsList>
+      <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
+        <Tab label="文档列表" />
+        <Tab label="向量搜索" />
+      </Tabs>
 
-        <TabsContent value="documents" className="mt-4">
+      {tabValue === 0 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-            </div>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
+              <Loader2 style={{ width: 32, height: 32, animation: "spin 1s linear infinite" }} />
+            </Box>
           ) : (
-            <div className="space-y-3">
+            <>
               {(documents || []).map((doc) => (
                 <Card key={doc.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                          <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                              {doc.title}
-                            </h3>
-                            <Badge
-                              className={getStatusBadgeColor(doc.status || "")}
-                            >
-                              <div className="flex items-center space-x-1">
-                                {getStatusIcon(doc.status || "")}
-                                <span>{getStatusText(doc.status || "")}</span>
-                              </div>
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <CardContent sx={{ p: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                        <Box sx={{ p: 1, borderRadius: 1, backgroundColor: "#f3e5f5" }}>
+                          <FileText style={{ width: 20, height: 20, color: "#7b1fa2" }} />
+                        </Box>
+                        <Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>{doc.title}</Typography>
+                            <Chip
+                              size="small"
+                              label={getStatusText(doc.status || "")}
+                              sx={{
+                                backgroundColor: getStatusColor(doc.status || "").bg,
+                                color: getStatusColor(doc.status || "").text,
+                                fontSize: 12,
+                              }}
+                            />
+                          </Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                             {doc.filename} • {formatFileSize(doc.file_size)}
-                          </p>
+                          </Typography>
                           {doc.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                              {doc.description}
-                            </p>
+                            <Typography variant="body2" sx={{ mt: 0.5 }}>{doc.description}</Typography>
                           )}
                           {doc.error_message && (
-                            <p className="text-xs text-red-500 mt-1">
-                              错误: {doc.error_message}
-                            </p>
+                            <Typography variant="caption" sx={{ color: "error.main", mt: 0.5 }}>错误: {doc.error_message}</Typography>
                           )}
-                          <p className="text-xs text-gray-400 mt-2">
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
                             上传于: {formatDate(doc.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(doc)}
-                              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>删除文档</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Tooltip title="删除文档">
+                        <IconButton
+                          onClick={() => handleDelete(doc)}
+                          sx={{ color: "error.main", "&:hover": { backgroundColor: "rgba(255, 0, 0, 0.1)" } }}
+                        >
+                          <Trash2 style={{ width: 18, height: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </CardContent>
                 </Card>
               ))}
 
               {(documents || []).length === 0 && (
                 <Card>
-                  <CardContent className="p-8 text-center">
-                    <FileText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                      暂无文档
-                    </h3>
-                    <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  <CardContent sx={{ p: 4, textAlign: "center" }}>
+                    <FileText style={{ width: 48, height: 48, color: "#ccc", margin: "0 auto 16px" }} />
+                    <Typography variant="h6" sx={{ mb: 1 }}>暂无文档</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       上传文档开始构建您的知识库
-                    </p>
+                    </Typography>
                     <Button onClick={() => fileInputRef.current?.click()}>
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus style={{ width: 16, height: 16, marginRight: 8 }} />
                       上传文档
                     </Button>
                   </CardContent>
                 </Card>
               )}
-            </div>
+            </>
           )}
-        </TabsContent>
+        </Box>
+      )}
 
-        <TabsContent value="search" className="mt-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3 mb-6">
-                <Input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                  placeholder="输入搜索内容..."
-                  className="flex-1"
-                />
-                <Button onClick={handleSearch} disabled={searching}>
-                  {searching ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Search className="w-4 h-4 mr-2" />
-                  )}
-                  搜索
-                </Button>
-              </div>
+      {tabValue === 1 && (
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="输入搜索内容..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+              />
+              <Button onClick={handleSearch} disabled={searching} variant="contained">
+                {searching ? <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} /> : <Search style={{ width: 16, height: 16 }} />}
+              </Button>
+            </Box>
 
-              {searchResults.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100">
-                    搜索结果 ({searchResults.length})
-                  </h3>
-                  {searchResults.map((result, index) => (
-                    <Card key={`${result.chunk_id}-${index}`}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {result.document_title || "相关文档"}
-                            </p>
-                            <Badge variant="secondary" className="mt-1">
-                              相似度: {(result.similarity * 100).toFixed(1)}%
-                            </Badge>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
-                          {result.content}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+            {searchResults.length > 0 && (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  搜索结果 ({searchResults.length})
+                </Typography>
+                {searchResults.map((result, index) => (
+                  <Card key={`${result.chunk_id}-${index}`} variant="outlined">
+                    <CardContent sx={{ p: 2 }}>
+                      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1 }}>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {result.document_title || "相关文档"}
+                          </Typography>
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={`相似度: ${(result.similarity * 100).toFixed(1)}%`}
+                            sx={{ mt: 0.5, fontSize: 12 }}
+                          />
+                        </Box>
+                      </Box>
+                      <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", color: "text.secondary" }}>
+                        {result.content}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            )}
 
-              {searchQuery && searchResults.length === 0 && !searching && (
-                <div className="text-center py-8">
-                  <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">
-                    未找到相关内容
-                  </p>
-                </div>
-              )}
+            {searchQuery && searchResults.length === 0 && !searching && (
+              <Box sx={{ textAlign: "center", py: 4 }}>
+                <Search style={{ width: 48, height: 48, color: "#ccc", margin: "0 auto 16px" }} />
+                <Typography variant="body1" color="text.secondary">未找到相关内容</Typography>
+              </Box>
+            )}
 
-              {!searchQuery && (
-                <div className="text-center py-8">
-                  <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">
-                    输入搜索内容开始向量搜索
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+            {!searchQuery && (
+              <Box sx={{ textAlign: "center", py: 4 }}>
+                <Search style={{ width: 48, height: 48, color: "#ccc", margin: "0 auto 16px" }} />
+                <Typography variant="body1" color="text.secondary">输入搜索内容开始向量搜索</Typography>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={uploadDialogOpen} onClose={() => setUploadDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>上传文档</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            支持上传文本文件、Markdown、PDF 等格式
+          </Typography>
+          <Box sx={{ border: "2px dashed", borderColor: "divider", borderRadius: 1, p: 4, textAlign: "center" }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.md,.pdf,.json,.csv"
+              onChange={handleFileSelect}
+              style={{ display: "none" }}
+              id="file-upload"
+            />
+            <label htmlFor="file-upload" style={{ cursor: "pointer" }}>
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <Upload style={{ width: 48, height: 48, color: "#999", marginBottom: 12 }} />
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  {uploading ? "上传中..." : "点击选择文件或拖放"}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                  支持 .txt, .md, .pdf, .json, .csv
+                </Typography>
+              </Box>
+            </label>
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </Box>
   );
 };

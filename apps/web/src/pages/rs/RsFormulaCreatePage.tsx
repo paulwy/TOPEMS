@@ -96,7 +96,7 @@ const RsFormulaCreatePage: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <div style={{ marginBottom: 12 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
           {isEdit ? "编辑配方" : "新增配方"}
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -106,14 +106,14 @@ const RsFormulaCreatePage: React.FC = () => {
 
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom>
               基本信息
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="配方名称"
@@ -125,7 +125,7 @@ const RsFormulaCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="配方编码"
@@ -138,7 +138,7 @@ const RsFormulaCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>所属项目</InputLabel>
               <Select
@@ -157,7 +157,7 @@ const RsFormulaCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>状态</InputLabel>
               <Select
@@ -176,7 +176,7 @@ const RsFormulaCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="配方描述"
@@ -189,14 +189,14 @@ const RsFormulaCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               配方组成
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -279,9 +279,9 @@ const RsFormulaCreatePage: React.FC = () => {
             </Button>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Divider sx={{ mb: 2 }} />
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end" }}>
               <Button
                 variant="outlined"
                 startIcon={<CancelIcon />}

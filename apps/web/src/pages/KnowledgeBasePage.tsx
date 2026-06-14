@@ -26,34 +26,31 @@ import { useAppStore } from "../store";
 import type { Document } from "../api/ai";
 import { aiApi } from "../api/ai";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
+  Button,
+  TextField,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Menu,
+  MenuItem,
+  Tabs,
+  Tab,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Box,
+  Typography,
+  Stack,
+  IconButton,
+  Divider,
+} from "@mui/material";
 
 interface DocumentWithMeta extends Document {
   category?: string;
@@ -362,7 +359,7 @@ const KnowledgeBasePage: React.FC = () => {
             </div>
             <div className="flex items-center space-x-3">
               <Button
-                variant="outline"
+                variant="outlined"
                 onClick={handleReload}
                 disabled={loading}
               >
@@ -385,30 +382,35 @@ const KnowledgeBasePage: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
+                <TextField
                   type="text"
                   placeholder="搜索文档标题或文件名..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  size="small"
+                  fullWidth
+                  slotProps={{
+                    input: {
+                      startAdornment: <Search className="w-4 h-4 text-gray-400" style={{ marginRight: 8 }} />,
+                    },
+                  }}
                 />
               </div>
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="选择分类" />
-                </SelectTrigger>
-                <SelectContent>
+              <FormControl size="small" sx={{ minWidth: 180 }}>
+                <InputLabel>分类</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  label="分类"
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  startAdornment={<Filter className="w-4 h-4" style={{ marginRight: 8 }} />}
+                >
                   {categories.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
+                    <MenuItem key={cat.value} value={cat.value}>
                       {cat.label}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </Select>
+              </FormControl>
             </div>
           </CardContent>
         </Card>
@@ -464,11 +466,7 @@ const KnowledgeBasePage: React.FC = () => {
 
         {/* 文档列表 */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>文档列表 ({filteredDocuments.length})</span>
-            </CardTitle>
-          </CardHeader>
+          <CardHeader title={<Typography variant="h6" className="flex items-center justify-between"><span>文档列表 ({filteredDocuments.length})</span></Typography>} />
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -500,17 +498,10 @@ const KnowledgeBasePage: React.FC = () => {
                               {doc.title}
                             </h3>
                             {doc.category && (
-                              <Badge variant="outline" className="text-xs">
-                                {doc.category}
-                              </Badge>
+                              <Chip label={doc.category} size="small" variant="outlined" />
                             )}
                             {doc.status === "processed" && (
-                              <Badge
-                                variant="default"
-                                className="text-xs bg-green-500"
-                              >
-                                已处理
-                              </Badge>
+                              <Chip label="已处理" size="small" color="success" />
                             )}
                           </div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
@@ -526,22 +517,19 @@ const KnowledgeBasePage: React.FC = () => {
                               {formatFileSize(doc.file_size)}
                             </span>
                             {doc.mime_type && (
-                              <Badge variant="secondary" className="text-xs">
-                                {doc.mime_type}
-                              </Badge>
+                              <Chip label={doc.mime_type} size="small" />
                             )}
                           </div>
                           {doc.tags && doc.tags.length > 0 && (
                             <div className="flex items-center space-x-1 mt-2">
                               <Tag className="w-3 h-3 text-gray-400" />
                               {doc.tags.map((tag, idx) => (
-                                <Badge
+                                <Chip
                                   key={idx}
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  {tag}
-                                </Badge>
+                                  label={tag}
+                                  size="small"
+                                  variant="outlined"
+                                />
                               ))}
                             </div>
                           )}
@@ -549,22 +537,22 @@ const KnowledgeBasePage: React.FC = () => {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          variant="text"
+                          size="small"
                           onClick={() => handleViewDetail(doc)}
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          variant="text"
+                          size="small"
                           onClick={() => handleEdit(doc)}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          variant="text"
+                          size="small"
                           onClick={() => handleDelete(doc.id)}
                           className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
@@ -580,14 +568,12 @@ const KnowledgeBasePage: React.FC = () => {
         </Card>
 
         {/* 上传对话框 */}
-        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>上传文档</DialogTitle>
-              <DialogDescription>
-                上传文档到知识库，支持 txt、md、json、pdf、doc、docx 格式
-              </DialogDescription>
-            </DialogHeader>
+        <Dialog open={showUploadDialog} onClose={() => setShowUploadDialog(false)}>
+          <DialogTitle>上传文档</DialogTitle>
+          <DialogContentText sx={{ px: 3, pt: 1 }}>
+            上传文档到知识库，支持 txt、md、json、pdf、doc、docx 格式
+          </DialogContentText>
+          <DialogContent>
             <div className="space-y-4">
               {/* 拖拽上传区域 */}
               <div
@@ -614,7 +600,7 @@ const KnowledgeBasePage: React.FC = () => {
                   accept=".txt,.md,.json,.pdf,.doc,.docx"
                 />
                 <Button
-                  variant="outline"
+                  variant="outlined"
                   onClick={() =>
                     document.getElementById("file-upload")?.click()
                   }
@@ -627,7 +613,7 @@ const KnowledgeBasePage: React.FC = () => {
               {/* 已选择的文件列表 */}
               {uploadFiles.length > 0 && (
                 <div className="space-y-2">
-                  <Label>已选择的文件</Label>
+                  <Typography variant="body2">已选择的文件</Typography>
                   {uploadFiles.map((file, idx) => (
                     <div
                       key={idx}
@@ -641,8 +627,8 @@ const KnowledgeBasePage: React.FC = () => {
                         </span>
                       </div>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant="text"
+                        size="small"
                         onClick={() =>
                           setUploadFiles(
                             uploadFiles.filter((_, i) => i !== idx),
@@ -656,214 +642,212 @@ const KnowledgeBasePage: React.FC = () => {
                 </div>
               )}
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowUploadDialog(false)}
-              >
-                取消
-              </Button>
-              <Button
-                onClick={handleUpload}
-                disabled={uploading || uploadFiles.length === 0}
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    上传中...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    开始上传
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
           </DialogContent>
+          <DialogActions>
+            <Button
+              variant="outlined"
+              onClick={() => setShowUploadDialog(false)}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleUpload}
+              disabled={uploading || uploadFiles.length === 0}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  上传中...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  开始上传
+                </>
+              )}
+            </Button>
+          </DialogActions>
         </Dialog>
 
         {/* 文档详情对话框 */}
-        <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>文档详情</DialogTitle>
-            </DialogHeader>
+        <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md" fullWidth>
+          <DialogTitle>文档详情</DialogTitle>
+          <DialogContent>
             {selectedDocument && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm text-gray-500">文档标题</Label>
-                    <p className="text-lg font-semibold">
+                    <Typography variant="body2" color="text.secondary">文档标题</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                       {selectedDocument.title}
-                    </p>
+                    </Typography>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">文件名</Label>
-                    <p className="text-lg">{selectedDocument.filename}</p>
+                    <Typography variant="body2" color="text.secondary">文件名</Typography>
+                    <Typography variant="body1">{selectedDocument.filename}</Typography>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">文件大小</Label>
-                    <p className="text-lg">
+                    <Typography variant="body2" color="text.secondary">文件大小</Typography>
+                    <Typography variant="body1">
                       {formatFileSize(selectedDocument.file_size)}
-                    </p>
+                    </Typography>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">文件类型</Label>
-                    <p className="text-lg">
+                    <Typography variant="body2" color="text.secondary">文件类型</Typography>
+                    <Typography variant="body1">
                       {selectedDocument.mime_type || "未知"}
-                    </p>
+                    </Typography>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">创建时间</Label>
-                    <p className="text-lg">
+                    <Typography variant="body2" color="text.secondary">创建时间</Typography>
+                    <Typography variant="body1">
                       {formatDate(selectedDocument.created_at)}
-                    </p>
+                    </Typography>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-500">更新时间</Label>
-                    <p className="text-lg">
+                    <Typography variant="body2" color="text.secondary">更新时间</Typography>
+                    <Typography variant="body1">
                       {formatDate(selectedDocument.updated_at)}
-                    </p>
+                    </Typography>
                   </div>
                 </div>
                 {selectedDocument.category && (
                   <div>
-                    <Label className="text-sm text-gray-500">分类</Label>
-                    <Badge variant="outline" className="mt-1">
-                      {selectedDocument.category}
-                    </Badge>
+                    <Typography variant="body2" color="text.secondary">分类</Typography>
+                    <Chip label={selectedDocument.category} size="small" variant="outlined" sx={{ mt: 0.5 }} />
                   </div>
                 )}
                 {selectedDocument.tags && selectedDocument.tags.length > 0 && (
                   <div>
-                    <Label className="text-sm text-gray-500">标签</Label>
-                    <div className="flex items-center space-x-1 mt-1">
+                    <Typography variant="body2" color="text.secondary">标签</Typography>
+                    <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
                       {selectedDocument.tags.map((tag, idx) => (
-                        <Badge key={idx} variant="outline">
-                          {tag}
-                        </Badge>
+                        <Chip key={idx} label={tag} size="small" variant="outlined" />
                       ))}
-                    </div>
+                    </Stack>
                   </div>
                 )}
                 {selectedDocument.description && (
                   <div>
-                    <Label className="text-sm text-gray-500">描述</Label>
-                    <p className="text-base mt-1">
+                    <Typography variant="body2" color="text.secondary">描述</Typography>
+                    <Typography variant="body1" sx={{ mt: 0.5 }}>
                       {selectedDocument.description}
-                    </p>
+                    </Typography>
                   </div>
                 )}
                 {selectedDocument.file_path && (
                   <div>
-                    <Label className="text-sm text-gray-500">文件路径</Label>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <Typography variant="body2" color="text.secondary">文件路径</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                       {selectedDocument.file_path}
-                    </p>
+                    </Typography>
                   </div>
                 )}
               </div>
             )}
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowDetailDialog(false)}
-              >
-                关闭
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowDetailDialog(false);
-                  handleEdit(selectedDocument!);
-                }}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                编辑
-              </Button>
-            </DialogFooter>
           </DialogContent>
+          <DialogActions>
+            <Button
+              variant="outlined"
+              onClick={() => setShowDetailDialog(false)}
+            >
+              关闭
+            </Button>
+            <Button
+              onClick={() => {
+                setShowDetailDialog(false);
+                handleEdit(selectedDocument!);
+              }}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              编辑
+            </Button>
+          </DialogActions>
         </Dialog>
 
         {/* 编辑文档对话框 */}
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>编辑文档信息</DialogTitle>
-              <DialogDescription>
-                更新文档的标题、描述、分类和标签信息
-              </DialogDescription>
-            </DialogHeader>
+        <Dialog open={showEditDialog} onClose={() => setShowEditDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>编辑文档信息</DialogTitle>
+          <DialogContentText sx={{ px: 3, pt: 1 }}>
+            更新文档的标题、描述、分类和标签信息
+          </DialogContentText>
+          <DialogContent>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title">文档标题</Label>
-                <Input
+                <Typography variant="body2" sx={{ mb: 1 }}>文档标题</Typography>
+                <TextField
                   id="title"
                   value={editForm.title}
                   onChange={(e) =>
                     setEditForm({ ...editForm, title: e.target.value })
                   }
+                  size="small"
+                  fullWidth
                 />
               </div>
               <div>
-                <Label htmlFor="category">分类</Label>
-                <Select
-                  value={editForm.category}
-                  onValueChange={(value) =>
-                    setEditForm({ ...editForm, category: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择分类" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <Typography variant="body2" sx={{ mb: 1 }}>分类</Typography>
+                <FormControl size="small" fullWidth>
+                  <Select
+                    value={editForm.category}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, category: e.target.value })
+                    }
+                    displayEmpty
+                  >
+                    <MenuItem value="" disabled>选择分类</MenuItem>
                     {categories
                       .filter((c) => c.value !== "all")
                       .map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
+                        <MenuItem key={cat.value} value={cat.value}>
                           {cat.label}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </div>
               <div>
-                <Label htmlFor="tags">标签（用逗号分隔）</Label>
-                <Input
+                <Typography variant="body2" sx={{ mb: 1 }}>标签（用逗号分隔）</Typography>
+                <TextField
                   id="tags"
                   value={editForm.tags}
                   onChange={(e) =>
                     setEditForm({ ...editForm, tags: e.target.value })
                   }
                   placeholder="例如: 技术, API, 开发"
+                  size="small"
+                  fullWidth
                 />
               </div>
               <div>
-                <Label htmlFor="description">描述</Label>
-                <Textarea
+                <Typography variant="body2" sx={{ mb: 1 }}>描述</Typography>
+                <TextField
                   id="description"
                   value={editForm.description}
                   onChange={(e) =>
                     setEditForm({ ...editForm, description: e.target.value })
                   }
+                  multiline
                   rows={4}
                   placeholder="添加文档描述..."
+                  size="small"
+                  fullWidth
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowEditDialog(false)}
-              >
-                取消
-              </Button>
-              <Button onClick={handleSaveEdit}>
-                <CheckCircle className="w-4 h-4 mr-2" />
-                保存
-              </Button>
-            </DialogFooter>
           </DialogContent>
+          <DialogActions>
+            <Button
+              variant="outlined"
+              onClick={() => setShowEditDialog(false)}
+            >
+              取消
+            </Button>
+            <Button variant="contained" onClick={handleSaveEdit}>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              保存
+            </Button>
+          </DialogActions>
         </Dialog>
       </div>
     </div>

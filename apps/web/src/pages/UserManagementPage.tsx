@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Checkbox, IconButton, Avatar, Stack, FormControlLabel, Paper } from "@mui/material";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Users,
@@ -23,21 +24,7 @@ import { RoleBadge } from "@/components/PermissionGate";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface UserManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -426,13 +413,13 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   const getRoleBadge = (role: string) => {
     const colors: Record<
       string,
-      "default" | "destructive" | "outline" | "secondary"
+      "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"
     > = {
-      管理员: "destructive",
-      普通用户: "secondary",
-      访客: "outline",
+      管理员: "error",
+      普通用户: "info",
+      访客: "default",
     };
-    return <Badge variant={colors[role] || "outline"}>{role || "未知"}</Badge>;
+    return <Chip size="small" color={colors[role] || "default"} label={role || "未知"} />;
   };
 
   const columns = useMemo<ColumnDef<User>[]>(
@@ -442,14 +429,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         header: () => (
           <Checkbox
             checked={selectAll && users.length > 0}
-            onCheckedChange={handleSelectAll}
+            onChange={handleSelectAll}
             aria-label="全选"
           />
         ),
         cell: ({ row }) => (
           <Checkbox
             checked={selectedUserIds.has(row.original.id)}
-            onCheckedChange={() => handleSelectUser(row.original.id)}
+            onChange={() => handleSelectUser(row.original.id)}
             aria-label={`选择 ${row.original.username}`}
           />
         ),
@@ -461,21 +448,19 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className="flex items-center space-x-3">
-              <Avatar>
-                <AvatarFallback className="bg-blue-100 text-blue-700">
-                  {user.username.charAt(0).toUpperCase()}
-                </AvatarFallback>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Avatar sx={{ bgcolor: "primary.main", width: 32, height: 32, fontSize: "0.875rem" }}>
+                {user.username.charAt(0).toUpperCase()}
               </Avatar>
-              <div>
-                <div className="font-medium text-gray-900 dark:text-gray-100">
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
                   {user.full_name || user.username}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
                   {user.email}
-                </div>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           );
         },
       },
@@ -485,14 +470,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className="flex items-center space-x-2">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <RoleBadge role={user.role || "user"} size="sm" />
               {user.roles && user.roles.length > 1 && (
-                <span className="text-xs text-gray-500">
+                <Typography variant="caption" color="text.secondary">
                   +{user.roles.length - 1}
-                </span>
+                </Typography>
               )}
-            </div>
+            </Box>
           );
         },
       },
@@ -502,9 +487,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <Typography variant="body2" color="text.secondary">
               {user.permissions ? user.permissions.length : 0} 个权限
-            </div>
+            </Typography>
           );
         },
       },
@@ -515,16 +500,16 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
           const user = row.original;
           const isActive = user.is_active !== false;
           return (
-            <div className="flex items-center space-x-2">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {isActive ? (
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle size={16} color="#2e7d32" />
               ) : (
-                <XCircle className="w-4 h-4 text-red-500" />
+                <XCircle size={16} color="#d32f2f" />
               )}
-              <span className="text-sm text-gray-600 dark:text-gray-300">
+              <Typography variant="body2">
                 {isActive ? "活跃" : "禁用"}
-              </span>
-            </div>
+              </Typography>
+            </Box>
           );
         },
       },
@@ -534,9 +519,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <Typography variant="body2" color="text.secondary">
               {new Date(user.created_at).toLocaleDateString("zh-CN")}
-            </div>
+            </Typography>
           );
         },
       },
@@ -546,34 +531,26 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className="flex items-center justify-end space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
+              <Tooltip title="编辑" arrow>
+                <IconButton size="small" onClick={() => {
                   setSelectedUser(user);
                   setShowEditModal(true);
-                }}
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => openRolesModal(user)}
-                title="管理角色"
-              >
-                <Shield className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:text-red-700"
-                onClick={() => handleDeleteUser(user.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
+                }}>
+                  <Edit size={16} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="管理角色" arrow>
+                <IconButton size="small" onClick={() => openRolesModal(user)}>
+                  <Shield size={16} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="删除" arrow>
+                <IconButton size="small" sx={{ color: "error.main" }} onClick={() => handleDeleteUser(user.id)}>
+                  <Trash2 size={16} />
+                </IconButton>
+              </Tooltip>
+            </Box>
           );
         },
       },
@@ -582,122 +559,104 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <Users className="w-7 h-7 mr-3 text-blue-600" />
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <IconButton onClick={() => navigate("/dashboard")}>
+                <ChevronLeft />
+              </IconButton>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+                  <Users size={28} color="#1976d2" />
                   用户管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   管理平台用户账户、角色和权限
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+              <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus size={20} />}>
                 创建用户
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
         {/* Search and Batch Actions */}
-        <div className="mb-6">
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                type="text"
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "#9e9e9e" }} />
+              <TextField
+                size="small"
                 placeholder="搜索用户名、邮箱..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                sx={{ width: "100%", pl: 5 }}
               />
-            </div>
-            <Button variant="secondary" onClick={loadData} disabled={loading}>
-              <RefreshCw
-                className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
-              />
+            </Box>
+            <Button variant="outlined" onClick={loadData} disabled={loading} startIcon={<RefreshCw size={16} className={loading ? "animate-spin" : ""} />}>
               刷新
             </Button>
-          </div>
+          </Box>
 
           {/* Batch Actions Toolbar */}
           {selectedUserIds.size > 0 && (
-            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
-                  已选择 {selectedUserIds.size} 个用户
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBatchUpdateStatus(true)}
-                >
-                  批量启用
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBatchUpdateStatus(false)}
-                >
-                  批量禁用
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={handleBatchDelete}
-                >
-                  批量删除
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
+            <Paper sx={{ p: 2, mb: 2, bgcolor: "primary.light", borderRadius: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <CheckCircle size={20} color="#1976d2" />
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: "primary.main" }}>
+                    已选择 {selectedUserIds.size} 个用户
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Button size="small" variant="outlined" onClick={() => handleBatchUpdateStatus(true)}>
+                    批量启用
+                  </Button>
+                  <Button size="small" variant="outlined" onClick={() => handleBatchUpdateStatus(false)}>
+                    批量禁用
+                  </Button>
+                  <Button size="small" variant="contained" color="error" onClick={handleBatchDelete}>
+                    批量删除
+                  </Button>
+                  <Button size="small" variant="text" onClick={() => {
                     setSelectedUserIds(new Set());
                     setSelectAll(false);
-                  }}
-                >
-                  取消选择
-                </Button>
-              </div>
-            </div>
+                  }}>
+                    取消选择
+                  </Button>
+                </Box>
+              </Box>
+            </Paper>
           )}
-        </div>
+        </Box>
 
         {/* Table */}
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
-                <p className="mt-2 text-gray-500 dark:text-gray-400">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Loader2 size={32} className="animate-spin" style={{ color: "#1976d2", margin: "0 auto" }} />
+                <Typography sx={{ mt: 2, color: "text.secondary" }}>
                   加载中...
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : error ? (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadData}>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <AlertCircle size={48} color="#d32f2f" />
+                <Typography sx={{ color: "error.main", mt: 2 }}>{error}</Typography>
+                <Button sx={{ mt: 2 }} onClick={loadData}>
                   重试
                 </Button>
-              </div>
+              </Box>
             ) : (
               <>
                 <DataTable
@@ -709,298 +668,285 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      显示 {(currentPage - 1) * pageSize + 1} -{" "}
-                      {Math.min(currentPage * pageSize, totalUsers)} 共{" "}
-                      {totalUsers} 条
-                    </div>
-                    <div className="flex items-center space-x-2">
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, py: 2, borderTop: 1, borderColor: "divider" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalUsers)} 共 {totalUsers} 条
+                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         onClick={goToPrevPage}
                         disabled={currentPage === 1}
                       >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft size={16} />
                       </Button>
-                      <span className="text-sm px-2">
+                      <Typography variant="body2" sx={{ px: 1 }}>
                         第 {currentPage} / {totalPages} 页
-                      </span>
+                      </Typography>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages}
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight size={16} />
                       </Button>
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
               </>
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* Create User Dialog */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>创建新用户</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateUser}>
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="username">用户名 *</Label>
-                <Input
-                  id="username"
-                  value={newUser.username}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, username: e.target.value })
-                  }
-                  placeholder="输入用户名"
-                  required
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>创建新用户</DialogTitle>
+        <form onSubmit={handleCreateUser}>
+          <DialogContent>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+              <TextField
+                label="用户名 *"
+                required
+                value={newUser.username}
+                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                placeholder="输入用户名"
+                fullWidth
+              />
+              <TextField
+                label="邮箱 *"
+                type="email"
+                required
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                placeholder="输入邮箱"
+                fullWidth
+              />
+              <TextField
+                label="密码 *"
+                type="password"
+                required
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                placeholder="输入密码"
+                fullWidth
+              />
+              <TextField
+                label="姓名"
+                value={newUser.full_name}
+                onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                placeholder="输入姓名"
+                fullWidth
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => {
+                setShowCreateModal(false);
+                setNewUser({
+                  username: "",
+                  email: "",
+                  password: "",
+                  full_name: "",
+                  role: "普通用户",
+                });
+              }}
+            >
+              取消
+            </Button>
+            <Button type="submit" variant="contained">创建</Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>编辑用户</DialogTitle>
+        {selectedUser && (
+          <form onSubmit={handleEditUser}>
+            <DialogContent>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+                <TextField
+                  label="用户名"
+                  value={selectedUser.username}
+                  disabled
+                  fullWidth
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">邮箱 *</Label>
-                <Input
-                  id="email"
+                <TextField
+                  label="邮箱 *"
                   type="email"
-                  value={newUser.email}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, email: e.target.value })
-                  }
-                  placeholder="输入邮箱"
                   required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">密码 *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newUser.password}
+                  value={selectedUser.email}
                   onChange={(e) =>
-                    setNewUser({ ...newUser, password: e.target.value })
+                    setSelectedUser({
+                      ...selectedUser,
+                      email: e.target.value,
+                    })
                   }
-                  placeholder="输入密码"
-                  required
+                  fullWidth
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="full_name">姓名</Label>
-                <Input
-                  id="full_name"
-                  value={newUser.full_name}
+                <TextField
+                  label="姓名"
+                  value={selectedUser.full_name || ""}
                   onChange={(e) =>
-                    setNewUser({ ...newUser, full_name: e.target.value })
+                    setSelectedUser({
+                      ...selectedUser,
+                      full_name: e.target.value,
+                    })
                   }
                   placeholder="输入姓名"
+                  fullWidth
                 />
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={selectedUser.is_active}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          is_active: e.target.checked,
+                        })
+                      }
+                    />
+                  }
+                  label="启用账户"
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
               <Button
-                type="button"
-                variant="secondary"
                 onClick={() => {
-                  setShowCreateModal(false);
-                  setNewUser({
-                    username: "",
-                    email: "",
-                    password: "",
-                    full_name: "",
-                    role: "普通用户",
-                  });
+                  setShowEditModal(false);
+                  setSelectedUser(null);
                 }}
               >
                 取消
               </Button>
-              <Button type="submit">创建</Button>
-            </DialogFooter>
+              <Button type="submit" variant="contained">保存</Button>
+            </DialogActions>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit User Dialog */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑用户</DialogTitle>
-          </DialogHeader>
-          {selectedUser && (
-            <form onSubmit={handleEditUser}>
-              <div className="space-y-4 py-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-username">用户名</Label>
-                  <Input
-                    id="edit-username"
-                    value={selectedUser.username}
-                    disabled
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-email">邮箱 *</Label>
-                  <Input
-                    id="edit-email"
-                    type="email"
-                    value={selectedUser.email}
-                    onChange={(e) =>
-                      setSelectedUser({
-                        ...selectedUser,
-                        email: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-full_name">姓名</Label>
-                  <Input
-                    id="edit-full_name"
-                    value={selectedUser.full_name || ""}
-                    onChange={(e) =>
-                      setSelectedUser({
-                        ...selectedUser,
-                        full_name: e.target.value,
-                      })
-                    }
-                    placeholder="输入姓名"
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="edit-is_active"
-                    checked={selectedUser.is_active}
-                    onChange={(e) =>
-                      setSelectedUser({
-                        ...selectedUser,
-                        is_active: e.target.checked,
-                      })
-                    }
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <Label htmlFor="edit-is_active">启用账户</Label>
-                </div>
-              </div>
-              <DialogFooter className="mt-6">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedUser(null);
-                  }}
-                >
-                  取消
-                </Button>
-                <Button type="submit">保存</Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
+        )}
       </Dialog>
 
       {/* Roles Management Dialog */}
-      <Dialog open={showRolesModal} onOpenChange={setShowRolesModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              用户角色管理 - {selectedUser?.full_name || selectedUser?.username}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-              已有角色
-            </h4>
-            <div className="space-y-2 mb-6">
+      <Dialog open={showRolesModal} onClose={() => setShowRolesModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          用户角色管理 - {selectedUser?.full_name || selectedUser?.username}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>已有角色</Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 3 }}>
               {userRoles.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <Typography variant="body2" color="text.secondary">
                   暂无分配角色
-                </p>
+                </Typography>
               ) : (
                 userRoles.map((role) => (
-                  <div
+                  <Box
                     key={role.id}
-                    className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+                    sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "success.light", borderRadius: 2, border: 1, borderColor: "success.main" }}
                   >
-                    <div className="flex items-center space-x-3">
-                      <Shield className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      <span className="font-medium text-green-900 dark:text-green-100">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Shield size={16} color="#2e7d32" />
+                      <Typography sx={{ fontWeight: 500, color: "success.main" }}>
                         {role.name}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      sx={{ color: "error.main" }}
                       onClick={() =>
                         selectedUser &&
                         handleRemoveRoleFromUser(selectedUser.id, role.id)
                       }
                       title="移除角色"
                     >
-                      <UserMinus className="w-4 h-4" />
-                    </Button>
-                  </div>
+                      <UserMinus size={16} />
+                    </IconButton>
+                  </Box>
                 ))
               )}
-            </div>
-            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-              可用角色
-            </h4>
-            <div className="space-y-2">
+            </Box>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>可用角色</Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {roles
                 .filter((r) => !userRoles.some((ur) => ur.id === r.id))
                 .map((role) => (
-                  <div
+                  <Box
                     key={role.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                    sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.100", borderRadius: 2 }}
                   >
-                    <div className="flex items-center space-x-3">
-                      <Shield className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                      <div>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Shield size={16} color="#9e9e9e" />
+                      <Box>
+                        <Typography sx={{ fontWeight: 500 }}>
                           {role.name}
-                        </span>
+                        </Typography>
                         {role.description && (
-                          <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
+                          <Typography variant="caption" color="text.secondary">
                             - {role.description}
-                          </span>
+                          </Typography>
                         )}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                      </Box>
+                    </Box>
+                    <IconButton
+                      size="small"
                       onClick={() =>
                         selectedUser &&
                         handleAddRoleToUser(selectedUser.id, role.id)
                       }
                       title="添加角色"
                     >
-                      <UserPlus className="w-4 h-4" />
-                    </Button>
-                  </div>
+                      <UserPlus size={16} />
+                    </IconButton>
+                  </Box>
                 ))}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowRolesModal(false)}
-            >
-              关闭
-            </Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={() => setShowRolesModal(false)}>
+            关闭
+          </Button>
+        </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
+
+// Tooltip component for actions
+function Tooltip({ title, children, arrow }: { title: string; children: React.ReactNode; arrow?: boolean }) {
+  return (
+    <Box sx={{ position: "relative", display: "inline-flex" }}>
+      {children}
+      <Box
+        sx={{
+          position: "absolute",
+          bgcolor: "rgba(0,0,0,0.8)",
+          color: "white",
+          px: 1,
+          py: 0.5,
+          borderRadius: 1,
+          fontSize: "0.75rem",
+          whiteSpace: "nowrap",
+          top: "100%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          mt: 0.5,
+          opacity: 0,
+          visibility: "hidden",
+          "&:hover": { opacity: 1, visibility: "visible" },
+          ...(arrow ? { "&::before": { content: '""', position: "absolute", top: -4, left: "50%", transform: "translateX(-50%)", borderWidth: "0 4px 4px 4px", borderStyle: "solid", borderColor: "transparent transparent rgba(0,0,0,0.8) transparent" } } : {})
+        }}
+      >
+        {title}
+      </Box>
+    </Box>
+  );
+}
 
 export default UserManagementPage;

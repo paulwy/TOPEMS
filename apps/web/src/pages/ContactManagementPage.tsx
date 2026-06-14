@@ -1,40 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
+  Button,
+  TextField,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
+  MenuItem,
+  Chip,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
-  TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+  Checkbox,
+  Box,
+  Typography,
+  Stack,
+  Paper,
+  IconButton,
+  Pagination,
+} from "@mui/material";
 import type {
   Contact,
   CreateContactRequest,
@@ -44,14 +37,6 @@ import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 
 const ContactManagementPage: React.FC = () => {
@@ -66,7 +51,7 @@ const ContactManagementPage: React.FC = () => {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [formData, setFormData] = useState<CreateContactRequest>({
+  const [formData, setFormData] = useState<CreateContactRequest & { customer_id?: string }>({
     first_name: "",
     last_name: "",
     email: "",
@@ -233,104 +218,111 @@ const ContactManagementPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<
       string,
-      {
-        label: string;
-        variant: "default" | "secondary" | "destructive" | "outline";
-      }
+      { label: string; color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }
     > = {
-      active: { label: "活跃", variant: "default" },
-      inactive: { label: "非活跃", variant: "secondary" },
+      active: { label: "活跃", color: "success" },
+      inactive: { label: "非活跃", color: "default" },
     };
-    const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+    const s = statusMap[status] || { label: status, color: "default" };
+    return <Chip size="small" color={s.color} label={s.label} />;
+  };
+
+  const handlePageChange = (_: React.ChangeEvent<any>, page: number) => {
+    setCurrentPage(page);
   };
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ mt: 3 }}>
       <Card>
         <CardHeader>
-          <CardTitle>联系人管理</CardTitle>
-          <CardDescription>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>联系人管理</Typography>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>
             管理联系人信息,包括姓名、联系方式、职位等
-          </CardDescription>
+          </Typography>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索联系人姓名或邮箱..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="状态筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="active">活跃</SelectItem>
-                <SelectItem value="inactive">非活跃</SelectItem>
-              </SelectContent>
-            </Select>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "gray" }} />
+              <TextField
+                size="small"
+                placeholder="搜索联系人姓名或邮箱..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                sx={{ pl: 5, width: "100%" }}
+              />
+            </Box>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>状态筛选</InputLabel>
+              <Select
+                value={statusFilter}
+                label="状态筛选"
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <MenuItem value="all">全部状态</MenuItem>
+                <MenuItem value="active">活跃</MenuItem>
+                <MenuItem value="inactive">非活跃</MenuItem>
+              </Select>
+            </FormControl>
             <Button
+              variant="contained"
               onClick={() => {
                 resetForm();
                 setShowDialog(true);
               }}
+              startIcon={<Plus style={{ width: 16, height: 16 }} />}
             >
-              <Plus className="mr-2 h-4 w-4" />
               新增联系人
             </Button>
-          </div>
+          </Stack>
 
           {selectedIds.length > 0 && (
-            <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between">
-              <span className="text-sm">
-                已选择 {selectedIds.length} 个联系人
-              </span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleBatchDelete}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                批量删除
-              </Button>
-            </div>
+            <Paper sx={{ p: 1.5, mb: 2, bgcolor: "grey.100" }}>
+              <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2">已选择 {selectedIds.length} 个联系人</Typography>
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={handleBatchDelete}
+                  startIcon={<Trash2 style={{ width: 16, height: 16 }} />}
+                >
+                  批量删除
+                </Button>
+              </Stack>
+            </Paper>
           )}
 
-          <div className="rounded-md border">
+          <TableContainer component={Paper} variant="outlined">
             <Table>
-              <TableHeader>
+              <TableHead>
                 <TableRow>
-                  <TableHead className="w-[50px]">
+                  <TableCell padding="checkbox">
                     <Checkbox
-                      checked={
-                        selectedIds.length === contacts.length &&
-                        contacts.length > 0
-                      }
-                      onCheckedChange={toggleSelectAll}
+                      checked={selectedIds.length === contacts.length && contacts.length > 0}
+                      onChange={toggleSelectAll}
                     />
-                  </TableHead>
-                  <TableHead>姓名</TableHead>
-                  <TableHead>邮箱</TableHead>
-                  <TableHead>电话</TableHead>
-                  <TableHead>职位</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  </TableCell>
+                  <TableCell>姓名</TableCell>
+                  <TableCell>邮箱</TableCell>
+                  <TableCell>电话</TableCell>
+                  <TableCell>职位</TableCell>
+                  <TableCell>状态</TableCell>
+                  <TableCell align="right">操作</TableCell>
                 </TableRow>
-              </TableHeader>
+              </TableHead>
               <TableBody>
                 {contacts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">
+                    <TableCell colSpan={7} align="center">
                       <EmptyState
                         title="暂无联系人数据"
                         description="点击上方按钮添加第一个联系人"
@@ -340,253 +332,158 @@ const ContactManagementPage: React.FC = () => {
                 ) : (
                   contacts.map((contact) => (
                     <TableRow key={contact.id}>
-                      <TableCell>
+                      <TableCell padding="checkbox">
                         <Checkbox
                           checked={selectedIds.includes(contact.id)}
-                          onCheckedChange={() => toggleSelect(contact.id)}
+                          onChange={() => toggleSelect(contact.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell sx={{ fontWeight: "medium" }}>
                         {contact.first_name} {contact.last_name || ""}
                       </TableCell>
                       <TableCell>{contact.email || "-"}</TableCell>
                       <TableCell>{contact.phone || "-"}</TableCell>
                       <TableCell>{contact.position || "-"}</TableCell>
                       <TableCell>{getStatusBadge(contact.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetail(contact)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(contact)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(contact.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
+                          <IconButton size="small" onClick={() => handleViewDetail(contact)}>
+                            <Eye style={{ width: 16, height: 16 }} />
+                          </IconButton>
+                          <IconButton size="small" onClick={() => handleEdit(contact)}>
+                            <Edit style={{ width: 16, height: 16 }} />
+                          </IconButton>
+                          <IconButton size="small" color="error" onClick={() => handleDelete(contact.id)}>
+                            <Trash2 style={{ width: 16, height: 16 }} />
+                          </IconButton>
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
-          </div>
+          </TableContainer>
 
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-                {Array.from(
-                  { length: Math.min(5, Math.ceil(total / pageSize)) },
-                  (_, i) => {
-                    const page = i + 1;
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  },
-                )}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage(
-                        Math.min(Math.ceil(total / pageSize), currentPage + 1),
-                      )
-                    }
-                    className={
-                      currentPage >= Math.ceil(total / pageSize)
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              共 {total} 条记录,第 {currentPage} / {Math.ceil(total / pageSize) || 1} 页
+            </Typography>
+            <Pagination
+              count={Math.ceil(total / pageSize) || 1}
+              page={currentPage}
+              onChange={handlePageChange}
+              shape="rounded"
+              size="small"
+            />
+          </Stack>
         </CardContent>
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedContact ? "编辑联系人" : "新增联系人"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedContact ? "修改联系人信息" : "填写新联系人信息"}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="first_name">名 *</Label>
-                <Input
-                  id="first_name"
-                  required
-                  value={formData.first_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, first_name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="last_name">姓</Label>
-                <Input
-                  id="last_name"
-                  value={formData.last_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, last_name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">邮箱</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">电话</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="position">职位</Label>
-                <Input
-                  id="position"
-                  value={formData.position}
-                  onChange={(e) =>
-                    setFormData({ ...formData, position: e.target.value })
-                  }
-                />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="notes">备注</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
-                  rows={3}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowDialog(false)}
-              >
-                取消
-              </Button>
-              <Button type="submit">保存</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>{selectedContact ? "编辑联系人" : "新增联系人"}</DialogTitle>
+        <form onSubmit={handleSubmit}>
+          <DialogContent>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, pt: 1 }}>
+              <TextField
+                label="名 *"
+                required
+                value={formData.first_name}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="姓"
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="邮箱"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="电话"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="职位"
+                value={formData.position}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                fullWidth
+                sx={{ gridColumn: "span 2" }}
+              />
+              <TextField
+                label="备注"
+                multiline
+                rows={3}
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                fullWidth
+                sx={{ gridColumn: "span 2" }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowDialog(false)}>取消</Button>
+            <Button type="submit" variant="contained">保存</Button>
+          </DialogActions>
+        </form>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>联系人详情</DialogTitle>
-          </DialogHeader>
-          {selectedContact && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">名</Label>
-                  <p className="font-medium">{selectedContact.first_name}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">姓</Label>
-                  <p>{selectedContact.last_name || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">邮箱</Label>
-                  <p>{selectedContact.email || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">电话</Label>
-                  <p>{selectedContact.phone || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">职位</Label>
-                  <p>{selectedContact.position || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">状态</Label>
-                  <div>{getStatusBadge(selectedContact.status)}</div>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">创建时间</Label>
-                  <p>
-                    {new Date(selectedContact.created_at).toLocaleString(
-                      "zh-CN",
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">更新时间</Label>
-                  <p>
-                    {new Date(selectedContact.updated_at).toLocaleString(
-                      "zh-CN",
-                    )}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground">备注</Label>
-                  <p>{selectedContact.notes || "-"}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
+      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>联系人详情</DialogTitle>
+        {selectedContact && (
+          <DialogContent>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">名</Typography>
+                <Typography sx={{ fontWeight: "medium" }}>{selectedContact.first_name}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">姓</Typography>
+                <Typography>{selectedContact.last_name || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">邮箱</Typography>
+                <Typography>{selectedContact.email || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">电话</Typography>
+                <Typography>{selectedContact.phone || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">职位</Typography>
+                <Typography>{selectedContact.position || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">状态</Typography>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedContact.status)}</Box>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">创建时间</Typography>
+                <Typography>{new Date(selectedContact.created_at).toLocaleString("zh-CN")}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">更新时间</Typography>
+                <Typography>{new Date(selectedContact.updated_at).toLocaleString("zh-CN")}</Typography>
+              </Box>
+              <Box sx={{ gridColumn: "span 2" }}>
+                <Typography variant="caption" color="text.secondary">备注</Typography>
+                <Typography>{selectedContact.notes || "-"}</Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+        )}
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

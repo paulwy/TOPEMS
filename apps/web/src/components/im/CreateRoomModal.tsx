@@ -1,16 +1,14 @@
 import React, { useState } from "react";
 import { X, Users, User, Save, MessageSquare } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogActions from "@mui/material/DialogActions";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
 import {
   imApi,
   type CreateChatRoomRequest,
@@ -185,80 +183,70 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>创建新会话</span>
-            <Button variant="ghost" size="sm" onClick={handleClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
+    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogContent sx={{ maxWidth: 500 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <DialogTitle sx={{ m: 0, p: 0 }}>创建新会话</DialogTitle>
+          <Button variant="text" size="small" onClick={handleClose}>
+            <X className="w-4 h-4" />
+          </Button>
+        </Box>
 
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as "chat" | "group")}
+          onChange={(_, v) => setActiveTab(v as "chat" | "group")}
+          variant="fullWidth"
         >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="chat" className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              聊天室
-            </TabsTrigger>
-            <TabsTrigger value="group" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              项目群组
-            </TabsTrigger>
-          </TabsList>
+          <Tab value="chat" icon={<MessageSquare className="w-4 h-4" />} iconPosition="start" label="聊天室" />
+          <Tab value="group" icon={<Users className="w-4 h-4" />} iconPosition="start" label="项目群组" />
+        </Tabs>
 
-          <TabsContent value="chat" className="space-y-4 py-4">
-            <div className="space-y-2">
+        {activeTab === "chat" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <label className="text-sm font-medium text-gray-700">
                 聊天室类型
               </label>
-              <div className="flex gap-2">
+              <Box sx={{ display: "flex", gap: 1 }}>
                 <Button
-                  variant={chatRoomType === "direct" ? "default" : "secondary"}
+                  variant={chatRoomType === "direct" ? "contained" : "outlined"}
                   onClick={() => setChatRoomType("direct")}
-                  className="flex items-center gap-2"
-                  size="sm"
+                  size="small"
+                  startIcon={<User className="w-4 h-4" />}
                 >
-                  <User className="w-4 h-4" />
                   私聊
                 </Button>
                 <Button
-                  variant={chatRoomType === "group" ? "default" : "secondary"}
+                  variant={chatRoomType === "group" ? "contained" : "outlined"}
                   onClick={() => setChatRoomType("group")}
-                  className="flex items-center gap-2"
-                  size="sm"
+                  size="small"
+                  startIcon={<Users className="w-4 h-4" />}
                 >
-                  <Users className="w-4 h-4" />
                   群聊
                 </Button>
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                名称 {chatRoomType === "direct" ? "(可选)" : ""}
-              </label>
-              <Input
-                placeholder={
-                  chatRoomType === "direct"
-                    ? "输入聊天室名称（可选）"
-                    : "输入群组名称"
-                }
-                value={chatRoomName}
-                onChange={(e) => setChatRoomName(e.target.value)}
-              />
-            </div>
+            <TextField
+              size="small"
+              placeholder={
+                chatRoomType === "direct"
+                  ? "输入聊天室名称（可选）"
+                  : "输入群组名称"
+              }
+              value={chatRoomName}
+              onChange={(e) => setChatRoomName(e.target.value)}
+              label="名称"
+              helperText={chatRoomType === "direct" ? "(可选)" : ""}
+            />
 
-            <div className="space-y-2">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <label className="text-sm font-medium text-gray-700">
                 添加成员
               </label>
-              <div className="flex gap-2">
-                <Input
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <TextField
+                  size="small"
                   placeholder="输入用户ID"
                   value={newMemberInput}
                   onChange={(e) => setNewMemberInput(e.target.value)}
@@ -272,6 +260,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       );
                     }
                   }}
+                  sx={{ flex: 1 }}
                 />
                 <Button
                   onClick={() =>
@@ -282,18 +271,20 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       setNewMemberInput,
                     )
                   }
+                  variant="contained"
+                  size="small"
                 >
                   添加
                 </Button>
-              </div>
+              </Box>
               {chatRoomMembers.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
                   {chatRoomMembers.map((member, idx) => (
-                    <span
+                    <Box
                       key={idx}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.5, py: 0.5, bgcolor: "grey.100", borderRadius: "full" }}
                     >
-                      {member}
+                      <span className="text-sm">{member}</span>
                       <button
                         onClick={() =>
                           removeMember(
@@ -306,54 +297,52 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       >
                         <X className="w-3 h-3" />
                       </button>
-                    </span>
+                    </Box>
                   ))}
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
 
-            <DialogFooter>
+            <DialogActions sx={{ px: 0 }}>
               <Button
                 onClick={handleCreateChatRoom}
                 disabled={loading}
-                className="flex items-center gap-2"
+                variant="contained"
+                startIcon={<Save className="w-4 h-4" />}
               >
-                <Save className="w-4 h-4" />
                 {loading ? "创建中..." : "创建聊天室"}
               </Button>
-            </DialogFooter>
-          </TabsContent>
+            </DialogActions>
+          </Box>
+        )}
 
-          <TabsContent value="group" className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                群组名称
-              </label>
-              <Input
-                placeholder="输入群组名称"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-              />
-            </div>
+        {activeTab === "group" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+            <TextField
+              size="small"
+              placeholder="输入群组名称"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              label="群组名称"
+            />
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                群组描述
-              </label>
-              <Textarea
-                placeholder="输入群组描述（可选）"
-                value={groupDescription}
-                onChange={(e) => setGroupDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
+            <TextField
+              size="small"
+              placeholder="输入群组描述（可选）"
+              value={groupDescription}
+              onChange={(e) => setGroupDescription(e.target.value)}
+              label="群组描述"
+              multiline
+              rows={3}
+            />
 
-            <div className="space-y-2">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <label className="text-sm font-medium text-gray-700">
                 添加成员
               </label>
-              <div className="flex gap-2">
-                <Input
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <TextField
+                  size="small"
                   placeholder="输入用户ID"
                   value={newGroupMemberInput}
                   onChange={(e) => setNewGroupMemberInput(e.target.value)}
@@ -367,6 +356,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       );
                     }
                   }}
+                  sx={{ flex: 1 }}
                 />
                 <Button
                   onClick={() =>
@@ -377,18 +367,20 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       setNewGroupMemberInput,
                     )
                   }
+                  variant="contained"
+                  size="small"
                 >
                   添加
                 </Button>
-              </div>
+              </Box>
               {groupMembers.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
                   {groupMembers.map((member, idx) => (
-                    <span
+                    <Box
                       key={idx}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.5, py: 0.5, bgcolor: "grey.100", borderRadius: "full" }}
                     >
-                      {member}
+                      <span className="text-sm">{member}</span>
                       <button
                         onClick={() =>
                           removeMember(groupMembers, setGroupMembers, member)
@@ -397,24 +389,24 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       >
                         <X className="w-3 h-3" />
                       </button>
-                    </span>
+                    </Box>
                   ))}
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
 
-            <DialogFooter>
+            <DialogActions sx={{ px: 0 }}>
               <Button
                 onClick={handleCreateProjectGroup}
                 disabled={loading}
-                className="flex items-center gap-2"
+                variant="contained"
+                startIcon={<Save className="w-4 h-4" />}
               >
-                <Save className="w-4 h-4" />
                 {loading ? "创建中..." : "创建群组"}
               </Button>
-            </DialogFooter>
-          </TabsContent>
-        </Tabs>
+            </DialogActions>
+          </Box>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -36,27 +36,25 @@ import { docApi, type Folder as FolderType } from "../api/doc";
 import { useAppStore } from "../store";
 import { DocumentPreviewModal } from "../components/DocumentPreviewModal";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ModeToggle } from "@/components/ModeToggle";
-import { Card, CardContent } from "@/components/ui/card";
 import {
+  Button,
+  TextField,
+  Card,
+  CardContent,
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import {
+  DialogContent,
+  DialogActions,
+  Chip,
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+  Tabs,
+  Tab,
+  Box,
+  Typography,
+  Stack,
+  IconButton,
+} from "@mui/material";
+import { ModeToggle } from "@/components/ModeToggle";
 
 interface File {
   id: string;
@@ -121,15 +119,13 @@ const CreateFolderModal: React.FC<{
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onClose={onClose}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>创建文件夹</DialogTitle>
-        </DialogHeader>
+        <DialogTitle>创建文件夹</DialogTitle>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <Label htmlFor="folderName">文件夹名称</Label>
-            <Input
+            <Typography variant="body2" sx={{ mb: 1 }}>文件夹名称</Typography>
+            <TextField
               id="folderName"
               type="text"
               value={folderName}
@@ -137,22 +133,24 @@ const CreateFolderModal: React.FC<{
               placeholder="输入文件夹名称"
               disabled={creating}
               autoFocus
+              fullWidth
+              size="small"
             />
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           </div>
-          <DialogFooter>
+          <DialogActions>
             <Button
               type="button"
-              variant="secondary"
+              variant="outlined"
               onClick={onClose}
               disabled={creating}
             >
               取消
             </Button>
-            <Button type="submit" disabled={creating || !folderName.trim()}>
+            <Button type="submit" variant="contained" disabled={creating || !folderName.trim()}>
               {creating ? "创建中..." : "创建"}
             </Button>
-          </DialogFooter>
+          </DialogActions>
         </form>
       </DialogContent>
     </Dialog>
@@ -588,7 +586,7 @@ const DocumentsPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -604,32 +602,30 @@ const DocumentsPage: React.FC = () => {
               <ModeToggle />
               <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
+                <TextField
                   type="text"
                   placeholder="搜索文件..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  size="small"
+                  sx={{ pl: 10, width: "100%" }}
                 />
               </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={showFilters ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setShowFilters(!showFilters)}
-                    >
-                      <Filter className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>筛选</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="筛选">
+                <span>
+                  <Button
+                    variant={showFilters ? "contained" : "text"}
+                    size="small"
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </span>
+              </Tooltip>
               <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant="text"
+                  size="small"
                   onClick={() => setViewMode("grid")}
                   className={
                     viewMode === "grid"
@@ -640,8 +636,8 @@ const DocumentsPage: React.FC = () => {
                   <Grid3X3 className="w-4 h-4" />
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant="text"
+                  size="small"
                   onClick={() => setViewMode("list")}
                   className={
                     viewMode === "list"
@@ -652,19 +648,16 @@ const DocumentsPage: React.FC = () => {
                   <List className="w-4 h-4" />
                 </Button>
               </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setShowCreateFolderModal(true)}
-                    >
-                      <Plus className="w-5 h-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>新建文件夹</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="新建文件夹">
+                <span>
+                  <Button
+                    variant="text"
+                    onClick={() => setShowCreateFolderModal(true)}
+                  >
+                    <Plus className="w-5 h-5" />
+                  </Button>
+                </span>
+              </Tooltip>
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
@@ -706,8 +699,8 @@ const DocumentsPage: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <Clock className="w-4 h-4 text-gray-400" />
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant="text"
+                  size="small"
                   onClick={() => toggleSort("date")}
                   className={
                     sortBy === "date" ? "text-blue-600 dark:text-blue-400" : ""
@@ -722,8 +715,8 @@ const DocumentsPage: React.FC = () => {
                     ))}
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant="text"
+                  size="small"
                   onClick={() => toggleSort("name")}
                   className={
                     sortBy === "name" ? "text-blue-600 dark:text-blue-400" : ""
@@ -738,8 +731,8 @@ const DocumentsPage: React.FC = () => {
                     ))}
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant="text"
+                  size="small"
                   onClick={() => toggleSort("size")}
                   className={
                     sortBy === "size" ? "text-blue-600 dark:text-blue-400" : ""
@@ -792,7 +785,7 @@ const DocumentsPage: React.FC = () => {
               <CardContent className="p-4">
                 <div className="space-y-1">
                   <Button
-                    variant="ghost"
+                    variant="text"
                     onClick={() => handleFolderSelect(null)}
                     className="w-full justify-start"
                   >
@@ -808,7 +801,7 @@ const DocumentsPage: React.FC = () => {
                     <div key={folder.id} className="group">
                       <div className="flex items-center">
                         <Button
-                          variant="ghost"
+                          variant="text"
                           onClick={() => handleFolderSelect(folder.id)}
                           className="flex-1 justify-start"
                         >
@@ -821,24 +814,21 @@ const DocumentsPage: React.FC = () => {
                             {folder.name}
                           </span>
                         </Button>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteFolder(folder.id, folder.name);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>删除文件夹</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Tooltip title="删除文件夹">
+                          <span>
+                            <Button
+                              variant="text"
+                              size="small"
+                              className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteFolder(folder.id, folder.name);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </span>
+                        </Tooltip>
                       </div>
                     </div>
                   ))}
@@ -885,15 +875,15 @@ const DocumentsPage: React.FC = () => {
                     <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
                       已选择 {selectedFiles.length} 个文件
                     </span>
-                    <Button variant="ghost" size="sm" onClick={clearSelection}>
+                    <Button variant="text" size="small" onClick={clearSelection}>
                       取消选择
                     </Button>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
-                      variant="default"
-                      size="sm"
-                      className="bg-red-600 hover:bg-red-700"
+                      variant="contained"
+                      size="small"
+                      color="error"
                       onClick={handleBatchDelete}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -930,15 +920,13 @@ const DocumentsPage: React.FC = () => {
             </div>
 
             {/* Files Grid/List */}
-            <Tabs
-              value={viewMode}
-              onValueChange={(val) => setViewMode(val as "grid" | "list")}
-            >
-              <TabsList className="mb-6">
-                <TabsTrigger value="grid">网格视图</TabsTrigger>
-                <TabsTrigger value="list">列表视图</TabsTrigger>
-              </TabsList>
-              <TabsContent value="grid">
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+              <Tabs value={viewMode} onChange={(_, val) => setViewMode(val as "grid" | "list")}>
+                <Tab value="grid" label="网格视图" />
+                <Tab value="list" label="列表视图" />
+              </Tabs>
+            </Box>
+            {viewMode === "grid" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {filteredItems.map((item) =>
                     item.type === "folder" ? (
@@ -953,23 +941,20 @@ const DocumentsPage: React.FC = () => {
                               <Folder className="w-7 h-7 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteFolder(item.id, item.name);
-                                      }}
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>删除文件夹</TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                              <Tooltip title="删除文件夹">
+                                <span>
+                                  <Button
+                                    variant="text"
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteFolder(item.id, item.name);
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </span>
+                              </Tooltip>
                             </div>
                           </div>
                           <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-1">
@@ -993,8 +978,8 @@ const DocumentsPage: React.FC = () => {
                     ),
                   )}
                 </div>
-              </TabsContent>
-              <TabsContent value="list">
+              )}
+              {viewMode === "list" && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
@@ -1042,8 +1027,8 @@ const DocumentsPage: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                   <div className="flex items-center space-x-2">
                                     <Button
-                                      variant="ghost"
-                                      size="sm"
+                                      variant="text"
+                                      size="small"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleDeleteFolder(item.id, item.name);
@@ -1068,9 +1053,7 @@ const DocumentsPage: React.FC = () => {
                                       </div>
                                       <div className="flex space-x-2 mt-1">
                                         {item.tags.map((tag) => (
-                                          <Badge key={tag} variant="outline">
-                                            {tag}
-                                          </Badge>
+                                          <Chip key={tag} label={tag} size="small" variant="outlined" />
                                         ))}
                                       </div>
                                     </div>
@@ -1085,22 +1068,22 @@ const DocumentsPage: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                   <div className="flex items-center space-x-2">
                                     <Button
-                                      variant="ghost"
-                                      size="sm"
+                                      variant="text"
+                                      size="small"
                                       onClick={() => handlePreview(item)}
                                     >
                                       <Eye className="w-4 h-4" />
                                     </Button>
                                     <Button
-                                      variant="ghost"
-                                      size="sm"
+                                      variant="text"
+                                      size="small"
                                       onClick={() => handleDownload(item)}
                                     >
                                       <Download className="w-4 h-4" />
                                     </Button>
                                     <Button
-                                      variant="ghost"
-                                      size="sm"
+                                      variant="text"
+                                      size="small"
                                       onClick={() => toggleStar(item.id)}
                                     >
                                       <Star
@@ -1111,9 +1094,9 @@ const DocumentsPage: React.FC = () => {
                                       />
                                     </Button>
                                     <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-red-600 hover:text-red-700"
+                                      variant="text"
+                                      size="small"
+                                      color="error"
                                       onClick={() => handleDelete(item.id)}
                                     >
                                       <Trash2 className="w-4 h-4" />
@@ -1128,10 +1111,9 @@ const DocumentsPage: React.FC = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
+              )}
+            </div>
           </div>
-        </div>
       </main>
 
       <CreateFolderModal
@@ -1239,35 +1221,29 @@ const FileCard: React.FC<FileCardProps> = ({
             <FileText className="w-7 h-7 text-purple-600 dark:text-purple-400" />
           </div>
           <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStarToggle(file.id);
-                    }}
-                  >
-                    <Star
-                      className={`w-4 h-4 ${file.starred ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`}
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>星标</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreVertical className="w-4 h-4 text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>更多操作</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip title="星标">
+              <span>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStarToggle(file.id);
+                  }}
+                >
+                  <Star
+                    className={`w-4 h-4 ${file.starred ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`}
+                  />
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip title="更多操作">
+              <span>
+                <Button variant="text" size="small">
+                  <MoreVertical className="w-4 h-4 text-gray-400" />
+                </Button>
+              </span>
+            </Tooltip>
           </div>
         </div>
         <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-1">
@@ -1280,16 +1256,14 @@ const FileCard: React.FC<FileCardProps> = ({
         </div>
         <div className="flex flex-wrap gap-2">
           {file.tags.map((tag) => (
-            <Badge key={tag} variant="outline">
-              {tag}
-            </Badge>
+            <Chip key={tag} label={tag} size="small" variant="outlined" />
           ))}
         </div>
       </CardContent>
       <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800 rounded-b-xl flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
-          variant="ghost"
-          size="sm"
+          variant="text"
+          size="small"
           onClick={(e) => {
             e.stopPropagation();
             onPreview(file);
@@ -1299,8 +1273,8 @@ const FileCard: React.FC<FileCardProps> = ({
           预览
         </Button>
         <Button
-          variant="ghost"
-          size="sm"
+          variant="text"
+          size="small"
           onClick={(e) => {
             e.stopPropagation();
             onDownload(file);
@@ -1309,7 +1283,7 @@ const FileCard: React.FC<FileCardProps> = ({
           <Download className="w-4 h-4 mr-2" />
           下载
         </Button>
-        <Button variant="ghost" size="sm">
+        <Button variant="text" size="small">
           <Share2 className="w-4 h-4 mr-2" />
           分享
         </Button>

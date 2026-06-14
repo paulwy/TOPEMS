@@ -1,17 +1,12 @@
 "use client";
 
+import * as React from "react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { Button, Box, Popover } from "@mui/material";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 export type DatePickerProps = {
   date?: Date;
@@ -28,36 +23,59 @@ function DatePicker({
   disabled = false,
   className,
 }: DatePickerProps) {
-  const handleSelect = (selectedDate: Date | Date[] | undefined) => {
-    if (onSelect && !Array.isArray(selectedDate)) {
-      onSelect(selectedDate);
+  const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (!disabled) {
+      setAnchorEl(event.currentTarget);
     }
   };
 
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleSelect = (selectedDate: Date | Date[] | undefined) => {
+    if (onSelect && !Array.isArray(selectedDate)) {
+      onSelect(selectedDate);
+      handleClose();
+    }
+  };
+
+  const open = Boolean(anchorEl);
+
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            "w-full justify-start text-left font-normal",
-            !date && "text-muted-foreground",
-            className,
-          )}
-          disabled={disabled}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? (
-            format(date, "yyyy年 MM月 dd日", { locale: zhCN })
-          ) : (
-            <span>{placeholder}</span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={date} onSelect={handleSelect} />
-      </PopoverContent>
-    </Popover>
+    <Box sx={{ position: "relative" }} className={className}>
+      <Button
+        variant="outlined"
+        onClick={handleClick}
+        disabled={disabled}
+        startIcon={<CalendarIcon style={{ width: 20, height: 20 }} />}
+        sx={{
+          justifyContent: "flex-start",
+          textAlign: "left",
+          width: "100%",
+          color: date ? "text.primary" : "text.secondary",
+        }}
+      >
+        {date ? format(date, "yyyy年 MM月 dd日", { locale: zhCN }) : placeholder}
+      </Button>
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+      >
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={handleSelect}
+        />
+      </Popover>
+    </Box>
   );
 }
 

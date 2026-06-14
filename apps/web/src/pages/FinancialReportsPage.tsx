@@ -1,3 +1,4 @@
+import { Card, CardContent, CardHeader, Chip, Typography, Button, TextField, FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
 /**
  * 财务报表页面
  * 查看资产负债表、利润表、现金流量表
@@ -18,17 +19,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   useBalanceSheet,
   useIncomeStatement,
@@ -44,20 +34,20 @@ const REPORT_TYPE_CONFIG = {
   balance_sheet: {
     name: "资产负债表",
     icon: Building2,
-    color: "text-blue-600",
-    bgColor: "bg-blue-100",
+    color: "blue.main",
+    bgColor: "blue.100",
   },
   income_statement: {
     name: "利润表",
     icon: TrendingUp,
-    color: "text-green-600",
-    bgColor: "bg-green-100",
+    color: "green.main",
+    bgColor: "green.100",
   },
   cash_flow: {
     name: "现金流量表",
     icon: DollarSign,
-    color: "text-purple-600",
-    bgColor: "bg-purple-100",
+    color: "purple.main",
+    bgColor: "purple.100",
   },
 };
 
@@ -139,120 +129,118 @@ export default function FinancialReportsPage() {
   const typeConfig = REPORT_TYPE_CONFIG[reportType];
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <Box sx={{ mx: "auto", py: 3, px: 2 }}>
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">财务报表</h1>
-          <p className="text-gray-500 mt-1">
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>财务报表</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             查看和生成资产负债表、利润表、现金流量表
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Button
-            variant="outline"
+            variant="outlined"
             onClick={() => currentQuery.refetch()}
             disabled={currentQuery.isFetching}
           >
             <RefreshCw
-              className={`w-4 h-4 mr-2 ${currentQuery.isFetching ? "animate-spin" : ""}`}
+              style={{ width: 16, height: 16, marginRight: 8 }}
             />
             刷新
           </Button>
-          <Select
-            value={reportType}
-            onValueChange={(v) => setReportType(v as any)}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="balance_sheet">资产负债表</SelectItem>
-              <SelectItem value="income_statement">利润表</SelectItem>
-              <SelectItem value="cash_flow">现金流量表</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <Select
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value as any)}
+            >
+              <MenuItem value="balance_sheet">资产负债表</MenuItem>
+              <MenuItem value="income_statement">利润表</MenuItem>
+              <MenuItem value="cash_flow">现金流量表</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
 
       {/* 筛选条件 */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="flex items-end gap-4">
-            <div className="space-y-2 flex-1">
-              <label className="text-sm font-medium">公司</label>
-              <Input
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ py: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "flex-end", gap: 2 }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body2" sx={{ mb: 0.5 }}>公司</Typography>
+              <TextField
                 placeholder="输入公司ID"
                 value={companyId}
                 onChange={(e) => setCompanyId(e.target.value)}
+                size="small"
+                fullWidth
               />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">会计期间</label>
-              <Input
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5 }}>会计期间</Typography>
+              <TextField
                 type="month"
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
               />
-            </div>
-            <Button onClick={handleGenerate} disabled={!companyId}>
-              <RefreshCw className="w-4 h-4 mr-2" />
+            </Box>
+            <Button variant="contained" onClick={handleGenerate} disabled={!companyId}>
+              <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
               生成报表
             </Button>
-          </div>
+          </Box>
         </CardContent>
       </Card>
 
       {/* 报表内容 */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-lg ${typeConfig.bgColor} flex items-center justify-center`}
-            >
-              <typeConfig.icon className={`w-5 h-5 ${typeConfig.color}`} />
-            </div>
-            <div>
-              <CardTitle>{typeConfig.name}</CardTitle>
-              <p className="text-sm text-gray-500">
-                {companyId ? `公司: ${companyId}` : "请选择公司"} | 期间:{" "}
-                {period}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+      <Card sx={{ mb: 3 }}>
+        <CardHeader sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ width: 40, height: 40, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: typeConfig.bgColor }}>
+              <typeConfig.icon style={{ width: 20, height: 20, color: `var(--mui-palette-${typeConfig.color.replace('.', '-')})` }} />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>{typeConfig.name}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {companyId ? `公司: ${companyId}` : "请选择公司"} | 期间: {period}
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button
-              variant="outline"
-              size="sm"
+              variant="outlined"
+              size="small"
               onClick={() => handleExport("xlsx")}
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
               导出Excel
             </Button>
             <Button
-              variant="outline"
-              size="sm"
+              variant="outlined"
+              size="small"
               onClick={() => handleExport("pdf")}
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
               导出PDF
             </Button>
-          </div>
+          </Box>
         </CardHeader>
 
         <CardContent>
           {currentQuery.isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
-            </div>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
+              <RefreshCw style={{ width: 32, height: 32 }} />
+            </Box>
           ) : !currentReport ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <FileText className="w-12 h-12 text-gray-400 mb-4" />
-              <p className="text-gray-500">暂无报表数据</p>
-              <p className="text-sm text-gray-400 mt-1">
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 6 }}>
+              <FileText style={{ width: 48, height: 48 }} />
+              <Typography color="text.secondary" sx={{ mt: 2 }}>暂无报表数据</Typography>
+              <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
                 请输入公司ID和期间后点击"生成报表"
-              </p>
-            </div>
+              </Typography>
+            </Box>
           ) : (
             <ReportContent reportType={reportType} data={currentReport} />
           )}
@@ -260,53 +248,47 @@ export default function FinancialReportsPage() {
       </Card>
 
       {/* 报表对比入口 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => navigate("/finance/reports/comparison")}
-        >
-          <CardContent className="flex items-center gap-4 py-6">
-            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-medium">报表对比</h3>
-              <p className="text-sm text-gray-500">多期间、多公司对比分析</p>
-            </div>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 1fr" }, gap: 3 }}>
+        <Card sx={{ cursor: "pointer", "&:hover": { boxShadow: 6 }, transition: "box-shadow 0.2s" }}
+          onClick={() => navigate("/finance/reports/comparison")}>
+          <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: 3 }}>
+            <Box sx={{ width: 48, height: 48, borderRadius: 1, bgcolor: "blue.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <BarChart3 style={{ width: 24, height: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>报表对比</Typography>
+              <Typography variant="body2" color="text.secondary">多期间、多公司对比分析</Typography>
+            </Box>
           </CardContent>
         </Card>
 
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => navigate("/finance/reports/trend")}
-        >
-          <CardContent className="flex items-center gap-4 py-6">
-            <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-medium">趋势分析</h3>
-              <p className="text-sm text-gray-500">报表项目趋势变化</p>
-            </div>
+        <Card sx={{ cursor: "pointer", "&:hover": { boxShadow: 6 }, transition: "box-shadow 0.2s" }}
+          onClick={() => navigate("/finance/reports/trend")}>
+          <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: 3 }}>
+            <Box sx={{ width: 48, height: 48, borderRadius: 1, bgcolor: "green.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <TrendingUp style={{ width: 24, height: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>趋势分析</Typography>
+              <Typography variant="body2" color="text.secondary">报表项目趋势变化</Typography>
+            </Box>
           </CardContent>
         </Card>
 
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => navigate("/finance/reports/consolidated")}
-        >
-          <CardContent className="flex items-center gap-4 py-6">
-            <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="font-medium">合并报表</h3>
-              <p className="text-sm text-gray-500">多公司报表合并</p>
-            </div>
+        <Card sx={{ cursor: "pointer", "&:hover": { boxShadow: 6 }, transition: "box-shadow 0.2s" }}
+          onClick={() => navigate("/finance/reports/consolidated")}>
+          <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: 3 }}>
+            <Box sx={{ width: 48, height: 48, borderRadius: 1, bgcolor: "purple.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Building2 style={{ width: 24, height: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>合并报表</Typography>
+              <Typography variant="body2" color="text.secondary">多公司报表合并</Typography>
+            </Box>
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 

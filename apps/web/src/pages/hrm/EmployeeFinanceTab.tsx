@@ -8,18 +8,21 @@ import {
   useEmployeeFinanceInfo,
   useUpdateEmployeeFinanceInfo,
 } from "@/hooks/useHrmFinance";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
+  Button,
+  TextField,
+  FormLabel,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  MenuItem,
+  Box,
+  Typography,
+} from "@mui/material";
 import { Banknote, DollarSign, Shield, Save, Edit2, X } from "lucide-react";
 
 interface EmployeeFinanceTabProps {
@@ -82,22 +85,35 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            border: "3px solid #e5e7eb",
+            borderTopColor: "#2563eb",
+            animation: "spin 1s linear infinite",
+            "@keyframes spin": {
+              "0%": { transform: "rotate(0deg)" },
+              "100%": { transform: "rotate(360deg)" },
+            },
+          }}
+        />
+      </Box>
     );
   }
 
   if (error) {
     return (
       <Card>
-        <CardContent className="py-8">
-          <div className="text-center text-gray-500">
-            <p>加载失败: {error.message}</p>
-            <Button variant="outline" onClick={handleEdit} className="mt-4">
+        <CardContent sx={{ py: 4 }}>
+          <Box sx={{ textAlign: "center", color: "text.secondary" }}>
+            <Typography>加载失败: {error.message}</Typography>
+            <Button variant="outlined" onClick={handleEdit} sx={{ mt: 2 }}>
               初始化财务信息
             </Button>
-          </div>
+          </Box>
         </CardContent>
       </Card>
     );
@@ -106,73 +122,79 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
   const hasFinanceInfo = !!financeInfo;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* 操作栏 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">财务信息</h3>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="h6">财务信息</Typography>
           {hasFinanceInfo && (
-            <Badge
-              variant={
-                financeInfo.status === "active" ? "default" : "secondary"
-              }
-            >
-              {financeInfo.status === "active" ? "正常" : "未激活"}
-            </Badge>
+            <Chip
+              label={financeInfo.status === "active" ? "正常" : "未激活"}
+              color={financeInfo.status === "active" ? "primary" : "default"}
+              size="small"
+            />
           )}
-        </div>
+        </Box>
         {isEditing ? (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleCancel}>
-              <X className="w-4 h-4 mr-1" />
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" size="small" onClick={handleCancel}>
+              <X style={{ width: 16, height: 16, marginRight: 4 }} />
               取消
             </Button>
             <Button
-              size="sm"
+              size="small"
+              variant="contained"
               onClick={handleSave}
               disabled={updateFinanceInfo.isPending}
+              startIcon={<Save style={{ width: 16, height: 16, marginRight: 4 }} />}
             >
-              <Save className="w-4 h-4 mr-1" />
               保存
             </Button>
-          </div>
+          </Box>
         ) : (
-          <Button variant="outline" size="sm" onClick={handleEdit}>
-            <Edit2 className="w-4 h-4 mr-1" />
+          <Button variant="outlined" size="small" onClick={handleEdit}>
+            <Edit2 style={{ width: 16, height: 16, marginRight: 4 }} />
             {hasFinanceInfo ? "编辑" : "初始化"}
           </Button>
         )}
-      </div>
+      </Box>
 
       {/* 银行账户信息 */}
       <Card>
-        <CardHeader className="flex flex-row items-center gap-2">
-          <Banknote className="w-5 h-5 text-blue-600" />
-          <CardTitle className="text-base">银行账户信息</CardTitle>
-        </CardHeader>
+        <CardHeader
+          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          title={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Banknote style={{ width: 20, height: 20, color: "#2563eb" }} />
+              <Typography variant="subtitle1">银行账户信息</Typography>
+            </Box>
+          }
+        />
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label className="text-sm text-gray-500">开户银行</Label>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>开户银行</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   value={editData.bank_name || ""}
                   onChange={(e) =>
                     setEditData({ ...editData, bank_name: e.target.value })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
                   placeholder="如：中国工商银行"
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-medium">
+                <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
                   {financeInfo?.bank_name || "-"}
-                </p>
+                </Typography>
               )}
-            </div>
-            <div>
-              <Label className="text-sm text-gray-500">银行卡号</Label>
+            </Box>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>银行卡号</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   value={editData.bank_card_number || ""}
                   onChange={(e) =>
                     setEditData({
@@ -180,48 +202,57 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                       bank_card_number: e.target.value,
                     })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
                   placeholder="请输入银行卡号"
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>
                   {financeInfo?.bank_card_number || "-"}
-                </p>
+                </Typography>
               )}
-            </div>
-            <div>
-              <Label className="text-sm text-gray-500">支行名称</Label>
+            </Box>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>支行名称</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   value={editData.bank_branch || ""}
                   onChange={(e) =>
                     setEditData({ ...editData, bank_branch: e.target.value })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
                   placeholder="如：北京分行中关村支行"
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-medium">
+                <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
                   {financeInfo?.bank_branch || "-"}
-                </p>
+                </Typography>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
       {/* 薪资信息 */}
       <Card>
-        <CardHeader className="flex flex-row items-center gap-2">
-          <DollarSign className="w-5 h-5 text-green-600" />
-          <CardTitle className="text-base">薪资设置</CardTitle>
-        </CardHeader>
+        <CardHeader
+          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          title={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <DollarSign style={{ width: 20, height: 20, color: "#16a34a" }} />
+              <Typography variant="subtitle1">薪资设置</Typography>
+            </Box>
+          }
+        />
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label className="text-sm text-gray-500">基本工资</Label>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>基本工资</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   type="number"
                   value={editData.base_salary || 0}
                   onChange={(e) =>
@@ -230,18 +261,20 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                       base_salary: parseFloat(e.target.value) || 0,
                     })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono font-medium">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace", fontWeight: 500 }}>
                   ¥{(financeInfo?.base_salary || 0).toLocaleString("zh-CN")}
-                </p>
+                </Typography>
               )}
-            </div>
-            <div>
-              <Label className="text-sm text-gray-500">岗位工资</Label>
+            </Box>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>岗位工资</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   type="number"
                   value={editData.position_salary || 0}
                   onChange={(e) =>
@@ -250,18 +283,20 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                       position_salary: parseFloat(e.target.value) || 0,
                     })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono font-medium">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace", fontWeight: 500 }}>
                   ¥{(financeInfo?.position_salary || 0).toLocaleString("zh-CN")}
-                </p>
+                </Typography>
               )}
-            </div>
-            <div>
-              <Label className="text-sm text-gray-500">技能工资</Label>
+            </Box>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>技能工资</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   type="number"
                   value={editData.skill_salary || 0}
                   onChange={(e) =>
@@ -270,46 +305,53 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                       skill_salary: parseFloat(e.target.value) || 0,
                     })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono font-medium">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace", fontWeight: 500 }}>
                   ¥{(financeInfo?.skill_salary || 0).toLocaleString("zh-CN")}
-                </p>
+                </Typography>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
           {hasFinanceInfo && (
-            <div className="mt-4 pt-4 border-t">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">月薪合计</span>
-                <span className="text-lg font-bold text-green-600">
+            <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>月薪合计</Typography>
+                <Typography variant="h6" sx={{ fontWeight: "bold", color: "success.main" }}>
                   ¥
                   {(
                     (financeInfo?.base_salary || 0) +
                     (financeInfo?.position_salary || 0) +
                     (financeInfo?.skill_salary || 0)
                   ).toLocaleString("zh-CN")}
-                </span>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           )}
         </CardContent>
       </Card>
 
       {/* 社保公积金 */}
       <Card>
-        <CardHeader className="flex flex-row items-center gap-2">
-          <Shield className="w-5 h-5 text-orange-600" />
-          <CardTitle className="text-base">社保公积金</CardTitle>
-        </CardHeader>
+        <CardHeader
+          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          title={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Shield style={{ width: 20, height: 20, color: "#ea580c" }} />
+              <Typography variant="subtitle1">社保公积金</Typography>
+            </Box>
+          }
+        />
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm text-gray-500">社保基数</Label>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>社保基数</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   type="number"
                   value={editData.social_security_base || 0}
                   onChange={(e) =>
@@ -318,44 +360,47 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                       social_security_base: parseFloat(e.target.value) || 0,
                     })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>
                   ¥
                   {(financeInfo?.social_security_base || 0).toLocaleString(
                     "zh-CN",
                   )}
-                </p>
+                </Typography>
               )}
-            </div>
-            <div>
-              <Label className="text-sm text-gray-500">社保比例</Label>
+            </Box>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>社保比例</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   type="number"
-                  step="0.001"
                   value={editData.social_security_ratio || 0}
                   onChange={(e) =>
                     setEditData({
                       ...editData,
-                      social_security_ratio: parseFloat(e.target.value) || 0,
+                      social_security_ratio: parseFloat((e.target as HTMLInputElement).value) || 0,
                     })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
                   placeholder="如: 0.105"
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>
                   {((financeInfo?.social_security_ratio || 0) * 100).toFixed(1)}
                   %
-                </p>
+                </Typography>
               )}
-            </div>
-            <div>
-              <Label className="text-sm text-gray-500">公积金基数</Label>
+            </Box>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>公积金基数</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   type="number"
                   value={editData.housing_fund_base || 0}
                   onChange={(e) =>
@@ -364,46 +409,49 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                       housing_fund_base: parseFloat(e.target.value) || 0,
                     })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>
                   ¥
                   {(financeInfo?.housing_fund_base || 0).toLocaleString(
                     "zh-CN",
                   )}
-                </p>
+                </Typography>
               )}
-            </div>
-            <div>
-              <Label className="text-sm text-gray-500">公积金比例</Label>
+            </Box>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>公积金比例</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   type="number"
-                  step="0.001"
                   value={editData.housing_fund_ratio || 0}
                   onChange={(e) =>
                     setEditData({
                       ...editData,
-                      housing_fund_ratio: parseFloat(e.target.value) || 0,
+                      housing_fund_ratio: parseFloat((e.target as HTMLInputElement).value) || 0,
                     })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
                   placeholder="如: 0.12"
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>
                   {((financeInfo?.housing_fund_ratio || 0) * 100).toFixed(1)}%
-                </p>
+                </Typography>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
           {hasFinanceInfo && (
-            <div className="mt-4 pt-4 border-t space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">个人社保扣款(估算)</span>
-                <span className="font-mono">
+            <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider", display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>个人社保扣款(估算)</Typography>
+                <Typography sx={{ fontFamily: "monospace" }}>
                   ¥
                   {(
                     (financeInfo?.social_security_base || 0) *
@@ -412,11 +460,11 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">个人公积金扣款(估算)</span>
-                <span className="font-mono">
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>个人公积金扣款(估算)</Typography>
+                <Typography sx={{ fontFamily: "monospace" }}>
                   ¥
                   {(
                     (financeInfo?.housing_fund_base || 0) *
@@ -425,42 +473,49 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
-                </span>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           )}
         </CardContent>
       </Card>
 
       {/* 费用归属 */}
       <Card>
-        <CardHeader className="flex flex-row items-center gap-2">
-          <DollarSign className="w-5 h-5 text-purple-600" />
-          <CardTitle className="text-base">费用归属</CardTitle>
-        </CardHeader>
+        <CardHeader
+          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          title={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <DollarSign style={{ width: 20, height: 20, color: "#7c3aed" }} />
+              <Typography variant="subtitle1">费用归属</Typography>
+            </Box>
+          }
+        />
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm text-gray-500">成本中心</Label>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>成本中心</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   value={editData.cost_center_id || ""}
                   onChange={(e) =>
                     setEditData({ ...editData, cost_center_id: e.target.value })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
                   placeholder="请输入成本中心编码"
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>
                   {financeInfo?.cost_center_id || "-"}
-                </p>
+                </Typography>
               )}
-            </div>
-            <div>
-              <Label className="text-sm text-gray-500">费用科目</Label>
+            </Box>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>费用科目</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   value={editData.expense_account_id || ""}
                   onChange={(e) =>
                     setEditData({
@@ -468,73 +523,79 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                       expense_account_id: e.target.value,
                     })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
                   placeholder="请输入费用科目编码"
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono">
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>
                   {financeInfo?.expense_account_id || "-"}
-                </p>
+                </Typography>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
       {/* 税务信息 */}
       <Card>
-        <CardHeader className="flex flex-row items-center gap-2">
-          <Shield className="w-5 h-5 text-red-600" />
-          <CardTitle className="text-base">税务信息</CardTitle>
-        </CardHeader>
+        <CardHeader
+          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          title={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Shield style={{ width: 20, height: 20, color: "#dc2626" }} />
+              <Typography variant="subtitle1">税务信息</Typography>
+            </Box>
+          }
+        />
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm text-gray-500">纳税人识别号</Label>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>纳税人识别号</FormLabel>
               {isEditing ? (
-                <Input
+                <TextField
                   value={editData.tax_id || ""}
                   onChange={(e) =>
                     setEditData({ ...editData, tax_id: e.target.value })
                   }
-                  className="mt-1"
+                  size="small"
+                  fullWidth
                   placeholder="请输入纳税人识别号"
+                  sx={{ mt: 0.5 }}
                 />
               ) : (
-                <p className="mt-1 font-mono">{financeInfo?.tax_id || "-"}</p>
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>{financeInfo?.tax_id || "-"}</Typography>
               )}
-            </div>
-            <div>
-              <Label className="text-sm text-gray-500">专项附加扣除</Label>
+            </Box>
+            <Box>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>专项附加扣除</FormLabel>
               {isEditing ? (
-                <Select
-                  value={editData.tax_level?.toString() || "0"}
-                  onValueChange={(value) =>
-                    setEditData({ ...editData, tax_level: parseInt(value) })
-                  }
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">无扣除</SelectItem>
-                    <SelectItem value="1">一孩扣除</SelectItem>
-                    <SelectItem value="2">两孩扣除</SelectItem>
-                    <SelectItem value="3">三孩扣除</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth size="small" sx={{ mt: 0.5 }}>
+                  <Select
+                    value={editData.tax_level?.toString() || "0"}
+                    onChange={(e) =>
+                      setEditData({ ...editData, tax_level: parseInt(e.target.value) })
+                    }
+                  >
+                    <MenuItem value="0">无扣除</MenuItem>
+                    <MenuItem value="1">一孩扣除</MenuItem>
+                    <MenuItem value="2">两孩扣除</MenuItem>
+                    <MenuItem value="3">三孩扣除</MenuItem>
+                  </Select>
+                </FormControl>
               ) : (
-                <p className="mt-1 font-medium">
+                <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
                   {financeInfo?.tax_level
                     ? `${financeInfo.tax_level}孩扣除`
                     : "无扣除"}
-                </p>
+                </Typography>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 };
 

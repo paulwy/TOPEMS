@@ -1,3 +1,25 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Stack,
+  TextField,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton,
+  Tooltip,
+  Skeleton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  InputAdornment,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Play,
@@ -8,7 +30,6 @@ import {
   Search,
   Loader2,
   Eye,
-  User,
   GitBranch,
   ChevronLeft,
   Plus,
@@ -21,35 +42,7 @@ import { flowApi } from "../api/flow";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const FlowInstanceListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -155,18 +148,18 @@ const FlowInstanceListPage: React.FC = () => {
 
   const getStatusBadgeVariant = (
     status: string,
-  ): "default" | "destructive" | "outline" | "secondary" => {
+  ): "success" | "error" | "info" | "warning" | "default" | "primary" | "secondary" => {
     switch (status) {
       case "completed":
-        return "secondary";
+        return "success";
       case "rejected":
-        return "destructive";
+        return "error";
       case "running":
-        return "default";
+        return "info";
       case "pending":
-        return "outline";
+        return "warning";
       default:
-        return "outline";
+        return "default";
     }
   };
 
@@ -183,15 +176,15 @@ const FlowInstanceListPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle size={20} style={{ color: "#16a34a" }} />;
       case "rejected":
-        return <XCircle className="w-5 h-5 text-red-600" />;
+        return <XCircle size={20} style={{ color: "#dc2626" }} />;
       case "running":
-        return <Play className="w-5 h-5 text-blue-600" />;
+        return <Play size={20} style={{ color: "#2563eb" }} />;
       case "pending":
-        return <Clock className="w-5 h-5 text-yellow-600" />;
+        return <Clock size={20} style={{ color: "#ca8a04" }} />;
       default:
-        return <AlertCircle className="w-5 h-5 text-gray-600" />;
+        return <AlertCircle size={20} style={{ color: "#4b5563" }} />;
     }
   };
 
@@ -210,9 +203,9 @@ const FlowInstanceListPage: React.FC = () => {
         header: "实例 ID",
         cell: ({ row }) => {
           return (
-            <div className="font-medium text-gray-900 dark:text-gray-100">
+            <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
               {row.original.id.substring(0, 8)}...
-            </div>
+            </Typography>
           );
         },
       },
@@ -224,10 +217,10 @@ const FlowInstanceListPage: React.FC = () => {
             (w) => w.id === row.original.workflow_id,
           );
           return (
-            <div className="flex items-center text-sm text-gray-900 dark:text-gray-100">
-              <FileText className="w-4 h-4 mr-1" />
-              {workflow?.name || "未知"}
-            </div>
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+              <FileText size={16} />
+              <Typography variant="body2">{workflow?.name || "未知"}</Typography>
+            </Stack>
           );
         },
       },
@@ -237,12 +230,15 @@ const FlowInstanceListPage: React.FC = () => {
         cell: ({ row }) => {
           const status = row.original.status;
           return (
-            <div className="flex items-center space-x-1">
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               {getStatusIcon(status)}
-              <Badge variant={getStatusBadgeVariant(status)}>
-                {getStatusText(status)}
-              </Badge>
-            </div>
+              <Chip
+                size="small"
+                variant={getStatusBadgeVariant(status) === "warning" ? "outlined" : "filled"}
+                color={getStatusBadgeVariant(status)}
+                label={getStatusText(status)}
+              />
+            </Stack>
           );
         },
       },
@@ -251,10 +247,12 @@ const FlowInstanceListPage: React.FC = () => {
         header: "当前节点",
         cell: ({ row }) => {
           return row.original.current_node ? (
-            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-              <Users className="w-4 h-4 mr-1" />
-              {row.original.current_node}
-            </div>
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+              <Users size={16} />
+              <Typography variant="body2" color="text.secondary">
+                {row.original.current_node}
+              </Typography>
+            </Stack>
           ) : (
             "-"
           );
@@ -265,9 +263,9 @@ const FlowInstanceListPage: React.FC = () => {
         header: "创建时间",
         cell: ({ row }) => {
           return (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <Typography variant="body2" color="text.secondary">
               {new Date(row.original.created_at).toLocaleString()}
-            </div>
+            </Typography>
           );
         },
       },
@@ -276,24 +274,18 @@ const FlowInstanceListPage: React.FC = () => {
         header: "操作",
         cell: ({ row }) => {
           return (
-            <div className="flex items-center justify-end">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        navigate(`/flow/instances/${row.original.id}`)
-                      }
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>查看详情</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Tooltip title="查看详情">
+                <IconButton
+                  size="small"
+                  onClick={() =>
+                    navigate(`/flow/instances/${row.original.id}`)
+                  }
+                >
+                  <Eye size={20} />
+                </IconButton>
+              </Tooltip>
+            </Box>
           );
         },
       },
@@ -302,106 +294,116 @@ const FlowInstanceListPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-              <GitBranch className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                工作流实例
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                管理运行中的工作流实例
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <ModeToggle />
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="w-5 h-5 mr-2" />
-              启动实例
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <IconButton onClick={() => navigate("/dashboard")}>
+                <ChevronLeft size={20} />
+              </IconButton>
+              <Box sx={{ width: 48, height: 48, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <GitBranch size={24} style={{ color: "#6366f1" }} />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>工作流实例</Typography>
+                <Typography variant="body2" color="text.secondary">管理运行中的工作流实例</Typography>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1}>
+              <ModeToggle />
+              <Button
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+                startIcon={<Plus size={20} />}
+              >
+                启动实例
+              </Button>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 2, mb: 3 }}>
         {Object.entries(statusCounts).map(([status, count]) => (
           <Card
             key={status}
-            className={`cursor-pointer transition-all ${statusFilter === status ? "ring-2 ring-blue-500 dark:ring-blue-400" : ""}`}
+            sx={{
+              cursor: "pointer",
+              border: statusFilter === status ? 2 : 0,
+              borderColor: "primary.main",
+            }}
+            onClick={() => setStatusFilter(status)}
           >
-            <CardContent
-              onClick={() => setStatusFilter(status)}
-              className="p-4"
-            >
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {count}
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>{count}</Typography>
+              <Typography variant="body2" color="text.secondary">
                 {status === "all" ? "全部" : getStatusText(status)}
-              </div>
+              </Typography>
             </CardContent>
           </Card>
         ))}
-      </div>
+      </Box>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input type="text" placeholder="搜索实例ID..." className="pl-10" />
-          </div>
-          <Select value={workflowFilter} onValueChange={setWorkflowFilter}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="全部工作流" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部工作流</SelectItem>
-              {workflows.map((w) => (
-                <SelectItem key={w.id} value={w.id}>
-                  {w.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="secondary" onClick={loadData}>
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            ) : (
-              <RefreshIcon className="w-5 h-5 mr-2" />
-            )}
-            刷新
-          </Button>
-        </div>
-      </div>
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+            <TextField
+              size="small"
+              placeholder="搜索实例ID..."
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={20} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ flex: 1 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 128 }}>
+              <InputLabel>全部工作流</InputLabel>
+              <Select
+                value={workflowFilter}
+                label="全部工作流"
+                onChange={(e) => setWorkflowFilter(e.target.value)}
+              >
+                <MenuItem value="all">全部工作流</MenuItem>
+                {workflows.map((w) => (
+                  <MenuItem key={w.id} value={w.id}>
+                    {w.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button variant="outlined" onClick={loadData} startIcon={loading ? <Loader2 size={20} className="animate-spin" /> : <RefreshIcon />}>
+              刷新
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
 
       {/* Data Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent sx={{ p: 0 }}>
           {loading ? (
-            <div className="p-8">
-              <div className="space-y-4">
+            <Box sx={{ p: 4 }}>
+              <Stack spacing={2}>
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center space-x-4">
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
-                  </div>
+                  <Stack key={i} direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                    <Skeleton variant="circular" width={48} height={48} />
+                    <Box sx={{ flex: 1 }}>
+                      <Skeleton variant="text" width="75%" />
+                      <Skeleton variant="text" width="50%" />
+                    </Box>
+                  </Stack>
                 ))}
-              </div>
-            </div>
+              </Stack>
+            </Box>
           ) : (
             <DataTable
               columns={columns}
@@ -414,67 +416,49 @@ const FlowInstanceListPage: React.FC = () => {
       </Card>
 
       {/* Create Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>启动工作流实例</DialogTitle>
-            <DialogDescription>选择要启动的工作流实例</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="workflow">选择工作流 *</Label>
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>启动工作流实例</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>选择工作流 *</InputLabel>
               <Select
                 value={createFormData.workflow_id}
-                onValueChange={(v) =>
-                  setCreateFormData({ ...createFormData, workflow_id: v })
-                }
+                label="选择工作流 *"
+                onChange={(e) => setCreateFormData({ ...createFormData, workflow_id: e.target.value })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择工作流" />
-                </SelectTrigger>
-                <SelectContent>
-                  {workflows.map((w) => (
-                    <SelectItem key={w.id} value={w.id}>
-                      {w.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                {workflows.map((w) => (
+                  <MenuItem key={w.id} value={w.id}>
+                    {w.name}
+                  </MenuItem>
+                ))}
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="initiator">发起人ID</Label>
-              <Input
-                id="initiator"
-                type="text"
-                value={createFormData.initiator_id}
-                onChange={(e) =>
-                  setCreateFormData({
-                    ...createFormData,
-                    initiator_id: e.target.value,
-                  })
-                }
-                placeholder="可选"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowCreateModal(false)}
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleStartInstance}
-              disabled={creating || !createFormData.workflow_id}
-            >
-              {creating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              启动
-            </Button>
-          </DialogFooter>
+            </FormControl>
+            <TextField
+              size="small"
+              label="发起人ID"
+              value={createFormData.initiator_id}
+              onChange={(e) => setCreateFormData({ ...createFormData, initiator_id: e.target.value })}
+              placeholder="可选"
+              fullWidth
+            />
+          </Stack>
         </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={() => setShowCreateModal(false)}>
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleStartInstance}
+            disabled={creating || !createFormData.workflow_id}
+            startIcon={creating ? <Loader2 size={16} className="animate-spin" /> : undefined}
+          >
+            启动
+          </Button>
+        </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

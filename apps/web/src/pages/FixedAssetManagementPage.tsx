@@ -14,34 +14,27 @@ import {
   TrendingDown,
   DollarSign,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  TextField,
+  Chip,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  MenuItem,
+  Drawer,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Box,
+  Typography,
+  Stack,
+} from "@mui/material";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
 /** 资产状态配置 */
@@ -276,7 +269,7 @@ export default function FixedAssetManagementPage() {
           label: row.category,
           color: "bg-gray-100 text-gray-800",
         };
-        return <Badge className={config.color}>{config.label}</Badge>;
+        return <Chip label={config.label} size="small" className={config.color} />;
       },
     },
     {
@@ -330,7 +323,7 @@ export default function FixedAssetManagementPage() {
           label: row.depreciation_method,
           color: "bg-gray-100 text-gray-800",
         };
-        return <Badge className={config.color}>{config.label}</Badge>;
+        return <Chip label={config.label} size="small" className={config.color} />;
       },
     },
     {
@@ -342,7 +335,7 @@ export default function FixedAssetManagementPage() {
           label: row.status,
           color: "bg-gray-100 text-gray-800",
         };
-        return <Badge className={config.color}>{config.label}</Badge>;
+        return <Chip label={config.label} size="small" className={config.color} />;
       },
     },
     {
@@ -351,8 +344,8 @@ export default function FixedAssetManagementPage() {
       cell: ({ row }: { row: FixedAsset }) => (
         <div className="flex items-center gap-1">
           <Button
-            variant="ghost"
-            size="icon"
+            variant="text"
+            size="small"
             onClick={() => {
               setSelectedAsset(row);
               setIsEditing(true);
@@ -361,10 +354,10 @@ export default function FixedAssetManagementPage() {
             <Edit className="w-4 h-4" />
           </Button>
           <Button
-            variant="ghost"
-            size="icon"
+            variant="text"
+            size="small"
             onClick={() => setDeletingId(row.id)}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            color="error"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -422,7 +415,7 @@ export default function FixedAssetManagementPage() {
             </div>
           </div>
           <Button
-            size="sm"
+            size="small"
             onClick={() => {
               setSelectedAsset(null);
               setIsCreating(true);
@@ -502,56 +495,56 @@ export default function FixedAssetManagementPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex-1 min-w-[200px]">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="搜索资产名称、编号或部门..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
+                <TextField
+                  placeholder="搜索资产名称、编号或部门..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  size="small"
+                  fullWidth
+                  slotProps={{
+                    input: {
+                      startAdornment: <Search className="w-4 h-4 text-gray-400" style={{ marginRight: 8 }} />,
+                    },
+                  }}
+                />
               </div>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="资产类别" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部类别</SelectItem>
-                  <SelectItem value="building">房屋建筑物</SelectItem>
-                  <SelectItem value="vehicle">运输设备</SelectItem>
-                  <SelectItem value="equipment">生产设备</SelectItem>
-                  <SelectItem value="office">办公设备</SelectItem>
-                  <SelectItem value="electronic">电子设备</SelectItem>
-                  <SelectItem value="other">其他</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="资产状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="normal">正常</SelectItem>
-                  <SelectItem value="disposed">已处置</SelectItem>
-                  <SelectItem value="impaired">减值</SelectItem>
-                  <SelectItem value="scrapped">报废</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>资产类别</InputLabel>
+                <Select
+                  value={categoryFilter}
+                  label="资产类别"
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                  <MenuItem value="all">全部类别</MenuItem>
+                  <MenuItem value="building">房屋建筑物</MenuItem>
+                  <MenuItem value="vehicle">运输设备</MenuItem>
+                  <MenuItem value="equipment">生产设备</MenuItem>
+                  <MenuItem value="office">办公设备</MenuItem>
+                  <MenuItem value="electronic">电子设备</MenuItem>
+                  <MenuItem value="other">其他</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>资产状态</InputLabel>
+                <Select
+                  value={statusFilter}
+                  label="资产状态"
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <MenuItem value="all">全部状态</MenuItem>
+                  <MenuItem value="normal">正常</MenuItem>
+                  <MenuItem value="disposed">已处置</MenuItem>
+                  <MenuItem value="impaired">减值</MenuItem>
+                  <MenuItem value="scrapped">报废</MenuItem>
+                </Select>
+              </FormControl>
             </div>
           </CardContent>
         </Card>
 
         {/* 资产列表 */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>固定资产列表</CardTitle>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span>共 {filteredAssets.length} 项资产</span>
-              </div>
-            </div>
-          </CardHeader>
+          <CardHeader title="固定资产列表" subheader={`共 ${filteredAssets.length} 项资产`} />
           <CardContent>
             <EnhancedDataTable
               columns={columns}
@@ -563,27 +556,24 @@ export default function FixedAssetManagementPage() {
       </div>
 
       {/* 创建/编辑侧边栏 */}
-      <Sheet
+      <Drawer
+        anchor="right"
         open={isCreating || isEditing}
-        onOpenChange={(open: boolean) => {
-          if (!open) {
-            setIsCreating(false);
-            setIsEditing(false);
-            setSelectedAsset(null);
-          }
+        onClose={() => {
+          setIsCreating(false);
+          setIsEditing(false);
+          setSelectedAsset(null);
         }}
       >
-        <SheetContent className="sm:max-w-[500px]">
-          <SheetHeader>
-            <SheetTitle>
-              {isCreating ? "新增固定资产" : "编辑固定资产"}
-            </SheetTitle>
-            <SheetDescription>
-              {isCreating
-                ? "创建新的固定资产记录"
-                : `编辑资产: ${selectedAsset?.asset_name}`}
-            </SheetDescription>
-          </SheetHeader>
+        <Box sx={{ width: 500, p: 3 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {isCreating ? "新增固定资产" : "编辑固定资产"}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {isCreating
+              ? "创建新的固定资产记录"
+              : `编辑资产: ${selectedAsset?.asset_name}`}
+          </Typography>
           <FixedAssetForm
             asset={selectedAsset}
             onSubmit={isCreating ? handleCreate : handleUpdate}
@@ -593,32 +583,24 @@ export default function FixedAssetManagementPage() {
               setSelectedAsset(null);
             }}
           />
-        </SheetContent>
-      </Sheet>
+        </Box>
+      </Drawer>
 
       {/* 删除确认对话框 */}
-      <AlertDialog
-        open={!!deletingId}
-        onOpenChange={(open: boolean) => !open && setDeletingId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
-            <AlertDialogDescription>
-              确定要删除该固定资产吗？此操作不可恢复。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              删除
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog open={!!deletingId} onClose={() => setDeletingId(null)}>
+        <DialogTitle>确认删除</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            确定要删除该固定资产吗？此操作不可恢复。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeletingId(null)}>取消</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">
+            删除
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
@@ -657,252 +639,206 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 mt-6">
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              资产编号 <span className="text-red-600">*</span>
-            </label>
-            <Input
-              value={formData.asset_code}
-              onChange={(e) =>
-                setFormData({ ...formData, asset_code: e.target.value })
-              }
-              placeholder="例如：FA-2024-001"
-              required
-            />
-          </div>
+      <Stack spacing={3}>
+        <Stack direction="row" spacing={2}>
+          <TextField
+            label="资产编号"
+            value={formData.asset_code}
+            onChange={(e) =>
+              setFormData({ ...formData, asset_code: e.target.value })
+            }
+            placeholder="例如：FA-2024-001"
+            required
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="资产名称"
+            value={formData.asset_name}
+            onChange={(e) =>
+              setFormData({ ...formData, asset_name: e.target.value })
+            }
+            placeholder="请输入资产名称"
+            required
+            fullWidth
+            size="small"
+          />
+        </Stack>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              资产名称 <span className="text-red-600">*</span>
-            </label>
-            <Input
-              value={formData.asset_name}
-              onChange={(e) =>
-                setFormData({ ...formData, asset_name: e.target.value })
-              }
-              placeholder="请输入资产名称"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              资产类别 <span className="text-red-600">*</span>
-            </label>
+        <Stack direction="row" spacing={2}>
+          <FormControl size="small" fullWidth required>
+            <InputLabel>资产类别</InputLabel>
             <Select
               value={formData.category}
-              onValueChange={(value) =>
-                setFormData({ ...formData, category: value })
+              label="资产类别"
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
               }
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="building">房屋建筑物</SelectItem>
-                <SelectItem value="vehicle">运输设备</SelectItem>
-                <SelectItem value="equipment">生产设备</SelectItem>
-                <SelectItem value="office">办公设备</SelectItem>
-                <SelectItem value="electronic">电子设备</SelectItem>
-                <SelectItem value="other">其他</SelectItem>
-              </SelectContent>
+              <MenuItem value="building">房屋建筑物</MenuItem>
+              <MenuItem value="vehicle">运输设备</MenuItem>
+              <MenuItem value="equipment">生产设备</MenuItem>
+              <MenuItem value="office">办公设备</MenuItem>
+              <MenuItem value="electronic">电子设备</MenuItem>
+              <MenuItem value="other">其他</MenuItem>
             </Select>
-          </div>
+          </FormControl>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              资产状态 <span className="text-red-600">*</span>
-            </label>
+          <FormControl size="small" fullWidth required>
+            <InputLabel>资产状态</InputLabel>
             <Select
               value={formData.status}
-              onValueChange={(value) =>
-                setFormData({ ...formData, status: value })
+              label="资产状态"
+              onChange={(e) =>
+                setFormData({ ...formData, status: e.target.value })
               }
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="normal">正常</SelectItem>
-                <SelectItem value="disposed">已处置</SelectItem>
-                <SelectItem value="impaired">减值</SelectItem>
-                <SelectItem value="scrapped">报废</SelectItem>
-              </SelectContent>
+              <MenuItem value="normal">正常</MenuItem>
+              <MenuItem value="disposed">已处置</MenuItem>
+              <MenuItem value="impaired">减值</MenuItem>
+              <MenuItem value="scrapped">报废</MenuItem>
             </Select>
-          </div>
-        </div>
+          </FormControl>
+        </Stack>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            规格型号
-          </label>
-          <Input
-            value={formData.specification || ""}
+        <TextField
+          label="规格型号"
+          value={formData.specification || ""}
+          onChange={(e) =>
+            setFormData({ ...formData, specification: e.target.value })
+          }
+          placeholder="请输入规格型号"
+          fullWidth
+          size="small"
+        />
+
+        <TextField
+          label="存放地点"
+          value={formData.location || ""}
+          onChange={(e) =>
+            setFormData({ ...formData, location: e.target.value })
+          }
+          placeholder="请输入资产存放地点"
+          fullWidth
+          size="small"
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            label="购置日期"
+            type="date"
+            value={formData.acquisition_date}
             onChange={(e) =>
-              setFormData({ ...formData, specification: e.target.value })
+              setFormData({ ...formData, acquisition_date: e.target.value })
             }
-            placeholder="请输入规格型号"
+            required
+            fullWidth
+            size="small"
+            slotProps={{ inputLabel: { shrink: true } }}
           />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            存放地点
-          </label>
-          <Input
-            value={formData.location || ""}
+          <TextField
+            label="使用寿命（年）"
+            type="number"
+            value={formData.useful_life}
             onChange={(e) =>
-              setFormData({ ...formData, location: e.target.value })
+              setFormData({
+                ...formData,
+                useful_life: parseInt(e.target.value) || 0,
+              })
             }
-            placeholder="请输入资产存放地点"
+            fullWidth
+            size="small"
+            slotProps={{ htmlInput: { min: 1 } }}
           />
-        </div>
+        </Stack>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              购置日期 <span className="text-red-600">*</span>
-            </label>
-            <Input
-              type="date"
-              value={formData.acquisition_date}
-              onChange={(e) =>
-                setFormData({ ...formData, acquisition_date: e.target.value })
-              }
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              使用寿命（年）
-            </label>
-            <Input
-              type="number"
-              value={formData.useful_life}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  useful_life: parseInt(e.target.value) || 0,
-                })
-              }
-              min="1"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              折旧方法
-            </label>
+        <Stack direction="row" spacing={2}>
+          <FormControl size="small" fullWidth>
+            <InputLabel>折旧方法</InputLabel>
             <Select
               value={formData.depreciation_method}
-              onValueChange={(value) =>
-                setFormData({ ...formData, depreciation_method: value })
+              label="折旧方法"
+              onChange={(e) =>
+                setFormData({ ...formData, depreciation_method: e.target.value })
               }
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="straight_line">直线法</SelectItem>
-                <SelectItem value="declining_balance">
-                  双倍余额递减法
-                </SelectItem>
-                <SelectItem value="sum_of_years">年数总和法</SelectItem>
-                <SelectItem value="units_of_production">工作量法</SelectItem>
-              </SelectContent>
+              <MenuItem value="straight_line">直线法</MenuItem>
+              <MenuItem value="declining_balance">双倍余额递减法</MenuItem>
+              <MenuItem value="sum_of_years">年数总和法</MenuItem>
+              <MenuItem value="units_of_production">工作量法</MenuItem>
             </Select>
-          </div>
+          </FormControl>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              折旧状态
-            </label>
+          <FormControl size="small" fullWidth>
+            <InputLabel>折旧状态</InputLabel>
             <Select
               value={formData.depreciation_status}
-              onValueChange={(value) =>
-                setFormData({ ...formData, depreciation_status: value })
+              label="折旧状态"
+              onChange={(e) =>
+                setFormData({ ...formData, depreciation_status: e.target.value })
               }
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="not_started">未开始</SelectItem>
-                <SelectItem value="depreciating">折旧中</SelectItem>
-                <SelectItem value="completed">已提足</SelectItem>
-              </SelectContent>
+              <MenuItem value="not_started">未开始</MenuItem>
+              <MenuItem value="depreciating">折旧中</MenuItem>
+              <MenuItem value="completed">已提足</MenuItem>
             </Select>
-          </div>
-        </div>
+          </FormControl>
+        </Stack>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              原值 <span className="text-red-600">*</span>
-            </label>
-            <Input
-              type="number"
-              value={formData.original_value}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  original_value: parseFloat(e.target.value) || 0,
-                })
-              }
-              placeholder="0.00"
-              min="0"
-              step="0.01"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              残值
-            </label>
-            <Input
-              type="number"
-              value={formData.residual_value}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  residual_value: parseFloat(e.target.value) || 0,
-                })
-              }
-              placeholder="0.00"
-              min="0"
-              step="0.01"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            备注
-          </label>
-          <Input
-            value={formData.description || ""}
+        <Stack direction="row" spacing={2}>
+          <TextField
+            label="原值"
+            type="number"
+            value={formData.original_value}
             onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
+              setFormData({
+                ...formData,
+                original_value: parseFloat(e.target.value) || 0,
+              })
             }
-            placeholder="可选描述信息"
+            placeholder="0.00"
+            required
+            fullWidth
+            size="small"
+            slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
           />
-        </div>
-      </div>
+          <TextField
+            label="残值"
+            type="number"
+            value={formData.residual_value}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                residual_value: parseFloat(e.target.value) || 0,
+              })
+            }
+            placeholder="0.00"
+            fullWidth
+            size="small"
+            slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
+          />
+        </Stack>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <TextField
+          label="备注"
+          value={formData.description || ""}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
+          placeholder="可选描述信息"
+          fullWidth
+          size="small"
+          multiline
+          rows={2}
+        />
+      </Stack>
+
+      <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end", mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}>
+        <Button type="button" variant="outlined" onClick={onCancel}>
           取消
         </Button>
-        <Button type="submit">保存</Button>
-      </div>
+        <Button type="submit" variant="contained">保存</Button>
+      </Stack>
     </form>
   );
 }

@@ -15,7 +15,7 @@ mod employee_tests {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct Employee {
         id: Uuid,
-        employee_no: String,
+        employee_number: String,
         name: String,
         gender: String,
         birth_date: NaiveDate,
@@ -31,7 +31,7 @@ mod employee_tests {
     fn test_employee_creation() {
         let employee = Employee {
             id: Uuid::new_v4(),
-            employee_no: "EMP001".to_string(),
+            employee_number: "EMP001".to_string(),
             name: "张三".to_string(),
             gender: "男".to_string(),
             birth_date: NaiveDate::from_ymd_opt(1990, 1, 1).unwrap(),
@@ -43,7 +43,7 @@ mod employee_tests {
             hire_date: NaiveDate::from_ymd_opt(2020, 1, 1).unwrap(),
         };
 
-        assert_eq!(employee.employee_no, "EMP001");
+        assert_eq!(employee.employee_number, "EMP001");
         assert_eq!(employee.name, "张三");
         assert_eq!(employee.status, "active");
     }
@@ -55,7 +55,7 @@ mod employee_tests {
         for status in statuses {
             let employee = Employee {
                 id: Uuid::new_v4(),
-                employee_no: "EMP001".to_string(),
+                employee_number: "EMP001".to_string(),
                 name: "员工".to_string(),
                 gender: "男".to_string(),
                 birth_date: NaiveDate::from_ymd_opt(1990, 1, 1).unwrap(),
@@ -75,7 +75,7 @@ mod employee_tests {
     fn test_employee_serialization() {
         let employee = Employee {
             id: Uuid::new_v4(),
-            employee_no: "EMP002".to_string(),
+            employee_number: "EMP002".to_string(),
             name: "李四".to_string(),
             gender: "女".to_string(),
             birth_date: NaiveDate::from_ymd_opt(1995, 5, 5).unwrap(),
@@ -89,7 +89,7 @@ mod employee_tests {
 
         let json = serde_json::to_string(&employee).unwrap();
         let deserialized: Employee = serde_json::from_str(&json).unwrap();
-        assert_eq!(deserialized.employee_no, employee.employee_no);
+        assert_eq!(deserialized.employee_number, employee.employee_number);
     }
 }
 

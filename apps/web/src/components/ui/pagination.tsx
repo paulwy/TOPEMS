@@ -1,112 +1,87 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Pagination as MuiPagination, PaginationItem, Box } from "@mui/material";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-
-const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
-  <nav
-    role="navigation"
-    aria-label="pagination"
-    className={cn("mx-auto flex w-full justify-center", className)}
-    {...props}
-  />
-);
-Pagination.displayName = "Pagination";
-
-const PaginationContent = React.forwardRef<
-  HTMLUListElement,
-  React.ComponentProps<"ul">
->(({ className, ...props }, ref) => (
-  <ul
-    ref={ref}
-    className={cn("flex flex-row items-center gap-1", className)}
-    {...props}
-  />
-));
-PaginationContent.displayName = "PaginationContent";
-
-const PaginationItem = React.forwardRef<
-  HTMLLIElement,
-  React.ComponentProps<"li">
->(({ className, ...props }, ref) => (
-  <li ref={ref} className={cn("", className)} {...props} />
-));
-PaginationItem.displayName = "PaginationItem";
-
-interface PaginationLinkProps {
-  isActive?: boolean;
+export interface PaginationProps {
+  count: number;
+  page: number;
+  onChange: (_event: React.ChangeEvent<unknown>, newPage: number) => void;
+  rowsPerPage?: number;
+  rowsPerPageOptions?: number[];
+  onRowsPerPageChange?: (_event: React.ChangeEvent<HTMLSelectElement>) => void;
+  className?: string;
 }
 
-const PaginationLink = ({
+const Pagination: React.FC<PaginationProps> = ({
+  count,
+  page,
+  onChange,
+  rowsPerPage,
+  rowsPerPageOptions = [10, 20, 50, 100],
+  onRowsPerPageChange,
   className,
-  isActive,
-  size = "icon",
-  ...props
-}: PaginationLinkProps & React.ComponentProps<typeof Button>) => (
-  <Button
-    aria-current={isActive ? "page" : undefined}
-    variant={isActive ? "outline" : "ghost"}
-    size={size}
-    className={cn("", className)}
-    {...props}
-  />
-);
-PaginationLink.displayName = "PaginationLink";
-
-const PaginationPrevious = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    aria-label="Go to previous page"
-    size="default"
-    className={cn("gap-1 pl-2.5", className)}
-    {...props}
-  >
-    <ChevronLeft className="h-4 w-4" />
-    <span className="hidden sm:inline">上一页</span>
-  </PaginationLink>
-);
-PaginationPrevious.displayName = "PaginationPrevious";
-
-const PaginationNext = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    aria-label="Go to next page"
-    size="default"
-    className={cn("gap-1 pr-2.5", className)}
-    {...props}
-  >
-    <span className="hidden sm:inline">下一页</span>
-    <ChevronRight className="h-4 w-4" />
-  </PaginationLink>
-);
-PaginationNext.displayName = "PaginationNext";
-
-const PaginationEllipsis = ({
-  className,
-  ...props
-}: React.ComponentProps<"span">) => (
-  <span
-    aria-hidden
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
-    {...props}
-  >
-    <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">更多页面</span>
-  </span>
-);
-PaginationEllipsis.displayName = "PaginationEllipsis";
-
-export {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
+}) => {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 2,
+        py: 2,
+      }}
+      className={className}
+    >
+      <MuiPagination
+        count={count}
+        page={page}
+        onChange={onChange}
+        shape="rounded"
+        color="primary"
+        renderItem={(item) => (
+          <PaginationItem
+            slots={{
+              previous: () => (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <ChevronLeft style={{ width: 16, height: 16 }} />
+                  <span>上一页</span>
+                </Box>
+              ),
+              next: () => (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <span>下一页</span>
+                  <ChevronRight style={{ width: 16, height: 16 }} />
+                </Box>
+              ),
+            }}
+            {...item}
+          />
+        )}
+      />
+      {onRowsPerPageChange && rowsPerPage !== undefined && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <span style={{ fontSize: 14, color: "#666" }}>每页</span>
+          <select
+            value={rowsPerPage}
+            onChange={onRowsPerPageChange}
+            style={{
+              border: "1px solid #e0e0e0",
+              borderRadius: 4,
+              padding: "4px 8px",
+              fontSize: 14,
+            }}
+          >
+            {rowsPerPageOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <span style={{ fontSize: 14, color: "#666" }}>条</span>
+        </Box>
+      )}
+    </Box>
+  );
 };
+
+export { Pagination };

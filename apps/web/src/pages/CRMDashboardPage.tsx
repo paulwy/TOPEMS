@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import {
-  Card,
+  Card as MuiCard,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+} from "@mui/material";
+import Typography from "@mui/material/Typography";
+import Chip from "@mui/material/Chip";
 import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -242,10 +241,10 @@ const CRMDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <MuiCard>
         <CardHeader>
-          <CardTitle>CRM 仪表板</CardTitle>
-          <CardDescription>客户关系管理数据概览</CardDescription>
+          <Typography variant="h6">CRM 仪表板</Typography>
+          <Typography variant="body2" color="text.secondary">客户关系管理数据概览</Typography>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -312,12 +311,12 @@ const CRMDashboardPage: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <Card>
+              <MuiCard>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <Typography variant="h6" className="flex items-center gap-2">
                     <BarChart3 className="w-5 h-5" />
                     销售趋势
-                  </CardTitle>
+                  </Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="h-80">
@@ -352,15 +351,15 @@ const CRMDashboardPage: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
-              </Card>
+              </MuiCard>
             </div>
 
-            <Card>
+            <MuiCard>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <Typography variant="h6" className="flex items-center gap-2">
                   <PieChart className="w-5 h-5" />
                   行业分布
-                </CardTitle>
+                </Typography>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -416,16 +415,16 @@ const CRMDashboardPage: React.FC = () => {
                   ))}
                 </div>
               </CardContent>
-            </Card>
+            </MuiCard>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <MuiCard>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <Typography variant="h6" className="flex items-center gap-2">
                   <Activity className="w-5 h-5" />
                   销售漏斗
-                </CardTitle>
+                </Typography>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -450,14 +449,14 @@ const CRMDashboardPage: React.FC = () => {
                   ))}
                 </div>
               </CardContent>
-            </Card>
+            </MuiCard>
 
-            <Card>
+            <MuiCard>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <Typography variant="h6" className="flex items-center gap-2">
                   <Calendar className="w-5 h-5" />
                   最近活动
-                </CardTitle>
+                </Typography>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -467,7 +466,7 @@ const CRMDashboardPage: React.FC = () => {
                         key={index}
                         className="flex items-center gap-3 p-3 bg-muted rounded-lg"
                       >
-                        <Badge variant="secondary">{activity.type}</Badge>
+                        <Chip label={activity.type} color="secondary" size="small" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">
                             {activity.title}
@@ -490,10 +489,10 @@ const CRMDashboardPage: React.FC = () => {
                   )}
                 </div>
               </CardContent>
-            </Card>
+            </MuiCard>
           </div>
         </CardContent>
-      </Card>
+      </MuiCard>
     </div>
   );
 };

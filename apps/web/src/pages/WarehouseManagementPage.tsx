@@ -1,39 +1,22 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
+  MenuItem,
   Table,
   TableBody,
   TableCell,
   TableHead,
-  TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+  Checkbox,
+  TextField,
+} from "@mui/material";
 import type {
   Warehouse,
   CreateWarehouseRequest,
@@ -43,14 +26,6 @@ import { wmsApi } from "@/api/wms";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 
 const WarehouseManagementPage: React.FC = () => {
@@ -205,19 +180,24 @@ const WarehouseManagementPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<
-      string,
-      {
-        label: string;
-        variant: "default" | "secondary" | "destructive" | "outline";
-      }
-    > = {
-      active: { label: "活跃", variant: "default" },
-      inactive: { label: "非活跃", variant: "secondary" },
-      maintenance: { label: "维护中", variant: "outline" },
+    const statusMap: Record<string, "success" | "info" | "warning" | "error"> = {
+      active: "success",
+      inactive: "info",
+      maintenance: "warning",
     };
-    const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+    const labels: Record<string, string> = {
+      active: "活跃",
+      inactive: "非活跃",
+      maintenance: "维护中",
+    };
+    return (
+      <Chip
+        size="small"
+        color={statusMap[status] || "default"}
+        label={labels[status] || status}
+        variant="outlined"
+      />
+    );
   };
 
   if (loading) return <LoadingSpinner />;
@@ -226,45 +206,52 @@ const WarehouseManagementPage: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>仓库管理</CardTitle>
-          <CardDescription>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            仓库管理
+          </Typography>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>
             管理仓库信息,包括仓库名称、编码、地址、负责人等
-          </CardDescription>
+          </Typography>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索仓库名称或编码..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="pl-8"
-                />
-              </div>
+              <TextField
+                placeholder="搜索仓库名称或编码..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                fullWidth
+                size="small"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <Search className="mr-2 h-4 w-4 text-muted-foreground" />
+                    ),
+                  },
+                }}
+              />
             </div>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value);
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="状态筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="active">活跃</SelectItem>
-                <SelectItem value="inactive">非活跃</SelectItem>
-                <SelectItem value="maintenance">维护中</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>状态筛选</InputLabel>
+              <Select
+                value={statusFilter}
+                label="状态筛选"
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <MenuItem value="all">全部状态</MenuItem>
+                <MenuItem value="active">活跃</MenuItem>
+                <MenuItem value="inactive">非活跃</MenuItem>
+                <MenuItem value="maintenance">维护中</MenuItem>
+              </Select>
+            </FormControl>
             <Button
+              variant="contained"
               onClick={() => {
                 resetForm();
                 setShowDialog(true);
@@ -276,13 +263,13 @@ const WarehouseManagementPage: React.FC = () => {
           </div>
 
           {selectedIds.length > 0 && (
-            <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between">
+            <div className="mb-4 p-3 bg-grey-100 rounded-lg flex items-center justify-between">
               <span className="text-sm">
                 已选择 {selectedIds.length} 个仓库
               </span>
               <Button
-                variant="destructive"
-                size="sm"
+                variant="outlined"
+                size="small"
                 onClick={() => setSelectedIds([])}
               >
                 清除选择
@@ -290,266 +277,267 @@ const WarehouseManagementPage: React.FC = () => {
             </div>
           )}
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={
+                      selectedIds.length === warehouses.length &&
+                      warehouses.length > 0
+                    }
+                    onChange={toggleSelectAll}
+                  />
+                </TableCell>
+                <TableHead>仓库名称</TableHead>
+                <TableHead>仓库编码</TableHead>
+                <TableHead>地址</TableHead>
+                <TableHead>负责人</TableHead>
+                <TableHead>联系电话</TableHead>
+                <TableHead>状态</TableHead>
+                <TableCell align="right">操作</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {warehouses.length === 0 ? (
                 <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Checkbox
-                      checked={
-                        selectedIds.length === warehouses.length &&
-                        warehouses.length > 0
-                      }
-                      onCheckedChange={toggleSelectAll}
+                  <TableCell colSpan={8} align="center">
+                    <EmptyState
+                      title="暂无仓库数据"
+                      description="点击上方按钮添加第一个仓库"
                     />
-                  </TableHead>
-                  <TableHead>仓库名称</TableHead>
-                  <TableHead>仓库编码</TableHead>
-                  <TableHead>地址</TableHead>
-                  <TableHead>负责人</TableHead>
-                  <TableHead>联系电话</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {warehouses.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center">
-                      <EmptyState
-                        title="暂无仓库数据"
-                        description="点击上方按钮添加第一个仓库"
+              ) : (
+                warehouses.map((warehouse) => (
+                  <TableRow key={warehouse.id}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedIds.includes(warehouse.id)}
+                        onChange={() => toggleSelect(warehouse.id)}
                       />
                     </TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>
+                      {warehouse.name}
+                    </TableCell>
+                    <TableCell>{warehouse.code || "-"}</TableCell>
+                    <TableCell>{warehouse.address || "-"}</TableCell>
+                    <TableCell>{warehouse.manager || "-"}</TableCell>
+                    <TableCell>{warehouse.phone || "-"}</TableCell>
+                    <TableCell>{getStatusBadge(warehouse.status)}</TableCell>
+                    <TableCell align="right">
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => handleViewDetail(warehouse)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => handleEdit(warehouse)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="small"
+                        color="error"
+                        onClick={() => handleDelete(warehouse.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                ) : (
-                  warehouses.map((warehouse) => (
-                    <TableRow key={warehouse.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedIds.includes(warehouse.id)}
-                          onCheckedChange={() => toggleSelect(warehouse.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {warehouse.name}
-                      </TableCell>
-                      <TableCell>{warehouse.code || "-"}</TableCell>
-                      <TableCell>{warehouse.address || "-"}</TableCell>
-                      <TableCell>{warehouse.manager || "-"}</TableCell>
-                      <TableCell>{warehouse.phone || "-"}</TableCell>
-                      <TableCell>{getStatusBadge(warehouse.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetail(warehouse)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(warehouse)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(warehouse.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
 
           <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-gray-500">
               共 {total} 条记录,第 {currentPage} /{" "}
               {Math.ceil(total / pageSize) || 1} 页
             </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-                {Array.from(
-                  { length: Math.min(5, Math.ceil(total / pageSize)) },
-                  (_, i) => {
-                    const page = i + 1;
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  },
-                )}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage(
-                        Math.min(Math.ceil(total / pageSize), currentPage + 1),
-                      )
-                    }
-                    className={
-                      currentPage >= Math.ceil(total / pageSize)
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            <div className="flex gap-2">
+              <Button
+                size="small"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              >
+                上一页
+              </Button>
+              {Array.from(
+                { length: Math.min(5, Math.ceil(total / pageSize)) },
+                (_, i) => {
+                  const page = i + 1;
+                  return (
+                    <Button
+                      key={page}
+                      size="small"
+                      variant={currentPage === page ? "contained" : "outlined"}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  );
+                },
+              )}
+              <Button
+                size="small"
+                disabled={
+                  currentPage >= Math.ceil(total / pageSize)
+                }
+                onClick={() =>
+                  setCurrentPage(
+                    Math.min(Math.ceil(total / pageSize), currentPage + 1),
+                  )
+                }
+              >
+                下一页
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedWarehouse ? "编辑仓库" : "新增仓库"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedWarehouse ? "修改仓库信息" : "填写新仓库信息"}
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {selectedWarehouse ? "编辑仓库" : "新增仓库"}
+        </DialogTitle>
+        <DialogContent>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">仓库名称 *</Label>
-                <Input
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="code">仓库编码</Label>
-                <Input
-                  id="code"
-                  value={formData.code}
-                  onChange={(e) =>
-                    setFormData({ ...formData, code: e.target.value })
-                  }
-                />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="address">地址</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="manager">负责人</Label>
-                <Input
-                  id="manager"
-                  value={formData.manager}
-                  onChange={(e) =>
-                    setFormData({ ...formData, manager: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">联系电话</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                />
-              </div>
+              <TextField
+                label="仓库名称 *"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                fullWidth
+                required
+              />
+              <TextField
+                label="仓库编码"
+                value={formData.code}
+                onChange={(e) =>
+                  setFormData({ ...formData, code: e.target.value })
+                }
+                fullWidth
+              />
+              <TextField
+                label="地址"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+                fullWidth
+              />
+              <TextField
+                label="负责人"
+                value={formData.manager}
+                onChange={(e) =>
+                  setFormData({ ...formData, manager: e.target.value })
+                }
+                fullWidth
+              />
+              <TextField
+                label="联系电话"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                fullWidth
+              />
             </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowDialog(false)}
-              >
+            <DialogActions>
+              <Button variant="outlined" onClick={() => setShowDialog(false)}>
                 取消
               </Button>
-              <Button type="submit">保存</Button>
-            </DialogFooter>
+              <Button variant="contained" type="submit">
+                保存
+              </Button>
+            </DialogActions>
           </form>
         </DialogContent>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>仓库详情</DialogTitle>
-          </DialogHeader>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>仓库详情</DialogTitle>
+        <DialogContent>
           {selectedWarehouse && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-muted-foreground">仓库名称</Label>
-                  <p className="font-medium">{selectedWarehouse.name}</p>
+                  <Typography variant="caption" color="text.secondary">
+                    仓库名称
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {selectedWarehouse.name}
+                  </Typography>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">仓库编码</Label>
-                  <p>{selectedWarehouse.code || "-"}</p>
+                  <Typography variant="caption" color="text.secondary">
+                    仓库编码
+                  </Typography>
+                  <Typography>{selectedWarehouse.code || "-"}</Typography>
                 </div>
                 <div className="col-span-2">
-                  <Label className="text-muted-foreground">地址</Label>
-                  <p>{selectedWarehouse.address || "-"}</p>
+                  <Typography variant="caption" color="text.secondary">
+                    地址
+                  </Typography>
+                  <Typography>{selectedWarehouse.address || "-"}</Typography>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">负责人</Label>
-                  <p>{selectedWarehouse.manager || "-"}</p>
+                  <Typography variant="caption" color="text.secondary">
+                    负责人
+                  </Typography>
+                  <Typography>{selectedWarehouse.manager || "-"}</Typography>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">联系电话</Label>
-                  <p>{selectedWarehouse.phone || "-"}</p>
+                  <Typography variant="caption" color="text.secondary">
+                    联系电话
+                  </Typography>
+                  <Typography>{selectedWarehouse.phone || "-"}</Typography>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">状态</Label>
+                  <Typography variant="caption" color="text.secondary">
+                    状态
+                  </Typography>
                   <div>{getStatusBadge(selectedWarehouse.status)}</div>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">创建时间</Label>
-                  <p>
+                  <Typography variant="caption" color="text.secondary">
+                    创建时间
+                  </Typography>
+                  <Typography>
                     {new Date(selectedWarehouse.created_at).toLocaleString(
                       "zh-CN",
                     )}
-                  </p>
+                  </Typography>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">更新时间</Label>
-                  <p>
+                  <Typography variant="caption" color="text.secondary">
+                    更新时间
+                  </Typography>
+                  <Typography>
                     {new Date(selectedWarehouse.updated_at).toLocaleString(
                       "zh-CN",
                     )}
-                  </p>
+                  </Typography>
                 </div>
               </div>
             </div>

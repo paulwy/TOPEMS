@@ -117,7 +117,7 @@ impl ServiceRegistry {
                 name: "topems-ai".to_string(),
                 display_name: "AI知识库".to_string(),
                 description: "AI智能知识库".to_string(),
-                port: 8013,
+                port: 8062,
                 health_endpoint: "/health".to_string(),
                 api_prefix: "/api/v1".to_string(),
             },
